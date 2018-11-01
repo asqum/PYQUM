@@ -159,7 +159,7 @@ def test(detail=False):
     unitY = list(channel1(bench))[1]["UNITs"]
     timebase(bench, action=['Set', 'NORMAL', '150ns', '120ns', '50ns'])
     timebase(bench)
-    acquiredata(bench, action=['Set', 'average', '100', '10'])
+    acquiredata(bench, action=['Set', 'average', '100', '101'])
     acquiredata(bench)
     waveform(bench, action=['Set', 'max', 'channel1', 'ascii', '?', '?'])
     ans = list(waveform(bench))[1]
