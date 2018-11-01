@@ -1,0 +1,177 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.left {
+    float: left;
+}
+
+.right {
+    float: right;
+}
+
+.name {
+    font: 37;
+    color: white;
+}
+
+.navbar {
+    width: 100%;
+    height: fit-content;
+    background-color: #333333;
+}
+
+.navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+.navbar ul li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 16px;
+    text-decoration: none;
+}
+
+.navbar ul li a:hover {
+    /* color: blue; */
+    cursor: pointer;
+    background-color: purple;
+}
+
+
+body.home a.home, .char a.char, .calib a.calib, .exp a.exp, .schemes a.schemes {
+    background-color: green;
+}
+
+/* contents */
+
+.notelist {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.notelist .note {
+    width: fit-content;
+    height: fit-content;
+    background-color: white;
+    color: black;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    margin: 0.5rem;
+}
+
+
+/* Forms */
+
+.dataform {
+    width: 50%;
+    margin-top: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.dataform textarea {
+    width: 100%;
+    font-size: 16px;
+}
+
+.dataform {
+    font-size: 16px;
+}
+
+
+/* submit buttons */
+
+.button {
+    background-color: #555555;
+    /* Green */
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    -webkit-transition-duration: 0.4s;
+    /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+.buttonesgon {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonesgon:hover {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonesgoff:hover {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonesgoff {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonvsaon {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonvsaon:hover {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonvsaoff:hover {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonvsaoff {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonawgon {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonawgon:hover {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonawgoff:hover {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonawgoff {
+    background-color: #555555;
+    color: white;
+}

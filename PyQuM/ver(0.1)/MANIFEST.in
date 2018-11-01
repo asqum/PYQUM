@@ -1,0 +1,6 @@
+include LICENSE
+include pyqum/schema.sql
+graft pyqum/static
+graft pyqum/templates
+graft tests
+global-exclude *.pyc

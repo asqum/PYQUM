@@ -1,0 +1,42 @@
+{% extends 'base.html' %} {% block content %}
+<title>{% block title %}Combo{% endblock %}</title>
+<body class="comb">
+<form method='POST' class='dataform'>
+    <fieldset>
+        <legend style="font-size: 16px;">Setting ESG:</legend>
+        <label for='datatext'>
+            FREQUENCY (GHz)
+            <textarea name='frequency' id='freq'>3</textarea>
+            POWER (dBm)
+            <textarea name='power' id='pow'>-5</textarea>
+        </label>
+        <input class="button buttonesgon" type='submit' name='esgon' value='ESG ON'>
+        <input class="button buttonesgoff" type='submit' name='esgoff' value='ESG OFF'>
+    </fieldset>
+</form>
+
+<form method='POST' class='dataform'>
+    <fieldset>
+        <legend style="font-size: 16px;">Setting AWG MARKER:</legend>
+        <label for='datatext'>
+            Set Active Marker (GHz)
+            <textarea name='active' id='act'>3</textarea>
+            Set Marker Delay (dBm)
+            <textarea name='delay' id='del'>5e-7</textarea>
+        </label>
+        <input class="button buttonesgon" type='submit' name='reset' value='RESET'>
+        <input class="button buttonesgon" type='submit' name='semarker' value='SET MARKER'>
+        <input class="button buttonawgoff" type='submit' name='closeawg' value='CLOSE'>
+        <input class="button buttonesgon" type='submit' name='model' value='MODEL'>
+        <input class="button buttonesgon" type='submit' name='gemarker' value='GET MARKER'>
+        {% if ans %}
+        <h3> MODEL: {{ans}} </h3>
+        {% elif mark %}
+        <h3> MARKER: {{mark}} </h3>
+        {% endif %}
+    </fieldset>
+</form>
+
+</body>
+
+{% endblock %}

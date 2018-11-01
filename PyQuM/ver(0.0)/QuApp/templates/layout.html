@@ -1,0 +1,21 @@
+<!DOCTYPE>
+
+<html>
+        <title>{% block title %}{% endblock %} - PyQuM</title>
+        <link rel='stylesheet' 
+        type='text/css' href='{{ url_for("static", filename="css/style.css") }}'>
+        <nav class='navbar'>
+            <ul >
+                <li class='left'><a href='/' class="home">Home</a></li>
+                <li class='left'><a href='/schemes' class="schemes">Schemes</a></li>
+                <li class='left'><a href="/experiments" class="exp">Experiments</a></li>
+                
+                <li class='right'><a href="/characterizations" class="char">Characterizations</a></li>
+                <li class='right'><a href="/calibration" class="calib">Calibrations</a></li>
+            </ul>
+        </nav>
+    <section>
+        {% block content %}
+        {% endblock %}
+    </section>
+</html>

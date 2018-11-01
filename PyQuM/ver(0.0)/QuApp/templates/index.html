@@ -1,0 +1,14 @@
+{% extends 'layout.html' %} {% block content %}
+<!--h2>This is the index</h2-->
+<title>{% block title %}HOME{% endblock %}</title>
+<body class="home">
+    <div style="padding:16px;margin-top:12px;"></div>
+    <div class='notelist'>
+        {% for data in datas %}
+            <div class='note'>
+                <p>{{ data }}</p>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+{% endblock %}

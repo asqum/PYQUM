@@ -1,0 +1,29 @@
+{% extends 'layout.html' %} {% block content %}
+<title>{% block title %}CHARACTERIZATION{% endblock %}</title>
+<body class="char">
+<div style="padding:16px;margin-top:5px;"></div>
+<form method='POST' class='dataform'>
+    <fieldset>
+        <legend style="font-size: 16px;">Setting ESG:</legend>
+        <label for='datatext'>
+            FREQUENCY (GHz)
+            <textarea name='frequency' id='freq'></textarea>
+            POWER (dBm)
+            <textarea name='power' id='pow'></textarea>
+        </label>
+        <input class="button buttonesgon" type='submit' name='esgon' value='ESG ON'>
+        <input class="button buttonesgoff" type='submit' name='esgoff' value='ESG OFF'>
+    </fieldset>
+</form>
+
+<form method='POST' class='dataform'>
+    <input class="button buttonvsaon" type='submit' name='initiatevsa' value='INITIATE VSA'>
+    <input class="button buttonvsaoff" type='submit' name='closevsa' value='CLOSE VSA'>
+</form>
+
+<form method='POST' class='dataform'>
+    <input class="button buttonawgon" type='submit' name='initiateawg' value='INITIATE AWG'>
+    <input class="button buttonawgoff" type='submit' name='closeawg' value='CLOSE AWG'>
+</form>
+</body>
+{% endblock %}

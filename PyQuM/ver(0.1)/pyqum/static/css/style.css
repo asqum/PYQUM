@@ -1,0 +1,256 @@
+/*
+* {
+    margin: 0;
+    padding: 0;
+}
+*/
+
+
+html {
+  font-family: sans-serif;
+  background: #eee;
+}
+
+body {
+  max-width: fit-content;
+  margin: 0 auto;
+  background: white;
+}
+
+
+.left {
+    float: left;
+}
+
+.right {
+    float: right;
+}
+
+/*
+.name {
+    font: 37;
+    color: purple;
+}
+*/
+
+.navbar {
+    width: 100%;
+    height: fit-content;
+    background-color: #333333;
+}
+
+.navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+/*    position: fixed;*/
+    top: 0;
+    width: 100%;
+}
+
+.navbar ul li a, .navbar ul li span {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 16px;
+    text-decoration: none;
+}
+
+header .action {
+    display: block;
+    color: darkblue;
+    text-align: center;
+    padding: 16px;
+    text-decoration: none;
+}
+
+.navbar ul li .user {
+    font-family: fantasy;
+    color: chartreuse;
+}
+
+.navbar ul li a:hover {
+    /* color: blue; */
+    cursor: pointer;
+    background-color: lightsalmon;
+}
+
+body.home a.home, .comb a.comb, .awg a.awg, .log a.log, .reg a.reg {
+    background-color: white;
+    color: midnightblue;
+    font-weight: 800;
+}
+
+/* Forms */
+
+.dataform {
+    width: 50%;
+    margin-top: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.dataform textarea {
+    width: 100%;
+    font-size: 16px;
+}
+
+.dataform {
+    font-size: 16px;
+}
+
+/* submit buttons */
+
+.button {
+    background-color: #555555;
+    /* Green */
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    -webkit-transition-duration: 0.4s;
+    /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+.buttonesgon {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonesgon:hover {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonesgoff:hover {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonesgoff {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonvsaon {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonvsaon:hover {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonvsaoff:hover {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonvsaoff {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonawgon {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonawgon:hover {
+    background-color: #555555;
+    color: white;
+}
+
+.buttonawgoff:hover {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.buttonawgoff {
+    background-color: #555555;
+    color: white;
+}
+
+
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: serif;
+  color: #377ba8;
+  margin: 1rem 0;
+}
+
+a {
+  color: #377ba8;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid lightgray;
+}
+
+
+
+.content {
+  padding: 0 1rem 1rem;
+}
+
+.content > header {
+  border-bottom: 1px solid lightgray;
+  display: flex;
+  align-items: flex-end;
+}
+
+.content > header h1 {
+  flex: auto;
+  margin: 1rem 0 0.25rem 0;
+}
+
+.post > header {
+  display: flex;
+  align-items: flex-end;
+  font-size: 0.85em;
+}
+
+.post > header > div:first-of-type {
+  flex: auto;
+}
+
+.post > header h1 {
+  font-size: 1.5em;
+  margin-bottom: 0;
+}
+
+.post .about {
+  color: slategray;
+  font-style: italic;
+}
+
+.post .body {
+  white-space: pre-line;
+}
+
+
+
+
+
+
+
+
+
+
+

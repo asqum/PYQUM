@@ -1,0 +1,46 @@
+{% extends 'base.html' %} 
+
+{% block header %}
+<h1>{% block title %}AWG Test{% endblock %}</h1>
+{% endblock %}
+
+{% block content %} 
+<html>
+<head>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/awgonly.js') }}"></script>
+</head>
+
+<body class='awg'>
+    <form method='POST' class='dataform'>
+    <fieldset>
+        <legend style="font-size: 16px;">Setting Marker:</legend>
+        <label for='datatext'>
+            Set Active Marker (GHz)
+            <textarea name='active' id='act'>3</textarea>
+            Set Marker Delay (dBm)
+            <textarea name='delay' id='del'>5e-7</textarea>
+        </label>
+        <input class="button buttonesgon" type='submit' name='marker' value='SET'>
+        <input class="button buttonesgon" type='submit' name='reset' value='RESET'>
+        <input class="button buttonesgon" type='submit' name='model' value='MODEL'>
+    </fieldset>
+    </form>
+
+    <div>
+    <form method='GET'><a href=# id='mod'><h3>Model</h3></a></form>
+    <form method='GET'><a href=# id='gemarker'><h3>Active Marker</h3></a></form>
+    <form method='GET'><a href=# id='gedelay'><h3>Marker Delay</h3></a></form>
+    </div>
+
+    <br/>
+    <a href='/off'>Close AWG</a>
+    <br/>
+    <a href='/model'>Model</a>
+    <br/>
+    <p>model: {{ stat }}</p>
+
+
+</body>
+</html>
+{% endblock %}

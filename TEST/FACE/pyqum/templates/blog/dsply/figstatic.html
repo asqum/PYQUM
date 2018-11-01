@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Static{% endblock %}
+
+{% block head %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<body class="fig">
+
+<div style="padding: 1rem 1.5rem;">
+    <div><a href='/dynamic'>Dynamic</a></div>
+    <div><a href='/concurrent'>Concurrent</a></div>
+    <div><a href='/stream'>Stream</a></div>
+    <div style="width:75%;">
+        <canvas id="canvas" style="display: block; width: 1000px; height: 500px;" width="1000" height="500" class="chartjs-render-monitor"></canvas>
+    </div>
+
+    <script>
+        var ctx = document.getElementById('canvas').getContext('2d');
+        var chart = new Chart(ctx, {
+            // The type of chart we want to create
+            type: 'line',
+
+            // The data for our dataset
+            data: {
+                labels: ["January", "February", "March", "April", "May", "June", "July"],
+                datasets: [{
+                    fill: false,
+                    label: "CN",
+                    backgroundColor: 'rgb(255, 99, 132)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    data: [0, 10, 5, 2, 20, 30, 45]
+                }, {
+                    fill: false,
+                    label: "US",
+                    backgroundColor: 'rgb(25, 120, 101)',
+                    borderColor: 'rgb(25, 120, 101)',
+                    data: [0, 7, 3, 2, 17, 37, 42]
+                }]
+            },
+
+            // Configuration options go here
+            options: {}
+        });
+    </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div style="width:75%">
+        <canvas id="canvas01" style="display: block; width: 1000px; height: 500px;" width="1000" height="500" class="chartjs-render-monitor"></canvas>
+    </div>
+
+    <script>
+        var ctx = document.getElementById('canvas01').getContext('2d');
+        var chart = new Chart(ctx, {
+            // The type of chart we want to create
+            type: 'line',
+
+            // The data for our dataset
+            data: {
+                labels: ["January", "February", "March", "April", "May", "June", "July"],
+                datasets: [{
+                    fill: false,
+                    label: "CN",
+                    backgroundColor: 'rgb(2, 2, 2)',
+                    borderColor: 'rgb(2, 2, 2)',
+                    data: [0, 10, 5, 2, 20, 30, 45]
+                }, {
+                    fill: false,
+                    label: "US",
+                    backgroundColor: 'rgb(25, 120, 101)',
+                    borderColor: 'rgb(25, 120, 101)',
+                    data: [0, 7, 3, 2, 17, 37, 42]
+                }]
+            },
+
+            // Configuration options go here
+            options: {}
+        });
+    </script>
+</div>
+
+</body>
+
+{% endblock %}
