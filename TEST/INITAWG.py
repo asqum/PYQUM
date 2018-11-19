@@ -1,11 +1,15 @@
 from ctypes import c_int, c_bool, c_char_p, byref, cdll, c_long, c_char
 from ctypes.util import find_library
-import ivi
+from visa import ResourceManager as rm
 
 # dloc = "C:\\Program Files\\IVI Foundation\\IVI\Bin\\AgM933x_64.dll" #64-bit
 lib_name = find_library('AgM933x_64.dll')
+print(lib_name)
 dll = cdll.LoadLibrary(lib_name) #Python is 64-bit
-AWGrs = b'PXI22::14::0::INSTR'
+
+rm = rm()
+# A = rm.open_resource("visa://192.168.0.7:3537/PXI20::14::0::INSTR")
+AWGrs = b'192.168.0.7:3537/PXI20::14::0::INSTR'
 
 # Initiate session
 def run():
@@ -20,4 +24,4 @@ def run():
     print('session: %s' %(session.value))
     return status, session.value
 
-# run()
+run()

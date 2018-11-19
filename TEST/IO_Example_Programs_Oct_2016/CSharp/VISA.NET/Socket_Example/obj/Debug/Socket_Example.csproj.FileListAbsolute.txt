@@ -1,0 +1,2 @@
+C:\Users\acopelan\Source\Repos\Example programs\Socket_Example\bin\Debug\Socket_Example.exe
+C:\Users\acopelan\Source\Repos\Example programs\Socket_Example\bin\Debug\Socket_Example.pdb

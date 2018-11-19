@@ -1,0 +1,2 @@
+C:\Users\acopelan\Source\Repos\Example programs\FindDevices\bin\Debug\FindDevices.exe
+C:\Users\acopelan\Source\Repos\Example programs\FindDevices\bin\Debug\FindDevices.pdb

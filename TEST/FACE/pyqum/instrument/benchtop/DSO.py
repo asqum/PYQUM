@@ -93,8 +93,8 @@ def model(bench, action=['Get'] + 10 * ['']):
     return bench, SCPIcore, action
 @Attribute
 def channel1(bench, action=['Get'] + 10 * ['']):
-    '''action=['Get/Set', <coupling>, <range>, <scale>, <offset>, <units>]'''
-    SCPIcore = ':CHANNEL1:COUPLING;RANGE;SCALE;OFFSET;UNITs'
+    '''action=['Get/Set', <coupling>, <range>, <scale>, <offset>, <units>, <Display>]'''
+    SCPIcore = ':CHANNEL1:COUPLING;RANGE;SCALE;OFFSET;UNITs;Display'
     return bench, SCPIcore, action
 @Attribute
 def timebase(bench, action=['Get'] + 10 * ['']):
@@ -138,7 +138,7 @@ def display2D(dx, y, units):
 
 def close(bench, reset=True):
     if reset:
-        bench.write('*RST') # reset to factory setting (including switch-off)
+        bench.write('*RST;channel1:display off;') # reset to factory setting (including switch-off)
         set_status(mdlname, dict(config='reset'))
     else: set_status(mdlname, dict(config='previous'))
     try:
@@ -155,13 +155,13 @@ def test(detail=False):
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     bench = Initiate()
     model(bench)
-    channel1(bench, action=['Set', 'DC', '1.56', '2', '3', 'Volt'])
+    channel1(bench, action=['Set', 'DC', '1.56', '2', '3', 'Volt', 'OFF'])
     unitY = list(channel1(bench))[1]["UNITs"]
     timebase(bench, action=['Set', 'NORMAL', '150ns', '120ns', '50ns'])
     timebase(bench)
     acquiredata(bench, action=['Set', 'average', '100', '101'])
     acquiredata(bench)
-    waveform(bench, action=['Set', 'max', 'channel1', 'ascii', '?', '?'])
+    waveform(bench, action=['Set', 'max', 'channel1', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
     ans = list(waveform(bench))[1]
     y, dx = ans['DATA'], float(ans['XINCrement'])
     measure(bench)
@@ -170,7 +170,7 @@ def test(detail=False):
     close(bench)
     return
 
-test(False)
+test(True)
 
 
 # print("Stream-length: %s, Data-length: %s" %(len(wave), len(wavef)))

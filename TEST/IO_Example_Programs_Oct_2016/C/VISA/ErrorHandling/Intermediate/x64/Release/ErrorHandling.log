@@ -1,0 +1,7 @@
+﻿  stdafx.cpp
+  ErrorHandling.cpp
+  Generating code
+  All 12 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  ErrorHandling.vcxproj -> C:\Users\acopelan\Source\Repos\Example programs\C Examples\ErrorHandling\x64\Release\ErrorHandling.exe
+  ErrorHandling.vcxproj -> C:\Users\acopelan\Source\Repos\Example programs\C Examples\ErrorHandling\x64\Release\ErrorHandling.pdb (Full PDB)

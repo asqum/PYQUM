@@ -1,0 +1,2 @@
+C:\Users\acopelan\Source\Repos\Example programs\Serial_Example\bin\Release\Serial_Example.exe
+C:\Users\acopelan\Source\Repos\Example programs\Serial_Example\bin\Release\Serial_Example.pdb

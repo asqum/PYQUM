@@ -3,7 +3,7 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from os.path import basename as bs
-mdlname = bs(__file__).split('.')[0] # model's name e.g. ESG, PSG, MXG, AWG, VSA, ADC
+mdlname = bs(__file__).split('.')[0] # model's name e.g. ESG, PSG, AWG, VSA, ADC
 debugger = 'debug' + mdlname
 
 import visa
@@ -34,7 +34,7 @@ def Attribute(Name):
     def wrapper(*a, **b):
 
         global debug
-        bench, SCPIcore, unit, action = Name(*a, **b)
+        bench, SCPIcore, action = Name(*a, **b)
         SCPIcore = SCPIcore.split(";")
         parakeys, paravalues, getspecific, command = [(SCPIcore[0]).split(':')[-1]] + SCPIcore[1:], [], [], []
 
@@ -56,14 +56,12 @@ def Attribute(Name):
                 status = "query unsuccessful"
                 ans = None
 
-        if action[0] == 'Set': # only set has "unit"
+        if action[0] == 'Set':
 
             for i in range(len(parakeys)):
-                A, U = str(action[i+1]).split(',') , unit.split(',')
-                params = [''.join([A[i], U[i]]) for i in range(len(U))]
-                paravalues.append(','.join(params))
-                
+                paravalues.append(str(action[i+1]))
                 command.append(str(SCPIcore[i]) + " " + paravalues[i])
+
             command = ";".join(command)
             status = str(bench.write(command)[1])[-7:]
             
@@ -87,51 +85,44 @@ def Attribute(Name):
 @Attribute
 def model(bench, action=['Get', '']):
     SCPIcore = '*IDN'  #inquiring machine identity: "who r u?"
-    unit = None       #no 'Set' for model
-    return bench, SCPIcore, unit, action
+    return bench, SCPIcore, action
 @Attribute
 def savestate(bench, action):
     """action=['Set', '<reg 0-99>,<seq 0-9>']
     """
     SCPIcore = '*SAV'  #save machine state
-    unit = "" # ","      
-    return bench, SCPIcore, unit, action
+    return bench, SCPIcore, action
 @Attribute
 def recallstate(bench, action):
     """action=['Set', '<reg 0-99>,<seq 0-9>']
     """
     SCPIcore = '*RCL'  #save machine state
-    unit = "" # ","      
-    return bench, SCPIcore, unit, action
+    return bench, SCPIcore, action
 @Attribute
 def commentstate(bench, action): # query with parameters
     """action=['Set', '<reg 0-99>,<seq 0-9>,comment']
     or action=['Get', '<reg 0-99>,<seq 0-9>']
     """
     SCPIcore = ':MEMory:STATe:COMMent'  #save machine state
-    unit = ",," # ","      
-    return bench, SCPIcore, unit, action
+    return bench, SCPIcore, action
 @Attribute
 def memory(bench, action=['Get', '']):
     SCPIcore = ':MEMory:CATalog:ALL'  #inquiring machine memory
-    unit = None       #no 'Set' for memory
-    return bench, SCPIcore, unit, action
+    return bench, SCPIcore, action
 @Attribute
 def frequency(bench, action=['Get', '']):
+    '''action=['Set','2GHz']'''
     SCPIcore = ':SOUR:FREQ:FIX'
-    unit = 'GHZ'
-    # unit = ':FIX GHZ'
-    return bench, SCPIcore, unit, action
+    return bench, SCPIcore, action
 @Attribute
-def power(bench, action=['Get', '']):
+def power(bench, action=['Get', '']): 
+    '''action=['Set','-7dbm']'''
     SCPIcore = ':SOUR:POW:LEV'
-    unit = 'DBM'
-    return bench, SCPIcore, unit, action
+    return bench, SCPIcore, action
 @Attribute
 def output(bench, action=['Get', '']):
     SCPIcore = ':OUTP:STAT'
-    unit = ''  # no unit
-    return bench, SCPIcore, unit, action
+    return bench, SCPIcore, action
 
 def close(bench, reset=True):
     if reset:
@@ -161,13 +152,12 @@ def test(detail=False):
         print("Power: %s" %p)
         output(s, action=['Set', 'ON'])
         output(s)
-        # power(s, action=['Set', str(p - 2)])
         savestate(s, ['Set','1,0'])
         commentstate(s, action=['Set', "1,0,'OMG I am ALEXA'"])
         commentstate(s, action=['Get', '1,0'])
-        power(s, action=['Set', '-7'])
+        power(s, action=['Set', '-7dbm'])
         power(s)
-        frequency(s, action=['Set', 1])
+        frequency(s, action=['Set', '1GHz'])
         frequency(s)
         output(s, action=['Set', 'ON'])
         output(s)

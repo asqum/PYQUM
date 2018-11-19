@@ -1,0 +1,2 @@
+C:\Users\acopelan\Source\Repos\Example programs\GettingStarted\bin\Release\GettingStarted.exe
+C:\Users\acopelan\Source\Repos\Example programs\GettingStarted\bin\Release\GettingStarted.pdb

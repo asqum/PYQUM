@@ -1,0 +1,2 @@
+C:\Users\acopelan\Source\Repos\Example programs\PXI_Example\bin\Release\PXI_Example.exe
+C:\Users\acopelan\Source\Repos\Example programs\PXI_Example\bin\Release\PXI_Example.pdb

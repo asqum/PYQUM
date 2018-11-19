@@ -23,6 +23,7 @@ pyqum/static/js/concurrent.js
 pyqum/static/js/dynamic.js
 pyqum/static/js/esg.js
 pyqum/static/js/mach.js
+pyqum/static/js/mxg.js
 pyqum/static/js/script.js
 pyqum/static/js/stream.js
 pyqum/static/js/test.js
@@ -41,6 +42,7 @@ pyqum/templates/blog/dsply/figstream.html
 pyqum/templates/blog/machn/awg.html
 pyqum/templates/blog/machn/esg.html
 pyqum/templates/blog/machn/machine.html
+pyqum/templates/blog/machn/mxg.html
 pyqum/templates/blog/machn/test.html
 pyqum/templates/blog/machn/vsa.html
 pyqum/templates/guide/AgM933x-IviCErrorsWarnings.html

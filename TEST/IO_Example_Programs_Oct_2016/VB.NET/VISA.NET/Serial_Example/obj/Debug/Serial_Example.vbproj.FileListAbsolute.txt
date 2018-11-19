@@ -1,0 +1,5 @@
+C:\Users\acopelan\Source\Repos\Example programs\VB.NET VISA.NET Example Programs\Serial_Example\bin\Debug\Serial_Example.exe
+C:\Users\acopelan\Source\Repos\Example programs\VB.NET VISA.NET Example Programs\Serial_Example\bin\Debug\Serial_Example.pdb
+C:\Users\acopelan\Source\Repos\Example programs\VB.NET VISA.NET Example Programs\Serial_Example\bin\Debug\Serial_Example.xml
+C:\Users\acopelan\Source\Repos\Example programs\VB.NET VISA.NET Example Programs\Serial_Example\bin\Debug\Ivi.Visa.dll
+C:\Users\acopelan\Source\Repos\Example programs\VB.NET VISA.NET Example Programs\Serial_Example\bin\Debug\Ivi.Visa.xml

@@ -1,0 +1,2 @@
+C:\Users\acopelan\Source\Repos\Example programs\ErrorHandling\bin\Debug\ErrorHandling.exe
+C:\Users\acopelan\Source\Repos\Example programs\ErrorHandling\bin\Debug\ErrorHandling.pdb
