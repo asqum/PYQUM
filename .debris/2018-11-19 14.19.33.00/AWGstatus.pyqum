@@ -1,0 +1,1 @@
+{"address": "PXI20::14::0::INSTR", "state": "Initialized Successfully", "session": 2, "resource_descriptor": "PXI20::14::0::INSTR", "model": "M9331A", "active_marker": "1", "marker_source": 0, "marker_delay": 0.0, "predistortion_enabled": true, "marker_pulse_width": 0.0, "Arb_Seq_Handle": 2}

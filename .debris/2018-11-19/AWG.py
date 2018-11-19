@@ -311,4 +311,4 @@ def test(detail=False):
     close(s)
     return
 
-#test(True)
+test(True)
