@@ -130,20 +130,16 @@ def output(bench, action=['Get', '']):
     return bench, SCPIcore, action
 
 def close(bench, reset=True):
+    if reset:
+        bench.write('*RST') # reset to factory setting (including switch-off)
+        set_status(mdlname, dict(config='reset'))
+    else: set_status(mdlname, dict(config='previous'))
     try:
-        if reset:
-            bench.write('*RST') # reset to factory setting (including switch-off)
-            set_status(mdlname, dict(config='reset'))
-        else: set_status(mdlname, dict(config='previous'))
-        try:
-            bench.close() #None means Success?
-            status = "Success"
-        except: status = "Error"
-        set_status(mdlname, dict(state='disconnected'))
-        print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
-    except: 
-        status = "disconnected per se"
-        pass
+        bench.close() #None means Success?
+        status = "Success"
+    except: status = "Error"
+    set_status(mdlname, dict(state='disconnected'))
+    print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
     return status
         
 

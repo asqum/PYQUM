@@ -31,7 +31,6 @@ def Initiate():
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
-        bench = "disconnected"
     return bench
 
 def Attribute(Name):
@@ -130,20 +129,16 @@ def output(bench, action=['Get', '']):
     return bench, SCPIcore, action
 
 def close(bench, reset=True):
+    if reset:
+        bench.write('*RST') # reset to factory setting (including switch-off)
+        set_status(mdlname, dict(config='reset'))
+    else: set_status(mdlname, dict(config='previous'))
     try:
-        if reset:
-            bench.write('*RST') # reset to factory setting (including switch-off)
-            set_status(mdlname, dict(config='reset'))
-        else: set_status(mdlname, dict(config='previous'))
-        try:
-            bench.close() #None means Success?
-            status = "Success"
-        except: status = "Error"
-        set_status(mdlname, dict(state='disconnected'))
-        print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
-    except: 
-        status = "disconnected per se"
-        pass
+        bench.close() #None means Success?
+        status = "Success"
+    except: status = "Error"
+    set_status(mdlname, dict(state='disconnected'))
+    print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
     return status
         
 
@@ -152,7 +147,7 @@ def test(detail=False):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     s = Initiate()
-    if eval(debugger) and s is not "disconnected":
+    if eval(debugger):
         print(Fore.RED + "Detailed Test:")
         model(s)
         recallstate(s, action=['Set', '1,0'])

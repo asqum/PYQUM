@@ -12,10 +12,9 @@ from pyqum.instrument.logger import address, get_status, set_status, status_code
 from pyqum.instrument.modular import AWG, VSA
 awgsess = AWG.InitWithOptions()
 vsasess = VSA.InitWithOptions()
-from pyqum.instrument.benchtop import MXG, ESG, DSO
-esgbench = ESG.Initiate()
+from pyqum.instrument.benchtop import MXG, ESG
+esgbench = 0 #ESG.Initiate()
 mxgbench = MXG.Initiate()
-dsobench = DSO.Initiate()
 
 bp = Blueprint(myname, __name__, url_prefix='/mach')
 
