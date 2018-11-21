@@ -27,7 +27,7 @@ debug() # declare the debugger mode here
 
 ## The name should be consistent with the functions provided in driver's manual
 # 1. Initialize
-def InitWithOptions(IdQuery=True, Reset=True, OptionsString='Simulate=false, DriverSetup=DDS=false'):
+def InitWithOptions(IdQuery=False, Reset=False, OptionsString='Simulate=false, DriverSetup=DDS=false'):
     '''status = InitWithOptions(IdQuery, Reset, OptionsString)
     '''
     rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
@@ -268,47 +268,48 @@ def test(detail=False):
     print(Fore.RED + "Debugger mode: %s" %eval(debugger))
     s = InitWithOptions()
     # s = InitWithOptions()
-    resource_descriptor(s)
-    model(s)
-    active_marker(s)
-    active_marker(s, action=["Set", "3"])
-    active_marker(s)
-    marker_source(s)
-    marker_source(s, action=["Set", 10])
-    marker_source(s)
-    marker_delay(s)
-    marker_delay(s, action=["Set", 5e-7])
-    marker_delay(s)
-    # Preparing AWGenerator
-    Abort_Gen(s)
-    Output_Mode(s)
-    predistortion_enabled(s, action=["Set", False])
-    predistortion_enabled(s)
-    # Assigning handles to each different waveform
-    stat = CreateArbWaveform(s, ([i*0 for i in range(100)] + [i*1 for i in range(1000)] + [i*0 for i in range(100)]))
-    h1 = stat[1]
-    stat = CreateArbWaveform(s, list([i*0 for i in range(1200)]))
-    h2 = stat[1]
-    # Composing different sequences to each channel
-    # Channel 1
-    Seq = {}
-    Seq[str(h1)], Seq[str(h2)] = 1, 5
-    stat = CreateArbSequence(s, Seq)
-    Arb_Seq_Handle(s, RepCap='1', action=["Set", stat[1]])
-    Arb_Seq_Handle(s, RepCap='1')
-    # Channel 2
-    Seq = {}
-    Seq[str(h1)], Seq[str(h2)] = 2, 1
-    stat = CreateArbSequence(s, Seq)
-    Arb_Seq_Handle(s, RepCap='2', action=["Set", stat[1]])
-    Arb_Seq_Handle(s, RepCap='2')
-    # Setting Sample Rate
-    ConfigSampRate(s, 1250000000)
-    # Configure Output
-    ConfigOupState(s, '1', True)
-    ConfigOupState(s, '2', True)
+    if detail:
+        resource_descriptor(s)
+        model(s)
+        active_marker(s)
+        active_marker(s, action=["Set", "3"])
+        active_marker(s)
+        marker_source(s)
+        marker_source(s, action=["Set", 10])
+        marker_source(s)
+        marker_delay(s)
+        marker_delay(s, action=["Set", 5e-7])
+        marker_delay(s)
+        # Preparing AWGenerator
+        Abort_Gen(s)
+        Output_Mode(s)
+        predistortion_enabled(s, action=["Set", False])
+        predistortion_enabled(s)
+        # Assigning handles to each different waveform
+        stat = CreateArbWaveform(s, ([i*0 for i in range(100)] + [i*1 for i in range(1000)] + [i*0 for i in range(100)]))
+        h1 = stat[1]
+        stat = CreateArbWaveform(s, list([i*0 for i in range(1200)]))
+        h2 = stat[1]
+        # Composing different sequences to each channel
+        # Channel 1
+        Seq = {}
+        Seq[str(h1)], Seq[str(h2)] = 1, 5
+        stat = CreateArbSequence(s, Seq)
+        Arb_Seq_Handle(s, RepCap='1', action=["Set", stat[1]])
+        Arb_Seq_Handle(s, RepCap='1')
+        # Channel 2
+        Seq = {}
+        Seq[str(h1)], Seq[str(h2)] = 2, 1
+        stat = CreateArbSequence(s, Seq)
+        Arb_Seq_Handle(s, RepCap='2', action=["Set", stat[1]])
+        Arb_Seq_Handle(s, RepCap='2')
+        # Setting Sample Rate
+        ConfigSampRate(s, 1250000000)
+        # Configure Output
+        ConfigOupState(s, '1', True)
+        ConfigOupState(s, '2', True)
 
     close(s)
     return
 
-#test(True)
+# test(True)

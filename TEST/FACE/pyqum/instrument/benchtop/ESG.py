@@ -21,8 +21,8 @@ debug() # declare the debugger mode here
 def Initiate():
     rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
     rm = visa.ResourceManager()
-    bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
     try:
+        bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
         stat = bench.write('*CLS') #Clear buffer memory
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 15000 #set timeout in ms
@@ -152,27 +152,30 @@ def test(detail=False):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     s = Initiate()
-    if eval(debugger) and s is not "disconnected":
-        print(Fore.RED + "Detailed Test:")
-        model(s)
-        recallstate(s, action=['Set', '1,0'])
-        frequency(s)
-        p = float(power(s)[1])
-        print("Power: %s" %p)
-        output(s, action=['Set', 'ON'])
-        output(s)
-        savestate(s, ['Set','1,0'])
-        commentstate(s, action=['Set', "1,0,'OMG I am ALEXA'"])
-        commentstate(s, action=['Get', '1,0'])
-        power(s, action=['Set', '-7dbm'])
-        power(s)
-        frequency(s, action=['Set', '1GHz'])
-        frequency(s)
-        output(s, action=['Set', 'ON'])
-        output(s)
-    else: print(Fore.RED + "Basic IO Test")
+    if s is "disconnected":
+        pass
+    else:
+        if eval(debugger):
+            print(Fore.RED + "Detailed Test:")
+            model(s)
+            recallstate(s, action=['Set', '1,0'])
+            frequency(s)
+            p = float(power(s)[1])
+            print("Power: %s" %p)
+            output(s, action=['Set', 'ON'])
+            output(s)
+            savestate(s, ['Set','1,0'])
+            commentstate(s, action=['Set', "1,0,'OMG I am ALEXA'"])
+            commentstate(s, action=['Get', '1,0'])
+            power(s, action=['Set', '-7dbm'])
+            power(s)
+            frequency(s, action=['Set', '1GHz'])
+            frequency(s)
+            output(s, action=['Set', 'ON'])
+            output(s)
+        else: print(Fore.RED + "Basic IO Test")
     close(s)
     return
 
-test(True)
+# test(True)
 

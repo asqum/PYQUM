@@ -25,12 +25,17 @@ debug() # declare the debugger mode here
 def Initiate():
     rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
     rm = visa.ResourceManager()
-    bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-    stat = bench.write('*CLS;*RST;:AUTOSCALE') #Clear buffer memory; Load preset, Auto-scale
-    bench.read_termination = '\n' #omit termination tag from output 
-    bench.timeout = 15000 #set timeout in ms
-    set_status(mdlname, dict(state='connected'))
-    print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+    try:
+        bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
+        stat = bench.write('*CLS;*RST;:AUTOSCALE') #Clear buffer memory; Load preset, Auto-scale
+        bench.read_termination = '\n' #omit termination tag from output 
+        bench.timeout = 15000 #set timeout in ms
+        set_status(mdlname, dict(state='connected'))
+        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+    except: 
+        set_status(mdlname, dict(state='DISCONNECTED'))
+        print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
+        bench = "disconnected"
     return bench
 
 def Attribute(Name):
@@ -137,16 +142,20 @@ def display2D(dx, y, units):
         plt.show()
 
 def close(bench, reset=True):
-    if reset:
-        bench.write('*RST;channel1:display off;') # reset to factory setting (including switch-off)
-        set_status(mdlname, dict(config='reset'))
-    else: set_status(mdlname, dict(config='previous'))
     try:
-        bench.close() #None means Success?
-        status = "Success"
-    except: status = "Error"
-    set_status(mdlname, dict(state='disconnected'))
-    print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
+        if reset:
+            bench.write('*RST;channel1:display off;') # reset to factory setting (including switch-off)
+            set_status(mdlname, dict(config='reset'))
+        else: set_status(mdlname, dict(config='previous'))
+        try:
+            bench.close() #None means Success?
+            status = "Success"
+        except: status = "Error"
+        set_status(mdlname, dict(state='disconnected'))
+        print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
+    except: 
+        status = "disconnected per se"
+        pass
     return status
 
 # Test Zone
@@ -154,23 +163,28 @@ def test(detail=False):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     bench = Initiate()
-    model(bench)
-    channel1(bench, action=['Set', 'DC', '1.56', '2', '3', 'Volt', 'OFF'])
-    unitY = list(channel1(bench))[1]["UNITs"]
-    timebase(bench, action=['Set', 'NORMAL', '150ns', '120ns', '50ns'])
-    timebase(bench)
-    acquiredata(bench, action=['Set', 'average', '100', '101'])
-    acquiredata(bench)
-    waveform(bench, action=['Set', 'max', 'channel1', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
-    ans = list(waveform(bench))[1]
-    y, dx = ans['DATA'], float(ans['XINCrement'])
-    measure(bench)
-    print(y)
-    display2D(dx, y, units=['s', unitY])
+    if bench is "disconnected":
+        pass
+    else:
+        if eval(debugger):
+            model(bench)
+            channel1(bench, action=['Set', 'DC', '1.56', '2', '3', 'Volt', 'OFF'])
+            unitY = list(channel1(bench))[1]["UNITs"]
+            timebase(bench, action=['Set', 'NORMAL', '150ns', '120ns', '50ns'])
+            timebase(bench)
+            acquiredata(bench, action=['Set', 'average', '100', '101'])
+            acquiredata(bench)
+            waveform(bench, action=['Set', 'max', 'channel1', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
+            ans = list(waveform(bench))[1]
+            y, dx = ans['DATA'], float(ans['XINCrement'])
+            measure(bench)
+            print(y)
+            display2D(dx, y, units=['s', unitY])
+        else: print(Fore.RED + "Basic IO Test")
     close(bench)
     return
 
-test(True)
+# test(True)
 
 
 # print("Stream-length: %s, Data-length: %s" %(len(wave), len(wavef)))

@@ -8,14 +8,16 @@ import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
 
-# Modulars first, only then Benchtops
+# This will run at server startup
+# Modulars first, only then Benchtops (if and only if we use render_template)
 from pyqum.instrument.modular import AWG, VSA
-awgsess = AWG.InitWithOptions()
-vsasess = VSA.InitWithOptions()
+AWG.test(False)
+# awgsess = AWG.InitWithOptions()
+# vsasess = VSA.InitWithOptions()
 from pyqum.instrument.benchtop import MXG, ESG, DSO
-esgbench = ESG.Initiate()
-mxgbench = MXG.Initiate()
-dsobench = DSO.Initiate()
+# esgbench = ESG.Initiate()
+# mxgbench = MXG.Initiate()
+# dsobench = DSO.Initiate()
 
 bp = Blueprint(myname, __name__, url_prefix='/mach')
 
