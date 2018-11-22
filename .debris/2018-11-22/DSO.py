@@ -154,7 +154,7 @@ def close(bench, reset=True):
         set_status(mdlname, dict(state='disconnected'))
         print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
     except: 
-        status = "disconnected per se!!!"
+        status = "disconnected per se"
         pass
     return status
 

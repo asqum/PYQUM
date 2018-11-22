@@ -308,7 +308,7 @@ def test(detail=False):
         # Configure Output
         ConfigOupState(s, '1', True)
         ConfigOupState(s, '2', True)
-    else: print(Fore.RED + "Basic IO Test")
+
     close(s)
     return
 

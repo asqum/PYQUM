@@ -11,7 +11,7 @@ from pyqum.instrument.logger import address, get_status, set_status, status_code
 # This will run at server startup
 # Modulars first, only then Benchtops (if and only if we use render_template)
 from pyqum.instrument.modular import AWG, VSA
-AWG.test(False) #seems like AWG's working-instance works differently than VSA's
+AWG.test(False)
 # awgsess = AWG.InitWithOptions()
 # vsasess = VSA.InitWithOptions()
 from pyqum.instrument.benchtop import MXG, ESG, DSO
