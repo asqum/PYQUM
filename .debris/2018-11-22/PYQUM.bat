@@ -34,15 +34,12 @@ IF EXIST "instance\pyqum.sqlite" (
 
 :local
     ECHO STARTING APP as Local
-    python pqrun.py local
+    python pqrun.py
     goto tq
 
 :web
     ECHO STARTING APP as Web Server
-    python pqrun.py web
-    ::start server using batch command:
-    ::flask run --host=127.0.0.1 --port=5200 
-    ::the above method will make AWG's initialization depends on VSA's
+    flask run --host=127.0.0.1 --port=5200
     goto tq
 
 :tq
