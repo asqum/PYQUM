@@ -28,8 +28,9 @@ def show():
 
 # TEST
 @bp.route('/test', methods=['POST', 'GET'])
-def test():
-    return render_template("blog/machn/test.html")
+def test(): 
+    x = 100
+    return render_template("blog/machn/test.html", x=x)
 
 # AWG
 @bp.route('/awg', methods=['GET'])
@@ -152,13 +153,13 @@ def esgsettings():
     message = []
     freq = request.args.get('freq')
     stat = ESG.frequency(esgbench, action=['Set',float(freq)])
-    message += ['frequency (GHz): ' + stat[0]]
+    message += ['frequency (GHz): %s <%s>' %(stat[1], stat[0])]
     powa = request.args.get('powa')
     stat = ESG.power(esgbench, action=['Set',float(powa)])
-    message += ['power (dBm): ' + stat[0]]
+    message += ['power (dBm): %s <%s>' %(stat[1], stat[0])]
     oupt = request.args.get('oupt')
     stat = ESG.output(esgbench, action=['Set',int(oupt)])
-    message += ['RF output: ' + stat[0]]
+    message += ['RF output: %s <%s>' %(stat[1], stat[0])]
     return jsonify(message=message)
 @bp.route('/esg/about', methods=['GET'])
 def esgabout():
@@ -176,7 +177,7 @@ def esgabout():
 
 # MXG
 @bp.route('/mxg', methods=['GET'])
-def mxg(): 
+def mxg():
     return render_template("blog/machn/mxg.html")
 @bp.route('/mxg/log', methods=['GET'])
 def mxglog():
@@ -200,14 +201,14 @@ def mxgsettings():
     global mxgbench
     message = []
     freq = request.args.get('freq')
-    stat = MXG.frequency(mxgbench, action=['Set',float(freq)])
-    message += ['frequency (GHz): ' + stat[0]]
+    stat = MXG.frequency(mxgbench, action=['Set', freq + "GHZ"])
+    message += ['frequency (GHz): %s <%s>' %(stat[1], stat[0])]
     powa = request.args.get('powa')
     stat = MXG.power(mxgbench, action=['Set',float(powa)])
-    message += ['power (dBm): ' + stat[0]]
+    message += ['power (dBm): %s <%s>' %(stat[1], stat[0])]
     oupt = request.args.get('oupt')
     stat = MXG.output(mxgbench, action=['Set',int(oupt)])
-    message += ['RF output: ' + stat[0]]
+    message += ['RF output: %s <%s>' %(stat[1], stat[0])]
     return jsonify(message=message)
 @bp.route('/mxg/about', methods=['GET'])
 def mxgabout():
@@ -221,6 +222,68 @@ def mxgabout():
     message += ['Power: %s (%s)' % (status[1], status[0])]
     status = MXG.output(mxgbench) # output
     message += ['RF output: %s (%s)' % (output_code(status[1]), status[0])]
+    return jsonify(message=message)
+
+# DSO
+@bp.route('/dso', methods=['GET'])
+def dso():
+    # default input/select value (pave way for future ML algorithm)
+    df_rnge = 16.2
+    df_trnge = 520
+    return render_template("blog/machn/dso.html", df_rnge=df_rnge, df_trnge=df_trnge)
+@bp.route('/dso/log', methods=['GET'])
+def dsolog():
+    log = get_status('DSO')
+    return jsonify(log=log)
+@bp.route('/dso/reset', methods=['GET'])
+def dsoreset():
+    global dsobench
+    try:
+        dsobench = DSO.Initiate()
+        status = "Success"
+    except: status = "Error"
+    return jsonify(message=status)
+@bp.route('/dso/close', methods=['GET'])
+def dsoclose():
+    global dsobench
+    status = DSO.close(dsobench)
+    return jsonify(message=status)
+@bp.route('/dso/settings', methods=['GET'])
+def dsosettings():
+    global dsobench
+    message = []
+    rnge = request.args.get('rnge')
+    scal = request.args.get('scal')
+    ofset = request.args.get('ofset')
+    stat = DSO.channel1(dsobench, action=['Set', 'DC', rnge, scal, ofset, 'Volt', 'OFF'])
+    message += ['CHANNEL 1: %s <%s>' %(stat[1], stat[0])]
+    trnge = request.args.get('trnge')
+    tdelay = request.args.get('tdelay')
+    tscal = request.args.get('tscal')
+    stat = DSO.timebase(dsobench, action=['Set', 'NORMAL', trnge + 'ns', tdelay + 'ns', tscal + 'ns'])
+    message += ['TIMEBASE: %s <%s>' %(stat[1], stat[0])]
+    avenum = request.args.get('avenum')
+    stat = DSO.acquiredata(dsobench, action=['Set', 'average', '100', avenum])
+    message += ['ACQUIRE DATA: %s <%s>' %(stat[1], stat[0])]
+    # Generate Figure
+    DSO.waveform(dsobench, action=['Set', 'max', 'channel1', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
+    ans = list(DSO.waveform(dsobench))[1]
+    y, dx = ans['DATA'], float(ans['XINCrement'])
+    unitY = list(DSO.channel1(dsobench))[1]["UNITs"]
+    DSO.display2D(dx, y, units=['s', unitY]) #Figure will be in INSTLOG
+    return jsonify(message=message)
+@bp.route('/dso/about', methods=['GET'])
+def dsoabout():
+    global dsobench
+    message = []
+    status = DSO.model(dsobench) # model
+    message += ['Model: %s (%s)' % (status[1], status[0])]
+    status = DSO.channel1(dsobench) # channel 1
+    message += ['Channel 1: %s (%s)' % (status[1], status[0])]
+    status = DSO.timebase(dsobench) # timebase
+    message += ['Timebase: %s (%s)' % (status[1], status[0])]
+    status = DSO.acquiredata(dsobench) # acquire data
+    message += ['Acquisition of Data: %s (%s)' % (status[1], status[0])]
     return jsonify(message=message)
 
 

@@ -69,14 +69,16 @@ def Attribute(Name):
         if len(SCPIcore) > 1:
             ans = dict(zip(parakeys, paravalues))
         else: ans = paravalues[0]
+
+        # Logging answer
+        if action[0] == 'Get': # No logging for "Set"
+            set_status(mdlname, {Name.__name__ : str(ans)})
         
         # debugging
         if eval(debugger):
             if action[0] == 'Get':
-                set_status(mdlname, {Name.__name__ : ans})
                 print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__, ans, status))
             if action[0] == 'Set':
-                # No logging for "Set"
                 print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__ , ans, status))
 
         return status, ans
@@ -155,7 +157,7 @@ def test(detail=False):
         savestate(s, ['Set','1,0'])
         commentstate(s, action=['Set', "1,0,'OMG I am ALEXA'"])
         commentstate(s, action=['Get', '1,0'])
-        power(s, action=['Set', '-7dbm'])
+        power(s, action=['Set', '-7.3dbm'])
         power(s)
         frequency(s, action=['Set', '1GHz'])
         frequency(s)

@@ -2,9 +2,10 @@
 {% block title %}Machine{% endblock %}
 
 {% block head %}
-<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/mach.css') }}">
-<script type="text/javascript" src="{{ url_for('static', filename='js/mach.js') }}"></script>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mach.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='js/mach.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -17,7 +18,8 @@
       $("div#awg").load("{{ url_for('machine.awg') }}");
       $("div#vsa").load("{{ url_for('machine.vsa') }}");
       $("div#esg").load("{{ url_for('machine.esg') }}");
-      $("div#mxg").load("{{ url_for('machine.mxg') }}"); 
+      $("div#mxg").load("{{ url_for('machine.mxg') }}");
+      $("div#dso").load("{{ url_for('machine.dso') }}"); 
     });
 </script> 
 
@@ -27,6 +29,7 @@
   <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button>
   <button class="tablinks" id="esg-tab" onclick="openTab(event, 'esg')">ESG</button>
   <button class="tablinks" id="mxg-tab" onclick="openTab(event, 'mxg')">MXG</button>
+  <button class="tablinks" id="dso-tab" onclick="openTab(event, 'dso')">DSO</button>
 </div>
 
 <div id="test" class="tabcontent"></div>
@@ -34,6 +37,7 @@
 <div id="vsa" class="tabcontent"></div>
 <div id="esg" class="tabcontent"></div>
 <div id="mxg" class="tabcontent"></div>
+<div id="dso" class="tabcontent"></div>
 
 </body>
 

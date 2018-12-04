@@ -61,7 +61,7 @@ def Attribute(Name):
                 paravalues = [x.replace('()', '') for x in paravalues]
 
                 status = "Success"
-            except:
+            except: # get out of the method with just return-value at exception?
                 status = "query unsuccessful"
                 ans = None
 
@@ -78,15 +78,17 @@ def Attribute(Name):
         if len(SCPIcore) > 1:
             ans = dict(zip(parakeys, paravalues))
         else: ans = paravalues[0]
-        
+
+        # Logging answer
+        if action[0] == 'Get': # No logging for "Set"
+            set_status(mdlname, {Name.__name__ : str(ans)})
+
         # debugging
         if eval(debugger):
             print(Fore.BLUE + "SCPI Command: {%s}" %command)
             if action[0] == 'Get':
-                set_status(mdlname, {Name.__name__ : ans})
                 print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__, ans, status))
             if action[0] == 'Set':
-                # No logging for "Set"
                 print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__ , ans, status))
 
         return status, ans
@@ -104,7 +106,7 @@ def channel1(bench, action=['Get'] + 10 * ['']):
 @Attribute
 def timebase(bench, action=['Get'] + 10 * ['']):
     '''action=['Get/Set', <mode>, <range[ns]>, <delay[ns]>, <scale[ns]>]'''
-    SCPIcore = ':TIMEBASE:MODE;RANGE;DELAY;scale'
+    SCPIcore = ':TIMEBASE:MODE;RANGE;DELAY;SCALE'
     return bench, SCPIcore, action
 @Attribute
 def acquiredata(bench, action=['Get'] + 10 * ['']): # ACQUIRING DATA from DSO
@@ -127,7 +129,7 @@ def display2D(dx, y, units):
     from pathlib import Path
     from inspect import getfile, currentframe
     pyfilename = getfile(currentframe()) # current pyscript filename (usually with path)
-    INSTR_PATH = Path(pyfilename).parents[3] / "INSTLOG" # 2 levels up the path
+    INSTR_PATH = Path(pyfilename).parents[2] / "static" / "img" / "dso" # 2 levels up the path
     png_file =  mdlname + "waveform.png"
     PNG = Path(INSTR_PATH) / png_file
     # Organizing Data
@@ -167,13 +169,16 @@ def test(detail=False):
         pass
     else:
         if eval(debugger):
+            state = acquiredata(bench)
+            print("State: %s" %state[1])
             model(bench)
             channel1(bench, action=['Set', 'DC', '1.56', '2', '3', 'Volt', 'OFF'])
             unitY = list(channel1(bench))[1]["UNITs"]
             timebase(bench, action=['Set', 'NORMAL', '150ns', '120ns', '50ns'])
             timebase(bench)
-            acquiredata(bench, action=['Set', 'average', '100', '101'])
-            acquiredata(bench)
+            acquiredata(bench, action=['Set', 'average', '100', '35'])
+            status = acquiredata(bench)
+            print(status)
             waveform(bench, action=['Set', 'max', 'channel1', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
             ans = list(waveform(bench))[1]
             y, dx = ans['DATA'], float(ans['XINCrement'])

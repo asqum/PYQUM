@@ -17,17 +17,20 @@ print("The Doc for AWG's active_marker: %s" %AWG.active_marker.__doc__)
 stage, prev = clocker(0)
 
 # Testing each machine individually
-MXG.test(True)
-stage, prev = clocker(stage, prev) # Marking certain point of time
-AWG.test(True)
-stage, prev = clocker(stage, prev)
-VSA.test(True)
-stage, prev = clocker(stage, prev)
-DSO.test(True)
-stage, prev = clocker(stage, prev)
-ESG.test(True)
-stage, prev = clocker(stage, prev)
-
-
-
+state = str(input("TEST's Switch Code (MXG-AWG-VSA-DSO-ESG): "))
+if state[0] == "1":
+    MXG.test(True)
+    stage, prev = clocker(stage, prev) # Marking certain point of time
+if state[1] == "1":
+    AWG.test(True)
+    stage, prev = clocker(stage, prev)
+if state[2] == "1":
+    VSA.test(True)
+    stage, prev = clocker(stage, prev)
+if state[3] == "1":
+    DSO.test(True)
+    stage, prev = clocker(stage, prev)
+if state[4] == "1":
+    ESG.test(True)
+    stage, prev = clocker(stage, prev)
 

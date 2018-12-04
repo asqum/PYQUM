@@ -93,8 +93,17 @@
     background-color: gold;
 }
 
+.newupdate {
+    background-color: rgb(255, 145, 0);
+}
+
+/* for AI-Bridge */
+.suggestion {
+    background-color: rgb(203, 124, 240);
+}
+
 /* Instrument content page */
-div.awgcontent, div.vsacontent, div.esgcontent, div.mxgcontent {
+div.awgcontent, div.vsacontent, div.esgcontent, div.mxgcontent, div.dsocontent {
     display: block;
     float: left;
     padding: 0px 3.5%;

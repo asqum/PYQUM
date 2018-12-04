@@ -74,14 +74,16 @@ def Attribute(Name):
         if len(SCPIcore) > 1:
             ans = dict(zip(parakeys, paravalues))
         else: ans = paravalues[0]
+
+        # Logging answer
+        if action[0] == 'Get': # No logging for "Set"
+            set_status(mdlname, {Name.__name__ : str(ans)})
         
         # debugging
         if eval(debugger):
             if action[0] == 'Get':
-                set_status(mdlname, {Name.__name__ : ans})
                 print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__, ans, status))
             if action[0] == 'Set':
-                # No logging for "Set"
                 print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__ , ans, status))
 
         return status, ans

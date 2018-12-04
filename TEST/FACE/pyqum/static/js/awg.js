@@ -61,7 +61,7 @@ $(function() {
     });
 });
 
-//setting on key-press
+//settings (keypress) -> about
 $(function () {
     $('input.awg#settings').keypress(function(e) {
         var key = e.which;
