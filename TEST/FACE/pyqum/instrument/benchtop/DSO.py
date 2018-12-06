@@ -139,6 +139,7 @@ def display2D(dx, y, units):
     fig, ax = plt.subplots()
     ax.plot(X, Y)
     ax.set(xlabel='time(%s)'%units[0], ylabel='voltage (%s)'%units[1], title=mdlname+'-Waveform')
+    plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
     fig.savefig(PNG)
     if eval(debugger):
         plt.show()

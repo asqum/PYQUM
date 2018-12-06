@@ -65,7 +65,7 @@ $(function() {
 $(function () {
     $('input.esg#settings').keypress(function(e) {
         var key = e.which;
-        if (key == 13) { $('input.esg#settings').trigger('click'); } }); });
+        if (key == 13) { $('input.esg#settings').trigger('click'); } }); }); // the enter key code //trigger next click below?
 $(function () {
     $('input.esg#submitsettings').bind('click', function () { // the enter key code
         $.getJSON('/mach/esg/settings', {

@@ -46,6 +46,11 @@
     overflow-y: scroll;
 }
 
+/* Only allow ALL-page to show-up when loading machine.html */
+.tabcontent#all {
+    display: block;
+}
+
 /* Instrument's Log */
 .slider {
     background-color: darkblue;
@@ -103,7 +108,7 @@
 }
 
 /* Instrument content page */
-div.awgcontent, div.vsacontent, div.esgcontent, div.mxgcontent, div.dsocontent {
+div.awgcontent, div.vsacontent, div.esgcontent, div.mxgcontent, div.dsocontent, div.jobcontent {
     display: block;
     float: left;
     padding: 0px 3.5%;

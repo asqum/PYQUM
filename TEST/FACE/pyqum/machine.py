@@ -8,6 +8,9 @@ import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
 
+# Scientific Constants
+from scipy import constants as cnst
+
 # This will run at server startup
 # Modulars first, only then Benchtops (if and only if we use render_template)
 from pyqum.instrument.modular import AWG, VSA
@@ -26,11 +29,11 @@ bp = Blueprint(myname, __name__, url_prefix='/mach')
 def show():
     return render_template("blog/machn/machine.html")
 
-# TEST
-@bp.route('/test', methods=['POST', 'GET'])
-def test(): 
-    x = 100
-    return render_template("blog/machn/test.html", x=x)
+# ALL
+@bp.route('/all', methods=['POST', 'GET'])
+def all(): 
+    # Test Bed # All Task # Great Work
+    return render_template("blog/machn/all.html")
 
 # AWG
 @bp.route('/awg', methods=['GET'])
@@ -44,6 +47,7 @@ def awglog():
 def awgreset():
     global awgsess
     awgsess = AWG.InitWithOptions()
+    AWG.Abort_Gen(awgsess)
     return jsonify(message=awgsess)
 @bp.route('/awg/close', methods=['GET'])
 def awgclose():
@@ -56,19 +60,23 @@ def awgsettings():
     message = []
     active = request.args.get('active')
     stat = AWG.active_marker(awgsess, action=['Set',active])
-    message += ['active marker: ' + status_code(stat[0])]
+    message += ['active marker: %s <%s>' %(stat[1], status_code(stat[0]))]
     delay = request.args.get('delay')
     stat = AWG.marker_delay(awgsess, action=['Set',float(delay)])
-    message += ['marker delay: ' + status_code(stat[0])]
+    message += ['marker delay: %s <%s>' %(stat[1], status_code(stat[0]))]
     pulsew = request.args.get('pulsew')
     stat = AWG.marker_pulse_width(awgsess, action=['Set',float(pulsew)])
-    message += ['marker pulse width: ' + status_code(stat[0])]
+    message += ['marker pulse width: %s <%s>' %(stat[1], status_code(stat[0]))]
     source = request.args.get('source')
     stat = AWG.marker_source(awgsess, action=['Set',int(source)])
-    message += ['marker source: ' + status_code(stat[0])]
+    message += ['marker source: %s <%s>' %(stat[1], status_code(stat[0]))]
     predist = request.args.get('predist')
     stat = AWG.predistortion_enabled(awgsess, action=['Set',int(predist)])
-    message += ['predistortion enabled: ' + status_code(stat[0])]
+    message += ['predistortion enabled: %s <%s>' %(stat[1], status_code(stat[0]))]
+    outpmode = request.args.get('outpmode')
+    stat = AWG.output_mode_adv(awgsess, action=['Set',int(outpmode)])
+    message += ['advanced output mode: %s <%s>' %(stat[1], status_code(stat[0]))]
+
     return jsonify(message=message)
 @bp.route('/awg/about', methods=['GET'])
 def awgabout():
@@ -86,6 +94,9 @@ def awgabout():
     message += ['Marker Source: %s (%s)' % (status[1], status_code(status[0]))]
     status = AWG.predistortion_enabled(awgsess) # predistortion enabled
     message += ['Predistortion Enabled: %s (%s)' % (status[1], status_code(status[0]))]
+    status = AWG.output_mode_adv(awgsess) # advanced output mode
+    message += ['Advanced Output Mode: %s (%s)' % (status[1], status_code(status[0]))]
+    
     return jsonify(message=message)
 
 # VSA
@@ -228,9 +239,19 @@ def mxgabout():
 @bp.route('/dso', methods=['GET'])
 def dso():
     # default input/select value (pave way for future ML algorithm)
-    df_rnge = 16.2
-    df_trnge = 520
-    return render_template("blog/machn/dso.html", df_rnge=df_rnge, df_trnge=df_trnge)
+    yrange, yscale, yoffset = 16.2, 2, 3
+    trange, tdelay, tscale = 520, 120, 50
+    return render_template("blog/machn/dso.html", yrange=yrange, yscale=yscale, yoffset=yoffset, trange=trange, tdelay=tdelay, tscale=tscale)
+@bp.route('/dso/autoscale', methods=['GET'])
+def dsoautoscale():
+    global dsobench
+    dsobench.write(':AUTOSCALE')
+    status = DSO.channel1(dsobench) # channel 1
+    yrange, yscale, yoffset = status[1]['RANGE'], status[1]['SCALE'], status[1]['OFFSET']
+    status = DSO.timebase(dsobench) # timebase
+    trange, tdelay, tscale = status[1]['RANGE'], status[1]['DELAY'], status[1]['SCALE']
+    trange, tdelay, tscale = float(trange)/cnst.nano, float(tdelay)/cnst.nano, float(tscale)/cnst.nano
+    return jsonify(yrange=yrange, yscale=yscale, yoffset=yoffset, trange=trange, tdelay=tdelay, tscale=tscale)
 @bp.route('/dso/log', methods=['GET'])
 def dsolog():
     log = get_status('DSO')
@@ -285,6 +306,18 @@ def dsoabout():
     status = DSO.acquiredata(dsobench) # acquire data
     message += ['Acquisition of Data: %s (%s)' % (status[1], status[0])]
     return jsonify(message=message)
+
+# JOB
+@bp.route('/job', methods=['GET'])
+def job():
+    return render_template("blog/machn/job.html")
+@bp.route('/job/basic', methods=['GET'])
+def jobasic():
+    from pyqum.job import gen_waveform as gwf
+    seg1 = request.args.get('seg1')
+    seg2 = request.args.get('seg2')
+    gwf.squarewave(int(seg1), int(seg2))
+    return jsonify()
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

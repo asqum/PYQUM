@@ -54,18 +54,19 @@ $(function () {
 $(function() {
     $('button.awg#settings').bind('click', function() {
         $('div.awgcontent').hide();
-        $('div.awgcontent#settings').show();
+        $('div.awgcontent#settings-marker').show(); //first-page of settings
         $('button.awg').removeClass('selected');
         $('button.awg#settings').addClass('selected');
         return false;
     });
 });
 
-//settings (keypress) -> about
+//settings -> about
+//no keypress trigger for awg's settings
 $(function () {
-    $('input.awg#settings').keypress(function(e) {
-        var key = e.which;
-        if (key == 13) { $('input.awg#settings').trigger('click'); } }); });
+    $('input.awg#goto-prepare').bind('click', function () {
+        $('div.awgcontent#settings-marker').hide();
+        $('div.awgcontent#settings-prepare').show(); }); });
 $(function () {
     $('input.awg#submitsettings').bind('click', function () { // the enter key code
         $.getJSON('/mach/awg/settings', {
@@ -74,7 +75,8 @@ $(function () {
             delay: $('input.awg[name="delay"]').val(),
             pulsew: $('input.awg[name="pulsew"]').val(),
             source: $('select.awg[name="source"]').val(),
-            predist: $('select.awg[name="predist"]').val()
+            predist: $('select.awg[name="predist"]').val(),
+            outpmode: $('select.awg[name="outpmode"]').val()
         }, function (data) {
             $('div.awgcontent#debug').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
             $.each(data.message, function(index, value) {

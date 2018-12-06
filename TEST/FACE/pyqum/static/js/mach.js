@@ -1,3 +1,8 @@
+//when page is loading:
+$(document).ready(function(){
+    $('button#all-tab').toggleClass('active');
+});
+
 function openTab(evt, Name) {
     // Declare all variables
     var i, tabcontent, tablinks;

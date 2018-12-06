@@ -1,0 +1,80 @@
+<!doctype html> <!--extended from parent: machine.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/dso.js') }}"></script>
+</head>
+
+<body class="mach">
+<div>
+    <!--previous settings-->
+    <form method='GET'>
+        <button class="slider" id="dso"><strong>Instrument Log (History)</strong></button>
+    </form>
+    <div class="instrlog" id="dso"></div>
+
+    <div class="tab">
+    <form method='GET'>
+        <button class='dso' id='reset'><i class="fa fa-refresh" style="font-size:15px;color:lightgreen;"></i> RESET</button>
+        <button class='dso' id='close'><i class="fa fa-times-circle" style="font-size:15px;color:red;"></i> CLOSE</button>
+
+        <button class='dso' id='about'>ABOUT</button>
+        <button class='dso' id='debug'>DEBUG</button>
+        <button class='dso' id='settings'>SETTINGS</button>
+        <button class='dso' id='display'>DISPLAY</button> 
+        
+    </form>
+    </div>
+    
+    <div class="dsocontent" id="debug"></div>
+    <div class="dsocontent" id="about"></div>
+    
+    
+    <div class="dsocontent" id="settings">
+        <div class="container">
+            <form method='GET'>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-25"><label>Y-Range</label></div>
+                <div class="col-75"><input class='dso' id="settings" name='rnge' type="text" value="{{df_rnge}}"/></div>
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-25"><label>Y-Scale</label></div>
+                <div class="col-75"><input class='dso' id="settings" name='scal' type="text" value="2"/></div>
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-25"><label>Y-Offset</label></div>
+                <div class="col-75"><input class='dso' id="settings" name="ofset" type="text" value="3"/></div> 
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-25"><label>T-Range (ns)</label></div>
+                <div class="col-75"><input class='dso' id="settings" name="trnge" type="text" value="{{df_trnge}}"/></div> 
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-25"><label>T-Delay (ns)</label></div>
+                <div class="col-75"><input class='dso' id="settings" name="tdelay" type="text" value="120"/></div> 
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-25"><label>T-Scale (ns)</label></div>
+                <div class="col-75"><input class='dso' id="settings" name="tscal" type="text" value="50"/></div> 
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-25"><label>Average Count</label></div>
+                <div class="col-75"><input class='dso' id="settings" name="avenum" type="text" value="12"/></div> 
+                </div>
+                
+                
+                <div class="row"> <!-- SUBMIT BUTTON -->
+                    <div class="col-25"></div>
+                    <div class="col-75"><input class='dso' id='submitsettings' type="submit" value="Submit"/></div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="dsocontent" id="display">
+        <img src='/static/img/dso/DSOwaveform.png' alt='DSOwaveform'>   
+    </div>
+</div>
+</body>
+
+</html>

@@ -14,7 +14,8 @@
 
 <script> 
     $(function(){
-      $("div#test").load("{{ url_for('machine.test') }}");
+      $("div#all").load("{{ url_for('machine.all') }}");
+      $("div#job").load("{{ url_for('machine.job') }}");
       $("div#awg").load("{{ url_for('machine.awg') }}");
       $("div#vsa").load("{{ url_for('machine.vsa') }}");
       $("div#esg").load("{{ url_for('machine.esg') }}");
@@ -24,7 +25,8 @@
 </script> 
 
 <div class="tab">
-  <button class="tablinks" id="test-tab" onclick="openTab(event, 'test')">TEST</button>
+  <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button>
+  <button class="tablinks" id="job-tab" onclick="openTab(event, 'job')">JOB</button>
   <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
   <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button>
   <button class="tablinks" id="esg-tab" onclick="openTab(event, 'esg')">ESG</button>
@@ -32,7 +34,8 @@
   <button class="tablinks" id="dso-tab" onclick="openTab(event, 'dso')">DSO</button>
 </div>
 
-<div id="test" class="tabcontent"></div>
+<div id="all" class="tabcontent"></div>
+<div id="job" class="tabcontent"></div>
 <div id="awg" class="tabcontent"></div>
 <div id="vsa" class="tabcontent"></div>
 <div id="esg" class="tabcontent"></div>

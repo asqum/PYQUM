@@ -80,7 +80,7 @@ input, select {
     -moz-appearance: none;
     appearance: none;
     width: 75%;
-    padding: 12px 4px;
+    padding: 12px 3px;
     border: 1px solid #ccc;
     border-radius: 3.5px;
     resize: vertical;
@@ -99,8 +99,8 @@ input[type=submit] {
     border: none;
     border-radius: 3.5px;
     cursor: pointer;
-    width: 50%;
-    margin: 5px 0;
+    width: 95%;
+    margin: 2.5px 0;
 }
 
 input[type=submit]:hover {
@@ -118,9 +118,45 @@ input[type=submit]:hover {
     padding: 2px
 }
 
+.col-space {
+    float: left;
+    width: 0.5%;
+    margin-top: 6px;
+}
+
+.col-10 {
+    float: left;
+    width: 10%;
+    margin-top: 6px;
+}
+
+.col-15 {
+    float: left;
+    width: 15%;
+    margin-top: 6px;
+}
+
 .col-25 {
     float: left;
     width: 25%;
+    margin-top: 6px;
+}
+
+.col-35 {
+    float: left;
+    width: 35%;
+    margin-top: 6px;
+}
+
+.col-48 {
+    float: left;
+    width: 48%;
+    margin-top: 6px;
+}
+
+.col-60 {
+    float: left;
+    width: 60%;
     margin-top: 6px;
 }
 

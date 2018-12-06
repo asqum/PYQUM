@@ -63,10 +63,10 @@ $(function() {
 });
 
 //setting on key-press
-$(function () {
-    $('input.dso#settings').keypress(function(e) {
-        var key = e.which;
-        if (key == 13) { $('input.dso#settings').trigger('click'); } }); }); // the enter key code
+// $(function () {
+//     $('input.dso#settings').keypress(function(e) {
+//         var key = e.which;
+//         if (key == 13) { $('input.dso#settings').trigger('click'); } }); });
 $(function () {
     $('input.dso#submitsettings').bind('click', function () {
          //indicate it is still running:
@@ -95,6 +95,23 @@ $(function () {
         });
         return false;
     });
+});
+
+//autoscale on submit
+$('input.dso#autoscale').bind('click', function () {
+    $( "i.dso" ).remove(); //clear previous
+    $('button.dso#settings').prepend("<i class='dso fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    $.getJSON('/mach/dso/autoscale', {
+    }, function (data) {
+        $( "i.dso" ).remove(); //clear previous
+        $('input.dso[name="rnge"]').val(data.yrange);
+        $('input.dso[name="scal"]').val(data.yscale);
+        $('input.dso[name="ofset"]').val(data.yoffset);
+        $('input.dso[name="trnge"]').val(data.trange);
+        $('input.dso[name="tdelay"]').val(data.tdelay);
+        $('input.dso[name="tscal"]').val(data.tscale);
+    });
+    return false;
 });
 
 //reset
