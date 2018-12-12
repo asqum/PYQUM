@@ -62,11 +62,13 @@ def address(instr_name, reset=False):
     Set <reset=False> to directly load from LOG if it contains "address" 
     '''
     rs = dict()
+    rs["PNA"] = "TCPIP0::192.168.0.6::hpib7,16::INSTR"
     rs["DSO"] = "GPIB0::7::INSTR" # Oscilloscope Agilent 54621A
     # rs["DSO"] = "visa://qdl-pc/GPIB0::7::INSTR" # Oscilloscope Agilent 54621A
     rs["ESG"] = "GPIB0::27::INSTR" # Interface TYPE + Number :: Address :: INSTR
     rs["MXG"] = "TCPIP0::169.254.0.1::INSTR"
-    rs["VSA"] = "PXI0::22-14.0::INSTR;PXI0::22-12.0::INSTR;PXI0::22-9.0::INSTR;PXI0::22-8.0::INSTR;PXI0::27-0.0::INSTR"
+    # rs["VSA"] = "PXI0::22-14.0::INSTR;PXI0::22-12.0::INSTR;PXI0::22-9.0::INSTR;PXI0::22-8.0::INSTR;PXI0::27-0.0::INSTR"
+    rs["VSA"] = "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR"
     rs["AWG"] = "PXI20::14::0::INSTR"
     # rs["AWG"] = "visa://qdl-pc/PXI20::14::0::INSTR"
     rs["TEST"] = "PXISAMAZING"

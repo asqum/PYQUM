@@ -147,7 +147,7 @@ def test(detail=False):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     s = InitWithOptions()
-    s = InitWithOptions()
+    # s = InitWithOptions()
     # s = int(input("Session: "))
     if eval(debugger):
         print(Fore.RED + "Detailed Test:")
@@ -158,4 +158,4 @@ def test(detail=False):
     close(s)
     return
 
-#test(True)
+# test(True)

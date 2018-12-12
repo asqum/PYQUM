@@ -57,6 +57,7 @@ def Attribute(Name):
                 command = ";".join(command)
 
                 paravalues = bench.query(command).split(';')
+                #just in case of the presence of query parameters, which is rare
                 paravalues = [paravalues[i] + '(' + str(action[i+1]) + ')' for i in range(len(parakeys))]
                 paravalues = [x.replace('()', '') for x in paravalues]
 
@@ -104,6 +105,11 @@ def channel1(bench, action=['Get'] + 10 * ['']):
     SCPIcore = ':CHANNEL1:COUPLING;RANGE;SCALE;OFFSET;UNITs;Display'
     return bench, SCPIcore, action
 @Attribute
+def channel2(bench, action=['Get'] + 10 * ['']):
+    '''action=['Get/Set', <coupling>, <range>, <scale>, <offset>, <units>, <Display>]'''
+    SCPIcore = ':CHANNEL1:COUPLING;RANGE;SCALE;OFFSET;UNITs;Display'
+    return bench, SCPIcore, action
+@Attribute
 def timebase(bench, action=['Get'] + 10 * ['']):
     '''action=['Get/Set', <mode>, <range[ns]>, <delay[ns]>, <scale[ns]>]'''
     SCPIcore = ':TIMEBASE:MODE;RANGE;DELAY;SCALE'
@@ -115,7 +121,7 @@ def acquiredata(bench, action=['Get'] + 10 * ['']): # ACQUIRING DATA from DSO
     return bench, SCPIcore, action
 @Attribute
 def waveform(bench, action=['Get'] + 10 * ['']): # SETTING UP WAVEFORM
-    '''action=['Get/Set', <POINTS{MAX}>, <SOURCE{CHANNEL1}>, <FORMAT{ASCII}>, <XINCrement?>, <DATA?>]'''
+    '''action=['Get/Set', <POINTS{MAX}>, <SOURCE{CHANNEL#}>, <FORMAT{ASCII}>, <XINCrement?>, <DATA?>]'''
     SCPIcore = ':WAVEFORM:POINTS;SOURCE;FORMAT;XINCrement;DATA'
     return bench, SCPIcore, action
 @Attribute
@@ -124,13 +130,13 @@ def measure(bench, action=['Get'] + 10 * ['']): # SETTING UP WAVEFORM
     SCPIcore = ':MEASure:COUNter;RISEtime;FALLtime;PWIDth;NWIDth;VPP;VAMP;VRMS'
     return bench, SCPIcore, action
 
-def display2D(dx, y, units):
+def display2D(dx, y, units, channel):
     # setting png path
     from pathlib import Path
     from inspect import getfile, currentframe
     pyfilename = getfile(currentframe()) # current pyscript filename (usually with path)
     INSTR_PATH = Path(pyfilename).parents[2] / "static" / "img" / "dso" # 2 levels up the path
-    png_file =  mdlname + "waveform.png"
+    png_file = "%swaveform(CH%s).png" %(mdlname, channel)
     PNG = Path(INSTR_PATH) / png_file
     # Organizing Data
     Y = [float(i) for i in y.split(",")[1:-1]] # to avoid the first and the last string
@@ -169,25 +175,46 @@ def test(detail=False):
     if bench is "disconnected":
         pass
     else:
+        model(bench)
+        bench.write(':AUTOSCALE')
         if eval(debugger):
             state = acquiredata(bench)
             print("State: %s" %state[1])
-            model(bench)
-            channel1(bench, action=['Set', 'DC', '1.56', '2', '3', 'Volt', 'OFF'])
-            unitY = list(channel1(bench))[1]["UNITs"]
-            timebase(bench, action=['Set', 'NORMAL', '150ns', '120ns', '50ns'])
+
+            status = channel1(bench) # channel 1
+            yrange, yscale, yoffset = status[1]['RANGE'], status[1]['SCALE'], status[1]['OFFSET']
+            channel1(bench, action=['Set', 'DC', yrange, yscale, yoffset, 'Volt', 'OFF'])
+
+            status = channel2(bench) # channel 2
+            yrange, yscale, yoffset = status[1]['RANGE'], status[1]['SCALE'], status[1]['OFFSET']
+            channel2(bench, action=['Set', 'DC', yrange, yscale, yoffset, 'Volt', 'OFF'])
+
+            status = timebase(bench) # timebase
+            trange, tdelay, tscale = status[1]['RANGE'], status[1]['DELAY'], status[1]['SCALE']
+            timebase(bench, action=['Set', 'NORMAL', trange, tdelay, tscale])
             timebase(bench)
-            acquiredata(bench, action=['Set', 'average', '100', '35'])
+
+            unitY = list(channel1(bench))[1]["UNITs"]
+            acquiredata(bench, action=['Set', 'average', '100', '7'])
             status = acquiredata(bench)
             print(status)
+
             waveform(bench, action=['Set', 'max', 'channel1', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
             ans = list(waveform(bench))[1]
             y, dx = ans['DATA'], float(ans['XINCrement'])
             measure(bench)
             print(y)
-            display2D(dx, y, units=['s', unitY])
+            display2D(dx, y, units=['s', unitY], channel=1)
+
+            waveform(bench, action=['Set', 'max', 'channel2', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
+            ans = list(waveform(bench))[1]
+            y, dx = ans['DATA'], float(ans['XINCrement'])
+            measure(bench)
+            print(y)
+            display2D(dx, y, units=['s', unitY], channel=2)
+
         else: print(Fore.RED + "Basic IO Test")
-    close(bench)
+    close(bench, reset=False)
     return
 
 # test(True)

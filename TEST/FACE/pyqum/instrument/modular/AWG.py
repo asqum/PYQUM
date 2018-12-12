@@ -171,7 +171,7 @@ def arb_sequence_handle(session, Type='Int32', RepCap='', AttrID=1250211, buffsi
     This function returns a handle that identifies the particular sequence. 
     To configure the function generator to produce a specific sequence, set this attribute to the sequence's handle.
         Set:
-            RepCap=< channel# (1-2) >
+            RepCap: < channel# (1-2) >
     """
     return session, Type, RepCap, AttrID, buffsize, action
 
@@ -186,6 +186,80 @@ def output_mode_adv(session, Type='Int32', RepCap='', AttrID=1150051, buffsize=0
         1: AGM933X_VAL_OUTPUT_MODE_ARBITRARY
         2: AGM933X_VAL_OUTPUT_MODE_SEQUENCE
         3: AGM933X_VAL_OUTPUT_MODE_ADVANCED_SEQUENCE
+    """
+    return session, Type, RepCap, AttrID, buffsize, action
+
+@Attribute
+#define AGM933X_ATTR_OPERATION_MODE 1250005
+def operation_mode(session, Type='Int32', RepCap='', AttrID=1250005, buffsize=0, action=['Get', '']):
+    """[Operation Mode <int32>]
+    Sets/Gets how the function generator produces output. When set to Continuous mode, the waveform will be output continuously. 
+    When set to Burst mode, the ConfigureBurstCount function is used to specify how many cycles of the waveform to output.
+    RepCap: < channel# (1-2) >
+    Attribute value (mode):
+        0: AGM933X_VAL_OPERATE_CONTINUOUS	
+        1: AGM933X_VAL_OPERATE_BURST	
+    """
+    return session, Type, RepCap, AttrID, buffsize, action
+
+@Attribute
+#define AGM933X_ATTR_TRIGGER_SOURCE_ADVANCED 1150052
+def trigger_source_adv(session, Type='Int32', RepCap='', AttrID=1150052, buffsize=0, action=['Get', '']):
+    """[Advanced Trigger Source <int32>]
+    Specifies the advanced trigger source, which are can be selected from enums of AgM933XTriggerSourceEnum. 
+    These sources may be chosen as individual sources or logically OR'd together to allow one of multiple sources to supply the trigger.
+    RepCap: < channel# (1-2) >
+    Attribute value (mode):
+         0: AgM933xTriggerSourceNoTrigger	
+         2: AgM933xTriggerSourceExternal1
+         4: AgM933xTriggerSourceExternal2
+         8: AgM933xTriggerSourceExternal3
+        16:	AgM933xTriggerSourceExternal4
+         1: AgM933xTriggerSourceSoftware1
+        32: AgM933xTriggerSourceSoftware2
+        64: AgM933xTriggerSourceSoftware3
+       256: AgM933xTriggerSourceMarker1
+       512: AgM933xTriggerSourceMarker2
+      1024: AgM933xTriggerSourceMarker3
+      2048: AgM933xTriggerSourceMarker4
+      4096: AgM933xTriggerSourceAuxPort
+      8063: AgM933xTriggerSourceAllSources
+    """
+    return session, Type, RepCap, AttrID, buffsize, action
+
+@Attribute
+#define AGM933X_ATTR_OUTPUT_CONFIGURATION 1150054
+def output_config(session, Type='Int32', RepCap='', AttrID=1150054, buffsize=0, action=['Get', '']):
+    """[Output Configuration <int32>]
+    Specifies the configuration of the output signal.
+    RepCap: < channel# (1-2) >
+    Attribute value (mode):
+        0: AgM933xOutputConfiguration: SingleEnded	
+        1: AgM933xOutputConfiguration: Differential
+        2. AgM933xOutputConfiguration: Amplified
+    """
+    return session, Type, RepCap, AttrID, buffsize, action
+
+@Attribute
+#define AGM933X_ATTR_OUTPUT_FILTER_BANDWIDTH 1150056
+def output_filter_bandwidth(session, Type='Int32', RepCap='', AttrID=1150056, buffsize=0, action=['Get', '']):
+    """[Output Filter Bandwidth <int32>]
+    Specifies the bandwidth of the output channel. 
+    This only affects the output signal when output filtering is enabled.
+    RepCap: < channel# (1-2) >
+    Attribute value (mode):
+        0: AgM933xFilterBandwidth250MHz: Sets the bandwidth of the arbitrary waveform generator signal to 250 MHz.	
+        1: AgM933xFilterBandwidth500MHz: Sets the bandwidth of the arbitrary waveform generator signal to 500 MHz.
+    """
+    return session, Type, RepCap, AttrID, buffsize, action
+
+@Attribute
+#define AGM933X_ATTR_BURST_COUNT 1250350
+def burst_count(session, Type='Int32', RepCap='', AttrID=1250350, buffsize=0, action=['Get', '']):
+    """[Burst Count <int32>]
+    Sets/Gets the number of waveform cycles that the function generator produces after it receives a trigger. 
+    The Burst Count is used when the operation mode is Operate Burst.
+    RepCap: < channel# (1-2) >
     """
     return session, Type, RepCap, AttrID, buffsize, action
 
@@ -273,6 +347,16 @@ def output_enabled(session, Type='Boolean', RepCap='', AttrID=1250003, buffsize=
     """
     return session, Type, RepCap, AttrID, buffsize, action
 
+@Attribute
+#define AGM933X_ATTR_OUTPUT_FILTER_ENABLED 1150055
+def output_filter_enabled(session, Type='Boolean', RepCap='', AttrID=1150055, buffsize=0, action=['Get', '']):
+    """[Output Filtering Enabled <?>]
+    Enables output filtering selected by the FilterBandwidth property.
+    Set:
+        RepCap=< channel# (1-2) >
+    """
+    return session, Type, RepCap, AttrID, buffsize, action
+
 # 2.1 Abort Generation
 def Abort_Gen(session):
     """[Abort Waveform Generation]
@@ -280,14 +364,19 @@ def Abort_Gen(session):
     AGM = dll.AgM933x_AbortGeneration
     AGM.restype = c_int
     status = AGM(c_long(session))
-    if eval(debugger):
-        print(Back.YELLOW + Fore.MAGENTA + "%s: %s" %(stack()[0][3], status_code(status)))
+    print(Back.WHITE + Fore.BLACK + "%s's generation Aborted: %s" %(mdlname, status_code(status)))
     return status_code(status)
 
 # 2.2 Create Arbitrary Waveform
 def CreateArbWaveform(session, Data):
     '''[Create Arbitrary Waveform]
-        *Data should be 1000 points minimum
+        *Data: 
+            minimum: 1000 points
+            maximum: 15000 points
+            minimum per change: 200 for constant, 120 for linear?
+            Amplitude between -1 and 1
+        *2 Channel length must match to avoid truncation to the smaller length?
+        *Error usually occur when the points is too few!
     '''
     AGM = dll.AgM933x_CreateArbWaveform
     AGM.restype = c_int
@@ -296,46 +385,39 @@ def CreateArbWaveform(session, Data):
     carray = (c_double * Size)(*Data)
     status = AGM(c_long(session), c_int(Size), carray, byref(handle))
     if eval(debugger):
+        # print("Data: %s" %Data)
         print(Back.YELLOW + Fore.MAGENTA + "%s: %s (%s)" %(stack()[0][3], handle.value, status_code(status)))
     return status_code(status), handle.value
 
 # 2.3 Create Arbitrary Sequence
-def CreateArbSequence(session, sequence):
+def CreateArbSequence(session, sequence, counts):
     '''[Create Arbitrary Sequence]
-        sequence = < { waveform (handle.value from "CreateArbWaveform") : loop# (>0) } >
+        sequence = < waveform (handle.value from "CreateArbWaveform") >
+        counts = loop# (>0)
     '''
     AGM = dll.AgM933x_CreateArbSequence
     AGM.restype = c_int
     handle = c_long()
     Size = len(sequence)
-    wfmhandles = (c_int * Size)(*[int(i) for i in sequence.keys()])
-    loopcounts = (c_int * Size)(*[i for i in sequence.values()])
-    status = AGM(c_long(session), c_int(Size), wfmhandles, loopcounts, byref(handle))
+    wfmhandles = (c_long * Size)(*sequence)
+    loopcounts = (c_long * Size)(*counts)
+    status = AGM(c_long(session), c_long(Size), wfmhandles, loopcounts, byref(handle))
     if eval(debugger):
+        print("Sequence's size: %s" %Size)
+        print("Sequence: %s" %sequence)
+        print("Sequence's counts: %s" %counts)
         print(Back.YELLOW + Fore.MAGENTA + "%s: %s (%s)" %(stack()[0][3], handle.value, status_code(status)))
     return status_code(status), handle.value
 
-# 2.4 Output Configuration (Type) (Canbe converted to output_config and output_filter_bandwidth)
-def OupConfig(session, channel, outputmode=0, filteron=False, bandwidth=0):
-    """[Output Configuration]
-    This function allows you to: specify the kind of electrical output generated by the function generator, 
-    select the frequency of the low-pass reconstruction filter, and enable/disable that filter.
-
-    outputmode:
-        0. AGM933X_VAL_OUTPUT_CONFIGURATION_SINGLE_ENDED: The configuration of the output signal is differential 
-        1. AGM933X_VAL_OUTPUT_CONFIGURATION_DIFFERENTIAL: The configuration of the output signal is single-ended. 
-        2. AGM933X_VAL_OUTPUT_CONFIGURATION_AMPLIFIED:    The configuration of the output signal is amplified (single-ended).
-
-    bandwidth:
-        0. AGM933X_VAL_FILTER_BANDWIDTH_250MHZ: Sets the bandwidth of the arbitrary waveform generator signal to 250 MHz. 
-        1. AGM933X_VAL_FILTER_BANDWIDTH_500MHZ: Sets the bandwidth of the arbitrary waveform generator signal to 500 MHz. 
+# 2.4 Send Numbered Software Trigger (initiate burst/single pulse)
+def Send_Pulse(session, triggernum=1):
+    """[Sending Software Trigger to generate single/burst pulse]
     """
-    AGM = dll.AgM933x_OutputConfigure
+    AGM = dll.AgM933x_TriggerSendNumberedSoftwareTrigger
     AGM.restype = c_int
-    channel = bytes(channel, 'ascii')
-    status = AGM(c_long(session), c_char_p(channel), c_int(outputmode), c_bool(filteron), c_int(bandwidth))
+    status = AGM(c_long(session), c_long(triggernum))
     if eval(debugger):
-        print(Back.YELLOW + Fore.MAGENTA + "%s: channel=%s, output mode=%s, filter=%s, bandwidth=%s (%s)" %(stack()[0][3], str(channel, 'ascii'), outputmode, filteron, bandwidth, status_code(status)))
+        print(Back.YELLOW + Fore.MAGENTA + "%s: %s" %(stack()[0][3], status_code(status)))
     return status_code(status)
 
 # 2.5 Initiate Generation
@@ -345,8 +427,18 @@ def Init_Gen(session):
     AGM = dll.AgM933x_InitiateGeneration
     AGM.restype = c_int
     status = AGM(c_long(session))
-    if eval(debugger):
-        print(Back.YELLOW + Fore.MAGENTA + "%s: %s" %(stack()[0][3], status_code(status)))
+    print(Fore.GREEN + "%s's generation Initialized: %s" % (mdlname, status_code(status)))
+    return status_code(status)
+
+# 2.6 Clear Arbitrary Memory
+def Clear_ArbMemory(session):
+    """Removes all previously created arbitrary waveforms and sequences from the instrument's memory and invalidates all waveform and sequence handles. 
+    If either a waveform or sequence is currently being generated, an error will be reported.
+    """
+    AGM = dll.AgM933x_ClearArbMemory
+    AGM.restype = c_int
+    status = AGM(c_long(session))
+    print(Fore.GREEN + "%s's arbitrary memory ALL Cleared: %s" % (mdlname, status_code(status)))
     return status_code(status)
 
 # 3. close
@@ -368,7 +460,6 @@ def test(detail=False):
     print(Fore.RED + "Debugger mode: %s" %eval(debugger))
     s = InitWithOptions()
     Abort_Gen(s)
-    # s = InitWithOptions()
     if detail:
         # basic queries:
         resource_descriptor(s)
@@ -393,51 +484,90 @@ def test(detail=False):
         output_mode_adv(s)
         predistortion_enabled(s, action=["Set", False])
         predistortion_enabled(s)
-        # Assigning handles to each different waveform
-        stat = CreateArbWaveform(s, ([i*0 for i in range(1000)] + [i*1 for i in range(3000)] + [i*0 for i in range(1000)]))
-        h1 = stat[1]
-        stat = CreateArbWaveform(s, list([i*0 for i in range(1200)]))
-        h2 = stat[1]
-        # Composing different sequences to each channel
-        # Channel 1
-        Seq = {}
-        Seq[(h1)], Seq[(h2)] = 1, 5 #loopcount
-        stat = CreateArbSequence(s, Seq)
-        arb_sequence_handle(s, RepCap='1', action=["Set", stat[1]])
-        arb_sequence_handle(s, RepCap='1')
-        # Channel 2
-        Seq = {}
-        Seq[str(h1)], Seq[str(h2)] = 2, 1
-        stat = CreateArbSequence(s, Seq)
-        arb_sequence_handle(s, RepCap='2', action=["Set", stat[1]])
-        arb_sequence_handle(s, RepCap='2')
+
         # Setting Sample Rate
-        # ConfigSampRate(s, 1250000000)
         arb_sample_rate(s, action=["Set", 1250000000])
         arb_sample_rate(s)
-        # Configure Output (Channels)
-        # ConfigOupState(s, '1', True)
-        # ConfigOupState(s, '2', True)
-        output_enabled(s, RepCap='1', action=["Set", True])
-        output_enabled(s, RepCap='1')
-        output_enabled(s, RepCap='2', action=["Set", True])
-        output_enabled(s, RepCap='2')
-        OupConfig(s, "1")
-        OupConfig(s, "2")
-        arb_gain(s, RepCap='1', action=["Set", 0.25])
-        arb_gain(s, RepCap='1')
-        arb_gain(s, RepCap='2', action=["Set", 0.25])
-        arb_gain(s, RepCap='2')
-        output_impedance(s, RepCap='1', action=["Set", 50])
-        output_impedance(s, RepCap='1')
-        output_impedance(s, RepCap='2', action=["Set", 50])
-        output_impedance(s, RepCap='2')
         
+        seg0 = 1000
+        seg1 = 5000
+        seg2 = 5000
+        # Create Waveform
+        stat = CreateArbWaveform(s, ([1]*seg0))
+        h1 = stat[1]
+        stat = CreateArbWaveform(s, ([0]*seg1))
+        h2 = stat[1]
+        stat = CreateArbWaveform(s, ([-1]*seg2))
+        h3 = stat[1]
+        stat = CreateArbWaveform(s, ([0.2]*5000 + [5]*1200 + [-1]*1000))
+        ch1 = stat[1]
+        stat = CreateArbWaveform(s, ([0.8]*5000 + [-1]*1000 + [i/1200 for i in range(1200)]))
+        ch2 = stat[1]
+
+        # Composing different sequences to each channel
+        # Channel 1
+        i = 1
+        if i:
+            # Seq, counts = [h1, h3], [1, 2] #Seqhandles, loops#
+            Seq, counts = [ch1], [1] #unique wfm
+            stat = CreateArbSequence(s, Seq, counts)
+            print("Sequence handle for CH1: %s" %stat[1])
+            arb_sequence_handle(s, RepCap='1', action=["Set", stat[1]])
+            arb_sequence_handle(s, RepCap='1')
+            output_enabled(s, RepCap='1', action=["Set", True])
+            output_enabled(s, RepCap='1')
+            output_filter_enabled(s, RepCap='1')
+            output_filter_enabled(s, RepCap='1', action=["Set", False])
+            output_filter_bandwidth(s, RepCap='1')
+            output_filter_bandwidth(s, RepCap='1', action=["Set", 0])
+            output_config(s, RepCap='1')
+            output_config(s, RepCap='1', action=["Set", 0])
+            arb_gain(s, RepCap='1', action=["Set", 0.25])
+            arb_gain(s, RepCap='1')
+            output_impedance(s, RepCap='1', action=["Set", 50])
+            output_impedance(s, RepCap='1')
+            # Setting pulse mode (Single or Continuous)
+            operation_mode(s, RepCap='1')
+            operation_mode(s, RepCap='1', action=["Set", 0])
+            trigger_source_adv(s, RepCap='1')
+            trigger_source_adv(s, RepCap='1', action=["Set", 0])
+            burst_count(s, RepCap='1', action=["Set", 1000001])
+
+        # Channel 2
+        i = 1
+        if i:
+            # Seq, counts = [h2, h3], [1, 1] #Seqhandles, loops#
+            Seq, counts = [ch2], [1] #unique wfm
+            stat = CreateArbSequence(s, Seq, counts)
+            print("Sequence handle for CH2: %s" %stat[1])
+            arb_sequence_handle(s, RepCap='2', action=["Set", stat[1]])
+            arb_sequence_handle(s, RepCap='2')
+            output_enabled(s, RepCap='2', action=["Set", True])
+            output_enabled(s, RepCap='2')
+            output_filter_enabled(s, RepCap='2')
+            output_filter_enabled(s, RepCap='2', action=["Set", False])
+            output_filter_bandwidth(s, RepCap='2')
+            output_filter_bandwidth(s, RepCap='2', action=["Set", 0])
+            output_config(s, RepCap='2')
+            output_config(s, RepCap='2', action=["Set", 0])
+            arb_gain(s, RepCap='2', action=["Set", 0.25])
+            arb_gain(s, RepCap='2')
+            output_impedance(s, RepCap='2', action=["Set", 50])
+            output_impedance(s, RepCap='2')
+            # Setting pulse mode (Single or Continuous)
+            operation_mode(s, RepCap='2')
+            operation_mode(s, RepCap='2', action=["Set", 0])
+            trigger_source_adv(s, RepCap='2')
+            trigger_source_adv(s, RepCap='2', action=["Set", 0])
+            burst_count(s, RepCap='2', action=["Set", 1000001])
+            
         if not bool(input("Press ENTER (OTHER KEY) to initiated (skip) generation: ")):
             Init_Gen(s)
+            Send_Pulse(s, 1)
+        else: Clear_ArbMemory(s) #remove waveform
             
     else: print(Fore.RED + "Basic IO Test")
     close(s)
     return
 
-# test(True)
+# test(False)
