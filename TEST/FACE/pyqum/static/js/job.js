@@ -22,8 +22,10 @@ $(function () {
          $('button.job#basic').prepend("<i class='job fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         $.getJSON('/mach/job/basic', {
             // input value here:
-            seg1: $('input.job[name="seg1"]').val(),
-            seg2: $('input.job[name="seg2"]').val()
+            ch1g: $('input.job[name="ch1g"]').val(),
+            ch1e: $('input.job[name="ch1e"]').val(),
+            ch2g: $('input.job[name="ch2g"]').val(),
+            ch2e: $('input.job[name="ch2e"]').val()
         }, function (data) {
             $( "i.job" ).remove(); //clear previous
         });

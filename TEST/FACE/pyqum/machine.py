@@ -240,18 +240,21 @@ def mxgabout():
 def dso():
     # default input/select value (pave way for future ML algorithm)
     yrange, yscale, yoffset = 16.2, 2, 3
+    yrange2, yscale2, yoffset2 = 16.2, 2, 3
     trange, tdelay, tscale = 520, 120, 50
-    return render_template("blog/machn/dso.html", yrange=yrange, yscale=yscale, yoffset=yoffset, trange=trange, tdelay=tdelay, tscale=tscale)
+    return render_template("blog/machn/dso.html", yrange=yrange, yscale=yscale, yoffset=yoffset, yrange2=yrange2, yscale2=yscale2, yoffset2=yoffset2, trange=trange, tdelay=tdelay, tscale=tscale)
 @bp.route('/dso/autoscale', methods=['GET'])
 def dsoautoscale():
     global dsobench
     dsobench.write(':AUTOSCALE')
     status = DSO.channel1(dsobench) # channel 1
     yrange, yscale, yoffset = status[1]['RANGE'], status[1]['SCALE'], status[1]['OFFSET']
+    status = DSO.channel2(dsobench) # channel 2
+    yrange2, yscale2, yoffset2 = status[1]['RANGE'], status[1]['SCALE'], status[1]['OFFSET']
     status = DSO.timebase(dsobench) # timebase
     trange, tdelay, tscale = status[1]['RANGE'], status[1]['DELAY'], status[1]['SCALE']
     trange, tdelay, tscale = float(trange)/cnst.nano, float(tdelay)/cnst.nano, float(tscale)/cnst.nano
-    return jsonify(yrange=yrange, yscale=yscale, yoffset=yoffset, trange=trange, tdelay=tdelay, tscale=tscale)
+    return jsonify(yrange=yrange, yscale=yscale, yoffset=yoffset, yrange2=yrange2, yscale2=yscale2, yoffset2=yoffset2, trange=trange, tdelay=tdelay, tscale=tscale)
 @bp.route('/dso/log', methods=['GET'])
 def dsolog():
     log = get_status('DSO')
@@ -278,6 +281,11 @@ def dsosettings():
     ofset = request.args.get('ofset')
     stat = DSO.channel1(dsobench, action=['Set', 'DC', rnge, scal, ofset, 'Volt', 'OFF'])
     message += ['CHANNEL 1: %s <%s>' %(stat[1], stat[0])]
+    rnge2 = request.args.get('rnge2')
+    scal2 = request.args.get('scal2')
+    ofset2 = request.args.get('ofset2')
+    stat = DSO.channel2(dsobench, action=['Set', 'DC', rnge2, scal2, ofset2, 'Volt', 'OFF'])
+    message += ['CHANNEL 2: %s <%s>' %(stat[1], stat[0])]
     trnge = request.args.get('trnge')
     tdelay = request.args.get('tdelay')
     tscal = request.args.get('tscal')
@@ -291,7 +299,12 @@ def dsosettings():
     ans = list(DSO.waveform(dsobench))[1]
     y, dx = ans['DATA'], float(ans['XINCrement'])
     unitY = list(DSO.channel1(dsobench))[1]["UNITs"]
-    DSO.display2D(dx, y, units=['s', unitY]) #Figure will be in INSTLOG
+    DSO.display2D(dx, y, units=['s', unitY], channel=1) #Figure will be in static/img
+    DSO.waveform(dsobench, action=['Set', 'max', 'channel2', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
+    ans = list(DSO.waveform(dsobench))[1]
+    y, dx = ans['DATA'], float(ans['XINCrement'])
+    unitY = list(DSO.channel2(dsobench))[1]["UNITs"]
+    DSO.display2D(dx, y, units=['s', unitY], channel=2) #Figure will be in static/img
     return jsonify(message=message)
 @bp.route('/dso/about', methods=['GET'])
 def dsoabout():
@@ -301,6 +314,8 @@ def dsoabout():
     message += ['Model: %s (%s)' % (status[1], status[0])]
     status = DSO.channel1(dsobench) # channel 1
     message += ['Channel 1: %s (%s)' % (status[1], status[0])]
+    status = DSO.channel2(dsobench) # channel 2
+    message += ['Channel 2: %s (%s)' % (status[1], status[0])]
     status = DSO.timebase(dsobench) # timebase
     message += ['Timebase: %s (%s)' % (status[1], status[0])]
     status = DSO.acquiredata(dsobench) # acquire data
@@ -314,9 +329,11 @@ def job():
 @bp.route('/job/basic', methods=['GET'])
 def jobasic():
     from pyqum.job import gen_waveform as gwf
-    seg1 = request.args.get('seg1')
-    seg2 = request.args.get('seg2')
-    gwf.squarewave(int(seg1), int(seg2))
+    ch1g = request.args.get('ch1g')
+    ch1e = request.args.get('ch1e')
+    ch2g = request.args.get('ch2g')
+    ch2e = request.args.get('ch2e')
+    gwf.squarewave(int(ch1g), int(ch1e), int(ch2g), int(ch2e))
     return jsonify()
 
 

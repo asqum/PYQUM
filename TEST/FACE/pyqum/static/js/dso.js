@@ -77,6 +77,9 @@ $(function () {
             rnge: $('input.dso[name="rnge"]').val(),
             scal: $('input.dso[name="scal"]').val(),
             ofset: $('input.dso[name="ofset"]').val(),
+            rnge2: $('input.dso[name="rnge2"]').val(),
+            scal2: $('input.dso[name="scal2"]').val(),
+            ofset2: $('input.dso[name="ofset2"]').val(),
             trnge: $('input.dso[name="trnge"]').val(),
             tdelay: $('input.dso[name="tdelay"]').val(),
             tscal: $('input.dso[name="tscal"]').val(),
@@ -107,6 +110,9 @@ $('input.dso#autoscale').bind('click', function () {
         $('input.dso[name="rnge"]').val(data.yrange);
         $('input.dso[name="scal"]').val(data.yscale);
         $('input.dso[name="ofset"]').val(data.yoffset);
+        $('input.dso[name="rnge2"]').val(data.yrange2);
+        $('input.dso[name="scal2"]').val(data.yscale2);
+        $('input.dso[name="ofset2"]').val(data.yoffset2);
         $('input.dso[name="trnge"]').val(data.trange);
         $('input.dso[name="tdelay"]').val(data.tdelay);
         $('input.dso[name="tscal"]').val(data.tscale);

@@ -1,19 +1,10 @@
 from pyqum.instrument.modular import AWG
 AWG.debug(True)
 
-def squarewave(seg0, seg1):
+def squarewave(ch1g, ch1e, ch2g, ch2e):
     s = AWG.InitWithOptions()
-    AWG.Abort_Gen(s)
     AWG.Clear_ArbMemory(s)
-    # Setting Marker:
-    AWG.active_marker(s, action=["Set", "1"])
-    AWG.active_marker(s)
-    AWG.marker_source(s, action=["Set", 10])
-    AWG.marker_source(s)
-    AWG.marker_delay(s, action=["Set", 2e-7])
-    AWG.marker_delay(s)
-    AWG.marker_pulse_width(s, action=["Set", 2.5e-7])
-    AWG.marker_pulse_width(s)
+    AWG.Abort_Gen(s)
 
     # Preparing AWGenerator
     AWG.output_mode_adv(s, action=["Set", 2])
@@ -26,21 +17,17 @@ def squarewave(seg0, seg1):
     AWG.arb_sample_rate(s)
 
     # Create Waveform
-    stat = AWG.CreateArbWaveform(s, ([0]*seg0 + [1]*seg1 + [0]*seg0))
-    h1 = stat[1]
-    stat = AWG.CreateArbWaveform(s, ([0]*seg1 + [-1]*seg1))
-    h2 = stat[1]
-    stat = AWG.CreateArbWaveform(s, ([-1]*seg1))
-    h3 = stat[1]
+    stat = AWG.CreateArbWaveform(s, ([0]*ch1g + [1]*ch1e))
+    ch1 = stat[1]
+    stat = AWG.CreateArbWaveform(s, ([0]*ch2g + [1]*ch2e))
+    ch2 = stat[1]
 
     # Composing different sequences to each channel
     # Channel 1
     i = 1
     if i:
-        Seq = [h1, h3]
-        counts = [1, 2] #loopcount
+        Seq, counts = [ch1], [1] #unique wfm
         stat = AWG.CreateArbSequence(s, Seq, counts)
-        print("Sequence handle for CH1: %s" %stat[1])
         AWG.arb_sequence_handle(s, RepCap='1', action=["Set", stat[1]])
         AWG.arb_sequence_handle(s, RepCap='1')
         AWG.output_enabled(s, RepCap='1', action=["Set", True])
@@ -63,12 +50,10 @@ def squarewave(seg0, seg1):
         AWG.burst_count(s, RepCap='1', action=["Set", 1000001])
 
     # Channel 2
-    i = 0
+    i = 1
     if i:
-        Seq = [h2, h3]
-        counts = [1, 1] #loopcount
+        Seq, counts = [ch2], [1] #unique wfm
         stat = AWG.CreateArbSequence(s, Seq, counts)
-        print("Sequence handle for CH2: %s" %stat[1])
         AWG.arb_sequence_handle(s, RepCap='2', action=["Set", stat[1]])
         AWG.arb_sequence_handle(s, RepCap='2')
         AWG.output_enabled(s, RepCap='2', action=["Set", True])
@@ -94,4 +79,3 @@ def squarewave(seg0, seg1):
     AWG.close(s)
     return
 
-squarewave(5000, 5000)
