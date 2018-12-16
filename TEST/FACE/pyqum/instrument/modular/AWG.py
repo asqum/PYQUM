@@ -50,7 +50,7 @@ def InitWithOptions(IdQuery=False, Reset=False, OptionsString='Simulate=false, D
     return msession
 
 ## WRAPPER
-# 2.1 Get/Set Attribute (String, Int32, Real64)
+# 2.1 Get/Set Attribute (String, Int32, Real64, Boolean)
 def Attribute(Name):
     @wraps(Name)
     def wrapper(*a, **b):
@@ -427,7 +427,7 @@ def Init_Gen(session):
     AGM = dll.AgM933x_InitiateGeneration
     AGM.restype = c_int
     status = AGM(c_long(session))
-    print(Fore.GREEN + "%s's generation Initialized: %s" % (mdlname, status_code(status)))
+    print(Fore.GREEN + "%s's generation Initiated: %s" % (mdlname, status_code(status)))
     return status_code(status)
 
 # 2.6 Clear Arbitrary Memory
@@ -445,8 +445,9 @@ def Clear_ArbMemory(session):
 def close(session):
     '''[Close the connection]
     '''
-    AGMclose = dll.AgM933x_close
-    status = AGMclose(c_long(session))
+    AGM = dll.AgM933x_close
+    AGM.restype = c_int
+    status = AGM(c_long(session))
     if status == 0:
         set_status(mdlname, dict(state="Closed Successfully"))
     else: set_status(mdlname, dict(state="Error: " + str(status)))
