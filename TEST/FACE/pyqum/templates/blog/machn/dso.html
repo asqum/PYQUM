@@ -8,12 +8,10 @@
 <body class="mach">
 <div>
     <!--previous settings-->
-    <form method='GET'>
-        <button class="slider" id="dso"><strong>Instrument Log (History)</strong></button>
-    </form>
+    <button class="slider" id="dso"><strong>Instrument Log (History)</strong></button>
     <div class="instrlog" id="dso"></div>
 
-    <div class="tab">
+    <div class="tab" style='margin-top:32px;'>
         <button class='dso' id='reset'><i class="fa fa-refresh" style="font-size:15px;color:lightgreen;"></i> RESET</button>
         <button class='dso' id='close'><i class="fa fa-times-circle" style="font-size:15px;color:red;"></i> CLOSE</button>
 
@@ -29,63 +27,66 @@
     
     <div class="dsocontent" id="settings">
         <div class="container">
-            <form method='GET'>
-                <h3>Channel 1:</h3>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Y-Range</label></div>
-                <div class="col-75"><input class='dso' id="settings" name='rnge' type="text" value="{{yrange}}"/></div>
-                </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Y-Scale</label></div>
-                <div class="col-75"><input class='dso' id="settings" name='scal' type="text" value="{{yscale}}"/></div>
-                </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Y-Offset</label></div>
-                <div class="col-75"><input class='dso' id="settings" name="ofset" type="text" value="{{yoffset}}"/></div> 
-                </div>
-                <h3>Channel 2:</h3>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Y-Range</label></div>
-                <div class="col-75"><input class='dso' id="settings" name='rnge2' type="text" value="{{yrange2}}"/></div>
-                </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Y-Scale</label></div>
-                <div class="col-75"><input class='dso' id="settings" name='scal2' type="text" value="{{yscale2}}"/></div>
-                </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Y-Offset</label></div>
-                <div class="col-75"><input class='dso' id="settings" name="ofset2" type="text" value="{{yoffset2}}"/></div> 
-                </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>T-Range (ns)</label></div>
-                <div class="col-75"><input class='dso' id="settings" name="trnge" type="text" value="{{trange}}"/></div> 
-                </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>T-Delay (ns)</label></div>
-                <div class="col-75"><input class='dso' id="settings" name="tdelay" type="text" value="{{tdelay}}"/></div> 
-                </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>T-Scale (ns)</label></div>
-                <div class="col-75"><input class='dso' id="settings" name="tscal" type="text" value="{{tscale}}"/></div> 
-                </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Average Count</label></div>
-                <div class="col-75"><input class='dso' id="settings" name="avenum" type="text" value="12"/></div> 
-                </div>
-                
-                
-                <div class="row"> <!-- ACTION BUTTON -->
-                    <div class="col-25"></div>
-                    <div class="col-25"><input class='dso' id='autoscale' type="submit" value="Autoscale"/></div>
-                    <div class="col-25"><input class='dso' id='submitsettings' type="submit" value="Submit"/></div>
-                </div>
-            </form>
+            <h3>Channel 1:</h3>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>Y-Range</label></div>
+            <div class="col-75"><input class='dso' id="settings" name='rnge' type="text" value="{{yrange}}"/></div>
+            </div>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>Y-Scale</label></div>
+            <div class="col-75"><input class='dso' id="settings" name='scal' type="text" value="{{yscale}}"/></div>
+            </div>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>Y-Offset</label></div>
+            <div class="col-75"><input class='dso' id="settings" name="ofset" type="text" value="{{yoffset}}"/></div> 
+            </div>
+            <h3>Channel 2:</h3>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>Y-Range</label></div>
+            <div class="col-75"><input class='dso' id="settings" name='rnge2' type="text" value="{{yrange2}}"/></div>
+            </div>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>Y-Scale</label></div>
+            <div class="col-75"><input class='dso' id="settings" name='scal2' type="text" value="{{yscale2}}"/></div>
+            </div>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>Y-Offset</label></div>
+            <div class="col-75"><input class='dso' id="settings" name="ofset2" type="text" value="{{yoffset2}}"/></div> 
+            </div>
+            <h3>Time Range:</h3>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>T-Range (ns)</label></div>
+            <div class="col-75"><input class='dso' id="settings" name="trnge" type="text" value="{{trange}}"/></div> 
+            </div>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>T-Delay (ns)</label></div>
+            <div class="col-75"><input class='dso' id="settings" name="tdelay" type="text" value="{{tdelay}}"/></div> 
+            </div>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>T-Scale (ns)</label></div>
+            <div class="col-75"><input class='dso' id="settings" name="tscal" type="text" value="{{tscale}}"/></div> 
+            </div>
+            <h3>Averaging:</h3>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="col-25"><label>Average Count</label></div>
+            <div class="col-75"><input class='dso' id="settings" name="avenum" type="text" value="12"/></div> 
+            </div>
+
+
+            <div class="row"> <!-- ACTION BUTTON -->
+                <div class="col-25"></div>
+                <div class="col-25"><input class='dso' id='autoscale' type="submit" value="Autoscale"/></div>
+                <div class="col-25"><input class='dso' id='submitsettings' type="submit" value="Submit"/></div>
+            </div>
+            
         </div>
     </div>
 
     <div class="dsocontent" id="display">
-        <img id='ch1' src='/static/img/dso/DSOwaveform(CH1).png' alt='DSOwaveform'>
-        <img id='ch2' src='/static/img/dso/DSOwaveform(CH2).png' alt='DSOwaveform'>   
+        <div class="container">
+            <img id='ch1' src='/static/img/dso/DSOwaveform(CH1).png' alt='DSOwaveform'>
+            <img id='ch2' src='/static/img/dso/DSOwaveform(CH2).png' alt='DSOwaveform'> 
+        </div>
     </div>
 </div>
 </body>

@@ -11,6 +11,7 @@ from functools import wraps
 from ctypes import c_int, c_bool, c_char_p, byref, cdll, c_char, c_long, c_double, c_float
 from ctypes.util import find_library
 from pyqum.instrument.logger import address, get_status, set_status, status_code
+import matplotlib.pyplot as plt
 
 # dloc = "C:\\Program Files\\IVI Foundation\\IVI\Bin\\AgM9392_64.dll" #64-bit
 lib_name = find_library('AgM9392_64.dll')
@@ -104,7 +105,7 @@ def Attribute(Name):
 
         # Logging Answer:
         if action[0] == "Get": # No logging for "Set"
-            if  status == 0:
+            if status == 0:
                 set_status(mdlname, {Name.__name__ + hashtag : ans}) #logging the name and value of the attribute
             else: set_status(mdlname, {Name.__name__ + hashtag : "Error: " + str(status)})
 
@@ -281,11 +282,50 @@ def Get_Data(session, ComplexDataBufferSize):
     ComplexDataActualSize = c_long()
     NumberCopied = c_long()
     status = AGM(c_long(session), c_long(ComplexDataBufferSize), byref(ComplexData), byref(ComplexDataActualSize), byref(NumberCopied))
-    # print("Complex Data: %s" %[x for x in ComplexData])
-    print("Actual Size: %s; Number Copied: %s" %(ComplexDataActualSize.value, NumberCopied.value))
-    print(Fore.LIGHTWHITE_EX + "%s's Data Extracted: %s" % (mdlname, status_code(status)))
-    return status
+    answer = {}
+    answer["ComplexData"] = [x for x in ComplexData]
+    answer["ComplexDataActualSize"], answer["NumberCopied"] = ComplexDataActualSize.value, NumberCopied.value
+    if status == 0:
+        set_status(mdlname, {stack()[0][3] : answer}) #logging the name and value of the attribute
+    else: set_status(mdlname, {stack()[0][3] : "Error: " + str(status)})
+    if eval(debugger):
+        print(Fore.LIGHTWHITE_EX + "%s out of %s actual %s's Data extracted & copied: %s" % (NumberCopied.value, ComplexDataActualSize.value, mdlname, status_code(status)))
+    return status, answer
 
+def display2D(IQdata, samplerate):
+    # setting image path
+    from pathlib import Path
+    from inspect import getfile, currentframe
+    pyfilename = getfile(currentframe()) # current pyscript filename (usually with path)
+    INSTR_PATH = Path(pyfilename).parents[2] / "static" / "img" / "vsa" # 2 levels up the path
+    image_IQ = "%s(IQData).png" %(mdlname)
+    IMG_IQ = Path(INSTR_PATH) / image_IQ
+    # Scaling X
+    dx = 1/samplerate
+    from math import log10
+    x_order = round(log10(dx))
+    # Organizing Data
+    X = [x*dx/10**x_order for x in range(int(len(IQdata)/2))]
+    i, YI, YQ = 1, [], []
+    for data in IQdata:
+        if i%2:
+            YI.append(IQdata[i-1])
+        else: YQ.append(IQdata[i-1])
+        i += 1
+    # Plotting
+    fig, ax = plt.subplots(2, 1, sharex=True, sharey=False)
+    ax[0].set(title="%s's IQ-Data"%(mdlname))
+    ax[0].plot(X, YI)
+    ax[0].set(ylabel=r'I-Data (V)')
+    ax[1].plot(X, YQ)
+    ax[1].set(ylabel=r'Q-Data (V)')
+    ax[1].set(xlabel=r'$time({\times} 10^{%d}s)$'%(x_order))
+    [axe.grid(True) for axe in ax]
+    fig.tight_layout()
+    fig.savefig(IMG_IQ, format="png")
+    if eval(debugger):
+        plt.show()
+    return X, YI, YQ
 
 # 3. close
 def close(session):
@@ -311,9 +351,10 @@ def test(detail=False):
         resource_descriptor(s)
         model(s)
         acquisition_time(s)
+        acquisition_time(s, action=["Set", 3e-5])
         preselector_enabled(s)
-        frequency(s)
-        power(s)
+        frequency(s, action=["Set", 5e9])
+        power(s, action=["Set", -7.3])
         bandwidth(s)
         # setting trigger
         trigger_source(s)
@@ -326,9 +367,10 @@ def test(detail=False):
         Arm_Measure(s)
         stat = samples_number(s)
         # Get Sample Rate
-        sample_rate(s)
+        sr = sample_rate(s)
         # Extracting Data
-        Get_Data(s, 2*stat[1])
+        gd = Get_Data(s, 2*stat[1])
+        display2D(gd[1]['ComplexData'], sr[1])
 
     else: print(Fore.RED + "Basic IO Test")
     close(s)

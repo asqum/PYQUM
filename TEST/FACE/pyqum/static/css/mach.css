@@ -7,11 +7,12 @@
 
 /* General Tabs */
 .tab {
+    position: fixed;
     align-content: space-around;
     padding-left: 0%;
     float: left;
     background-color: #f1f1f1;
-    width: 20%;
+    width: 15%;
     height: 100vh;
     overflow-y: scroll;
     overflow-x: hidden;
@@ -38,12 +39,13 @@
 }
 
 .tabcontent {
+    position: fixed;
     display: none;
     float: left;
     padding: 0px 0.5%;
-    width: 79%;
+    width: 84%;
     height: 100vh;
-    overflow-y: scroll;
+    margin-left: 15%;
 }
 
 /* Only allow ALL-page to show-up when loading machine.html */
@@ -53,6 +55,7 @@
 
 /* Instrument's Log */
 .slider {
+    position: fixed; /* use margin to compensate */
     background-color: darkblue;
     color: white;
     cursor: pointer;
@@ -73,6 +76,7 @@
 }
 
 .instrlog {
+    margin-bottom: -32px;
     padding: 0 7px;
     display: none;
     overflow: hidden;
@@ -80,12 +84,12 @@
 }
 
 /* Modified Tabs */
-.reset {
+.reset, .generate {
     background-color: #4CAF50;
     color: white;
 }
 
-.close {
+.close, .abort {
     background-color: tomato;
     color: white;
 }
@@ -109,10 +113,27 @@
 
 /* Instrument content page */
 div.awgcontent, div.vsacontent, div.esgcontent, div.mxgcontent, div.dsocontent, div.jobcontent {
+    position: fixed;
     display: block;
     float: left;
-    padding: 0px 3.5%;
-    width: 73%;
+    margin-top: 32px;
+    margin-left: 15%;
+    padding-left: 3.5%;
+    padding-right: 3.5%;
+    width: 78%;
     height: 100vh;
+    margin-bottom: 64px;
     overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+
+/* special adjustment to jobcontent due to the absence of instrlog */
+div.jobcontent {
+    margin-top: 16px;
+}
+
+img {
+    object-fit: contain;
+    display: block;
+    width: 70%;
 }

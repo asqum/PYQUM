@@ -1,0 +1,30 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<head>
+    <title>{% block title %}{% endblock %} - PyQuM</title>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+    {% block head %}{% endblock %}
+</head>
+
+<div class="navbar">
+        <a href="{{ url_for('blog.index') }}" class="home left">Home</a>
+        <a href="{{ url_for('machine.show') }}" class="mach left">Machine</a>
+        <a href="{{ url_for('display.figstatic') }}" class="fig left">Display</a>
+        <a href="{{ url_for('bridge.show') }}" class="bridg left">Bridge</a>
+        <a href="{{ url_for('guide.show') }}" class="guide left">Guide</a>
+
+        {% if g.user %}
+        <span class="user right">{{ g.user['username'] }}</span>
+        <a href="{{ url_for('auth.logout') }}" class="right">Log Out</a>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}" class="reg right">Register</a>
+        <a href="{{ url_for('auth.login') }}" class="login right">Log In</a>
+        {% endif %}    
+</div>
+
+<div style="margin-top:56px;">
+    {% block content %}{% endblock %}
+</div>

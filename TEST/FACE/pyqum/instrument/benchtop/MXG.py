@@ -159,12 +159,15 @@ def test(detail=False):
         commentstate(s, action=['Get', '1,0'])
         power(s, action=['Set', '-7.3dbm'])
         power(s)
-        frequency(s, action=['Set', '1GHz'])
+        frequency(s, action=['Set', '5GHz'])
         frequency(s)
         output(s, action=['Set', 'ON'])
         output(s)
     else: print(Fore.RED + "Basic IO Test")
-    close(s)
+    if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):
+        state = True
+    else: state = False
+    close(s, reset=state)
     return
 
 #test(True)

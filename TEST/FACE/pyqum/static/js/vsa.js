@@ -9,6 +9,7 @@ $(function () {
         $.getJSON('/mach/vsa/log', {
         }, function (data) {
             $('div.instrlog#vsa').empty();
+            $('div.instrlog#vsa').append($('<p style="margin-top:32px;"></p>'));
             $.each(data.log, function(index, value) {
                 $('div.instrlog#vsa').append($('<h4 style="color: white;"></h4>').text(index + ": ").
                 append($('<span style="color: yellow;"></span>').text(value)));

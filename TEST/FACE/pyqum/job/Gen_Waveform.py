@@ -6,6 +6,12 @@ def squarewave(ch1g, ch1e, ch2g, ch2e):
     AWG.Clear_ArbMemory(s)
     AWG.Abort_Gen(s)
 
+    # Setting Marker:
+    AWG.active_marker(s, action=["Set", "3"])
+    AWG.marker_source(s, action=["Set", 7])
+    AWG.marker_delay(s, action=["Set", 2e-7])
+    AWG.marker_pulse_width(s, action=["Set", 2.5e-7])
+
     # Preparing AWGenerator
     AWG.output_mode_adv(s, action=["Set", 2])
     AWG.output_mode_adv(s)

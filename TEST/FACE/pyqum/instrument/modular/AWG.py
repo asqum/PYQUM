@@ -365,7 +365,7 @@ def Abort_Gen(session):
     AGM.restype = c_int
     status = AGM(c_long(session))
     print(Back.WHITE + Fore.BLACK + "%s's generation Aborted: %s" %(mdlname, status_code(status)))
-    return status_code(status)
+    return status
 
 # 2.2 Create Arbitrary Waveform
 def CreateArbWaveform(session, Data):
@@ -387,7 +387,7 @@ def CreateArbWaveform(session, Data):
     if eval(debugger):
         # print("Data: %s" %Data)
         print(Back.YELLOW + Fore.MAGENTA + "%s: %s (%s)" %(stack()[0][3], handle.value, status_code(status)))
-    return status_code(status), handle.value
+    return status, handle.value
 
 # 2.3 Create Arbitrary Sequence
 def CreateArbSequence(session, sequence, counts):
@@ -407,7 +407,7 @@ def CreateArbSequence(session, sequence, counts):
         print("Sequence: %s" %sequence)
         print("Sequence's counts: %s" %counts)
         print(Back.YELLOW + Fore.MAGENTA + "%s: %s (%s)" %(stack()[0][3], handle.value, status_code(status)))
-    return status_code(status), handle.value
+    return status, handle.value
 
 # 2.4 Send Numbered Software Trigger (initiate burst/single pulse)
 def Send_Pulse(session, triggernum=1):
@@ -418,7 +418,7 @@ def Send_Pulse(session, triggernum=1):
     status = AGM(c_long(session), c_long(triggernum))
     if eval(debugger):
         print(Back.YELLOW + Fore.MAGENTA + "%s: %s" %(stack()[0][3], status_code(status)))
-    return status_code(status)
+    return status
 
 # 2.5 Initiate Generation
 def Init_Gen(session):
@@ -428,7 +428,7 @@ def Init_Gen(session):
     AGM.restype = c_int
     status = AGM(c_long(session))
     print(Fore.GREEN + "%s's generation Initiated: %s" % (mdlname, status_code(status)))
-    return status_code(status)
+    return status
 
 # 2.6 Clear Arbitrary Memory
 def Clear_ArbMemory(session):
@@ -439,7 +439,7 @@ def Clear_ArbMemory(session):
     AGM.restype = c_int
     status = AGM(c_long(session))
     print(Fore.GREEN + "%s's arbitrary memory ALL Cleared: %s" % (mdlname, status_code(status)))
-    return status_code(status)
+    return status
 
 # 3. close
 def close(session):
@@ -471,9 +471,9 @@ def test(detail=False):
         output_clock_freq(s)
 
         # Setting Marker:
-        active_marker(s, action=["Set", "1"])
+        active_marker(s, action=["Set", "3"])
         active_marker(s)
-        marker_source(s, action=["Set", 10])
+        marker_source(s, action=["Set", 7])
         marker_source(s)
         marker_delay(s, action=["Set", 2e-7])
         marker_delay(s)
@@ -500,7 +500,7 @@ def test(detail=False):
         h2 = stat[1]
         stat = CreateArbWaveform(s, ([-1]*seg2))
         h3 = stat[1]
-        stat = CreateArbWaveform(s, ([0.2]*5000 + [5]*1200 + [-1]*1000))
+        stat = CreateArbWaveform(s, ([0]*5000 + [1]*1200 + [-1]*1000))
         ch1 = stat[1]
         stat = CreateArbWaveform(s, ([0.8]*5000 + [-1]*1000 + [i/1200 for i in range(1200)]))
         ch2 = stat[1]

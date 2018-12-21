@@ -22,12 +22,13 @@ from pyqum.instrument.benchtop import MXG, ESG, DSO
 # mxgbench = MXG.Initiate()
 # dsobench = DSO.Initiate()
 
+encryp = 'ghhgjad'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
 
 # Main
 @bp.route('/')
 def show():
-    return render_template("blog/machn/machine.html")
+    return render_template("blog/machn/machine.html", encryp=encryp)
 
 # ALL
 @bp.route('/all', methods=['POST', 'GET'])
@@ -49,13 +50,23 @@ def awgreset():
     awgsess = AWG.InitWithOptions()
     AWG.Abort_Gen(awgsess)
     return jsonify(message=awgsess)
+@bp.route('/awg/generate', methods=['GET'])
+def awggenerate():
+    global awgsess
+    status = AWG.Init_Gen(awgsess)
+    return jsonify(message=status)
 @bp.route('/awg/close', methods=['GET'])
 def awgclose():
     global awgsess
     status = AWG.close(awgsess)
     return jsonify(message=status)
-@bp.route('/awg/settings', methods=['GET'])
-def awgsettings():
+@bp.route('/awg/abort', methods=['GET'])
+def awgabort():
+    global awgsess
+    status = AWG.Abort_Gen(awgsess)
+    return jsonify(message=status)
+@bp.route('/awg/settings-marker', methods=['GET'])
+def awgsettingsmarker():
     global awgsess
     message = []
     active = request.args.get('active')
@@ -70,12 +81,64 @@ def awgsettings():
     source = request.args.get('source')
     stat = AWG.marker_source(awgsess, action=['Set',int(source)])
     message += ['marker source: %s <%s>' %(stat[1], status_code(stat[0]))]
+    return jsonify(message=message)
+@bp.route('/awg/settings-prepare', methods=['GET'])
+def awgsettingsprepare():
+    global awgsess
+    message = []
     predist = request.args.get('predist')
     stat = AWG.predistortion_enabled(awgsess, action=['Set',int(predist)])
     message += ['predistortion enabled: %s <%s>' %(stat[1], status_code(stat[0]))]
     outpmode = request.args.get('outpmode')
     stat = AWG.output_mode_adv(awgsess, action=['Set',int(outpmode)])
     message += ['advanced output mode: %s <%s>' %(stat[1], status_code(stat[0]))]
+    samprat = request.args.get('samprat')
+    stat = AWG.arb_sample_rate(awgsess, action=['Set',float(samprat)])
+    message += ['sample rate: %s <%s>' %(stat[1], status_code(stat[0]))]
+    return jsonify(message=message)
+@bp.route('/awg/settings-squarewave', methods=['GET'])
+def awgsettingssquarewave():
+    global awgsess, seqhandl
+    message = []
+    # Shaping parameters
+    voltag = []
+    voltag.append(float(request.args.get('voltag1')))
+    voltag.append(float(request.args.get('voltag2')))
+    pointnum = []
+    pointnum.append(int(request.args.get('pointnum1')))
+    pointnum.append(int(request.args.get('pointnum2')))
+    wavefom = ([voltag[0]]*pointnum[0] + [voltag[0]]*pointnum[0])
+    print(Fore.YELLOW + "waveform:%s" %[x for x in wavefom])
+    stat = AWG.CreateArbWaveform(awgsess, wavefom)
+    print(Fore.YELLOW + "Arb Waveform Created: %s"%stat[0])
+    message += ['Waveform created: %s <%s>' %(stat[1], status_code(stat[0]))]
+    stat = AWG.CreateArbSequence(awgsess, [stat[1]], [1]) # loop# canbe >1 if longer sequence is needed in the future!
+    print(Fore.YELLOW + "Arb Sequence Created: %s"%stat[0])
+    seqhandl = stat[1]
+    message += ['Sequence assembled: %s <%s>' %(stat[1], status_code(stat[0]))]
+    return jsonify(message=message)
+@bp.route('/awg/settings-channel', methods=['GET'])
+def awgsettingschannel():
+    global awgsess, seqhandl
+    message = [] 
+    channel = request.args.get('channel')
+    stat = AWG.arb_sequence_handle(awgsess, RepCap=channel, action=["Set", seqhandl])
+    message += ['Sequence embeded: %s <%s>' %(stat[1], status_code(stat[0]))]
+    outputch = request.args.get('outputch')
+    stat = AWG.output_enabled(awgsess, RepCap=channel, action=["Set", int(outputch)])
+    message += ['output channel %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
+    oupfiltr = request.args.get('oupfiltr')
+    stat = AWG.output_filter_enabled(awgsess, RepCap=channel, action=["Set", int(oupfiltr)])
+    message += ['output filter channel %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
+
+    # temporary:
+    AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
+    AWG.output_config(awgsess, RepCap=channel, action=["Set", 0])
+    AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.25])
+    AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
+    AWG.operation_mode(awgsess, RepCap=channel, action=["Set", 0])
+    AWG.trigger_source_adv(awgsess, RepCap=channel, action=["Set", 0])
+    AWG.burst_count(awgsess, RepCap=channel, action=["Set", 1000001])
 
     return jsonify(message=message)
 @bp.route('/awg/about', methods=['GET'])
@@ -96,6 +159,8 @@ def awgabout():
     message += ['Predistortion Enabled: %s (%s)' % (status[1], status_code(status[0]))]
     status = AWG.output_mode_adv(awgsess) # advanced output mode
     message += ['Advanced Output Mode: %s (%s)' % (status[1], status_code(status[0]))]
+    status = AWG.arb_sample_rate(awgsess) # sample rate
+    message += ['Sample Rate: %s (%s)' % (status[1], status_code(status[0]))]
     
     return jsonify(message=message)
 

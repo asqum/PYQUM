@@ -9,6 +9,7 @@ $(function () {
         $.getJSON('/mach/dso/log', {
         }, function (data) {
             $('div.instrlog#dso').empty();
+            $('div.instrlog#dso').append($('<p style="margin-top:32px;"></p>'));
             $.each(data.log, function(index, value) {
                 $('div.instrlog#dso').append($('<h4 style="color: white;"></h4>').text(index + ": ").
                 append($('<span style="color: yellow;"></span>').text(value)));
@@ -34,6 +35,8 @@ $(function() {
 //show about's page
 $(function () {
     $('button.dso#about').bind('click', function () { // id become #
+        $( "i.dso" ).remove();
+        $('button.dso#about').removeClass('newupdate');
         $.getJSON('/mach/dso/about', {
         }, function (data) {
             $('div.dsocontent').hide();
@@ -90,11 +93,11 @@ $(function () {
                 $('div.dsocontent#debug').append($('<h4 style="color: black;"></h4>').text(Number(index+1) + ". " + value));
               });
             //click on about
-            $('button.dso#about').trigger('click'); //or: .click();
+            $('button.dso#display').trigger('click'); //or: .click();
             //update display-button:
-            $('button.dso#display').addClass('newupdate');
+            $('button.dso#about').addClass('newupdate');
             $( "i.dso" ).remove(); //clear previous
-            $('button.dso#display').prepend("<i class='dso fa fa-file-photo-o faa-ring animated fa-4x' style='font-size:15px;color:blue;'></i> ");
+            $('button.dso#about').prepend("<i class='dso fa fa-file-text-o faa-ring animated fa-4x' style='font-size:15px;color:blue;'></i> ");
         });
         return false;
     });
@@ -104,7 +107,7 @@ $(function () {
 $('input.dso#autoscale').bind('click', function () {
     $( "i.dso" ).remove(); //clear previous
     $('button.dso#settings').prepend("<i class='dso fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-    $.getJSON('/mach/dso/autoscale', {
+    $.getJSON('/mach'+'/dso/autoscale', {
     }, function (data) {
         $( "i.dso" ).remove(); //clear previous
         $('input.dso[name="rnge"]').val(data.yrange);
@@ -123,7 +126,7 @@ $('input.dso#autoscale').bind('click', function () {
 //reset
 $(function () {
     $('button.dso#reset').bind('click', function () { // id become #
-        $.getJSON('/mach/dso/reset', {
+        $.getJSON('/mach'+'/dso/reset', {
         }, function (data) {
             if (data.message == "Success"){
                 $('button.dso').removeClass('error');
@@ -155,9 +158,7 @@ $(function() {
     $('button.dso#display').bind('click', function() {
         $('div.dsocontent').hide();
         $('div.dsocontent#display').show();
-        $( "i.dso" ).remove();
         $('button.dso').removeClass('selected');
-        $('button.dso#display').removeClass('newupdate');
         $('button.dso#display').addClass('selected');
         //refresh image-cache:
         jQuery('img').each(function(){
@@ -166,3 +167,4 @@ $(function() {
         return false;
     });
 });
+

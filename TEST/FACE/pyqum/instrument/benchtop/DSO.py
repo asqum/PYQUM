@@ -82,7 +82,7 @@ def Attribute(Name):
 
         # Logging answer
         if action[0] == 'Get': # No logging for "Set"
-            set_status(mdlname, {Name.__name__ : str(ans)})
+            set_status(mdlname, {Name.__name__ : ans})
 
         # debugging
         if eval(debugger):
@@ -131,22 +131,27 @@ def measure(bench, action=['Get'] + 10 * ['']): # SETTING UP WAVEFORM
     return bench, SCPIcore, action
 
 def display2D(dx, y, units, channel):
-    # setting png path
+    # setting image path
     from pathlib import Path
     from inspect import getfile, currentframe
     pyfilename = getfile(currentframe()) # current pyscript filename (usually with path)
     INSTR_PATH = Path(pyfilename).parents[2] / "static" / "img" / "dso" # 2 levels up the path
-    png_file = "%swaveform(CH%s).png" %(mdlname, channel)
-    PNG = Path(INSTR_PATH) / png_file
+    image_file = "%swaveform(CH%s).png" %(mdlname, channel)
+    IMG = Path(INSTR_PATH) / image_file
+    # Scaling X
+    from math import log10
+    x_order = round(log10(dx))
     # Organizing Data
     Y = [float(i) for i in y.split(",")[1:-1]] # to avoid the first and the last string
-    X = arange(0, len(Y), 1) * dx
+    X = [x*dx/10**x_order for x in range(len(Y))]  #X = arange(0, len(Y), 1) * dx
     # Plotting
     fig, ax = plt.subplots()
     ax.plot(X, Y)
-    ax.set(xlabel='time(%s)'%units[0], ylabel='voltage (%s)'%units[1], title=mdlname+'-Waveform')
-    plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
-    fig.savefig(PNG)
+    ax.set(xlabel=r'$time({\times} 10^{%d}%s)$'%(x_order, units[0]))
+    ax.set(ylabel=r'voltage (%s)'%units[1][0])
+    ax.set(title="%s's Channel %s"%(mdlname, channel))
+    plt.setp(ax.get_xticklabels(), rotation=0, horizontalalignment='right')
+    fig.savefig(IMG, format="png")
     if eval(debugger):
         plt.show()
 

@@ -9,6 +9,7 @@ $(function () {
         $.getJSON('/mach/esg/log', {
         }, function (data) {
             $('div.instrlog#esg').empty();
+            $('div.instrlog#esg').append($('<p style="margin-top:32px;"></p>'));
             $.each(data.log, function(index, value) {
                 $('div.instrlog#esg').append($('<h4 style="color: white;"></h4>').text(index + ": ").
                 append($('<span style="color: yellow;"></span>').text(value)));
