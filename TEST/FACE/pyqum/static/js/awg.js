@@ -86,12 +86,8 @@ function awgmarker () {
         pulsew: $('input.awg[name="pulsew"]').val(),
         source: $('select.awg[name="source"]').val()}, 
     function(data) {logdebug(data);}); 
-    console.log("setting awg-marker!");
+        console.log("setting awg-marker!");
 }
-$(function () {
-    $('input.awg#set-marker').bind('click', function () {
-        awgmarker();
-        return false; }); }); 
          
 // set prepare
 function awgprepare () {
@@ -100,12 +96,8 @@ function awgprepare () {
         outpmode: $('select.awg[name="outpmode"]').val(),
         samprat: $('select.awg[name="samprat"]').val()}, 
     function(data) {logdebug(data);}); 
-    console.log("setting awg-prepare!");
+        console.log("setting awg-prepare!");
 }
-$(function () {
-    $('input.awg#set-prepare').bind('click', function () {
-        awgprepare();
-        return false; }); }); 
 
 // set squarewave
 function awgsquarewave () {
@@ -114,8 +106,9 @@ function awgsquarewave () {
         pointnum1: $('input.awg[name="pointnum1"]').val(),
         voltag2: $('input.awg[name="voltag2"]').val(),
         pointnum2: $('input.awg[name="pointnum2"]').val()}, 
-    function(data) {logdebug(data);}); 
-    console.log("setting awg-squarewave!");
+    function(data) {logdebug(data);
+        console.log("setting awg-squarewave");
+    }); 
 }
 
 // set channel
@@ -125,63 +118,54 @@ function awgchannel () {
         outputch: $('select.awg[name="outputch"]').val(),
         oupfiltr: $('select.awg[name="oupfiltr"]').val()}, 
     function(data) {logdebug(data);}); 
-    console.log("setting awg-channel!");
+        console.log("setting awg-channel!");
 }
 
-//settings: marker goto prepare
+//settings' forward sequences
 $(function () {
-    $('input.awg#goto-prepare').bind('click', function () {
+    $('input.awg#set-marker').bind('click', function () {
         $('div.awgcontent#settings-marker').hide();
         $('div.awgcontent#settings-prepare').show(); }); });
-//settings: prepare goto squarewave
 $(function () {
-    $('input.awg#goto-squarewave').bind('click', function () {
+    $('input.awg#set-prepare').bind('click', function () {
         $('div.awgcontent#settings-prepare').hide();
         $('div.awgcontent#settings-squarewave').show(); }); });
-//settings: prepare bato marker
+//settings' backward sequences
 $(function () {
     $('input.awg#bato-marker').bind('click', function () {
         $('div.awgcontent#settings-prepare').hide();
         $('div.awgcontent#settings-marker').show(); }); });
-//settings: squarewave bato prepare
 $(function () {
     $('input.awg#bato-prepare').bind('click', function () {
         $('div.awgcontent#settings-squarewave').hide();
         $('div.awgcontent#settings-prepare').show(); }); });
-//settings: squarewave -> channel
+//settings:  looping squarewave <-> channel
 $(function () {
-    $('input.awg#goto-channel').bind('click', function () {
+    $('input.awg#set-squarewave').bind('click', function () {
         $('div.awgcontent#settings-squarewave').hide();
         $('div.awgcontent#settings-channel').show(); }); });
-//settings: squarewave <- channel
 $(function () {
     $('input.awg#set-channel').bind('click', function () {
         $('div.awgcontent#settings-channel').hide();
         $('div.awgcontent#settings-squarewave').show(); }); });
 
-// settings:
+// settings: execution
 $(function () {
-    $('input.awg#goto-squarewave').bind('click', function () {
-        console.log("wrap-up marker & prepare");
-        awgmarker();
-        awgprepare();
-        return false;
-    });
-});
+    $('input.awg#set-marker').bind('click', function () {
+        console.log("set-up marker");
+        awgmarker(); return false; }); });
 $(function () {
-    $('input.awg#goto-channel').bind('click', function () {
-        console.log("set-up channels");
-        awgsquarewave();
-        return false;
-    });
-});
+    $('input.awg#set-prepare').bind('click', function () {
+        console.log("set-up prepare");
+        awgprepare(); return false; }); });
+$(function () {
+    $('input.awg#set-squarewave').bind('click', function () {
+        console.log("set-up square-wave");
+        awgsquarewave(); return false; }); });
 $(function () {
     $('input.awg#set-channel').bind('click', function () {
         console.log("set-up channels");
-        awgchannel();
-        return false;
-    });
-});
+        awgchannel(); return false; }); });
 
 //reset
 $(function () {

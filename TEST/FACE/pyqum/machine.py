@@ -107,19 +107,22 @@ def awgsettingssquarewave():
     pointnum = []
     pointnum.append(int(request.args.get('pointnum1')))
     pointnum.append(int(request.args.get('pointnum2')))
-    wavefom = ([voltag[0]]*pointnum[0] + [voltag[0]]*pointnum[0])
-    print(Fore.YELLOW + "waveform:%s" %[x for x in wavefom])
+    wavefom = ([voltag[0]]*pointnum[0] + [voltag[1]]*pointnum[1])
+    
     stat = AWG.CreateArbWaveform(awgsess, wavefom)
     print(Fore.YELLOW + "Arb Waveform Created: %s"%stat[0])
     message += ['Waveform created: %s <%s>' %(stat[1], status_code(stat[0]))]
     stat = AWG.CreateArbSequence(awgsess, [stat[1]], [1]) # loop# canbe >1 if longer sequence is needed in the future!
     print(Fore.YELLOW + "Arb Sequence Created: %s"%stat[0])
     seqhandl = stat[1]
+    print("seq handle in set-waveform is %s"%seqhandl)
     message += ['Sequence assembled: %s <%s>' %(stat[1], status_code(stat[0]))]
+
     return jsonify(message=message)
 @bp.route('/awg/settings-channel', methods=['GET'])
 def awgsettingschannel():
     global awgsess, seqhandl
+    print("seq handle in set-channel is %s"%seqhandl)
     message = [] 
     channel = request.args.get('channel')
     stat = AWG.arb_sequence_handle(awgsess, RepCap=channel, action=["Set", seqhandl])

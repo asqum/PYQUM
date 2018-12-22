@@ -1,5 +1,6 @@
 import visa
 import numpy
+from time import sleep
 
 # ena
 rm = visa.ResourceManager()
@@ -17,9 +18,6 @@ print(ena.query('*IDN?'))  #inquiring machine identity: "who r u?"
 #Clear buffer memory
 ena.write(':SENS:CORR:COLL:CLE') 
 
-# switch on ena
-ena.write('OUTP ON')
-
 # set trace#
 def setrace():
     ena.write('CALC1:PAR:COUN 2')
@@ -30,9 +28,9 @@ def setrace():
     for i in range(int(trace_num)):
         trace_info+=('trace#%s: ' %(i+1) + ena.query('CALC1:PAR%s:DEF?' %(i+1)) +'\n')
     print(trace_info)
+    return int(trace_num)
 
 ## CALIBRATION
-
 # checking connection between vna & ecal
 def checkecalports():
     connected_vnaports = []
@@ -49,7 +47,7 @@ def checkecalports():
 
     # print(connected_vnaports)
     return connected_vnaports
-
+# checking ecal ports
 connected_vnaports = checkecalports()
 
 def ecal():
@@ -72,10 +70,54 @@ def ecal():
         except:
             print('Not a valid type!') #prevent run-error
     options[option_id]() #run func from dict
+# ecal()
 
-ecal()
+# START TRANSLATION FROM LABVIEW
+status = ena.write("FORMat:DATA ASCii,0")
+print("Format data: %s" %[x for x in status])
+trace_num = setrace()
+status = ena.query("SENS:SWE:TYPE?")
+print("Sweeping Type: %s" %status)
+status = ena.query("SENSe:SWEep:POINts?")
+print("Sweeping Points#: %s" %status)
+sweeptime = ena.query("SENS:SWE:TIME?")
+print("Sweeping Time: %s" %sweeptime)
 
-# Extract confidence
+status = ena.query("SENSe:FREQuency:STARt?")
+print("Start Frequency(Hz): %s" %status)
+status = ena.query("SENSe:FREQuency:STOP?")
+print("Stop Frequency(Hz): %s" %status)
+
+status = ena.query("SENSe:BANDwidth?") #IF Freq
+print("Bandwidth (Hz): %s" %status)
+status = ena.query("SOURce:POWer?")
+print("Power (dBm): %s" %status)
+
+status = ena.write("SENSe:AVER ON") #OFF
+print("Set Average ON: %s" %[x for x in status])
+Ave_num = 5
+status = ena.write("SENSe:AVER:COUN %s" %Ave_num)
+print("Set Average Number=%s: %s" %(Ave_num, [x for x in status]))
+status = ena.write("SENSe:AVER:CLE")
+print("Clear Average: %s" %[x for x in status])
+status = ena.write("TRIG:SOUR INT;INIT:CONT ON") #INIT:CONT OFF;INIT:IMM
+print("Set Continuous: %s" %[x for x in status])
+
+# switch on ena
+ena.write('OUTP ON')
+
+# Waiting while sweeping
+waitime = 180 #sec
+# sleep(Ave_num*float(sweeptime) + waitime)
+
+# for i in range(trace_num):
+#     status = ena.write("CALC:PAR%d:SEL"%(i+1))
+
+
+i = 1
+data = ena.query("CALC:TRAC%d:DATA:FDATA?"%i)
+print([x for x in data])
+
 
 
 # switch off ena
