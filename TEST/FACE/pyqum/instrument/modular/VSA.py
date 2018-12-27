@@ -309,8 +309,8 @@ def display2D(IQdata, samplerate):
     i, YI, YQ = 1, [], []
     for data in IQdata:
         if i%2:
-            YI.append(IQdata[i-1])
-        else: YQ.append(IQdata[i-1])
+            YI.append(data)
+        else: YQ.append(data)
         i += 1
     # Plotting
     fig, ax = plt.subplots(2, 1, sharex=True, sharey=False)
