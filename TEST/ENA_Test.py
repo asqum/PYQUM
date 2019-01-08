@@ -1,6 +1,7 @@
 import visa
-import numpy
+from numpy import arange, sqrt, arctan, frombuffer, array, linspace, pi, log10, reshape
 import matplotlib.pyplot as plt
+from time import sleep, time
 
 # ena
 rm = visa.ResourceManager()
@@ -8,140 +9,152 @@ rm = visa.ResourceManager()
 ena = rm.open_resource('TCPIP0::169.254.176.142::INSTR') #establishing LAN connection with ENA E5071C
 
 ena.read_termination = '\n' #omit termination tag from output 
-ena.timeout = 8000 #set timeout
+ena.timeout = 8000000 #set timeout
 
-#Checking Connections & Identities
-
-# print('All connected GPIB Instruments:', rm.list_resources())
 print(ena.query('*IDN?'))  #inquiring machine identity: "who r u?"
 
 #Clear buffer memory
-ena.write(':SENS:CORR:COLL:CLE') 
+ena.write('*RST;*CLS;')
 
-# set trace#
-def setrace(chnum, trace_num):
-    ena.write('CALC%s:PAR:COUN %s' %(chnum, trace_num)) #set 2 traces
-    print('we have ', ena.query('CALC1:PAR:COUN?'), 'trace(s)')
-    trace_info, Mname = '', {}
-    for i in range(trace_num):
-        Mname[str(i+1)] = ena.query('CALC1:PAR%s:DEF?' %(i+1))
-        trace_info += ('trace#%s: ' %(i+1) + Mname[str(i+1)] +'\n')
-    print(trace_info)
-    return Mname
+# Setting Trace
+ena.write("CALC:PAR:COUN 1")
+# ena.write("CALC:PAR1:DEF S21")
+# ena.write("CALC:PAR1:DEF R2") #A,B,C,D,R1,R2,R3,R4
+ena.write("CALC:PAR1:DEF S12")
+print("we are measuring %s" %ena.query("CALC:PAR1:DEF?"))
 
-## CALIBRATION
-# checking connection between vna & ecal
-def checkecalports():
-    connected_vnaports = []
-    vna_port_num = 4
-    ecal_ports = ['0', 'A', 'B', 'C', 'D']
-
-    for i in range(vna_port_num):
-        ecal_port_id = ena.query(':SENS1:CORR:COLL:ECAL:PATH? %s' %(i+1))
-        if (int(ecal_port_id)==0):
-            print('VNA port %s is not connected' %(i+1))
-        else:
-            connected_vnaports.append(i+1)
-            print('VNA port %s is connected to ECAL port %s' %(i+1, ecal_ports[int(ecal_port_id)]))
-
-    # print(connected_vnaports)
-    return connected_vnaports
-# checking ecal ports
-connected_vnaports = checkecalports()
-
-def ecal():
-    # ena.write(':SENS1:CORR:COLL:ECAL:SOLT2 1,2') #FDP (for debugging purposes)
-    # select calibration type
-    def TwoPorts():
-        ena.write(':SENS1:CORR:COLL:ECAL:SOLT2 %s,%s' %(connected_vnaports[0], connected_vnaports[1]))
-    def Thru():
-        ena.write(':SENS1:CORR:COLL:ECAL:THRU %s,%s' %(connected_vnaports[0], connected_vnaports[1]))
-    options = {2 : TwoPorts,
-            1 : Thru 
-            }
-    while True:
-        try:
-            option_id = int(input('Calibration type? (1:Through, 2:Two-Ports)'))
-            if option_id in (1, 2):
-                break
-            else:
-                print('There is no such type!') #prevent int other than (1,2)
-        except:
-            print('Not a valid type!') #prevent run-error
-    options[option_id]() #run func from dict
-# ecal()
-
-# START TRANSLATION FROM LABVIEW
-status = ena.write("FORMat:DATA ASCii,0")
-print("Format data: %s" %[x for x in status])
-Mname = setrace(1, 2)
+ena.write(":SENS1:SWE:TYPE LIN")
 status = ena.query("SENS:SWE:TYPE?")
 print("Sweeping Type: %s" %status)
-status = ena.query("SENSe:SWEep:POINts?")
-print("Sweeping Points#: %s" %status)
-sweeptime = ena.query("SENS:SWE:TIME?")
-print("Sweeping Time: %s" %sweeptime)
+N = 150
+ena.write("SENSe:SWEep:POINts %s" %N)
+datapts = ena.query("SENSe:SWEep:POINts?")
+print("Sweeping Points#: %s" %datapts)
 
-status = ena.query("SENSe:FREQuency:STARt?")
-print("Start Frequency(Hz): %s" %status)
-status = ena.query("SENSe:FREQuency:STOP?")
-print("Stop Frequency(Hz): %s" %status)
+ena.write("SENSe:FREQuency:STARt 2e9")
+fstart = ena.query("SENSe:FREQuency:STARt?")
+print("Start Frequency(Hz): %s" %fstart)
+ena.write("SENSe:FREQuency:STOP 8e9")
+fstop = ena.query("SENSe:FREQuency:STOP?")
+print("Stop Frequency(Hz): %s" %fstop)
 
+# Building X-axis
+fstart, fstop, datapts = float(fstart), float(fstop), int(datapts)
+X = list(linspace(fstart, fstop, datapts))
+
+IFB = (float(fstart) - float(fstop))/N
+ena.write("SENSe:BANDwidth %s" %IFB)
 status = ena.query("SENSe:BANDwidth?") #IF Freq
 print("Bandwidth (Hz): %s" %status)
+ena.write("SOURce:POWer -10")
 status = ena.query("SOURce:POWer?")
 print("Power (dBm): %s" %status)
 
 status = ena.write("SENSe:AVER ON") #OFF
 print("Set Average ON: %s" %[x for x in status])
-Ave_num = 5
+Ave_num = 1
 status = ena.write("SENSe:AVER:COUN %s" %Ave_num) #Averaged by VNA itself
 print("Set Average Number=%s: %s" %(Ave_num, [x for x in status]))
 status = ena.write("SENSe:AVER:CLE")
 print("Clear Average: %s" %[x for x in status])
-status = ena.write("TRIG:SOUR INT;INIT:CONT ON") #INIT:CONT OFF;INIT:IMM
-print("Set Continuous: %s" %[x for x in status])
 
-# switch on ena
-ena.write('OUTP ON')
+# start measurement (auto-on)
+ena.write(':ABOR;:INIT:CONT ON;:TRIG:SOUR BUS;:TRIG:SING;')
 
-# when opc return, the sweep is done
-ena.query("*OPC?") 
+ena.write(":DISP:WIND1:TRAC1:Y:AUTO") #auto-scale
+sweeptime = ena.query("SENS:SWE:TIME?")
+print("Sweeping Time: %s" %sweeptime)
 
-chnum = 1
-# select measurement name
-status = ena.write('CALC%d:PAR:SEL %s'%(chnum, Mname[str(1)]))
-data = ena.query("CALC%d:DATA:FDATA?"%chnum)
-# print(data)
-datas = data.split(',')
-print("Data-length: %s" %len(datas))
-# print(datas)
-
-i, Idata, Qdata = 1, [], []
-for x in datas:
-    if i%2: #odd
-        Idata.append(x)
-    else: Qdata.append(x) #even
-    i += 1
-
-print("Idata-length: %s" %len(Idata))
-yI = [float(i) for i in Idata]
-yQ = [float(i) for i in Qdata]
-print(yI)
-
-# Plotting
-fig, ax = plt.subplots(2, 1, sharex=True, sharey=False)
-ax[0].set(title="IQ-Data")
-ax[0].plot(range(len(Idata)), yI)
-# ax[0].set(ylabel=r'I-Data (V)')
-ax[1].plot(range(len(Qdata)), yQ)
-# ax[1].set(ylabel=r'Q-Data (V)')
-# ax[1].set(xlabel=r'$time({\times} 10^{%d}s)$'%(x_order))
-[axe.grid(True) for axe in ax]
-fig.tight_layout()
-plt.show()
-
+# make the machine inform us when the measurement is done
+ena.query("*OPC?")
 
 # switch off ena
-ena.write('OUTP OFF')
+if ena.query("OUTP?"):
+    ena.write('OUTP OFF')
+print("ENA state is %s" % ena.query("OUTP?"))
+
+chnum = 1
+status = ena.write('CALC%d:PAR1:SEL'%(chnum))
+
+ena.write(':FORM:DATA REAL32')
+# start = time() #in seconds
+# ena.write(":CALC:SEL:DATA:SDAT?")
+# data = ena.read_raw()
+# i0 = data.find(b'#')
+# print("header location: %s" %i0)
+# nDig = int(data[i0+1:i0+2])
+# print("byte size: %s" %nDig)
+# nByte = int(data[i0+2:i0+2+nDig])
+# print("number of bytes transferred: %s" %nByte)
+# nData = int(nByte/4)
+# print("data size: %s" %nData)
+# nCPair = int(nData/2)
+# print("# of complex-pairs: %s" %nCPair)
+# print("Main Data:")
+# chunck = data[(i0+2+nDig):(i0+2+nDig+nByte)]
+# print(chunck)
+# datas = frombuffer(data[(i0+2+nDig):(i0+2+nDig+nByte)], dtype='>f', count=nData)
+# stop = time()
+
+start = time() #in seconds
+databin = ena.query_binary_values(":CALC:SEL:DATA:SDAT?", datatype='f', is_big_endian=True)
+# print("raw data with %s points" %len(data))
+# print(data)
+stop = time()
+DataAcqTimeb = stop - start
+print("It take %ss to retrieve data from machine using binary" %DataAcqTimeb)
+
+start = time() #in seconds
+ena.write(':FORM:DATA ASCII')
+data = ena.query(":CALC:SEL:DATA:SDAT?")
+datascii = data.split(',')
+stop = time()
+DataAcqTimes = stop - start
+print("It take %ss to retrieve data from machine using ascii" %DataAcqTimes)
+
+if DataAcqTimeb > DataAcqTimes:
+    print("ASCII is transferred faster than Binary by %sms" %((DataAcqTimeb - DataAcqTimes)/1e-3))
+elif DataAcqTimes > DataAcqTimeb:
+    print("Binary is transferred faster than ASCII by %sms" %((DataAcqTimes - DataAcqTimeb)/1e-3))
+else: print("ascii and binary has the exact same speed")
+
+databoth = array(databin + datascii)
+if len(databin) == len(datascii):
+    DATA = databoth.reshape(2, len(databin))
+else: print("inconsistency between binary and ascii data handling!")
+
+for i in range(len(DATA[:])):
+    datas = DATA[i]
+    print("Data #%s:" %i)
+    print("Data-length: %s" %len(datas))
+    # print("Data: %s" %datas)
+
+    IQdata = datas.reshape(datapts, 2)
+    Idata, Qdata = IQdata[:,0], IQdata[:,1]
+
+    print("Idata-length: %s" %len(Idata))
+    yI = [float(i) for i in Idata]
+    yQ = [float(i) for i in Qdata]
+
+    Amp, Pha = [], []
+    for i in zip(yI, yQ):
+        Amp.append(20*log10(sqrt(i[0]**2 + i[1]**2)))
+        if i[0] == 0:
+            Pha.append(pi/2)
+        else: Pha.append(arctan(i[1]/i[0]))
+
+    # Plotting
+    fig, ax = plt.subplots(2, 2, sharex=True, sharey=False)
+    ax[0][0].set(title="IQ-Data")
+    ax[0][0].plot(X, yI)
+    # ax[0].set(ylabel=r'I-Data (V)')
+    ax[0][1].plot(X, yQ)
+    # ax[1].set(ylabel=r'Q-Data (V)')
+    # ax[1].set(xlabel=r'$time({\times} 10^{%d}s)$'%(x_order))
+    ax[1][0].plot(X, Amp)
+    ax[1][1].plot(X, Pha)
+    # [axe.grid(True) for axe in ax]
+    fig.tight_layout()
+    plt.show()
+
 ena.close()

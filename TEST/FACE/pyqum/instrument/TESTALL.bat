@@ -1,6 +1,8 @@
 :: This batch file runs TESTALL
 
 @echo off
+:: Start Windows batch file maximized
+if not "%1" == "max" start /MAX cmd /c %0 max & exit/b
 
 ECHO TESTING ALL INSTRUMENTS
 ::DIR

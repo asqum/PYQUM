@@ -1,6 +1,8 @@
 :: This batch file runs pyqum v0.1
 
 @echo off
+:: Start Windows batch file maximized
+if not "%1" == "max" start /MAX cmd /c %0 max & exit/b
 
 ECHO WELCOME TO PYQUM 101
 ::DIR

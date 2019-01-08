@@ -62,6 +62,7 @@ def address(instr_name, reset=False):
     Set <reset=False> to directly load from LOG if it contains "address" 
     '''
     rs = dict()
+    rs["ENA"] = 'TCPIP0::169.254.176.142::INSTR'
     rs["PNA"] = "TCPIP0::192.168.0.6::hpib7,16::INSTR"
     rs["DSO"] = "GPIB0::7::INSTR" # Oscilloscope Agilent 54621A
     # rs["DSO"] = "visa://qdl-pc/GPIB0::7::INSTR" # Oscilloscope Agilent 54621A
@@ -81,5 +82,8 @@ def address(instr_name, reset=False):
     else: RS = None
     return RS
 
+def set_data(user, timestamp, place, mission, machine, measuredata):
+    place = 'NCHUQ'
 
+    return
 

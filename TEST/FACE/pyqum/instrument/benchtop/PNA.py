@@ -1,4 +1,4 @@
-# Communicating with Benchtop Digital Storage Oscilloscope 
+# Communicating with Benchtop P-series Vector Network Analyzer 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
@@ -27,9 +27,9 @@ def Initiate():
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-        stat = bench.write('*CLS;*RST;:AUTOSCALE') #Clear buffer memory; Load preset, Auto-scale
+        stat = bench.write('*CLS;*RST;') #Clear buffer memory; Load preset
         bench.read_termination = '\n' #omit termination tag from output 
-        bench.timeout = 15000 #set timeout in ms
+        bench.timeout = 731000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
     except: 
