@@ -1,7 +1,7 @@
 # For TESTING of ALL Instruments
 
 from pyqum.instrument.logger import clocker
-from pyqum.instrument.benchtop import MXG, DSO, ESG
+from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA
 from pyqum.instrument.modular import AWG, VSA
 import inspect, numpy, time
 
