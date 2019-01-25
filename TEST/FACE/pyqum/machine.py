@@ -5,16 +5,19 @@ from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 import requests
-from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
+from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
+
+# Error handling
+from contextlib import suppress
 
 # Scientific Constants
 from scipy import constants as cnst
 
 # This will run at server startup
 # Modulars first, only then Benchtops (if and only if we use render_template)
-from pyqum.instrument.modular import AWG, VSA
-AWG.test(False) #seems like AWG's working-instance works differently than VSA's
+# from pyqum.instrument.modular import AWG, VSA
+# AWG.test(False) #seems like AWG's working-instance works differently than VSA's
 # awgsess = AWG.InitWithOptions()
 # vsasess = VSA.InitWithOptions()
 from pyqum.instrument.benchtop import MXG, ESG, DSO, PNA
@@ -39,7 +42,10 @@ def all():
 # AWG
 @bp.route('/awg', methods=['GET'])
 def awg(): 
-    return render_template("blog/machn/awg.html")
+    with suppress(KeyError):
+        print("USER %s has just logged in!" %session['user_id'])
+        return render_template("blog/machn/awg.html")
+    return("Please Login")        
 @bp.route('/awg/log', methods=['GET'])
 def awglog():
     log = get_status('AWG')
@@ -389,20 +395,6 @@ def dsoabout():
     status = DSO.acquiredata(dsobench) # acquire data
     message += ['Acquisition of Data: %s (%s)' % (status[1], status[0])]
     return jsonify(message=message)
-
-# JOB
-@bp.route('/job', methods=['GET'])
-def job():
-    return render_template("blog/machn/job.html")
-@bp.route('/job/basic', methods=['GET'])
-def jobasic():
-    from pyqum.job import gen_waveform as gwf
-    ch1g = request.args.get('ch1g')
-    ch1e = request.args.get('ch1e')
-    ch2g = request.args.get('ch2g')
-    ch2e = request.args.get('ch2e')
-    gwf.squarewave(int(ch1g), int(ch1e), int(ch2g), int(ch2e))
-    return jsonify()
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

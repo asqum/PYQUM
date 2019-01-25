@@ -88,12 +88,13 @@ def create_app(test_config=None):
 
     # Register Blueprints
     print(Back.WHITE + Fore.BLACK + "Registering Blueprints...")
-    from pyqum import auth, blog, display, bridge, machine, guide
+    from pyqum import auth, blog, display, bridge, machine, guide, mission
     app.register_blueprint(auth.bp)
     app.register_blueprint(blog.bp)
     app.register_blueprint(display.bp)
     app.register_blueprint(bridge.bp)
     app.register_blueprint(machine.bp)
+    app.register_blueprint(mission.bp)
     app.register_blueprint(guide.bp)
 
     # Manage Program exit

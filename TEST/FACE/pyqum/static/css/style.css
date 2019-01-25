@@ -64,7 +64,7 @@ div.navbar {
     background-color: lightsalmon;
 }
 
-body.home a.home, .mach a.mach, .guide a.guide,
+body.home a.home, .mach a.mach, .mssn a.mssn, .guide a.guide,
 .fig a.fig, .bridg a.bridg, .login a.login, .reg a.reg {
     background-color: white;
     color: midnightblue;

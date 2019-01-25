@@ -1,17 +1,20 @@
-# Communicating with Benchtop E-series Vector Network Analyzer 
+#!/usr/bin/env python
+'''Communicating with Benchtop E-series Vector Network Analyzer'''
+
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from os.path import basename as bs
-mdlname = bs(__file__).split('.')[0] # model's name e.g. ESG, PSG, MXG, AWG, VSA, ADC
+mdlname = bs(__file__).split('.')[0] # model's name e.g. ESG, PSG, MXG, AWG, VSA, ADC, PNA
 debugger = 'debug' + mdlname
 
-import visa
-from functools import wraps
-from pyqum.instrument.logger import address, set_status, status_code
-
+# from functools import wraps
 import matplotlib.pyplot as plt
-from numpy import arange, floor, ceil
+from numpy import arange, floor, ceil, linspace
+
+import visa, wrapt
+from boltons.funcutils import wraps
+from pyqum.instrument.logger import address, set_status, status_code
 
 def debug(state=False):
     exec('%s %s; %s = %s' %('global', debugger, debugger, 'state'), globals(), locals()) # open global and local both-ways channels!
@@ -27,9 +30,10 @@ def Initiate():
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-        stat = bench.write('*CLS;*RST;') #Clear buffer memory; Load preset, Auto-scale
+        stat = bench.write('*RST;*CLS') #Clear buffer memory;
+        bench.write("SENS:CORR:EXT:AUTO:RESet") #clear port-extension auto-correction
         bench.read_termination = '\n' #omit termination tag from output 
-        bench.timeout = 15000 #set timeout in ms
+        bench.timeout = 80000000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
     except: 
@@ -38,117 +42,176 @@ def Initiate():
         bench = "disconnected"
     return bench
 
-def Attribute(Name):
-    @wraps(Name)
-    def wrapper(*a, **b):
+@wrapt.decorator
+def Attribute(Name, instance, a, b):
+    # @wraps(Name)
+    # def wrapper(*a, **b):
+    global debug
+    bench, SCPIcore, action = Name(*a, **b)
+    SCPIcore = SCPIcore.split(";")
+    headers = SCPIcore[0].split(':')
+    parakeys, paravalues, getspecific, command = [headers[-1]] + SCPIcore[1:], [], [], []
 
-        global debug
-        bench, SCPIcore, action = Name(*a, **b)
-        SCPIcore = SCPIcore.split(";")
-        parakeys, paravalues, getspecific, command = [(SCPIcore[0]).split(':')[-1]] + SCPIcore[1:], [], [], []
-
-        if action[0] == 'Get':
-            try:
-                for i in range(len(parakeys)):
-                    if len(str(action[i+1])) > 0: #special type of query (e.g. commentstate)
-                        getspecific.append(" " + str(action[i+1]))
-                    else: getspecific.append('')
-                    command.append(str(SCPIcore[i]) + "?" + getspecific[i])
-                command = ";".join(command)
-
-                paravalues = bench.query(command).split(';')
-                paravalues = [paravalues[i] + '(' + str(action[i+1]) + ')' for i in range(len(parakeys))]
-                paravalues = [x.replace('()', '') for x in paravalues]
-
-                status = "Success"
-            except: # get out of the method with just return-value at exception?
-                status = "query unsuccessful"
-                ans = None
-
-        if action[0] == 'Set':
-
+    if action[0] == 'Get':
+        try:
             for i in range(len(parakeys)):
+                if len(str(action[i+1])) > 0: #special type of query (e.g. commentstate)
+                    getspecific.append(" " + str(action[i+1]))
+                else: getspecific.append('')
+                command.append(parakeys[i] + "?" + getspecific[i])
+
+            command = ':'.join(headers[:-1] + [";".join(command)])
+            paravalues = bench.query(command).split(';')
+            #just in case of the presence of query parameters, which is rare
+            paravalues = [paravalues[i] + '(' + str(action[i+1]) + ')' for i in range(len(parakeys))]
+            paravalues = [x.replace('()', '') for x in paravalues]
+
+            status = "Success"
+        except: # get out of the method with just return-value at exception?
+            status = "query unsuccessful"
+            ans = None
+
+    if action[0] == 'Set':
+
+        for i in range(len(parakeys)):
+            if str(action[i+1]) == '':
+                paravalues.append("NIL") # allow for arbitrary choosing
+            else: 
                 paravalues.append(str(action[i+1]))
-                command.append(str(SCPIcore[i]) + " " + paravalues[i])
+                command.append(parakeys[i] + " " + paravalues[i])
 
-            command = ";".join(command)
-            status = str(bench.write(command)[1])[-7:]
-            
-        # formatting return answer
-        if len(SCPIcore) > 1:
-            ans = dict(zip(parakeys, paravalues))
-        else: ans = paravalues[0]
+        command = ':'.join(headers[:-1] + [";".join(command)])
+        status = str(bench.write(command)[1])[-7:]
+        
+    # formatting return answer
+    ans = dict(zip([a.replace('*','') for a in parakeys], paravalues))
 
-        # Logging answer
-        if action[0] == 'Get': # No logging for "Set"
-            set_status(mdlname, {Name.__name__ : str(ans)})
+    # Logging answer
+    if action[0] == 'Get': # No logging for "Set"
+        set_status(mdlname, {Name.__name__ : ans})
 
-        # debugging
-        if eval(debugger):
-            print(Fore.BLUE + "SCPI Command: {%s}" %command)
-            if action[0] == 'Get':
-                print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__, ans, status))
-            if action[0] == 'Set':
-                print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__ , ans, status))
+    # debugging
+    if eval(debugger):
+        print(Fore.BLUE + "SCPI Command: {%s}" %command)
+        if action[0] == 'Get':
+            print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__, ans, status))
+        if action[0] == 'Set':
+            print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__ , ans, status))
 
-        return status, ans
-    return wrapper
+    return status, ans
 
 @Attribute
 def model(bench, action=['Get'] + 10 * ['']):
     SCPIcore = '*IDN'  #inquiring machine identity: "who r u?"
     return bench, SCPIcore, action
 @Attribute
-def channel1(bench, action=['Get'] + 10 * ['']):
-    '''action=['Get/Set', <coupling>, <range>, <scale>, <offset>, <units>, <Display>]'''
-    SCPIcore = ':CHANNEL1:COUPLING;RANGE;SCALE;OFFSET;UNITs;Display'
+def rfports(bench, action=['Get'] + 10 * ['']):
+    SCPIcore = 'OUTPut:STATE'  #switch-on/off RF-ports
     return bench, SCPIcore, action
 @Attribute
-def timebase(bench, action=['Get'] + 10 * ['']):
-    '''action=['Get/Set', <mode>, <range[ns]>, <delay[ns]>, <scale[ns]>]'''
-    SCPIcore = ':TIMEBASE:MODE;RANGE;DELAY;SCALE'
+def sweep(bench, action=['Get'] + 10 * ['']):
+    '''
+    action=['Get/Set', <auto: ON/OFF 100>, <points>]
+    1. Sets the time the analyzer takes to complete one sweep.
+    2. Sets the number of data points for the measurement.
+    '''
+    print(Fore.GREEN + "action: %s" %action)
+    if action[1] in ['ON', 'TRUE', 'True']:
+        bench.write('SENSe:SWEep:TIME:AUTO ON')
+        action.remove(action[1])
+        SCPIcore = 'SENSe:SWEep:POINTS'
+    elif action[1].split(' ')[0] in ['OFF', 'FALSE', 'False', '']:
+        try:
+            action[1] = action[1].split(' ')[1]
+            bench.write('SENSe:SWEep:TIME:AUTO OFF')
+        except IndexError: pass
+        SCPIcore = 'SENSe:SWEep:TIME;POINTS'
+    else: print(Fore.RED + "Parameter NOT VALID!")
     return bench, SCPIcore, action
 @Attribute
-def acquiredata(bench, action=['Get'] + 10 * ['']): # ACQUIRING DATA from DSO
-    '''action=['Get/Set', <type{average}>, <complete{0-100}>, <count{N}>]'''
-    SCPIcore = ':ACQUIRE:TYPE;COMPLETE;COUNT'
+def linfreq(bench, action=['Get'] + 10 * ['']):
+    '''action=['Get/Set', <start(Hz)>, <stop(Hz)>]'''
+    bench.write("SENS:SWE:TYPE LINEAR") #by default: Freq Sweep
+    SCPIcore = 'SENS:FREQuency:START;STOP'
     return bench, SCPIcore, action
 @Attribute
-def waveform(bench, action=['Get'] + 10 * ['']): # SETTING UP WAVEFORM
-    '''action=['Get/Set', <POINTS{MAX}>, <SOURCE{CHANNEL1}>, <FORMAT{ASCII}>, <XINCrement?>, <DATA?>]'''
-    SCPIcore = ':WAVEFORM:POINTS;SOURCE;FORMAT;XINCrement;DATA'
+def ifbw(bench, action=['Get'] + 10 * ['']):
+    '''action=['Get/Set', <IFB(Hz)>]'''
+    SCPIcore = 'SENSe:BANDWIDTH'
     return bench, SCPIcore, action
 @Attribute
-def measure(bench, action=['Get'] + 10 * ['']): # SETTING UP WAVEFORM
-    '''action=['Get', <COUNter>, <RISEtime>, <FALLtime>, <PWIDth>, <NWIDth>, <VPP>, <VAMP>, <VRMS>]'''
-    SCPIcore = ':MEASure:COUNter;RISEtime;FALLtime;PWIDth;NWIDth;VPP;VAMP;VRMS'
+def power(bench, action=['Get']):
+    '''
+    action=['Get/Set', <Level(dBm)>, <Start(dBm)>, <Stop(dBm)>]
+    dynamic range is limited to 35dB
+    '''
+    SCPIcore = 'SOURce:POWER:LEVEL;START;STOP'
+    action += 10 * ['']
+    return bench, SCPIcore, action
+@Attribute
+def cwfreq(bench, action=['Get'] + 10 * ['']):
+    '''action=['Get/Set', <Fixed(Hz)>]
+    Sets the Continuous Wave (or Fixed) frequency. 
+    Must also send SENS:SWEEP:TYPE CW to put the analyzer into CW sweep mode.
+    '''
+    bench.write("SENS:SWE:TYPE POWER") #Power Sweep
+    SCPIcore = 'SENSe:FREQuency:CW'
+    return bench, SCPIcore, action
+@Attribute
+def averag(bench, action=['Get'] + 10 * ['']):
+    '''action=['Get/Set', <points>]
+    Sets the number of measurements to combine for an average.
+    '''
+    bench.write("SENSe:AVER ON") # OFF by default
+    bench.write("SENSe:AVER:CLE")
+    SCPIcore = 'SENSe:AVER:COUNT'
+    return bench, SCPIcore, action
+@Attribute
+def dataform(bench, action=['Get'] + 10 * ['']):
+    '''action=['Get/Set', <format: REAL/REAL32/ASCii>]
+    Sets the data format for data transfers.
+    '''
+    SCPIcore = 'FORMat:DATA'
     return bench, SCPIcore, action
 
-def display2D(dx, y, units):
-    # setting png path
-    from pathlib import Path
-    from inspect import getfile, currentframe
-    pyfilename = getfile(currentframe()) # current pyscript filename (usually with path)
-    INSTR_PATH = Path(pyfilename).parents[2] / "static" / "img" / "dso" # 2 levels up the path
-    png_file =  mdlname + "waveform.png"
-    PNG = Path(INSTR_PATH) / png_file
-    # Organizing Data
-    Y = [float(i) for i in y.split(",")[1:-1]] # to avoid the first and the last string
-    X = arange(0, len(Y), 1) * dx
-    # Plotting
-    fig, ax = plt.subplots()
-    ax.plot(X, Y)
-    ax.set(xlabel='time(%s)'%units[0], ylabel='voltage (%s)'%units[1], title=mdlname+'-Waveform')
-    plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
-    fig.savefig(PNG)
-    if eval(debugger):
-        plt.show()
+# Setting Trace
+def setrace(bench, Mparam=['S11','S21','S12','S22'], window='D1'):
+    '''window = {D<Tr#...>: {#repeat: linewidth, _:next-line}}
+    '''
+    bench.write("CALC:PAR:COUN %d" %len(Mparam))
+    Mreturn = []
+    for iTrace, S in enumerate(Mparam):
+        bench.write("CALC:PAR%d:DEF %s" %(iTrace + 1, S)) #setting trace name
+        Mreturn.append(bench.query("CALC:PAR%d:DEF?" %(iTrace + 1)))
+        bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(iTrace + 1)) #pre-auto-scale
+    bench.write("DISPlay:WINDow:SPLit %s" %window)
+    return Mreturn
+
+def autoscal(bench):
+    tracenum = int(bench.query("CALC:PAR:COUN?"))
+    for i in range(tracenum):
+        lastatus = bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(i+1))
+    return lastatus
+
+def measure(bench):
+    bench.write(':ABOR;:INIT:CONT ON;:TRIG:SOUR BUS;:TRIG:SING;')
+    # when opc return, the sweep is done
+    ready = bench.query("*OPC?") # method from labber was inefficient at best, misleading us on purpose perhaps!
+    return ready
+
+def sdata(bench, format='REAL,32'):
+    if format == 'REAL,32':
+        datas = bench.query_binary_values("CALC:DATA? SDATA", datatype='f', is_big_endian=True)
+    elif format == 'ASCII,0':
+        datas = bench.query_ascii_values("CALC:DATA? SDATA")
+    print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
+    return datas
 
 def close(bench, reset=True):
     try:
         if reset:
-            # bench.write('*RST;channel1:display off;') # reset to factory setting (including switch-off)
-            set_status(mdlname, dict(config='reset'))
+            bench.write('OUTP OFF')
+            set_status(mdlname, dict(config='reset-off'))
         else: set_status(mdlname, dict(config='previous'))
         try:
             bench.close() #None means Success?
@@ -169,12 +232,47 @@ def test(detail=False):
     if bench is "disconnected":
         pass
     else:
+        model(bench)
         if eval(debugger):
+            print(setrace(bench, window='D12_34'))
+            power(bench, action=['Set', -73.1])
+            power(bench)
+            N = 7000
+            sweep(bench, action=['Set', 'ON', N])
+            f_start, f_stop = 4.4e9, 4.9e9
+            linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
+            stat = linfreq(bench)
+            fstart, fstop = stat[1]['START'], stat[1]['STOP']
+            # Building X-axis
+            fstart, fstop = float(fstart), float(fstop)
+            X = list(linspace(fstart, fstop, N))
+            noisefilfac = 100
+            IFB = abs(float(fstart) - float(fstop))/N/noisefilfac
+            ifbw(bench, action=['Set', IFB])
+            ifbw(bench)
+            averag(bench, action=['Set', 1]) #optional
+            averag(bench)
+            stat = sweep(bench)
+            print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
+            print("Ready: %s" %measure(bench)[1])
+            autoscal(bench)
+
+            cwfreq(bench, action=['Set', 5.25e9])
+            cwfreq(bench)
+            power(bench, action=['Set', '', -75.3, -40.3])
+            power(bench)
+            stat = sweep(bench)
+            print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
+            print("Ready: %s" %measure(bench)[1])
             
+            autoscal(bench)
+
+            rfports(bench, action=['Set', 'OFF'])
+            rfports(bench)
         else: print(Fore.RED + "Basic IO Test")
     close(bench)
     return
 
-# test(True)
+test(True)
 
 

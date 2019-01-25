@@ -1,0 +1,32 @@
+{% extends 'base.html' %} 
+{% block title %}Mission{% endblock %}
+
+{% block head %}
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mssn.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/mssn.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+<body class="mssn" style="overflow-y:hidden">
+
+<script> 
+    $(function(){
+      $("div#all").load("{{ url_for('mission.all') }}");
+      
+    });
+</script> 
+
+<div class="tab">
+  <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button>
+  
+</div>
+
+<div id="all" class="tabcontent"></div>
+
+
+</body>
+
+{% endblock %}

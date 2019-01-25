@@ -6,7 +6,8 @@ from time import sleep, time
 # ena
 rm = visa.ResourceManager()
 # ena = rm.open_resource('GPIB0::16::INSTR') #establishing GPIB connection with ENA E5071C
-ena = rm.open_resource('TCPIP0::169.254.176.142::INSTR') #establishing LAN connection with ENA E5071C
+# ena = rm.open_resource('TCPIP0::169.254.176.142::INSTR') #establishing LAN connection with ENA E5071C
+ena = rm.open_resource('TCPIP0::192.168.1.85::INSTR') #establishing LAN connection with ENA E5071C
 
 ena.read_termination = '\n' #omit termination tag from output 
 ena.timeout = 8000000 #set timeout

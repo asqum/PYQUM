@@ -204,7 +204,7 @@ def displaydata(Mname):
         fig.savefig(IMG, format="png")
         
         # saving data
-        pna_data = dict(Sdata=Mname, datype=datype, X=X, yI=yI, yQ=yQ, Amp=Amp, Pha=Pha)
+        pna_data = dict(Sdata=Mname, datype=datype, X=X, yI=yI, yQ=yQ, Amp=Amp, Pha=Pha) #packing measurement data
         set_data("LTH", "NCHUQ", "Finding Resonance", "PNA", pna_data)
 
         plt.show()

@@ -6,8 +6,8 @@ import csv
 
 # Open Comm
 rm = visa.ResourceManager()
-rigo = rm.open_resource('TCPIP::169.254.217.17::INSTR') #establishing LAN connection with RIGOL DS6104
-psg = rm.open_resource('TCPIP0::169.254.217.35::INSTR') #establishing LAN connection with PSG E8267D
+rigo = rm.open_resource('TCPIP0::192.168.1.81::INSTR') #establishing LAN connection with RIGOL DS6104
+psg = rm.open_resource('TCPIP0::192.168.1.35::INSTR') #establishing LAN connection with PSG E8267D
 # psg = rm.open_resource('GPIB0::27::INSTR') #backup by establishing GPIB connection with PSG E8267D
 
 rigo.read_termination = '\n' #omit termination tag from output 
@@ -61,6 +61,7 @@ psg.write(':OUTPut:STATe ON')
 # psg.write(':OUTPut:STATe OFF')
 
 # Data extraction from RIGOL
+rigo.write(":AUTOSCALE")
 scal = rigo.query(':CHAN1:SCAL?')
 print([scal])
 rigo.write(':ACQuire:TYPE NORMal')
@@ -83,7 +84,7 @@ fig, ax = plt.subplots()
 ax.plot(t, wavefo)
 ax.set(xlabel='arb. time', ylabel='voltage (mV)',
        title='Modulated Waveform')
-fig.savefig("rigol05.png")
+# fig.savefig("rigol05.png")
 plt.show()
 
 # Close Comm

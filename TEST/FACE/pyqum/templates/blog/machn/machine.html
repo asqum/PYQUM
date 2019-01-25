@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/mach.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
-  <script type="text/javascript" src="{{ url_for('static', filename='js/mach.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/mach/mach.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,6 @@
 <script> 
     $(function(){
       $("div#all").load("{{ url_for('machine.all') }}");
-      $("div#job").load("{{ url_for('machine.job') }}");
       $("div#awg").load("{{ url_for('machine.awg') }}");
       $("div#vsa").load("{{ url_for('machine.vsa') }}");
       $("div#esg").load("{{ url_for('machine.esg') }}");
@@ -24,9 +23,9 @@
     });
 </script> 
 
+{% if g.user %}
 <div class="tab">
   <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button>
-  <button class="tablinks" id="job-tab" onclick="openTab(event, 'job')"><b>JOB</b></button>
   <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
   <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button>
   <button class="tablinks" id="esg-tab" onclick="openTab(event, 'esg')">ESG</button>
@@ -35,12 +34,12 @@
 </div>
 
 <div id="all" class="tabcontent"></div>
-<div id="job" class="tabcontent"></div>
 <div id="awg" class="tabcontent"></div>
 <div id="vsa" class="tabcontent"></div>
 <div id="esg" class="tabcontent"></div>
 <div id="mxg" class="tabcontent"></div>
 <div id="dso" class="tabcontent"></div>
+{% endif %}
 
 </body>
 

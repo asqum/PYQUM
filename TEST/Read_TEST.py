@@ -1,5 +1,6 @@
-from pyqum.instrument.logger import get_data, search_allpaths, goto_siblings
-from pyqum.instrument.reader import smooth, FFT_deNoise, search_time
+from pyqum.instrument.logger import get_data
+from pyqum.instrument.reader import search_allpaths, goto_siblings, search_time
+from pyqum.instrument.analyzer import smooth, FFT_deNoise
 from numpy import arange, sqrt, arctan2, array, linspace, pi, log10, reshape, unwrap, gradient
 from statistics import median, mean
 import matplotlib.pyplot as plt
@@ -9,7 +10,6 @@ from time import ctime
 from datetime import datetime
 from operator import itemgetter
 
-
 USR = get_data("LTH")
 p = search_allpaths(USR, 'NCHUQ_S21')
 
@@ -17,6 +17,7 @@ p = search_allpaths(USR, 'NCHUQ_S21')
 nearest, selectedP = search_time(p, '2019 01 15')
 print("The nearest being %s away in the path: %s" %(nearest, selectedP))
 
+# selectedP = p[0]
 print("The path [%s] gives: " %selectedP)
 data_sib = goto_siblings(USR, selectedP)
 print("This data has these keys: %s" %data_sib.keys())
@@ -62,19 +63,40 @@ def plotdata():
     return
 
 UPHA = unwrap(Pha)
-avebox = int(len(X)/300)
+avebox = max([1, int(len(X)/500)])
+print("Box: %s" %avebox)
 UPHA_smooth = smooth(UPHA, avebox)
 UPHA_flat = gradient(UPHA_smooth, X)
 UPHA_flat = minmax_scale(UPHA_flat)
 
-f, spec, UPHA_fft = FFT_deNoise(UPHA_flat[avebox:-avebox]*1e8, X[1]-X[0], 0.0002)
+f, spec, wsel, UPHA_fft = FFT_deNoise(UPHA_flat[avebox:-avebox]*1e8, X[1]-X[0], 0.00007)
 
+# filter spectrum
+i_sel = [i for i,j in enumerate(wsel) if wsel is not 0]
+spec_sel, f_sel = spec[i_sel], f[i_sel]
+
+# finding peak and dip
 indices = indexes(UPHA_fft, thres=0.88, min_dist=0.1)
 X_peak = [X[i] for i in indices]
 Y_peak = [UPHA_fft[i] for i in indices]
 indices = indexes(-1*UPHA_fft, thres=0.88, min_dist=0.1)
 X_dip = [X[i] for i in indices]
 Y_dip = [UPHA_fft[i] for i in indices]
+xshift = mean([X_dip[Y_dip.index(min(Y_dip))], X_peak[Y_peak.index(max(Y_peak))]])
+print("Peak: %s, Dip: %s, Shift: %s" %(X_peak, X_dip, xshift))
+# deduce the in-between
+ishift, shift = min(enumerate([abs(x-xshift) for x in X]), key=itemgetter(1))
+X_shift = [X[ishift]]
+Y_shfit = [UPHA_fft[ishift]]
+
+# FIGURES
+# Plot wrapped phase 
+fig, ax = plt.subplots()
+ax.plot(X, Pha)
+ax.set(ylabel=r' wrapped Phase (rad)', xlabel=r'$frequency (Hz)$',
+        title='wrapped Phase')
+ax.grid(linewidth=0.5)
+plt.show()
 
 # Plot unwrapped phase 
 fig, ax = plt.subplots()
@@ -100,14 +122,22 @@ ax.set(ylabel=r' unwrapped Phase (rad)', xlabel=r'$frequency (Hz)$',
 ax.grid(linewidth=0.5)
 plt.show()
 
+# Filtered Spectrum
+fig, ax = plt.subplots()
+ax.plot(f_sel[1:], spec_sel[1:])
+ax.set(ylabel=r'Amplitude', xlabel=r'$1/{\Delta}freq (1/Hz)$',
+        title='Filtered Spectrum after FFT selection')
+ax.grid(linewidth=0.5)
+plt.show()
+
 # Filter out low-contributing noise by FFT
 fig, ax = plt.subplots()
 ax.plot(X[avebox:-avebox], UPHA_fft)
-ax.plot(X_peak, Y_peak, marker='P', color='b', markersize=15)
-ax.plot(X_dip, Y_dip, marker='P', color='r', markersize=15)
+ax.plot(X_peak, Y_peak, marker='P', color='b', markersize=15, linestyle='')
+ax.plot(X_dip, Y_dip, marker='P', color='r', markersize=15, linestyle='')
+ax.plot(X_shift, Y_shfit, marker='P', color='g', markersize=15, linestyle='')
 ax.set(ylabel=r' unwrapped Phase (rad)', xlabel=r'$frequency (Hz)$',
         title='Filter out low-contributing noise by FFT')
 ax.grid(linewidth=0.5)
 plt.show()
 
-print(X_peak)
