@@ -96,7 +96,7 @@ def search_time(dictpaths, timestamp):
     selectedP = dictpaths[inearest]
     return nearest, selectedP
 
-def test_reader():
+def test():
     Test_DATA = {'A': {'B': {'C': {'D': {'E': 100, 'mind': 'Great'}}}},
     'A1': {'B': {'C': {'D': {'E': 100, 'idol': 'Einstein'}}}},
     'A2': {'B': {'C': {'D': {'E': 100, 'address': 'Mars'}}}},
@@ -134,4 +134,5 @@ def test_reader():
     
     return
 
-# test_reader()
+
+# test()

@@ -101,7 +101,7 @@ def close(bench, reset=False):
         
 
 # Test Zone
-def test(detail=False):
+def test(detail=True):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     s = Initiate()
@@ -120,5 +120,4 @@ def test(detail=False):
     close(s, True)
     return
 
-test(True)
 

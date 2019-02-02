@@ -150,7 +150,7 @@ def close(bench, reset=True):
         
 
 # Test Zone
-def test(detail=False):
+def test(detail=True):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     s = Initiate()
@@ -178,6 +178,4 @@ def test(detail=False):
         else: print(Fore.RED + "Basic IO Test")
     close(s)
     return
-
-# test(True)
 

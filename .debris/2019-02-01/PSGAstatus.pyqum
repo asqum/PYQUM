@@ -1,0 +1,1 @@
+{"address": "TCPIP0::192.168.1.33::INSTR", "state": "connected", "model": {"IDN": "Agilent Technologies, E8257D, MY53400662, C.06.21"}, "memory": {}, "frequency": {"CW": "+1.0000000000000E+09"}, "power": {"AMPLITUDE": "-7.30000000E+000"}, "rfoutput": {"STATE": "1"}, "commentstate": {}, "config": "reset", "Lfamp": {}}

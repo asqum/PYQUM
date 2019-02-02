@@ -1,5 +1,0 @@
-flask
-
-[test]
-pytest
-coverage

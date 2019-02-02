@@ -4,7 +4,7 @@
 :: Start Windows batch file maximized
 if not "%1" == "max" start /MAX cmd /c %0 max & exit/b
 
-ECHO TESTING ALL INSTRUMENTS
+ECHO TESTING ALL MODULES
 ::DIR
 
 :: Initialize Anaconda Environment

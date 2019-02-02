@@ -184,7 +184,7 @@ def close(bench, reset=True):
     return status
 
 # Test Zone
-def test(detail=False):
+def test(detail=True):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     bench = Initiate()
@@ -233,9 +233,4 @@ def test(detail=False):
     close(bench)
     return
 
-test(True)
-
-
-# print("Stream-length: %s, Data-length: %s" %(len(wave), len(wavef)))
-# print("Data-25pt-overview: %s" %wavefo[::int(ceil(len(wavefo)/25))])
 

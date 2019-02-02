@@ -14,9 +14,11 @@ from pyqum.instrument.logger import address, get_status, set_status, status_code
 import matplotlib.pyplot as plt
 
 # dloc = "C:\\Program Files\\IVI Foundation\\IVI\Bin\\AgM9392_64.dll" #64-bit
-lib_name = find_library('AgM9392_64.dll')
-print(Fore.YELLOW + "%s's driver located: %s" %(mdlname, lib_name))
-dll = cdll.LoadLibrary(lib_name) #Python is 64-bit
+try:
+    lib_name = find_library('AgM9392_64.dll')
+    print(Fore.YELLOW + "%s's driver located: %s" %(mdlname, lib_name))
+    dll = cdll.LoadLibrary(lib_name) #Python is 64-bit
+except: print(Fore.RED + "%s's driver not found in this server" %mdlname)
 
 def debug(state=False):
     exec('%s %s; %s = %s' %('global', debugger, debugger, 'state'), globals(), locals()) # open global and local both-ways channels!
@@ -342,7 +344,7 @@ def close(session):
 
 
 # Test Zone
-def test(detail=False):
+def test(detail=True):
     debug(detail)
     print(Fore.RED + "Debugger mode: %s" %eval(debugger))
     s = InitWithOptions()
@@ -376,4 +378,3 @@ def test(detail=False):
     close(s)
     return
 
-# test(True)

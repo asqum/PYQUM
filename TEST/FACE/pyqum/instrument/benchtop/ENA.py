@@ -1,32 +1,23 @@
-#!/usr/bin/env python
 '''Communicating with Benchtop E-series Vector Network Analyzer'''
 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from os.path import basename as bs
-mdlname = bs(__file__).split('.')[0] # model's name e.g. ESG, PSG, MXG, AWG, VSA, ADC, PNA
-debugger = 'debug' + mdlname
+mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
-# from functools import wraps
 import matplotlib.pyplot as plt
 from numpy import arange, floor, ceil, linspace
 
-import visa, wrapt
-from boltons.funcutils import wraps
-from pyqum.instrument.logger import address, set_status, status_code
+import visa
+from pyqum.instrument.logger import address, set_status, status_code, debug
+from pyqum.instrument.logger import translate_scpi as Attribute
 
-def debug(state=False):
-    exec('%s %s; %s = %s' %('global', debugger, debugger, 'state'), globals(), locals()) # open global and local both-ways channels!
-    if state:
-        print(Back.RED + '%s: Debugging Mode' %debugger.replace('debug', ''))
-    return
-
-debug() # declare the debugger mode here
+debugger = debug(mdlname)
 
 # INITIALIZATION
 def Initiate():
-    rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
+    rs = address(mdlname, reset=debugger) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -42,75 +33,17 @@ def Initiate():
         bench = "disconnected"
     return bench
 
-@wrapt.decorator
-def Attribute(Name, instance, a, b):
-    # @wraps(Name)
-    # def wrapper(*a, **b):
-    global debug
-    bench, SCPIcore, action = Name(*a, **b)
-    SCPIcore = SCPIcore.split(";")
-    headers = SCPIcore[0].split(':')
-    parakeys, paravalues, getspecific, command = [headers[-1]] + SCPIcore[1:], [], [], []
-
-    if action[0] == 'Get':
-        try:
-            for i in range(len(parakeys)):
-                if len(str(action[i+1])) > 0: #special type of query (e.g. commentstate)
-                    getspecific.append(" " + str(action[i+1]))
-                else: getspecific.append('')
-                command.append(parakeys[i] + "?" + getspecific[i])
-
-            command = ':'.join(headers[:-1] + [";".join(command)])
-            paravalues = bench.query(command).split(';')
-            #just in case of the presence of query parameters, which is rare
-            paravalues = [paravalues[i] + '(' + str(action[i+1]) + ')' for i in range(len(parakeys))]
-            paravalues = [x.replace('()', '') for x in paravalues]
-
-            status = "Success"
-        except: # get out of the method with just return-value at exception?
-            status = "query unsuccessful"
-            ans = None
-
-    if action[0] == 'Set':
-
-        for i in range(len(parakeys)):
-            if str(action[i+1]) == '':
-                paravalues.append("NIL") # allow for arbitrary choosing
-            else: 
-                paravalues.append(str(action[i+1]))
-                command.append(parakeys[i] + " " + paravalues[i])
-
-        command = ':'.join(headers[:-1] + [";".join(command)])
-        status = str(bench.write(command)[1])[-7:]
-        
-    # formatting return answer
-    ans = dict(zip([a.replace('*','') for a in parakeys], paravalues))
-
-    # Logging answer
-    if action[0] == 'Get': # No logging for "Set"
-        set_status(mdlname, {Name.__name__ : ans})
-
-    # debugging
-    if eval(debugger):
-        print(Fore.BLUE + "SCPI Command: {%s}" %command)
-        if action[0] == 'Get':
-            print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__, ans, status))
-        if action[0] == 'Set':
-            print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__ , ans, status))
-
-    return status, ans
-
 @Attribute
 def model(bench, action=['Get'] + 10 * ['']):
     SCPIcore = '*IDN'  #inquiring machine identity: "who r u?"
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
 @Attribute
 def rfports(bench, action=['Get'] + 10 * ['']):
     SCPIcore = 'OUTPut:STATE'  #switch-on/off RF-ports
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
 @Attribute
 def sweep(bench, action=['Get'] + 10 * ['']):
-    '''
+    '''CONDITIONAL SWEEP:\n
     action=['Get/Set', <auto: ON/OFF 100>, <points>]
     1. Sets the time the analyzer takes to complete one sweep.
     2. Sets the number of data points for the measurement.
@@ -127,18 +60,18 @@ def sweep(bench, action=['Get'] + 10 * ['']):
         except IndexError: pass
         SCPIcore = 'SENSe:SWEep:TIME;POINTS'
     else: print(Fore.RED + "Parameter NOT VALID!")
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
 @Attribute
 def linfreq(bench, action=['Get'] + 10 * ['']):
     '''action=['Get/Set', <start(Hz)>, <stop(Hz)>]'''
     bench.write("SENS:SWE:TYPE LINEAR") #by default: Freq Sweep
     SCPIcore = 'SENS:FREQuency:START;STOP'
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
 @Attribute
 def ifbw(bench, action=['Get'] + 10 * ['']):
     '''action=['Get/Set', <IFB(Hz)>]'''
     SCPIcore = 'SENSe:BANDWIDTH'
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
 @Attribute
 def power(bench, action=['Get']):
     '''
@@ -147,7 +80,7 @@ def power(bench, action=['Get']):
     '''
     SCPIcore = 'SOURce:POWER:LEVEL;START;STOP'
     action += 10 * ['']
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
 @Attribute
 def cwfreq(bench, action=['Get'] + 10 * ['']):
     '''action=['Get/Set', <Fixed(Hz)>]
@@ -156,7 +89,7 @@ def cwfreq(bench, action=['Get'] + 10 * ['']):
     '''
     bench.write("SENS:SWE:TYPE POWER") #Power Sweep
     SCPIcore = 'SENSe:FREQuency:CW'
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
 @Attribute
 def averag(bench, action=['Get'] + 10 * ['']):
     '''action=['Get/Set', <points>]
@@ -165,14 +98,26 @@ def averag(bench, action=['Get'] + 10 * ['']):
     bench.write("SENSe:AVER ON") # OFF by default
     bench.write("SENSe:AVER:CLE")
     SCPIcore = 'SENSe:AVER:COUNT'
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
 @Attribute
 def dataform(bench, action=['Get'] + 10 * ['']):
     '''action=['Get/Set', <format: REAL/REAL32/ASCii>]
     Sets the data format for data transfers.
+    Usually only the last two are preferred.
     '''
     SCPIcore = 'FORMat:DATA'
-    return bench, SCPIcore, action
+    return mdlname, bench, SCPIcore, action
+
+@Attribute
+def selectrace(bench, action=['Set'] + ['par 1']):
+    '''
+    This command sets/gets the selected trace (Tr) of selected channel (Ch) to the active trace.
+    You can set only a trace displayed to the active trace. 
+    If this object is used to set a trace not displayed to the active trace, an error occurs when executed and the object is ignored. (No read)
+    '''
+    SCPIcore = 'CALCulate:PARameter:SELECT'
+    action += 10 * ['']
+    return mdlname, bench, SCPIcore, action
 
 # Setting Trace
 def setrace(bench, Mparam=['S11','S21','S12','S22'], window='D1'):
@@ -185,7 +130,7 @@ def setrace(bench, Mparam=['S11','S21','S12','S22'], window='D1'):
         Mreturn.append(bench.query("CALC:PAR%d:DEF?" %(iTrace + 1)))
         bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(iTrace + 1)) #pre-auto-scale
     bench.write("DISPlay:WINDow:SPLit %s" %window)
-    return Mreturn
+    return Mreturn #same as <Mparam>
 
 def autoscal(bench):
     tracenum = int(bench.query("CALC:PAR:COUN?"))
@@ -199,11 +144,16 @@ def measure(bench):
     ready = bench.query("*OPC?") # method from labber was inefficient at best, misleading us on purpose perhaps!
     return ready
 
-def sdata(bench, format='REAL,32'):
-    if format == 'REAL,32':
-        datas = bench.query_binary_values("CALC:DATA? SDATA", datatype='f', is_big_endian=True)
-    elif format == 'ASCII,0':
-        datas = bench.query_ascii_values("CALC:DATA? SDATA")
+def sdata(bench):
+    '''Collect data from ENA
+    This command sets/gets the corrected data array, for the active trace of selected channel (Ch).
+    '''
+    sdatacore = ":CALC:SEL:DATA:SDAT?"
+    stat = dataform(bench)
+    if stat[1]['DATA'] == 'REAL32': #PENDING: testing REAL (64bit)
+        datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True)
+    elif stat[1]['DATA'] == 'ASCii':
+        datas = bench.query_ascii_values(sdatacore)
     print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
     return datas
 
@@ -225,20 +175,18 @@ def close(bench, reset=True):
     return status
 
 # Test Zone
-def test(detail=False):
-    debug(detail)
-    print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
+def test(detail=True):
     bench = Initiate()
     if bench is "disconnected":
         pass
     else:
         model(bench)
-        if eval(debugger):
+        if debug(mdlname, detail):
             print(setrace(bench, window='D12_34'))
             power(bench, action=['Set', -73.1])
             power(bench)
             N = 7000
-            sweep(bench, action=['Set', 'ON', N])
+            sweep(bench, action=['Set', 'OFF 10', N])
             f_start, f_stop = 4.4e9, 4.9e9
             linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
             stat = linfreq(bench)
@@ -266,6 +214,10 @@ def test(detail=False):
             print("Ready: %s" %measure(bench)[1])
             
             autoscal(bench)
+            dataform(bench, action=['Set', 'REAL32'])
+
+            selectrace(bench, action=['Set', 'para 1 calc 1'])
+            print(sdata(bench))
 
             rfports(bench, action=['Set', 'OFF'])
             rfports(bench)
@@ -273,6 +225,5 @@ def test(detail=False):
     close(bench)
     return
 
-test(True)
 
 

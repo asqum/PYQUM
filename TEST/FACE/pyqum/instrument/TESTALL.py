@@ -1,36 +1,44 @@
-# For TESTING of ALL Instruments
+# For TESTING of ALL Modules
 
-from pyqum.instrument.logger import clocker
-from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA
+from colorama import init, Fore, Back
+init(autoreset=True) #to convert termcolor to wins color
+
+from pyqum.instrument import logger, reader, network
+from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA, ENA, PSGV, PSGA, RDS
 from pyqum.instrument.modular import AWG, VSA
 import inspect, numpy, time
 
 # Testing function's name-string:
 def piqom():
-    print("(This function's name:", inspect.stack()[0][3], ")")
+    '''Python Instructed Quantum Operation Modules'''
+    print(Fore.BLUE + "RUNNING %s" %inspect.stack()[0][3])
 piqom()
 
-# Testing Help DocStrings
-print("The Doc for AWG's active_marker: %s" %AWG.active_marker.__doc__)
+MDL = ['AWG', 'VSA', 'ENA', 'PSGV', 'PSGA', 'RDG', 'RDS', 'MXG', 'DSO', 'YOKO' #instruments
+        'reader', 'logger', 'network'] #tools
+print("These modules are available for test:")
+print(Fore.GREEN + str(MDL))
+while True:
+    selectedmdl = str(input("Pick those you'd like to test with comma between them:\n"))
+    selectedmdl = selectedmdl.strip().split(',')
+    for i,val in enumerate(selectedmdl):
+        val = val.strip()
+        if len(val) < 5: #limit up to 4 capital-letters for instruments
+            selectedmdl[i] = val.upper()
+        else: selectedmdl[i] = val.lower() #tools have to be more than 5 letters in lower-case
+    if set(MDL) & set(selectedmdl):
+        break
+
+for i in list(set(selectedmdl) - set(MDL)): #pop those not in the list
+    selectedmdl.remove(i)
+print("The following modules will be tested:")
+print(Fore.YELLOW + str(selectedmdl))
 
 # Marking starting point of time:
-stage, prev = clocker(0)
+stage, prev = logger.clocker(0)
 
-# Testing each machine individually
-state = str(input("TEST's Switch Code (MXG-AWG-VSA-DSO-ESG): "))
-if state[0] == "1":
-    MXG.test(True)
-    stage, prev = clocker(stage, prev) # Marking certain point of time
-if state[1] == "1":
-    AWG.test(True)
-    stage, prev = clocker(stage, prev)
-if state[2] == "1":
-    VSA.test(True)
-    stage, prev = clocker(stage, prev)
-if state[3] == "1":
-    DSO.test(True)
-    stage, prev = clocker(stage, prev)
-if state[4] == "1":
-    ESG.test(True)
-    stage, prev = clocker(stage, prev)
+# Testing each module individually
+for mdl in selectedmdl:
+    eval(mdl+".test()")
+    stage, prev = logger.clocker(stage, prev) # Marking time
 
