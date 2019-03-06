@@ -1,4 +1,4 @@
-# Communicating with Benchtop PSG
+# Communicating with Benchtop PSG (Latest:2019/02)
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 

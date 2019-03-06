@@ -4,6 +4,8 @@ from operator import itemgetter
 from contextlib import suppress
 from copy import deepcopy, copy
 
+import matplotlib.pyplot as plt
+
 def dict_depth(d):
     if isinstance(d, dict):
         return 1 + (max(map(dict_depth, d.values())) if d else 0)
@@ -95,6 +97,10 @@ def search_time(dictpaths, timestamp):
     print(nearest)
     selectedP = dictpaths[inearest]
     return nearest, selectedP
+
+def display():
+    
+    return
 
 def test():
     Test_DATA = {'A': {'B': {'C': {'D': {'E': 100, 'mind': 'Great'}}}},

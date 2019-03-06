@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 '''For logging file'''
 
 from colorama import init, Fore, Back
@@ -7,13 +6,17 @@ init(autoreset=True) #to convert termcolor to wins color
 from pathlib import Path
 from os import stat, SEEK_END
 from os.path import exists, getsize
-from time import time, ctime
+from datetime import datetime
+from time import time, sleep
 from contextlib import suppress
-import inspect, json, wrapt
+from numpy import prod, mean, rad2deg
+import inspect, json, wrapt, struct, geocoder, ast
+
+from pyqum.instrument.toolbox import cdatasearch
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
-__credits__ = ["Chii-Dong Chen", "Yu-Cheng Chang"]
+__credits__ = ["Chii-Dong Chen"]
 __license__ = "GPL"
 __version__ = "beta3"
 __email__ = "teikhui@phys.sinica.edu.tw"
@@ -22,7 +25,22 @@ __status__ = "development"
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
 INSTR_PATH = Path(pyfilename).parents[2] / "INSTLOG" # 2 levels up the path
 USR_PATH = Path(pyfilename).parents[2] / "USRLOG"
-# print(Path(pyfilename).parts[-1]) # last part of the path
+
+def location():
+    place = []
+    # approximate radius of earth in km
+    eaRth = 6373.0
+    # acceptable distance error in km
+    toleratekm = 0.00000001
+    toleratedeg = rad2deg(toleratekm / eaRth)
+    g = geocoder.ip('me')
+    gps = g.latlng #[latitude, longitude]
+    if mean([abs(i-j) for i,j in zip(gps, [25.0478, 121.532])]) < toleratedeg:
+        place.append('AS')
+    if mean([abs(i-j) for i,j in zip(gps, [25.0478, 121.532])]) < toleratedeg*10:
+        place.append('Taipei')
+    
+    return place
 
 def clocker(stage, prev=0):
     now = time()
@@ -72,74 +90,33 @@ def set_status(instr_name, info):
     with open(loginstr(instr_name)[1], 'w') as jfile:
         json.dump(instrument, jfile)
 
-def address(instr_name, reset=False):
+class address:
     '''Use Built-in Params as Default
     Set <reset=False> to directly load from LOG if it contains "address" 
     '''
-    rs = dict()
-    rs['RDG'] = 'TCPIP0::192.168.1.179::INSTR'
-    rs['YOKO'] = "GPIB0::2::INSTR"
-    rs['RDS'] = 'TCPIP0::192.168.1.81::INSTR'
-    rs["PSGV"] = 'TCPIP0::192.168.1.35::INSTR'
-    rs["PSGA"] = 'TCPIP0::192.168.1.33::INSTR'
-    rs["ENA"] = 'TCPIP0::192.168.1.85::INSTR'
-    rs["PNA"] = "TCPIP0::192.168.0.6::hpib7,16::INSTR"
-    rs["DSO"] = "GPIB0::7::INSTR" # Oscilloscope Agilent 54621A
-    # rs["DSO"] = "visa://qdl-pc/GPIB0::7::INSTR" # Oscilloscope Agilent 54621A
-    rs["ESG"] = "GPIB0::27::INSTR" # Interface TYPE + Number :: Address :: INSTR
-    # rs["MXG"] = "TCPIP0::169.254.0.1::INSTR"
-    rs["MXG"] = "TCPIP0::192.168.0.3::INSTR"
-    # rs["VSA"] = "PXI0::22-14.0::INSTR;PXI0::22-12.0::INSTR;PXI0::22-9.0::INSTR;PXI0::22-8.0::INSTR;PXI0::27-0.0::INSTR"
-    rs["VSA"] = "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR"
-    rs["AWG"] = "PXI20::14::0::INSTR"
-    # rs["AWG"] = "visa://qdl-pc/PXI20::14::0::INSTR"
-    rs["TEST"] = "PXISAMAZING"
-    if instr_name in rs: # checking database
-        instrument = get_status(instr_name)
-        if instrument is None or "address" not in instrument or reset:
-            set_status(instr_name,dict(address=rs[instr_name]))
-            instrument = get_status(instr_name) # get status again after the update
-        RS = instrument["address"]
-    else: RS = None
-    return RS
+    def __init__(self):
+        self.book = json.load(open(Path(pyfilename).parent / 'address.json'))
 
-def loguser(usr_name, sample):
-    '''[Existence, Assigned Path] = logfile(User's name)
-    '''
-    pyqumfile = "%s(%s)data.pyqum" %(usr_name, sample)
-    pqfile = Path(USR_PATH) / pyqumfile
-    existence = exists(pqfile) and stat(pqfile).st_size > 0 #The beauty of Python: if first item is false, second item will not be evaluated in AND-statement, thus avoiding errors
-    return existence, pqfile
+    def lookup(self, instr_name, level=0):
+        self.instr_name = instr_name
+        self.level = level
+        try:
+            if self.level:
+                self.rs = self.book[self.instr_name]["alternative"][self.level-1]
+            else: self.rs = self.book[self.instr_name]["resource"]
+        except(KeyError): self.rs = None # checking if instrument in database
+        return self.rs
 
-def get_data(usr_name, sample='Sample'):
-    '''Get User's Data from LOG
-    '''
-    usr_log = loguser(usr_name, sample)
-    if usr_log[0] == False:
-        user = None # No such User
-    else:
-        with open(usr_log[1]) as jfile:
-            user = json.load(jfile) # in json format
-    return user
+    def visible(self):
+        self.vis = []
+        for k,v in self.book.items():
+            if v["visible"]:
+                self.vis.append(k)
+        return self.vis
 
-# SUPER IMPORTANT!!!
-def set_data(usr_name, place, mission, machine, measuredata, sample='Sample'):
-    '''LOG USER DATA
-    * <measuredata> must be a DICT'''
-    usr_bag = json.dumps({ctime(): {place: {mission: {machine: measuredata}}}}) #serialize the json
-    user = get_data(usr_name, sample)
-    if user is None:
-        with open(loguser(usr_name, sample)[1], 'ab+') as jfile:
-            jfile.write(bytes(usr_bag, 'ascii'))
-    else:
-        # pending: checking JSON format
-        with open(loguser(usr_name, sample)[1], 'rb+') as ufile: # truncate the last letter from file
-                    ufile.seek(-1, SEEK_END)
-                    ufile.truncate()
-        with open(loguser(usr_name, sample)[1], 'ab+') as jfile: #paste new data
-            jfile.write(bytes(", ", 'ascii') + bytes(usr_bag[1:-1], 'ascii') + bytes("}", 'ascii'))
-    return
-
+    def update_status(self):
+        set_status(self.instr_name,dict(address=self.rs))
+    
 # Debugger settings
 def debug(mdlname, state=False):
     debugger = 'debug' + mdlname
@@ -219,9 +196,140 @@ def translate_scpi(Name, instance, a, b):
 
     return status, ans
 
+class measurement:
+    '''Initialize Measurement:\n
+        corder: {parameters: [...], instruments: [...], ranges: [...]}\n
+    '''
+    def __init__(self, mission, task, corder, usr_name='USR', place='Unknown', sample='Sample', comment=''):
+        self.mission = mission
+        self.task = task
+        self.corder = corder
+        self.usr_name = usr_name
+        self.place = place
+        self.sample = sample
+        self.comment = comment #to be appended to data after ACK-mark
+
+        # assembly day & moment
+        now = datetime.now()
+        day = now.strftime("%Y-%m-%d(%a)")
+        moment = now.strftime("%H:%M")
+
+        # assembly file-name:
+        filename = "%s.pyqum" %task
+        self.pqfile = Path(USR_PATH) / self.usr_name / self.sample / mission / day / filename
+        
+        # assembly the file-header(time, place, mission, task, c-parameters):
+        usr_bag = bytes("{'%s': {'place': '%s', 'c-order': %s, 'data': " %(moment, place, corder), 'utf-8')
+        usr_bag += b'\x05' + b'\x06' + bytes("}"*2, 'utf-8') # data container
+
+        # check if the file exists and not blank:
+        existence = exists(self.pqfile) and stat(self.pqfile).st_size > 0 #The beauty of Python: if first item is false, second item will not be evaluated in AND-statement, thus avoiding errors
+        
+        # write into file:
+        if existence == False:
+            self.pqfile.parent.mkdir(parents=True, exist_ok=True) #make directories
+            with open(self.pqfile, 'wb') as datapie:
+                # Initialize blank file
+                datapie.write(usr_bag)
+        else:
+            with open(self.pqfile, 'rb+') as datapie:
+                # Appending moment-log if it's already existed
+                datapie.seek(-1, SEEK_END)
+                datapie.truncate()
+                datapie.write(bytes(", ", 'utf-8') + usr_bag[1:-1] + bytes("}", 'utf-8'))
+    
+    def log(self, data):
+        '''Logging DATA from instruments on the fly
+        '''
+        data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
+        try:
+            with open(self.pqfile, 'rb+') as datapie:
+                datapie.seek(-3, SEEK_END)
+                datapie.truncate()
+                datapie.write(data + b'\x06' + bytes("}"*2, 'utf-8'))  
+        except: print("THE FILE WAS NOT WELL PREPARED. PLS RUN 'measurement' FIRST")              
+        return
+
+    def load(self):
+        '''Get User's Data from LOG
+        '''
+        try:
+            filesize = stat(self.pqfile).st_size
+            with open(self.pqfile, 'rb') as datapie:
+                Enq, Ack, datacontainer, buildcontainer = [], [], '', True
+                for i in range(filesize):
+                    datapie.seek(i)
+                    bite = datapie.read(1)
+                    if bite == b'\x05':
+                        Enq.append(i)
+                        buildcontainer = False
+                        datacontainer += 'None'
+                    elif bite == b'\x06':
+                        Ack.append(i)
+                        buildcontainer = True
+                    else:
+                        if buildcontainer:
+                            datacontainer += bite.decode('utf-8')
+                datacontainer = ast.literal_eval(datacontainer)
+            self.datalocation = dict(zip(Enq, Ack)) 
+        except:
+            print("Measurement not initiated!")
+        return datacontainer
+
+    def get(self, entry=1):
+        '''select data'''
+        try:
+            load = self.load()
+            selectime = [k for k in load.keys()][entry-1]
+            k, v = [k for k in self.datalocation.keys()][entry-1], [v for v in self.datalocation.values()][entry-1]
+            with open(self.pqfile, 'rb') as datapie:
+                datapie.seek(k+1)
+                pie = datapie.read(v-k-1)
+                selectedata = list(struct.unpack('>' + 'd'*((v-k-1)//8), pie))
+        except: 
+            print("out of range!")
+        return selectime, selectedata
+
+    def database(self):
+        '''reconstructing the database in dictionary format'''
+        book = self.load()
+        for i,t in enumerate(book.keys()):
+            book[t]['data'] = self.get(i+1)[1]
+        return book
+
+# C-Parameters Descriptor
+def settings(place):
+    @wrapt.decorator
+    def wrapper(Name, instance, a, b):
+        data = Name(*a, **b)
+        mission = Path(inspect.stack()[1][1]).name.replace('.py','')
+        task = Name.__name__
+        Cnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
+        Carrays = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
+        Corders = dict(zip(Cnames, Carrays))
+        datasize = prod([len(x) for x in Carrays])
+        # print(datasize)
+        M = measurement(mission, task, Corders, place=place)
+        try:
+            for x in data:
+                # print(Fore.YELLOW + '\r %s' %x, end='\r')
+                M.log(x)
+                # sleep(0.006)
+        except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
+        print(M.get(1))
+        print(M.database()['00:50']['c-order'])
+        return
+    return wrapper
+
 
 def test():
-    pass
+    L = location()
+    print("We are now in %s" %L)
+    ad = address()
+    print(ad.lookup("YOKO"))
+    print(ad.lookup("TEST", 2))
+    print(ad.visible())
     return
     
+test()
 

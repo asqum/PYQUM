@@ -143,7 +143,7 @@ def test(detail=True):
             rfoutput(s, action=['Set', 'ON'])
             rfoutput(s)
             Lfshape(s, action=['Set', 'DC'])
-            Lfamp(s, action=['Set', 'FUNC', '1.5V'])
+            Lfamp(s, action=['Set', 'FUNC', '1.57V'])
             Lfamp(s)
             Lfoutput(s, action=['Set', 'ON'])
         else: print(Fore.RED + "Basic IO Test")

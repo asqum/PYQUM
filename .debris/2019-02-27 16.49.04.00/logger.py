@@ -1,0 +1,246 @@
+'''For logging file'''
+
+from colorama import init, Fore, Back
+init(autoreset=True) #to convert termcolor to wins color
+
+from pathlib import Path
+from os import stat, SEEK_END
+from os.path import exists, getsize
+from time import time, ctime
+from contextlib import suppress
+import inspect, json, wrapt, struct
+
+__author__ = "Teik-Hui Lee"
+__copyright__ = "Copyright 2019, The Pyqum Project"
+__credits__ = ["Chii-Dong Chen", "Yu-Cheng Chang"]
+__license__ = "GPL"
+__version__ = "beta3"
+__email__ = "teikhui@phys.sinica.edu.tw"
+__status__ = "development"
+
+pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
+INSTR_PATH = Path(pyfilename).parents[2] / "INSTLOG" # 2 levels up the path
+USR_PATH = Path(pyfilename).parents[2] / "USRLOG"
+# print(Path(pyfilename).parts[-1]) # last part of the path
+
+def clocker(stage, prev=0):
+    now = time()
+    duration = now - prev
+    if int(stage) > 0:
+        print(Fore.BLUE + Back.WHITE + "It took {:.5f}s to complete {:d}-th stage\n".format(duration, stage))
+    stage += 1
+    return stage, now
+
+def status_code(status):
+    if status == 0:
+        return "Success!"
+    else: return "error %s" % status
+
+def output_code(output):
+    if output == "1":
+        return "ON"
+    elif output == "0":
+        return "OFF"
+
+def loginstr(instr_name):
+    '''[Existence, Assigned Path] = loginstr(Instrument's name)
+    '''
+    pyqumfile = instr_name + "status.pyqum"
+    pqfile = Path(INSTR_PATH) / pyqumfile
+    existence = exists(pqfile) and stat(pqfile).st_size > 0
+    return existence, pqfile
+
+def get_status(instr_name):
+    '''Get Instrument Status from LOG
+    '''
+    instr_log = loginstr(instr_name)
+    if instr_log[0] == False:
+        instrument = None # No such Instrument
+    else:
+        with open(instr_log[1]) as jfile:
+            instrument = json.load(jfile) # in json format
+    return instrument
+
+def set_status(instr_name, info):
+    '''Set Instrument Status for LOG
+    * <info> must be a DICT'''
+    instrument = get_status(instr_name)
+    if instrument is None:
+        instrument = {}
+    instrument.update(info)
+    with open(loginstr(instr_name)[1], 'w') as jfile:
+        json.dump(instrument, jfile)
+
+class address:
+    '''Use Built-in Params as Default
+    Set <reset=False> to directly load from LOG if it contains "address" 
+    '''
+    def __init__(self, instr_name, level=0):
+        self.instr_name = instr_name
+        self.level = level
+
+    def lookup(self):
+        self.rs = json.load(open(Path(pyfilename).parent / 'address.json'))
+        try:
+            if self.level:
+                self.rs = self.rs[self.instr_name]["alternative"][self.level-1]
+            else: self.rs = self.rs[self.instr_name]["resource"]
+        except(KeyError): self.rs = None # checking if instrument in database
+        return self.rs
+
+    def update_status(self):
+        set_status(self.instr_name,dict(address=self.rs))
+    
+    
+
+# Debugger settings
+def debug(mdlname, state=False):
+    debugger = 'debug' + mdlname
+    exec('%s %s; %s = %s' %('global', debugger, debugger, 'state'), globals(), locals()) # open global and local both-ways channels!
+    if state:
+        print(Back.RED + '%s: Debugging Mode' %debugger.replace('debug', ''))
+    return eval(debugger)
+
+# SCPI Translator
+@wrapt.decorator
+def translate_scpi(Name, instance, a, b):
+    
+    mdlname, bench, SCPIcore, action = Name(*a, **b)
+    debugger = 'debug' + mdlname
+    SCPIcore = SCPIcore.split(";")
+    headers = SCPIcore[0].split(':')
+    parakeys, paravalues, getspecific, command = [headers[-1]] + SCPIcore[1:], [], [], []
+
+    if action[0] == 'Get':
+        try:
+            for i in range(len(parakeys)):
+                if len(str(action[i+1])) > 0: #special type of query (e.g. commentstate)
+                    getspecific.append(" " + str(action[i+1]))
+                else: getspecific.append('')
+                command.append(parakeys[i] + "?" + getspecific[i])
+
+            command = ':'.join(headers[:-1] + [";".join(command)])
+            paravalues = bench.query(command).split(';')
+            #just in case of the presence of query parameters, which is rare
+            paravalues = [paravalues[i] + '(' + str(action[i+1]) + ')' for i in range(len(parakeys))]
+            paravalues = [x.replace('()', '') for x in paravalues]
+
+            status = "Success"
+        except: # get out of the method with just return-value at exception?
+            status = "query unsuccessful"
+            ans = None
+
+    if action[0] == 'Set':
+
+        for i in range(len(parakeys)):
+            if str(action[i+1]) == '':
+                paravalues.append("NIL") # allow for arbitrary choosing
+            elif ' ' in str(action[i+1]) and not "'" in str(action[i+1]): #set parameters for each header by certain parakey
+                actionwords = str(action[i+1]).split(' ')
+                oddwords, evenwords, J = actionwords[1::2], actionwords[0::2], []
+                # print("Odd: %s; Even: %s"%(oddwords,evenwords))
+                for j,h in enumerate(headers):
+                    for w,word in enumerate(oddwords):
+                        if evenwords[w].upper() in h.upper(): #only need to type part of the header(core)!
+                            headers[j] = h.upper() + word
+                            J.append(j)
+                statement = ','.join([headers[sel] for sel in J])    
+                paravalues.append(statement) #will appear in the <ans>
+                command.append(parakeys[i])
+            else: 
+                paravalues.append(str(action[i+1]))
+                command.append(parakeys[i] + " " + paravalues[i])
+
+        command = ':'.join(headers[:-1] + [";".join(command)])
+        status = str(bench.write(command)[1])[-7:]
+        
+    # formatting return answer
+    ans = dict(zip([a.replace('*','') for a in parakeys], paravalues))
+
+    # Logging answer
+    if action[0] == 'Get': # No logging for "Set"
+        set_status(mdlname, {Name.__name__ : ans})
+
+    # debugging
+    if eval(debugger):
+        print(Fore.LIGHTBLUE_EX + "SCPI Header: {%s}" %headers[:-1])
+        print(Fore.CYAN + "SCPI Command: {%s}" %command)
+        if action[0] == 'Get':
+            print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__, ans, status))
+        if action[0] == 'Set':
+            print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__ , ans, status))
+
+    return status, ans
+
+class measurement:
+    '''Measurement:\n
+        directive: { <mission> : <task> }\n
+        corder: {parameters: [...], instruments: [...], ranges: [...]}\n
+    '''
+    def __init__(self, directive, corder, usr_name='USR', place='Unknown', sample='Sample'):
+        self.directive = directive
+        self.corder = corder
+        self.usr_name = usr_name
+        self.place = place
+        self.sample = sample
+        filename = "%s(%s)data.pyqum" %(self.usr_name, self.sample)
+        self.pqfile = Path(USR_PATH) / filename
+        self.existence = exists(self.pqfile) and stat(self.pqfile).st_size > 0 #The beauty of Python: if first item is false, second item will not be evaluated in AND-statement, thus avoiding errors
+
+    def get(self):
+        '''Get User's Data from LOG
+        '''
+        if self.existence == False:
+            self.user = None # No such User
+        else:
+            with open(self.pqfile) as jfile:
+                self.user = json.load(jfile) # in json format
+        return self.user
+    
+    def log(self, data, resume=False):
+        '''LOG USER DATA
+        '''
+        (mission, task) = [x for x in self.directive.items()][0]
+        usr_bag = bytes("{'%s': {'%s': {'%s': {'%s': {'c-order': %s, 'data': " %(ctime(), self.place, mission, task, self.corder), 'utf-8')
+        data = struct.pack('>' + 'd'*len(data), *data) # f:32bit, d:64bit each floating-number
+        usr_bag += b'\x05' + data + b'\x06' + bytes("}"*5, 'utf-8')
+
+        if self.existence == False:
+            # Initialize blank file
+            with open(self.pqfile, 'rb+') as jfile:
+                jfile.write(usr_bag)
+        else:
+            with open(self.pqfile, 'rb+') as ufile:
+                if resume:
+                    ufile.seek(-6, SEEK_END)
+                    ufile.truncate()
+                    ufile.write(data + b'\x06' + bytes("}"*5, 'utf-8'))
+                else:    
+                    ufile.seek(-1, SEEK_END)
+                    ufile.truncate() #truncate the last letter from file
+                    ufile.write(bytes(", ", 'utf-8') + usr_bag[1:-1] + bytes("}", 'utf-8'))
+        return
+
+# C-Parameters Decriptor
+def settings(place):
+    @wrapt.decorator
+    def wrapper(Name, instance, a, b):
+        data = Name(*a, **b)
+        mission = inspect.stack()[1][1].split("\\")[-1].replace('.py','')
+        task = Name.__name__
+        print(inspect.getargvalues(inspect.currentframe()).locals['a'])
+        print(str(inspect.signature(Name)))
+        # M = measurement({mission: task}, params, place=place)
+        # M.log(data)
+        return
+    return wrapper
+
+
+def test():
+    # from pyqum.directive.Characterize import test
+    # print(test.__doc__[:5])
+    print(address("YOKO"))
+    print(address("TEST", 3, True))
+    return
+    
+test()

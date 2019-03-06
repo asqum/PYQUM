@@ -13,7 +13,7 @@ from scipy import constants as cnst
 
 # This will run at server startup
 # Modulars first, only then Benchtops (if and only if we use render_template)
-from pyqum.job.characterize import resonatorQ
+from pyqum.directive.characterize import TESTC
 
 
 encryp = 'ghhgjad'

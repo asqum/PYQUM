@@ -10,6 +10,8 @@ from contextlib import suppress
 from numpy import linspace
 import matplotlib.pyplot as plt
 
+from pyqum.instrument.logger import address
+
 def scanetwork():
     active = []
     platinfo = platform.system() #check which OS
@@ -27,38 +29,38 @@ def scanetwork():
         if "ttl" in str(msg).lower():
             active.append(ip)
 
+    print("\nConnected Instruments:")
+    for i, active in enumerate(active):
+        print(Fore.YELLOW + "%s. %s" %(i+1, active))
+
     return active
 
 def checkallconnections():
     '''Check the availability of all instrument
     '''
     rm = visa.ResourceManager()
+    ad = address()
     addresses = {}
-    addresses["Yoko"] = "GPIB0::2::INSTR"
-    addresses["Tes"] = "GPIB0::7::INSTR"
-    addresses["Test"] = "GPIB0::8::INSTR"
-    addresses['RDS'] = 'TCPIP0::192.168.1.81::INSTR'
-    addresses["PSG"] = 'TCPIP0::192.168.1.35::INSTR'
-    addresses["ENA"] = 'TCPIP0::192.168.1.85::INSTR'
-    addresses['RDG'] = 'TCPIP0::192.168.1.179::INSTR'
-    addresses['RDSG'] = 'TCPIP0::192.168.1.25::INSTR'
-    # addresses["PNA"] = "TCPIP0::192.168.0.6::hpib7,16::INSTR"
-    # addresses["MXG"] = "TCPIP0::192.168.0.3::INSTR"
-    # PXIs
-    # addresses["VSA"] = "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR"
-    # addresses["AWG"] = "PXI20::14::0::INSTR"
+    for i in ad.visible():
+        addresses[i] = ad.lookup(i)
 
     instr = {}
     for k,ad in addresses.items():
         try:
             instr[k] = rm.open_resource(ad)
-            instr[k].read_termination = '\n' #omit termination tag from output 
+            instr[k].read_termination = '\r\n' #omit termination tag from output 
             instr[k].timeout = 3000 #set timeout
+            # check serial interface
+            interface = str(instr[k].interface_type).split('.')[1].upper()
+            if interface == 'ASRL':
+                instr[k].baud_rate, instr[k].data_bits = 57600, 7
+                instr[k].parity = visa.constants.Parity(1)
+                instr[k].stop_bits = visa.constants.StopBits(10)
             if k in ['Yoko']:
                 ID = instr[k].query('OD')
             else:
                 ID = instr[k].query('*IDN?')
-            print(Fore.WHITE + Back.GREEN + "%s is ONLINE!" %k)
+            print(Fore.WHITE + Back.GREEN + "%s [%s] is ONLINE!" %(k, interface))
             print(Fore.YELLOW + "ID: %s" %ID)  #identify each machine
                 
         except:
@@ -105,16 +107,17 @@ def closeall(instr):
         print(Fore.BLACK + Back.WHITE + "\r%s is CLOSED"%k, end='\r', flush=True)
         return
 
-
-def test():
-    active = scanetwork()
-    print("\nConnected Instruments:")
-    for i, active in enumerate(active):
-        print(Fore.YELLOW + "%s. %s" %(i+1, active))
-    instr = checkallconnections()
-    connectionspeed(instr)
-    closeall(instr)
-
+def initializationspeed():
+    # to be filled
     return
 
 
+def test():
+    scanetwork()
+    # instr = checkallconnections()
+    # connectionspeed(instr)
+    # closeall(instr)
+    # initializationspeed()
+    return
+
+test()

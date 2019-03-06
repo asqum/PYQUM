@@ -1,0 +1,110 @@
+{
+    
+    "TEST": {
+        "resource": "GPIB0::8::INSTR",
+        "alternative": [
+                        "PXISAMAZING",
+                        "GPIB0::0::INSTR",
+                        "TCPIP0::192.168.0.0::INSTR"
+                    ],           
+        "location": "everywhere",
+        "visible": true
+    },
+    
+    "YOKO": {
+        "resource": "GPIB0::2::INSTR",
+        "location": "AS",
+        "visible": true
+    },
+
+    "RDS": {
+        "resource": "TCPIP0::192.168.1.77::INSTR",
+        "location": "AS",
+        "visible": true
+    },
+
+    "PSGV": {
+        "resource": "TCPIP0::192.168.1.35::INSTR",
+        "location": "AS",
+        "visible": true
+    },
+
+    "PSGA": {
+        "resource": "TCPIP0::192.168.1.33::INSTR",
+        "location": "AS",
+        "visible": false
+    },
+
+    "ENA": {
+        "resource": "TCPIP0::192.168.1.85::INSTR",
+        "location": "AS",
+        "visible": true
+    },
+
+    "RDG": {
+        "resource": "TCPIP0::192.168.1.179::INSTR",
+        "location": "AS",
+        "visible": false
+
+    },
+
+    "RDSG": {
+        "resource": "TCPIP0::192.168.1.25::INSTR",
+        "location": "AS",
+        "visible": false
+    },
+    
+    "PNA": {
+        "resource": "TCPIP0::192.168.0.6::hpib7,16::INSTR",
+        "location": "NCHU",
+        "visible": false
+    },
+
+    "DSO": {
+        "resource": "GPIB0::7::INSTR",
+        "alternative": "visa://qdl-pc/GPIB0::7::INSTR",
+        "location": "NCHU",
+        "description": "Oscilloscope Agilent 54621A",
+        "visible": false
+    },
+
+    "ESG": {
+        "resource": "GPIB0::27::INSTR",
+        "location": "NCHU",
+        "visible": false
+    },
+
+    "MXG": {
+        "resource": "TCPIP0::192.168.0.3::INSTR",
+        "location": "NCHU",
+        "visible": false
+    },
+
+    "VSA": {
+        "resource": "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR",
+        "alternative": [
+                    "PXI27::0::0::INSTR;PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR",
+                    "PXI0::22-14.0::INSTR;PXI0::22-12.0::INSTR;PXI0::22-9.0::INSTR;PXI0::22-8.0::INSTR;PXI0::27-0.0::INSTR",
+                    "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR"
+                    ],
+        "location": "NCHU",
+        "visible": false
+    },
+
+    "AWG": {
+        "resource": "PXI20::14::0::INSTR",
+        "alternative": [
+                    "PXI20::14::0::INSTR"
+                    ],
+        "location": "NCHU",
+        "visible": false
+    },
+    
+    "LAKE": {
+        "resource": "visa://192.168.1.23:7777/ASRL3::INSTR",
+        "alternative": "visa://BlueForsAS/ASRL3::INSTR",
+        "location": "AS",
+        "visible": true
+    }
+
+}
