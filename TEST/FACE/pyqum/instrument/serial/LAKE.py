@@ -44,7 +44,9 @@ try:
     P5 = bench.query('RDGPWR? 5')
     print("P5: %sW" %P5)
 
-    bench.write("display 2,2,1")
+    print("Display setting: %s" %bench.query("display?"))
+    bench.write("display 2,2,2")
+    # bench.write("display 2,1,2")
     # bench.write("display 1,2,1")
 
 except:

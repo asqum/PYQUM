@@ -6,24 +6,6 @@ $(document).ready(function(){
     $('div.awgcontent').hide();
 });
 
-//show log's page
-$(function () {
-    $('button#awg').bind('click', function () {
-        $.getJSON('/mach/awg/log', {
-        }, function (data) {
-            $('div.instrlog#awg').empty();
-            $('div.instrlog#awg').append($('<p style="margin-top:32px;"></p>'));
-            $.each(data.log, function(index, value) {
-                $('div.instrlog#awg').append($('<h4 style="color: white;"></h4>').text(index + ": ").
-                append($('<span style="color: yellow;"></span>').text(value)));
-              });
-              $('div.instrlog#awg').slideToggle('fast');
-              $('button#awg').toggleClass('active');
-        });
-        return false;
-    });
-});
-
 //show debug's page
 $(function() {
     $('button.awg#debug').bind('click', function() {

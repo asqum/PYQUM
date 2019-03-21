@@ -1,0 +1,34 @@
+<!doctype html> <!--extended from parent: machine.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/bdr.js') }}"></script>
+</head>
+
+<body class="mach">
+
+<div>
+
+    <div class="tab">
+        <button class='bdr' id='pressure'>Pressure</button>
+        <button class='bdr' id='temperature'>Temperature</button> 
+    </div>
+    
+    <!-- page content based on button clicked -->
+    <div class="bdrcontent" id="settings">
+        <div class="container">
+            
+        </div>
+    </div>
+
+    <div class="bdrcontent" id="display">
+        <div class="container">
+            
+        </div>
+    </div>
+
+</div>
+
+</body>
+
+</html>

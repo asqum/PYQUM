@@ -3,24 +3,6 @@ $(document).ready(function(){
     $('div.mxgcontent').hide();
 });
 
-//show log's page
-$(function () {
-    $('button#mxg').bind('click', function () {
-        $.getJSON('/mach/mxg/log', {
-        }, function (data) {
-            $('div.instrlog#mxg').empty();
-            $('div.instrlog#mxg').append($('<p style="margin-top:32px;"></p>'));
-            $.each(data.log, function(index, value) {
-                $('div.instrlog#mxg').append($('<h4 style="color: white;"></h4>').text(index + ": ").
-                append($('<span style="color: yellow;"></span>').text(value)));
-              });
-              $('div.instrlog#mxg').slideToggle('fast');
-              $('button#mxg').toggleClass('active');
-        });
-        return false;
-    });
-});
-
 //show debug's page
 $(function() {
     $('button.mxg#debug').bind('click', function() {

@@ -1,6 +1,22 @@
 '''For analyzing data'''
-from numpy import ones, convolve, log10, sqrt, arctan2
+from numpy import ones, convolve, log10, sqrt, arctan2, diff
 from scipy.fftpack import rfft, rfftfreq, irfft
+
+import matplotlib.pyplot as plt
+
+# curve display
+def curve(x, y, title, xlabel, ylabel):
+    fig, ax = plt.subplots(1, sharex=True, sharey=False)
+    ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    ax.plot(x, y)
+    fig.tight_layout()
+    plt.show()
+
+# differentiation
+def derivative(x, y, step=1):
+    X, Y = x[::step], y[::step]
+    dydx = diff(Y) / diff(X)
+    return X[1::], dydx
 
 # Extract IQ
 def IQAP(datas):
@@ -29,3 +45,8 @@ def FFT_deNoise(y, dx, noise_level, noise_filter=0.1):
     w_clean[cutoff] = 0
     y_clean = irfft(w_clean)
     return f, spectrum, w_clean, y_clean
+
+
+def test():
+
+    return

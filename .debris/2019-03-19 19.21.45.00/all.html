@@ -1,0 +1,39 @@
+<html>
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/all.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Clock.js') }}"></script>
+</head>
+
+<body>
+
+<!-- <div class="allcontent"> -->
+    
+    <div class="all clock"></div>
+    <canvas id="canvas" width="400" height="400" style="background-color:#333"></canvas>
+    <script>myClock("canvas")</script>
+
+    <div style="background-color: black;">
+    <h3 style="color: white;">Welcome to play any instrument below:</h3>
+    </div>
+
+    <p>1. AWG: Arbitrary Wave Generator </p>
+    <p>2. VSA: Vector Signal Analyzer</p>
+    <p>3. ESG: E-Series Analog Signal Generator</p>
+    <p>4. MXG: Migrated X-Series Vector Signal Generator</p>
+    <p>5. DSO: Digital Storage Oscilloscope</p>
+    <p>6. *NA: (Vector) Network Analyzer</p>
+    <p>7. BDR: BlueFors Dilution Refridgerator</p>
+
+
+    <button id='how'>How am I?</button>
+    <div class="all good"><h3>I am GOOD</h3></div>
+    <div class="all good" style="display: none"><h3>I am AWESOME</h3></div>
+    
+<!-- </div> -->
+
+</body>
+
+</html>

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Script{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/jquery-ui.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='ui/jquery-ui.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+<body class="bridg">
+    <br/>
+    <div class="ui-widget" style="padding: 1rem 1.5rem;">
+        <label for="tags">Tags: </label>
+        <input id="tags">
+    </div>
+    
+</body>
+
+{% endblock %}

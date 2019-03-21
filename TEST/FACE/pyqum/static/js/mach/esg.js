@@ -3,24 +3,6 @@ $(document).ready(function(){
     $('div.esgcontent').hide();
 });
 
-//show log's page
-$(function () {
-    $('button#esg').bind('click', function () {
-        $.getJSON('/mach/esg/log', {
-        }, function (data) {
-            $('div.instrlog#esg').empty();
-            $('div.instrlog#esg').append($('<p style="margin-top:32px;"></p>'));
-            $.each(data.log, function(index, value) {
-                $('div.instrlog#esg').append($('<h4 style="color: white;"></h4>').text(index + ": ").
-                append($('<span style="color: yellow;"></span>').text(value)));
-              });
-              $('div.instrlog#esg').slideToggle('fast');
-              $('button#esg').toggleClass('active');
-        });
-        return false;
-    });
-});
-
 //show debug's page
 $(function() {
     $('button.esg#debug').bind('click', function() {

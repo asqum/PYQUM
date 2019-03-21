@@ -317,7 +317,7 @@ def settings(place):
                 # sleep(0.006)
         except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
         print(M.get(1))
-        print(M.database()['00:50']['c-order'])
+        # print(M.database()['00:50']['c-order'])
         return
     return wrapper
 
@@ -331,5 +331,5 @@ def test():
     print(ad.visible())
     return
     
-test()
+# test()
 

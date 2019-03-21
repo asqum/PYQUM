@@ -1,0 +1,35 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='fa/css/v4-shims.css') }}">
+
+<head>
+    <title>{% block title %}{% endblock %} - PyQuM</title>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    {% block head %}{% endblock %}
+</head>
+
+<div class="navbar">
+        <a href="{{ url_for('blog.index') }}" class="home left">Home</a>
+        {% if g.user %}
+        <a href="{{ url_for('machine.show') }}" class="mach left">Machine</a>
+        <a href="{{ url_for('mission.show') }}" class="mssn left">Mission</a>
+        <a href="{{ url_for('bridge.show') }}" class="bridg left">Bridge</a>
+        {% endif %}  
+        <a href="{{ url_for('guide.show') }}" class="guide left">Guide</a>
+        <a href="{{ url_for('display.figstatic') }}" class="fig left">Display</a>
+
+        {% if g.user %}
+        <span class="user right">{{ g.user['username'] }}</span>
+        <a href="{{ url_for('auth.logout') }}" class="right">Log Out</a>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}" class="reg right">Register</a>
+        <a href="{{ url_for('auth.login') }}" class="login right">Log In</a>
+        {% endif %}    
+</div>
+
+<div style="margin-top:56px;">
+    {% block header %}{% endblock %}
+    {% block content %}{% endblock %}
+</div>

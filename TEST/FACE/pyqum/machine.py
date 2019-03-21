@@ -24,6 +24,7 @@ from pyqum.instrument.benchtop import MXG, ESG, DSO, PNA
 # esgbench = ESG.Initiate()
 # mxgbench = MXG.Initiate()
 # dsobench = DSO.Initiate()
+from pyqum.instrument.dilution import bluefors
 
 encryp = 'ghhgjad'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
@@ -31,7 +32,7 @@ bp = Blueprint(myname, __name__, url_prefix='/mach')
 # Main
 @bp.route('/')
 def show():
-    return render_template("blog/machn/machine.html", encryp=encryp)
+    return render_template("blog/machn/machine.html")
 
 # ALL
 @bp.route('/all', methods=['POST', 'GET'])
@@ -329,10 +330,6 @@ def dsoautoscale():
     trange, tdelay, tscale = status[1]['RANGE'], status[1]['DELAY'], status[1]['SCALE']
     trange, tdelay, tscale = float(trange)/cnst.nano, float(tdelay)/cnst.nano, float(tscale)/cnst.nano
     return jsonify(yrange=yrange, yscale=yscale, yoffset=yoffset, yrange2=yrange2, yscale2=yscale2, yoffset2=yoffset2, trange=trange, tdelay=tdelay, tscale=tscale)
-@bp.route('/dso/log', methods=['GET'])
-def dsolog():
-    log = get_status('DSO')
-    return jsonify(log=log)
 @bp.route('/dso/reset', methods=['GET'])
 def dsoreset():
     global dsobench
@@ -396,5 +393,17 @@ def dsoabout():
     message += ['Acquisition of Data: %s (%s)' % (status[1], status[0])]
     return jsonify(message=message)
 
+# BDR
+@bp.route('/bdr', methods=['GET'])
+def bdr():
+    return render_template("blog/machn/bdr.html")
+@bp.route('/bdr/temperature', methods=['GET'])
+def bdrtemperature():
+    b = bluefors()
+    b.selectday(3)
+    [startime, t, T] = b.temperaturelog(5)
+    return jsonify(startime=startime, t=t, T=T)
+
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
+

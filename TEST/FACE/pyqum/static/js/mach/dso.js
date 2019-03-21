@@ -3,24 +3,6 @@ $(document).ready(function(){
     $('div.dsocontent').hide();
 });
 
-//show log's page
-$(function () {
-    $('button#dso').bind('click', function () {
-        $.getJSON('/mach/dso/log', {
-        }, function (data) {
-            $('div.instrlog#dso').empty();
-            $('div.instrlog#dso').append($('<p style="margin-top:32px;"></p>'));
-            $.each(data.log, function(index, value) {
-                $('div.instrlog#dso').append($('<h4 style="color: white;"></h4>').text(index + ": ").
-                append($('<span style="color: yellow;"></span>').text(value)));
-              });
-              $('div.instrlog#dso').slideToggle('fast');
-              $('button#dso').toggleClass('active');
-        });
-        return false;
-    });
-});
-
 //show debug's page
 $(function() {
     $('button.dso#debug').bind('click', function() {

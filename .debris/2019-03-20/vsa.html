@@ -1,0 +1,47 @@
+<!doctype html> <!--extended from parent: machine.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/vsa.js') }}"></script>
+</head>
+
+<body class="mach">
+<div>
+    <!--previous settings-->
+    <button class="slider" id="vsa"><strong>Instrument Log (History)</strong></button>
+    <div class="instrlog" id="vsa"></div>
+
+    <div class="tab" style='margin-top:32px;'>
+    <form method='GET'>
+        <button class='vsa' id='reset'><i class="fa fa-refresh" style="font-size:15px;color:lightgreen;"></i> RESET</button>
+        <button class='vsa' id='close'><i class="fa fa-times-circle" style="font-size:15px;color:red;"></i> CLOSE</button>
+
+        <button class='vsa' id='about'>ABOUT</button>
+        <button class='vsa' id='debug'>DEBUG</button>
+        <button class='vsa' id='settings'>SETTINGS</button> 
+        
+    </form>
+    </div>
+
+    <div class="vsacontent" id="debug"></div>
+    <div class="vsacontent" id="about">></div>
+
+    <div class="vsacontent" id="settings">
+        <div class="container">
+            <form method='GET'>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-25"><label>Set Acquisition Time (s)</label></div>
+                <div class="col-75"><input class='vsa' id="settings" name='acquis' type="text" value="1e-6"/></div>
+                </div>
+
+                <div class="row"> <!-- SUBMIT BUTTON -->
+                    <div class="col-25"></div>
+                    <div class="col-75"><input class='vsa' id='submitsettings' type="submit" value="Submit"/></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

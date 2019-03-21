@@ -21,6 +21,9 @@ IF EXIST "instance\pyqum.sqlite" (
     ECHO New Database Created
     )
 
+::BYPASS to WEB
+goto web
+
 :pyqum
     ::ECHO INITIATE AWG
     ::python -c "from pyqum.instrument.modular import AWG; print(AWG.InitWithOptions())"

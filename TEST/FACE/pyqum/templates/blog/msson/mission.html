@@ -12,7 +12,9 @@
 
 <body class="mssn" style="overflow-y:hidden">
 
-<script> 
+<script>
+    $('.navbar button').removeClass('active');
+    $('.navbar button.mission').addClass('active');
     $(function(){
       $("div#all").load("{{ url_for('mission.all') }}");
       $("div#data").load("{{ url_for('mission.data') }}");

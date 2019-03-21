@@ -1,0 +1,42 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='fa/css/v4-shims.css') }}">
+
+<head>
+    <title>{% block title %}{% endblock %} - PyQuM</title>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    {% block head %}{% endblock %}
+</head>
+
+<div class="navbar">
+
+    <button class="home" id="left">Home</button>
+
+    <!-- user specific -->
+    {% if g.user %}
+        <button class="machine" id="left">Machine</button>
+        <button class="mission" id="left">Mission</button>
+        <button class="bridge" id="left">Bridge</button>
+    {% endif %}  
+
+    <button class="guide" id="left">Guide</button>
+    <button class="display" id="left">Display</button>
+
+    <!-- User Credentials -->
+    {% if g.user %}
+        <button class="user" id="right">{{ g.user['username'] }}</button>
+        <button class="logout" id="right">Log Out</button>
+    {% else %}
+        <button class="reg" id="right">Register</button>
+        <button class="login" id="right">Log In</button>
+    {% endif %} 
+       
+</div>
+
+<div class="navcontent" style="margin-top:56px;">
+    {% block header %}{% endblock %}
+    {% block content %}{% endblock %}
+</div>

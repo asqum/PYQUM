@@ -1,0 +1,798 @@
+{% extends 'base.html' %}
+{% block title %}New Post{% endblock %}
+
+{% block content %}
+ 
+<body class="guide">
+    
+    <!-- Main section (everything below first separator line) -->
+    <div id="mainSection" style="padding: 1rem 1.5rem;">
+        <!-- Main body (between header separator line and footer separator line) -->
+        <div id="mainBody">
+
+            <!-- Errors -->
+            <h1>Errors</h1>
+            <div id="errorTableSection" class="section" name="collapseableSection" style="">
+                <table id="Table1" class="members" frame="lhs" cellpadding="2">
+                    <tr>
+                        <th class="nameColumn">
+                            Name</th>
+                        <th class="hexValueColumn" style="white-space: nowrap">
+                            Value (Hex)</th>
+                        <th class="decimalValueColumn" style="white-space: nowrap">
+                            Value (Decimal)</th>
+                        <th class="descriptionColumn">
+                            Description</th>
+                    </tr>
+                    <tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_CANNOT_RECOVER</td>
+    <td>
+        0xBFFA0000</td>
+    <td>
+        -1074135040</td>
+    <td>
+        Failure cannot recover.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_INSTRUMENT_STATUS</td>
+    <td>
+        0xBFFA0001</td>
+    <td>
+        -1074135039</td>
+    <td>
+        Instrument error detected.  Use ErrorQuery() to determine the error(s).</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_CANNOT_OPEN_FILE</td>
+    <td>
+        0xBFFA0002</td>
+    <td>
+        -1074135038</td>
+    <td>
+        Cannot open file.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_READING_FILE</td>
+    <td>
+        0xBFFA0003</td>
+    <td>
+        -1074135037</td>
+    <td>
+        Error reading file.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_WRITING_FILE</td>
+    <td>
+        0xBFFA0004</td>
+    <td>
+        -1074135036</td>
+    <td>
+        Error writing file.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_INVALID_PATHNAME</td>
+    <td>
+        0xBFFA000B</td>
+    <td>
+        -1074135029</td>
+    <td>
+        The pathname is invalid.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_INVALID_VALUE</td>
+    <td>
+        0xBFFA0010</td>
+    <td>
+        -1074135024</td>
+    <td>
+        Invalid value (%1) for method %2, parameter %3.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_FUNCTION_NOT_SUPPORTED</td>
+    <td>
+        0xBFFA0011</td>
+    <td>
+        -1074135023</td>
+    <td>
+        Does not support this class-compliant feature: method %1</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_ATTRIBUTE_NOT_SUPPORTED</td>
+    <td>
+        0xBFFA0012</td>
+    <td>
+        -1074135022</td>
+    <td>
+        Does not support this class-compliant feature: property %1.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_VALUE_NOT_SUPPORTED</td>
+    <td>
+        0xBFFA0013</td>
+    <td>
+        -1074135021</td>
+    <td>
+        Does not support this class-compliant feature:  (enumeration) value %1 passed as the value for parameter %2 in method %3.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_NOT_INITIALIZED</td>
+    <td>
+        0xBFFA001D</td>
+    <td>
+        -1074135011</td>
+    <td>
+        A connection to the instrument has not been established.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_UNKNOWN_CHANNEL_NAME</td>
+    <td>
+        0xBFFA0020</td>
+    <td>
+        -1074135008</td>
+    <td>
+        Unknown channel name.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_TOO_MANY_OPEN_FILES</td>
+    <td>
+        0xBFFA0023</td>
+    <td>
+        -1074135005</td>
+    <td>
+        Too many files are open.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_CHANNEL_NAME_REQUIRED</td>
+    <td>
+        0xBFFA0044</td>
+    <td>
+        -1074134972</td>
+    <td>
+        A channel name is required.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_MISSING_OPTION_NAME</td>
+    <td>
+        0xBFFA0049</td>
+    <td>
+        -1074134967</td>
+    <td>
+        The option string is missing an option name.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_MISSING_OPTION_VALUE</td>
+    <td>
+        0xBFFA004A</td>
+    <td>
+        -1074134966</td>
+    <td>
+        The option string is missing an option value.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_BAD_OPTION_NAME</td>
+    <td>
+        0xBFFA004B</td>
+    <td>
+        -1074134965</td>
+    <td>
+        The %1 name in the option string is unknown.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_BAD_OPTION_VALUE</td>
+    <td>
+        0xBFFA004C</td>
+    <td>
+        -1074134964</td>
+    <td>
+        The %1 value in the option string is unknown.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_OUT_OF_MEMORY</td>
+    <td>
+        0xBFFA0056</td>
+    <td>
+        -1074134954</td>
+    <td>
+        Could not allocate necessary memory.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_OPERATION_PENDING</td>
+    <td>
+        0xBFFA0057</td>
+    <td>
+        -1074134953</td>
+    <td>
+        Operation in progress.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_NULL_POINTER</td>
+    <td>
+        0xBFFA0058</td>
+    <td>
+        -1074134952</td>
+    <td>
+        Null pointer passed for method %1, parameter %2.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_UNEXPECTED_RESPONSE</td>
+    <td>
+        0xBFFA0059</td>
+    <td>
+        -1074134951</td>
+    <td>
+        Unexpected response from instrument.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_FILE_NOT_FOUND</td>
+    <td>
+        0xBFFA005B</td>
+    <td>
+        -1074134949</td>
+    <td>
+        File not found.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_INVALID_FILE_FORMAT</td>
+    <td>
+        0xBFFA005C</td>
+    <td>
+        -1074134948</td>
+    <td>
+        Invalid file format.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_STATUS_NOT_AVAILABLE</td>
+    <td>
+        0xBFFA005D</td>
+    <td>
+        -1074134947</td>
+    <td>
+        The instrument status is not available.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_ID_QUERY_FAILED</td>
+    <td>
+        0xBFFA005E</td>
+    <td>
+        -1074134946</td>
+    <td>
+        Instrument ID query failed.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_RESET_FAILED</td>
+    <td>
+        0xBFFA005F</td>
+    <td>
+        -1074134945</td>
+    <td>
+        Instrument reset failed.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_RESOURCE_UNKNOWN</td>
+    <td>
+        0xBFFA0060</td>
+    <td>
+        -1074134944</td>
+    <td>
+        Unknown resource.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_ALREADY_INITIALIZED</td>
+    <td>
+        0xBFFA0061</td>
+    <td>
+        -1074134943</td>
+    <td>
+        The driver is already initialized.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_CANNOT_CHANGE_SIMULATION_STATE</td>
+    <td>
+        0xBFFA0062</td>
+    <td>
+        -1074134942</td>
+    <td>
+        The simulation state cannot be changed.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_INVALID_NUMBER_OF_LEVELS_IN_SELECTOR</td>
+    <td>
+        0xBFFA0063</td>
+    <td>
+        -1074134941</td>
+    <td>
+        The number of levels in the selector is not valid for the %1 repeated capability.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_INVALID_RANGE_IN_SELECTOR</td>
+    <td>
+        0xBFFA0064</td>
+    <td>
+        -1074134940</td>
+    <td>
+        The range %1 is not valid for the repeated capability %2.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_UNKOWN_NAME_IN_SELECTOR</td>
+    <td>
+        0xBFFA0065</td>
+    <td>
+        -1074134939</td>
+    <td>
+        Unknown name in selector.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_BADLY_FORMED_SELECTOR</td>
+    <td>
+        0xBFFA0066</td>
+    <td>
+        -1074134938</td>
+    <td>
+        The repeated capability selector is badly-formed.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_UNKNOWN_PHYSICAL_IDENTIFIER</td>
+    <td>
+        0xBFFA0067</td>
+    <td>
+        -1074134937</td>
+    <td>
+        Unknown physical repeated capability selector.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_TRIGGER_NOT_SOFTWARE</td>
+    <td>
+        0xBFFA1001</td>
+    <td>
+        -1074130943</td>
+    <td>
+        The trigger source is not set to software trigger.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_NO_WFMS_AVAILABLE</td>
+    <td>
+        0xBFFA2004</td>
+    <td>
+        -1074126844</td>
+    <td>
+        The function generator's waveform memory is full.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_WFM_IN_USE</td>
+    <td>
+        0xBFFA2008</td>
+    <td>
+        -1074126840</td>
+    <td>
+        The waveform is currently in use.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_NO_SEQS_AVAILABLE</td>
+    <td>
+        0xBFFA2009</td>
+    <td>
+        -1074126839</td>
+    <td>
+        The function generator sequence memory is full.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_SEQ_IN_USE</td>
+    <td>
+        0xBFFA200D</td>
+    <td>
+        -1074126835</td>
+    <td>
+        The sequence is currently in use.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_INVALID_WFM_HANDLE</td>
+    <td>
+        0xBFFA4001</td>
+    <td>
+        -1074118655</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_INVALID_SEQUENCE_HANDLE</td>
+    <td>
+        0xBFFA4002</td>
+    <td>
+        -1074118654</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_WRONG_CHANNEL_FOR_WFM</td>
+    <td>
+        0xBFFA4003</td>
+    <td>
+        -1074118653</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_UNKNOWN_ERROR</td>
+    <td>
+        0xBFFA4004</td>
+    <td>
+        -1074118652</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_MISSING_CLOCK</td>
+    <td>
+        0xBFFA4005</td>
+    <td>
+        -1074118651</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_WRONG_FIRMWARE</td>
+    <td>
+        0xBFFA4006</td>
+    <td>
+        -1074118650</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_CORRUPT_CALIBRATION_DATA</td>
+    <td>
+        0xBFFA4007</td>
+    <td>
+        -1074118649</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_CLOCK_SYNC</td>
+    <td>
+        0xBFFA4008</td>
+    <td>
+        -1074118648</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_ERROR_CORRECTIONS_NOT_AVAILABLE</td>
+    <td>
+        0xBFFA4009</td>
+    <td>
+        -1074118647</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_GENERAL_ERROR</td>
+    <td>
+        0xBFFA400A</td>
+    <td>
+        -1074118646</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_ARRAY_SIZE_MISMATCH</td>
+    <td>
+        0xBFFA400B</td>
+    <td>
+        -1074118645</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_DDS_NOT_SPECIFIED</td>
+    <td>
+        0xBFFA400C</td>
+    <td>
+        -1074118644</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_OPTION_NOT_AVAILABLE</td>
+    <td>
+        0xBFFA400D</td>
+    <td>
+        -1074118643</td>
+    <td>
+        </td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_PERSONALITY_NOT_ACTIVE</td>
+    <td>
+        0xBFFA4211</td>
+    <td>
+        -1074118127</td>
+    <td>
+        Personality is not active.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_PERSONALITY_NOT_INSTALLED</td>
+    <td>
+        0xBFFA4212</td>
+    <td>
+        -1074118126</td>
+    <td>
+        Personality is not installed.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_PERSONALITY_NOT_LICENSED</td>
+    <td>
+        0xBFFA4213</td>
+    <td>
+        -1074118125</td>
+    <td>
+        Personality is not licensed.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_IO_GENERAL</td>
+    <td>
+        0xBFFA4214</td>
+    <td>
+        -1074118124</td>
+    <td>
+        I/O error.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_IO_TIMEOUT</td>
+    <td>
+        0xBFFA4215</td>
+    <td>
+        -1074118123</td>
+    <td>
+        I/O timeout error.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_ERROR_MODEL_NOT_SUPPORTED</td>
+    <td>
+        0xBFFA4216</td>
+    <td>
+        -1074118122</td>
+    <td>
+        Instrument model does not support this feature.</td>
+</tr>
+
+</table>
+<a href="#mainBody">Top</a>
+</div>
+
+<!-- Warnings -->
+<h1>Warnings</h1>
+<div id="warningTableSection" class="section" name="collapseableSection" style="">
+<table id="memberList" class="members" frame="lhs" cellpadding="2">
+<tr>
+    <th class="nameColumn">
+        Name</th>
+    <th class="hexValueColumn" style="white-space: nowrap">
+        Value (Hex)</th>
+    <th class="decimalValueColumn" style="white-space: nowrap">
+        Value (Decimal)</th>
+    <th class="descriptionColumn">
+        Description</th>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_SUCCESS</td>
+    <td>
+        0x0</td>
+    <td>
+        0</td>
+    <td>
+        Success.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_WARN_NSUP_ID_QUERY</td>
+    <td>
+        0x3FFA0065</td>
+    <td>
+        1073348709</td>
+    <td>
+        ID Query is not supported by this instrument.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_WARN_NSUP_RESET</td>
+    <td>
+        0x3FFA0066</td>
+    <td>
+        1073348710</td>
+    <td>
+        Reset is not supported by this instrument.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_WARN_NSUP_SELF_TEST</td>
+    <td>
+        0x3FFA0067</td>
+    <td>
+        1073348711</td>
+    <td>
+        Self test is not supported by this instrument.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_WARN_NSUP_ERROR_QUERY</td>
+    <td>
+        0x3FFA0068</td>
+    <td>
+        1073348712</td>
+    <td>
+        Error query is not supported by this instrument.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_WARN_NSUP_REV_QUERY</td>
+    <td>
+        0x3FFA0069</td>
+    <td>
+        1073348713</td>
+    <td>
+        Firmware revision query is not supported by this instrument.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_WARN_PREDISTORTION_CLIPPING</td>
+    <td>
+        0x3FFA4001</td>
+    <td>
+        1073364993</td>
+    <td>
+        Predistortion Clipping Has Occurred.</td>
+</tr>
+
+<tr data="public;declared;">
+    <td>
+        AGM933X_WARN_PREDISTORTION_INVALID</td>
+    <td>
+        0x3FFA4002</td>
+    <td>
+        1073364994</td>
+    <td>
+        Predistortion Data is Invalid.</td>
+</tr>
+
+
+                </table>
+                <a href="#mainBody">Top</a>
+            </div>
+        </div>
+        
+<!-- Footer -->
+</br>        
+<div id="footer">
+    <span id="fb" class="feedbackcss" /> <a href="Copyright.html">Copyright 2010, 2011-2012 Agilent Technologies. All rights reserved.</a>
+</div>
+
+    </div>
+</body>
+
+{% endblock %}

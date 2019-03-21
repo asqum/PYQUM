@@ -1,0 +1,207 @@
+/* General */
+html {
+  font-family: sans-serif;
+  /* background: #eee; */
+  scroll-behavior: smooth;
+}
+body {
+  max-width: 100%;
+  margin: 0 0;
+  height: fit-content;
+  font-family: Arial, Helvetica, sans-serif;
+  border: 1px solid transparent;
+  /* padding-bottom: 100px;
+  margin-bottom: 100px; */
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: serif;
+    color: #377ba8;
+    margin: 0.35rem 0;
+}
+hr {
+border: none;
+border-top: 1px solid lightgray;
+}
+
+/* Navigation */
+.left {
+    float: left;
+}
+.right {
+    float: right;
+}
+div.navbar {
+    background-color: #333333;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    display: block;
+    transition: top 0.3s;
+}
+.navbar a, .navbar span {
+    font-size: 17px;
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 16px;
+    text-decoration: none;
+}
+.navbar .user {
+    font-family: fantasy;
+    color: chartreuse;
+}
+.navbar a:hover {
+    cursor: pointer;
+    background-color: lightsalmon;
+}
+body.home a.home, .mach a.mach, .mssn a.mssn, .guide a.guide,
+.fig a.fig, .bridg a.bridg, .login a.login, .reg a.reg {
+    background-color: white;
+    color: midnightblue;
+    font-weight: 800;
+}
+/* .home, .mach, .mssn, .guide, .fig, .bridg, .login, .reg {
+    position: fixed;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    background-color: white;
+    height: 120vh;
+} */
+
+
+/* Forms */
+input, select {
+    -webkit-appearance: none; /*make it native*/
+    -moz-appearance: none;
+    appearance: none;
+    width: 75%;
+    padding: 12px 3px;
+    border: 1px solid #ccc;
+    border-radius: 3.5px;
+    resize: vertical;
+}
+label {
+    word-wrap: break-word;
+    padding: 12px 0px 0px 0;
+    display: block;
+}
+input[type=submit] {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 3.5px;
+    cursor: pointer;
+    width: 95%;
+    margin: 2.5px 0;
+}
+input[type=submit]:hover {
+    background-color: #45a049;
+}
+.container {
+    width: 80%;
+    border-radius: 5px;
+    background-color: white;
+    padding: 3px;
+    padding-bottom:137px;
+}
+.container#login, .container#reg {
+    width: 80%;
+    border-radius: 5px;
+    background-color: white;
+    padding: 8px 8px;
+    padding-bottom:137px;
+    margin-left: 25px;
+}
+.row {
+    padding: 2px
+}
+.col-space {
+    float: left;
+    width: 0.5%;
+    margin-top: 6px;
+}
+.col-10 {
+    float: left;
+    width: 10%;
+    margin-top: 6px;
+}
+.col-15 {
+    float: left;
+    width: 15%;
+    margin-top: 6px;
+}
+.col-25 {
+    float: left;
+    width: 25%;
+    margin-top: 6px;
+}
+.col-35 {
+    float: left;
+    width: 35%;
+    margin-top: 6px;
+}
+.col-48 {
+    float: left;
+    width: 48%;
+    margin-top: 6px;
+}
+.col-60 {
+    float: left;
+    width: 60%;
+    margin-top: 6px;
+}
+.col-75 {
+    float: left;
+    width: 75%;
+    margin-top: 10px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+
+/* Post */
+header .action {
+    display: block;
+    color: darkblue;
+    text-align: center;
+    padding: 16px;
+    text-decoration: none;
+}
+.post > header {
+  display: flex;
+  align-items: flex-end;
+  font-size: 0.85em;
+  padding: 0 1.5rem;
+}
+.post > header > div:first-of-type {
+  flex: auto;
+}
+.post > header h1 {
+  font-size: 1.5em;
+  margin-bottom: 0;
+}
+.post .about {
+  color: slategray;
+  font-style: italic;
+}
+.post .body {
+  white-space: pre-line;
+  padding: 0 1.5rem;
+}
+
+
+
+
+
+
+
+
+
+
+

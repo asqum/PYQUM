@@ -108,5 +108,9 @@ def create_app(test_config=None):
     # make url_for('index') == url_for('blog.index')
     app.add_url_rule('/', endpoint='index')
 
-    print(Back.GREEN + Fore.LIGHTYELLOW_EX + "PYQUM is READY")
+    print(Back.GREEN + Fore.LIGHTYELLOW_EX + "Starting PYQUM:")
+    
+    import webbrowser
+    webbrowser.open("http://127.0.0.1:5200/", new=2)
+
     return app
