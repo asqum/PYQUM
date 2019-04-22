@@ -183,42 +183,45 @@ def test(detail=True):
     else:
         model(bench)
         if debug(mdlname, detail):
-            print(setrace(bench, window='D12_34'))
+            # print(setrace(bench, window='D12_34'))
+            print(setrace(bench, Mparam=['S12'], window='D1'))
             power(bench, action=['Set', -73.1])
             power(bench)
             N = 7000
             sweep(bench, action=['Set', 'OFF 10', N])
-            f_start, f_stop = 4.4e9, 4.9e9
+            # sweep(bench, action=['Set', 'ON', N])
+            f_start, f_stop = 0.7e9, 18e9
             linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
             stat = linfreq(bench)
             fstart, fstop = stat[1]['START'], stat[1]['STOP']
             # Building X-axis
             fstart, fstop = float(fstart), float(fstop)
             X = list(linspace(fstart, fstop, N))
-            noisefilfac = 100
+            noisefilfac = 2000
             IFB = abs(float(fstart) - float(fstop))/N/noisefilfac
             ifbw(bench, action=['Set', IFB])
             ifbw(bench)
             averag(bench, action=['Set', 1]) #optional
             averag(bench)
+            # start sweeping
             stat = sweep(bench)
             print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
             print("Ready: %s" %measure(bench)[1])
             autoscal(bench)
 
-            cwfreq(bench, action=['Set', 5.25e9])
-            cwfreq(bench)
-            power(bench, action=['Set', '', -75.3, -40.3])
-            power(bench)
-            stat = sweep(bench)
-            print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
-            print("Ready: %s" %measure(bench)[1])
+            # cwfreq(bench, action=['Set', 5.25e9])
+            # cwfreq(bench)
+            # power(bench, action=['Set', '', -75.3, -40.3])
+            # power(bench)
+            # stat = sweep(bench)
+            # print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
+            # print("Ready: %s" %measure(bench)[1])
             
             autoscal(bench)
-            dataform(bench, action=['Set', 'REAL32'])
 
+            dataform(bench, action=['Set', 'REAL32'])
             selectrace(bench, action=['Set', 'para 1 calc 1'])
-            print(sdata(bench))
+            # print(sdata(bench))
 
             rfports(bench, action=['Set', 'OFF'])
             rfports(bench)

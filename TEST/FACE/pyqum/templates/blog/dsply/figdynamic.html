@@ -1,9 +1,8 @@
-{% extends 'base.html' %} 
-{% block title %}Dynamic{% endblock %}
+<!doctype html>
 
-{% block head %}
+<head>
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/dynamic.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/dsply/dynamic.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
     <script>
         $(document).ready(function(){
@@ -12,35 +11,33 @@
             });
         });
     </script>
-{% endblock %}
- 
- {% block content %}
+</head>
 
-    <body class="fig">
-        <p>If you click on me, I will disappear.</p>
-        <p>Click me away!</p>
-        <p>Click me too!</p>
-        
-        <form method='POST' class='dataform'>
-            <input class="button buttonmeasure" type='submit' name='analysis' value='ANALYSIS'>
-        </form>
-        
-<!--
-        {% for item in datanum %}
-            <h3>{{ item }}</h3>
-        {% endfor %}
--->
-        <div style="width:75%;">
-            <h5 id="counter"></h5>
-            <canvas id="canvas01" style="display: block; width: 1000px; height: 500px;" width="1000" height="500" class="chartjs-render-monitor"></canvas>
-            {% for item in data %}
-                <script>
-                    document.getElementById("counter").innerHTML = "COUNT: " + {{item[0] + 1}}
-                    myPlot("canvas01", {{item[1]['x']}}, {{item[1]['y']}})
-                </script>   
-            {% endfor %}    
-        </div>
-        
-    </body>
+<body class="fig">
+    <p>If you click on me, I will disappear.</p>
+    <p>Click me away!</p>
+    <p>Click me too!</p>
     
-{% endblock %}
+    <form method='POST' class='dataform'>
+        <input class="button buttonmeasure" type='submit' name='analysis' value='ANALYSIS'>
+    </form>
+    
+<!--
+    {% for item in datanum %}
+        <h3>{{ item }}</h3>
+    {% endfor %}
+-->
+    <div style="width:75%;">
+        <h5 id="counter"></h5>
+        <canvas id="canvas01" style="display: block; width: 1000px; height: 500px;" width="1000" height="500" class="chartjs-render-monitor"></canvas>
+        {% for item in data %}
+            <script>
+                document.getElementById("counter").innerHTML = "COUNT: " + {{item[0] + 1}}
+                myPlot("canvas01", {{item[1]['x']}}, {{item[1]['y']}})
+            </script>   
+        {% endfor %}    
+    </div>
+    
+</body>
+    
+</html>

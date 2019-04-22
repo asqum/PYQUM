@@ -1,22 +1,23 @@
-{% extends 'base.html' %}
-{% block title %}Static{% endblock %}
+<!doctype html> <!--extended from parent: display.html, which in turn inherited base.html-->
 
-{% block head %}
+<head>
     <script src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
-{% endblock %}
 
-{% block content %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js"></script>
+    <!-- PlotlyFinance.js -->
+    <script src="https://cdn.rawgit.com/etpinard/plotlyjs-finance/master/plotlyjs-finance.js"></script>
+</head>
 
 <body class="fig">
 
 <div style="padding: 1rem 1.5rem;">
-    <div><a href='/dynamic'>Dynamic</a></div>
+    <!-- <div><a href='/dynamic'>Dynamic</a></div>
     <div><a href='/concurrent'>Concurrent</a></div>
-    <div><a href='/stream'>Stream</a></div>
+    <div><a href='/stream'>Stream</a></div> -->
+
     <div style="width:75%;">
         <canvas id="canvas" style="display: block; width: 1000px; height: 500px;" width="1000" height="500" class="chartjs-render-monitor"></canvas>
     </div>
-
     <script>
         var ctx = document.getElementById('canvas').getContext('2d');
         var chart = new Chart(ctx, {
@@ -52,7 +53,6 @@
     <div style="width:75%">
         <canvas id="canvas01" style="display: block; width: 1000px; height: 500px;" width="1000" height="500" class="chartjs-render-monitor"></canvas>
     </div>
-
     <script>
         var ctx = document.getElementById('canvas01').getContext('2d');
         var chart = new Chart(ctx, {
@@ -81,8 +81,274 @@
             options: {}
         });
     </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div id="myDiv" style="width: 480px; height: 400px;">
+        <!-- Plotly chart will be drawn inside this DIV --></div>
+    <script>
+        Plotly.d3.json('https://raw.githubusercontent.com/plotly/datasets/master/custom_heatmap_colorscale.json', function(figure) {
+        var data = [{
+                    z: figure.z,
+                    colorscale: 'YIGnBu',
+                    type: 'heatmap'
+                    }
+                    ];
+        var layout = {title: 'YIGnBu'};
+        Plotly.newPlot('myDiv', data, layout, {showSendToCloud:true});
+        });
+    </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div id="myDiv01"></div>
+    <script>
+        var intensity = [0, 0.14285714285714285, 0.2857142857142857, 0.42857142857142855, 0.5714285714285714, 0.7142857142857143, 0.8571428571428571, 1];
+        var data = [{
+            type: "mesh3d",
+            x: [0, 0, 1, 1, 0, 0, 1, 1],
+            y: [0, 1, 1, 0, 0, 1, 1, 0],
+            z: [0, 0, 0, 0, 1, 1, 1, 1],
+            i: [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
+            j: [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
+            k: [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
+            intensity: intensity,
+            colorscale: [
+            [0, 'rgb(255, 0, 255)'],
+            [0.5, 'rgb(0, 255, 0)'],
+            [1, 'rgb(0, 0, 255)']
+            ]
+        }
+        ];
+        Plotly.plot('myDiv01', data, {}, {showSendToCloud: true});
+    </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div id="plotDiv"></div>
+    <script>
+        var plotDiv = document.getElementById('plotDiv');
+
+        var data = [{
+            x: [ new Date().getTime() / 1000 ],
+            y: [0]
+        }];
+
+        Plotly.plot(plotDiv, data, { title: 'Random Over Time'});
+
+        setInterval(function(){
+            var update = {
+                x: [[ new Date().getTime() / 1000 ]],
+                y: [[ Math.random() ]]
+            };
+            console.log(update.x);
+            console.log(update.y);
+            Plotly.extendTraces(plotDiv, update, [0], 10);
+        }, 1000);
+    </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div id="graph"></div>
+    <script>
+        Plotly.d3.csv('https://raw.githubusercontent.com/plotly/datasets/master/3d-line1.csv', function(err, rows){
+            function unpack(rows, key) {
+                return rows.map(function(row) 
+                { return row[key]; }); }
+        var x = unpack(rows , 'x');
+        var y = unpack(rows , 'y');
+        var z = unpack(rows , 'z'); 
+        var c = unpack(rows , 'color');
+        Plotly.plot('graph', [{
+        type: 'scatter3d',
+        mode: 'lines',
+        x: x,
+        y: y,
+        z: z,
+        opacity: 1,
+        line: {
+            width: 6,
+            color: c,
+            reversescale: false
+        }
+        }], {
+        height: 640
+        }, {showSendToCloud: true});
+        });
+    </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div id="myDiv02" style="width:100%;height:100%"></div>
+    <script>
+        Plotly.d3.csv('https://raw.githubusercontent.com/plotly/datasets/master/api_docs/mt_bruno_elevation.csv', function(err, rows){
+        function unpack(rows, key) {
+        return rows.map(function(row) { return row[key]; });
+        }
+        
+        var z_data=[ ]
+        for(i=0;i<24;i++)
+        {
+        z_data.push(unpack(rows,i));
+        }
+
+        var data = [{
+        z: z_data,
+        type: 'surface'
+                }];
+        
+        var layout = {
+        title: 'Mt Bruno Elevation',
+        autosize: false,
+        width: 500,
+        height: 500,
+        margin: {
+            l: 65,
+            r: 50,
+            b: 65,
+            t: 90,
+        }
+        };
+        Plotly.newPlot('myDiv02', data, layout, {showSendToCloud: true});
+        });
+    </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div id="switch"></div>
+    <script>
+        var frames = [
+        {name: 'sine', data: [{x: [], y: []}]},
+        {name: 'cosine', data: [{x: [], y: []}]},
+        {name: 'circle', data: [{x: [], y: []}]},
+        ];
+
+        var n = 100;
+        for (var i = 0; i < n; i++) {
+        var t = i / (n - 1) * 2 - 1;
+        
+        // A sine wave:
+        frames[0].data[0].x[i] = t * Math.PI;
+        frames[0].data[0].y[i] = Math.sin(t * Math.PI);
+        
+        // A cosine wave:
+        frames[1].data[0].x[i] = t * Math.PI;
+        frames[1].data[0].y[i] = Math.cos(t * Math.PI);
+        
+        // A circle:
+        frames[2].data[0].x[i] = Math.sin(t * Math.PI);
+        frames[2].data[0].y[i] = Math.cos(t * Math.PI);
+        }
+
+        Plotly.newPlot('switch', [{
+        x: frames[0].data[0].x,
+        y: frames[0].data[0].y,
+        line: {simplify: false},
+        }], {
+        xaxis: {range: [-Math.PI, Math.PI]},
+        yaxis: {range: [-1.2, 1.2]},
+        updatemenus: [{
+            buttons: [
+            {method: 'animate', args: [['sine']], label: 'sine'},
+            {method: 'animate', args: [['cosine']], label: 'cosine'},
+            {method: 'animate', args: [['circle']], label: 'circle'}
+            ]
+        }]
+        }, {displayModeBar: false}).then(function() {
+        Plotly.addFrames('switch', frames);
+        });
+    </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div id="myDiv03" style="width: 800; height: 640;"></div>
+    <script>
+        var myPlot = document.getElementById('myDiv03'),
+            d3 = Plotly.d3,
+            N = 100,
+            x = d3.range(N),
+            y1 = d3.range(N).map( d3.random.normal() ),
+            y2 = d3.range(N).map( d3.random.normal(-2) ),
+            y3 = d3.range(N).map( d3.random.normal(2) ),
+            trace1 = { x:x, y:y1, type:'scatter', mode:'lines', name:'Jeff' },
+            trace2 = { x:x, y:y2, type:'scatter', mode:'lines', name:'Terren' },
+            trace3 = { x:x, y:y3, type:'scatter', mode:'lines', name:'Arthur' },
+            data = [ trace1, trace2, trace3 ],
+            layout = {
+                hovermode:'closest',
+                title:'Click on Points to add an Annotation on it'
+            };
+
+        Plotly.newPlot('myDiv03', data, layout, {showSendToCloud: true});
+        
+        // dynamic and interactive annotation:
+        myPlot.on('plotly_click', function(data){
+            var pts = '';
+            for(var i=0; i<data.points.length; i++){
+                annotate_text = 'x = '+data.points[i].x +
+                            'y = '+data.points[i].y.toPrecision(4);
+
+                annotation = {
+                text: annotate_text,
+                x: data.points[i].x,
+                y: parseFloat(data.points[i].y.toPrecision(4))
+                }
+
+                annotations = self.layout.annotations || [];
+                annotations.push(annotation);
+                Plotly.relayout('myDiv03',{annotations: annotations})
+            }
+        });
+    </script>
+
+    <!-- add lines with br -->
+    <br> <br>
+
+    <div id="double" style="width: 480px; height: 400px;"></div>
+    <script>
+        var trace1 = {
+        x: [1, 2, 3], 
+        y: [40, 50, 60], 
+        name: 'yaxis data', 
+        type: 'scatter'
+        };
+
+        var trace2 = {
+        x: [2, 3, 4], 
+        y: [4, 5, 6], 
+        name: 'yaxis2 data', 
+        yaxis: 'y2', 
+        type: 'scatter'
+        };
+
+        var data = [trace1, trace2];
+
+        var layout = {
+        title: 'Double Y Axis Example', 
+        yaxis: {title: 'yaxis title'}, 
+        yaxis2: {
+            title: 'yaxis2 title', 
+            titlefont: {color: 'rgb(148, 103, 189)'}, 
+            tickfont: {color: 'rgb(148, 103, 189)'}, 
+            overlaying: 'y', 
+            side: 'right'
+        }
+        };
+
+        Plotly.newPlot('double', data, layout, {showSendToCloud: true});
+    </script>
+
 </div>
 
 </body>
 
-{% endblock %}
+</html>
+
+

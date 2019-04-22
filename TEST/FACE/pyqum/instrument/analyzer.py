@@ -18,7 +18,7 @@ def derivative(x, y, step=1):
     dydx = diff(Y) / diff(X)
     return X[1::], dydx
 
-# Extract IQ
+# Extract IQ (to be changed to take in list instead of np.array)
 def IQAP(datas):
     # Slicing datas into IQ-data
     IQdata = datas.reshape(len(datas)/2, 2)
@@ -30,7 +30,7 @@ def IQAP(datas):
         Pha.append(arctan2(i[1], i[0])) # -pi < phase < pi
     return yI, yQ, Amp, Pha
 
-    # moving average
+# moving average
 def smooth(y, box_pts):
     box = ones(box_pts)/box_pts
     y_smooth = convolve(y, box, mode='same')

@@ -2,31 +2,46 @@
 {% block title %}WELCOME TO PYQUM v0.1{% endblock %}
 
 {% block header %}
-{% if g.user %}
-<div>
-    </p><a class="action" href="{{ url_for('blog.create') }}">New</a></p>
-</div>
-{% endif %}
+
 {% endblock %}
 
 {% block content %} 
 
 <body class="home">
-    
+
+{% if g.user %}
+<div class="container" id="post">
+    <div class=row id='left'>
+        <a class="action" href="{{ url_for('blog.create') }}">New</a>
+    </div>
+</div>
+{% endif %}
+
 {% for post in posts %}
-<article class="post">
-    <header>
-        <div>
-            <h1>{{ post['title'] }}</h1>
-            <div class="about">by {{ post['username'] }} on {{ post['created'].strftime('%Y-%m-%d') }}</div>
+
+<div class="container" id="post">
+    <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+        <div class="title">{{ post['title'] }}</div>
+    </div>
+    <div class='row'>
+        <div class="about">
+            by {{ post['username'] }} on {{ post['created'].strftime('%Y-%m-%d') }} 
+            {% if g.user['id'] == post['author_id'] %}
+            <a href="{{ url_for('blog.update', id=post['id']) }}"> [Edit]</a>
+            {% endif %}
         </div>
-        {% if g.user['id'] == post['author_id'] %}
-        <a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Edit</a> {% endif %}
-    </header>
-    <p class="body">{{ post['body'] }}</p>
-</article>
+    </div>
+    <div class='row'>
+        <p class="body">{{ post['body'] }}</p>
+    </div>
+</div>
+
 {% if not loop.last %}
-<hr> {% endif %} {% endfor %} 
+<hr>
+{% endif %}
+
+{% endfor %} 
+
 </body>
 
 {% endblock %}

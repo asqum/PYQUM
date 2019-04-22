@@ -48,6 +48,7 @@ try:
     bench.write("display 2,2,2")
     # bench.write("display 2,1,2")
     # bench.write("display 1,2,1")
+    bench.close()
 
 except:
     print(rm.last_status)
@@ -55,4 +56,5 @@ except:
         print("Please make sure the address is correct or the instrument is turned on")
     elif rm.last_status == visa.constants.StatusCode.error_resource_busy:
         print("The instrument is still busy with another session")
+  
     

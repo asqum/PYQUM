@@ -12,6 +12,12 @@ from pyqum import stream_template
 
 bp = Blueprint(myname, __name__)
 
+@bp.route('/display', methods=['POST', 'GET'])
+def show():
+    
+    return render_template('blog/dsply/display.html')
+
+# Static
 @bp.route('/figstatic', methods=['POST', 'GET'])
 def figstatic():
     def fetch():
@@ -109,5 +115,9 @@ def concurrent():  # one of the method called by base/layout
     return Response(stream_with_context(stream_template('blog/dsply/figconcurrent.html', datad=datad, chartopt=str(chartopt), chartop=str(chartop))))
     # return render_template('blog/analysis.html', data=data) #NORMAL Display, No streaming!
 
+@bp.route('/game01', methods=['POST', 'GET'])
+def game01():
+    
+    return render_template('blog/dsply/game01.html')
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

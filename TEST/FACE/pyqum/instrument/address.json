@@ -81,7 +81,7 @@
     },
 
     "VSA": {
-        "resource": "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR",
+        "resource": "PXI24::12::0::INSTR;PXI24::14::0::INSTR;PXI24::8::0::INSTR;PXI24::9::0::INSTR;PXI29::0::0::INSTR",
         "alternative": [
                     "PXI27::0::0::INSTR;PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR",
                     "PXI0::22-14.0::INSTR;PXI0::22-12.0::INSTR;PXI0::22-9.0::INSTR;PXI0::22-8.0::INSTR;PXI0::27-0.0::INSTR",
@@ -92,7 +92,7 @@
     },
 
     "AWG": {
-        "resource": "PXI20::14::0::INSTR",
+        "resource": "PXI22::14::0::INSTR",
         "alternative": [
                     "PXI20::14::0::INSTR"
                     ],

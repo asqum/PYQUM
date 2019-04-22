@@ -7,13 +7,14 @@
 <head>
     <title>{% block title %}{% endblock %} - PyQuM</title>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/plotly-latest.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/base.js') }}"></script>
     {% block head %}{% endblock %}
 </head>
 
 <div class="navbar">
 
-    <button class="home" id="left">Home</button>
+    <button class="home" id="left"><i class='fa fa-university'></i></button>
 
     <!-- user specific -->
     {% if g.user %}
@@ -24,6 +25,9 @@
 
     <button class="guide" id="left">Guide</button>
     <button class="display" id="left">Display</button>
+
+    <!-- reset CSS (Cascading Style Sheet) -->
+    <button class="reset" id="right"><i class='fa fa-refresh'></i></button>
 
     <!-- User Credentials -->
     {% if g.user %}

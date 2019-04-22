@@ -4,7 +4,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
-import requests
+from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
 
@@ -20,9 +20,7 @@ from scipy import constants as cnst
 # AWG.test(False) #seems like AWG's working-instance works differently than VSA's
 # awgsess = AWG.InitWithOptions()
 # vsasess = VSA.InitWithOptions()
-from pyqum.instrument.benchtop import MXG, ESG, DSO, PNA
-# esgbench = ESG.Initiate()
-# mxgbench = MXG.Initiate()
+from pyqum.instrument.benchtop import DSO, PNA
 # dsobench = DSO.Initiate()
 from pyqum.instrument.dilution import bluefors
 
@@ -212,101 +210,54 @@ def vsaabout():
     message += ['Acquisition Time: %s (%s)' % (status[1], status_code(status[0]))]
     return jsonify(message=message)
 
-# ESG
-@bp.route('/esg', methods=['GET'])
-def esg(): 
-    return render_template("blog/machn/esg.html")
-@bp.route('/esg/log', methods=['GET'])
-def esglog():
-    log = get_status('ESG')
+# SG
+@bp.route('/sg', methods=['GET'])
+def sg(): 
+    return render_template("blog/machn/sg.html")
+@bp.route('/sg/log', methods=['GET'])
+def sglog():
+    log = get_status('sg')
     return jsonify(log=log)
-@bp.route('/esg/reset', methods=['GET'])
-def esgreset():
-    global esgbench
+@bp.route('/sg/reset', methods=['GET'])
+def sgreset():
+    global sgbench, SG
+    sgtype = request.args.get('sgtype')
     try:
-        esgbench = ESG.Initiate()
+        SG = im("pyqum.instrument.benchtop.%s" %sgtype)
+        sgbench = SG.Initiate()
         status = "Success"
     except: status = "Error"
     return jsonify(message=status)
-@bp.route('/esg/close', methods=['GET'])
-def esgclose():
-    global esgbench
-    status = ESG.close(esgbench)
+@bp.route('/sg/close', methods=['GET'])
+def sgclose():
+    global sgbench
+    status = SG.close(sgbench)
     return jsonify(message=status)
-@bp.route('/esg/settings', methods=['GET'])
-def esgsettings():
-    global esgbench
+@bp.route('/sg/settings', methods=['GET'])
+def sgsettings():
+    global sgbench
     message = []
     freq = request.args.get('freq')
-    stat = ESG.frequency(esgbench, action=['Set',float(freq)])
+    stat = SG.frequency(sgbench, action=['Set', freq + "GHZ"])
     message += ['frequency (GHz): %s <%s>' %(stat[1], stat[0])]
     powa = request.args.get('powa')
-    stat = ESG.power(esgbench, action=['Set',float(powa)])
+    stat = SG.power(sgbench, action=['Set',float(powa)])
     message += ['power (dBm): %s <%s>' %(stat[1], stat[0])]
     oupt = request.args.get('oupt')
-    stat = ESG.output(esgbench, action=['Set',int(oupt)])
+    stat = SG.rfoutput(sgbench, action=['Set',int(oupt)])
     message += ['RF output: %s <%s>' %(stat[1], stat[0])]
     return jsonify(message=message)
-@bp.route('/esg/about', methods=['GET'])
-def esgabout():
-    global esgbench
+@bp.route('/sg/about', methods=['GET'])
+def sgabout():
+    global sgbench
     message = []
-    status = ESG.model(esgbench) # model
+    status = SG.model(sgbench) # model
     message += ['Model: %s (%s)' % (status[1], status[0])]
-    status = ESG.frequency(esgbench) # frequency
+    status = SG.frequency(sgbench) # frequency
     message += ['Frequency: %s (%s)' % (status[1], status[0])]
-    status = ESG.power(esgbench) # power
+    status = SG.power(sgbench) # power
     message += ['Power: %s (%s)' % (status[1], status[0])]
-    status = ESG.output(esgbench) # output
-    message += ['RF output: %s (%s)' % (output_code(status[1]), status[0])]
-    return jsonify(message=message)
-
-# MXG
-@bp.route('/mxg', methods=['GET'])
-def mxg():
-    return render_template("blog/machn/mxg.html")
-@bp.route('/mxg/log', methods=['GET'])
-def mxglog():
-    log = get_status('MXG')
-    return jsonify(log=log)
-@bp.route('/mxg/reset', methods=['GET'])
-def mxgreset():
-    global mxgbench
-    try:
-        mxgbench = MXG.Initiate()
-        status = "Success"
-    except: status = "Error"
-    return jsonify(message=status)
-@bp.route('/mxg/close', methods=['GET'])
-def mxgclose():
-    global mxgbench
-    status = MXG.close(mxgbench)
-    return jsonify(message=status)
-@bp.route('/mxg/settings', methods=['GET'])
-def mxgsettings():
-    global mxgbench
-    message = []
-    freq = request.args.get('freq')
-    stat = MXG.frequency(mxgbench, action=['Set', freq + "GHZ"])
-    message += ['frequency (GHz): %s <%s>' %(stat[1], stat[0])]
-    powa = request.args.get('powa')
-    stat = MXG.power(mxgbench, action=['Set',float(powa)])
-    message += ['power (dBm): %s <%s>' %(stat[1], stat[0])]
-    oupt = request.args.get('oupt')
-    stat = MXG.output(mxgbench, action=['Set',int(oupt)])
-    message += ['RF output: %s <%s>' %(stat[1], stat[0])]
-    return jsonify(message=message)
-@bp.route('/mxg/about', methods=['GET'])
-def mxgabout():
-    global mxgbench
-    message = []
-    status = MXG.model(mxgbench) # model
-    message += ['Model: %s (%s)' % (status[1], status[0])]
-    status = MXG.frequency(mxgbench) # frequency
-    message += ['Frequency: %s (%s)' % (status[1], status[0])]
-    status = MXG.power(mxgbench) # power
-    message += ['Power: %s (%s)' % (status[1], status[0])]
-    status = MXG.output(mxgbench) # output
+    status = SG.rfoutput(sgbench) # rf output
     message += ['RF output: %s (%s)' % (output_code(status[1]), status[0])]
     return jsonify(message=message)
 
@@ -396,13 +347,34 @@ def dsoabout():
 # BDR
 @bp.route('/bdr', methods=['GET'])
 def bdr():
-    return render_template("blog/machn/bdr.html")
-@bp.route('/bdr/temperature', methods=['GET'])
-def bdrtemperature():
+    global b
     b = bluefors()
-    b.selectday(3)
-    [startime, t, T] = b.temperaturelog(5)
-    return jsonify(startime=startime, t=t, T=T)
+    return render_template("blog/machn/bdr.html", Days=b.Days)
+@bp.route('/bdr/history', methods=['GET'])
+def bdrhistory():
+    global b
+    wday = b.Days.index(request.args.get('wday'))
+    P_Ch = int(request.args.get('P_Ch'))
+    T_Ch = int(request.args.get('T_Ch'))
+    P_Ch2 = int(request.args.get('P_Ch2'))
+    T_Ch2 = int(request.args.get('T_Ch2'))
+    b = bluefors()
+    b.selectday(wday)
+    [startimeP, tp, P, P_stat] = b.pressurelog(P_Ch)
+    [startimeT, tt, T] = b.temperaturelog(T_Ch)
+    if P_Ch2 > 0 and T_Ch2 > 0:
+        [startimeP, tp2, P2, P_stat2] = b.pressurelog(P_Ch2)
+        [startimeT, tt2, T2] = b.temperaturelog(T_Ch2)
+    elif P_Ch2 > 0:
+        [startimeP, tp2, P2, P_stat2] = b.pressurelog(P_Ch2)
+        [startimeT, tt2, T2] = [startimeT, tt, T]
+    elif T_Ch2 > 0:
+        [startimeP, tp2, P2, P_stat2] = [startimeP, tp, P, P_stat]
+        [startimeT, tt2, T2] = b.temperaturelog(T_Ch2)
+    else:
+        [startimeP, tp2, P2, P_stat2] = [startimeP, tp, P, P_stat]
+        [startimeT, tt2, T2] = [startimeT, tt, T]
+    return jsonify(startimeP=startimeP, startimeT=startimeT, tp=tp, P=P, P_stat=P_stat, tt=tt, T=T, tp2=tp2, P2=P2, P_stat2=P_stat2, tt2=tt2, T2=T2)
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

@@ -15,12 +15,23 @@
 <h3 style="color: white;">Welcome to play any instrument below:</h3>
 </div>
 
-<p>1. CHAR: Qubit Characterization </p>
-
+<div class="row">
+    <div class="col-25"><select class='msson' id="test" name="idea" type="text">
+        {% for i in range(3) %}
+        <option value={{i}} {% if i == 1 %} selected {% endif %}>{{i}}</option>
+        {% endfor %}</select>
+    </div> 
+</div>
+<div class="row">
+    <button class='msson' id='test'>TEST BUTTON</button>
+    <button class='msson' id='insertopt'>INSERT OPTIONS</button>
+</div>
 
 <button id='how'>How am I?</button>
 <div class="all good"><h3>I am GOOD</h3></div>
 <div class="all good" style="display: none"><h3>I am AWESOME</h3></div>
+
+<p>1. CHAR: Qubit Characterization </p>
 
 </body>
 

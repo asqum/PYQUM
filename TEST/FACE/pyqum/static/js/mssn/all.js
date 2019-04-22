@@ -10,3 +10,27 @@ $(function () {
         $('div.all.good').toggle("slow"); 
     });
 });
+
+//detect option
+$(function () {
+    $('button.msson#test').click(function () {
+        $.getJSON('/mssn'+'/all/test', {
+            idea: $('select.msson[name="idea"]').val()
+        });
+    });
+});
+
+//insert option
+$(function () {
+    $('button.msson#insertopt').click(function () {
+        $.getJSON('/mssn'+'/all/insertopt', {}, function(data) {
+            $('select.msson').empty();
+            $.each(data.x, function(i,v){
+                $('select.msson').append($('<option>', {
+                    text: v,
+                    value: i
+                }));
+            });
+        });
+    });
+});

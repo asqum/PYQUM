@@ -6,7 +6,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from pyqum.instrument import logger, reader, network
 from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA, ENA, PSGV, PSGA, RDS
 from pyqum.instrument.modular import AWG, VSA
-from pyqum.instrument.serial import LAKE
+# from pyqum.instrument.serial import LAKE
 import inspect, numpy, time
 
 # Testing function's name-string:

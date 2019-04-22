@@ -20,8 +20,7 @@
       $("div#bdr").load("{{ url_for('machine.bdr') }}");
       $("div#awg").load("{{ url_for('machine.awg') }}");
       $("div#vsa").load("{{ url_for('machine.vsa') }}");
-      $("div#esg").load("{{ url_for('machine.esg') }}");
-      $("div#mxg").load("{{ url_for('machine.mxg') }}");
+      $("div#sg").load("{{ url_for('machine.sg') }}");
       $("div#dso").load("{{ url_for('machine.dso') }}"); 
     });
 </script> 
@@ -32,8 +31,7 @@
   <button class="tablinks" id="bdr-tab" onclick="openTab(event, 'bdr')">BDR</button>
   <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
   <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button>
-  <button class="tablinks" id="esg-tab" onclick="openTab(event, 'esg')">ESG</button>
-  <button class="tablinks" id="mxg-tab" onclick="openTab(event, 'mxg')">MXG</button>
+  <button class="tablinks" id="sg-tab"  onclick="openTab(event, 'sg')"> SG </button>
   <button class="tablinks" id="dso-tab" onclick="openTab(event, 'dso')">DSO</button>
 </div>
 
@@ -41,8 +39,7 @@
 <div id="bdr" class="tabcontent"></div>
 <div id="awg" class="tabcontent"></div>
 <div id="vsa" class="tabcontent"></div>
-<div id="esg" class="tabcontent"></div>
-<div id="mxg" class="tabcontent"></div>
+<div id="sg" class="tabcontent"></div>
 <div id="dso" class="tabcontent"></div>
 {% endif %}
 

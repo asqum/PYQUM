@@ -110,7 +110,8 @@ def create_app(test_config=None):
 
     print(Back.GREEN + Fore.LIGHTYELLOW_EX + "Starting PYQUM:")
     
+    # open default browser on startup
     import webbrowser
-    webbrowser.open("http://127.0.0.1:5200/", new=2)
+    # webbrowser.open("http://127.0.0.1:5200/", new=2)
 
     return app

@@ -4,7 +4,8 @@ from time import sleep
 from numpy import array, append, zeros, prod, floor, inner
 
 def cdatasearch(Order, Structure):
-    ''' Order: cdata-location (collective index)\n
+    ''' Give the address of the data essentially!
+        Order: cdata-location (collective index)\n
         Structure = cdata-structure (how many bases for each hierarchy/level)
                     e.g. [cN#, c(N-1)#, ... , c3#, c2#, c1#], [10, 10, 7, 24, 35, 2]
     '''
@@ -16,6 +17,7 @@ def cdatasearch(Order, Structure):
     return Address
 
 def gotocdata(Address, Structure):
+    '''Give the order / entry of the data'''
     S = []
     for i in range(len(Structure)):
         S.append(prod(Structure[i+1:]))

@@ -1,0 +1,45 @@
+{% extends 'base.html' %} 
+{% block title %}Machine{% endblock %}
+
+{% block head %}
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mach.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='js/dsply/dsply.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+<body class="dsply" style="overflow-y:hidden">
+
+<script>
+    $('.navbar button').removeClass('active');
+    $('.navbar button.display').addClass('active');
+    $(function(){
+      $("div#static").load("{{ url_for('display.figstatic') }}");
+      $("div#dynamic").load("{{ url_for('display.dynamic') }}");
+      $("div#stream").load("{{ url_for('display.stream') }}");
+      $("div#concurrent").load("{{ url_for('display.concurrent') }}");
+      $("div#game01").load("{{ url_for('display.game01') }}");
+    });
+</script> 
+
+{% if g.user %}
+<div class="tab">
+  <button class="tablinks" id="static-tab" onclick="openTab(event, 'static')">STATIC</button>
+  <button class="tablinks" id="dynamic-tab" onclick="openTab(event, 'dynamic')">DYNAMIC</button>
+  <button class="tablinks" id="stream-tab" onclick="openTab(event, 'stream')">STREAM</button>
+  <button class="tablinks" id="concurrent-tab" onclick="openTab(event, 'concurrent')">CONCUR</button>
+  <button class="tablinks" id="game01-tab" onclick="openTab(event, 'game01')">GAME 1</button>
+</div>
+
+<div id="static" class="tabcontent"></div>
+<div id="dynamic" class="tabcontent"></div>
+<div id="stream" class="tabcontent"></div>
+<div id="concurrent" class="tabcontent"></div>
+<div id="game01" class="tabcontent"></div>
+{% endif %}
+
+</body>
+
+{% endblock %}

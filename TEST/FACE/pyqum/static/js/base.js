@@ -85,7 +85,7 @@ $(function () {
 
 $(function () {
     $("button.display").bind('click', function(){
-        window.open("/figstatic", '_self');
+        window.open("/display", '_self');
         return false;
     });
 });
@@ -118,3 +118,15 @@ $(function () {
     });
 });
 
+// reset caches on-click
+$(function () {
+    $('button.reset').bind('click', function() {
+        jQuery('link').each(function(){
+            jQuery(this).attr('href',jQuery(this).attr('href')+ '?' + (new Date()).getTime());
+            console.log("Caches have just been RESET!"); });
+        // jQuery('script').each(function(){
+        //     jQuery(this).attr('src',jQuery(this).attr('src')+ '?' + (new Date()).getTime());
+        //     });
+        return false;
+    });
+});

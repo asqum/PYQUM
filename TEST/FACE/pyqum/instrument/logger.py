@@ -4,8 +4,8 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from pathlib import Path
-from os import stat, SEEK_END
-from os.path import exists, getsize
+from os import listdir, stat, SEEK_END
+from os.path import exists, getsize, getmtime, join, isdir
 from datetime import datetime
 from time import time, sleep
 from contextlib import suppress
@@ -198,130 +198,188 @@ def translate_scpi(Name, instance, a, b):
 
 class measurement:
     '''Initialize Measurement:\n
-        corder: {parameters: [...], instruments: [...], ranges: [...]}\n
+        corder: {parameters: [ranges]}\n
+        operation choice: 
+        1. 'n': new fresh measurement
+        2. 'r': resume previous measurement
+        3. 'a': access any measurement
     '''
-    def __init__(self, mission, task, corder, usr_name='USR', place='Unknown', sample='Sample', comment=''):
+    def __init__(self, mission, task, corder, usr_name='USR', sample='Sample', comment='', operation="n"):
         self.mission = mission
         self.task = task
         self.corder = corder
         self.usr_name = usr_name
-        self.place = place
         self.sample = sample
         self.comment = comment #to be appended to data after ACK-mark
+        self.operation = operation
 
-        # assembly day & moment
-        now = datetime.now()
-        day = now.strftime("%Y-%m-%d(%a)")
-        moment = now.strftime("%H:%M")
-
-        # assembly file-name:
-        filename = "%s.pyqum" %task
-        self.pqfile = Path(USR_PATH) / self.usr_name / self.sample / mission / day / filename
+        self.mssnpath = Path(USR_PATH) / usr_name / sample / mission
+        print(self.mssnpath)
+        place = ", ".join(location()) #current location
         
-        # assembly the file-header(time, place, mission, task, c-parameters):
-        usr_bag = bytes("{'%s': {'place': '%s', 'c-order': %s, 'data': " %(moment, place, corder), 'utf-8')
-        usr_bag += b'\x05' + b'\x06' + bytes("}"*2, 'utf-8') # data container
+        if operation.lower() == "n":
+            now = datetime.now() #current day & time
+            self.day = now.strftime("%Y-%m-%d(%a)")
+            self.moment = now.strftime("%H:%M:%f")
+            # estimating data size from parameters:
+            self.datasize = prod([x[2] for x in corder.values()])
 
-        # check if the file exists and not blank:
-        existence = exists(self.pqfile) and stat(self.pqfile).st_size > 0 #The beauty of Python: if first item is false, second item will not be evaluated in AND-statement, thus avoiding errors
-        
-        # write into file:
-        if existence == False:
-            self.pqfile.parent.mkdir(parents=True, exist_ok=True) #make directories
-            with open(self.pqfile, 'wb') as datapie:
-                # Initialize blank file
-                datapie.write(usr_bag)
+            findex = 1
+            while True:
+                self.filename = "%s.pyqum(%s)" %(self.task, findex)
+                self.pqfile = self.mssnpath / self.day / self.filename
+
+                # assembly the file-header(time, place, c-parameters):
+                usr_bag = bytes("{'%s': {'place': '%s', 'c-order': %s, 'comment': '%s'}}" %(self.moment, place, self.corder, self.comment), 'utf-8')
+                usr_bag += b'\x02' + bytes("ACTS", 'utf-8') + b'\x03\x04' # ACTS
+                
+                # check if the file exists and not blank:
+                existence = exists(self.pqfile) and stat(self.pqfile).st_size > 0 #The beauty of Python: if first item is false, second item will not be evaluated in AND-statement, thus avoiding errors
+                if existence == False:
+                    self.pqfile.parent.mkdir(parents=True, exist_ok=True) #make directories
+                    with open(self.pqfile, 'wb') as datapie:
+                        # Initialize blank file
+                        datapie.write(usr_bag)
+                    break
+                else:
+                    findex += 1
+        # Resume / Retrieve operation:
         else:
-            with open(self.pqfile, 'rb+') as datapie:
-                # Appending moment-log if it's already existed
-                datapie.seek(-1, SEEK_END)
-                datapie.truncate()
-                datapie.write(bytes(", ", 'utf-8') + usr_bag[1:-1] + bytes("}", 'utf-8'))
-    
-    def log(self, data):
-        '''Logging DATA from instruments on the fly
+            daylist = [d for d in listdir(self.mssnpath) if isdir(self.mssnpath / d)]
+            daylist.sort(key=lambda x: getmtime(self.mssnpath / x))
+            self.daylist = daylist
+            print("days: %s" %daylist)
+
+    def insertdata(self, data):
+        '''Logging DATA from instruments on the fly:
+            By appending individual data-point to the EOF
         '''
         data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
         try:
             with open(self.pqfile, 'rb+') as datapie:
-                datapie.seek(-3, SEEK_END)
-                datapie.truncate()
-                datapie.write(data + b'\x06' + bytes("}"*2, 'utf-8'))  
+                datapie.seek(0, SEEK_END)
+                # datapie.truncate()
+                datapie.write(data)
         except: print("THE FILE WAS NOT WELL PREPARED. PLS RUN 'measurement' FIRST")              
         return
 
-    def load(self):
-        '''Get User's Data from LOG
+    def whichday(self):
+        '''This can be replaced by HTML Forms Input'''
+        total = len(self.daylist)
+        for i,day in enumerate(self.daylist):
+            print("%s. %s" %(i+1,day))
+        while True:
+            try:
+                k = int(input("Which day would you like to check out (1-%s): " %total))
+                if k-1 in range(total):
+                    break
+            except(ValueError):
+                print("Bad index. Please use numeric!")
+        return k-1 #index
+
+    def selectday(self, index):
+        try:
+            self.day = self.daylist[index]
+            print("Day selected: %s"%self.day)
+            self.timelist = [int(t.split('(')[1][:-1]) for t in listdir(self.mssnpath / self.day) if t.split('.')[0] == self.task]
+            self.timelist.sort(reverse=False) #ascending order
+        except(ValueError): 
+            print("index might be out of range")
+            pass
+
+    def whichmoment(self):
+        '''This can be replaced by HTML Forms Input'''
+        while True:
+            try:
+                k = int(input("Which moment would you like to check out (1-%s): " %self.timelist[-1]))
+                if k in self.timelist:
+                    break
+            except(ValueError):
+                print("Bad index. Please use numeric!")
+        return k
+
+    def selectmoment(self, entry):
+        '''select data from time-log'''
+        # select file#
+        self.filename = "%s.pyqum(%s)" %(self.task, entry)
+        self.pqfile = self.mssnpath / self.day / self.filename
+        print("file selected: %s"%self.filename)
+        return
+
+    def accesstructure(self):
+        '''Get User-Data's container & location from LOG
         '''
         try:
-            filesize = stat(self.pqfile).st_size
+            self.filesize = stat(self.pqfile).st_size
             with open(self.pqfile, 'rb') as datapie:
-                Enq, Ack, datacontainer, buildcontainer = [], [], '', True
-                for i in range(filesize):
+                i = 0
+                while i < (self.filesize):
                     datapie.seek(i)
-                    bite = datapie.read(1)
-                    if bite == b'\x05':
-                        Enq.append(i)
-                        buildcontainer = False
-                        datacontainer += 'None'
-                    elif bite == b'\x06':
-                        Ack.append(i)
-                        buildcontainer = True
-                    else:
-                        if buildcontainer:
-                            datacontainer += bite.decode('utf-8')
-                datacontainer = ast.literal_eval(datacontainer)
-            self.datalocation = dict(zip(Enq, Ack)) 
+                    bite = datapie.read(7)
+                    if bite == b'\x02' + bytes("ACTS", 'utf-8') + b'\x03\x04': # ACTS
+                        self.datalocation = i
+                        break
+                    else: i += 1
+                datapie.seek(0)
+                bite = datapie.read(self.datalocation)
+                datacontainer = bite.decode('utf-8')
+                        
+            print("Data locations: %s" %self.datalocation)           
+            self.datacontainer = ast.literal_eval(datacontainer) # library w/o the data yet
         except:
-            print("Measurement not initiated!")
-        return datacontainer
+            print("File structure invalid!")
+        return
 
-    def get(self, entry=1):
-        '''select data'''
-        try:
-            load = self.load()
-            selectime = [k for k in load.keys()][entry-1]
-            k, v = [k for k in self.datalocation.keys()][entry-1], [v for v in self.datalocation.values()][entry-1]
+    def accesstimeline(self):
+        '''Get timeline layout for each day'''
+        startimes = []
+        for k in self.timelist:
+            self.selectmoment(k)
             with open(self.pqfile, 'rb') as datapie:
-                datapie.seek(k+1)
-                pie = datapie.read(v-k-1)
-                selectedata = list(struct.unpack('>' + 'd'*((v-k-1)//8), pie))
-        except: 
-            print("out of range!")
-        return selectime, selectedata
+                datapie.seek(2)
+                bite = datapie.read(5)
+                startimes.append(bite.decode('utf-8'))
+        self.startimes = startimes
+        return
 
-    def database(self):
-        '''reconstructing the database in dictionary format'''
-        book = self.load()
-        for i,t in enumerate(book.keys()):
-            book[t]['data'] = self.get(i+1)[1]
-        return book
+    def loadata(self):
+        try:
+            with open(self.pqfile, 'rb') as datapie:
+                datapie.seek(self.datalocation+7)
+                pie = datapie.read(self.filesize-self.datalocation-7)
+                self.selectedata = list(struct.unpack('>' + 'd'*((self.filesize-self.datalocation-7)//8), pie))
+        except:
+            print("\ndata not found")
+
+    def buildata(self):
+        '''build data into datacontainer'''
+        self.datacontainer[next(iter(self.datacontainer))]['data'] = self.selectedata
+        return
 
 # C-Parameters Descriptor
-def settings(place):
+def settings():
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         data = Name(*a, **b)
-        mission = Path(inspect.stack()[1][1]).name.replace('.py','')
+        mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
+        print("mission: %s" %mission)
         task = Name.__name__
-        Cnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
-        Carrays = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
-        Corders = dict(zip(Cnames, Carrays))
-        datasize = prod([len(x) for x in Carrays])
-        # print(datasize)
-        M = measurement(mission, task, Corders, place=place)
-        try:
-            for x in data:
-                # print(Fore.YELLOW + '\r %s' %x, end='\r')
-                M.log(x)
-                # sleep(0.006)
-        except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
-        print(M.get(1))
-        # print(M.database()['00:50']['c-order'])
-        return
+        Argnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
+        Argvalues = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
+        Corders = dict(zip(Argnames[:-2], Argvalues[:-2]))
+        M = measurement(mission, task, Corders, comment=Argvalues[-2], operation=Argvalues[-1])
+        if Argvalues[-1].lower() == "n": # the choice of operation
+            try:
+                for i,x in enumerate(data): #yielding data from measurement-module
+                    print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*100, x), end='\r', flush=True)
+                    M.insertdata(x)
+                    # sleep(0.02)
+            except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
+        # Measurement Object/Session:
+        return M
     return wrapper
 
-
+# TEST
 def test():
     L = location()
     print("We are now in %s" %L)

@@ -1,4 +1,4 @@
-function myPlot(canvas, datax, datay) {
+function crPlot(canvas, datax, datay) {
     
 //    document.getElementById(output).innerHTML = "Y1-Data: " + datay.slice(0,6);
     var ctx = document.getElementById(canvas).getContext('2d');

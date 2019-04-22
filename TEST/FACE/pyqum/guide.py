@@ -11,7 +11,7 @@ bp = Blueprint(myname, __name__, url_prefix='/gd')
 @bp.route('/guide')
 def show():
 
-    return render_template('guide/AgM933x-IviCErrorsWarnings.html')
+    return render_template('guide/papers.html')
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

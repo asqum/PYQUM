@@ -2,7 +2,7 @@ from pyqum import create_app
 import sys
 
 app = create_app()
-Port, DeBuG, RLD = 5200, False, False
+Port, DeBuG, RLD = 5200, True, True
 
 def server(mode):
     app.secret_key = "bcsjfhksP_*$3#bcjahfqaOgvGFGhnNg"

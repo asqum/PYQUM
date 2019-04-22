@@ -4,13 +4,25 @@
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
-import visa, subprocess, platform
+import visa, subprocess, platform, inspect, smtplib, scrypt, ast
 from time import time, ctime, sleep
 from contextlib import suppress
 from numpy import linspace
 import matplotlib.pyplot as plt
 
+from pathlib import Path
+from os import stat
+from os.path import exists, getsize
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+
 from pyqum.instrument.logger import address
+
+pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
+HIDDEN_PATH = Path(pyfilename).parents[6] / "QuDATA" / "HIDDEN"
+hdfile = Path(HIDDEN_PATH) / "HD.pyqum"
 
 def scanetwork():
     active = []
@@ -111,13 +123,59 @@ def initializationspeed():
     # to be filled
     return
 
+def store_pwd():
+    BOOK = {}
+    existence = exists(hdfile) and stat(hdfile).st_size > 0
+    if existence:
+        with open(hdfile, 'r') as hfile:
+            BOOK = ast.literal_eval(hfile.read())
+            print("Purposes FOUND:\n%s" %[x for x in BOOK.keys()])
+    pwd = input("SET Password: ")
+    purposes = input("STATE Purposes: ")
+    data = scrypt.encrypt(pwd, 'whatdouwant?', maxtime=0.73)
+    BOOK.update({purposes: data})
+    with open(hdfile, 'w') as hfile:
+        hfile.write(str(BOOK))
+
+    return
+
+def notify(recipient, subject, body):
+    try:
+        with open(hdfile, 'r') as hfile:
+            BOOK = ast.literal_eval(hfile.read())
+            via = scrypt.decrypt(BOOK['qbc'], 'whatdouwant?', maxtime=0.73)
+            usr = scrypt.decrypt(BOOK['mK'], 'whatdouwant?', maxtime=0.73)
+    except: 
+        print("DUDE!")
+        pass
+    msg = MIMEMultipart()
+    msg['From'] = usr
+    msg['To'] = recipient
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body,'plain'))
+    # Attachment:
+    # filename='filename'
+    # attachment  =open(filename,'rb')
+    # part = MIMEBase('application','octet-stream')
+    # part.set_payload((attachment).read())
+    # encoders.encode_base64(part)
+    # part.add_header('Content-Disposition',"attachment; filename= "+filename)
+    # msg.attach(part)
+    text = msg.as_string()
+    server = smtplib.SMTP('smtp.gmail.com',587)
+    server.starttls()
+    server.login(usr, via)
+    server.sendmail(usr, recipient, text)
+    server.quit()
 
 def test():
-    scanetwork()
+    # scanetwork()
     # instr = checkallconnections()
     # connectionspeed(instr)
     # closeall(instr)
     # initializationspeed()
+    # notify('ufocrew@gmail.com', 'Test', 'Success')
+    # store_pwd()
     return
 
 # test()

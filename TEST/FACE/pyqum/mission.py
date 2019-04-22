@@ -7,13 +7,10 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
+from pyqum.directive.characterize import TESTC, RTAmp
 
 # Scientific Constants
 from scipy import constants as cnst
-
-# This will run at server startup
-# Modulars first, only then Benchtops (if and only if we use render_template)
-from pyqum.directive.characterize import TESTC
 
 
 encryp = 'ghhgjad'
@@ -25,15 +22,69 @@ def show():
     return render_template("blog/msson/mission.html", encryp=encryp)
 
 # ALL
-@bp.route('/all', methods=['POST', 'GET'])
+@bp.route('/all', methods=['GET'])
 def all(): 
     # Test Bed # All Task # Great Work
     return render_template("blog/msson/all.html")
+@bp.route('/all/test', methods=['GET'])
+def alltest():
+    i = request.args.get('idea')
+    print(Back.MAGENTA + 'i: %s'%i)
+    return jsonify(i=i)
+@bp.route('/all/insertopt', methods=['GET'])
+def allinsertopt():
+    x = [100, 200, 300, 400, 500, 600, 777]
+    return jsonify(x=x)
 
 # CHAR
 @bp.route('/char', methods=['GET'])
 def char(): 
     return render_template("blog/msson/char.html")
+# CHAR -> RTAmp
+@bp.route('/char/rtamp/init', methods=['GET'])
+def charrtampinit(): 
+    ampstate = [int(request.args.get('ampstate'))]*2 + [1]
+    powr = eval(str(request.args.get('powr')))
+    freq = eval(str(request.args.get('freq')))
+    ifb = eval(str(request.args.get('ifb')))
+    comment = str(request.args.get('comment'))
+    try:
+        global rtamp_operation
+        rtamp_operation = str(request.args.get('operation'))
+        global M_rtamp
+        M_rtamp = RTAmp(ampstate, powr, freq, ifb, [0,1,2], comment, rtamp_operation)
+        if rtamp_operation.lower() == 'n':
+            dayslot = [M_rtamp.day]
+        else: dayslot = M_rtamp.daylist
+    except: dayslot = ["pick a day"]
+    return jsonify(status="Initiated", dayslot=dayslot)
+@bp.route('/char/rtamp/time', methods=['GET'])
+def charrtamptime(): 
+    try:
+        wday = int(request.args.get('wday'))
+        print("wday: %s" %wday)
+        M_rtamp.selectday(wday)
+        if rtamp_operation.lower() == 'n':
+            timeslot = [M_rtamp.moment]
+        else: 
+            M_rtamp.accesstimeline()
+            timeslot = M_rtamp.startimes
+    except: timeslot = ["pick a time"]
+    return jsonify(timeslot=timeslot)
+@bp.route('/char/rtamp/run', methods=['GET'])
+def charrtamprun(): 
+    try:
+        wmoment = int(request.args.get('wmoment'))
+        M_rtamp.selectmoment(wmoment)
+        M_rtamp.accesstructure()
+        M_rtamp.loadata()
+        Idata = M_rtamp.selectedata[::2]
+        Qdata = M_rtamp.selectedata[1::2]
+    except:
+        M_rtamp.datacontainer = {}
+        Idata = []
+        Qdata = []
+    return jsonify(datacontainer=M_rtamp.datacontainer, Idata=Idata, Qdata=Qdata)
 
 # DATA
 @bp.route('/data', methods=['GET'])
@@ -41,7 +92,19 @@ def data():
     return render_template("blog/msson/data.html")
 
 
+def test():
+    Op = "a"
+    M = RTAmp([0,0,1], [-70,-50,3], [0.7e9,18e9,251], [10,10,1], [0,1,2], '', Op)
+    if Op.lower() != "n":
+        M.selectday(0)
+        M.selectmoment(1)
+        M.accesstructure()
+        M.loadata()
+        print(M.selectedata[-1])
+        M.buildata()
+        print(M.datacontainer)
 
+# test()
 
 
 

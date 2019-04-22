@@ -33,7 +33,9 @@ debug() # declare the debugger mode here
 def InitWithOptions(IdQuery=False, Reset=False, OptionsString=''):
     '''status = InitWithOptions(IdQuery, Reset, OptionsString)
     '''
-    rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
+    # rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
+    ad = address()
+    rs = ad.lookup(mdlname) # Instrument's Address
     Resource = bytes(rs, 'ascii')
     Option = bytes(OptionsString, 'ascii') # utf-8
     Session = c_long()

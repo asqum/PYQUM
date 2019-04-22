@@ -122,7 +122,7 @@ def power(bench, action=['Get', '']):
     SCPIcore = ':SOUR:POW:LEV'
     return bench, SCPIcore, action
 @Attribute
-def output(bench, action=['Get', '']):
+def rfoutput(bench, action=['Get', '']):
     SCPIcore = ':OUTP:STAT'
     return bench, SCPIcore, action
 
@@ -152,8 +152,8 @@ def test(detail=True):
         frequency(s)
         p = float(power(s)[1])
         print("Power: %s" %p)
-        output(s, action=['Set', 'ON'])
-        output(s)
+        rfoutput(s, action=['Set', 'ON'])
+        rfoutput(s)
         savestate(s, ['Set','1,0'])
         commentstate(s, action=['Set', "1,0,'OMG I am ALEXA'"])
         commentstate(s, action=['Get', '1,0'])
@@ -161,8 +161,8 @@ def test(detail=True):
         power(s)
         frequency(s, action=['Set', '1GHz'])
         frequency(s)
-        output(s, action=['Set', 'ON'])
-        output(s)
+        rfoutput(s, action=['Set', 'ON'])
+        rfoutput(s)
     else: print(Fore.RED + "Basic IO Test")
     if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):
         state = True
