@@ -98,6 +98,7 @@ class address:
         self.book = json.load(open(Path(pyfilename).parent / 'address.json'))
 
     def lookup(self, instr_name, level=0):
+        '''level: alternative address's index'''
         self.instr_name = instr_name
         self.level = level
         try:

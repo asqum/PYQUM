@@ -22,7 +22,7 @@ def TESTC(C1, C2, C3, C4, C5, comment='', operation="n"):
                         yield data*1e2
 
 @settings()
-def RTAmp(amp, powr, freq, ifb, iq, comment='', operation="a"):
+def Network_Analyzer(amp, powr, freq, ifb, iq, comment='', operation="a"):
     '''Testing Room Temperature Amplifier
         iq: [0,1,2] <I:0;Q:1> '''
     bench = ENA.Initiate()
@@ -64,7 +64,7 @@ def test():
     #     M.buildata()
     #     print(M.datacontainer)
     Op = "a"
-    M = RTAmp([0,0,1], [-70,-50,3], [0.7e9,18e9,251], [10,10,1], [0,1,2], '', Op)
+    M = Network_Analyzer([0,0,1], [-70,-50,3], [0.7e9,18e9,251], [10,10,1], [0,1,2], '', Op)
     if Op.lower() != "n":
         M.selectday(M.whichday())
         M.accesstimeline()

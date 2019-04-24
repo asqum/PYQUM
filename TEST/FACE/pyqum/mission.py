@@ -40,7 +40,7 @@ def allinsertopt():
 @bp.route('/char', methods=['GET'])
 def char(): 
     return render_template("blog/msson/char.html")
-# CHAR -> RTAmp
+# CHAR -> FLEM
 @bp.route('/char/rtamp/init', methods=['GET'])
 def charrtampinit(): 
     ampstate = [int(request.args.get('ampstate'))]*2 + [1]
