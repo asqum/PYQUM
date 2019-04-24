@@ -1615,6 +1615,7 @@ pyqum/static/img/dso/DSOwaveform(CH1).svg
 pyqum/static/img/dso/DSOwaveform(CH2).png
 pyqum/static/img/dso/DSOwaveform(CH2).svg
 pyqum/static/img/vsa/VSA(IQData).png
+pyqum/static/js/.DS_Store
 pyqum/static/js/Chart.min.js
 pyqum/static/js/Clock.js
 pyqum/static/js/base.js
