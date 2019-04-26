@@ -6,20 +6,22 @@ mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, Y
 from flask import request
 from numpy import linspace, sin, pi
 from pyqum.instrument.benchtop import ENA
-from pyqum.instrument.logger import settings
+from pyqum.instrument.logger import settings, clocker
 from pyqum.instrument.analyzer import curve
 
 @settings()
 def TESTC(C1, C2, C3, C4, C5, comment='', operation="n"):
     '''Serve as a template for other real tasks to come'''
-    data = 0
+    x = 0
     for c1 in linspace(C1[0],C1[1],C1[2]):
         for c2 in linspace(C2[0],C2[1],C2[2]):
             for c3 in linspace(C3[0],C3[1],C3[2]):
                 for c4 in linspace(C4[0],C4[1],C4[2]):
+                    data = []
                     for c5 in linspace(C5[0],C5[1],C5[2]):
-                        data += 1
-                        yield data*1e2
+                        x += 1
+                        data.append(x)
+                    yield data
 
 @settings()
 def Network_Analyzer(amp, powr, freq, ifb, iq, comment='', operation="a"):
@@ -52,19 +54,17 @@ def Network_Analyzer(amp, powr, freq, ifb, iq, comment='', operation="a"):
 
 
 def test():
-    # Op = "n"
-    # C = eval('[1,3000,3000]')
-    # M = TESTC([0,0,1], [0.1,0.1,1], [1,1,1], C, [0,1,2], '', Op)
-    # if Op.lower() != "n":
-    #     M.selectday(M.whichday())
-    #     M.selectmoment(1)
-    #     M.accesstructure()
-    #     M.loadata()
-    #     print(M.selectedata[-1])
-    #     M.buildata()
-    #     print(M.datacontainer)
-    Op = "a"
-    M = Network_Analyzer([0,0,1], [-70,-50,3], [0.7e9,18e9,251], [10,10,1], [0,1,2], '', Op)
+    Op = "n"
+    points = 30000
+    C = eval('[1,3000,%s]' %points)
+
+    stage, prev = clocker(0) # Marking starting point of time
+    i = prev
+    M = TESTC([0,0,1], [0.1,0.1,1], [1,1,1], [0,1,2], C, '', Op)
+    print("For %s points:" %points)
+    stage, prev = clocker(stage, prev) # Marking time lapsed
+    print("Hence this pc can write %ss per point" %((prev - i) / points))
+
     if Op.lower() != "n":
         M.selectday(M.whichday())
         M.accesstimeline()
@@ -75,6 +75,18 @@ def test():
         print(M.selectedata[-1])
         M.buildata()
         print(M.datacontainer)
+    # Op = "a"
+    # M = Network_Analyzer([0,0,1], [-70,-50,3], [0.7e9,18e9,251], [10,10,1], [0,1,2], '', Op)
+    # if Op.lower() != "n":
+    #     M.selectday(M.whichday())
+    #     M.accesstimeline()
+    #     print(M.startimes)
+    #     M.selectmoment(M.whichmoment())
+    #     M.accesstructure()
+    #     M.loadata()
+    #     print(M.selectedata[-1])
+    #     M.buildata()
+    #     print(M.datacontainer)
 
-# test()
+test()
 

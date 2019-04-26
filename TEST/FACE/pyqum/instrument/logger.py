@@ -43,6 +43,7 @@ def location():
     return place
 
 def clocker(stage, prev=0):
+    '''timing algorithm in seconds'''
     now = time()
     duration = now - prev
     if int(stage) > 0:
@@ -215,7 +216,6 @@ class measurement:
         self.operation = operation
 
         self.mssnpath = Path(USR_PATH) / usr_name / sample / mission
-        print(self.mssnpath)
         place = ", ".join(location()) #current location
         
         if operation.lower() == "n":
@@ -249,13 +249,15 @@ class measurement:
             daylist = [d for d in listdir(self.mssnpath) if isdir(self.mssnpath / d)]
             daylist.sort(key=lambda x: getmtime(self.mssnpath / x))
             self.daylist = daylist
-            print("days: %s" %daylist)
 
     def insertdata(self, data):
         '''Logging DATA from instruments on the fly:
-            By appending individual data-point to the EOF
+            By appending individual data-point to the EOF (defined by SEEK_END)
         '''
-        data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
+        # get data type:
+        if type(data) is list:
+            data = struct.pack(">" + "d"*len(data), *data)
+        else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
         try:
             with open(self.pqfile, 'rb+') as datapie:
                 datapie.seek(0, SEEK_END)
@@ -363,7 +365,6 @@ def settings():
     def wrapper(Name, instance, a, b):
         data = Name(*a, **b)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
-        print("mission: %s" %mission)
         task = Name.__name__
         Argnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
         Argvalues = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
@@ -372,7 +373,7 @@ def settings():
         if Argvalues[-1].lower() == "n": # the choice of operation
             try:
                 for i,x in enumerate(data): #yielding data from measurement-module
-                    print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*100, x), end='\r', flush=True)
+                    # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*100, x), end='\r', flush=True)
                     M.insertdata(x)
                     # sleep(0.02)
             except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
