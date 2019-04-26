@@ -1,4 +1,5 @@
 flask
+geocoder
 
 [test]
 pytest
