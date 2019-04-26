@@ -1,14 +1,18 @@
 '''For analyzing data'''
-from numpy import ones, convolve, log10, sqrt, arctan2, diff
+from numpy import ones, convolve, log10, sqrt, arctan2, diff, array
 from scipy.fftpack import rfft, rfftfreq, irfft
 
 import matplotlib.pyplot as plt
 
 # curve display
-def curve(x, y, title, xlabel, ylabel):
-    fig, ax = plt.subplots(1, sharex=True, sharey=False)
+def curve(x, y, title, xlabel, ylabel, style="-k"):
+    fig, ax = plt.subplots(1, 1, sharex=True, sharey=False)
     ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
-    ax.plot(x, y)
+    if len(array(x).shape) == 1:
+        ax.plot(x, y, style)
+    elif len(array(x).shape) > 1:
+        for x,y,s in zip(x,y,style):
+            ax.plot(x, y, s)
     fig.tight_layout()
     plt.show()
 
