@@ -68,6 +68,7 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         read_task.timing.cfg_samp_clk_timing(
             sample_rate, source=samp_clk_terminal,
             active_edge=Edge.FALLING, samps_per_chan=number_of_samples)
+        # read_task.channels.ai_averaging_win_size = 3
 
         # Single Channel:
         # writer = AnalogSingleChannelWriter(write_task.out_stream)
