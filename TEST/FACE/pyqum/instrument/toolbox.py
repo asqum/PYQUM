@@ -24,23 +24,23 @@ def gotocdata(Address, Structure):
     Order = inner(Address, S)
     return Order
 
-def waveform(command):
-    command = command.lower().replace(" ","").split("*")
-    C = [j for i in command for j in i.split('to')]
-    # rooting out wrong command:
-    try:
-        C = [float(x) for x in C] #float all the string elements!
-        start, wave = C[0], []
-        change = range(int(len(C[:-1])/2))
-        for i,target,num in zip(change,C[1::2],C[2::2]):
-            wave += list(linspace(start, target, int(num), endpoint=bool(i==change[-1]), dtype=float64))
-            start = target
-    except: 
-        raise
-        print("Invalid command")
-        pass
-        
-    return wave
+class waveform:
+    def __init__(self, command):
+        self.command = command
+        command = command.lower().replace(" ","").split("*")
+        C = [j for i in command for j in i.split('to')]
+        # rooting out wrong command:
+        try:
+            C = [float(x) for x in C] #float all the string elements!
+            start, self.data, self.count = C[0], [], 0
+            change = range(int(len(C[:-1])/2))
+            for i,target,num in zip(change,C[1::2],C[2::2]):
+                self.count += int(num)
+                self.data += list(linspace(start, target, int(num), endpoint=bool(i==change[-1]), dtype=float64))
+                start = target
+        except:
+            print("Invalid command")
+            pass
 
 
 def test():
@@ -49,10 +49,8 @@ def test():
     #     %(i, cdatasearch(i, [8,10,10,2]), gotocdata(cdatasearch(i, [8,10,10,2]), [8,10,10,2])))
         # sleep(0.3)
     command = "0 to  10  * 7 TO  20 *15 to35*  13"
-    print("Waveform of length %s is:\n %s" %(len(waveform(command)), waveform(command)))
-    number_of_samples = 101
-    print(array(waveform("0 to 10 *%s to 0 * %s" %(round(number_of_samples/2), number_of_samples-round(number_of_samples/2)))))
-    print(array(waveform("0 to 10 *51 to 0 * 51")))
+    wave = waveform(command)
+    print("Waveform of length %s is:\n %s" %(wave.count, wave.data))
     return
 
 
