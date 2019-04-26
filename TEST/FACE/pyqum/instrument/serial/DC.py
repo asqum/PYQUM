@@ -44,7 +44,7 @@ X0, X1 = waveform("0 to 10 *100 to 0 * 200"), waveform("0 to 5 *70 to 10*130 to 
 X = array([X0.data, X1.data])
 number_of_samples = X0.count #should be the same for both channels
 print("X:\n%s" %X)
-sample_rate = 50000 #random.uniform(1000, 5000)
+sample_rate = 250000 #random.uniform(1000, 5000)
 with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         nidaqmx.Task() as sample_clk_task:
         # Use a counter output pulse train task as the sample clock source
