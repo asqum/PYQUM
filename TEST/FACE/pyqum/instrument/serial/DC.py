@@ -2,6 +2,7 @@ import nidaqmx, random
 
 from nidaqmx.system import System
 from nidaqmx.constants import TerminalConfiguration, AcquisitionType, Edge
+from nidaqmx.utils import flatten_channel_string
 
 from nidaqmx.stream_readers import (
     AnalogSingleChannelReader, AnalogMultiChannelReader)
@@ -20,54 +21,63 @@ for i,dev in enumerate(sys.devices):
 device = sys.devices[(D[0])]
 print(device)
 
-X = waveform("0 to 10 *10 to 0 * 20")
-# print("X: %s" %X)
-V = []
+X0, X1 = waveform("0 to 10 *10 to 0 * 20"), waveform("0 to 5 *7 to 10*13 to 0 * 10")
+X = list(array([X0.data, X1.data]).T)
+V0, V1 = [], []
 with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task:
-    write_task.ao_channels.add_ao_voltage_chan("Dev1/ao0")
-    read_task.ai_channels.add_ai_voltage_chan("Dev1/ai0", terminal_config=TerminalConfiguration.RSE, min_val=-10, max_val=10)
+    write_task.ao_channels.add_ao_voltage_chan("Dev1/ao0, Dev1/ao1")
+    read_task.ai_channels.add_ai_voltage_chan("Dev1/ai0:1", 
+        terminal_config=TerminalConfiguration.RSE, min_val=-10, max_val=10)
+    print("First reading: %sV" %read_task.read(1))
     for x in X:
-        write_task.write(x, auto_start=True)
-        V += read_task.read(1)
+        write_task.write(list(x), auto_start=True)
+        v = read_task.read(1)
+        V0 += v[0]
+        V1 += v[1]
 
-# print("V: %s" %V)
-curve(range(len(X)), X, "", "#", "Aout(V)")
-curve(range(len(V)), V, "", "#", "Ain(V)")
+print(V1)
+curve([range(X0.count),range(len(V0))], [X0.data,V0], "Channel #0", "arb time", "V(V)", ["-k","or"])
+curve([range(X1.count),range(len(V1))], [X1.data,V1], "Channel #1", "arb time", "V(V)", ["-k","or"])
 
 # stream data
-number_of_samples = 3502
-print("number of samples: %s" %number_of_samples)
-sample_rate = 5000 #random.uniform(1000, 5000)
+X0, X1 = waveform("0 to 10 *100 to 0 * 200"), waveform("0 to 5 *70 to 10*130 to 0 * 100")
+X = array([X0.data, X1.data])
+number_of_samples = X0.count #should be the same for both channels
+print("X:\n%s" %X)
+sample_rate = 50000 #random.uniform(1000, 5000)
 with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         nidaqmx.Task() as sample_clk_task:
-
         # Use a counter output pulse train task as the sample clock source
         # for both the AI and AO tasks.
         sample_clk_task.co_channels.add_co_pulse_chan_freq(
             '{0}/ctr0'.format("Dev1"), freq=sample_rate)
         sample_clk_task.timing.cfg_implicit_timing(
+            sample_mode=AcquisitionType.FINITE,
             samps_per_chan=number_of_samples)
 
         samp_clk_terminal = '/{0}/Ctr0InternalOutput'.format("Dev1")
 
         write_task.ao_channels.add_ao_voltage_chan(
-            "Dev1/ao0", max_val=10, min_val=-10)
+            "Dev1/ao0:1", max_val=10, min_val=-10)
         write_task.timing.cfg_samp_clk_timing(
             sample_rate, source=samp_clk_terminal, active_edge=Edge.RISING,
             samps_per_chan=number_of_samples)
 
         read_task.ai_channels.add_ai_voltage_chan(
-            "Dev1/ai0", max_val=10, min_val=-10)
+            "Dev1/ai0:1", terminal_config=TerminalConfiguration.RSE, max_val=10, min_val=-10)
         read_task.timing.cfg_samp_clk_timing(
             sample_rate, source=samp_clk_terminal,
             active_edge=Edge.FALLING, samps_per_chan=number_of_samples)
 
-        writer = AnalogSingleChannelWriter(write_task.out_stream)
-        reader = AnalogSingleChannelReader(read_task.in_stream)
+        # Single Channel:
+        # writer = AnalogSingleChannelWriter(write_task.out_stream)
+        # reader = AnalogSingleChannelReader(read_task.in_stream)
+
+        # Multi Channel:
+        writer = AnalogMultiChannelWriter(write_task.out_stream)
+        reader = AnalogMultiChannelReader(read_task.in_stream)
 
         # start writing waveform into AO
-        X = array(waveform("0 to 10 *%s to 0 * %s" %(round(number_of_samples/2), number_of_samples-round(number_of_samples/2))))
-        # X = array([random.uniform(-10, 10) for _ in range(number_of_samples)],dtype=float64)
         writer.write_many_sample(X)
 
         # Start the read and write tasks before starting the sample clock
@@ -76,12 +86,14 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         write_task.start()
         sample_clk_task.start()
 
-        V = zeros(number_of_samples)
+        V = zeros((2,number_of_samples))
         reader.read_many_sample(
             V, number_of_samples_per_channel=number_of_samples,
-            timeout=2)
+            timeout=88)
 
-        print(V)
+        # print(V)
 
-curve(range(len(X)), X, "", "#", "Aout(V)")
-curve(range(len(V)), V, "", "#", "Ain(V)")
+print(range(V.size))
+curve([range(X0.count),range(V[0].size)], [X0.data,list(V[0])], "Channel #0", "arb time", "V(V)", ["-k","or"])
+curve([range(X1.count),range(V[1].size)], [X1.data,list(V[1])], "Channel #1", "arb time", "V(V)", ["-k","or"])
+
