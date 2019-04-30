@@ -5,6 +5,7 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 import visa, subprocess, platform, inspect, smtplib, scrypt, ast
+from nidaqmx.system import System
 from time import time, ctime, sleep
 from contextlib import suppress
 from numpy import linspace
@@ -23,6 +24,13 @@ from pyqum.instrument.logger import address
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
 HIDDEN_PATH = Path(pyfilename).parents[6] / "QuDATA" / "HIDDEN"
 hdfile = Path(HIDDEN_PATH) / "HD.pyqum"
+
+def scanserial():
+    sys = System.local()
+    for i,dev in enumerate(sys.devices):
+        print("%s. %s" %(i+1,dev.name))
+    devices = sys.devices
+    return devices
 
 def scanetwork():
     active = []
@@ -176,6 +184,7 @@ def test():
     # initializationspeed()
     # notify('ufocrew@gmail.com', 'Test', 'Success')
     # store_pwd()
+    print(scanserial()[0])
     return
 
-# test()
+test()
