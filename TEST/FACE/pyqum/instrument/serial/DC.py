@@ -40,17 +40,18 @@ curve([range(X0.count),range(len(V0))], [X0.data,V0], "Channel #0", "arb time", 
 curve([range(X1.count),range(len(V1))], [X1.data,V1], "Channel #1", "arb time", "V(V)", ["-k","or"])
 
 # stream data
-X0, X1 = waveform("0 to 10 *100 to 0 * 200"), waveform("0 to 5 *70 to 10*130 to 0 * 100")
+X0, X1 = waveform("0 to 10 *10 to 0 * 20"), waveform("0 to 5 *7 to 10*13 to 0 * 10")
 X = array([X0.data, X1.data])
 number_of_samples = X0.count #should be the same for both channels
 print("X:\n%s" %X)
-sample_rate = 250000 #max 500K over all channels
+sample_rate = 10 #max 500K over all channels
 with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         nidaqmx.Task() as sample_clk_task:
         # Use a counter output pulse train task as the sample clock source
         # for both the AI and AO tasks.
+        # duty cycle = pulse width / pulse period
         sample_clk_task.co_channels.add_co_pulse_chan_freq(
-            '{0}/ctr0'.format("Dev1"), freq=sample_rate)
+            '{0}/ctr0'.format("Dev1"), freq=sample_rate, initial_delay=0, duty_cycle=0.5)
         sample_clk_task.timing.cfg_implicit_timing(
             sample_mode=AcquisitionType.FINITE,
             samps_per_chan=number_of_samples)
@@ -62,13 +63,14 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         write_task.timing.cfg_samp_clk_timing(
             sample_rate, source=samp_clk_terminal, active_edge=Edge.RISING,
             samps_per_chan=number_of_samples)
+        # write_task.ao_channels.add_ao_func_gen_chan
 
         read_task.ai_channels.add_ai_voltage_chan(
             "Dev1/ai0:1", terminal_config=TerminalConfiguration.RSE, max_val=10, min_val=-10)
         read_task.timing.cfg_samp_clk_timing(
             sample_rate, source=samp_clk_terminal,
             active_edge=Edge.FALLING, samps_per_chan=number_of_samples)
-        # read_task.channels.ai_averaging_win_size = 3
+        # read_task.channels.ai_averaging_win_size = 3 #FPGA
 
         # Single Channel:
         # writer = AnalogSingleChannelWriter(write_task.out_stream)
