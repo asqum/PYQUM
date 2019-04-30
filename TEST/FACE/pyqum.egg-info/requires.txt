@@ -1,5 +1,6 @@
 flask
 geocoder
+scrypt
 
 [test]
 pytest

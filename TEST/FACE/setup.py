@@ -20,6 +20,7 @@ setup(
     install_requires=[
         'flask',
         'geocoder',
+        'scrypt',
     ],
     extras_require={
         'test': [
