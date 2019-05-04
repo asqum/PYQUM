@@ -96,14 +96,15 @@ class address:
     Set <reset=False> to directly load from LOG if it contains "address" 
     '''
     def __init__(self):
-        self.book = json.load(open(Path(pyfilename).parent / 'address.json'))
+        with open(Path(pyfilename).parent / 'address.json') as ad:
+            self.book = json.load(ad)
 
     def lookup(self, instr_name, level=0):
         '''level: alternative address's index'''
         self.instr_name = instr_name
         self.level = level
         try:
-            if self.level:
+            if self.level: #False if 0
                 self.rs = self.book[self.instr_name]["alternative"][self.level-1]
             else: self.rs = self.book[self.instr_name]["resource"]
         except(KeyError): self.rs = None # checking if instrument in database

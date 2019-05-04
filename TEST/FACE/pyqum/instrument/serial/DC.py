@@ -1,6 +1,12 @@
-import nidaqmx, random
+'''Communicating with DC-Box'''
 
-from nidaqmx.system import System
+from colorama import init, Fore, Back
+init(autoreset=True) #to convert termcolor to wins color
+
+from os.path import basename as bs
+mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
+
+import nidaqmx, random
 from nidaqmx.constants import TerminalConfiguration, AcquisitionType, Edge
 from nidaqmx.utils import flatten_channel_string
 
@@ -10,16 +16,15 @@ from nidaqmx.stream_writers import (
     AnalogSingleChannelWriter, AnalogMultiChannelWriter)
 
 from numpy import ndarray, array, zeros
+
+from pyqum.instrument.logger import address
 from pyqum.instrument.analyzer import curve
 from pyqum.instrument.toolbox import waveform
 
-D = []
-sys = System.local()
-for i,dev in enumerate(sys.devices):
-    print("%s. %s" %(i+1,dev.name))
-    D.append(dev.name)
-device = sys.devices[(D[0])]
-print(device)
+ad = address()
+rs = ad.lookup(mdlname) # Instrument's Address
+
+# def apply_voltage()
 
 X0, X1 = waveform("0 to 10 *10 to 0 * 20"), waveform("0 to 5 *7 to 10*13 to 0 * 10")
 X = list(array([X0.data, X1.data]).T)
@@ -71,6 +76,7 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
             sample_rate, source=samp_clk_terminal,
             active_edge=Edge.FALLING, samps_per_chan=number_of_samples)
         # read_task.channels.ai_averaging_win_size = 3 #FPGA
+        print("Max reading rate: %s" %read_task.timing.samp_clk_max_rate)
 
         # Single Channel:
         # writer = AnalogSingleChannelWriter(write_task.out_stream)

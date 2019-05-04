@@ -62,7 +62,9 @@
 
     "DSO": {
         "resource": "GPIB0::7::INSTR",
-        "alternative": "visa://qdl-pc/GPIB0::7::INSTR",
+        "alternative": [
+                        "visa://qdl-pc/GPIB0::7::INSTR"
+                        ],
         "location": "NCHU",
         "description": "Oscilloscope Agilent 54621A",
         "visible": false
@@ -102,7 +104,18 @@
     
     "LAKE": {
         "resource": "visa://192.168.1.23:7777/ASRL3::INSTR",
-        "alternative": "visa://BlueForsAS/ASRL3::INSTR",
+        "alternative": [
+                        "visa://BlueForsAS/ASRL3::INSTR"
+                        ],
+        "location": "AS",
+        "visible": true
+    },
+
+    "DC": {
+        "resource": "Dev1",
+        "alternative": [
+                        "Dev2", "Dev3"
+                        ],
         "location": "AS",
         "visible": true
     }

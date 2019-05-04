@@ -26,21 +26,39 @@ def gotocdata(Address, Structure):
 
 class waveform:
     def __init__(self, command):
-        self.command = command
-        command = command.lower().replace(" ","").split("*")
-        C = [j for i in command for j in i.split('to')]
-        # rooting out wrong command:
-        try:
-            C = [float(x) for x in C] #float all the string elements!
-            start, self.data, self.count = C[0], [], 0
-            change = range(int(len(C[:-1])/2))
-            for i,target,num in zip(change,C[1::2],C[2::2]):
-                self.count += int(num)
-                self.data += list(linspace(start, target, int(num), endpoint=bool(i==change[-1]), dtype=float64))
-                start = target
-        except:
-            print("Invalid command")
-            pass
+        # defaulting to lower case
+        self.command = command.lower()
+        # get rid of multiple spacings
+        while " "*2 in self.command:
+            self.command = self.command.replace(" "*2," ")
+        # get rid of spacing around keywords
+        while " *" in self.command or "* " in self.command:
+            self.command = self.command.replace(" *","*")
+            self.command = self.command.replace("* ","*")
+        while " to" in self.command or "to " in self.command:
+            self.command = self.command.replace(" to","to")
+            self.command = self.command.replace("to ","to")
+
+        command = self.command.split(" ")
+        command = [x for x in command if x is not ""]
+        self.data, self.count = [], 0
+        for cmd in command:
+            self.count += 1
+            if "*" in cmd and "to" in cmd:
+                C = [j for i in cmd.split("*") for j in i.split('to')]
+                # rooting out wrong command:
+                try:
+                    start = float(C[0])
+                    steps = range(int(len(C[:-1])/2))
+                    for i,target,num in zip(steps,C[1::2],C[2::2]):
+                        self.count += int(num)
+                        self.data += list(linspace(start, float(target), int(num), endpoint=False, dtype=float64))
+                        if i==steps[-1]: self.data += [float(target)]
+                        else: start = float(target)
+                except:
+                    print("Invalid command")
+                    pass
+            else: self.data.append(float(cmd))
 
 
 def test():
@@ -48,9 +66,12 @@ def test():
     #     print("decoding data-%s into c-%s and back into %s" 
     #     %(i, cdatasearch(i, [8,10,10,2]), gotocdata(cdatasearch(i, [8,10,10,2]), [8,10,10,2])))
         # sleep(0.3)
-    command = "0 to  10  * 7 TO  20 *15 to35*  13"
+    command = "0 1   2   to  10  * 1 TO  20  *1 25 26  to35*  1to 70 *  5 73  75   to80  *5 81 82 to  101*  8"
+    # command = "100    12  37              77   81  "
+    # command = '1 to 10 *           12 to     25 *    7'
     wave = waveform(command)
-    print("Waveform of length %s is:\n %s" %(wave.count, wave.data))
+    if wave.count == len(wave.data):
+        print("Waveform of length %s is:\n %s" %(wave.count, wave.data))
     return
 
 
