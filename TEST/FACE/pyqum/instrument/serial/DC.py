@@ -26,23 +26,28 @@ rs = ad.lookup(mdlname) # Instrument's Address
 
 # def apply_voltage()
 
-X0, X1 = waveform("0 to 10 *10 to 0 * 20"), waveform("0 to 5 *7 to 10*13 to 0 * 10")
-X = list(array([X0.data, X1.data]).T)
+X0 = waveform("10")#, waveform("10")
+# X = list(array([X0.data, X1.data]).T)
 V0, V1 = [], []
 with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task:
-    write_task.ao_channels.add_ao_voltage_chan("Dev1/ao0, Dev1/ao1")
-    read_task.ai_channels.add_ai_voltage_chan("Dev1/ai0:1", 
+    write_task.ao_channels.add_ao_voltage_chan("Dev1/ao0")
+    read_task.ai_channels.add_ai_voltage_chan("Dev1/ai0:31", 
         terminal_config=TerminalConfiguration.RSE, min_val=-10, max_val=10)
-    print("First reading: %sV" %read_task.read(1))
-    for x in X:
-        write_task.write(list(x), auto_start=True)
-        v = read_task.read(1)
-        V0 += v[0]
-        V1 += v[1]
+    print("Previous Reading:")
+    for i,v in enumerate(read_task.read(1)):
+        print("AI%s: %sV" %(i,v[0]))
+    # for x in X0:
+    write_task.write([0], auto_start=True)
+    v = read_task.read(1)
+    # V0 += v[0]
+    # V1 += v[1]
+    print("\nReading Now:")
+    for i,v in enumerate(v):
+        print("AI%s: %sV"%(i,v[0]))
 
-print(V1)
-curve([range(X0.count),range(len(V0))], [X0.data,V0], "Channel #0", "arb time", "V(V)", ["-k","or"])
-curve([range(X1.count),range(len(V1))], [X1.data,V1], "Channel #1", "arb time", "V(V)", ["-k","or"])
+# print(V1)
+# curve([range(X0.count),range(len(V0))], [X0.data,V0], "Channel #0", "arb time", "V(V)", ["-k","or"])
+# curve([range(X1.count),range(len(V1))], [X1.data,V1], "Channel #1", "arb time", "V(V)", ["-k","or"])
 
 # stream data
 X0, X1 = waveform("0 to 10 *10 to 0 * 20"), waveform("0 to 5 *7 to 10*13 to 0 * 10")

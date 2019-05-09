@@ -87,7 +87,8 @@
         "alternative": [
                     "PXI27::0::0::INSTR;PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR",
                     "PXI0::22-14.0::INSTR;PXI0::22-12.0::INSTR;PXI0::22-9.0::INSTR;PXI0::22-8.0::INSTR;PXI0::27-0.0::INSTR",
-                    "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR"
+                    "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR",
+                    "PXI19::12::0::INSTR;PXI19::14::0::INSTR;PXI19::8::0::INSTR;PXI19::9::0::INSTR;PXI24::0::0::INSTR"
                     ],
         "location": "NCHU",
         "visible": false

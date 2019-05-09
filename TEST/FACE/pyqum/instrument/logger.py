@@ -100,7 +100,7 @@ class address:
             self.book = json.load(ad)
 
     def lookup(self, instr_name, level=0):
-        '''level: alternative address's index'''
+        '''level: alternative address's index (1,2,3...)'''
         self.instr_name = instr_name
         self.level = level
         try:
