@@ -35,7 +35,7 @@ def InitWithOptions(IdQuery=False, Reset=False, OptionsString='Simulate=false, D
     '''
     # rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
     ad = address()
-    rs = ad.lookup(mdlname) # Instrument's Address
+    rs = ad.lookup(mdlname,2) # Instrument's Address
     Resource = bytes(rs, 'ascii')
     Option = bytes(OptionsString, 'ascii') # utf-8
     Session = c_long()
@@ -575,3 +575,4 @@ def test(detail=True):
     close(s)
     return
 
+test()

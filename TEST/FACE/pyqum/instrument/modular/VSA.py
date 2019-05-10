@@ -35,7 +35,7 @@ def InitWithOptions(IdQuery=False, Reset=False, OptionsString=''):
     '''
     # rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
     ad = address()
-    rs = ad.lookup(mdlname,4) # Instrument's Address
+    rs = ad.lookup(mdlname,5) # Instrument's Address
     Resource = bytes(rs, 'ascii')
     Option = bytes(OptionsString, 'ascii') # utf-8
     Session = c_long()
@@ -357,8 +357,8 @@ def test(detail=True):
         acquisition_time(s)
         acquisition_time(s, action=["Set", 3e-5])
         preselector_enabled(s)
-        frequency(s, action=["Set", 5e9])
-        power(s, action=["Set", -7.3])
+        frequency(s, action=["Set", 3e9])
+        power(s, action=["Set", -15])
         bandwidth(s)
         # setting trigger
         trigger_source(s)

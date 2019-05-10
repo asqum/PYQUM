@@ -88,7 +88,8 @@
                     "PXI27::0::0::INSTR;PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR",
                     "PXI0::22-14.0::INSTR;PXI0::22-12.0::INSTR;PXI0::22-9.0::INSTR;PXI0::22-8.0::INSTR;PXI0::27-0.0::INSTR",
                     "PXI22::12::0::INSTR;PXI22::14::0::INSTR;PXI22::8::0::INSTR;PXI22::9::0::INSTR;PXI27::0::0::INSTR",
-                    "PXI19::12::0::INSTR;PXI19::14::0::INSTR;PXI19::8::0::INSTR;PXI19::9::0::INSTR;PXI24::0::0::INSTR"
+                    "PXI19::12::0::INSTR;PXI19::14::0::INSTR;PXI19::8::0::INSTR;PXI19::9::0::INSTR;PXI24::0::0::INSTR",
+                    "PXI21::12::0::INSTR;PXI21::14::0::INSTR;PXI21::8::0::INSTR;PXI21::9::0::INSTR;PXI26::0::0::INSTR"
                     ],
         "location": "NCHU",
         "visible": false
@@ -97,7 +98,8 @@
     "AWG": {
         "resource": "PXI22::14::0::INSTR",
         "alternative": [
-                    "PXI20::14::0::INSTR"
+                    "PXI20::14::0::INSTR",
+                    "PXI19::14::0::INSTR"
                     ],
         "location": "NCHU",
         "visible": false

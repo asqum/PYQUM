@@ -50,11 +50,11 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task:
 # curve([range(X1.count),range(len(V1))], [X1.data,V1], "Channel #1", "arb time", "V(V)", ["-k","or"])
 
 # stream data
-X0, X1 = waveform("0 to 10 *10 to 0 * 20"), waveform("0 to 5 *7 to 10*13 to 0 * 10")
-X = array([X0.data, X1.data])
+X0, X1, X3 = waveform("0 to 10 *1000 to 0 * 2000"), waveform("0 to 5 *700 to 10*1300 to 0 * 1000"), waveform("0 to 3 *700  to 1*1500 to 7*500 to 0 * 300")
+X = array([X0.data, X1.data, X3.data])
 number_of_samples = X0.count #should be the same for both channels
 print("X:\n%s" %X)
-sample_rate = 10 #max 500K over all channels
+sample_rate = 10000 #max 500K over all channels
 with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         nidaqmx.Task() as sample_clk_task:
         # Use a counter output pulse train task as the sample clock source
@@ -69,14 +69,14 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         samp_clk_terminal = '/{0}/Ctr0InternalOutput'.format("Dev1")
 
         write_task.ao_channels.add_ao_voltage_chan(
-            "Dev1/ao0:1", max_val=10, min_val=-10)
+            "Dev1/ao0:1, Dev1/ao3", max_val=10, min_val=-10)
         write_task.timing.cfg_samp_clk_timing(
             sample_rate, source=samp_clk_terminal, active_edge=Edge.RISING,
             samps_per_chan=number_of_samples)
         # write_task.ao_channels.add_ao_func_gen_chan
 
         read_task.ai_channels.add_ai_voltage_chan(
-            "Dev1/ai0:1", terminal_config=TerminalConfiguration.RSE, max_val=10, min_val=-10)
+            "Dev1/ai0:1, Dev1/ai17", terminal_config=TerminalConfiguration.RSE, max_val=10, min_val=-10)
         read_task.timing.cfg_samp_clk_timing(
             sample_rate, source=samp_clk_terminal,
             active_edge=Edge.FALLING, samps_per_chan=number_of_samples)
@@ -100,7 +100,7 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
         write_task.start()
         sample_clk_task.start()
 
-        V = zeros((2,number_of_samples))
+        V = zeros((3,number_of_samples))
         reader.read_many_sample(
             V, number_of_samples_per_channel=number_of_samples,
             timeout=88)
@@ -110,4 +110,5 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
 print(range(V.size))
 curve([range(X0.count),range(V[0].size)], [X0.data,list(V[0])], "Channel #0", "arb time", "V(V)", ["-k","or"])
 curve([range(X1.count),range(V[1].size)], [X1.data,list(V[1])], "Channel #1", "arb time", "V(V)", ["-k","or"])
+curve([range(X3.count),range(V[2].size)], [X3.data,list(V[2])], "Channel #3->17", "arb time", "V(V)", ["-k","or"])
 
