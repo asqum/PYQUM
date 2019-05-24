@@ -22,12 +22,32 @@ from pyqum.instrument.analyzer import curve
 from pyqum.instrument.toolbox import waveform
 
 # INITIALIZATION
-def initiate(ao, ai):
+def openall():
     ad = address()
     rs = ad.lookup(mdlname) # Instrument's Address
     write_task = nidaqmx.Task()
+    write_task.ao_channels.add_ao_voltage_chan("Dev1/ao0:3")
+    read_task = nidaqmx.Task()
+    read_task.ai_channels.add_ai_voltage_chan("Dev1/ai0:31", terminal_config=TerminalConfiguration.RSE, min_val=-10, max_val=10)
+    return write_task, read_task
 
-    return rs
+w, r = openall()
+
+print("Previous Reading:")
+for i,v in enumerate(r.read(1)):
+    print("AI%s: %sV" %(i,v[0]))
+
+w.write([0, 0, 0, 0], auto_start=True)
+v = r.read(1)
+
+print("\nReading Now:")
+for i,v in enumerate(v):
+    print("AI%s: %sV"%(i,v[0]))
+
+w.close()
+r.close()
+
+A = input("pause")
 
 # def apply_voltage()
 
@@ -38,6 +58,7 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task:
     write_task.ao_channels.add_ao_voltage_chan("Dev1/ao0")
     read_task.ai_channels.add_ai_voltage_chan("Dev1/ai0:31", 
         terminal_config=TerminalConfiguration.RSE, min_val=-10, max_val=10)
+
     print("Previous Reading:")
     for i,v in enumerate(read_task.read(1)):
         print("AI%s: %sV" %(i,v[0]))

@@ -382,7 +382,7 @@ def dc():
     global b
     b = bluefors()
     return render_template("blog/machn/dc.html", Days=b.Days)
-@bp.route('/dc/history', methods=['GET'])
+@bp.route('/dc/state', methods=['GET'])
 def dcstate():
     
     return jsonify()
