@@ -24,7 +24,8 @@ debug() # declare the debugger mode here
 
 # INITIALIZATION
 def Initiate():
-    rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
+    ad = address()
+    rs = ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -121,3 +122,4 @@ def test(detail=True):
     return
 
 
+test()

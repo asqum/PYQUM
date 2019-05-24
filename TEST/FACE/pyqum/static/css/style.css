@@ -41,6 +41,7 @@ div.navbar {
 .navbar .user {
     /* font-family: fantasy; */
     color: chartreuse;
+    /* color: blue; */
 }
 .navbar button {
     font-size: 17px;

@@ -376,6 +376,17 @@ def bdrhistory():
         [startimeT, tt2, T2] = [startimeT, tt, T]
     return jsonify(startimeP=startimeP, startimeT=startimeT, tp=tp, P=P, P_stat=P_stat, tt=tt, T=T, tp2=tp2, P2=P2, P_stat2=P_stat2, tt2=tt2, T2=T2)
 
+# DC
+@bp.route('/dc', methods=['GET'])
+def dc():
+    global b
+    b = bluefors()
+    return render_template("blog/machn/dc.html", Days=b.Days)
+@bp.route('/dc/history', methods=['GET'])
+def dcstate():
+    
+    return jsonify()
+
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
 

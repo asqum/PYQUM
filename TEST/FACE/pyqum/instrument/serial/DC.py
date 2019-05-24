@@ -21,8 +21,13 @@ from pyqum.instrument.logger import address
 from pyqum.instrument.analyzer import curve
 from pyqum.instrument.toolbox import waveform
 
-ad = address()
-rs = ad.lookup(mdlname) # Instrument's Address
+# INITIALIZATION
+def initiate(ao, ai):
+    ad = address()
+    rs = ad.lookup(mdlname) # Instrument's Address
+    write_task = nidaqmx.Task()
+
+    return rs
 
 # def apply_voltage()
 
@@ -44,6 +49,8 @@ with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task:
     print("\nReading Now:")
     for i,v in enumerate(v):
         print("AI%s: %sV"%(i,v[0]))
+
+A = input("pause")
 
 # print(V1)
 # curve([range(X0.count),range(len(V0))], [X0.data,V0], "Channel #0", "arb time", "V(V)", ["-k","or"])

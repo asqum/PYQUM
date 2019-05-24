@@ -8,7 +8,8 @@ ECHO WELCOME TO PYQUM 101
 ::DIR
 
 :: Initialize Anaconda Environment
-set root=C:\ProgramData\Anaconda3
+:: set root=C:\ProgramData\Anaconda3
+set root=C:\Users\Great\Anaconda3
 call %root%\Scripts\activate.bat %root%
 ::call conda list flask
 SET FLASK_APP=pyqum

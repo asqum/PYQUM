@@ -7,7 +7,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
-from pyqum.directive.characterize import TESTC, RTAmp
+from pyqum.directive.characterize import TESTC
 
 # Scientific Constants
 from scipy import constants as cnst
