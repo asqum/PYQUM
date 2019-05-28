@@ -1664,6 +1664,7 @@ pyqum/templates/blog/machn/all.html
 pyqum/templates/blog/machn/awg.html
 pyqum/templates/blog/machn/bdr.html
 pyqum/templates/blog/machn/bdr.js
+pyqum/templates/blog/machn/dc.html
 pyqum/templates/blog/machn/dso.html
 pyqum/templates/blog/machn/machine.html
 pyqum/templates/blog/machn/sg.html
