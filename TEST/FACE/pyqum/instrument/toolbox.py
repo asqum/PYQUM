@@ -1,7 +1,7 @@
 '''TOOLBOX for all other modules'''
 
 from time import sleep
-from numpy import array, append, zeros, prod, floor, inner, linspace, float64
+from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin
 
 def cdatasearch(Order, Structure):
     ''' Give the address of the data essentially!
@@ -60,6 +60,12 @@ class waveform:
                     pass
             else: self.data.append(float(cmd))
 
+def match(List, Value):
+    '''matching closest value in a list
+    '''
+    index = abs(array(List) - Value).argmin()
+    return index
+
 
 def test():
     # for i in range(150):
@@ -72,6 +78,11 @@ def test():
     wave = waveform(command)
     if wave.count == len(wave.data):
         print("Waveform of length %s is:\n %s" %(wave.count, wave.data))
+
+    s = [0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,10,12,13,15]
+    idx = match(s, 7.3)
+    print("7.3 is nearest to %s at index %s of s" %(s[idx],idx))
+
     return
 
 

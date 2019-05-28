@@ -5,7 +5,7 @@
         "Power": {
             "State": [0, 1],
             "ai6": [0, 10],
-            "ai7": [0, 10]
+            "ai7": [0, -10]
         },
 
         "Rb": {
@@ -19,15 +19,13 @@
         }, 
 
         "Bias": {
-            "Voltage": 10,
-            "Current": -10,
-            "ai": 11
+            "mode": ["Voltage", "Current"],
+            "ai11": [10, -10]
         },
 
         "Symmetry": {
-            "differential": 10,
-            "Single-end": -10,
-            "ai": 8
+            "mode": ["differential", "Single-end"],
+            "ai8": [10, -10]
         },
 
         "Vgain1": {
@@ -43,8 +41,7 @@
         "Vg": {
             "1": "ai14",
             "2": "ai15",
-            "div-type": "index",
-            "div": [1, 2, 3, 4, 5, 6],
+            "mode": ["OFF", "Vg/100", "Vg/50", "Vg/10", "Vg*1", "Vext"],
             "ai-value": [9.97, 5.99, 2, -1.99, -5.98, -9.97]
         }
 
