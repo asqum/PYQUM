@@ -1,11 +1,14 @@
 <!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/button.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/v4-shims.css') }}">
 
 <head>
     <title>{% block title %}{% endblock %} - PyQuM</title>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/gauge.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/plotly-latest.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/base.js') }}"></script>
@@ -21,6 +24,7 @@
         <button class="machine" id="left">Machine</button>
         <button class="mission" id="left">Mission</button>
         <button class="bridge" id="left">Bridge</button>
+        <button class="ups" id="left"><a href="https://qum.phys.sinica.edu.tw:8888/0">UPS</a></button>
     {% endif %}  
 
     <button class="guide" id="left">Guide</button>

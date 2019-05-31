@@ -62,6 +62,7 @@ class waveform:
 
 def match(List, Value):
     '''matching closest value in a list
+    and return the index thereof
     '''
     index = abs(array(List) - Value).argmin()
     return index

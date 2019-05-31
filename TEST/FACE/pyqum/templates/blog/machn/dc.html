@@ -11,158 +11,101 @@
 
     <div class="tab2">
     <form method='GET'>
-        <button class='dc' id='reset'><i class="fa fa-refresh" style="font-size:15px;color:lightgreen;"></i> RESET</button>
-        <button class='dc' id='close'><i class="fa fa-times-circle" style="font-size:15px;color:red;"></i> CLOSE</button>
-
-        <button class='dc' id='about'>ABOUT</button>
-        <button class='dc' id='debug'>DEBUG</button>
-        <button class='dc' id='settings'>SETTINGS</button> 
+        <button class='dc' id='amplifier'>AMPLIFIER</button>
+        <button class='dc' id='wavein'>WAVE-IN</button>
+        <button class='dc' id='ivcurve'>I-Vb</button> 
         
-        <button class='dc' id='generate'><i class="fas fa-volume-up" style="font-size:15px;color:lightgreen;"></i> GENERATE</button>
-        <button class='dc' id='abort'><i class="fa fa-times-circle" style="font-size:15px;color:red;"></i> ABORT</button>
     </form>
     </div>
 
-    <div class="dccontent" id="debug"></div>
-    <div class="dccontent" id="about"></div>
-
-    <div class="dccontent" id="settings-marker">
+    
+    <div class="dccontent" id="amplifier">
         <div class="container">
+            
+            <div class="row"> <!-- NEW ROW for ON-OFF SWITCH -->
+                <div class="col-5" id='left'></div>
+                <div class="col-20" id='left'>
+                    <label class="dc switch">
+                        <input class="dc" id='on-amplifier' type="checkbox">
+                        <div class="slider round">
+                            <span class="on">ON</span><span class="off">OFF</span>
+                        </div>
+                    </label>
+                </div>
+                <div class="dc-ind SE col-20" id='left'>
+                    <button class="large red button" disabled>Single-End</button>
+                </div>
+                <div class="dc-ind DIFF col-20" id='left'>
+                    <button class="large blue button" disabled>Differential</button>
+                </div>
+                <div class="dc-ind Current col-20" id='left'>
+                    <button class="large red button" disabled>Current Bias</button>
+                </div>
+                <div class="dc-ind Voltage col-20" id='left'>
+                    <button class="large blue button" disabled>Voltage Bias</button>
+                </div>
+                <div class="col-15 acenter" id='right'>
+                    <a class="dc ampscan push_button blue" id='w-120' href="#">Save</a>
+                </div>
+            </div>
 
-            <h3> 1. Setting marker: </h3>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Active Marker</label></div>
-                <div class="col-75"><select class='dc' id="settings" name='active'>
-                    {% for i in range(3) %}
-                    <option value={{i+1}} {% if i+1 == 3 %} selected {% endif %}>{{i+1}}</option>
-                    {% endfor %}</select></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Delay (s)</label></div>
-                <div class="col-75"><input class='dc' id="settings" name='delay' type="text" value="5e-7"/></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Pulse Width (s)</label></div>
-                <div class="col-75"><input class='dc' id="settings" name='pulsew' type="text" value="1e-8"/></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Source</label></div>
-                <div class="col-75"><select class='dc' id="settings" name='source'>
-                    {% for i in range(10) %}
-                    <option value={{i+1}} {% if i+1 == 10 %} selected {% endif %}>{{i+1}}</option>
-                    {% endfor %}</select></div>
+            <!-- <div class="row">
+                <div class="col-48 acenter" id='left'>
+                    <h3>Vb = DAQ-AO</h3>
+                </div>
+                <div class="col-48 acenter" id='left'>
+                    <h3>The distributor</h3>
+                </div>
+                
+            </div> -->
+
+            <br><br>
+            <div class="row">
+                <div class="col-15 acenter" id='left'>
+                    <canvas class='dc ampgauges' id="canvas-VSP"></canvas>
+                </div>
+                <div class="col-15 acenter" id='left'>
+                    <canvas class='dc ampgauges' id="canvas-VSN"></canvas>
+                </div>
+                <div class="col-32 acenter" id='left'>
+                    <canvas class='dc ampgauges' id="canvas-Div"></canvas>
+                </div>
+                <div class="col-32 acenter" id='left'>
+                    <canvas class='dc ampgauges' id="canvas-Rb"></canvas>
+                </div>
             </div>
 
-            <div class="row"> <!-- ACTION BUTTON -->
-                <div class="col-25"></div>
-                <div class="col-15"><input class='dc' id='set-marker' type="submit" value="Next"/></div>
+            <br><br>
+            <div class="row">
+                <div class="col-30" id='left'>
+                    <canvas class='dc ampgauges' id="canvas-Vg1"></canvas>
+                </div>
+                <div class="col-30" id='left'>
+                    <canvas class='dc ampgauges' id="canvas-Vg2"></canvas>
+                </div>
+                <!-- <div class="col-12" id='left'></div> -->
+                <div class="col-15" id='left'>
+                    <canvas class='dc ampgauges' id="canvas-gain1"></canvas>
+                </div>
+                <div class="col-15" id='left'>
+                    <canvas class='dc ampgauges' id="canvas-gain2"></canvas>
+                </div>
+                
             </div>
+           
+            
             
         </div>
     </div>
 
-    <div class="dccontent" id="settings-prepare">
-        <div class="container">
-            
-            <h3> 2. Preparing AWG: </h3>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Predistortion</label></div>
-                <div class="col-75"><select class='dc' id="settings" name="predist">
-                    <option value=1>Enabled</option>
-                    <option value=0 selected>Disabled</option>
-                </select></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Output Mode</label></div>
-                <div class="col-75"><select class='dc' id="settings" name="outpmode">
-                    <option value=1>Arbitrary</option>
-                    <option value=2 selected>Sequence</option>
-                    <option value=3>Advanced Sequence</option>
-                </select></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Sample Rate</label></div>
-                <div class="col-75"><select class='dc' id="settings" name="samprat">
-                    <option value=1250000000 selected>1250000000</option>
-                    <option value=625000000>625000000</option>
-                    <option value=312500000>312500000</option>
-                </select></div>
-            </div>
+    
 
-            <div class="row"> <!-- ACTION BUTTON -->
-                <div class="col-25"></div>
-                <div class="col-15"><input class='dc' id='bato-marker' type="submit" value="Back"/></div>
-                <div class="col-15"><input class='dc' id='set-prepare' type="submit" value="Next"/></div>
-            </div>
-            
-        </div>
-    </div>
+    
 
-    <div class="dccontent" id="settings-squarewave">
-        <div class="container">
-            
-            <h3> 3a. Designing Square-Wave: </h3>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Voltage Level</label></div>
-                <div class="col-75"><input class='dc' id="settings" name="voltag1", type='text', value='0'/></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Points #</label></div>
-                <div class="col-75"><input class='dc' id="settings" name="pointnum1", type='text', value='3000'/></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Voltage Level</label></div>
-                <div class="col-75"><input class='dc' id="settings" name="voltag2", type='text', value='1'/></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Points #</label></div>
-                <div class="col-75"><input class='dc' id="settings" name="pointnum2", type='text', value='5000'/></div>
-            </div>
-            
-            <div class="row"> <!-- ACTION BUTTON -->
-                <div class="col-25"></div>
-                <div class="col-15"><input class='dc' id='bato-prepare' type="submit" value="Back"/></div>
-                <div class="col-15"><input class='dc' id='set-squarewave' type="submit" value="Channel"/></div>
-            </div>
-            
-        </div>
-    </div>
-
-    <div class="dccontent" id="settings-channel">
-        <div class="container">
-            
-            <h3> 4. Configure Channel: </h3>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Channel</label></div>
-                <div class="col-75"><select class='dc' id="settings" name="channel">
-                    <option value=1>1</option>
-                    <option value=2>2</option>
-                </select></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Output</label></div>
-                <div class="col-75"><select class='dc' id="settings" name="outputch">
-                    <option value=1 selected>ON</option>
-                    <option value=0>OFF</option>
-                </select></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25"><label>Output Filter</label></div>
-                <div class="col-75"><select class='dc' id="settings" name="oupfiltr">
-                    <option value=1>Enabled</option>
-                    <option value=0 selected>Disabled</option>
-                </select></div>
-            </div>
-            
-            <div class="row"> <!-- ACTION BUTTON -->
-                <div class="col-25"></div>
-                <div class="col-15"><input class='dc' id='set-channel' type="submit" value="Set"/></div>
-            </div>
-            
-        </div>
-    </div>
+    
 
 </div>
 </body>
 
 </html>
+
