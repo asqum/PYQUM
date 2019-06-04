@@ -49,13 +49,15 @@ $(function () {
     $('input.sg#settings').keypress(function(e) {
         var key = e.which;
         if (key == 13) { $('input.sg#settings').trigger('click'); } }); }); // the enter key code //trigger next click below?
+
+//submit settings (on-rf)
 $(function () {
-    $('input.sg#submitsettings').bind('click', function () { // the enter key code
+    $('input.sg#on-rf').bind('click', function () { // the enter key code
         $.getJSON('/mach/sg/settings', {
             // input value here:
             freq: $('input.sg[name="freq"]').val(),
             powa: $('input.sg[name="powa"]').val(),
-            oupt: $('select.sg[name="oupt"]').val()
+            oupt: $('select.sg[name="oupt"]').is(':checked') ? 0:1 //convert bool to int
         }, function (data) {
             $('div.sgcontent#debug').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
             $.each(data.message, function(index, value) {
@@ -67,17 +69,17 @@ $(function () {
     });
 });
 
-//reset
+//connect
 $(function () {
-    $('button.sg#reset').bind('click', function () { // id become #
-        $.getJSON('/mach/sg/reset', {
+    $('button.sg#connect').bind('click', function () { // id become #
+        $.getJSON('/mach/sg/connect', {
             // input value here:
-            sgtype: $('input.sg[name="sgtype"]').val()
+            sgtype: $('select.sg[name="sgtype"]').val()
         }, function (data) {
             if (data.message == "Success"){
                 $('button.sg').removeClass('error');
                 $('button.sg#close').removeClass('close');
-                $('button.sg#reset').addClass('reset');}
+                $('button.sg#connect').addClass('connect');}
             else {$('button.sg').addClass('error');}
         });
         return false;
@@ -91,7 +93,7 @@ $(function () {
         }, function (data) {
             if (data.message == "Success"){
                 $('button.sg').removeClass('error');
-                $('button.sg#reset').removeClass('reset');
+                $('button.sg#connect').removeClass('connect');
                 $('button.sg#close').addClass('close');}
             else {$('button.sg').addClass('error');}         
         });

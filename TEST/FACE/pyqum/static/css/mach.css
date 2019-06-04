@@ -101,7 +101,7 @@ div.dccontent, div.bdrcontent, div.awgcontent, div.vsacontent, div.sgcontent, di
 }
 
 /* Modified Tabs */
-.reset, .generate {
+.connect, .reset, .generate {
     background-color: #4CAF50;
     color: white;
 }

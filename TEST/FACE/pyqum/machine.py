@@ -221,8 +221,8 @@ def sg():
 def sglog():
     log = get_status('sg')
     return jsonify(log=log)
-@bp.route('/sg/reset', methods=['GET'])
-def sgreset():
+@bp.route('/sg/connect', methods=['GET'])
+def sgconnect():
     global sgbench, SG
     sgtype = request.args.get('sgtype')
     try:
