@@ -20,23 +20,23 @@
             <div class="container">
 
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-15"><select class='char' id="rtamp" name="ampstate" type="text">
+                    <div class="col-15" id='left'><select class='char' id="rtamp" name="ampstate" type="text">
                         <option value=0 selected>OFF</option>
                         <option value=1>ON</option>
                         </select>
                     </div>
-                    <div class="col-25"><select class='char' id="rtamp" name="operation" type="text">
+                    <div class="col-25" id='left'><select class='char' id="rtamp" name="operation" type="text">
                         <option value="" selected>Select Measurement</option>
                         <option value="a">Access Measurement</option>
                         <option value="r">Resume Measurement</option>
                         <option value="n">New Measurement</option>
                         </select>
                     </div>
-                    <div class="col-25"><select class='char' id="rtamp" name="wday" type="text">
+                    <div class="col-25" id='left'><select class='char' id="rtamp" name="wday" type="text">
                         <option value="" selected>pick a day</option>
                         </select>
                     </div>
-                    <div class="col-25"><select class='char' id="rtamp" name="wmoment" type="text">
+                    <div class="col-25" id='left'><select class='char' id="rtamp" name="wmoment" type="text">
                         <option value="" selected>pick a time</option>
                         </select>
                     </div>
@@ -45,20 +45,20 @@
                 </div>
 
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-15"></div>
-                    <div class="col-25">
+                    <div class="col-15" id='left'></div>
+                    <div class="col-25" id='left'>
                         <input class='char' id="rtamp" name="powr" type="text" value="[-70,-70,1]"/>
                     </div> 
-                    <div class="col-25">
+                    <div class="col-25" id='left'>
                         <input class='char' id="rtamp" name="freq" type="text" value="[0.7e9,18e9,251]"/>
                     </div>
-                    <div class="col-25">
+                    <div class="col-25" id='left'>
                         <input class='char' id="rtamp" name="ifb" type="text" value="[10,10,1]"/>
                     </div> 
                 
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-15"></div>
-                    <div class="col-25">
+                    <div class="col-15" id='left'></div>
+                    <div class="col-25" id='left'>
                         <textarea class='char' id="rtamp" name="comment" type="text" rows="7" cols="101">--comment--</textarea>
                     </div>
                 </div>

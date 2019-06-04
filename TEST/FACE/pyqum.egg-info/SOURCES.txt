@@ -1631,6 +1631,7 @@ pyqum/static/js/dsply/stream.js
 pyqum/static/js/mach/all.js
 pyqum/static/js/mach/awg.js
 pyqum/static/js/mach/bdr.js
+pyqum/static/js/mach/dc.js
 pyqum/static/js/mach/dso.js
 pyqum/static/js/mach/mach.js
 pyqum/static/js/mach/sg.js
@@ -1663,7 +1664,6 @@ pyqum/templates/blog/dsply/game01.html
 pyqum/templates/blog/machn/all.html
 pyqum/templates/blog/machn/awg.html
 pyqum/templates/blog/machn/bdr.html
-pyqum/templates/blog/machn/bdr.js
 pyqum/templates/blog/machn/dc.html
 pyqum/templates/blog/machn/dso.html
 pyqum/templates/blog/machn/machine.html

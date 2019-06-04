@@ -13,6 +13,7 @@ from contextlib import suppress
 
 # Scientific Constants
 from scipy import constants as cnst
+from si_prefix import si_format, si_parse
 
 # This will run at server startup
 # Modulars first, only then Benchtops (if and only if we use render_template)
@@ -23,6 +24,8 @@ from scipy import constants as cnst
 from pyqum.instrument.benchtop import DSO, PNA
 # dsobench = DSO.Initiate()
 from pyqum.instrument.dilution import bluefors
+from pyqum.instrument.serial import DC
+from pyqum.instrument.toolbox import match
 
 encryp = 'ghhgjad'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
@@ -379,13 +382,38 @@ def bdrhistory():
 # DC
 @bp.route('/dc', methods=['GET'])
 def dc():
-    global b
-    b = bluefors()
-    return render_template("blog/machn/dc.html", Days=b.Days)
-@bp.route('/dc/state', methods=['GET'])
-def dcstate():
-    
-    return jsonify()
+    print("loading dc.html")
+    return render_template("blog/machn/dc.html")
+@bp.route('/dc/amplifier', methods=['GET'])
+def dcamplifier():
+    ampstat = request.args.get('ampstat')
+    # print(type(ampstat))
+    if ampstat == 'true':
+        global Amp
+        Amp = DC.amplifier()
+        print("Amplifier Initialized")
+    elif ampstat == 'false':
+        Amp.close()
+        print("Amplifier Closed")
+    return jsonify(ampstat=Amp.state)
+@bp.route('/dc/amplifier/sense', methods=['GET'])
+def dcamplifiersense():
+    state = Amp.state
+    if state:
+        Amp.sensehardpanel()
+        VSP = '%.1f'%Amp.VSupplyP[0]
+        VSN = '%.1f'%Amp.VSupplyN[0]
+        Sym = Amp.Symmetry
+        BM = Amp.BiasMode
+        Rb = si_format(Amp.Rb, precision=0).replace(' ','').upper()
+        Div = si_format(Amp.Division, precision=0).replace(' ','').upper()
+        Vg1, Vg2 = Amp.VgMode1, Amp.VgMode2
+        gain1 = si_format(Amp.VGain1, precision=0).replace(' ','').upper()
+        gain2 = si_format(Amp.VGain2, precision=0).replace(' ','').upper()
+    else: 
+        VSP, VSN, Sym, BM, Rb, Div, gain1, gain2, Vg1, Vg2 = None, None, None, None, None, None, None, None, None, None
+        print('DC disconnected')
+    return jsonify(state=state, VSP=VSP, VSN=VSN, Sym=Sym, BM=BM, Rb=Rb, Div=Div, Vg1=Vg1, Vg2=Vg2, gain1=gain1, gain2=gain2)
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
