@@ -26,6 +26,8 @@ body {
 .ups a {
     color: yellow;
     text-decoration: none;
+    /*字體陰影,邊框*/
+    text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black;
 }
 h1, h2, h3, h4, h5, h6 {
     font-family: serif;
@@ -45,7 +47,7 @@ border-top: 1px solid lightgray;
     float: right;
 }
 div.navbar {
-    background-color: #333333;
+    background-color: #ffba26;
     position: absolute;
     top: 0;
     width: 100%;
@@ -54,8 +56,9 @@ div.navbar {
 }
 .navbar .user {
     /* font-family: fantasy; */
-    color: chartreuse;
-    /* color: blue; */
+    /*color: chartreuse;*/
+    color:slategray;
+    text-shadow: -2px 0 snow, 0 2px snow, 2px 0 snow, 0 -2px snow;
 }
 .navbar button {
     font-size: 17px;
@@ -73,11 +76,11 @@ div.navbar {
 }
 .navbar button:hover {
     cursor: pointer;
-    background-color: lightsalmon;
+    background-color: rgba(164, 236, 70, 0.918);
 }
 .navbar button.active {
     background-color: white;
-    color: rgb(25, 25, 192);
+    color: rgb(226, 71, 71);
 }
 
 /* Forms: input & select */
@@ -86,7 +89,7 @@ input, select {
     background-color: white;
     border: thin solid purple;
     border-radius: 3.5px;
-    display: block;
+    display: inline-block;
     font: inherit;
     line-height: 1.5em;
     padding: 0.5em 3.5em 0.5em 1em;
@@ -98,7 +101,7 @@ input, select {
     -webkit-appearance: none;
     -moz-appearance: none;
     resize: vertical;
-    width: 100%;
+    width: 95%;
     /* text-align: left; */
 }
 label {
