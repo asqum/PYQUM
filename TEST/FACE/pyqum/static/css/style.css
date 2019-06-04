@@ -31,7 +31,7 @@ border-top: 1px solid lightgray;
     float: right;
 }
 div.navbar {
-    background-color: #333333;
+    background-color: #f3ad15;
     position: absolute;
     top: 0;
     width: 100%;
@@ -40,8 +40,8 @@ div.navbar {
 }
 .navbar .user {
     /* font-family: fantasy; */
-    color: chartreuse;
-    /* color: blue; */
+    /*color: chartreuse;*/
+    color: lightpink; 
 }
 .navbar button {
     font-size: 17px;
@@ -59,7 +59,7 @@ div.navbar {
 }
 .navbar button:hover {
     cursor: pointer;
-    background-color: lightsalmon;
+    background-color: rgba(8, 128, 209, 0.932);
 }
 .navbar button.active {
     background-color: white;
