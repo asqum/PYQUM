@@ -17,17 +17,16 @@ from si_prefix import si_format, si_parse
 
 # This will run at server startup
 # Modulars first, only then Benchtops (if and only if we use render_template)
-# from pyqum.instrument.modular import AWG, VSA
-# AWG.test(False) #seems like AWG's working-instance works differently than VSA's
-# awgsess = AWG.InitWithOptions()
-# vsasess = VSA.InitWithOptions()
+from pyqum.instrument.modular import AWG, VSA
+# seems like AWG's working-instance works differently than VSA's
+awgsess = AWG.InitWithOptions()
 from pyqum.instrument.benchtop import DSO, PNA
 # dsobench = DSO.Initiate()
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
 from pyqum.instrument.toolbox import match
 
-encryp = 'ghhgjad'
+encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
 
 # Main
@@ -219,7 +218,7 @@ def sg():
     return render_template("blog/machn/sg.html")
 @bp.route('/sg/log', methods=['GET'])
 def sglog():
-    log = get_status('sg')
+    log = get_status(request.args.get('sgtype'))
     return jsonify(log=log)
 @bp.route('/sg/connect', methods=['GET'])
 def sgconnect():
