@@ -10,6 +10,7 @@
 /* General */
 html {
   font-family: sans-serif;
+  /*font-family: OCR A Std, monospace;*/
   background: white;
   /* background: rgb(240, 122, 220); */
   scroll-behavior: smooth;
@@ -19,15 +20,21 @@ body {
   margin: 0 0;
   height: fit-content;
   font-family: Arial, Helvetica, sans-serif;
+  /*font-family:Verdana, sans-serif;*/
   border: 1px solid transparent;
   /* padding-bottom: 100px;
   margin-bottom: 100px; */
 }
 .ups a {
     color: yellow;
+    /*改字型*/
+    font-family:monospace;
     text-decoration: none;
     /*字體陰影,邊框*/
-    text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black;
+    text-shadow: -1.3px 0 black, 0 1.3px black, 1.3px 0 black, 0 -1.3px black;
+}
+.text-shadow {
+    text-shadow: -1.3px 0 darkblue, 0 1.3px darkblue, 1.3px 0 darkblue, 0 -1.3px darkblue;
 }
 h1, h2, h3, h4, h5, h6 {
     font-family: serif;
@@ -55,7 +62,7 @@ div.navbar {
     /* transition: top 0.3s; */
 }
 .navbar .user {
-    /* font-family: fantasy; */
+    /* font-family: fantasy;*/
     /*color: chartreuse;*/
     color:slategray;
     text-shadow: -2px 0 snow, 0 2px snow, 2px 0 snow, 0 -2px snow;
@@ -64,8 +71,7 @@ div.navbar {
     font-size: 17px;
     font-weight: 700;
     /* display: block; */
-    color: white;
-    text-align: center;
+    color: rgb(255, 255, 255);
     padding: 16px;
     text-decoration: none;
     background-color: inherit;
