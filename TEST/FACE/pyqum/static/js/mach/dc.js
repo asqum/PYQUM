@@ -244,14 +244,6 @@ $(function () {
     });
 });
 
-//loop-check amplifier settings
-$('a.dc.ampscan').bind('click', function () {
-    $( "i.dc" ).remove(); //clear previous
-    $('button.dc#settings').prepend("<i class='dc fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-    
-
-    return false;
-});
 
 // on-fly settings
 $(function () {

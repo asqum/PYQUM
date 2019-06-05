@@ -1,6 +1,7 @@
 //when page is loading:
 $(document).ready(function(){
     $('div.sgcontent').hide();
+    $('div.sgcontent#settings').show();
 });
 
 //show debug's page
@@ -14,20 +15,27 @@ $(function() {
     });
 });
 
-//show about's page
+// display log based on sg-model selected
+$('select.sg[name="sgtype"]').change( function() {
+    $('button.sg#log').trigger('click'); //click on log
+});
+
+//show log's page
 $(function () {
-    $('button.sg#about').bind('click', function () { // id become #
-        $.getJSON('/mach/sg/about', {
+    $('button.sg#log').bind('click', function () { // id become #
+        $.getJSON('/mach/sg/log', {
+            sgtype: $('select.sg[name="sgtype"]').val()
         }, function (data) {
             $('div.sgcontent').hide();
-            $('div.sgcontent#about').empty();
-            $.each(data.message, function(index, value) {
-                $('div.sgcontent#about').append($('<h4 style="color: darkblue;"></h4>').text(Number(index+1) + ". " + value.split(": ")[0] + ": ").
-                append($('<span style="background-color: darkblue; color: white;"></span>').text(value.split(": ")[1])));
+            $('div.sgcontent#log').empty();
+            console.log(data.log['frequency']);
+            $.each(data.log, function(key, value) {
+                $('div.sgcontent#log').append($('<h4 style="color: darkblue;"></h4>').text(key + ":\n").
+                append($('<span style="background-color: darkblue; color: white;"></span>').text(JSON.stringify(value))));
               });
-              $('div.sgcontent#about').show();
+              $('div.sgcontent#log').show();
               $('button.sg').removeClass('selected');
-              $('button.sg#about').addClass('selected');
+              $('button.sg#log').addClass('selected');
         });
         return false;
     });
@@ -50,20 +58,21 @@ $(function () {
         var key = e.which;
         if (key == 13) { $('input.sg#settings').trigger('click'); } }); }); // the enter key code //trigger next click below?
 
-//submit settings (on-rf)
+//update settings
 $(function () {
-    $('input.sg#on-rf').bind('click', function () { // the enter key code
+    $('button.sg#update').bind('click', function () { // the enter key code
         $.getJSON('/mach/sg/settings', {
             // input value here:
             freq: $('input.sg[name="freq"]').val(),
             powa: $('input.sg[name="powa"]').val(),
-            oupt: $('select.sg[name="oupt"]').is(':checked') ? 0:1 //convert bool to int
+            oupt: $('input.sg[name="oupt"]').is(':checked')?1:0
         }, function (data) {
+            console.log($('input.sg[name="oupt"]').is(':checked')?1:0);
             $('div.sgcontent#debug').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
             $.each(data.message, function(index, value) {
                 $('div.sgcontent#debug').append($('<h4 style="color: black;"></h4>').text(Number(index+1) + ". " + value));
               });
-            $('button.sg#about').trigger('click'); //click on about //or: .click();
+            
         });
         return false;
     });
