@@ -99,6 +99,7 @@ def login():
             # store the user id in a new session and return to the index
             session.clear()
             session['user_id'] = user['id']
+            session['user_name'] = user['username']
             return redirect(url_for('index'))
 
         flash(error)

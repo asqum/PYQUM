@@ -18,16 +18,12 @@
 <div class="navbar">
 
     <button class="home" id="left"><i class='fa fa-university'></i></button>
-    <button class="machine" id="left"><i class="far fa-hdd"></i></button>
-    <button class="mission" id="left"><i class="far fa-arrow-alt-circle-up"></i></button>
-    <button class="bridge" id="left"><i class="fas fa-umbrella"></i></button>
-
-
+    
     <!-- user specific -->
     {% if g.user %}
-   <!-- <button class="machine" id="left">Machine</button>
-        <button class="mission" id="left">Mission</button>
-        <button class="bridge" id="left">Bridge</button>-->
+        <button class="machine" id="left"><i class="far fa-hdd"></i></button>
+        <button class="mission" id="left"><i class="far fa-arrow-alt-circle-up"></i></button>
+        <button class="bridge" id="left"><i class="fas fa-umbrella"></i></button>
         <button class="ups" id="left"><a href="https://qum.phys.sinica.edu.tw:8888/0">UPS</a></button>
     {% endif %}  
 

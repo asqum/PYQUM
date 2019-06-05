@@ -32,7 +32,10 @@ bp = Blueprint(myname, __name__, url_prefix='/mach')
 # Main
 @bp.route('/')
 def show():
-    return render_template("blog/machn/machine.html")
+    with suppress(KeyError):
+        print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s "%session['user_name'] + Fore.LIGHTBLUE_EX + "has just logged in as Guest #%s!"%session['user_id'])
+        return render_template("blog/machn/machine.html")
+    return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
 # ALL
 @bp.route('/all', methods=['POST', 'GET'])
@@ -43,10 +46,7 @@ def all():
 # AWG
 @bp.route('/awg', methods=['GET'])
 def awg(): 
-    with suppress(KeyError):
-        print("USER %s has just logged in!" %session['user_id'])
-        return render_template("blog/machn/awg.html")
-    return("Please Login")        
+    return render_template("blog/machn/awg.html")
 @bp.route('/awg/log', methods=['GET'])
 def awglog():
     log = get_status('AWG')
@@ -224,6 +224,7 @@ def sglog():
 def sgconnect():
     global sgbench, SG
     sgtype = request.args.get('sgtype')
+    print("user selected %s!" %sgtype)
     try:
         SG = im("pyqum.instrument.benchtop.%s" %sgtype)
         sgbench = SG.Initiate()

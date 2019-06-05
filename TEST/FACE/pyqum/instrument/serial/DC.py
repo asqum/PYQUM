@@ -163,8 +163,8 @@ def test():
     A.close()
 
     # Test Streaming IV-curve
-    X0 = waveform("0 to 10 *300 to 0 * 300") # waveform("0 to 5 *700 to 10*1300 to 0 * 1000"), waveform("0 to 3 *700  to 1*1500 to 7*500 to 0 * 300")
-    M = measure(sample_rate=1000, duty_cycle=0.8, samps_per_chan=X0.count)
+    X0 = waveform("0 to -1 *150 to 1 *300 to 0 *150") # waveform("0 to 5 *700 to 10*1300 to 0 * 1000"), waveform("0 to 3 *700  to 1*1500 to 7*500 to 0 * 300")
+    M = measure(sample_rate=10000, duty_cycle=0.8, samps_per_chan=X0.count)
     read_values = M.IVb(X0.data)
     V0 = read_values[0]
     V = read_values[3]/(A.Rb)
