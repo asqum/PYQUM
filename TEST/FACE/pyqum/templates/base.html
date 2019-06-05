@@ -18,17 +18,21 @@
 <div class="navbar">
 
     <button class="home" id="left"><i class='fa fa-university'></i></button>
+    <button class="machine" id="left"><i class="far fa-hdd"></i></button>
+    <button class="mission" id="left"><i class="far fa-arrow-alt-circle-up"></i></button>
+    <button class="bridge" id="left"><i class="fas fa-umbrella"></i></button>
+
 
     <!-- user specific -->
     {% if g.user %}
-        <button class="machine" id="left">Machine</button>
+   <!-- <button class="machine" id="left">Machine</button>
         <button class="mission" id="left">Mission</button>
-        <button class="bridge" id="left">Bridge</button>
+        <button class="bridge" id="left">Bridge</button>-->
         <button class="ups" id="left"><a href="https://qum.phys.sinica.edu.tw:8888/0">UPS</a></button>
     {% endif %}  
 
-    <button class="guide" id="left">Guide</button>
-    <button class="display" id="left">Display</button>
+    <button class="guide text-shadow" id="left">Guide</button>
+    <button class="display" id="left"><i class="fas fa-pencil-alt"></i></button>
 
     <!-- reset CSS (Cascading Style Sheet) -->
     <button class="reset" id="right"><i class='fa fa-refresh'></i></button>
@@ -36,10 +40,10 @@
     <!-- User Credentials -->
     {% if g.user %}
         <button class="user" id="right">{{ g.user['username'] }}</button>
-        <button class="logout" id="right">Log Out</button>
+        <button class="logout" id="right"><i class="fas fa-sign-out-alt"></i></button>
     {% else %}
-        <button class="reg" id="right">Register</button>
-        <button class="login" id="right">Log In</button>
+        <button class="reg" id="right"><i class="fas fa-user-friends"></i></button>
+        <button class="login" id="right"><i class="fas fa-sign-in-alt"></i></button>
     {% endif %} 
        
 </div>
