@@ -17,23 +17,25 @@ from si_prefix import si_format, si_parse
 
 # This will run at server startup
 # Modulars first, only then Benchtops (if and only if we use render_template)
-# from pyqum.instrument.modular import AWG, VSA
-# AWG.test(False) #seems like AWG's working-instance works differently than VSA's
-# awgsess = AWG.InitWithOptions()
-# vsasess = VSA.InitWithOptions()
+from pyqum.instrument.modular import AWG, VSA
+# seems like AWG's working-instance works differently than VSA's
+awgsess = AWG.InitWithOptions()
 from pyqum.instrument.benchtop import DSO, PNA
 # dsobench = DSO.Initiate()
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
 from pyqum.instrument.toolbox import match
 
-encryp = 'ghhgjad'
+encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
 
 # Main
 @bp.route('/')
 def show():
-    return render_template("blog/machn/machine.html")
+    with suppress(KeyError):
+        print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s "%session['user_name'] + Fore.LIGHTBLUE_EX + "has just logged in as Guest #%s!"%session['user_id'])
+        return render_template("blog/machn/machine.html")
+    return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
 # ALL
 @bp.route('/all', methods=['POST', 'GET'])
@@ -44,10 +46,7 @@ def all():
 # AWG
 @bp.route('/awg', methods=['GET'])
 def awg(): 
-    with suppress(KeyError):
-        print("USER %s has just logged in!" %session['user_id'])
-        return render_template("blog/machn/awg.html")
-    return("Please Login")        
+    return render_template("blog/machn/awg.html")
 @bp.route('/awg/log', methods=['GET'])
 def awglog():
     log = get_status('AWG')
@@ -219,12 +218,13 @@ def sg():
     return render_template("blog/machn/sg.html")
 @bp.route('/sg/log', methods=['GET'])
 def sglog():
-    log = get_status('sg')
+    log = get_status(request.args.get('sgtype'))
     return jsonify(log=log)
 @bp.route('/sg/connect', methods=['GET'])
 def sgconnect():
     global sgbench, SG
     sgtype = request.args.get('sgtype')
+    print("user selected %s!" %sgtype)
     try:
         SG = im("pyqum.instrument.benchtop.%s" %sgtype)
         sgbench = SG.Initiate()

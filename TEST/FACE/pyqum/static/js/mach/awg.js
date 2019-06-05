@@ -30,7 +30,7 @@ function logdebug (data) {
     console.log("logging debug status");
 }
 
-//show about's page
+//show about's page (directly inquire from instrument)
 $(function () {
     $('button.awg#about').bind('click', function () { // id become #
         $.getJSON('/mach/awg/about', {

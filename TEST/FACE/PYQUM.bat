@@ -23,7 +23,7 @@ IF EXIST "instance\pyqum.sqlite" (
     )
 
 ::BYPASS to WEB
-goto web
+::goto web
 
 :pyqum
     ::ECHO INITIATE AWG

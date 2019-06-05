@@ -212,8 +212,9 @@
 	height:40px;
 	text-align:center;
 	color:#FFF;
-	text-decoration:none;
-	line-height:43px;
+  text-decoration:none;
+  /* words-down-shift vertical position */
+	line-height:22px;
 	font-family:'Oswald', Helvetica;
 	display: block;
 	/* margin: 10px; */

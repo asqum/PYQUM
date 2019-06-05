@@ -74,7 +74,7 @@ $(function () {
             $.each(data.message, function(index, value) {
                 $('div.dsocontent#debug').append($('<h4 style="color: black;"></h4>').text(Number(index+1) + ". " + value));
               });
-            //click on about
+            //click on display
             $('button.dso#display').trigger('click'); //or: .click();
             //update display-button:
             $('button.dso#about').addClass('newupdate');
