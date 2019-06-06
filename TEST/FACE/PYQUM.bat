@@ -22,6 +22,20 @@ IF EXIST "instance\pyqum.sqlite" (
     ECHO New Database Created
     )
 
+::Preventing PyCache::
+REM ECHO Before: Prevent PyCache: %PYTHONDONTWRITEBYTECODE%
+if "%PYTHONDONTWRITEBYTECODE%"=="1" (
+    echo pycache already fucked
+) else (
+    ::locally (in RAM)
+    REM set PYTHONDONTWRITEBYTECODE=1
+    ::globally (user specific)
+    SETX PYTHONDONTWRITEBYTECODE 1
+    echo pycache just fucked
+)
+REM echo After: Prevent PyCache: %PYTHONDONTWRITEBYTECODE%
+
+REM PAUSE
 ::BYPASS to WEB
 ::goto web
 

@@ -51,6 +51,7 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        userstatus = 'pending'
         db = get_db()
         error = None
 
@@ -64,11 +65,10 @@ def register():
             error = 'User {0} is already registered.'.format(username)
 
         if error is None:
-            # the name is available, store it in the database and go to
-            # the login page
+            # the name is available, store it in the database and go to the login page
             db.execute(
-                'INSERT INTO user (username, password) VALUES (?, ?)',
-                (username, generate_password_hash(password))
+                'INSERT INTO user (username, password, status) VALUES (?, ?, ?)',
+                (username, generate_password_hash(password), userstatus)
             )
             db.commit()
             return redirect(url_for('auth.login'))
@@ -94,14 +94,18 @@ def login():
             error = 'Incorrect username.'
         elif not check_password_hash(user['password'], password):
             error = 'Incorrect password.'
+        elif user['status'].upper() != 'APPROVED':
+            error = 'Awaiting Approval...'
 
         if error is None:
             # store the user id in a new session and return to the index
             session.clear()
             session['user_id'] = user['id']
             session['user_name'] = user['username']
+            print("Logged-in Successfully!")
             return redirect(url_for('index'))
 
+        print(error)
         flash(error)
 
     return render_template('auth/login.html')

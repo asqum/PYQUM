@@ -178,7 +178,7 @@ def test():
     
     return
 
-test()
+# test()
 
 # A = input("pause")
 # with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
