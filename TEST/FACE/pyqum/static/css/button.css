@@ -219,8 +219,8 @@
 	display: block;
 	/* margin: 10px; */
 }
-.push_button #w-120 {
-    width:120px;
+.push_button#w-95 {
+  width:95%;
 }
 .push_button:before {
 	background:#f0f0f0;
