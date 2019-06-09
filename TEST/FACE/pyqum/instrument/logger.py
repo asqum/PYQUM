@@ -284,7 +284,7 @@ class measurement:
                     break
                 else:
                     findex += 1
-
+        # from database:
         else:
             try:
                 self.day = self.daylist[index]
