@@ -17,6 +17,7 @@ pyqum.egg-info/not-zip-safe
 pyqum.egg-info/requires.txt
 pyqum.egg-info/top_level.txt
 pyqum/static/css/anime.css
+pyqum/static/css/button.css
 pyqum/static/css/mach.css
 pyqum/static/css/mssn.css
 pyqum/static/css/style.css
@@ -1619,6 +1620,7 @@ pyqum/static/js/.DS_Store
 pyqum/static/js/Chart.min.js
 pyqum/static/js/Clock.js
 pyqum/static/js/base.js
+pyqum/static/js/gauge.min.js
 pyqum/static/js/jquery.min.js
 pyqum/static/js/plotly-latest.min.js
 pyqum/static/js/script.js

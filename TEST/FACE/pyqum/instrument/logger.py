@@ -12,8 +12,6 @@ from contextlib import suppress
 from numpy import prod, mean, rad2deg
 import inspect, json, wrapt, struct, geocoder, ast
 
-from pyqum.instrument.toolbox import cdatasearch
-
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
 __credits__ = ["Chii-Dong Chen"]
@@ -219,12 +217,53 @@ class measurement:
         self.mssnpath = Path(USR_PATH) / usr_name / sample / mission
         place = ", ".join(location()) #current location
         
-        if operation.lower() == "n":
+        # FOR Resume / Access operation:
+        try:
+            daylist = [d for d in listdir(self.mssnpath) if isdir(self.mssnpath / d)]
+            daylist.sort(key=lambda x: getmtime(self.mssnpath / x))
+            self.daylist = daylist
+        except:
+            print("database is EMPTY")
+            pass
+
+    def insertdata(self, data, position=0):
+        '''Logging DATA from instruments on the fly:
+            By appending individual data-point to the EOF (defined by SEEK_END)
+        '''
+        # get data type:
+        if type(data) is list:
+            data = struct.pack(">" + "d"*len(data), *data)
+        else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
+        try:
+            with open(self.pqfile, 'rb+') as datapie:
+                datapie.seek(position, SEEK_END)
+                # datapie.truncate()
+                datapie.write(data)
+        except: print("THE FILE WAS NOT WELL PREPARED. PLS RUN 'measurement' FIRST")              
+        return
+
+    def whichday(self):
+        '''This can be replaced by HTML Forms Input'''
+        total = len(self.daylist)
+        for i,day in enumerate(['new',self.daylist]):
+            print("%s. %s" %(i,day))
+        while True:
+            try:
+                k = int(input("Which day would you like to check out (0-%s): " %total))
+                if k-1 in range(total):
+                    break
+            except(ValueError):
+                print("Bad index. Please use numeric!")
+        return k-1 #index
+
+    def selectday(self, index):
+        # New operation
+        if index < 0:
             now = datetime.now() #current day & time
             self.day = now.strftime("%Y-%m-%d(%a)")
             self.moment = now.strftime("%H:%M:%f")
             # estimating data size from parameters:
-            self.datasize = prod([x[2] for x in corder.values()])
+            self.datasize = prod([x[2]+1 for x in corder.values()])
 
             findex = 1
             while True:
@@ -245,51 +284,16 @@ class measurement:
                     break
                 else:
                     findex += 1
-        # Resume / Retrieve operation:
+
         else:
-            daylist = [d for d in listdir(self.mssnpath) if isdir(self.mssnpath / d)]
-            daylist.sort(key=lambda x: getmtime(self.mssnpath / x))
-            self.daylist = daylist
-
-    def insertdata(self, data):
-        '''Logging DATA from instruments on the fly:
-            By appending individual data-point to the EOF (defined by SEEK_END)
-        '''
-        # get data type:
-        if type(data) is list:
-            data = struct.pack(">" + "d"*len(data), *data)
-        else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
-        try:
-            with open(self.pqfile, 'rb+') as datapie:
-                datapie.seek(0, SEEK_END)
-                # datapie.truncate()
-                datapie.write(data)
-        except: print("THE FILE WAS NOT WELL PREPARED. PLS RUN 'measurement' FIRST")              
-        return
-
-    def whichday(self):
-        '''This can be replaced by HTML Forms Input'''
-        total = len(self.daylist)
-        for i,day in enumerate(self.daylist):
-            print("%s. %s" %(i+1,day))
-        while True:
             try:
-                k = int(input("Which day would you like to check out (1-%s): " %total))
-                if k-1 in range(total):
-                    break
-            except(ValueError):
-                print("Bad index. Please use numeric!")
-        return k-1 #index
-
-    def selectday(self, index):
-        try:
-            self.day = self.daylist[index]
-            print("Day selected: %s"%self.day)
-            self.timelist = [int(t.split('(')[1][:-1]) for t in listdir(self.mssnpath / self.day) if t.split('.')[0] == self.task]
-            self.timelist.sort(reverse=False) #ascending order
-        except(ValueError): 
-            print("index might be out of range")
-            pass
+                self.day = self.daylist[index]
+                print("Day selected: %s"%self.day)
+                self.timelist = [int(t.split('(')[1][:-1]) for t in listdir(self.mssnpath / self.day) if t.split('.')[0] == self.task]
+                self.timelist.sort(reverse=False) #ascending order
+            except(ValueError): 
+                print("index might be out of range")
+                pass
 
     def whichmoment(self):
         '''This can be replaced by HTML Forms Input'''
@@ -374,8 +378,17 @@ def settings():
         if Argvalues[-1].lower() == "n": # the choice of operation
             try:
                 for i,x in enumerate(data): #yielding data from measurement-module
-                    # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*100, x), end='\r', flush=True)
+                    print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*(Argvalues[-3][-1]+1)*100, x), end='\r', flush=True)
                     M.insertdata(x)
+                    sleep(1)
+            except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
+        elif Argvalues[-1].lower() == "r": # the choice of operation
+            M.loadata()
+            resumepoint = len(M.selectedata)
+            try:
+                for i,x in enumerate(data[resumepoint::]): #yielding data from measurement-module
+                    # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*100, x), end='\r', flush=True)
+                    M.insertdata(x,resumepoint)
                     # sleep(0.02)
             except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
         # Measurement Object/Session:

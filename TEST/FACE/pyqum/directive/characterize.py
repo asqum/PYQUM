@@ -8,20 +8,31 @@ from numpy import linspace, sin, pi
 from pyqum.instrument.benchtop import ENA
 from pyqum.instrument.logger import settings, clocker
 from pyqum.instrument.analyzer import curve
+from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 
 @settings()
 def TESTC(C1, C2, C3, C4, C5, comment='', operation="n"):
     '''Serve as a template for other real tasks to come'''
     x = 0
-    for c1 in linspace(C1[0],C1[1],C1[2]):
-        for c2 in linspace(C2[0],C2[1],C2[2]):
-            for c3 in linspace(C3[0],C3[1],C3[2]):
-                for c4 in linspace(C4[0],C4[1],C4[2]):
-                    data = []
-                    for c5 in linspace(C5[0],C5[1],C5[2]):
-                        x += 1
-                        data.append(x)
-                    yield data
+    C1 = waveform('%s to %s * %s'%tuple(C1))
+    C2 = waveform('%s to %s * %s'%tuple(C2))
+    C3 = waveform('%s to %s * %s'%tuple(C3))
+    C4 = waveform('%s to %s * %s'%tuple(C4))
+    C5 = waveform('%s to %s * %s'%tuple(C5))
+    datasize = C1.count*C2.count*C3.count*C4.count*C5.count
+    buffersize = C5.count
+    data = []
+    for i in range(0,datasize):
+        # print("%s of %s"%(i+1,datasize))
+        caddress = cdatasearch(i, [C1.count,C2.count,C3.count,C4.count,C5.count])
+        # Use Cj.data[caddress[j]] for parameters' value here
+        # x += 1
+        x = C1.data[caddress[0]] + C5.data[caddress[4]]*C2.data[caddress[1]]*sin(pi/2*C3.data[caddress[2]]) + C4.data[caddress[3]]
+        data.append(x)
+        # saving chunck by chunck improves speed a lot!
+        if not (i+1)%buffersize: #multiples of buffersize
+            yield data
+            data = []
 
 @settings()
 def Network_Analyzer(amp, powr, freq, ifb, iq, comment='', operation="a"):
@@ -54,13 +65,13 @@ def Network_Analyzer(amp, powr, freq, ifb, iq, comment='', operation="a"):
 
 
 def test():
-    Op = "n"
-    points = 30000
-    C = eval('[1,3000,%s]' %points)
+    Op = "a"
+    points = 70
+    C = eval('[1,70,%s]' %points)
 
     stage, prev = clocker(0) # Marking starting point of time
     i = prev
-    M = TESTC([0,0,1], [0.1,0.1,1], [1,1,1], [0,1,2], C, '', Op)
+    M = TESTC([0,0,0], [0.1,0.1,0], [1,1,0], [0,12,3], C, '', Op)
     print("For %s points:" %points)
     stage, prev = clocker(stage, prev) # Marking time lapsed
     print("Hence this pc can write %ss per point" %((prev - i) / points))
@@ -72,21 +83,10 @@ def test():
         M.selectmoment(M.whichmoment())
         M.accesstructure()
         M.loadata()
-        print(M.selectedata[-1])
+        print("last element of data: %s"%M.selectedata[-1])
         M.buildata()
         print(M.datacontainer)
-    # Op = "a"
-    # M = Network_Analyzer([0,0,1], [-70,-50,3], [0.7e9,18e9,251], [10,10,1], [0,1,2], '', Op)
-    # if Op.lower() != "n":
-    #     M.selectday(M.whichday())
-    #     M.accesstimeline()
-    #     print(M.startimes)
-    #     M.selectmoment(M.whichmoment())
-    #     M.accesstructure()
-    #     M.loadata()
-    #     print(M.selectedata[-1])
-    #     M.buildata()
-    #     print(M.datacontainer)
+   
 
-# test()
+test()
 

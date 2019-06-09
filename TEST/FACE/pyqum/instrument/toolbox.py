@@ -8,12 +8,16 @@ def cdatasearch(Order, Structure):
         Order: cdata-location (collective index)\n
         Structure = cdata-structure (how many bases for each hierarchy/level)
                     e.g. [cN#, c(N-1)#, ... , c3#, c2#, c1#], [10, 10, 7, 24, 35, 2]
+        \nNote: 
+            Order & Address are index-type(0,1,2...); 
+            Structure is count-type(1,2,3...): [slow(high-level) to fast(low-level)]
     '''
     Address, Structure = [], array(Structure)
     Digitmax = len(Structure)
     Structure = append(Structure, [1])
     for i in range(Digitmax):
-        Address.append(floor(((Order)%prod(Structure[i:]))/prod(Structure[i+1:])))  
+        dgit = floor(((Order)%prod(Structure[i:]))/prod(Structure[i+1:]))
+        Address.append(int(dgit))  
     return Address
 
 def gotocdata(Address, Structure):
@@ -53,6 +57,7 @@ class waveform:
                     for i,target,num in zip(steps,C[1::2],C[2::2]):
                         self.count += int(num)
                         self.data += list(linspace(start, float(target), int(num), endpoint=False, dtype=float64))
+                        # print("data: %s"%self.data)
                         if i==steps[-1]: self.data += [float(target)]
                         else: start = float(target)
                 except:
@@ -69,11 +74,12 @@ def match(List, Value):
 
 
 def test():
-    # for i in range(150):
-    #     print("decoding data-%s into c-%s and back into %s" 
-    #     %(i, cdatasearch(i, [8,10,10,2]), gotocdata(cdatasearch(i, [8,10,10,2]), [8,10,10,2])))
+    for i in range(700):
+        print("decoding data-%s into c-%s and back into %s" 
+        %(i, cdatasearch(i, [8,10,10,2]), gotocdata(cdatasearch(i, [8,10,10,2]), [8,10,10,2])))
         # sleep(0.3)
-    command = "0 1   2   to  10  * 1 TO  20  *1 25 26  to35*  1to 70 *  5 73  75   to80  *5 81 82 to  101*  8"
+    command = "1 to 1 * 0"
+    # command = "0 1   2   to  10  * 1 TO  20  *1 25 26  to35*  1to 70 *  5 73  75   to80  *5 81 82 to  101*  8"
     # command = "100    12  37              77   81  "
     # command = '1 to 10 *           12 to     25 *    7'
     wave = waveform(command)
