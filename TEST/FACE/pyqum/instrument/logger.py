@@ -200,22 +200,16 @@ def translate_scpi(Name, instance, a, b):
 class measurement:
     '''Initialize Measurement:\n
         corder: {parameters: [ranges]}\n
-        operation choice: 
-        1. 'n': new fresh measurement
-        2. 'r': resume previous measurement
-        3. 'a': access any measurement
     '''
-    def __init__(self, mission, task, corder, usr_name='USR', sample='Sample', comment='', operation="n"):
+    def __init__(self, mission, task, usr_name='USR', sample='Sample', comment=''):
         self.mission = mission
         self.task = task
-        self.corder = corder
         self.usr_name = usr_name
         self.sample = sample
         self.comment = comment #to be appended to data after ACK-mark
-        self.operation = operation
 
         self.mssnpath = Path(USR_PATH) / usr_name / sample / mission
-        place = ", ".join(location()) #current location
+        self.place = ", ".join(location()) #current location
         
         # FOR Resume / Access operation:
         try:
@@ -245,7 +239,7 @@ class measurement:
     def whichday(self):
         '''This can be replaced by HTML Forms Input'''
         total = len(self.daylist)
-        for i,day in enumerate(['new',self.daylist]):
+        for i,day in enumerate(['new']+self.daylist):
             print("%s. %s" %(i,day))
         while True:
             try:
@@ -256,14 +250,15 @@ class measurement:
                 print("Bad index. Please use numeric!")
         return k-1 #index
 
-    def selectday(self, index):
+    def selectday(self, index, corder={'c':[1,1,0]}):
+        self.corder = corder
         # New operation
         if index < 0:
             now = datetime.now() #current day & time
             self.day = now.strftime("%Y-%m-%d(%a)")
             self.moment = now.strftime("%H:%M:%f")
             # estimating data size from parameters:
-            self.datasize = prod([x[2]+1 for x in corder.values()])
+            self.datasize = prod([x[2]+1 for x in self.corder.values()])
 
             findex = 1
             while True:
@@ -271,7 +266,7 @@ class measurement:
                 self.pqfile = self.mssnpath / self.day / self.filename
 
                 # assembly the file-header(time, place, c-parameters):
-                usr_bag = bytes("{'%s': {'place': '%s', 'c-order': %s, 'comment': '%s'}}" %(self.moment, place, self.corder, self.comment), 'utf-8')
+                usr_bag = bytes("{'%s': {'place': '%s', 'c-order': %s, 'comment': '%s'}}" %(self.moment, self.place, self.corder, self.comment), 'utf-8')
                 usr_bag += b'\x02' + bytes("ACTS", 'utf-8') + b'\x03\x04' # ACTS
                 
                 # check if the file exists and not blank:
@@ -334,7 +329,11 @@ class measurement:
                         
             print("Data locations: %s" %self.datalocation)           
             self.datacontainer = ast.literal_eval(datacontainer) # library w/o the data yet
+            self.corder = [x for x in self.datacontainer.values()][0]['c-order']
+            self.datasize = prod([x[2]+1 for x in self.corder.values()])
+            # print("C-order: %s"%(self.corder))
         except:
+            raise
             print("File structure invalid!")
         return
 
@@ -356,6 +355,9 @@ class measurement:
                 datapie.seek(self.datalocation+7)
                 pie = datapie.read(self.filesize-self.datalocation-7)
                 self.selectedata = list(struct.unpack('>' + 'd'*((self.filesize-self.datalocation-7)//8), pie))
+                if len(self.selectedata) == self.datasize:
+                    self.datastat = 'complete'
+                    print("The Data is COMPLETE")
         except:
             print("\ndata not found")
 
@@ -373,24 +375,17 @@ def settings():
         task = Name.__name__
         Argnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
         Argvalues = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
-        Corders = dict(zip(Argnames[:-2], Argvalues[:-2]))
-        M = measurement(mission, task, Corders, comment=Argvalues[-2], operation=Argvalues[-1])
-        if Argvalues[-1].lower() == "n": # the choice of operation
-            try:
-                for i,x in enumerate(data): #yielding data from measurement-module
-                    print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*(Argvalues[-3][-1]+1)*100, x), end='\r', flush=True)
-                    M.insertdata(x)
-                    sleep(1)
-            except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
-        elif Argvalues[-1].lower() == "r": # the choice of operation
-            M.loadata()
-            resumepoint = len(M.selectedata)
-            try:
-                for i,x in enumerate(data[resumepoint::]): #yielding data from measurement-module
-                    # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*100, x), end='\r', flush=True)
-                    M.insertdata(x,resumepoint)
-                    # sleep(0.02)
-            except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
+        Corders = dict(zip(Argnames[:-1], Argvalues[:-1]))
+        M = measurement(mission, task, comment=Argvalues[-1])
+        
+        
+        # try:
+        #     for i,x in enumerate(data): #yielding data from measurement-module
+        #         print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*(Argvalues[-3][-1]+1)*100, x), end='\r', flush=True)
+        #         M.insertdata(x)
+        #         sleep(1)
+        # except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
+        
         # Measurement Object/Session:
         return M
     return wrapper

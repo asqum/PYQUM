@@ -11,7 +11,7 @@ from pyqum.instrument.analyzer import curve
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 
 @settings()
-def TESTC(C1, C2, C3, C4, C5, comment='', operation="n"):
+def TESTC(C1, C2, C3, C4, C5, comment=''):
     '''Serve as a template for other real tasks to come'''
     x = 0
     C1 = waveform('%s to %s * %s'%tuple(C1))
@@ -35,7 +35,7 @@ def TESTC(C1, C2, C3, C4, C5, comment='', operation="n"):
             data = []
 
 @settings()
-def Network_Analyzer(amp, powr, freq, ifb, iq, comment='', operation="a"):
+def Network_Analyzer(amp, powr, freq, ifb, iq, comment=''):
     '''Testing Room Temperature Amplifier
         iq: [0,1,2] <I:0;Q:1> '''
     bench = ENA.Initiate()
@@ -65,19 +65,18 @@ def Network_Analyzer(amp, powr, freq, ifb, iq, comment='', operation="a"):
 
 
 def test():
-    Op = "a"
     points = 70
     C = eval('[1,70,%s]' %points)
 
     stage, prev = clocker(0) # Marking starting point of time
     i = prev
-    M = TESTC([0,0,0], [0.1,0.1,0], [1,1,0], [0,12,3], C, '', Op)
+    M = TESTC([0,0,0], [0.1,0.1,0], [1,1,0], [0,12,3], C, '')
     print("For %s points:" %points)
     stage, prev = clocker(stage, prev) # Marking time lapsed
     print("Hence this pc can write %ss per point" %((prev - i) / points))
 
-    if Op.lower() != "n":
-        M.selectday(M.whichday())
+    M.selectday(M.whichday())
+    try:
         M.accesstimeline()
         print(M.startimes)
         M.selectmoment(M.whichmoment())
@@ -86,6 +85,10 @@ def test():
         print("last element of data: %s"%M.selectedata[-1])
         M.buildata()
         print(M.datacontainer)
+    except:
+        raise
+        print("It's a new day")
+        pass
    
 
 test()
