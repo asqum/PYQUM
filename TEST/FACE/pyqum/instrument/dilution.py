@@ -1,4 +1,5 @@
-'''Reading Dilution Status'''
+'''Reading Dilution Status
+    Controlling via Server'''
 
 from pathlib import Path
 from datetime import datetime

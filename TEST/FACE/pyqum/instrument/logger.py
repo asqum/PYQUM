@@ -223,6 +223,7 @@ class measurement:
             print("database is EMPTY")
             pass
 
+    # only for scripting
     def whichday(self):
         '''This can be replaced by HTML Forms Input'''
         total = len(self.daylist)
@@ -230,8 +231,8 @@ class measurement:
             print("%s. %s" %(i,day))
         while True:
             try:
-                k = int(input("Which day would you like to check out (0-%s): " %total))
-                if k-1 in range(total):
+                k = int(input("Which day would you like to check out (0:new, 1-%s): " %total))
+                if k in range(total+1):
                     break
             except(ValueError):
                 print("Bad index. Please use numeric!")
@@ -247,7 +248,6 @@ class measurement:
             self.moment = now.strftime("%H:%M:%f")
             # estimating data size from parameters:
             self.corder = corder
-            self.datasize = prod([x[2]+1 for x in self.corder.values()])
             self.resumepoint = 0
             task_index = 1
             while True:
@@ -279,6 +279,7 @@ class measurement:
                 print("index might be out of range")
                 pass
 
+    # only for scripting
     def whichmoment(self):
         '''This can be replaced by HTML Forms Input'''
         while True:
@@ -292,14 +293,17 @@ class measurement:
 
     def selectmoment(self, entry):
         '''select data from time-log'''
-        # select file#
-        self.filename = "%s.pyqum(%s)" %(self.task, entry)
-        self.pqfile = self.mssnpath / self.day / self.filename
-        print("moment(file) selected: %s"%self.filename)
+        # select file in resume/access mode
+        if entry:
+            self.filename = "%s.pyqum(%s)" %(self.task, entry)
+            self.pqfile = self.mssnpath / self.day / self.filename
+            print("moment(file) selected: %s"%self.filename)
         return
 
-    def accesstimeline(self):
-        '''Get timeline layout for each day'''
+    def listime(self):
+        '''list all the logged time for each day
+            Pre-requisite: selectday
+        '''
         startimes = []
         for k in self.timelist:
             self.selectmoment(k)
@@ -308,10 +312,12 @@ class measurement:
                 bite = datapie.read(5)
                 startimes.append(bite.decode('utf-8'))
         self.startimes = startimes
+        print("For %s, we have: %s"%(self.day, ', '.join(self.startimes)))
         return
 
     def accesstructure(self):
         '''Get User-Data's container & location from LOG
+            Pre-requisite: pqfile (from selectmoment / selectday)
         '''
         try:
             self.filesize = stat(self.pqfile).st_size
@@ -339,6 +345,9 @@ class measurement:
         return
 
     def loadata(self):
+        '''Loading the Data
+            Pre-requisite: accesstructure
+        '''
         try:
             with open(self.pqfile, 'rb') as datapie:
                 datapie.seek(self.datalocation+7)
@@ -350,6 +359,7 @@ class measurement:
                 else:
                     self.data_complete = False
                     self.resumepoint = len(self.selectedata)
+                    print("The Data is NOT COMPLETE")
         except:
             print("\ndata not found")
 
@@ -361,12 +371,12 @@ class measurement:
         if type(data) is list:
             data = struct.pack(">" + "d"*len(data), *data)
         else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
-        try:
+        if not self.data_complete:
             with open(self.pqfile, 'rb+') as datapie:
-                datapie.seek(self.resumepoint, SEEK_END)
+                datapie.seek(0, SEEK_END) #seek from end
                 # datapie.truncate()
                 datapie.write(data)
-        except: print("THE FILE WAS NOT WELL PREPARED. PLS RUN 'measurement' FIRST")              
+        else: print("THE FILE IS COMPLETE. NO ACTION TAKEN")              
         return
 
     def buildata(self):
@@ -374,30 +384,32 @@ class measurement:
         self.datacontainer[next(iter(self.datacontainer))]['data'] = self.selectedata
         return
 
-# C-Parameters Descriptor
+# Setting up Measurement
 def settings():
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
-        data = Name(*a, **b)
+        Generator = Name(*a, **b)
+        corders, comment, dayindex, taskentry, buffersize, resumepoint = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
-        Argnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
-        Argvalues = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
-        # Corders = dict(zip(Argnames[:-3], Argvalues[:-3]))
-        M = measurement(mission, task, comment=Argvalues[-3])
-        M.selectday(Argvalues[-2])
-        try:
-            M.accesstimeline()
-            M.selectmoment(entry=Argvalues[-1])
+        # Get the Arguments from function being wrapped
+        # Argnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
+        # Argvalues = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
+        M = measurement(mission, task, comment=comment)
+        if type(dayindex) is str:
+            pass #access-only mode
+        elif type(dayindex) is int:
+            M.selectday(dayindex, corders)
+            M.selectmoment(taskentry)
             M.accesstructure()
             M.loadata()
-        
-        # try:
-        #     for i,x in enumerate(data): #yielding data from measurement-module
-        #         print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/M.datasize*(Argvalues[-3][-1]+1)*100, x), end='\r', flush=True)
-        #         M.insertdata(x)
-        #         sleep(1)
-        # except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
+            # skip insertdata in access-only mode
+            try:
+                for i,x in enumerate(Generator): #yielding data from measurement-module
+                    print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/(M.datasize-resumepoint)*buffersize*100, x), end='\r', flush=True)
+                    M.insertdata(x)
+                    sleep(1)
+            except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
         
         # Measurement Object/Session:
         return M
