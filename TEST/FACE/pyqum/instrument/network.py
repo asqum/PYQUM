@@ -22,7 +22,8 @@ from email import encoders
 from pyqum.instrument.logger import address
 
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
-HIDDEN_PATH = Path(pyfilename).parents[6] / "QuDATA" / "HIDDEN"
+MAIN_PATH = Path(pyfilename).parents[6] / "MEGAsync" / "CONFIG"
+HIDDEN_PATH = MAIN_PATH / "QuDATA" / "HIDDEN"
 hdfile = Path(HIDDEN_PATH) / "HD.pyqum"
 
 def scanserial():
@@ -147,6 +148,7 @@ def store_pwd():
 
     return
 
+# send notification email
 def notify(recipient, subject, body):
     try:
         with open(hdfile, 'r') as hfile:
@@ -187,4 +189,4 @@ def test():
     print(scanserial()[0])
     return
 
-test()
+# test()

@@ -21,8 +21,9 @@ __email__ = "teikhui@phys.sinica.edu.tw"
 __status__ = "development"
 
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
-INSTR_PATH = Path(pyfilename).parents[2] / "INSTLOG" # 2 levels up the path
-USR_PATH = Path(pyfilename).parents[2] / "USRLOG"
+MAIN_PATH = Path(pyfilename).parents[6] / "MEGAsync" / "CONFIG"
+INSTR_PATH = MAIN_PATH / "INSTLOG" # 2 levels up the path
+USR_PATH = MAIN_PATH / "USRLOG"
 
 def location():
     place = []
@@ -94,7 +95,7 @@ class address:
     Set <reset=False> to directly load from LOG if it contains "address" 
     '''
     def __init__(self):
-        with open(Path(pyfilename).parent / 'address.json') as ad:
+        with open(MAIN_PATH / 'address.json') as ad:
             self.book = json.load(ad)
 
     def lookup(self, instr_name, level=0):
@@ -199,7 +200,8 @@ def translate_scpi(Name, instance, a, b):
 
 class measurement:
     '''Initialize Measurement:\n
-        corder: {parameters: [ranges]}\n
+        1. Assembly Path based on Mission
+        2. Checking Database (daylist)
     '''
     def __init__(self, mission, task, usr_name='USR', sample='Sample', comment=''):
         self.mission = mission
@@ -217,24 +219,9 @@ class measurement:
             daylist.sort(key=lambda x: getmtime(self.mssnpath / x))
             self.daylist = daylist
         except:
+            self.daylist = []
             print("database is EMPTY")
             pass
-
-    def insertdata(self, data, position=0):
-        '''Logging DATA from instruments on the fly:
-            By appending individual data-point to the EOF (defined by SEEK_END)
-        '''
-        # get data type:
-        if type(data) is list:
-            data = struct.pack(">" + "d"*len(data), *data)
-        else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
-        try:
-            with open(self.pqfile, 'rb+') as datapie:
-                datapie.seek(position, SEEK_END)
-                # datapie.truncate()
-                datapie.write(data)
-        except: print("THE FILE WAS NOT WELL PREPARED. PLS RUN 'measurement' FIRST")              
-        return
 
     def whichday(self):
         '''This can be replaced by HTML Forms Input'''
@@ -250,19 +237,21 @@ class measurement:
                 print("Bad index. Please use numeric!")
         return k-1 #index
 
-    def selectday(self, index, corder={'c':[1,1,0]}):
-        self.corder = corder
-        # New operation
+    def selectday(self, index, corder={'c':[0,0,0]}):
+        '''corder: {parameters: [ranges]}\n'''
+        
+        # New operation if "new" is selected:
         if index < 0:
             now = datetime.now() #current day & time
             self.day = now.strftime("%Y-%m-%d(%a)")
             self.moment = now.strftime("%H:%M:%f")
             # estimating data size from parameters:
+            self.corder = corder
             self.datasize = prod([x[2]+1 for x in self.corder.values()])
-
-            findex = 1
+            self.resumepoint = 0
+            task_index = 1
             while True:
-                self.filename = "%s.pyqum(%s)" %(self.task, findex)
+                self.filename = "%s.pyqum(%s)" %(self.task, task_index)
                 self.pqfile = self.mssnpath / self.day / self.filename
 
                 # assembly the file-header(time, place, c-parameters):
@@ -274,11 +263,11 @@ class measurement:
                 if existence == False:
                     self.pqfile.parent.mkdir(parents=True, exist_ok=True) #make directories
                     with open(self.pqfile, 'wb') as datapie:
-                        # Initialize blank file
+                        # Initialize blank file w/ user bag
                         datapie.write(usr_bag)
                     break
                 else:
-                    findex += 1
+                    task_index += 1
         # from database:
         else:
             try:
@@ -306,7 +295,19 @@ class measurement:
         # select file#
         self.filename = "%s.pyqum(%s)" %(self.task, entry)
         self.pqfile = self.mssnpath / self.day / self.filename
-        print("file selected: %s"%self.filename)
+        print("moment(file) selected: %s"%self.filename)
+        return
+
+    def accesstimeline(self):
+        '''Get timeline layout for each day'''
+        startimes = []
+        for k in self.timelist:
+            self.selectmoment(k)
+            with open(self.pqfile, 'rb') as datapie:
+                datapie.seek(2)
+                bite = datapie.read(5)
+                startimes.append(bite.decode('utf-8'))
+        self.startimes = startimes
         return
 
     def accesstructure(self):
@@ -337,18 +338,6 @@ class measurement:
             print("File structure invalid!")
         return
 
-    def accesstimeline(self):
-        '''Get timeline layout for each day'''
-        startimes = []
-        for k in self.timelist:
-            self.selectmoment(k)
-            with open(self.pqfile, 'rb') as datapie:
-                datapie.seek(2)
-                bite = datapie.read(5)
-                startimes.append(bite.decode('utf-8'))
-        self.startimes = startimes
-        return
-
     def loadata(self):
         try:
             with open(self.pqfile, 'rb') as datapie:
@@ -356,10 +345,29 @@ class measurement:
                 pie = datapie.read(self.filesize-self.datalocation-7)
                 self.selectedata = list(struct.unpack('>' + 'd'*((self.filesize-self.datalocation-7)//8), pie))
                 if len(self.selectedata) == self.datasize:
-                    self.datastat = 'complete'
+                    self.data_complete = True
                     print("The Data is COMPLETE")
+                else:
+                    self.data_complete = False
+                    self.resumepoint = len(self.selectedata)
         except:
             print("\ndata not found")
+
+    def insertdata(self, data):
+        '''Logging DATA from instruments on the fly:
+            By appending individual data-point to the EOF (defined by SEEK_END)
+        '''
+        # get data type:
+        if type(data) is list:
+            data = struct.pack(">" + "d"*len(data), *data)
+        else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
+        try:
+            with open(self.pqfile, 'rb+') as datapie:
+                datapie.seek(self.resumepoint, SEEK_END)
+                # datapie.truncate()
+                datapie.write(data)
+        except: print("THE FILE WAS NOT WELL PREPARED. PLS RUN 'measurement' FIRST")              
+        return
 
     def buildata(self):
         '''build data into datacontainer'''
@@ -375,9 +383,14 @@ def settings():
         task = Name.__name__
         Argnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
         Argvalues = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
-        Corders = dict(zip(Argnames[:-1], Argvalues[:-1]))
-        M = measurement(mission, task, comment=Argvalues[-1])
-        
+        # Corders = dict(zip(Argnames[:-3], Argvalues[:-3]))
+        M = measurement(mission, task, comment=Argvalues[-3])
+        M.selectday(Argvalues[-2])
+        try:
+            M.accesstimeline()
+            M.selectmoment(entry=Argvalues[-1])
+            M.accesstructure()
+            M.loadata()
         
         # try:
         #     for i,x in enumerate(data): #yielding data from measurement-module

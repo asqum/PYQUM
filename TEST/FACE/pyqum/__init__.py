@@ -6,6 +6,10 @@ from flask.cli import with_appcontext
 from colorama import init, Back, Fore
 init(autoreset=True) #to convert termcolor to wins color
 
+from pathlib import Path
+pyfilename = Path(__file__).resolve() # current pyscript filename (usually with path)
+MAIN_PATH = Path(pyfilename).parents[5] / "MEGAsync" / "CONFIG"
+
 # For Database
 def get_db():
     """Connect to the application's configured database. The connection
@@ -62,14 +66,14 @@ def stream_template(template_name, **context):
 # equivalent to app.py
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True,instance_path=MAIN_PATH)
     app.config.from_mapping(
         # a default secret that should be overridden by instance config
         SECRET_KEY='good',
         # store the database in the instance folder
         DATABASE=os.path.join(app.instance_path, 'pyqum.sqlite'),
     )
-
+    
     if test_config is None:
             # load the instance config, if it exists, when not testing
             app.config.from_pyfile('config.py', silent=True)
@@ -78,10 +82,10 @@ def create_app(test_config=None):
         app.config.update(test_config)
 
     # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+    # try:
+    #     os.makedirs(app.instance_path) #leave it as empty instance
+    # except OSError:
+    #     pass
 
     # register the database commands
     init_app(app)

@@ -15,7 +15,14 @@ call %root%\Scripts\activate.bat %root%
 SET FLASK_APP=pyqum
 SET FLASK_ENV=development
 
-IF EXIST "instance\pyqum.sqlite" (
+::Get Parent Directory
+for %%a in (%cd%) do set "p_dir=%%~dpa"
+::Up many levels
+for %%a in (%p_dir:~0,-16%) do set "p2_dir=%%~dpa"
+echo Up until: %p2_dir%
+
+::Check Database Existence
+IF EXIST "%p2_dir%MEGAsync\CONFIG\pyqum.sqlite" (
     ECHO Database Found
 ) ELSE (
     flask init-db

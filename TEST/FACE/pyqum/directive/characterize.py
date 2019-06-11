@@ -11,8 +11,10 @@ from pyqum.instrument.analyzer import curve
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 
 @settings()
-def TESTC(C1, C2, C3, C4, C5, comment=''):
-    '''Serve as a template for other real tasks to come'''
+def TESTC(C1=[0,0,0], C2=[0,0,0], C3=[0,0,0], C4=[0,0,0], C5=[0,0,0], comment='', dayindex=0, taskentry=0):
+    '''Serve as a template for other real tasks to come
+        dayindex: {0:new data >=1:logged data}
+    '''
     x = 0
     C1 = waveform('%s to %s * %s'%tuple(C1))
     C2 = waveform('%s to %s * %s'%tuple(C2))
@@ -91,5 +93,5 @@ def test():
         pass
    
 
-test()
+# test()
 

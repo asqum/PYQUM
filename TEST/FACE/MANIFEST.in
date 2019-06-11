@@ -1,5 +1,5 @@
 include LICENSE
-include pyqum/schema.sql
+include pyqum/authschema.sql
 graft pyqum/static
 graft pyqum/templates
 graft tests
