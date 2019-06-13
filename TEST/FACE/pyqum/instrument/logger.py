@@ -12,6 +12,8 @@ from contextlib import suppress
 from numpy import prod, mean, rad2deg
 import inspect, json, wrapt, struct, geocoder, ast
 
+from pyqum.instrument.toolbox import waveform
+
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
 __credits__ = ["Chii-Dong Chen"]
@@ -238,8 +240,8 @@ class measurement:
                 print("Bad index. Please use numeric!")
         return k-1 #index
 
-    def selectday(self, index, corder={'c':[0,0,0]}):
-        '''corder: {parameters: [ranges]}\n'''
+    def selectday(self, index, corder={}):
+        '''corder: {parameters: <waveform>}\n'''
         
         # New operation if "new" is selected:
         if index < 0:
@@ -248,7 +250,7 @@ class measurement:
             self.moment = now.strftime("%H:%M:%f")
             # estimating data size from parameters:
             self.corder = corder
-            self.resumepoint = 0
+        
             task_index = 1
             while True:
                 self.filename = "%s.pyqum(%s)" %(self.task, task_index)
@@ -334,13 +336,18 @@ class measurement:
                 bite = datapie.read(self.datalocation)
                 datacontainer = bite.decode('utf-8')
                         
-            print("Data locations: %s" %self.datalocation)           
+            print(Back.WHITE + Fore.BLACK + "Data locations: %s" %self.datalocation)
+            self.writtensize = self.filesize-self.datalocation-7 
+            self.resumepoint = self.writtensize//8          
             self.datacontainer = ast.literal_eval(datacontainer) # library w/o the data yet
             self.corder = [x for x in self.datacontainer.values()][0]['c-order']
-            self.datasize = prod([x[2]+1 for x in self.corder.values()])
-            # print("C-order: %s"%(self.corder))
+            self.datasize = prod([waveform(x).count for x in self.corder.values()])
+            self.data_complete = (self.datasize*8==self.writtensize)
+            self.data_overflow = (self.datasize*8<self.writtensize)
+            self.data_mismatch = (self.writtensize%waveform(self.corder['Var']).count)
+            
+            
         except:
-            raise
             print("File structure invalid!")
         return
 
@@ -351,15 +358,8 @@ class measurement:
         try:
             with open(self.pqfile, 'rb') as datapie:
                 datapie.seek(self.datalocation+7)
-                pie = datapie.read(self.filesize-self.datalocation-7)
-                self.selectedata = list(struct.unpack('>' + 'd'*((self.filesize-self.datalocation-7)//8), pie))
-                if len(self.selectedata) == self.datasize:
-                    self.data_complete = True
-                    print("The Data is COMPLETE")
-                else:
-                    self.data_complete = False
-                    self.resumepoint = len(self.selectedata)
-                    print("The Data is NOT COMPLETE")
+                pie = datapie.read(self.writtensize)
+                self.selectedata = list(struct.unpack('>' + 'd'*((self.writtensize)//8), pie))
         except:
             print("\ndata not found")
 
@@ -371,12 +371,11 @@ class measurement:
         if type(data) is list:
             data = struct.pack(">" + "d"*len(data), *data)
         else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
-        if not self.data_complete:
-            with open(self.pqfile, 'rb+') as datapie:
-                datapie.seek(0, SEEK_END) #seek from end
-                # datapie.truncate()
-                datapie.write(data)
-        else: print("THE FILE IS COMPLETE. NO ACTION TAKEN")              
+        # inserting data:
+        with open(self.pqfile, 'rb+') as datapie:
+            datapie.seek(0, SEEK_END) #seek from end
+            # datapie.truncate()
+            datapie.write(data)             
         return
 
     def buildata(self):
@@ -389,26 +388,20 @@ def settings():
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
-        corders, comment, dayindex, taskentry, buffersize, resumepoint = next(Generator)
+        corder, comment, dayindex, taskentry = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
-        # Get the Arguments from function being wrapped
-        # Argnames = str(inspect.signature(Name)).replace('(','').replace(')','').split(', ')
-        # Argvalues = list(inspect.getargvalues(inspect.currentframe()).locals['a'])
         M = measurement(mission, task, comment=comment)
         if type(dayindex) is str:
             pass #access-only mode
         elif type(dayindex) is int:
-            M.selectday(dayindex, corders)
+            M.selectday(dayindex, corder)
             M.selectmoment(taskentry)
-            M.accesstructure()
-            M.loadata()
-            # skip insertdata in access-only mode
             try:
                 for i,x in enumerate(Generator): #yielding data from measurement-module
-                    print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/(M.datasize-resumepoint)*buffersize*100, x), end='\r', flush=True)
+                    print('\n' + Fore.GREEN + 'Writing Data...')
                     M.insertdata(x)
-                    sleep(1)
+                    sleep(3)
             except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
         
         # Measurement Object/Session:
