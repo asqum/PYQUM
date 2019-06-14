@@ -31,18 +31,19 @@ def TESTC(corder={}, comment='', dayindex='', taskentry=0, resumepoint=0):
     buffersize = Var.count
     datasize = prod([waveform(x).count for x in corder.values()])
     # adjust check-point so that it is of multiple of buffersize lest some data will never be written:
-    checkpoint, data = (resumepoint+1)-(resumepoint+1)%buffersize, []
-    for i in range(checkpoint,datasize):
+    # checkpoint = (resumepoint+1)-(resumepoint+1)%buffersize #adjust buffer/data-mismatch but need to offset the M.insertdata as well
+    data = []
+    for i in range(resumepoint,datasize):
         caddress = cdatasearch(i, [C1.count,C2.count,C3.count,C4.count,Var.count])
 
         # User-defined M-FLOW here====================================================================================================
-        # x = i + 1
         x = C1.data[caddress[0]] + Var.data[caddress[4]]*C2.data[caddress[1]]*sin(pi/2*C3.data[caddress[2]]) + C4.data[caddress[3]]
+        x = i + 1 #for debugging
         # ============================================================================================================================
 
         data.append(x)
         # saving chunck by chunck improves speed a lot!
-        if not (resumepoint+i+1)%buffersize: #multiples of buffersize
+        if not (i+1)%buffersize or i==datasize-1: #multiples of buffersize / reached the destination
             print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
             yield data
             data = []
@@ -97,9 +98,14 @@ def test():
         m = M.whichmoment()
         # reading Data
         M.accesstructure()
+        # use this to corrupt data to test repair capability
+        # print(Fore.RED + M.resetdata())
+        # M.accesstructure()
         print(Fore.CYAN + "Data complete: %s"%M.data_complete)
         print(Fore.CYAN + "Data overflow: %s"%M.data_overflow)
         print(Fore.CYAN + "Data mismatch: %s"%M.data_mismatch)
+        print(Fore.MAGENTA + M.repairdata())
+        M.accesstructure()
         M.loadata()
         M.buildata()
         print(M.datacontainer)

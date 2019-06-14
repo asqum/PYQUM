@@ -222,7 +222,7 @@ class measurement:
             self.daylist = daylist
         except:
             self.daylist = []
-            print("database is EMPTY")
+            print("Mission is EMPTY")
             pass
 
     # only for scripting
@@ -274,7 +274,7 @@ class measurement:
         else:
             try:
                 self.day = self.daylist[index]
-                print("Day selected: %s"%self.day)
+                print(Back.GREEN + "Day selected: %s"%self.day)
                 self.timelist = [int(t.split('(')[1][:-1]) for t in listdir(self.mssnpath / self.day) if t.split('.')[0] == self.task]
                 self.timelist.sort(reverse=False) #ascending order
             except(ValueError): 
@@ -299,7 +299,6 @@ class measurement:
         if entry:
             self.filename = "%s.pyqum(%s)" %(self.task, entry)
             self.pqfile = self.mssnpath / self.day / self.filename
-            print("moment(file) selected: %s"%self.filename)
         return
 
     def listime(self):
@@ -312,7 +311,7 @@ class measurement:
             with open(self.pqfile, 'rb') as datapie:
                 datapie.seek(2)
                 bite = datapie.read(5)
-                startimes.append(bite.decode('utf-8'))
+                startimes.append("(%s)%s"%(k,bite.decode('utf-8')))
         self.startimes = startimes
         print("For %s, we have: %s"%(self.day, ', '.join(self.startimes)))
         return
@@ -336,19 +335,22 @@ class measurement:
                 bite = datapie.read(self.datalocation)
                 datacontainer = bite.decode('utf-8')
                         
-            print(Back.WHITE + Fore.BLACK + "Data locations: %s" %self.datalocation)
-            self.writtensize = self.filesize-self.datalocation-7 
-            self.resumepoint = self.writtensize//8          
+            self.writtensize = self.filesize-self.datalocation-7           
             self.datacontainer = ast.literal_eval(datacontainer) # library w/o the data yet
             self.corder = [x for x in self.datacontainer.values()][0]['c-order']
             self.datasize = prod([waveform(x).count for x in self.corder.values()])
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)
-            self.data_mismatch = (self.writtensize%waveform(self.corder['Var']).count)
-            
+            self.data_mismatch = self.writtensize%waveform(self.corder['Var']).count*8
+            print(Back.WHITE + Fore.BLACK + "Data starts from %s-byth on the file with size of %sbytes" %(self.datalocation, self.filesize))
+            if not self.writtensize%8:
+                self.resumepoint = self.writtensize//8
+            else:
+                self.resumepoint = self.datasize
+                print(Back.RED + "SKIP SAVING: REPAIR DATA FIRST!")
             
         except:
-            print("File structure invalid!")
+            raise
         return
 
     def loadata(self):
@@ -361,6 +363,7 @@ class measurement:
                 pie = datapie.read(self.writtensize)
                 self.selectedata = list(struct.unpack('>' + 'd'*((self.writtensize)//8), pie))
         except:
+            # raise
             print("\ndata not found")
 
     def insertdata(self, data):
@@ -374,7 +377,6 @@ class measurement:
         # inserting data:
         with open(self.pqfile, 'rb+') as datapie:
             datapie.seek(0, SEEK_END) #seek from end
-            # datapie.truncate()
             datapie.write(data)             
         return
 
@@ -382,6 +384,24 @@ class measurement:
         '''build data into datacontainer'''
         self.datacontainer[next(iter(self.datacontainer))]['data'] = self.selectedata
         return
+
+    def repairdata(self):
+        '''Pre-requisite: accesstructure'''
+        ieee_mismatch = self.writtensize%8
+        print("IEEE-754(64bit) mismatch: %sbytes"%ieee_mismatch)
+        if ieee_mismatch:
+            with open(self.pqfile, 'rb+') as datapie:
+                datapie.seek(-ieee_mismatch, SEEK_END) #seek from end
+                datapie.truncate()
+            return "FILE IS REPAIRED"
+        else: return "FILE IS GOOD"
+
+    def resetdata(self,keepdata=0):
+        '''Pre-requisite: accesstructure'''
+        with open(self.pqfile, 'rb+') as datapie:
+            datapie.truncate(self.datalocation+7+keepdata)
+        return "FILE IS RESET"
+        
 
 # Setting up Measurement
 def settings():
@@ -397,6 +417,7 @@ def settings():
         elif type(dayindex) is int:
             M.selectday(dayindex, corder)
             M.selectmoment(taskentry)
+            print(Back.BLUE + "moment(file) selected: %s"%M.filename)
             try:
                 for i,x in enumerate(Generator): #yielding data from measurement-module
                     print('\n' + Fore.GREEN + 'Writing Data...')
