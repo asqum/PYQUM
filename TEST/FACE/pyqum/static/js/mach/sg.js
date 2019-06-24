@@ -53,29 +53,50 @@ $(function() {
 });
 
 //setting on key-press
-$(function () {
-    $('input.sg#settings').keypress(function(e) {
-        var key = e.which;
-        if (key == 13) { $('input.sg#settings').trigger('click'); } }); }); // the enter key code //trigger next click below?
+// $(function () {
+//     $('input.sg#settings').keypress(function(e) {
+//         var key = e.which;
+//         if (key == 13) { $('input.sg#settings').trigger('click'); } }); }); // the enter key code //trigger next click below?
 
-//update settings
-$(function () {
-    $('button.sg#update').bind('click', function () { // the enter key code
-        $.getJSON('/mach/sg/settings', {
-            // input value here:
-            freq: $('input.sg[name="freq"]').val(),
-            powa: $('input.sg[name="powa"]').val(),
-            oupt: $('input.sg[name="oupt"]').is(':checked')?1:0
-        }, function (data) {
-            console.log($('input.sg[name="oupt"]').is(':checked')?1:0);
-            $('div.sgcontent#debug').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
-            $.each(data.message, function(index, value) {
-                $('div.sgcontent#debug').append($('<h4 style="color: black;"></h4>').text(Number(index+1) + ". " + value));
-              });
-            
-        });
-        return false;
+//update settings on the fly
+$('input.sg[name="freq"]').change( function () { // the enter key code
+    $.getJSON('/mach/sg/set/freq', {
+        freq: $('input.sg[name="freq"]').val()
+    }, function (data) {
+        $('div.sgcontent#debug').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
+        $('div.sgcontent#debug').append($('<h4 style="color: black;"></h4>').text(data.message));
     });
+    return false;
+});
+$('input.sg[name="powa"]').change( function () { // the enter key code
+    $.getJSON('/mach/sg/set/powa', {
+        powa: $('input.sg[name="powa"]').val()
+    }, function (data) {
+        $('div.sgcontent#debug').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
+        $('div.sgcontent#debug').append($('<h4 style="color: black;"></h4>').text(data.message));
+    });
+    return false;
+});
+$('input.sg[name="oupt"]').change( function () { // the enter key code
+    $.getJSON('/mach/sg/set/oupt', {
+        oupt: $('input.sg[name="oupt"]').is(':checked')?1:0
+    }, function (data) {
+        $('div.sgcontent#debug').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
+        $('div.sgcontent#debug').append($('<h4 style="color: black;"></h4>').text(data.message));
+    });
+    return false;
+});
+
+// Get status:
+$('button.sg#status').click(function(){
+    $('button.sg#settings').click();
+    $.getJSON('/mach/sg/get', {
+    }, function(data){
+        console.log(data.message);
+        $('label.sg[name="freq"]').append($('<h4 style="background-color: lightgreen;"></h4>').text(JSON.stringify(data.message['frequency'][1])));
+        $('label.sg[name="powa"]').append($('<h4 style="background-color: lightgreen;"></h4>').text(JSON.stringify(data.message['power'][1])));
+    });
+    return false;
 });
 
 //connect

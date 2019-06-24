@@ -478,7 +478,7 @@ def test(detail=True):
         output_clock_freq(s)
 
         # Setting Marker:
-        active_marker(s, action=["Set", "3"])
+        active_marker(s, action=["Set", "1"])
         active_marker(s)
         marker_source(s, action=["Set", 7])
         marker_source(s)

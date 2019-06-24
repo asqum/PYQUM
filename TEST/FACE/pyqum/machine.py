@@ -237,32 +237,37 @@ def sgclose():
     global sgbench
     status = SG.close(sgbench)
     return jsonify(message=status)
-@bp.route('/sg/settings', methods=['GET'])
-def sgsettings():
+@bp.route('/sg/set/freq', methods=['GET'])
+def sgsetfreq():
     global sgbench
-    message = []
     freq = request.args.get('freq')
     stat = SG.frequency(sgbench, action=['Set', freq + "GHZ"])
-    message += ['frequency (GHz): %s <%s>' %(stat[1], stat[0])]
+    message = 'frequency (GHz): %s <%s>' %(stat[1], stat[0])
+    return jsonify(message=message) #message will go to debug log
+@bp.route('/sg/set/powa', methods=['GET'])
+def sgsetpowa():
+    global sgbench
     powa = request.args.get('powa')
-    stat = SG.power(sgbench, action=['Set',float(powa)])
-    message += ['power (dBm): %s <%s>' %(stat[1], stat[0])]
+    stat = SG.power(sgbench, action=['Set', float(powa)])
+    message = 'power (dBm): %s <%s>' %(stat[1], stat[0])
+    return jsonify(message=message) #message will go to debug log
+@bp.route('/sg/set/oupt', methods=['GET'])
+def sgsetoupt():
+    global sgbench
     oupt = request.args.get('oupt')
     stat = SG.rfoutput(sgbench, action=['Set',int(oupt)])
-    message += ['RF output: %s <%s>' %(stat[1], stat[0])]
-    return jsonify(message=message)
-@bp.route('/sg/about', methods=['GET'])
-def sgabout():
+    message = 'RF output: %s <%s>' %(stat[1], stat[0])
+    return jsonify(message=message) #message will go to debug log
+@bp.route('/sg/get', methods=['GET'])
+def sgget():
     global sgbench
-    message = []
-    status = SG.model(sgbench) # model
-    message += ['Model: %s (%s)' % (status[1], status[0])]
+    message = {}
     status = SG.frequency(sgbench) # frequency
-    message += ['Frequency: %s (%s)' % (status[1], status[0])]
+    message['frequency'] = status
     status = SG.power(sgbench) # power
-    message += ['Power: %s (%s)' % (status[1], status[0])]
+    message['power'] = status
     status = SG.rfoutput(sgbench) # rf output
-    message += ['RF output: %s (%s)' % (output_code(status[1]), status[0])]
+    message['rfoutput'] = status
     return jsonify(message=message)
 
 # DSO

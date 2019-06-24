@@ -358,7 +358,7 @@ def test(detail=True):
         acquisition_time(s, action=["Set", 3e-5])
         preselector_enabled(s)
         frequency(s, action=["Set", 3e9])
-        power(s, action=["Set", -15])
+        power(s, action=["Set", 10])
         bandwidth(s)
         # setting trigger
         trigger_source(s)
