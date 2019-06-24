@@ -41,7 +41,8 @@ def show():
 @bp.route('/all', methods=['POST', 'GET'])
 def all(): 
     # Test Bed # All Task # Great Work
-    return render_template("blog/machn/all.html")
+    current_usr = session['user_name']
+    return render_template("blog/machn/all.html", current_usr=current_usr)
 
 # AWG
 @bp.route('/awg', methods=['GET'])

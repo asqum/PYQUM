@@ -203,7 +203,7 @@ def translate_scpi(Name, instance, a, b):
 class measurement:
     '''Initialize Measurement:\n
         1. Assembly Path based on Mission
-        2. Checking Database (daylist)
+        2. Checking Database if any (daylist)
     '''
     def __init__(self, mission, task, usr_name='USR', sample='Sample', comment=''):
         self.mission = mission
@@ -404,14 +404,14 @@ class measurement:
         
 
 # Setting up Measurement
-def settings():
+def settings(usr_name='USR', sample='Sample'):
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
         corder, comment, dayindex, taskentry = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
-        M = measurement(mission, task, comment=comment)
+        M = measurement(mission, task, usr_name=usr_name, sample=sample, comment=comment)
         if type(dayindex) is str:
             pass #access-only mode
         elif type(dayindex) is int:

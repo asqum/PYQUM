@@ -6,14 +6,15 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
-from flask import request
+from flask import request, session
 from numpy import linspace, sin, pi, prod
 from pyqum.instrument.benchtop import ENA
 from pyqum.instrument.logger import settings, clocker
 from pyqum.instrument.analyzer import curve
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 
-@settings()
+# @settings(session['user_name'], 'Sam')
+@settings('ABC', 'Sam')
 def TESTC(corder={}, comment='', dayindex='', taskentry=0, resumepoint=0):
     '''Serve as a template for other real tasks to come
         dayindex: {string:access data, -1:new data 0-:manage data}
@@ -122,5 +123,5 @@ def test():
             print(Ma.datacontainer)
    
 
-test()
+# test()
 

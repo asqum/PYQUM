@@ -10,9 +10,9 @@ import numpy as np
 
 from pyqum import stream_template
 
-bp = Blueprint(myname, __name__)
+bp = Blueprint(myname, __name__, url_prefix='/dsply')
 
-@bp.route('/display', methods=['POST', 'GET'])
+@bp.route('/', methods=['POST', 'GET'])
 def show():
     
     return render_template('blog/dsply/display.html')

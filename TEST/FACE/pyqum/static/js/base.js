@@ -4,31 +4,42 @@ $(document).ready(function(){
     // console.log(window.location.pathname);
 
     if (window.location.pathname == "/"){
+        console.log(window.location.pathname);
         $('.navbar button').removeClass('active');
         $('.navbar button.home').addClass('active'); 
     };
               
     if (window.location.pathname == "/mach"){
+        // can't find path for this case
+        console.log("Path:");
         console.log(window.location.pathname); 
+        // Thus we embedded the script in machine.html
     };    
     
     if (window.location.pathname == "/mssn"){
+        // can't find path for this case
+        console.log("Path:");
         console.log(window.location.pathname);
+        // Thus we embedded the script in mission.html
     };
 
     if (window.location.pathname == "/script"){
+        console.log(window.location.pathname);
         $('.navbar button').removeClass('active');
         $('.navbar button.bridge').addClass('active'); 
     };
 
     if (window.location.pathname == "/gd/guide"){
+        console.log(window.location.pathname);
         $('.navbar button').removeClass('active');
         $('.navbar button.guide').addClass('active'); 
     };
 
-    if (window.location.pathname == "/figstatic"){
-        $('.navbar button').removeClass('active');
-        $('.navbar button.display').addClass('active'); 
+    if (window.location.pathname == "/dsply"){
+        // can't find path for this case
+        console.log("Path:");
+        console.log(window.location.pathname); 
+        // Thus we embedded the script in machine.html
     };
 
     if (window.location.pathname == "/auth/register"){
@@ -85,7 +96,7 @@ $(function () {
 
 $(function () {
     $("button.display").bind('click', function(){
-        window.open("/display", '_self');
+        window.open("/dsply", '_self');
         return false;
     });
 });

@@ -32,7 +32,7 @@ IF EXIST "%p2_dir%MEGAsync\CONFIG\pyqum.sqlite" (
 ::Preventing PyCache::
 REM ECHO Before: Prevent PyCache: %PYTHONDONTWRITEBYTECODE%
 if "%PYTHONDONTWRITEBYTECODE%"=="1" (
-    echo pycache already fucked
+    echo pycache already disabled
 ) else (
     ::locally (in RAM)
     REM set PYTHONDONTWRITEBYTECODE=1

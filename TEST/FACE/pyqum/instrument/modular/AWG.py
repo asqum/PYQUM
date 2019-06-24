@@ -445,7 +445,10 @@ def Clear_ArbMemory(session):
     print(Fore.GREEN + "%s's arbitrary memory ALL Cleared: %s" % (mdlname, status_code(status)))
     return status
 
-# 3. close
+# 3. Composite functions based on above methods
+
+
+# 4. close
 def close(session):
     '''[Close the connection]
     '''
@@ -459,7 +462,7 @@ def close(session):
     return status
 
 
-# Test Zone
+# 5. Test Zone
 def test(detail=True):
     debug(detail)
     print(Fore.RED + "Debugger mode: %s" %eval(debugger))
