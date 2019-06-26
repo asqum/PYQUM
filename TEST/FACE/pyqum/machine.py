@@ -216,6 +216,9 @@ def vsaabout():
 # SG
 @bp.route('/sg', methods=['GET'])
 def sg(): 
+    global sgbench, SG
+    try: print(Fore.GREEN + "Connected SG: %s" %sgbench.keys())
+    except: sgbench, SG = {}, {}
     return render_template("blog/machn/sg.html")
 @bp.route('/sg/log', methods=['GET'])
 def sglog():
@@ -223,51 +226,57 @@ def sglog():
     return jsonify(log=log)
 @bp.route('/sg/connect', methods=['GET'])
 def sgconnect():
-    global sgbench, SG
     sgtype = request.args.get('sgtype')
-    print("user selected %s!" %sgtype)
-    try:
-        SG = im("pyqum.instrument.benchtop.%s" %sgtype)
-        sgbench = SG.Initiate()
-        status = "Success"
-    except: status = "Error"
-    return jsonify(message=status)
-@bp.route('/sg/close', methods=['GET'])
-def sgclose():
-    global sgbench
-    status = SG.close(sgbench)
+    if sgtype not in sgbench.keys():
+        try:
+            SG[sgtype] = im("pyqum.instrument.benchtop.%s" %sgtype)
+            sgbench[sgtype] = SG[sgtype].Initiate()
+            message = "Successfully connected to %s" %sgtype
+        except:
+            message = "Please check %s's connection configuration or interface" %sgtype
+    else: message = "%s is already linked-up" %sgtype
+    linkedsg = [x for x in sgbench.keys()]
+    print(linkedsg)
+    return jsonify(message=message,linkedsg=linkedsg)
+@bp.route('/sg/closet', methods=['GET'])
+def sgcloset():
+    sgtype = request.args.get('sgtype')
+    status = SG[sgtype].close(sgbench[sgtype])
+    del SG[sgtype],sgbench[sgtype]
     return jsonify(message=status)
 @bp.route('/sg/set/freq', methods=['GET'])
 def sgsetfreq():
-    global sgbench
+    sgtype = request.args.get('sgtype')
     freq = request.args.get('freq')
-    stat = SG.frequency(sgbench, action=['Set', freq + "GHZ"])
-    message = 'frequency (GHz): %s <%s>' %(stat[1], stat[0])
+    frequnit = request.args.get('frequnit')
+    stat = SG[sgtype].frequency(sgbench[sgtype], action=['Set', freq + frequnit])
+    message = 'frequency: %s <%s>' %(stat[1], stat[0])
     return jsonify(message=message) #message will go to debug log
 @bp.route('/sg/set/powa', methods=['GET'])
 def sgsetpowa():
-    global sgbench
+    sgtype = request.args.get('sgtype')
     powa = request.args.get('powa')
-    stat = SG.power(sgbench, action=['Set', float(powa)])
-    message = 'power (dBm): %s <%s>' %(stat[1], stat[0])
+    powaunit = request.args.get('powaunit')
+    stat = SG[sgtype].power(sgbench[sgtype], action=['Set', powa + powaunit])
+    message = 'power: %s <%s>' %(stat[1], stat[0])
     return jsonify(message=message) #message will go to debug log
 @bp.route('/sg/set/oupt', methods=['GET'])
 def sgsetoupt():
-    global sgbench
+    sgtype = request.args.get('sgtype')
     oupt = request.args.get('oupt')
-    stat = SG.rfoutput(sgbench, action=['Set',int(oupt)])
+    stat = SG[sgtype].rfoutput(sgbench[sgtype], action=['Set',int(oupt)])
     message = 'RF output: %s <%s>' %(stat[1], stat[0])
     return jsonify(message=message) #message will go to debug log
 @bp.route('/sg/get', methods=['GET'])
 def sgget():
-    global sgbench
+    sgtype = request.args.get('sgtype')
     message = {}
-    status = SG.frequency(sgbench) # frequency
-    message['frequency'] = status
-    status = SG.power(sgbench) # power
-    message['power'] = status
-    status = SG.rfoutput(sgbench) # rf output
-    message['rfoutput'] = status
+    try:
+        message['frequency'] = si_format(float(SG[sgtype].frequency(sgbench[sgtype])[1]['CW']),precision=3) + "Hz" # frequency
+        message['power'] = si_format(float(SG[sgtype].power(sgbench[sgtype])[1]['AMPLITUDE']),precision=1) + "dBm" # power
+        message['rfoutput'] = int(SG[sgtype].rfoutput(sgbench[sgtype])[1]['STATE']) # rf output
+    except:
+        message = dict(status='%s is not connected' %sgtype)
     return jsonify(message=message)
 
 # DSO

@@ -98,7 +98,7 @@ input, select {
     display: inline-block;
     font: inherit;
     line-height: 1.5em;
-    padding: 0.5em 3.5em 0.5em 1em;
+    padding: 0.5em 0.7em 0.5em 0.7em;
     /* reset */
     margin: 0;      
     -webkit-box-sizing: border-box;
@@ -263,6 +263,10 @@ select:focus {
     width: 7%;
     margin-top: 6px;
 }
+.col-8 {
+    width: 7%;
+    margin-top: 6px;
+}
 .col-10 {
     width: 10%;
     margin-top: 6px;
@@ -313,7 +317,7 @@ select:focus {
 }
 .col-75 {
     width: 75%;
-    margin-top: 10px;
+    margin-top: 6px;
 }
 
 /* Clear floats after the columns */
@@ -340,10 +344,10 @@ a.action {
     font-size: 1.8em;
     color: rgb(121, 11, 21);
 }
-.about {
+/* .about {
     font-style: italic;
     color: grey;
-}
+} */
 .body {
     font-family: 'Times New Roman', Times, serif;
     font-size: 1.4em;
@@ -352,36 +356,24 @@ a.action {
 /* Sliders */
 .switch {
     position: relative;
-    display: inline-block;
-    width: 118px;
-    height: 35px;
+    display: block;
+    width: 95%; height: 35px;
+    margin: 2.5px 0;
 }
-.switch input {display:none;}
-/* .switch input { 
-    opacity: 0;
-    width: 0;
-    height: 0;
-} */
-/* circleinside the switch */
+.switch input {display:none;} /* .switch input { opacity: 0;width: 0;height: 0; } */
+/* shape inside the switch */
 .slider {
     position: absolute;
     cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0;left: 0;right: 0;bottom: 0;
     background-color: rgb(243, 12, 12);
-    /* background-color: #ccc; */
-    -webkit-transition: .4s;
-    transition: .4s;
+    -webkit-transition: .4s;transition: .4s;
 }
 .slider:before {
     position: absolute;
     content: "";
-    height: 35px;
-    width: 35px;
-    left: 5.5px;
-    bottom: 5.5px;
+    height: 35px;width: 35px;
+    left: 5.5px;bottom: 5.5px;
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
@@ -394,21 +386,14 @@ input:focus + .slider {
     /* box-shadow: 0 0 1px #2196F3; */
     box-shadow: 0 0 1px rgb(9, 182, 9);
 }
-input:checked + .slider:before {
-    -webkit-transform: translateX(73px);
-    -ms-transform: translateX(73px);
-    transform: translateX(73px);
-}
 /* For text beside slider in switch */
-.on
-{display: none;}
+.on {display: none;}
 .on, .off
 {
   color: white;
   position: absolute;
   transform: translate(-50%,-50%);
-  top: 50%;
-  left: 50%;
+  top: 50%;left: 50%;
   font-size: 15px;
   font-family: Verdana, sans-serif;
 }
@@ -416,11 +401,33 @@ input:checked+ .slider .on
 {display: block;}
 input:checked + .slider .off
 {display: none;}
-/* Rounded sliders */
+/* Rounded slider */
 .slider.round {
     border-radius: 34px;
 }
 .slider.round:before {
     border-radius: 50%;
+}
+/* Smooth slider */
+.slider.smooth {
+    border-radius: 3.5px;
+}
+.slider.smooth:before {
+    border-radius: 10%;
+}
+/* Tab2 slider */
+.slider.tab2 {
+    border-radius: 3.5px;
+}
+.slider.tab2:before {
+    border-radius: 10%;
+    width: 15px;
+}
+/* Movement settings */
+input:checked + .slider:before {
+    --move: calc(100vw);
+    -webkit-transform: translateX(var(--move));
+    -ms-transform: translateX(var(--move));
+    transform: translateX(var(--move));
 }
 

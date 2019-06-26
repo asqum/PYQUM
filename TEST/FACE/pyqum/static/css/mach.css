@@ -34,7 +34,8 @@
     color: #333333;
 }
 .tab button.active {
-    /* background-color: #ccc; */
+    color: blue;
+    font-weight: 777;
     background-color: gold;
 }
 .tabcontent {
@@ -42,7 +43,7 @@
     display: none;
     float: left;
     padding: 0px 0.5%;
-    width: 93%;
+    width: 93%; /*100 - tab/margin - 2*padding */
     height: 100vh; /*essential for mobile browsing*/
     margin-left: 6%;
     overflow-y: scroll;
@@ -56,7 +57,7 @@
     padding-left: 0%;
     float: left;
     background-color: #f1f1f1;
-    width: 12%;
+    width: 13%; /*should align w/ margin-left for tab2/mach-content! */
     height: 93vh;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch; /*momentum scroll*/
@@ -72,11 +73,8 @@
     transition: 0.3s;
 }
 .tab2 button:hover {
+    font-weight: 777;
     background-color: rgb(98, 245, 233);
-}
-.tab2 button.active {
-    /* background-color: #ccc; */
-    background-color: gold;
 }
 
 /* machines */
@@ -85,10 +83,10 @@ div.dccontent, div.bdrcontent, div.awgcontent, div.vsacontent, div.sgcontent, di
     display: block;
     float: left;
     /* margin-top: 32px; */
-    margin-left: 12%;
+    margin-left: 13%;
     padding-left: 2.5%;
     padding-right: 2.5%;
-    width: 77%;
+    width: 76%; /*100 - tab2/margin - 2*padding -tab */
     height: 100vh;
     /* margin-bottom: 64px; */
     overflow-y: scroll;
@@ -113,10 +111,26 @@ div.dccontent, div.bdrcontent, div.awgcontent, div.vsacontent, div.sgcontent, di
     background-color: darkslategray;
 }
 .selected {
+    color: blue;
+    font-weight: 777;
     background-color: gold;
 }
 .newupdate {
     background-color: rgb(255, 145, 0);
+}
+.setvalue {
+    color: rgb(29, 7, 153);
+    font-weight: 777;
+    background-color: rgb(13, 230, 78);
+}
+.getvalue {
+    color: rgb(219, 12, 12);
+    font-weight: 777;
+    background-color: rgb(241, 239, 110);
+}
+.unit {
+    color: rgb(49, 48, 48);
+    font-weight: 777;
 }
 
 /* for AI-Bridge */

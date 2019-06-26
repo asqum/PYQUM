@@ -120,7 +120,9 @@ def close(bench, reset=True):
 
 # Test Zone
 def test(detail=True):
-    s = Initiate()
+    S={}
+    S['x'] = Initiate()
+    s = S['x']
     if s is "disconnected":
         pass
     else:
