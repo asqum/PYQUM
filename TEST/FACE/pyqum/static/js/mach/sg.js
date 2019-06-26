@@ -13,6 +13,8 @@ $(function () {
         // Make global variable:
         window.sgtype = $(this).attr('name');
         console.log(sgtype)
+        $("i.sg.fa-check").remove();
+        $(this).prepend("<i class='sg fa fa-check' style='font-size:15px;color:green;'></i> ");
         // connecting to each models:
         $.getJSON('/mach/sg/connect', {
             sgtype: sgtype
@@ -48,11 +50,16 @@ $(function () {
 // Set each value on change:
 // RF Output
 $('input.sg[name="oupt"]').change( function () { // the enter key code
+    var oupt = $('input.sg[name="oupt"]').is(':checked')?1:0;
     $.getJSON('/mach/sg/set/oupt', {
-        sgtype: sgtype,
-        oupt: $('input.sg[name="oupt"]').is(':checked')?1:0
+        sgtype: sgtype, oupt: oupt
     }, function (data) { 
         console.log(Date($.now()) + ':\nSetting ' + data.message); 
+        if (oupt==1) {
+            $('button.sg#sgtype[name='+sgtype+']').append(" <i class='sg "+sgtype+" fa fa-wifi' style='font-size:15px;color:green;'></i>");
+        } else {
+            $( "i.sg."+sgtype+".fa-wifi" ).remove();
+        };
     });
     return false;
 });
@@ -107,8 +114,9 @@ $('button.sg#closet').bind('click', function () {
         if (data.message == "Success"){
             // $('select.sg[name="sgtype"]').find('option[value='+sgtype+']').removeClass('connect').addClass('close')
                 // .prepend("<i class='dso fa fa-file-text-o faa-ring animated fa-4x' style='font-size:15px;color:blue;'></i> ");
-            $('button.sg').removeClass('error');
-            $('button.sg#sgtype[name='+sgtype+']').removeClass('connect').addClass('close').prepend("<i class='sg "+sgtype+" fa fa-refresh' style='font-size:15px;color:green;'></i> ");
+            $( "i.sg."+sgtype+".fa-wifi" ).remove();
+            $('button.sg#sgtype[name='+sgtype+']').removeClass('error').removeClass('connect').addClass('close')
+                .prepend("<i class='sg "+sgtype+" fa fa-refresh' style='font-size:15px;color:green;'></i> ");
         } else {$('button.sg').addClass('error');}         
     });
     return false;
