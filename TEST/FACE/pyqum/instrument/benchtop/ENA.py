@@ -185,7 +185,7 @@ def test(detail=True):
         if debug(mdlname, detail):
             # print(setrace(bench, window='D12_34'))
             print(setrace(bench, Mparam=['S12'], window='D1'))
-            power(bench, action=['Set', -73.1])
+            power(bench, action=['Set', -7.1])
             power(bench)
             N = 7000
             sweep(bench, action=['Set', 'OFF 10', N])

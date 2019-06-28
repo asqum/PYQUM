@@ -112,10 +112,15 @@ input, select {
 }
 label {
     word-wrap: break-word;
-    padding: 12px 0px 0px 0;
+    /* y-up x-right y-down x-left -> Clock-wise! */
+    padding: 12px 0px 0px 7px;
     display: block;
+    font-weight: 600;
 }
-label.bdr {
+label.left {
+    text-align: left;
+}
+label.right {
     text-align: right;
 }
 input[type=submit] {

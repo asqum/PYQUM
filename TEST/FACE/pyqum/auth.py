@@ -7,11 +7,12 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 import functools
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, flash, g, redirect, render_template, request, session, url_for, jsonify
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from pyqum import get_db
+from pyqum.instrument.logger import lisample
 
 bp = Blueprint(myname, __name__, url_prefix='/auth')
 
@@ -116,6 +117,15 @@ def logout():
     """Clear the current session, including the stored user id."""
     session.clear()
     return redirect(url_for('index'))
+
+@bp.route('/user')
+def user():
+    """Load User Profile and Sample Database"""
+    return render_template('auth/user.html')
+@bp.route('/user/samples')
+def usersamples():
+    samples = lisample(session['user_name'])
+    return jsonify(samples=samples)
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

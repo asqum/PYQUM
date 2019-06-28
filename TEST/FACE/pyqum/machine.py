@@ -116,6 +116,8 @@ def awgsettingssquarewave():
     pointnum.append(int(request.args.get('pointnum1')))
     pointnum.append(int(request.args.get('pointnum2')))
     wavefom = ([voltag[0]]*pointnum[0] + [voltag[1]]*pointnum[1])
+    from numpy import sin, pi
+    wavefom = [sin(x*0.8*pointnum[1]/1000*2*pi) for x in range(8000)]
     
     stat = AWG.CreateArbWaveform(awgsess, wavefom)
     print(Fore.YELLOW + "Arb Waveform Created: %s"%stat[0])

@@ -497,18 +497,26 @@ def test(detail=True):
         arb_sample_rate(s, action=["Set", 1250000000])
         arb_sample_rate(s)
         
-        seg0 = 1000
-        seg1 = 5000
-        seg2 = 5000
+        # seg0 = 1000
+        # seg1 = 5000
+        # seg2 = 5000
         # Create Waveform
-        stat = CreateArbWaveform(s, ([1]*seg0))
-        h1 = stat[1]
-        stat = CreateArbWaveform(s, ([0]*seg1))
-        h2 = stat[1]
-        stat = CreateArbWaveform(s, ([-1]*seg2))
-        h3 = stat[1]
-        stat = CreateArbWaveform(s, ([0]*5000 + [1]*1200 + [-1]*1000))
+        # stat = CreateArbWaveform(s, ([1]*seg0))
+        # h1 = stat[1]
+        # stat = CreateArbWaveform(s, ([0]*seg1))
+        # h2 = stat[1]
+        # stat = CreateArbWaveform(s, ([-1]*seg2))
+        # h3 = stat[1]
+
+        # CH 1
+        stat = CreateArbWaveform(s, ([0]*5000 + [1]*3000))
         ch1 = stat[1]
+        from numpy import sin, pi
+        wave = [sin(x*0.8*0.1*2*pi) for x in range(10000)]
+        # stat = CreateArbWaveform(s, wave)
+        # ch1 = stat[1]
+
+        # CH 2
         stat = CreateArbWaveform(s, ([0.8]*5000 + [-1]*1000 + [i/1200 for i in range(1200)]))
         ch2 = stat[1]
 
@@ -550,7 +558,7 @@ def test(detail=True):
             print("Sequence handle for CH2: %s" %stat[1])
             arb_sequence_handle(s, RepCap='2', action=["Set", stat[1]])
             arb_sequence_handle(s, RepCap='2')
-            output_enabled(s, RepCap='2', action=["Set", True])
+            output_enabled(s, RepCap='2', action=["Set", False])
             output_enabled(s, RepCap='2')
             output_filter_enabled(s, RepCap='2')
             output_filter_enabled(s, RepCap='2', action=["Set", False])

@@ -402,7 +402,6 @@ class measurement:
             datapie.truncate(self.datalocation+7+keepdata)
         return "FILE IS RESET"
         
-
 # Setting up Measurement
 def settings(usr_name='USR', sample='Sample'):
     @wrapt.decorator
@@ -429,6 +428,11 @@ def settings(usr_name='USR', sample='Sample'):
         return M
     return wrapper
 
+def lisample(usr):
+    samples = [d for d in listdir(USR_PATH / usr) if isdir(USR_PATH / usr / d)]
+    return samples
+
+
 # TEST
 def test():
     L = location()
@@ -437,7 +441,8 @@ def test():
     print(ad.lookup("YOKO"))
     print(ad.lookup("TEST", 2))
     print(ad.visible())
+    print(lisample('USR'))
     return
     
-# test()
+test()
 
