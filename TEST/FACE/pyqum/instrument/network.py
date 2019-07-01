@@ -184,7 +184,7 @@ def test():
     # connectionspeed(instr)
     # closeall(instr)
     # initializationspeed()
-    # notify('ufocrew@gmail.com', 'Test', 'Success')
+    notify('ufocrew@gmail.com', 'Test', 'Success')
     # store_pwd()
     print(scanserial()[0])
     return

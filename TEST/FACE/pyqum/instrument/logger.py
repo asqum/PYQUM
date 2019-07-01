@@ -97,7 +97,7 @@ class address:
     Set <reset=False> to directly load from LOG if it contains "address" 
     '''
     def __init__(self):
-        with open(MAIN_PATH / 'address.json') as ad:
+        with open(MAIN_PATH / 'Address' / 'address.json') as ad:
             self.book = json.load(ad)
 
     def lookup(self, instr_name, level=0):
@@ -444,5 +444,5 @@ def test():
     print(lisample('USR'))
     return
     
-test()
+# test()
 

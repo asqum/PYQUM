@@ -178,10 +178,10 @@ def test():
     
     return
 
-# test()
-
 # A = input("pause")
 # with nidaqmx.Task() as write_task, nidaqmx.Task() as read_task, \
 #     nidaqmx.Task() as sample_clk_task:
+
+
 
 

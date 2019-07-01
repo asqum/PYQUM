@@ -36,6 +36,7 @@ def Initiate():
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
     except: 
+        # raise
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
         bench = "disconnected"
@@ -121,5 +122,4 @@ def test(detail=True):
     close(s, True)
     return
 
-
-test()
+# test()

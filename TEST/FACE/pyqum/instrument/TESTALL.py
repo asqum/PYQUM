@@ -4,9 +4,10 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from pyqum.instrument import logger, reader, network
-from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA, ENA, PSGV, PSGA, RDS
+from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA, ENA, PSGV, PSGA, RDS, YOKO
 from pyqum.instrument.modular import AWG, VSA
-# from pyqum.instrument.serial import LAKE
+from pyqum.instrument.serial import LAKE, DC
+
 import inspect, numpy, time
 
 # Testing function's name-string:
@@ -15,7 +16,7 @@ def piqom():
     print(Fore.BLUE + "RUNNING %s" %inspect.stack()[0][3])
 piqom()
 
-MDL = ['AWG', 'VSA', 'ENA', 'PSGV', 'PSGA', 'RDG', 'RDS', 'MXG', 'DSO', 'YOKO', 'LAKE', #instruments
+MDL = ['AWG', 'VSA', 'ENA', 'PSGV', 'PSGA', 'RDS', 'MXG', 'DSO', 'YOKO', 'LAKE', 'DC', #instruments
         'reader', 'logger', 'network'] #tools
 print("These modules are available for test:")
 print(Fore.GREEN + str(MDL))
