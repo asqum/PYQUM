@@ -152,10 +152,12 @@ def sdata(bench):
     sdatacore = ":CALC:SEL:DATA:SDAT?"
     stat = dataform(bench)
     if stat[1]['DATA'] == 'REAL32': #PENDING: testing REAL (64bit)
+        #convert the transferred ieee-encoded binaries into list (faster)
         datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True)
     elif stat[1]['DATA'] == 'ASCii':
+        #convert the transferred ascii-encoded binaries into list (slower)
         datas = bench.query_ascii_values(sdatacore)
-    print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
+    # print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
     return datas
 
 def close(bench, reset=True):
@@ -185,7 +187,7 @@ def test(detail=True):
         if debug(mdlname, detail):
             # print(setrace(bench, window='D12_34'))
             print(setrace(bench, Mparam=['S12'], window='D1'))
-            power(bench, action=['Set', -7.1])
+            power(bench, action=['Set', -8])
             power(bench)
             N = 7000
             sweep(bench, action=['Set', 'OFF 10', N])
@@ -221,7 +223,7 @@ def test(detail=True):
 
             dataform(bench, action=['Set', 'REAL32'])
             selectrace(bench, action=['Set', 'para 1 calc 1'])
-            # print(sdata(bench))
+            # print("Data (Type: %s):\n%s" %(type(sdata(bench)), sdata(bench)))
 
             rfports(bench, action=['Set', 'OFF'])
             rfports(bench)

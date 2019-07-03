@@ -3,46 +3,46 @@ $(document).ready(function(){
     $('div.charcontent').hide();
 });
 
-//show RT Amp's page
+//show F-Response's daylist
 $(function() {
-    $('button.char#rtamp').bind('click', function() {
+    $('button.char#fresp').bind('click', function() {
         $('div.charcontent').hide();
-        $('div.charcontent#rtamp').show();
+        $('div.charcontent#fresp').show();
         $('button.char').removeClass('selected');
-        $('button.char#rtamp').addClass('selected');
-        return false;
-    });
-});
-// list day based on operation type
-$(function () {
-    $('select.char#rtamp[name="operation"]').on('change', function () {
-        $.getJSON('/mssn/char/rtamp/init', {
-            operation: $('select.char#rtamp[name="operation"]').val(),
-            ampstate: $('select.char#rtamp[name="ampstate"]').val(),
-            powr: $('input.char#rtamp[name="powr"]').val(),
-            freq: $('input.char#rtamp[name="freq"]').val(),
-            ifb: $('input.char#rtamp[name="ifb"]').val(),
-            comment: $('textarea.char#rtamp[name="comment"]').val()
+        $('button.char#fresp').addClass('selected');
+        $.getJSON('/mssn/char/fresp/init', {
+            // operation: $('select.char#fresp[name="operation"]').val(),
+            // ampstate: $('select.char#fresp[name="ampstate"]').val(),
+            // powr: $('input.char#fresp[name="powr"]').val(),
+            // freq: $('input.char#fresp[name="freq"]').val(),
+            // ifb: $('input.char#fresp[name="ifb"]').val(),
+            // comment: $('textarea.char#fresp[name="comment"]').val()
         }, function (data) {
-            $('select.char#rtamp[name="wday"]').empty();
-            $.each(data.dayslot, function(i,v){
-                $('select.char#rtamp[name="wday"]').append($('<option>', {
+            $('select.char#fresp[name="wday"]').empty();
+            $('select.char#fresp[name="wday"]').append($('<option>', { text: 'pick a day', value: '' }));
+            $('select.char#fresp[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
+            $.each(data.daylist, function(i,v){
+                $('select.char#fresp[name="wday"]').append($('<option>', {
                     text: v,
                     value: i
                 }));
             });
         });
+        return false;
     });
 });
+
 // list time based on day picked
 $(function () {
-    $('select.char#rtamp[name="wday"]').on('change', function () {
-        $.getJSON('/mssn/char/rtamp/time', {
-            wday: $('select.char#rtamp[name="wday"]').val()
+    $('select.char#fresp[name="wday"]').on('change', function () {
+        var wday = $('select.char#fresp[name="wday"]').val();
+        console.log("Day Picked: " + wday);
+        $.getJSON('/mssn/char/fresp/time', {
+            wday: wday
         }, function (data) {
-            $('select.char#rtamp[name="wmoment"]').empty();
-            $.each(data.timeslot, function(i,v){
-                $('select.char#rtamp[name="wmoment"]').append($('<option>', {
+            $('select.char#fresp[name="wmoment"]').empty();
+            $.each(data.startimes, function(i,v){
+                $('select.char#fresp[name="wmoment"]').append($('<option>', {
                     text: v,
                     value: i+1
                 }));
@@ -52,10 +52,10 @@ $(function () {
 });
 // plot data based on time picked
 $(function () {
-    $('select.char#rtamp[name="wmoment"]').on('change', function () {
-        $.getJSON('/mssn/char/rtamp/run', {
+    $('select.char#fresp[name="wmoment"]').on('change', function () {
+        $.getJSON('/mssn/char/fresp/run', {
             // input/select value here:
-            wmoment: $('select.char#rtamp[name="wmoment"]').val()
+            wmoment: $('select.char#fresp[name="wmoment"]').val()
         }, function (data) {
             console.log(data.Idata);
             

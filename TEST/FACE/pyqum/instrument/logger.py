@@ -205,13 +205,12 @@ class measurement:
         1. Assembly Path based on Mission
         2. Checking Database if any (daylist)
     '''
-    def __init__(self, mission, task, usr_name='USR', sample='Sample', comment=''):
+    def __init__(self, mission, task, usr_name='USR', sample='Sample'):
+        # Primary parameters (mission & task is auto-detected by OS)
         self.mission = mission
         self.task = task
         self.usr_name = usr_name
         self.sample = sample
-        self.comment = comment #to be appended to data after ACK-mark
-
         self.mssnpath = Path(USR_PATH) / usr_name / sample / mission
         self.place = ", ".join(location()) #current location
         
@@ -240,9 +239,10 @@ class measurement:
                 print("Bad index. Please use numeric!")
         return k-1 #index
 
-    def selectday(self, index, corder={}):
+    # Secondary parameters
+    def selectday(self, index, corder={}, instr=[], datadensity=1, comment='', tag=''):
         '''corder: {parameters: <waveform>}\n'''
-        
+
         # New operation if "new" is selected:
         if index < 0:
             now = datetime.now() #current day & time
@@ -250,6 +250,10 @@ class measurement:
             self.moment = now.strftime("%H:%M:%f")
             # estimating data size from parameters:
             self.corder = corder
+            self.instr = instr
+            self.datadensity = datadensity
+            self.comment = comment
+            self.tag = tag
         
             task_index = 1
             while True:
@@ -257,7 +261,7 @@ class measurement:
                 self.pqfile = self.mssnpath / self.day / self.filename
 
                 # assembly the file-header(time, place, c-parameters):
-                usr_bag = bytes("{'%s': {'place': '%s', 'c-order': %s, 'comment': '%s'}}" %(self.moment, self.place, self.corder, self.comment), 'utf-8')
+                usr_bag = bytes("{'%s': {'place': '%s', 'data-density': %s, 'c-order': %s, 'instrument': %s, 'comment': '%s', 'tag': '%s'}}" %(self.moment, self.place, self.datadensity, self.corder, self.instr, self.comment, self.tag), 'utf-8')
                 usr_bag += b'\x02' + bytes("ACTS", 'utf-8') + b'\x03\x04' # ACTS
                 
                 # check if the file exists and not blank:
@@ -337,11 +341,14 @@ class measurement:
                         
             self.writtensize = self.filesize-self.datalocation-7           
             self.datacontainer = ast.literal_eval(datacontainer) # library w/o the data yet
+            # Access library keys:
             self.corder = [x for x in self.datacontainer.values()][0]['c-order']
-            self.datasize = prod([waveform(x).count for x in self.corder.values()])
+            self.datadensity = [x for x in self.datacontainer.values()][0]['data-density']
+            # Derive judging tools:
+            self.datasize = prod([waveform(x).count for x in self.corder.values()]) * self.datadensity
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)
-            self.data_mismatch = self.writtensize%waveform(self.corder['Var']).count*8
+            self.data_mismatch = self.writtensize%waveform([i for i in self.corder.values()][-1]).count*8 # counts for the last key of c-order
             print(Back.WHITE + Fore.BLACK + "Data starts from %s-byth on the file with size of %sbytes" %(self.datalocation, self.filesize))
             if not self.writtensize%8:
                 self.resumepoint = self.writtensize//8
@@ -407,14 +414,14 @@ def settings(usr_name='USR', sample='Sample'):
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
-        corder, comment, dayindex, taskentry = next(Generator)
+        tag, datadensity, instr, corder, comment, dayindex, taskentry = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
-        M = measurement(mission, task, usr_name=usr_name, sample=sample, comment=comment)
+        M = measurement(mission, task, usr_name, sample)
         if type(dayindex) is str:
-            pass #access-only mode
+            pass # For Initialization
         elif type(dayindex) is int:
-            M.selectday(dayindex, corder)
+            M.selectday(dayindex, corder, instr, datadensity, comment, tag)
             M.selectmoment(taskentry)
             print(Back.BLUE + "moment(file) selected: %s"%M.filename)
             try:

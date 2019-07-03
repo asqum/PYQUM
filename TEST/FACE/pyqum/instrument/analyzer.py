@@ -1,6 +1,7 @@
 '''For analyzing data'''
-from numpy import ones, convolve, log10, sqrt, arctan2, diff, array
+from numpy import ones, convolve, log10, sqrt, arctan2, diff, array, unwrap, gradient
 from scipy.fftpack import rfft, rfftfreq, irfft
+from sklearn.preprocessing import minmax_scale
 
 import matplotlib.pyplot as plt
 
@@ -25,7 +26,8 @@ def derivative(x, y, step=1):
 # Extract IQ (to be changed to take in list instead of np.array)
 def IQAP(datas):
     # Slicing datas into IQ-data
-    IQdata = datas.reshape(len(datas)/2, 2)
+    # print("half datas length: %s" %(len(datas)/2))
+    IQdata = datas.reshape(len(datas)//2, 2)
     Idata, Qdata = IQdata[:,0], IQdata[:,1]
     yI, yQ = [float(i) for i in Idata], [float(i) for i in Qdata]
     Amp, Pha = [], []
@@ -49,6 +51,15 @@ def FFT_deNoise(y, dx, noise_level, noise_filter=0.1):
     w_clean[cutoff] = 0
     y_clean = irfft(w_clean)
     return f, spectrum, w_clean, y_clean
+
+def UnwraPhase(X, Pha, Flatten=True, Normalized=True):
+    UPHA = unwrap(Pha)
+    if Flatten:
+        UPHA = gradient(UPHA, X)
+    if Normalized:
+        UPHA = minmax_scale(UPHA)
+    return UPHA
+    
 
 
 def test():

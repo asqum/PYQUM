@@ -4,6 +4,7 @@ setup.cfg
 setup.py
 pyqum/__init__.py
 pyqum/auth.py
+pyqum/authschema.sql
 pyqum/blog.py
 pyqum/bridge.py
 pyqum/display.py
@@ -26,6 +27,7 @@ pyqum/static/fa/css/all.css
 pyqum/static/fa/css/all.min.css
 pyqum/static/fa/css/brands.css
 pyqum/static/fa/css/brands.min.css
+pyqum/static/fa/css/font-awesome-animation.min.css
 pyqum/static/fa/css/fontawesome.css
 pyqum/static/fa/css/fontawesome.min.css
 pyqum/static/fa/css/regular.css
@@ -1624,6 +1626,7 @@ pyqum/static/js/gauge.min.js
 pyqum/static/js/jquery.min.js
 pyqum/static/js/plotly-latest.min.js
 pyqum/static/js/script.js
+pyqum/static/js/auth/user.js
 pyqum/static/js/dsply/concurrent.js
 pyqum/static/js/dsply/dsply.js
 pyqum/static/js/dsply/dynamic.js
@@ -1653,6 +1656,7 @@ pyqum/static/ui/jquery-ui.theme.min.css
 pyqum/templates/base.html
 pyqum/templates/auth/login.html
 pyqum/templates/auth/register.html
+pyqum/templates/auth/user.html
 pyqum/templates/blog/create.html
 pyqum/templates/blog/index.html
 pyqum/templates/blog/update.html
@@ -1663,6 +1667,7 @@ pyqum/templates/blog/dsply/figdynamic.html
 pyqum/templates/blog/dsply/figstatic.html
 pyqum/templates/blog/dsply/figstream.html
 pyqum/templates/blog/dsply/game01.html
+pyqum/templates/blog/dsply/test.html
 pyqum/templates/blog/machn/all.html
 pyqum/templates/blog/machn/awg.html
 pyqum/templates/blog/machn/bdr.html

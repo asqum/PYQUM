@@ -11,60 +11,46 @@
     <div>
 
         <div class="tab2">
-            <button class='char' id='rtamp'>RT AMP</button>
-            <button class='char' id='TBD'>TBD</button> 
+            <button class='char' id='fresp'>F-Response</button>
         </div>
         
         <!-- page content based on button clicked -->
-        <div class="charcontent" id="rtamp">
+        <div class="charcontent" id="fresp">
             <div class="container">
 
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-15" id='left'><select class='char' id="rtamp" name="ampstate" type="text">
-                        <option value=0 selected>OFF</option>
-                        <option value=1>ON</option>
-                        </select>
+                    <!-- 1. F-Response -->
+                    <div class="col-15" id='left'><select class='char' id="fresp" name="wday" type="text"></select>
                     </div>
-                    <div class="col-25" id='left'><select class='char' id="rtamp" name="operation" type="text">
-                        <option value="" selected>Select Measurement</option>
-                        <option value="a">Access Measurement</option>
-                        <option value="r">Resume Measurement</option>
-                        <option value="n">New Measurement</option>
-                        </select>
-                    </div>
-                    <div class="col-25" id='left'><select class='char' id="rtamp" name="wday" type="text">
-                        <option value="" selected>pick a day</option>
-                        </select>
-                    </div>
-                    <div class="col-25" id='left'><select class='char' id="rtamp" name="wmoment" type="text">
+                    <div class="col-15" id='left'><select class='char' id="fresp" name="wmoment" type="text">
                         <option value="" selected>pick a time</option>
                         </select>
                     </div>
                     
-                    <div class='char' id='tbd'></div>
                 </div>
 
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-15" id='left'></div>
-                    <div class="col-25" id='left'>
-                        <input class='char' id="rtamp" name="powr" type="text" value="[-70,-70,1]"/>
-                    </div> 
-                    <div class="col-25" id='left'>
-                        <input class='char' id="rtamp" name="freq" type="text" value="[0.7e9,18e9,251]"/>
+                    <div class="col-15" id='left'>
+                        <input class='char' id="fresp" name="sparam" type="text" value="S21,"/>
                     </div>
-                    <div class="col-25" id='left'>
-                        <input class='char' id="rtamp" name="ifb" type="text" value="[10,10,1]"/>
+                    <div class="col-15" id='left'>
+                        <input class='char' id="fresp" name="ifb" type="text" value="1000"/>
+                    </div>
+                    <div class="col-15" id='left'>
+                        <input class='char' id="fresp" name="powa" type="text" value="-37"/>
                     </div> 
+                    <div class="col-15" id='left'>
+                        <input class='char' id="fresp" name="freq" type="text" value="5 to 9 * 3000"/>
+                    </div>
+                </div>
+                     
                 
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-15" id='left'></div>
-                    <div class="col-25" id='left'>
-                        <textarea class='char' id="rtamp" name="comment" type="text" rows="7" cols="101">--comment--</textarea>
+                    <div class="col-35" id='left'>
+                        <textarea class='char' id="fresp" name="comment" type="text" rows="5" cols="101">--comment--</textarea>
                     </div>
                 </div>
 
-
-                    <div class='char' id='tbd'></div>
                 </div>
                 
                 <div id="char-chart-01"></div>

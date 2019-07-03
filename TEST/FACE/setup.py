@@ -18,9 +18,16 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
+        'numpy',
         'flask',
         'geocoder',
         'scrypt',
+        'pyvisa',
+        'nidaqmx',
+        'colorama',
+        'si-prefix',
+        'typed-ast',
+        'peakutils'
     ],
     extras_require={
         'test': [

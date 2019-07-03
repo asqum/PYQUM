@@ -7,37 +7,36 @@ from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
 from flask import request, session
-from numpy import linspace, sin, pi, prod
+from numpy import linspace, sin, pi, prod, array
 from pyqum.instrument.benchtop import ENA
 from pyqum.instrument.logger import settings, clocker
-from pyqum.instrument.analyzer import curve
+from pyqum.instrument.analyzer import curve, IQAP, UnwraPhase
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 
 # @settings(session['user_name'], 'Sam')
 @settings('ABC', 'Sam')
-def TESTC(corder={}, comment='', dayindex='', taskentry=0, resumepoint=0):
+def TESTC(tag="", datadensity=1, instr=[], corder={}, comment='', dayindex='', taskentry=0, resumepoint=0):
     '''Serve as a template for other real tasks to come
         dayindex: {string:access data, -1:new data 0-:manage data}
         C-Order: C1, C2, C3, C4, Var
     '''
     # pushing pre-measurement parameters to settings:
-    yield corder, comment, dayindex, taskentry
+    yield tag, datadensity, instr, corder, comment, dayindex, taskentry
 
-    # running measurement:
+    # User-defined Controlling-PARAMETER(s) ======================================================================================
     C1 = waveform(corder['C1'])
     C2 = waveform(corder['C2'])
     C3 = waveform(corder['C3'])
     C4 = waveform(corder['C4'])
     Var = waveform(corder['Var'])
+    # ============================================================================================================================
     buffersize = Var.count
     datasize = prod([waveform(x).count for x in corder.values()])
-    # adjust check-point so that it is of multiple of buffersize lest some data will never be written:
-    # checkpoint = (resumepoint+1)-(resumepoint+1)%buffersize #adjust buffer/data-mismatch but need to offset the M.insertdata as well
     data = []
     for i in range(resumepoint,datasize):
         caddress = cdatasearch(i, [C1.count,C2.count,C3.count,C4.count,Var.count])
 
-        # User-defined M-FLOW here====================================================================================================
+        # User-defined Measurement-FLOW ==============================================================================================
         x = C1.data[caddress[0]] + Var.data[caddress[4]]*C2.data[caddress[1]]*sin(pi/2*C3.data[caddress[2]]) + C4.data[caddress[3]]
         x = i + 1 #for debugging
         # ============================================================================================================================
@@ -49,48 +48,74 @@ def TESTC(corder={}, comment='', dayindex='', taskentry=0, resumepoint=0):
             yield data
             data = []
 
-@settings()
-def Network_Analyzer(amp, powr, freq, ifb, iq, comment=''):
-    '''Testing Room Temperature Amplifier
-        iq: [0,1,2] <I:0;Q:1> '''
-    bench = ENA.Initiate()
-    ENA.setrace(bench, Mparam=['S12'], window='D1')
-    ENA.dataform(bench, action=['Set', 'REAL32'])
-    ENA.sweep(bench, action=['Set', 'ON', freq[2]])
-    fstart, fstop = freq[0], freq[1]
-    ENA.linfreq(bench, action=['Set', fstart, fstop]) #F-sweep
+# @settings(session['user_name'], 'Sam')
+@settings('ABC', 'Sam')
+def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['ENA','ENA','ENA'], datadensity=2):
+    '''Characterizing 3D-cavity
+    C-Order: IF-Bandwidth, Power, Frequency
+    '''
+    # pushing pre-measurement parameters to settings:
+    yield tag, datadensity, instr, corder, comment, dayindex, taskentry
 
-    # Iteration part
-    for ifb in linspace(ifb[0],ifb[1],ifb[2]):
-        ENA.ifbw(bench, action=['Set', ifb])
-        for p in linspace(powr[0],powr[1],powr[2]):
-            ENA.power(bench, action=['Set', p])
-            #start sweeping
+    # User-defined Controlling-PARAMETER(s) ======================================================================================
+    Sparam = waveform(corder['S-Parameter'])
+    ifb = waveform(corder['IF-Bandwidth'])
+    powa = waveform(corder['Power'])
+    freq = waveform(corder['Frequency'])
+    
+    # Buffer setting(s):
+    buffersize = freq.count
+    
+    # Pre-loop settings:
+    bench = ENA.Initiate()
+    ENA.dataform(bench, action=['Set', 'REAL32'])
+    # Freq-sweep-range settings:
+    ENA.sweep(bench, action=['Set', 'ON', freq.count])
+    fstart, fstop = freq.data[0]*1e9, freq.data[-1]*1e9
+    ENA.linfreq(bench, action=['Set', fstart, fstop])
+
+    # User-defined Measurement-FLOW ==============================================================================================
+    datasize = prod([waveform(x).count for x in corder.values()])
+    for i in range(resumepoint,datasize):
+
+        # Registerring parameter(s)
+        caddress = cdatasearch(i, [Sparam.count,ifb.count,powa.count,freq.count])
+
+        # saving chunck by chunck improves speed a lot!
+        if not (i+1)%buffersize or i==datasize-1: #multiples of buffersize / reached the destination
+            ENA.setrace(bench, Mparam=[Sparam.data[caddress[0]]], window='D1')
+            ENA.ifbw(bench, action=['Set', ifb.data[caddress[1]]])
+            ENA.power(bench, action=['Set', powa.data[caddress[2]]])
+            # start sweeping:
             stat = ENA.sweep(bench)
             print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
-            print("Ready: %s" %ENA.measure(bench)[1])
+            print("Operation Complete: %s" %bool(ENA.measure(bench)[1]))
+            # adjusting display on ENA:
             ENA.autoscal(bench)
             ENA.selectrace(bench, action=['Set', 'para 1 calc 1'])
             data = ENA.sdata(bench)
-            for d in data:
-                yield d
+            print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
+            yield data
 
     ENA.rfports(bench, action=['Set', 'OFF'])
     ENA.close(bench)
-
+    # ============================================================================================================================
 
 def test():
-    points = 70
-    C = '1to70*%s'%points
-    CORDER = {'C1':'0to0*0', 'C2':'0.1to0.1*0', 'C3':'1to1*0', 'C4':'0to12*3', 'Var':C}
+    points = 3000
+    C = '5to9*%s'%points
+    CORDER = {'S-Parameter':'S12,S21,S22', 'IF-Bandwidth':'1000to2000*1', 'Power':'-9to-7*2', 'Frequency':C}
+    # points = 1000
+    # C = '0.0003to0.6*%s'%points
+    # CORDER = {'S-Parameter':'S21,', 'IF-Bandwidth':'1000', 'Power':'-50', 'Frequency':C}
     # access-only mode:
-    M = TESTC()
+    M = F_Response()
     k = M.whichday()
     if k < 0:
         # Creating New Data:
         stage, prev = clocker(0) # Marking starting point of time
         i = prev
-        M = TESTC(CORDER,'', dayindex=k)
+        M = F_Response(corder=CORDER, comment='Myrron RF-amplifier test', tag='3D, cavity', dayindex=k)
         stage, prev = clocker(stage, prev) # Marking time lapsed
         print("Hence this pc can write 1 point for %ss" %((prev - i) / points))
     else:
@@ -111,9 +136,21 @@ def test():
         M.buildata()
         print(M.datacontainer)
         # Manage Data
-        Ma = TESTC(corder=M.corder, dayindex=k, taskentry=m, resumepoint=M.resumepoint)
+        Ma = F_Response(corder=M.corder, dayindex=k, taskentry=m, resumepoint=M.resumepoint)
         if M.data_complete: 
             print("No action taken")
+            # reading Data
+            Ma.accesstructure()
+            cstructure = [waveform(Ma.corder['S-Parameter']).count,waveform(Ma.corder['IF-Bandwidth']).count,waveform(Ma.corder['Power']).count,waveform(Ma.corder['Frequency']).count*2]
+            Ma.loadata()
+            X = waveform(C).data
+            selected = [Ma.selectedata[gotocdata([0, 0, 0, x], cstructure)] for x in range(waveform(Ma.corder['Frequency']).count*2)]
+            yI, yQ, Amp, Pha = IQAP(array(selected))
+            print(len(Amp)==len(X))
+            curve(X, Amp, 'Freq response S12', 'f(GHz)', 'Amp(dB)')
+            curve(X, Pha, 'Freq response S12', 'f(GHz)', 'Pha(rad)')
+            curve(X, UnwraPhase(X,Pha), 'Freq response S12', 'f(GHz)', 'Unwrapped-Phase(deg)')
+
         else: 
             print(Fore.LIGHTGREEN_EX + "UPDATED:")
             # reading Data
@@ -123,5 +160,5 @@ def test():
             print(Ma.datacontainer)
    
 
-# test()
+test()
 

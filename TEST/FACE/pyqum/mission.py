@@ -7,7 +7,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
-from pyqum.directive.characterize import TESTC
+from pyqum.directive.characterize import F_Response
 
 # Scientific Constants
 from scipy import constants as cnst
@@ -40,51 +40,21 @@ def allinsertopt():
 @bp.route('/char', methods=['GET'])
 def char(): 
     return render_template("blog/msson/char.html")
-# CHAR -> FLEM
-@bp.route('/char/rtamp/init', methods=['GET'])
-def charrtampinit(): 
-    ampstate = [int(request.args.get('ampstate'))]*2 + [1]
-    powr = eval(str(request.args.get('powr')))
-    freq = eval(str(request.args.get('freq')))
-    ifb = eval(str(request.args.get('ifb')))
-    comment = str(request.args.get('comment'))
-    try:
-        global rtamp_operation
-        rtamp_operation = str(request.args.get('operation'))
-        global M_rtamp
-        M_rtamp = RTAmp(ampstate, powr, freq, ifb, [0,1,2], comment, rtamp_operation)
-        if rtamp_operation.lower() == 'n':
-            dayslot = [M_rtamp.day]
-        else: dayslot = M_rtamp.daylist
-    except: dayslot = ["pick a day"]
-    return jsonify(status="Initiated", dayslot=dayslot)
-@bp.route('/char/rtamp/time', methods=['GET'])
-def charrtamptime(): 
-    try:
-        wday = int(request.args.get('wday'))
-        print("wday: %s" %wday)
-        M_rtamp.selectday(wday)
-        if rtamp_operation.lower() == 'n':
-            timeslot = [M_rtamp.moment]
-        else: 
-            M_rtamp.accesstimeline()
-            timeslot = M_rtamp.startimes
-    except: timeslot = ["pick a time"]
-    return jsonify(timeslot=timeslot)
-@bp.route('/char/rtamp/run', methods=['GET'])
-def charrtamprun(): 
-    try:
-        wmoment = int(request.args.get('wmoment'))
-        M_rtamp.selectmoment(wmoment)
-        M_rtamp.accesstructure()
-        M_rtamp.loadata()
-        Idata = M_rtamp.selectedata[::2]
-        Qdata = M_rtamp.selectedata[1::2]
-    except:
-        M_rtamp.datacontainer = {}
-        Idata = []
-        Qdata = []
-    return jsonify(datacontainer=M_rtamp.datacontainer, Idata=Idata, Qdata=Qdata)
+# CHAR -> F-Response
+@bp.route('/char/fresp/init', methods=['GET'])
+def char_fresp_init(): 
+    global M_fresp
+    M_fresp = F_Response()
+    # ifb = eval(str(request.args.get('ifb')))
+    return jsonify(daylist=M_fresp.daylist)
+@bp.route('/char/fresp/time', methods=['GET'])
+def char_fresp_time():
+    wday = int(request.args.get('wday'))
+    M_fresp.selectday(wday)
+    M_fresp.listime()
+    return jsonify(startimes=M_fresp.startimes)
+
+
 
 # DATA
 @bp.route('/data', methods=['GET'])

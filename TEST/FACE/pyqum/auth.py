@@ -125,6 +125,7 @@ def user():
 @bp.route('/user/samples')
 def usersamples():
     samples = lisample(session['user_name'])
+    session['sample'] = samples
     return jsonify(samples=samples)
 
 
