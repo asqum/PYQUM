@@ -89,8 +89,8 @@ div.navbar {
     color: rgb(233, 98, 98);
 }
 
-/* Forms: input & select */
-input, select {
+/* Forms: input, select, textarea */
+input, select, textarea {
     /* styling */
     background-color: white;
     border: thin solid purple;
@@ -109,6 +109,15 @@ input, select {
     resize: vertical;
     width: 95%;
     /* text-align: left; */
+}
+input:focus, textarea:focus {
+	border: solid 3px #77bde0;	
+}
+/* additional customization just for textarea */
+textarea {
+	height: 100px;	
+	resize: none; 
+	overflow: auto;
 }
 label {
     word-wrap: break-word;

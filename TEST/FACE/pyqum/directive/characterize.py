@@ -102,41 +102,46 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     # ============================================================================================================================
 
 def test():
-    points = 3000
-    C = '5to9*%s'%points
-    CORDER = {'S-Parameter':'S12,S21,S22', 'IF-Bandwidth':'1000to2000*1', 'Power':'-9to-7*2', 'Frequency':C}
+    # points = 3000
+    # C = '5to9*%s'%points
+    # CORDER = {'S-Parameter':'S12,S21,S22', 'IF-Bandwidth':'1000to2000*1', 'Power':'-9to-7*2', 'Frequency':C}
     # points = 1000
     # C = '0.0003to0.6*%s'%points
-    # CORDER = {'S-Parameter':'S21,', 'IF-Bandwidth':'1000', 'Power':'-50', 'Frequency':C}
-    # access-only mode:
+    # CORDER = {'S-Parameter':'S21,', 'IF-Bandwidth':'1000', 'Power':'-70', 'Frequency':C}
+    points = 4000
+    C = '1to10*%s'%points
+    CORDER = {'S-Parameter':'S21,', 'IF-Bandwidth':'1000', 'Power':'0', 'Frequency':C}
+    # Initialization:
     M = F_Response()
     k = M.whichday()
     if k < 0:
         # Creating New Data:
         stage, prev = clocker(0) # Marking starting point of time
         i = prev
-        M = F_Response(corder=CORDER, comment='Myrron RF-amplifier test', tag='3D, cavity', dayindex=k)
+        # Run NEW
+        M = F_Response(corder=CORDER, comment='ISO-20-17 attenuation cross', tag='', dayindex=k)
         stage, prev = clocker(stage, prev) # Marking time lapsed
         print("Hence this pc can write 1 point for %ss" %((prev - i) / points))
     else:
         M.selectday(k)
-        M.listime()
-        m = M.whichmoment()
-        # reading Data
-        M.accesstructure()
+        
         # use this to corrupt data to test repair capability
         # print(Fore.RED + M.resetdata())
-        # M.accesstructure()
+        
+        # Manage Data
+        m = M.whichmoment()
+        M.selectmoment(m)
+        M.accesstructure()
         print(Fore.CYAN + "Data complete: %s"%M.data_complete)
         print(Fore.CYAN + "Data overflow: %s"%M.data_overflow)
         print(Fore.CYAN + "Data mismatch: %s"%M.data_mismatch)
         print(Fore.MAGENTA + M.repairdata())
-        M.accesstructure()
         M.loadata()
         M.buildata()
         print(M.datacontainer)
-        # Manage Data
+
         Ma = F_Response(corder=M.corder, dayindex=k, taskentry=m, resumepoint=M.resumepoint)
+
         if M.data_complete: 
             print("No action taken")
             # reading Data
@@ -160,5 +165,5 @@ def test():
             print(Ma.datacontainer)
    
 
-test()
+# test()
 

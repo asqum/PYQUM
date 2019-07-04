@@ -7,6 +7,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
+from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.directive.characterize import F_Response
 
 # Scientific Constants
@@ -51,8 +52,22 @@ def char_fresp_init():
 def char_fresp_time():
     wday = int(request.args.get('wday'))
     M_fresp.selectday(wday)
-    M_fresp.listime()
-    return jsonify(startimes=M_fresp.startimes)
+    return jsonify(taskentries=M_fresp.taskentries)
+@bp.route('/char/fresp/access', methods=['GET'])
+def char_fresp_access():
+	wmoment = int(request.args.get('wmoment'))
+	M_fresp.selectmoment(wmoment)
+	M_fresp.accesstructure()
+	csparam = waveform(M_fresp.corder['S-Parameter']).data
+	cifb = waveform(M_fresp.corder['IF-Bandwidth']).data
+	cpowa = waveform(M_fresp.corder['Power']).data
+	cfreq = waveform(M_fresp.corder['Frequency']).data
+	return jsonify(corder=M_fresp.corder, comment=M_fresp.comment, csparam=csparam, cifb=cifb, cpowa=cpowa, cfreq=cfreq)
+@bp.route('/char/fresp/data', methods=['GET'])
+def char_fresp_data():
+	M_fresp.loadata()
+	selectedata=M_fresp.selectedata
+	return jsonify()
 
 
 

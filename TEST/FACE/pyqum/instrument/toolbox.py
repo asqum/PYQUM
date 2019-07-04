@@ -101,6 +101,7 @@ def test():
     # command = '1 to 10 *           12 to     25 *    7'
     # command = ",s12 ,s21, s22,s11 ,   S22,S12,S21"
     command = "S,"
+    command = "10.0to0.0*1"
     wave = waveform(command)
     if wave.count == len(wave.data):
         print("Waveform of length %s is:\n %s" %(wave.count, wave.data))

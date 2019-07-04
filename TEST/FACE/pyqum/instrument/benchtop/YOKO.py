@@ -11,8 +11,8 @@ import visa
 from functools import wraps
 from time import sleep, time
 from contextlib import suppress
-from numpy import linspace
 from pyqum.instrument.logger import address, set_status, status_code
+from pyqum.instrument.toolbox import waveform
 
 def debug(state=False):
     exec('%s %s; %s = %s' %('global', debugger, debugger, 'state'), globals(), locals()) # open global and local both-ways channels!
@@ -57,39 +57,38 @@ def output(bench, state=0):
         status = 'Error'
     return status
 
-def sweep(bench, start, stop, datapts=1, pulsewidth=0.5, sweeprate=0.7):
+def sweep(bench, wave, pulsewidth=0.3, sweeprate=7):
     '''
     sweeprate in V/s
     pulsewidth: waiting/staying/settling/stabilization time in sec
     Voltage Range (AUTO): R2: 10mV; R3: 100mV; R4: 1V; R5: 10V; R6: 30V
     '''
-    SweepTime = abs(start - stop) / sweeprate + pulsewidth * datapts
     GPIBspeed = 62 #pts/s
-    Vdata = linspace(start, stop, datapts)
+    Vdata = waveform(wave).data
+    SweepTime = abs(waveform(wave).data[0] - waveform(wave).data[-1]) / sweeprate + pulsewidth * waveform(wave).count
+    
     for i,V in enumerate(Vdata):
         v_prev = float(previous(bench))
-        if i == 1:
+        if i == 0:
             Startime = time()
         try:
-            #smoothen the transition by setting as many points as possible
-            SweepRange = linspace(v_prev, V, int(abs(V-v_prev) * GPIBspeed / sweeprate))
+            #smoothen the transition by interpolating points as much as possible:
+            SweepRange = waveform("%sto%s*%s" %(v_prev, V, int(abs(V-v_prev) * GPIBspeed / sweeprate))).data
             for v in SweepRange:
                 bench.write('SA%.5fE'%v) #Set Voltage
-                # print("v: %.5f" %v)
-            if eval(debugger): 
-                print(Fore.YELLOW + "Settling %.5fV..." %V)
+            if eval(debugger):
+                print(Fore.YELLOW + "Staying %.5fV..." %V)
                 with suppress(NameError):
                     print(Fore.BLUE + "Time remaining: %.3fs" %(SweepTime - time() + Startime))
             sleep(pulsewidth)
         except:
-            pass
             print("Error setting V")
     return Vdata, SweepTime
 
 def close(bench, reset=False):
     if reset:
         previous(bench, True) # log last-applied voltage
-        sweep(bench, 0, 0) # return to zero
+        sweep(bench, "0to0*0") # return to zero
         output(bench, 0) # off output
         set_status(mdlname, dict(config='return to zero-off'))
     else: set_status(mdlname, dict(config='previous'))
@@ -110,14 +109,15 @@ def test(detail=True):
     if eval(debugger):
         output(s, 1)
         # sweep(s, 0, 7, 371)
-        factor = 1
-        V = 8 * factor
-        sweep(s, V, V, pulsewidth=3)
-        V = 10 * factor
-        sweep(s, V, V)
-        V = 12 * factor
-        sweep(s, V, V)
-        # sweep(s, 17, 3, 71) 
+        # factor = 1
+        # V = 8 * factor
+        # sweep(s, V, V, pulsewidth=3)
+        # V = 10 * factor
+        # sweep(s, V, V)
+        # V = 12 * factor
+        # sweep(s, V, V)
+        V_set = 10
+        sweep(s, "%sto0*1"%V_set, pulsewidth=10, sweeprate=V_set*60) # max sweep rate
     else: print(Fore.RED + "Basic IO Test")
     close(s, True)
     return

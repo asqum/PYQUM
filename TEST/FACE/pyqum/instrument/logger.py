@@ -279,8 +279,8 @@ class measurement:
             try:
                 self.day = self.daylist[index]
                 print(Back.GREEN + "Day selected: %s"%self.day)
-                self.timelist = [int(t.split('(')[1][:-1]) for t in listdir(self.mssnpath / self.day) if t.split('.')[0] == self.task]
-                self.timelist.sort(reverse=False) #ascending order
+                self.taskentries = [int(t.split('(')[1][:-1]) for t in listdir(self.mssnpath / self.day) if t.split('.')[0] == self.task]
+                self.taskentries.sort(reverse=False) #ascending order
             except(ValueError): 
                 print("index might be out of range")
                 pass
@@ -290,8 +290,8 @@ class measurement:
         '''This can be replaced by HTML Forms Input'''
         while True:
             try:
-                k = int(input("Which moment would you like to check out (1-%s): " %self.timelist[-1]))
-                if k in self.timelist:
+                k = int(input("Which moment would you like to check out (1-%s): " %self.taskentries[-1]))
+                if k in self.taskentries:
                     break
             except(ValueError):
                 print("Bad index. Please use numeric!")
@@ -299,7 +299,7 @@ class measurement:
 
     def selectmoment(self, entry):
         '''select data from time-log'''
-        # select file in resume/access mode
+        # select file in resume/access mode (Please avoid -ve because bool(-ve) also returns TRUE)
         if entry:
             self.filename = "%s.pyqum(%s)" %(self.task, entry)
             self.pqfile = self.mssnpath / self.day / self.filename
@@ -308,9 +308,10 @@ class measurement:
     def listime(self):
         '''list all the logged time for each day
             Pre-requisite: selectday
+            effect: open every task file to extract the time-stamp
         '''
         startimes = []
-        for k in self.timelist:
+        for k in self.taskentries:
             self.selectmoment(k)
             with open(self.pqfile, 'rb') as datapie:
                 datapie.seek(2)
@@ -344,6 +345,7 @@ class measurement:
             # Access library keys:
             self.corder = [x for x in self.datacontainer.values()][0]['c-order']
             self.datadensity = [x for x in self.datacontainer.values()][0]['data-density']
+            self.comment = [x for x in self.datacontainer.values()][0]['comment']
             # Derive judging tools:
             self.datasize = prod([waveform(x).count for x in self.corder.values()]) * self.datadensity
             self.data_complete = (self.datasize*8==self.writtensize)

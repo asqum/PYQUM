@@ -11,6 +11,7 @@
 
     <div class="tab2">
     <form method='GET'>
+        <button class='dc' id='yokogawa'>YOKOGAWA</button>
         <button class='dc' id='amplifier'>AMPLIFIER</button>
         <button class='dc' id='wavein'>WAVE-IN</button>
         <button class='dc' id='ivcurve'>I-Vb</button> 
@@ -93,6 +94,21 @@
            
             
             
+        </div>
+    </div>
+
+    <div class="dccontent" id="yokogawa">
+        <div class="container">
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-10" id='left'><label>V Pulse</label></div>
+                <div class="col-12" id='left'><input class='dc scale' id="yokogawa" name='vpulse' type="text" value="10"/></div>
+                <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vpulse' value="V"></div>
+                <div class="col-5" id='left'></div>
+                <div class="col-10" id='left'><label>Duration</label></div>
+                <div class="col-12" id='left'><input class='dc scale' id="yokogawa" name='vpulse-dur' type="text" value="1000"/></div>
+                <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vpulse-dur' value="ms"></div>
+                <div class="col-15" id='right'><button class='dc push_button w-95 blue' id='yokogawa' name='vpulse-send'>SEND</button></div>
+            </div>
         </div>
     </div>
 

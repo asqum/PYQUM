@@ -354,8 +354,28 @@ $(function () {
     });
 });
 
-
-
+// show yokogawa's page
+$(function() {
+    $('button.dc#yokogawa').bind('click', function() {
+        $('div.dc-ind').hide();
+        $('div.dccontent').hide();
+        $('div.dccontent#yokogawa').show();
+        $('button.dc').removeClass('selected');
+        $('button.dc#yokogawa').addClass('selected');
+        return false;
+    });
+});
+// send yokogawa V-Pulse
+$(function() {
+    $('button.dc#yokogawa[name="vpulse-send"]').bind('click', function() {
+        $.getJSON('/mach/dc/yokogawa/vpulse', {
+            vset: $('input.dc#yokogawa[name="vpulse"]').val(),
+            pwidth: $('input.dc#yokogawa[name="vpulse-dur"]').val()
+        }, function(data) {
+            console.log("SweepTime: " + data.SweepTime);
+        });
+    });
+});
 
 
 

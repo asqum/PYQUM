@@ -40,19 +40,46 @@ $(function () {
         $.getJSON('/mssn/char/fresp/time', {
             wday: wday
         }, function (data) {
-            $('select.char#fresp[name="wmoment"]').empty();
-            $.each(data.startimes, function(i,v){
-                $('select.char#fresp[name="wmoment"]').append($('<option>', {
-                    text: v,
-                    value: i+1
-                }));
-            });
+            $('select.char#fresp[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.taskentries, function(i,v){ $('select.char#fresp[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
         });
     });
 });
-// plot data based on time picked
+
+// access data based on time picked
 $(function () {
     $('select.char#fresp[name="wmoment"]').on('change', function () {
+        var wmoment = $('select.char#fresp[name="wmoment"]').val();
+        $.getJSON('/mssn/char/fresp/access', {
+            // input/select value here:
+            wmoment: wmoment
+        }, function (data) {
+            console.log(data.corder);
+            // load each command:
+            $('input.char#fresp[name="sparam"]').val(data.corder['S-Parameter']);
+            $('input.char#fresp[name="ifb"]').val(data.corder['IF-Bandwidth']);
+            $('input.char#fresp[name="powa"]').val(data.corder['Power']);
+            $('input.char#fresp[name="freq"]').val(data.corder['Frequency']);
+            // load comment:
+            $('textarea.char#fresp[name="comment"]').val(data.comment);
+            // load c-range for each command:
+            $('select.char#fresp[name="c-sparam"]').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.csparam, function(i,v){ $('select.char#fresp[name="c-sparam"]').append($('<option>', { text: v, value: i+1 })); });
+            $('select.char#fresp[name="c-ifb"]').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.cifb, function(i,v){ $('select.char#fresp[name="c-ifb"]').append($('<option>', { text: v, value: i+1 })); });
+            $('select.char#fresp[name="c-powa"]').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.cpowa, function(i,v){ $('select.char#fresp[name="c-powa"]').append($('<option>', { text: v, value: i+1 })); });
+            $('select.char#fresp[name="c-freq"]').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.cfreq, function(i,v){ $('select.char#fresp[name="c-freq"]').append($('<option>', { text: v, value: i+1 })); });
+        });
+    });
+});
+
+
+
+// plot data based on time picked
+$(function () {
+    $('select.char#fresp[name="wmo"]').on('change', function () {
         $.getJSON('/mssn/char/fresp/run', {
             // input/select value here:
             wmoment: $('select.char#fresp[name="wmoment"]').val()

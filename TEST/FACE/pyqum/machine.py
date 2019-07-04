@@ -20,7 +20,7 @@ from si_prefix import si_format, si_parse
 from pyqum.instrument.modular import AWG, VSA
 # seems like AWG's working-instance works differently than VSA's
 awgsess = AWG.InitWithOptions()
-from pyqum.instrument.benchtop import DSO, PNA
+from pyqum.instrument.benchtop import DSO, PNA, YOKO
 # dsobench = DSO.Initiate()
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
@@ -401,6 +401,15 @@ def bdrhistory():
 def dc():
     print("loading dc.html")
     return render_template("blog/machn/dc.html")
+@bp.route('/dc/yokogawa/vpulse', methods=['GET'])
+def dc_yokogawa_vpulse():
+    yokog = YOKO.Initiate()
+    YOKO.output(yokog, 1)
+    vset = float(request.args.get('vset'))
+    pwidth = float(request.args.get("pwidth"))
+    stat = YOKO.sweep(yokog, "%sto0*1"%vset, pulsewidth=pwidth*1e-3, sweeprate=vset*60)
+    YOKO.close(yokog, True)
+    return jsonify(SweepTime=stat[1])
 @bp.route('/dc/amplifier', methods=['GET'])
 def dcamplifier():
     ampstat = request.args.get('ampstat')
