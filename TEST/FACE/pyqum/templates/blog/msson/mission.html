@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/mssn.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
   <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/mssn.js') }}"></script>
 {% endblock %}
 
@@ -18,7 +19,6 @@
     $('.navbar button.mission').addClass('active');
     $(function(){
       $("div#all").load("{{ url_for('mission.all') }}");
-      $("div#data").load("{{ url_for('mission.data') }}");
       $("div#char").load("{{ url_for('mission.char') }}");
       
     });
@@ -26,13 +26,11 @@
 
 <div class="tab">
   <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button>
-  <button class="tablinks" id="data-tab" onclick="openTab(event, 'data')"><b>DATA</b></button>
   <button class="tablinks" id="char-tab" onclick="openTab(event, 'char')">CHAR</button>
   
 </div>
 
 <div id="all" class="tabcontent"></div>
-<div id="data" class="tabcontent"></div>
 <div id="char" class="tabcontent"></div>
 
 

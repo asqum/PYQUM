@@ -6,8 +6,12 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 
 import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
+from numpy import array
+
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
+from pyqum.instrument.analyzer import IQAP
+
 from pyqum.directive.characterize import F_Response
 
 # Scientific Constants
@@ -37,7 +41,7 @@ def allinsertopt():
     x = [100, 200, 300, 400, 500, 600, 777]
     return jsonify(x=x)
 
-# CHAR
+# CHAR - F Response:
 @bp.route('/char', methods=['GET'])
 def char(): 
     return render_template("blog/msson/char.html")
@@ -58,40 +62,39 @@ def char_fresp_access():
 	wmoment = int(request.args.get('wmoment'))
 	M_fresp.selectmoment(wmoment)
 	M_fresp.accesstructure()
-	csparam = waveform(M_fresp.corder['S-Parameter']).data
-	cifb = waveform(M_fresp.corder['IF-Bandwidth']).data
-	cpowa = waveform(M_fresp.corder['Power']).data
-	cfreq = waveform(M_fresp.corder['Frequency']).data
-	return jsonify(corder=M_fresp.corder, comment=M_fresp.comment, csparam=csparam, cifb=cifb, cpowa=cpowa, cfreq=cfreq)
-@bp.route('/char/fresp/data', methods=['GET'])
-def char_fresp_data():
+	csparam = waveform(M_fresp.corder['S-Parameter'])
+	cifb = waveform(M_fresp.corder['IF-Bandwidth'])
+	cpowa = waveform(M_fresp.corder['Power'])
+	cfreq = waveform(M_fresp.corder['Frequency'])
+	global c_fresp_structure
+	c_fresp_structure = [csparam.count,cifb.count,cpowa.count,cfreq.count*M_fresp.datadensity]
+	return jsonify(corder=M_fresp.corder, comment=M_fresp.comment, csparam=csparam.data, cifb=cifb.data, cpowa=cpowa.data, cfreq=cfreq.data)
+# Chart is supposedly shared by all measurements (under construction for nulti-purpose)
+@bp.route('/char/fresp/1ddata', methods=['GET'])
+def char_fresp_1ddata():
+	try: isparam = int(request.args.get('isparam'))
+	except(ValueError): isparam = request.args.get('isparam')
+	try: iifb = int(request.args.get('iifb'))
+	except(ValueError): iifb = request.args.get('iifb')
+	try: ipowa = int(request.args.get('ipowa'))
+	except(ValueError): ipowa = request.args.get('ipowa')
+	# try: ifreq = int(request.args.get('ifreq'))
+	# except(ValueError): ifreq = request.args.get('ifreq')
 	M_fresp.loadata()
 	selectedata=M_fresp.selectedata
-	return jsonify()
+	selected = [selectedata[gotocdata([isparam, iifb, ipowa, x], c_fresp_structure)] for x in range(waveform(M_fresp.corder['Frequency']).count*M_fresp.datadensity)]
+	yI, yQ, Amp, Pha = IQAP(array(selected))
+	x1, y1, x2, y2 = waveform(M_fresp.corder['Frequency']).data, Amp, [], []
+	return jsonify(x1=x1, y1=y1, x2=x2, y2=y2)
 
 
 
-# DATA
-@bp.route('/data', methods=['GET'])
-def data(): 
-    return render_template("blog/msson/data.html")
 
 
-def test():
-    Op = "a"
-    M = RTAmp([0,0,1], [-70,-50,3], [0.7e9,18e9,251], [10,10,1], [0,1,2], '', Op)
-    if Op.lower() != "n":
-        M.selectday(0)
-        M.selectmoment(1)
-        M.accesstructure()
-        M.loadata()
-        print(M.selectedata[-1])
-        M.buildata()
-        print(M.datacontainer)
-
-# test()
 
 
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
+
+

@@ -35,7 +35,8 @@ $(function() {
 // list time based on day picked
 $(function () {
     $('select.char#fresp[name="wday"]').on('change', function () {
-        var wday = $('select.char#fresp[name="wday"]').val();
+        // Make global variable:
+        window.wday = $('select.char#fresp[name="wday"]').val();
         console.log("Day Picked: " + wday);
         $.getJSON('/mssn/char/fresp/time', {
             wday: wday
@@ -49,7 +50,8 @@ $(function () {
 // access data based on time picked
 $(function () {
     $('select.char#fresp[name="wmoment"]').on('change', function () {
-        var wmoment = $('select.char#fresp[name="wmoment"]').val();
+        // Make global variable:
+        window.wmoment = $('select.char#fresp[name="wmoment"]').val();
         $.getJSON('/mssn/char/fresp/access', {
             // input/select value here:
             wmoment: wmoment
@@ -63,34 +65,36 @@ $(function () {
             // load comment:
             $('textarea.char#fresp[name="comment"]').val(data.comment);
             // load c-range for each command:
-            $('select.char#fresp[name="c-sparam"]').empty().append($('<option>', { text: 'pick', value: '' }));
-            $.each(data.csparam, function(i,v){ $('select.char#fresp[name="c-sparam"]').append($('<option>', { text: v, value: i+1 })); });
-            $('select.char#fresp[name="c-ifb"]').empty().append($('<option>', { text: 'pick', value: '' }));
-            $.each(data.cifb, function(i,v){ $('select.char#fresp[name="c-ifb"]').append($('<option>', { text: v, value: i+1 })); });
-            $('select.char#fresp[name="c-powa"]').empty().append($('<option>', { text: 'pick', value: '' }));
-            $.each(data.cpowa, function(i,v){ $('select.char#fresp[name="c-powa"]').append($('<option>', { text: v, value: i+1 })); });
-            $('select.char#fresp[name="c-freq"]').empty().append($('<option>', { text: 'pick', value: '' }));
-            $.each(data.cfreq, function(i,v){ $('select.char#fresp[name="c-freq"]').append($('<option>', { text: v, value: i+1 })); });
+            $('select.char#fresp[name="c-sparam"]').empty().append($('<option>', { text: 'All', value: 'all' }));
+            $.each(data.csparam, function(i,v){ $('select.char#fresp[name="c-sparam"]').append($('<option>', { text: v, value: i })); });
+            $('select.char#fresp[name="c-ifb"]').empty().append($('<option>', { text: 'All', value: 'all' }));
+            $.each(data.cifb, function(i,v){ $('select.char#fresp[name="c-ifb"]').append($('<option>', { text: v, value: i })); });
+            $('select.char#fresp[name="c-powa"]').empty().append($('<option>', { text: 'All', value: 'all' }));
+            $.each(data.cpowa, function(i,v){ $('select.char#fresp[name="c-powa"]').append($('<option>', { text: v, value: i })); });
+            $('select.char#fresp[name="c-freq"]').empty().append($('<option>', { text: 'All', value: 'all' }));
+            $.each(data.cfreq, function(i,v){ $('select.char#fresp[name="c-freq"]').append($('<option>', { text: v, value: i })); });
         });
     });
 });
 
-
-
-// plot data based on time picked
+// plot 1D-data based on c-parameters picked
 $(function () {
-    $('select.char#fresp[name="wmo"]').on('change', function () {
-        $.getJSON('/mssn/char/fresp/run', {
-            // input/select value here:
-            wmoment: $('select.char#fresp[name="wmoment"]').val()
+    $('input.char#1d-data').on('click', function () {
+        var isparam = $('select.char#fresp[name="c-sparam"]').val();
+        var iifb = $('select.char#fresp[name="c-ifb"]').val();
+        var ipowa = $('select.char#fresp[name="c-powa"]').val();
+        var ifreq = $('select.char#fresp[name="c-freq"]').val();
+        console.log("Picked: " + isparam);
+        $.getJSON('/mssn/char/fresp/1ddata', {
+            isparam: isparam, iifb: iifb, ipowa: ipowa, ifreq: ifreq
         }, function (data) {
-            console.log(data.Idata);
+            console.log(data.y1);
             
-            let traceI = {x: [], y: [], mode: 'lines', type: 'scatter', 
-                name: 'I (' + wday + ', ' + wmoment + ')',
+            let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
+                name: 'L (' + wday + ', ' + wmoment + ')',
                 line: {color: 'rgb(23, 151, 6)', width: 3} };
-            let traceQ = {x: [], y: [], mode: 'lines', type: 'scatter', 
-                name: 'Q (' + wday + ', ' + wmoment + ')',
+            let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', 
+                name: 'R (' + wday + ', ' + wmoment + ')',
                 line: {color: 'blue', width: 3} };
 
             let layout = {
@@ -99,7 +103,7 @@ $(function () {
                 width: $(window).width()*0.75,
                 xaxis: {
                     zeroline: false,
-                    title: "<b>time(hr)</b>",
+                    title: "<b>frequency(GHz)</b>",
                     titlefont: {size: 18},
                     tickfont: {size: 18},
                     tickwidth: 3,
@@ -115,7 +119,7 @@ $(function () {
                 },
                 yaxis2: {
                     zeroline: false,
-                    title: '<b>T(K)</b>', 
+                    title: '<b>Pha(rad)</b>', 
                     titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
                     tickfont: {color: 'rgb(148, 103, 189)', size: 18},
                     tickwidth: 3,
@@ -131,32 +135,36 @@ $(function () {
                     xanchor: 'right',
                     y: 1.05,
                     yanchor: 'bottom',
-                    text: '<b>P(mbar)</b>',
+                    text: '<b>Amp(dB)</b>',
                     font: {size: 18},
                     showarrow: false,
                     textangle: 0
                   }]
                 };
             
-            $.each(data.tp, function(i, val) {traceP.x.push(val);});
-            $.each(data.P, function(i, val) {traceP.y.push(val);});
-            $.each(data.tt, function(i, val) {traceT.x.push(val);});
-            $.each(data.T, function(i, val) {traceT.y.push(val);});
-            
+            $.each(data.x1, function(i, val) {traceL.x.push(val);});
+            $.each(data.y1, function(i, val) {traceL.y.push(val);});
+            $.each(data.x2, function(i, val) {traceR.x.push(val);});
+            $.each(data.y2, function(i, val) {traceR.y.push(val);});
+
+            var Trace = [traceL, traceR]
             Plotly.newPlot('char-chart-01', Trace, layout, {showSendToCloud: true});
-            console.log(traceP.x);
-            console.log(traceP.y);
-            console.log(traceT.y);
-            $('div.char#startP').empty();
-            $('div.char#startP').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
-            append($('<span style="color: red;"></span>').text(data.startimeP));
-            $('div.char#startT').empty();
-            $('div.char#startT').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
-            append($('<span style="color: red;"></span>').text(data.startimeT));;
+            
+            // $('div.char#startP').empty();
+            // $('div.char#startP').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
+            // append($('<span style="color: red;"></span>').text(data.startimeP));
+            // $('div.char#startT').empty();
+            // $('div.char#startT').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
+            // append($('<span style="color: red;"></span>').text(data.startimeT));;
         });
         return false;
     });
 });
+
+
+
+
+
 
 //autoscale on submit (override input defaults)
 $('input.char#autoscale').bind('click', function () {
@@ -178,7 +186,10 @@ $('input.char#autoscale').bind('click', function () {
     return false;
 });
 
-
+$('.modal-toggle').on('click', function(e) {
+    e.preventDefault();
+    $('.modal').toggleClass('is-visible');
+  });
 
  
 

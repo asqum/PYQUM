@@ -50,9 +50,12 @@ def TESTC(tag="", datadensity=1, instr=[], corder={}, comment='', dayindex='', t
 
 # @settings(session['user_name'], 'Sam')
 @settings('ABC', 'Sam')
-def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['ENA','ENA','ENA'], datadensity=2):
-    '''Characterizing 3D-cavity
-    C-Order: IF-Bandwidth, Power, Frequency
+def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['ENA'], datadensity=2):
+    '''Characterizing Frequency Response:
+    C-Order: S-Parameter, IF-Bandwidth, Power, Frequency
+    Before dayindex: freely customized by user
+    From instr onward: value set is intrinsic to the task
+    In-betweens: depends on mode / high interaction with the system
     '''
     # pushing pre-measurement parameters to settings:
     yield tag, datadensity, instr, corder, comment, dayindex, taskentry
@@ -140,6 +143,7 @@ def test():
         M.buildata()
         print(M.datacontainer)
 
+        # Auto-Update if any
         Ma = F_Response(corder=M.corder, dayindex=k, taskentry=m, resumepoint=M.resumepoint)
 
         if M.data_complete: 
