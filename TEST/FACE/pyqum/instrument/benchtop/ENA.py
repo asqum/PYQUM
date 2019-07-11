@@ -160,6 +160,10 @@ def sdata(bench):
     # print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
     return datas
 
+def preset(bench):
+    stat = bench.write(':SYSTem:PRESet')
+    return stat
+
 def close(bench, reset=True):
     try:
         if reset:
@@ -187,9 +191,9 @@ def test(detail=True):
         if debug(mdlname, detail):
             # print(setrace(bench, window='D12_34'))
             print(setrace(bench, Mparam=['S12'], window='D1'))
-            power(bench, action=['Set', -8])
+            power(bench, action=['Set', -35])
             power(bench)
-            N = 7000
+            N = 1000
             sweep(bench, action=['Set', 'OFF 10', N])
             # sweep(bench, action=['Set', 'ON', N])
             f_start, f_stop = 0.7e9, 18e9
@@ -198,7 +202,7 @@ def test(detail=True):
             fstart, fstop = stat[1]['START'], stat[1]['STOP']
             # Building X-axis
             fstart, fstop = float(fstart), float(fstop)
-            X = list(linspace(fstart, fstop, N))
+            # X = list(linspace(fstart, fstop, N))
             noisefilfac = 2000
             IFB = abs(float(fstart) - float(fstop))/N/noisefilfac
             ifbw(bench, action=['Set', IFB])
@@ -227,6 +231,8 @@ def test(detail=True):
 
             rfports(bench, action=['Set', 'OFF'])
             rfports(bench)
+            # TEST SCPI ZONE:
+            bench.write(':SYSTem:PRESet')
         else: print(Fore.RED + "Basic IO Test")
     close(bench)
     return

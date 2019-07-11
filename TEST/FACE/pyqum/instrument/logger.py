@@ -348,6 +348,7 @@ class measurement:
             self.comment = [x for x in self.datacontainer.values()][0]['comment']
             # Derive judging tools:
             self.datasize = prod([waveform(x).count for x in self.corder.values()]) * self.datadensity
+            self.data_progress = int(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)
             self.data_mismatch = self.writtensize%waveform([i for i in self.corder.values()][-1]).count*8 # counts for the last key of c-order
@@ -430,7 +431,7 @@ def settings(usr_name='USR', sample='Sample'):
                 for i,x in enumerate(Generator): #yielding data from measurement-module
                     print('\n' + Fore.GREEN + 'Writing Data...')
                     M.insertdata(x)
-                    sleep(3)
+                    # sleep(3) #for debugging purposes
             except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
         
         # Measurement Object/Session:

@@ -289,6 +289,10 @@ select:focus {
     width: 12%;
     margin-top: 6px;
 }
+.col-13 {
+    width: 13%;
+    margin-top: 6px;
+}
 .col-15 {
     width: 15%;
     margin-top: 6px;
@@ -322,6 +326,10 @@ select:focus {
     margin-top: 6px;
 }
 .col-48 {
+    width: 48%;
+    margin-top: 6px;
+}
+.col-49 {
     width: 48%;
     margin-top: 6px;
 }

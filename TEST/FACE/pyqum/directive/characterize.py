@@ -90,14 +90,15 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
             ENA.ifbw(bench, action=['Set', ifb.data[caddress[1]]])
             ENA.power(bench, action=['Set', powa.data[caddress[2]]])
             # start sweeping:
-            stat = ENA.sweep(bench)
+            stat = ENA.sweep(bench) #getting the estimated sweeping time
             print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
             print("Operation Complete: %s" %bool(ENA.measure(bench)[1]))
             # adjusting display on ENA:
             ENA.autoscal(bench)
             ENA.selectrace(bench, action=['Set', 'para 1 calc 1'])
             data = ENA.sdata(bench)
-            print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
+            # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
+            print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*100), end='\r', flush=True)
             yield data
 
     ENA.rfports(bench, action=['Set', 'OFF'])
@@ -111,9 +112,9 @@ def test():
     # points = 1000
     # C = '0.0003to0.6*%s'%points
     # CORDER = {'S-Parameter':'S21,', 'IF-Bandwidth':'1000', 'Power':'-70', 'Frequency':C}
-    points = 4000
-    C = '1to10*%s'%points
-    CORDER = {'S-Parameter':'S21,', 'IF-Bandwidth':'1000', 'Power':'0', 'Frequency':C}
+    points = 3000
+    C = '5to8*%s'%points
+    CORDER = {'S-Parameter':'S21,', 'IF-Bandwidth':'300', 'Power':'10', 'Frequency':C}
     # Initialization:
     M = F_Response()
     k = M.whichday()
@@ -122,7 +123,7 @@ def test():
         stage, prev = clocker(0) # Marking starting point of time
         i = prev
         # Run NEW
-        M = F_Response(corder=CORDER, comment='ISO-20-17 attenuation cross', tag='', dayindex=k)
+        M = F_Response(corder=CORDER, comment='KF-3 ISO-11 LNF-LNC4_8A-ON w/o switch', tag='', dayindex=k)
         stage, prev = clocker(stage, prev) # Marking time lapsed
         print("Hence this pc can write 1 point for %ss" %((prev - i) / points))
     else:

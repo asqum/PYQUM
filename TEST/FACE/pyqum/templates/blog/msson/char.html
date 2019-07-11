@@ -13,84 +13,16 @@
         <div class="tab2">
             <button class='char' id='fresp'>F-Response</button>
         </div>
+
+        <script>
+            $(function(){
+                $("div#fresp").load("{{ url_for('mission.char_fresp') }}");
+            });
+        </script>
         
         <!-- page content based on button clicked -->
-        <div class="charcontent" id="fresp">
-            <div class="container">
-
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <!-- 1. F-Response -->
-                    <div class="col-25" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
-                    <div class="col-10" id='left'><select class='char' id="fresp" name="wmoment" type="text"></select></div>
-                    <div class="col-15" id='left'><button class='char' id="fresp" name="progress"></button></div>
-                    
-                </div>
-
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <!-- 1. F-Response -->
-                    <div class="col-20" id='left'>
-                        <input class='char' id="fresp" name="sparam" type="text" value="S21,"/>
-                    </div>
-                    <div class="col-20" id='left'>
-                        <input class='char' id="fresp" name="ifb" type="text" value="1000"/>
-                    </div>
-                    <div class="col-20" id='left'>
-                        <input class='char' id="fresp" name="powa" type="text" value="-37"/>
-                    </div> 
-                    <div class="col-20" id='left'>
-                        <input class='char' id="fresp" name="freq" type="text" value="5 to 9 * 3000"/>
-                    </div>
-                </div>
-                     
-                
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <!-- 1. F-Response -->
-                    <div class="col-75" id='left'>
-                        <textarea class='char' id="fresp" name="comment" type="text" rows="3" cols="73">--comment--</textarea>
-                    </div>
-                </div>
-
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <!-- 1. F-Response -->
-                    <div class="col-20" id='left'><select class='char' id="fresp" name="c-sparam" type="text"></select></div>
-                    <div class="col-20" id='left'><select class='char' id="fresp" name="c-ifb" type="text"></select></div>
-                    <div class="col-20" id='left'><select class='char' id="fresp" name="c-powa" type="text"></select></div>
-                    <div class="col-20" id='left'><select class='char' id="fresp" name="c-freq" type="text"></select></div>
-                </div>
-
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-20" id='left'><input class='char' id='1d-data' type="submit" value="1D-Data"/></div>
-                </div>
-                
-                <button class="modal-toggle">Show modal</button>
-                
-                <div class="modal">
-                    <div class="modal-overlay modal-toggle"></div>
-                    <div class="modal-wrapper modal-transition">
-                        <div class="modal-header">
-                            <button class="modal-close modal-toggle"><svg class="icon-close icon" viewBox="0 0 32 32"><use xlink:href="#icon-close"></use></svg></button>
-                            <h2 class="modal-heading">This is a modal</h2>
-                        </div>
-                          
-                        <div class="modal-body">
-                            <div class="modal-content">
-                                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Impedit eum delectus, libero, accusantium dolores inventore obcaecati placeat cum sapiente vel laboriosam similique totam id ducimus aperiam, ratione fuga blanditiis maiores.</p>
-                                <button class="modal-toggle">Update</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-                <div id="char-chart-01"></div>
-            </div>
-        </div>
-    
-        <div class="charcontent" id="TBD">
-            <div class="container">
-                
-            </div>
-        </div>
+        <div class="charcontent" id="fresp"></div>
+        <div class="charcontent" id="TBD"></div>
     
     </div>
 

@@ -357,12 +357,27 @@ $(function () {
 // show yokogawa's page
 $(function() {
     $('button.dc#yokogawa').bind('click', function() {
-        $('div.dc-ind').hide();
         $('div.dccontent').hide();
         $('div.dccontent#yokogawa').show();
         $('button.dc').removeClass('selected');
         $('button.dc#yokogawa').addClass('selected');
         return false;
+    });
+});
+// toggle yokogawa connection
+$(function () {
+    $('input.dc#init-yokogawa').click(function () { 
+        //indicate it is still running:
+        $( "i.dc" ).remove(); //clear previous
+        $('button.dc#yokogawa[name="init"]').prepend("<i class='dc fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var yokostat = $('input.dc#init-yokogawa').is(':checked'); //use css to respond to click / touch
+        // toggle ON-OFF connection with yokogawa
+        $.getJSON('/mach'+'/dc/yokogawa', {
+            yokostat: yokostat
+        }, function (data) {
+            $( "i.dc" ).remove(); //clear previous
+            console.log("Previous: " + data.prev);
+        });
     });
 });
 // send yokogawa V-Pulse
@@ -371,6 +386,26 @@ $(function() {
         $.getJSON('/mach/dc/yokogawa/vpulse', {
             vset: $('input.dc#yokogawa[name="vpulse"]').val(),
             pwidth: $('input.dc#yokogawa[name="vpulse-dur"]').val()
+        }, function(data) {
+            console.log("SweepTime: " + data.SweepTime);
+        });
+    });
+});
+// send yokogawa on-off
+$(function() {
+    $('button.dc#yokogawa[name="onoff-send"]').bind('click', function() {
+        $.getJSON('/mach/dc/yokogawa/onoff', {
+        }, function(data) {
+        });
+    });
+});
+// send yokogawa V-Wave
+$(function() {
+    $('button.dc#yokogawa[name="vwave-sweep"]').bind('click', function() {
+        $.getJSON('/mach/dc/yokogawa/vwave', {
+            vwave: $('input.dc#yokogawa[name="vwave"]').val(),
+            pwidth: $('input.dc#yokogawa[name="vwave-dur"]').val(),
+            swprate: $('input.dc#yokogawa[name="vwave-rate"]').val()
         }, function(data) {
             console.log("SweepTime: " + data.SweepTime);
         });

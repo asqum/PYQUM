@@ -24,7 +24,7 @@ from pyqum.instrument.benchtop import DSO, PNA, YOKO
 # dsobench = DSO.Initiate()
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
-from pyqum.instrument.toolbox import match
+from pyqum.instrument.toolbox import match, waveform
 
 encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
@@ -281,6 +281,105 @@ def sgget():
         message = dict(status='%s is not connected' %sgtype)
     return jsonify(message=message)
 
+# NA
+@bp.route('/na', methods=['GET'])
+def na(): 
+    global nabench, NA
+    try: print(Fore.GREEN + "Connected NA: %s" %nabench.keys())
+    except: nabench, NA = {}, {}
+    return render_template("blog/machn/na.html")
+@bp.route('/na/log', methods=['GET'])
+def nalog():
+    log = get_status(request.args.get('natype'))
+    return jsonify(log=log)
+@bp.route('/na/connect', methods=['GET'])
+def naconnect():
+    natype = request.args.get('natype')
+    if natype not in nabench.keys():
+        try:
+            NA[natype] = im("pyqum.instrument.benchtop.%s" %natype)
+            nabench[natype] = NA[natype].Initiate()
+            message = "Successfully connected to %s" %natype
+        except:
+            message = "Please check %s's connection configuration or interface" %natype
+    else: message = "%s is already linked-up" %natype
+    linkedna = [x for x in nabench.keys()]
+    print(linkedna)
+    return jsonify(message=message,linkedna=linkedna)
+@bp.route('/na/closet', methods=['GET'])
+def nacloset():
+    natype = request.args.get('natype')
+    status = NA[natype].close(nabench[natype])
+    del NA[natype],nabench[natype]
+    return jsonify(message=status)
+@bp.route('/na/preset', methods=['GET'])
+def napreset():
+    natype = request.args.get('natype')
+    status = NA[natype].preset(nabench[natype])
+    del NA[natype],nabench[natype]
+    return jsonify(message=status)
+@bp.route('/na/set/freqrange', methods=['GET'])
+def nasetfreqrange():
+    natype = request.args.get('natype')
+    freqrange = waveform(request.args.get('freqrange'))
+    frequnit = request.args.get('frequnit').upper().replace('HZ','')
+    NA[natype].sweep(nabench[natype], action=['Set', 'ON', freqrange.count])
+    fstart, fstop = si_parse(str(freqrange.data[0])+frequnit), si_parse(str(freqrange.data[-1])+frequnit)
+    NA[natype].sweep(nabench[natype], action=['Set', 'ON', freqrange.count])
+    NA[natype].linfreq(nabench[natype], action=['Set', fstart, fstop])
+    message = 'frequency: %s to %s' %(fstart, fstop)
+    return jsonify(message=message)
+@bp.route('/na/set/powa', methods=['GET'])
+def nasetpowa():
+    natype = request.args.get('natype')
+    powa = request.args.get('powa')
+    stat = NA[natype].power(nabench[natype], action=['Set', powa])
+    message = 'power: %s <%s>' %(stat[1], stat[0])
+    return jsonify(message=message)
+@bp.route('/na/set/ifb', methods=['GET'])
+def nasetifb():
+    natype = request.args.get('natype')
+    ifb = request.args.get('ifb')
+    print(NA[natype])
+    stat = NA[natype].ifbw(nabench[natype], action=['Set', ifb])
+    message = 'ifb: %s <%s>' %(stat[1], stat[0])
+    return jsonify(message=message)
+@bp.route('/na/set/ave', methods=['GET'])
+def nasetave():
+    natype = request.args.get('natype')
+    ave = request.args.get('ave')
+    stat = NA[natype].averag(nabench[natype], action=['Set', ave])
+    message = 'average: %s <%s>' %(stat[1], stat[0])
+    return jsonify(message=message)
+@bp.route('/na/set/sparam', methods=['GET'])
+def nasetsparam():
+    natype = request.args.get('natype')
+    sparam = request.args.get('sparam')
+    stat = NA[natype].setrace(nabench[natype], Mparam=[sparam], window='D1')
+    message = 'S-parameter: <%s>' %stat
+    return jsonify(message=message)
+@bp.route('/na/set/sweep', methods=['GET'])
+def nasetsweep():
+    natype = request.args.get('natype')
+    NA[natype].measure(nabench[natype])
+    NA[natype].autoscal(nabench[natype])
+    stat = NA[natype].rfports(nabench[natype], action=['Set', 'OFF'])
+    message = 'RF output: %s <%s>' %(stat[1], stat[0])
+    return jsonify(message=message)
+@bp.route('/na/get', methods=['GET'])
+def naget():
+    natype = request.args.get('natype')
+    message = {}
+    try:
+        # message['frequency'] = si_format(float(NA[natype].frequency(nabench[natype])[1]['CW']),precision=3) + "Hz" # frequency
+        message['power'] = si_format(float(NA[natype].power(nabench[natype])[1]['LEVEL']),precision=1) + "dBm" # power
+        message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natype])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb
+        message['ave'] = si_format(float(NA[natype].averag(nabench[natype])[1]['COUNT']),precision=0) # ave
+        message['rfports'] = int(NA[natype].rfports(nabench[natype])[1]['STATE']) # rf output
+    except:
+        message = dict(status='%s is not connected' %natype)
+    return jsonify(message=message)
+
 # DSO
 @bp.route('/dso', methods=['GET'])
 def dso():
@@ -401,15 +500,39 @@ def bdrhistory():
 def dc():
     print("loading dc.html")
     return render_template("blog/machn/dc.html")
+# YOKOGAWA 7651
+@bp.route('/dc/yokogawa', methods=['GET'])
+def dcyokogawa():
+    yokostat = request.args.get('yokostat')
+    if yokostat == 'true':
+        global yokog
+        yokog = YOKO.Initiate()
+        prev = YOKO.previous(yokog)
+    elif yokostat == 'false':
+        prev = YOKO.previous(yokog)
+        YOKO.close(yokog, True)
+    return jsonify(prev=prev)
+@bp.route('/dc/yokogawa/vwave', methods=['GET'])
+def dc_yokogawa_vwave():
+    YOKO.output(yokog, 1)
+    vwave = request.args.get('vwave') #V-waveform command
+    pwidth = float(request.args.get("pwidth")) #ms
+    swprate = float(request.args.get("swprate")) #V/s
+    stat = YOKO.sweep(yokog, vwave, pulsewidth=pwidth*1e-3, sweeprate=swprate)
+    return jsonify(SweepTime=stat[1])
 @bp.route('/dc/yokogawa/vpulse', methods=['GET'])
 def dc_yokogawa_vpulse():
-    yokog = YOKO.Initiate()
     YOKO.output(yokog, 1)
     vset = float(request.args.get('vset'))
     pwidth = float(request.args.get("pwidth"))
-    stat = YOKO.sweep(yokog, "%sto0*1"%vset, pulsewidth=pwidth*1e-3, sweeprate=vset*60)
-    YOKO.close(yokog, True)
+    stat = YOKO.sweep(yokog, "%sto0*1"%vset, pulsewidth=pwidth*1e-3, sweeprate=abs(vset)*60)
     return jsonify(SweepTime=stat[1])
+@bp.route('/dc/yokogawa/onoff', methods=['GET'])
+def dc_yokogawa_onoff():
+    YOKO.output(yokog, 1)
+    YOKO.output(yokog, 0)
+    return jsonify()
+# Amplifier Box
 @bp.route('/dc/amplifier', methods=['GET'])
 def dcamplifier():
     ampstat = request.args.get('ampstat')

@@ -5,7 +5,7 @@
 /* 1. Ensure this sits above everything when visible */
 .modal {
     position: absolute;
-    z-index: 10000; /* 1 */
+    z-index: 1; /* 1 */
     top: 0;
     left: 0;
     visibility: hidden;
@@ -38,11 +38,11 @@
 
 .modal-wrapper {
   position: absolute;
-  z-index: 9999;
-  top: 6em;
-  left: 50%;
-  width: 32em;
-  margin-left: -16em;
+  z-index: 1000;
+  /* top: 6em; */
+  /* left: 10%; */
+  width: 95%;
+  /* margin: 5%; */
   background-color: #fff;
   box-shadow: 0 0 1.5em hsla(0, 0%, 0%, 0.35);
 }
@@ -68,20 +68,6 @@
   background-color: #fff;
   box-shadow: 0 1px 2px hsla(0, 0%, 0%, 0.06);
   border-bottom: 1px solid #e8e8e8;
-}
-
-.modal-close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 1em;
-  color: #aaa;
-  background: none;
-  border: 0;
-}
-
-.modal-close:hover {
-  color: #777;
 }
 
 .modal-heading {

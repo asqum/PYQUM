@@ -23,14 +23,18 @@ def debug(state=False):
 debug() # declare the debugger mode here
 
 # INITIALIZATION
-def Initiate():
+def Initiate(reset=False, current=False):
     ad = address()
     rs = ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-        stat = bench.write('RC') #Clear buffer memory
-        bench.write('H0;F1;M1') #No header; DC current in V; Single sweep
+        if reset:
+            bench.write('RC') #Clear buffer memory
+        if current:
+            stat = bench.write('H0;F5;M1') #No header; DC current in A; Single sweep
+        else:
+            stat = bench.write('H0;F1;M1') #No header; DC current in V; Single sweep
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 15000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
@@ -48,9 +52,11 @@ def previous(bench, log=False):
         set_status(mdlname, dict(voltage=float(prev)))
     return prev
 
-def output(bench, state=0):
-    try: 
-        bench.write('O%dE' %int(state)) #OUTPUT ON/OFF
+def output(bench, state=0, keeprev=True):
+    '''if keeprev is False, value will return to zero!
+    '''
+    try:
+        bench.write('O%dE' %int(state)) #OUTPUT ON/OFF #Apparently this will return value to zero!
         status = 'Success'
     except: 
         pass
