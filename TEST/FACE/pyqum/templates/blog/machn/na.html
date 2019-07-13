@@ -48,7 +48,12 @@
                     </div>
                 </div>
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-32" id='left'><input class='na' id="settings" name='sweep' type="submit" value="SWEEP"/></div>
+                    <div class="col-10" id='left'><label>SWEEP</label></div>
+                    <div class="col-20" id='left'>
+                        <label class="switch"><input class='na' id=settings name='sweep' type="checkbox">
+                            <div class="slider smooth"><span class="on">ON</span><span class="off">OFF</span></div>
+                        </label>
+                    </div>
                     <div class="col-15" id='right'>
                         <select class='na scale' id="settings" name='sparam' type="text">
                             <option value='' selected>S-Param</option>

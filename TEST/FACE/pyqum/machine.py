@@ -322,7 +322,7 @@ def napreset():
 def nasetfreqrange():
     natype = request.args.get('natype')
     freqrange = waveform(request.args.get('freqrange'))
-    frequnit = request.args.get('frequnit').upper().replace('HZ','')
+    frequnit = request.args.get('frequnit')[0]
     NA[natype].sweep(nabench[natype], action=['Set', 'ON', freqrange.count])
     fstart, fstop = si_parse(str(freqrange.data[0])+frequnit), si_parse(str(freqrange.data[-1])+frequnit)
     NA[natype].sweep(nabench[natype], action=['Set', 'ON', freqrange.count])
@@ -340,8 +340,8 @@ def nasetpowa():
 def nasetifb():
     natype = request.args.get('natype')
     ifb = request.args.get('ifb')
-    print(NA[natype])
-    stat = NA[natype].ifbw(nabench[natype], action=['Set', ifb])
+    ifbunit = request.args.get('ifbunit')[0]
+    stat = NA[natype].ifbw(nabench[natype], action=['Set', si_parse(ifb + ifbunit)])
     message = 'ifb: %s <%s>' %(stat[1], stat[0])
     return jsonify(message=message)
 @bp.route('/na/set/ave', methods=['GET'])
@@ -361,22 +361,23 @@ def nasetsparam():
 @bp.route('/na/set/sweep', methods=['GET'])
 def nasetsweep():
     natype = request.args.get('natype')
+    NA[natype].rfports(nabench[natype], action=['Set', 'ON'])
     NA[natype].measure(nabench[natype])
     NA[natype].autoscal(nabench[natype])
-    stat = NA[natype].rfports(nabench[natype], action=['Set', 'OFF'])
-    message = 'RF output: %s <%s>' %(stat[1], stat[0])
-    return jsonify(message=message)
+    NA[natype].rfports(nabench[natype], action=['Set', 'OFF'])
+    return jsonify()
 @bp.route('/na/get', methods=['GET'])
 def naget():
     natype = request.args.get('natype')
     message = {}
     try:
         # message['frequency'] = si_format(float(NA[natype].frequency(nabench[natype])[1]['CW']),precision=3) + "Hz" # frequency
-        message['power'] = si_format(float(NA[natype].power(nabench[natype])[1]['LEVEL']),precision=1) + "dBm" # power
+        message['power'] = str(NA[natype].power(nabench[natype])[1]['LEVEL']) + " dBm" # power (fixed unit)
         message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natype])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb
-        message['ave'] = si_format(float(NA[natype].averag(nabench[natype])[1]['COUNT']),precision=0) # ave
+        message['ave'] = str(NA[natype].averag(nabench[natype])[1]['COUNT']) # ave
         message['rfports'] = int(NA[natype].rfports(nabench[natype])[1]['STATE']) # rf output
     except:
+        raise
         message = dict(status='%s is not connected' %natype)
     return jsonify(message=message)
 
@@ -493,6 +494,12 @@ def bdrhistory():
     else:
         [startimeP, tp2, P2, P_stat2] = [startimeP, tp, P, P_stat]
         [startimeT, tt2, T2] = [startimeT, tt, T]
+    # align the time-stamp:
+    # T_max = max([tt[-1], tt2[-1], tp[-1], tp2[-1]])
+    # tt = [x + abs(tt[-1]-T_max) for x in tt]
+    # tt2 = [x + abs(tt2[-1]-T_max) for x in tt2]
+    # tp = [x + abs(tp[-1]-T_max) for x in tp]
+    # tp2 = [x + abs(tp2[-1]-T_max) for x in tp2]
     return jsonify(startimeP=startimeP, startimeT=startimeT, tp=tp, P=P, P_stat=P_stat, tt=tt, T=T, tp2=tp2, P2=P2, P_stat2=P_stat2, tt2=tt2, T2=T2)
 
 # DC

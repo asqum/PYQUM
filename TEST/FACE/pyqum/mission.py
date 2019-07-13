@@ -6,7 +6,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 
 import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
-from numpy import array
+from numpy import array, unwrap
 
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
@@ -68,11 +68,11 @@ def char_fresp_new():
 	ifb = request.args.get('ifb')
 	powa = request.args.get('powa')
 	freq = request.args.get('freq')
-	comment = request.args.get('comment')
+	comment = request.args.get('comment').replace("\"","")
 	CORDER = {'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
-	M = F_Response(corder=CORDER, comment=comment, tag='', dayindex=wday)
-	M.accesstructure()
-	return jsonify(complete=str(M.data_complete))
+	Run_fresp = F_Response(corder=CORDER, comment=comment, tag='', dayindex=wday)
+	Run_fresp.accesstructure()
+	return jsonify(complete=str(Run_fresp.data_complete))
 @bp.route('/char/fresp/access', methods=['GET'])
 def char_fresp_access():
 	wmoment = int(request.args.get('wmoment'))
@@ -85,7 +85,21 @@ def char_fresp_access():
 	cfreq = waveform(M_fresp.corder['Frequency'])
 	global c_fresp_structure
 	c_fresp_structure = [csparam.count,cifb.count,cpowa.count,cfreq.count*M_fresp.datadensity]
-	return jsonify(data_progress=data_progress, corder=M_fresp.corder, comment=M_fresp.comment, csparam=csparam.data, cifb=cifb.data, cpowa=cpowa.data, cfreq=cfreq.data)
+	c_fresp_address = cdatasearch(M_fresp.resumepoint-1, c_fresp_structure)
+	return jsonify(data_progress=data_progress, corder=M_fresp.corder, comment=M_fresp.comment, 
+		csparam=csparam.data[0:c_fresp_address[0]+1], cifb=cifb.data[0:c_fresp_address[1]+1], cpowa=cpowa.data[0:c_fresp_address[2]+1], cfreq=cfreq.data)
+@bp.route('/char/fresp/update', methods=['GET'])
+def char_fresp_update():
+	wday = int(request.args.get('wday'))
+	wmoment = int(request.args.get('wmoment'))
+	sparam = request.args.get('sparam')
+	ifb = request.args.get('ifb')
+	powa = request.args.get('powa')
+	freq = request.args.get('freq')
+	CORDER = {'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
+	M_fresp.accesstructure()
+	F_Response(corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_fresp.resumepoint)
+	return jsonify()
 # Chart is supposedly shared by all measurements (under construction for nulti-purpose)
 @bp.route('/char/fresp/1ddata', methods=['GET'])
 def char_fresp_1ddata():
@@ -101,7 +115,7 @@ def char_fresp_1ddata():
 	selectedata=M_fresp.selectedata
 	selected = [selectedata[gotocdata([isparam, iifb, ipowa, x], c_fresp_structure)] for x in range(waveform(M_fresp.corder['Frequency']).count*M_fresp.datadensity)]
 	yI, yQ, Amp, Pha = IQAP(array(selected))
-	x1, y1, y2 = waveform(M_fresp.corder['Frequency']).data, Amp, list(UnwraPhase(waveform(M_fresp.corder['Frequency']).data, Pha))
+	x1, y1, y2 = waveform(M_fresp.corder['Frequency']).data, Amp, list(UnwraPhase(waveform(M_fresp.corder['Frequency']).data, Pha)) #list(unwrap(Pha)) 
 	return jsonify(x1=x1, y1=y1, y2=y2)
 
 

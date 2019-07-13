@@ -165,7 +165,7 @@ $(function () {
             // indicate finished running
             $( "i.dc" ).remove(); //clear processing animation
             if (ampstat == true) {
-                $('a.dc.ampscan').show(); //showing scan button
+                // $('a.dc.ampscan').show(); //showing scan button
                 // LIVE AMPLIFIER SENSING:
                 var amploop = setInterval( function() {
                     $.getJSON('/mach'+'/dc/amplifier/sense', {

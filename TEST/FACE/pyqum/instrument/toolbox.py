@@ -91,10 +91,11 @@ def match(List, Value):
 
 
 def test():
-    for i in range(700):
-        print("decoding data-%s into c-%s and back into %s" 
-        %(i, cdatasearch(i, [8,10,10,2]), gotocdata(cdatasearch(i, [8,10,10,2]), [8,10,10,2])))
+    # for i in range(700):
+    #     print("decoding data-%s into c-%s and back into %s" 
+    #     %(i, cdatasearch(i, [8,10,10,2]), gotocdata(cdatasearch(i, [8,10,10,2]), [8,10,10,2])))
         # sleep(0.3)
+    print("location: %s" %(cdatasearch(8080807, [1,4,101,20002])))
     command = "1 to 1 * 0"
     command = "0 1   2   to  10  * 1 TO  20  *1 25 26  to35*  1to 70 *  5 73  75   to80  *5 81 82 to  101*  8"
     # command = "100    12  37              77   81  "

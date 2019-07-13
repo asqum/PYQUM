@@ -119,6 +119,12 @@ textarea {
 	resize: none; 
 	overflow: auto;
 }
+textarea:read-only {
+    color: red;
+    font-weight: 800;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: large;
+}
 label {
     word-wrap: break-word;
     /* y-up x-right y-down x-left -> Clock-wise! */

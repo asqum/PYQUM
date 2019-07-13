@@ -67,7 +67,7 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     freq = waveform(corder['Frequency'])
     
     # Buffer setting(s):
-    buffersize = freq.count
+    buffersize = freq.count * datadensity
     
     # Pre-loop settings:
     bench = ENA.Initiate()
@@ -78,28 +78,28 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     ENA.linfreq(bench, action=['Set', fstart, fstop])
 
     # User-defined Measurement-FLOW ==============================================================================================
-    datasize = prod([waveform(x).count for x in corder.values()])
-    for i in range(resumepoint,datasize):
+    datasize = prod([waveform(x).count for x in corder.values()]) * datadensity
+    for i in range(resumepoint//buffersize,datasize//buffersize):
 
         # Registerring parameter(s)
-        caddress = cdatasearch(i, [Sparam.count,ifb.count,powa.count,freq.count])
+        caddress = cdatasearch(i, [Sparam.count,ifb.count,powa.count])
 
         # saving chunck by chunck improves speed a lot!
-        if not (i+1)%buffersize or i==datasize-1: #multiples of buffersize / reached the destination
-            ENA.setrace(bench, Mparam=[Sparam.data[caddress[0]]], window='D1')
-            ENA.ifbw(bench, action=['Set', ifb.data[caddress[1]]])
-            ENA.power(bench, action=['Set', powa.data[caddress[2]]])
-            # start sweeping:
-            stat = ENA.sweep(bench) #getting the estimated sweeping time
-            print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
-            print("Operation Complete: %s" %bool(ENA.measure(bench)[1]))
-            # adjusting display on ENA:
-            ENA.autoscal(bench)
-            ENA.selectrace(bench, action=['Set', 'para 1 calc 1'])
-            data = ENA.sdata(bench)
-            # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
-            print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*100), end='\r', flush=True)
-            yield data
+        # if not (i+1)%buffersize or i==datasize-1: #multiples of buffersize / reached the destination
+        ENA.setrace(bench, Mparam=[Sparam.data[caddress[0]]], window='D1')
+        ENA.ifbw(bench, action=['Set', ifb.data[caddress[1]]])
+        ENA.power(bench, action=['Set', powa.data[caddress[2]]])
+        # start sweeping:
+        stat = ENA.sweep(bench) #getting the estimated sweeping time
+        print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
+        print("Operation Complete: %s" %bool(ENA.measure(bench)[1]))
+        # adjusting display on ENA:
+        ENA.autoscal(bench)
+        ENA.selectrace(bench, action=['Set', 'para 1 calc 1'])
+        data = ENA.sdata(bench)
+        # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
+        print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize*100), end='\r', flush=True)
+        yield data
 
     ENA.rfports(bench, action=['Set', 'OFF'])
     ENA.close(bench)

@@ -396,7 +396,8 @@ class measurement:
         return
 
     def repairdata(self):
-        '''Pre-requisite: accesstructure'''
+        '''Pre-requisite: accesstructure
+        pending update: repair buffer mismatch'''
         ieee_mismatch = self.writtensize%8
         print("IEEE-754(64bit) mismatch: %sbytes"%ieee_mismatch)
         if ieee_mismatch:

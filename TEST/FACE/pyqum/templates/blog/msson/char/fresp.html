@@ -13,16 +13,17 @@
         <div class="row"> <!-- New Role for File-status -->
             <div class="col-25" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
             <div class="col-10" id='left'><select class='char' id="fresp" name="wmoment" type="text"></select></div>
-            <div class="col-15" id='left'>
+            <div class="col-20" id='left'>
                 <ul class="data-status" id="fresp">
                     <li><span class="bar data-progress" id="fresp"></span><h3>Data Progress</h3></li>
                 </ul>
             </div>
+            <div class="col-15" id='right'><button class="char push_button w-95 blue" id="fresp-update">UPDATE</button></div>
         </div>
 
         <div class="row"> <!-- New Row for Comment -->
             <div class="col-75" id='left'>
-                <h3 class='char' id="fresp" name="comment" type="text" rows="3" cols="73">--comment--</h3>
+                <textarea class='char' id="fresp" name="comment" type="text" rows="3" cols="73" readonly>--comment--</textarea>
             </div>
         </div>
 
@@ -68,12 +69,12 @@
                             <div class="col-20" id='left'><input class='char' id="fresp" name="powa" type="text" value="-37"/></div> 
                             <div class="col-20" id='left'><input class='char' id="fresp" name="freq" type="text" value="5 to 9 * 3000"/></div>
                             <div class="col-75" id='left'>
-                                <textarea class='char' id="fresp" name="comment" type="text" rows="3" cols="73">--comment--</textarea>
+                                <textarea class='char' id="fresp" name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for EXECUTION -->
-                            <div class="col-20" id='left'><input class="char modal-toggle" id="fresp-run"  type="submit" value="RUN"/></div>
-                            <div class="col-20" id='left'><input class="modal-toggle" id="fresp-cancel" type="submit" value="CANCEL"/></div>
+                            <div class="col-15" id='left'><input class="char modal-toggle" id="fresp-run"  type="submit" value="RUN"/></div>
+                            <div class="col-15" id='left'><input class="modal-toggle" id="fresp-cancel" type="submit" value="CANCEL"/></div>
                         </div>
                     </div>
                 </div>

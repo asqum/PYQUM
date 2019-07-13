@@ -52,15 +52,6 @@ $(function () {
 }); 
  
 // Set each value on change:
-// RF SWEEP
-$('input.na[name="sweep"]').click( function () { // the enter key code
-    $.getJSON('/mach/na/set/sweep', {
-        natype: natype
-    }, function (data) { 
-        console.log(Date($.now()) + ':\nSetting ' + data.message); 
-    });
-    return false;
-});
 // RF Frequency Range
 $('input.na[name="freqrange"]').change( function () { // the enter key code
     $.getJSON('/mach/na/set/freqrange', {
@@ -87,7 +78,8 @@ $('input.na[name="powa"]').change( function () { // the enter key code
 $('input.na[name="ifb"]').change( function () { // the enter key code
     $.getJSON('/mach/na/set/ifb', {
         natype: natype,
-        ifb: $('input.na.scale[name="ifb"]').val()
+        ifb: $('input.na.scale[name="ifb"]').val(),
+        ifbunit: $('input.na.unit[name="ifb"]').val()
     }, function (data) {
         console.log(Date($.now()) + ':\nSetting ' + data.message);
         $('input.na#settings[name="ifb"]').removeClass('getvalue').addClass('setvalue');
@@ -168,6 +160,38 @@ $('button.na#preset').bind('click', function () {
     });
     return false;
 });
+
+// RF SWEEP (CONT)
+// $(function () {
+//     $('input.na#settings[name="sweep"]').click( function () { // the enter key code
+//         var swpstat = $('input.na#settings[name="sweep"]').is(':checked');
+//         if (swpstat == true) {
+//             var sweeploop = setInterval( function() {
+//                 // $.getJSON('/mach/na/set/sweep', {
+//                 //     natype: natype
+//                 // }, function (data) {    
+//                 // });
+//                 console.log("sweep");
+//             }, 1000);
+//             $('input.na#settings[name="sweep"]').click( function () {
+//                 clearInterval(sweeploop);
+//             });
+//         };
+//     });
+// });
+$(function(){
+    $('input.na#settings[name="sweep"]').click( function () { // the enter key code
+    var swpstat = $('input.na#settings[name="sweep"]').is(':checked');
+    do {
+        // $.getJSON('/mach/na/set/sweep', {
+        //     natype: natype
+        // }, function (data) {    
+        // });
+        console.log("sweep");
+    } while (swpstat == true);
+    });
+});
+
 
 
 //setting on key-press

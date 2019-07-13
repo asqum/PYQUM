@@ -1,4 +1,4 @@
-
+// Frequency Response 
 
 // hiding parameter settings:
 $('.modal-toggle').on('click', function(e) {
@@ -6,6 +6,7 @@ $('.modal-toggle').on('click', function(e) {
     $('.modal').toggleClass('is-visible');
     // revert back to default option upon leaving dialogue box
     $('select.char#fresp[name="wday"]').val('');
+    return false;
 });
 
 // show F-Response's daylist
@@ -49,6 +50,7 @@ $(function () {
             }); 
         };
     });
+    return false;
 });
 
 // click to run:
@@ -60,7 +62,8 @@ $('input.char#fresp-run').bind('click', function() {
     var ifb = $('input.char#fresp[name="ifb"]').val();
     var powa = $('input.char#fresp[name="powa"]').val();
     var freq = $('input.char#fresp[name="freq"]').val();
-    var comment = $('textarea.char#fresp[name="comment"]').val();
+    var comment = JSON.stringify($('textarea.char#fresp[name="ecomment"]').val());
+    // var comment = $('textarea.char#fresp[name="comment"]').val();
     $.getJSON('/mssn/char/fresp/new', {
         wday: wday, sparam: sparam, ifb: ifb, powa: powa, freq: freq, comment: comment
     }, function (data) {
@@ -68,6 +71,27 @@ $('input.char#fresp-run').bind('click', function() {
         $.each(data.taskentries, function(i,v){ $('select.char#fresp[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
         console.log("complete: " + data.complete);
         $( "i.fresp" ).remove(); //clear previous
+    });
+    return false;
+});
+
+// Click to Update File
+$(function () {
+    $('button.char#fresp-update').on('click', function () {
+        $( "i.fresp" ).remove(); //clear previous
+        $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        // waveform commands
+        var sparam = $('input.char#fresp[name="sparam"]').val();
+        var ifb = $('input.char#fresp[name="ifb"]').val();
+        var powa = $('input.char#fresp[name="powa"]').val();
+        var freq = $('input.char#fresp[name="freq"]').val();
+        $.getJSON('/mssn/char/fresp/update', {
+            wday: wday, wmoment: wmoment, sparam: sparam, ifb: ifb, powa: powa, freq: freq
+        }, function (data) {
+            // load data progress:
+            var data_progress = "  " + String(data.data_progress) + "%"
+            console.log("Progress: " + data_progress)
+        });
     });
     return false;
 });
@@ -88,9 +112,9 @@ $(function () {
             $('input.char#fresp[name="powa"]').val(data.corder['Power']);
             $('input.char#fresp[name="freq"]').val(data.corder['Frequency']);
             // load edittable comment:
-            $('textarea.char#fresp[name="comment"]').val(data.comment);
+            $('textarea.char#fresp[name="ecomment"]').val(data.comment);
             // load narrated comment:
-            $('h3.char#fresp[name="comment"]').text(data.comment);
+            $('textarea.char#fresp[name="comment"]').text(data.comment);
             // load c-range for each command:
             $('select.char#fresp[name="c-sparam"]').empty().append($('<option>', { text: 'All', value: 'all' }));
             $.each(data.csparam, function(i,v){ $('select.char#fresp[name="c-sparam"]').append($('<option>', { text: v, value: i })); });
@@ -106,6 +130,7 @@ $(function () {
             $('.data-progress#fresp').css({"width": data_progress}).text(data_progress);
         });
     });
+    return false;
 });
 
 // plot 1D-data based on c-parameters picked
@@ -193,4 +218,6 @@ $(function () {
         return false;
     });
 });
+
+
 
