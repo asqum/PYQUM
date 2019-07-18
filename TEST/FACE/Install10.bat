@@ -3,8 +3,8 @@
 @echo off
 
 :: Initialize Anaconda Environment
-:: set root=C:\ProgramData\Anaconda3
-set root=C:\Users\Great\Anaconda3
+set root=C:\ProgramData\Anaconda3
+:: set root=C:\Users\Great\Anaconda3
 call %root%\Scripts\activate.bat %root%
 
 ECHO Installing PYQUM 101

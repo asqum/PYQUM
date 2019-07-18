@@ -22,46 +22,84 @@
     <div class="nacontent" id="settings">
         <div class="container">
             <form method='GET'>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-10" id='left'><label>Frequency Range</label></div>
-                    <div class="col-20" id='left'><input class='na scale' id="settings" name='freqrange' type="text" value="4 to 8 * 3000"/></div>
+                <!-- Frequency Range -->
+                <div class="row"><div class="col-49" id='left'><label class='parameter'>Frequency Range</label></div></div>
+                <div class="row">
+                    <div class="col-49" id='left'><input class='na scale' id="settings" name='freqrange' type="text" value="4 to 8 * 3000"/></div>
                     <div class="col-10" id='left'><input class="na unit" id="settings" name='freqrange' value="GHz"></div>
-                    <div class="col-5" id='left'></div>
-                    <div class="col-10" id='left'><label>Power</label></div>
-                    <div class="col-12" id='left'><input class='na scale' id="settings" name='powa' type="text" value="-5"/></div>
-                    <div class="col-10" id='left'><input class="na unit" id="settings" name='powa' value="dBm"></div>
+                    
                     <!-- Close / Reset -->
                     <div class="col-15" id='right'>
                         <button class='na push_button w-95 red' id='closet'>CLOSE</button>
                     </div>
                 </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-10" id='left'><label>IFB</label></div>
+
+                 <!-- IF-Bandwidth & Power -->
+                <div class="row">
+                    <div class="col-25" id='left'><label class='parameter'>IF Bandwidth</label></div>
+                    <div class="col" id='left' style="width: 2%"></div>
+                    <div class="col-25" id='left'><label class='parameter'>Power</label></div>
+                </div>
+                <div class="row">
                     <div class="col-12" id='left'><input class='na scale' id="settings" name='ifb' type="text" value="1000"/></div>
                     <div class="col-10" id='left'><input class="na unit" id="settings" name='ifb' value="Hz"></div>
-                    <div class="col-13" id='left'></div>
-                    <div class="col-10" id='left'><label>Average</label></div>
-                    <div class="col-12" id='left'><input class='na scale' id="settings" name='ave' type="text" value="1"/></div>
-                    <!-- Close / Reset -->
+                    <div class="col-5" id='left'></div>
+                    <div class="col-12" id='left'><input class='na scale' id="settings" name='powa' type="text" value="-5"/></div>
+                    <div class="col-10" id='left'><input class="na unit" id="settings" name='powa' value="dBm"></div>
+
+                    <!-- SWEEP -->
                     <div class="col-15" id='right'>
-                        <button class='na push_button w-95 blue' id='preset'>PRESET</button>
+                        <button class='na push_button w-95 blue' id='sweep'>SWEEP</button>
                     </div>
                 </div>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-10" id='left'><label>SWEEP</label></div>
-                    <div class="col-20" id='left'>
-                        <label class="switch"><input class='na' id=settings name='sweep' type="checkbox">
-                            <div class="slider smooth"><span class="on">ON</span><span class="off">OFF</span></div>
+
+                <!-- S-Parameters -->
+                <div class="row">
+                    <div class="col-25" id='left'><label class='parameter'>Port-1 IN</label></div>
+                    <div class="col" id='left' style="width: 2%"></div>
+                    <div class="col-25" id='left'><label class='parameter'>Port-2 IN</label></div>
+                </div>
+                <div class="row">
+                    <div class="col-12" id='left' style="margin-right:0.5%">
+                        <label class="switch"><input class='na sparam' id=settings name='S21' type="checkbox">
+                            <div class="slider smooth"></div><span class="on">S21</span><span class="off">s21</span>
                         </label>
                     </div>
+                    <div class="col-12" id='left' style="margin-right:0.5%">
+                        <label class="switch"><input class='na sparam' id=settings name='S11' type="checkbox">
+                            <div class="slider smooth"><span class="on">S11</span><span class="off">s11</span></div>
+                        </label>
+                    </div>
+
+                    <div class="col" id='left' style="width: 2%"></div>
+
+                    <div class="col-12" id='left' style="margin-right:0.5%">
+                        <label class="switch"><input class='na sparam' id=settings name='S12' type="checkbox">
+                            <div class="slider smooth"><span class="on">S12</span><span class="off">s12</span></div>
+                        </label>
+                    </div>
+                    <div class="col-12" id='left' style="margin-right:0.5%">
+                        <label class="switch"><input class='na sparam' id=settings name='S22' type="checkbox">
+                            <div class="slider smooth"><span class="on">S22</span><span class="off">s22</span></div>
+                        </label>
+                    </div>
+
+                    <!-- AUTOSCALE -->
                     <div class="col-15" id='right'>
-                        <select class='na scale' id="settings" name='sparam' type="text">
-                            <option value='' selected>S-Param</option>
-                            <option value='S21'>S21</option>
-                            <option value='S12'>S12</option>
-                            <option value='S11'>S11</option>
-                            <option value='S22'>S22</option>
-                        </select>
+                        <button class='na push_button w-95 blue' id='autoscale'>AUTOSCALE</button>
+                    </div>
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT --> 
+                    <div class="col"> </div>
+                </div>
+
+                <!-- SWEEP -->
+                <div class="row">
+                    <div class="col-15" id='right'>
+                        <label class="switch"><input class='na' id=settings name='scanning' type="checkbox">
+                            <div class="slider smooth"><span class="on">Continuous</span><span class="off">Hold</span></div>
+                        </label>
                     </div>
                 </div>
                 

@@ -20,11 +20,11 @@
       $("div#all").load("{{ url_for('machine.all') }}");
       $("div#dc").load("{{ url_for('machine.dc') }}");
       $("div#bdr").load("{{ url_for('machine.bdr') }}");
-      $("div#awg").load("{{ url_for('machine.awg') }}");
-      $("div#vsa").load("{{ url_for('machine.vsa') }}");
       $("div#na").load("{{ url_for('machine.na') }}");
       $("div#sg").load("{{ url_for('machine.sg') }}");
       $("div#dso").load("{{ url_for('machine.dso') }}"); 
+      $("div#awg").load("{{ url_for('machine.awg') }}");
+      $("div#vsa").load("{{ url_for('machine.vsa') }}");
     });
 </script> 
 
@@ -33,25 +33,25 @@
   <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button>
   <button class="tablinks" id="dc-tab" onclick="openTab(event, 'dc')">DC</button>
   <button class="tablinks" id="bdr-tab" onclick="openTab(event, 'bdr')">BDR</button>
-  <!-- PXI Temporal Dynamic Instruments -->
-  <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
-  <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button>
   <!-- Network Analyzer -->
   <button class="tablinks" id="na-tab"  onclick="openTab(event, 'na')"> NA </button>
   <!-- Signal Generators -->
   <button class="tablinks" id="sg-tab"  onclick="openTab(event, 'sg')"> SG </button>
   <!-- Digital Oscilloscope -->
   <button class="tablinks" id="dso-tab" onclick="openTab(event, 'dso')">DSO</button>
+  <!-- PXI Temporal Dynamic Instruments -->
+  <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
+  <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button>
 </div>
 
 <div id="all" class="tabcontent"></div>
 <div id="dc" class="tabcontent"></div>
 <div id="bdr" class="tabcontent"></div>
-<div id="awg" class="tabcontent"></div>
-<div id="vsa" class="tabcontent"></div>
 <div id="na" class="tabcontent"></div>
 <div id="sg" class="tabcontent"></div>
 <div id="dso" class="tabcontent"></div>
+<div id="awg" class="tabcontent"></div>
+<div id="vsa" class="tabcontent"></div>
 {% endif %}
 
 </body>

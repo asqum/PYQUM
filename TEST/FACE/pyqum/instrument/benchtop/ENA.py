@@ -16,13 +16,18 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate():
+def Initiate(reset=False):
     ad = address()
     rs = ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-        stat = bench.write('*RST;*CLS') #Clear buffer memory;
+        if reset:
+            stat = bench.write('*RST;*CLS') #Clear buffer memory;
+        else:
+            bench.write(':ABORt;:INIT:CONT OFF;') #hold the trigger
+            stat = bench.write('*CLS') #Clear buffer memory;
+            bench.write('OUTPut:STATE ON') #open the port
         bench.write("SENS:CORR:EXT:AUTO:RESet") #clear port-extension auto-correction
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 80000000 #set timeout in ms
@@ -54,7 +59,7 @@ def sweep(bench, action=['Get'] + 10 * ['']):
         bench.write('SENSe:SWEep:TIME:AUTO ON')
         action.remove(action[1])
         SCPIcore = 'SENSe:SWEep:POINTS'
-    elif action[1].split(' ')[0] in ['OFF', 'FALSE', 'False', '']:
+    elif action[1].split(' ')[0] in ['OFF', 'FALSE', 'False', '']: # Get is here
         try:
             action[1] = action[1].split(' ')[1]
             bench.write('SENSe:SWEep:TIME:AUTO OFF')
@@ -133,6 +138,17 @@ def setrace(bench, Mparam=['S11','S21','S12','S22'], window='D1'):
     bench.write("DISPlay:WINDow:SPLit %s" %window)
     return Mreturn #same as <Mparam>
 
+# Getting Trace
+def getrace(bench):
+    '''getting traces on the screen
+    '''
+    tracenum = int(bench.query("CALC:PAR:COUN?"))
+    Mreturn = []
+    for i in range(tracenum):
+        Mreturn.append(bench.query("CALC:PAR%d:DEF?" %(i+1)))
+        bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(i+1)) #pre-auto-scale
+    return Mreturn
+
 def autoscal(bench):
     tracenum = int(bench.query("CALC:PAR:COUN?"))
     for i in range(tracenum):
@@ -144,6 +160,13 @@ def measure(bench):
     # when opc return, the sweep is done
     ready = bench.query("*OPC?") # method from labber was inefficient at best, misleading us on purpose perhaps!
     return ready
+
+def scanning(bench, scan=1):
+    if scan:
+        stat = bench.write(':ABOR;:INIT:CONT ON;:TRIG:SOUR INT;')
+    else:
+        stat = bench.write(':ABOR;:INIT:CONT OFF;')
+    return stat
 
 def sdata(bench):
     '''Collect data from ENA
@@ -183,14 +206,14 @@ def close(bench, reset=True):
 
 # Test Zone
 def test(detail=True):
-    bench = Initiate()
+    bench = Initiate(False)
     if bench is "disconnected":
         pass
     else:
         model(bench)
         if debug(mdlname, detail):
             # print(setrace(bench, window='D12_34'))
-            print(setrace(bench, Mparam=['S12'], window='D1'))
+            print(setrace(bench, Mparam=['S21','S11'], window='D1'))
             power(bench, action=['Set', -35])
             power(bench)
             N = 1000
@@ -232,10 +255,11 @@ def test(detail=True):
             rfports(bench, action=['Set', 'OFF'])
             rfports(bench)
             # TEST SCPI ZONE:
-            bench.write(':SYSTem:PRESet')
+            # bench.write(':SYSTem:PRESet')
+            scanning(bench)
         else: print(Fore.RED + "Basic IO Test")
     close(bench)
     return
 
 
-
+# test()

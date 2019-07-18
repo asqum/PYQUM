@@ -125,10 +125,11 @@ textarea:read-only {
     font-family: 'Times New Roman', Times, serif;
     font-size: large;
 }
-label {
+label.parameter {
     word-wrap: break-word;
     /* y-up x-right y-down x-left -> Clock-wise! */
-    padding: 12px 0px 0px 7px;
+    margin-bottom: -5px;
+    padding: 0.2em 0.5em 0em 0.5em;
     display: block;
     font-weight: 600;
 }
@@ -271,8 +272,15 @@ select:focus {
     padding: 2px;
     display: block;
 }
+.col {
+    margin-top: 6px;
+}
 .col-space {
     width: 0.5%;
+    margin-top: 6px;
+}
+.col-3 {
+    width: 5%;
     margin-top: 6px;
 }
 .col-5 {
@@ -400,7 +408,7 @@ a.action {
 .slider:before {
     position: absolute;
     content: "";
-    height: 35px;width: 35px;
+    height: 22px;width: 22px;
     left: 5.5px;bottom: 5.5px;
     background-color: white;
     -webkit-transition: .4s;

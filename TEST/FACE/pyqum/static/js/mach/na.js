@@ -36,14 +36,17 @@ $(function () {
                 }, function(data){
                     console.log('Getting:\n' + JSON.stringify(data.message));
                     $('input.na#settings').addClass('getvalue');
-                    // $('input.na.scale#settings[name="freqrange"]').val(data.message['frequency'].split(' ')[0]);
-                    // $('input.na.unit#settings[name="freqrange"]').val(data.message['frequency'].split(' ')[1]);
+                    // output freq range:
+                    var freqrange = data.message['start-frequency'].split(' ')[0] + " to " + data.message['stop-frequency'].split(' ')[0] + " * "
+                                        + data.message['sweep-points'];
+                    $('input.na.scale#settings[name="freqrange"]').val(freqrange);
+                    $('input.na.unit#settings[name="freqrange"]').val(data.message['start-frequency'].split(' ')[1]);
+                    // output power (w/ unit), IF-bandwidth (w/ unit) & S-Parameter:
                     $('input.na.scale#settings[name="powa"]').val(data.message['power'].split(" ")[0]);
                     $('input.na.unit#settings[name="powa"]').val(data.message['power'].split(' ')[1]);
                     $('input.na.scale#settings[name="ifb"]').val(data.message['ifb'].split(" ")[0]);
                     $('input.na.unit#settings[name="ifb"]').val(data.message['ifb'].split(' ')[1]);
-                    $('input.na.scale#settings[name="ave"]').val(data.message['ave']);
-                    $('input.na[name="oupt"]').prop( "checked", Boolean(data.message['rfports']) );
+                    $('input.na.sparam[name="S21"]').prop( "checked", Boolean(data.message['s21']) );
                 });
             } else {$('button.na#natype[name='+natype+']').addClass('error');}
         });
@@ -59,7 +62,7 @@ $('input.na[name="freqrange"]').change( function () { // the enter key code
         freqrange: $('input.na.scale[name="freqrange"]').val(), frequnit: $('input.na.unit[name="freqrange"]').val()
     }, function (data) { 
         console.log(Date($.now()) + ':\nSetting ' + data.message);
-        $('input.na#settings[name="freq"]').removeClass('getvalue').addClass('setvalue');
+        $('input.na#settings[name="freqrange"]').removeClass('getvalue').addClass('setvalue');
     });
     return false;
 });
@@ -86,25 +89,18 @@ $('input.na[name="ifb"]').change( function () { // the enter key code
     });
     return false;
 });
-// AVERAGE
-$('input.na[name="ave"]').change( function () { // the enter key code
-    $.getJSON('/mach/na/set/ave', {
-        natype: natype,
-        ave: $('input.na.scale[name="ave"]').val()
-    }, function (data) {
-        console.log(Date($.now()) + ':\nSetting ' + data.message);
-        $('input.na#settings[name="ave"]').removeClass('getvalue').addClass('setvalue');
-    });
-    return false;
-});
-// S-Parameter
-$('select.na[name="sparam"]').change( function () { // the enter key code
-    $.getJSON('/mach/na/set/sparam', {
-        natype: natype,
-        sparam: $('select.na.scale[name="sparam"]').val()
-    }, function (data) {
-        console.log(Date($.now()) + ':\nSetting ' + data.message);
-        $('input.na#settings[name="sparam"]').removeClass('getvalue').addClass('setvalue');
+// Scanning
+$('input.na[name="scanning"]').change( function () { // the enter key code
+    var scan = $('input.na[name="scanning"]').is(':checked')?1:0;
+    $.getJSON('/mach/na/set/scanning', {
+        natype: natype, scan: scan
+    }, function (data) { 
+        console.log(Date($.now()) + ':\nSetting ' + data.message); 
+        if (scan==1) {
+            $('button.na#natype[name='+natype+']').append(" <i class='na "+natype+" fa fa-wifi' style='font-size:15px;color:green;'></i>");
+        } else {
+            $( "i.na."+natype+".fa-wifi" ).remove();
+        };
     });
     return false;
 });
@@ -146,52 +142,39 @@ $('button.na#closet').bind('click', function () {
     return false;
 });
 
-// Preset
-$('button.na#preset').bind('click', function () {
-    $.getJSON('/mach/na/preset', {
-        natype: natype
-    }, function (data) {
-        console.log(data.message);
-        if (data.message == "Success"){
-            $( "i.na."+natype+".fa-wifi" ).remove();
-            $('button.na#natype[name='+natype+']').removeClass('error').removeClass('connect').addClass('close')
-                .prepend("<i class='na "+natype+" fa fa-refresh' style='font-size:15px;color:green;'></i> ");
-        } else {$('button.na').addClass('error');}         
-    });
-    return false;
-});
-
-// RF SWEEP (CONT)
-// $(function () {
-//     $('input.na#settings[name="sweep"]').click( function () { // the enter key code
-//         var swpstat = $('input.na#settings[name="sweep"]').is(':checked');
-//         if (swpstat == true) {
-//             var sweeploop = setInterval( function() {
-//                 // $.getJSON('/mach/na/set/sweep', {
-//                 //     natype: natype
-//                 // }, function (data) {    
-//                 // });
-//                 console.log("sweep");
-//             }, 1000);
-//             $('input.na#settings[name="sweep"]').click( function () {
-//                 clearInterval(sweeploop);
-//             });
-//         };
-//     });
-// });
+// SWEEP
 $(function(){
-    $('input.na#settings[name="sweep"]').click( function () { // the enter key code
-    var swpstat = $('input.na#settings[name="sweep"]').is(':checked');
-    do {
-        // $.getJSON('/mach/na/set/sweep', {
-        //     natype: natype
-        // }, function (data) {    
-        // });
-        console.log("sweep");
-    } while (swpstat == true);
+    $('button.na#sweep').click( function () { // the enter key code
+        $( "i.na" ).remove(); //clear previous
+        $("button.na[name="+natype+"]").prepend("<i class='na fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var s21 = $('input.na.sparam#settings[name="S21"]').is(':checked')?1:0;
+        var s11 = $('input.na.sparam#settings[name="S11"]').is(':checked')?1:0;
+        var s12 = $('input.na.sparam#settings[name="S12"]').is(':checked')?1:0;
+        var s22 = $('input.na.sparam#settings[name="S22"]').is(':checked')?1:0;
+            
+        $.getJSON('/mach/na/set/sweep', {
+            natype: natype, s21: s21, s11: s11, s12: s12, s22: s22
+        }, function (data) {  
+            console.log("sweep complete: " + data.sweep_complete);  
+            console.log("ETA in " + data.swptime + 's');
+            $( "i.na" ).remove(); //clear processing animation
+        });
+            
+        return false;
     });
 });
 
+// AUTOSCALE
+$(function(){
+    $('button.na#autoscale').click( function () { // the enter key code
+        $.getJSON('/mach/na/set/autoscale', {
+            natype: natype
+        }, function (data) {  
+            console.log("status: " + data.message);  
+        });  
+        return false;
+    });
+});
 
 
 //setting on key-press

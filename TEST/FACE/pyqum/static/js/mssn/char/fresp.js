@@ -88,9 +88,6 @@ $(function () {
         $.getJSON('/mssn/char/fresp/update', {
             wday: wday, wmoment: wmoment, sparam: sparam, ifb: ifb, powa: powa, freq: freq
         }, function (data) {
-            // load data progress:
-            var data_progress = "  " + String(data.data_progress) + "%"
-            console.log("Progress: " + data_progress)
         });
     });
     return false;
@@ -101,6 +98,7 @@ $(function () {
     $('select.char#fresp[name="wmoment"]').on('change', function () {
         // Make global variable:
         window.wmoment = $('select.char#fresp[name="wmoment"]').val();
+        $('.data-progress#fresp').css({"width": 0}).text('accessing...');
         $.getJSON('/mssn/char/fresp/access', {
             // input/select value here:
             wmoment: wmoment
@@ -208,12 +206,6 @@ $(function () {
             var Trace = [traceL, traceR]
             Plotly.newPlot('char-fresp-chart', Trace, layout, {showSendToCloud: true});
             
-            // $('div.char#startP').empty();
-            // $('div.char#startP').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
-            // append($('<span style="color: red;"></span>').text(data.startimeP));
-            // $('div.char#startT').empty();
-            // $('div.char#startT').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
-            // append($('<span style="color: red;"></span>').text(data.startimeT));;
         });
         return false;
     });

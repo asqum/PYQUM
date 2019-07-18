@@ -414,11 +414,11 @@ class measurement:
         return "FILE IS RESET"
         
 # Setting up Measurement
-def settings(usr_name='USR', sample='Sample'):
+def settings(datadensity=1, sample='Sample'):
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
-        tag, datadensity, instr, corder, comment, dayindex, taskentry = next(Generator)
+        usr_name, tag, instr, corder, comment, dayindex, taskentry = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
         M = measurement(mission, task, usr_name, sample)

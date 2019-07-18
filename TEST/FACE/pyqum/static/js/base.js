@@ -6,7 +6,7 @@ $(document).ready(function(){
     if (window.location.pathname == "/"){
         console.log(window.location.pathname);
         $('.navbar button').removeClass('active');
-        $('.navbar button.home').addClass('active'); 
+        $('.navbar button.home').addClass('active');
     };
               
     if (window.location.pathname == "/mach"){

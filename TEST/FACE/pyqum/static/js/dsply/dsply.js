@@ -8,10 +8,10 @@ $(document).ready(function(){
     };
 });
 
-$(function () {
-    $("button#static-tab").bind('click', function(){
-        window.open("/dsply/figstatic", '_self');
-        return false;
-    });
-});
+// $(function () {
+//     $("button#static-tab").bind('click', function(){
+//         window.open("/dsply/figstatic", '_self');
+//         return false;
+//     });
+// });
 

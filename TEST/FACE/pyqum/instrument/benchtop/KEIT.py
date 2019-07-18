@@ -23,7 +23,7 @@ def debug(state=False):
 debug() # declare the debugger mode here
 
 # INITIALIZATION
-def Initiate(reset=False, current=False):
+def Initiate(reset=False):
     ad = address()
     rs = ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
@@ -44,28 +44,35 @@ def Initiate(reset=False, current=False):
         bench = "disconnected"
     return bench
 
-def single_pulse(bench):
-    
+def single_pulse(bench, width, height):
+    '''width in seconds, height in volts
+       ON: 20ms, OFF: 50ms
+    '''
+    # set compliances
     bench.write(":SENS:CURR:PROT 0.8")
     bench.write(":SENS:CURR:RANGe 0.8")
-    # bench.write(":SENS:VOLT:RANGe 100")
+
+    # set range
+    # bench.write(":SENS:VOLT:RANGe %s" %height)
     
-    bench.write(":SOUR:LIST:VOLT 0,10,0")
+    # pulse sequence
+    bench.write(":SOUR:LIST:VOLT 0,%s,0" %height)
     bench.write(":TRIG:COUN 3")
-    bench.write(":SOUR:DEL 0.05")
-    print(bench.query("SOUR:DEL?"))
+    bench.write(":SOUR:DEL %s" %width)
+
+    return_width = bench.query("SOUR:DEL?")
     bench.write(":SOUR:VOLT:MODE LIST")
     bench.write(":OUTPUT ON")
 
     bench.write(":FORMAT:ELEM VOLT,CURR")
-    stat = bench.query(":READ?")
+    VI_List = bench.query(":READ?")
     
-    return stat
+    return return_width, VI_List
 
 
 def close(bench, reset=False):
     if reset:
-        
+        bench.write(":OUTPUT OFF")
         set_status(mdlname, dict(config='return to zero-off'))
     else: set_status(mdlname, dict(config='previous'))
     try:
@@ -83,7 +90,7 @@ def test(detail=True):
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     s = Initiate()
     if eval(debugger):
-        stat = single_pulse(s)
+        stat = single_pulse(s, 0.02, 10)
         print("KEITHLEY READ: %s" %stat)
     else: print(Fore.RED + "Basic IO Test")
     close(s, True)

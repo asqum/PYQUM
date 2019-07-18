@@ -20,14 +20,15 @@ pyqum.egg-info/top_level.txt
 pyqum/static/css/anime.css
 pyqum/static/css/button.css
 pyqum/static/css/mach.css
+pyqum/static/css/modal.css
 pyqum/static/css/mssn.css
+pyqum/static/css/progress.css
 pyqum/static/css/style.css
 pyqum/static/fa/LICENSE.txt
 pyqum/static/fa/css/all.css
 pyqum/static/fa/css/all.min.css
 pyqum/static/fa/css/brands.css
 pyqum/static/fa/css/brands.min.css
-pyqum/static/fa/css/font-awesome-animation.min.css
 pyqum/static/fa/css/fontawesome.css
 pyqum/static/fa/css/fontawesome.min.css
 pyqum/static/fa/css/regular.css
@@ -103,6 +104,7 @@ pyqum/static/fa/svgs/brands/adn.svg
 pyqum/static/fa/svgs/brands/adobe.svg
 pyqum/static/fa/svgs/brands/adversal.svg
 pyqum/static/fa/svgs/brands/affiliatetheme.svg
+pyqum/static/fa/svgs/brands/airbnb.svg
 pyqum/static/fa/svgs/brands/algolia.svg
 pyqum/static/fa/svgs/brands/alipay.svg
 pyqum/static/fa/svgs/brands/amazon-pay.svg
@@ -126,6 +128,7 @@ pyqum/static/fa/svgs/brands/avianex.svg
 pyqum/static/fa/svgs/brands/aviato.svg
 pyqum/static/fa/svgs/brands/aws.svg
 pyqum/static/fa/svgs/brands/bandcamp.svg
+pyqum/static/fa/svgs/brands/battle-net.svg
 pyqum/static/fa/svgs/brands/behance-square.svg
 pyqum/static/fa/svgs/brands/behance.svg
 pyqum/static/fa/svgs/brands/bimobject.svg
@@ -138,7 +141,9 @@ pyqum/static/fa/svgs/brands/blogger-b.svg
 pyqum/static/fa/svgs/brands/blogger.svg
 pyqum/static/fa/svgs/brands/bluetooth-b.svg
 pyqum/static/fa/svgs/brands/bluetooth.svg
+pyqum/static/fa/svgs/brands/bootstrap.svg
 pyqum/static/fa/svgs/brands/btc.svg
+pyqum/static/fa/svgs/brands/buffer.svg
 pyqum/static/fa/svgs/brands/buromobelexperte.svg
 pyqum/static/fa/svgs/brands/buysellads.svg
 pyqum/static/fa/svgs/brands/canadian-maple-leaf.svg
@@ -155,6 +160,7 @@ pyqum/static/fa/svgs/brands/cc-visa.svg
 pyqum/static/fa/svgs/brands/centercode.svg
 pyqum/static/fa/svgs/brands/centos.svg
 pyqum/static/fa/svgs/brands/chrome.svg
+pyqum/static/fa/svgs/brands/chromecast.svg
 pyqum/static/fa/svgs/brands/cloudscale.svg
 pyqum/static/fa/svgs/brands/cloudsmith.svg
 pyqum/static/fa/svgs/brands/cloudversify.svg
@@ -215,6 +221,7 @@ pyqum/static/fa/svgs/brands/envira.svg
 pyqum/static/fa/svgs/brands/erlang.svg
 pyqum/static/fa/svgs/brands/ethereum.svg
 pyqum/static/fa/svgs/brands/etsy.svg
+pyqum/static/fa/svgs/brands/evernote.svg
 pyqum/static/fa/svgs/brands/expeditedssl.svg
 pyqum/static/fa/svgs/brands/facebook-f.svg
 pyqum/static/fa/svgs/brands/facebook-messenger.svg
@@ -249,6 +256,7 @@ pyqum/static/fa/svgs/brands/galactic-senate.svg
 pyqum/static/fa/svgs/brands/get-pocket.svg
 pyqum/static/fa/svgs/brands/gg-circle.svg
 pyqum/static/fa/svgs/brands/gg.svg
+pyqum/static/fa/svgs/brands/git-alt.svg
 pyqum/static/fa/svgs/brands/git-square.svg
 pyqum/static/fa/svgs/brands/git.svg
 pyqum/static/fa/svgs/brands/github-alt.svg
@@ -291,6 +299,7 @@ pyqum/static/fa/svgs/brands/intercom.svg
 pyqum/static/fa/svgs/brands/internet-explorer.svg
 pyqum/static/fa/svgs/brands/invision.svg
 pyqum/static/fa/svgs/brands/ioxhost.svg
+pyqum/static/fa/svgs/brands/itch-io.svg
 pyqum/static/fa/svgs/brands/itunes-note.svg
 pyqum/static/fa/svgs/brands/itunes.svg
 pyqum/static/fa/svgs/brands/java.svg
@@ -341,7 +350,6 @@ pyqum/static/fa/svgs/brands/monero.svg
 pyqum/static/fa/svgs/brands/napster.svg
 pyqum/static/fa/svgs/brands/neos.svg
 pyqum/static/fa/svgs/brands/nimblr.svg
-pyqum/static/fa/svgs/brands/nintendo-switch.svg
 pyqum/static/fa/svgs/brands/node-js.svg
 pyqum/static/fa/svgs/brands/node.svg
 pyqum/static/fa/svgs/brands/npm.svg
@@ -400,6 +408,7 @@ pyqum/static/fa/svgs/brands/rev.svg
 pyqum/static/fa/svgs/brands/rocketchat.svg
 pyqum/static/fa/svgs/brands/rockrms.svg
 pyqum/static/fa/svgs/brands/safari.svg
+pyqum/static/fa/svgs/brands/salesforce.svg
 pyqum/static/fa/svgs/brands/sass.svg
 pyqum/static/fa/svgs/brands/schlix.svg
 pyqum/static/fa/svgs/brands/scribd.svg
@@ -424,10 +433,12 @@ pyqum/static/fa/svgs/brands/snapchat.svg
 pyqum/static/fa/svgs/brands/soundcloud.svg
 pyqum/static/fa/svgs/brands/sourcetree.svg
 pyqum/static/fa/svgs/brands/speakap.svg
+pyqum/static/fa/svgs/brands/speaker-deck.svg
 pyqum/static/fa/svgs/brands/spotify.svg
 pyqum/static/fa/svgs/brands/squarespace.svg
 pyqum/static/fa/svgs/brands/stack-exchange.svg
 pyqum/static/fa/svgs/brands/stack-overflow.svg
+pyqum/static/fa/svgs/brands/stackpath.svg
 pyqum/static/fa/svgs/brands/staylinked.svg
 pyqum/static/fa/svgs/brands/steam-square.svg
 pyqum/static/fa/svgs/brands/steam-symbol.svg
@@ -442,6 +453,7 @@ pyqum/static/fa/svgs/brands/stumbleupon.svg
 pyqum/static/fa/svgs/brands/superpowers.svg
 pyqum/static/fa/svgs/brands/supple.svg
 pyqum/static/fa/svgs/brands/suse.svg
+pyqum/static/fa/svgs/brands/symfony.svg
 pyqum/static/fa/svgs/brands/teamspeak.svg
 pyqum/static/fa/svgs/brands/telegram-plane.svg
 pyqum/static/fa/svgs/brands/telegram.svg
@@ -480,6 +492,7 @@ pyqum/static/fa/svgs/brands/vine.svg
 pyqum/static/fa/svgs/brands/vk.svg
 pyqum/static/fa/svgs/brands/vnv.svg
 pyqum/static/fa/svgs/brands/vuejs.svg
+pyqum/static/fa/svgs/brands/waze.svg
 pyqum/static/fa/svgs/brands/weebly.svg
 pyqum/static/fa/svgs/brands/weibo.svg
 pyqum/static/fa/svgs/brands/weixin.svg
@@ -502,6 +515,7 @@ pyqum/static/fa/svgs/brands/xing-square.svg
 pyqum/static/fa/svgs/brands/xing.svg
 pyqum/static/fa/svgs/brands/y-combinator.svg
 pyqum/static/fa/svgs/brands/yahoo.svg
+pyqum/static/fa/svgs/brands/yammer.svg
 pyqum/static/fa/svgs/brands/yandex-international.svg
 pyqum/static/fa/svgs/brands/yandex.svg
 pyqum/static/fa/svgs/brands/yarn.svg
@@ -715,6 +729,8 @@ pyqum/static/fa/svgs/solid/baby.svg
 pyqum/static/fa/svgs/solid/backspace.svg
 pyqum/static/fa/svgs/solid/backward.svg
 pyqum/static/fa/svgs/solid/bacon.svg
+pyqum/static/fa/svgs/solid/balance-scale-left.svg
+pyqum/static/fa/svgs/solid/balance-scale-right.svg
 pyqum/static/fa/svgs/solid/balance-scale.svg
 pyqum/static/fa/svgs/solid/ban.svg
 pyqum/static/fa/svgs/solid/band-aid.svg
@@ -735,6 +751,7 @@ pyqum/static/fa/svgs/solid/bell.svg
 pyqum/static/fa/svgs/solid/bezier-curve.svg
 pyqum/static/fa/svgs/solid/bible.svg
 pyqum/static/fa/svgs/solid/bicycle.svg
+pyqum/static/fa/svgs/solid/biking.svg
 pyqum/static/fa/svgs/solid/binoculars.svg
 pyqum/static/fa/svgs/solid/biohazard.svg
 pyqum/static/fa/svgs/solid/birthday-cake.svg
@@ -753,6 +770,9 @@ pyqum/static/fa/svgs/solid/book-open.svg
 pyqum/static/fa/svgs/solid/book-reader.svg
 pyqum/static/fa/svgs/solid/book.svg
 pyqum/static/fa/svgs/solid/bookmark.svg
+pyqum/static/fa/svgs/solid/border-all.svg
+pyqum/static/fa/svgs/solid/border-none.svg
+pyqum/static/fa/svgs/solid/border-style.svg
 pyqum/static/fa/svgs/solid/bowling-ball.svg
 pyqum/static/fa/svgs/solid/box-open.svg
 pyqum/static/fa/svgs/solid/box.svg
@@ -959,6 +979,7 @@ pyqum/static/fa/svgs/solid/external-link-square-alt.svg
 pyqum/static/fa/svgs/solid/eye-dropper.svg
 pyqum/static/fa/svgs/solid/eye-slash.svg
 pyqum/static/fa/svgs/solid/eye.svg
+pyqum/static/fa/svgs/solid/fan.svg
 pyqum/static/fa/svgs/solid/fast-backward.svg
 pyqum/static/fa/svgs/solid/fast-forward.svg
 pyqum/static/fa/svgs/solid/fax.svg
@@ -1120,6 +1141,7 @@ pyqum/static/fa/svgs/solid/hryvnia.svg
 pyqum/static/fa/svgs/solid/i-cursor.svg
 pyqum/static/fa/svgs/solid/ice-cream.svg
 pyqum/static/fa/svgs/solid/icicles.svg
+pyqum/static/fa/svgs/solid/icons.svg
 pyqum/static/fa/svgs/solid/id-badge.svg
 pyqum/static/fa/svgs/solid/id-card-alt.svg
 pyqum/static/fa/svgs/solid/id-card.svg
@@ -1271,10 +1293,13 @@ pyqum/static/fa/svgs/solid/pepper-hot.svg
 pyqum/static/fa/svgs/solid/percent.svg
 pyqum/static/fa/svgs/solid/percentage.svg
 pyqum/static/fa/svgs/solid/person-booth.svg
+pyqum/static/fa/svgs/solid/phone-alt.svg
 pyqum/static/fa/svgs/solid/phone-slash.svg
+pyqum/static/fa/svgs/solid/phone-square-alt.svg
 pyqum/static/fa/svgs/solid/phone-square.svg
 pyqum/static/fa/svgs/solid/phone-volume.svg
 pyqum/static/fa/svgs/solid/phone.svg
+pyqum/static/fa/svgs/solid/photo-video.svg
 pyqum/static/fa/svgs/solid/piggy-bank.svg
 pyqum/static/fa/svgs/solid/pills.svg
 pyqum/static/fa/svgs/solid/pizza-slice.svg
@@ -1322,6 +1347,7 @@ pyqum/static/fa/svgs/solid/recycle.svg
 pyqum/static/fa/svgs/solid/redo-alt.svg
 pyqum/static/fa/svgs/solid/redo.svg
 pyqum/static/fa/svgs/solid/registered.svg
+pyqum/static/fa/svgs/solid/remove-format.svg
 pyqum/static/fa/svgs/solid/reply-all.svg
 pyqum/static/fa/svgs/solid/reply.svg
 pyqum/static/fa/svgs/solid/republican.svg
@@ -1402,17 +1428,24 @@ pyqum/static/fa/svgs/solid/snowman.svg
 pyqum/static/fa/svgs/solid/snowplow.svg
 pyqum/static/fa/svgs/solid/socks.svg
 pyqum/static/fa/svgs/solid/solar-panel.svg
+pyqum/static/fa/svgs/solid/sort-alpha-down-alt.svg
 pyqum/static/fa/svgs/solid/sort-alpha-down.svg
+pyqum/static/fa/svgs/solid/sort-alpha-up-alt.svg
 pyqum/static/fa/svgs/solid/sort-alpha-up.svg
+pyqum/static/fa/svgs/solid/sort-amount-down-alt.svg
 pyqum/static/fa/svgs/solid/sort-amount-down.svg
+pyqum/static/fa/svgs/solid/sort-amount-up-alt.svg
 pyqum/static/fa/svgs/solid/sort-amount-up.svg
 pyqum/static/fa/svgs/solid/sort-down.svg
+pyqum/static/fa/svgs/solid/sort-numeric-down-alt.svg
 pyqum/static/fa/svgs/solid/sort-numeric-down.svg
+pyqum/static/fa/svgs/solid/sort-numeric-up-alt.svg
 pyqum/static/fa/svgs/solid/sort-numeric-up.svg
 pyqum/static/fa/svgs/solid/sort-up.svg
 pyqum/static/fa/svgs/solid/sort.svg
 pyqum/static/fa/svgs/solid/spa.svg
 pyqum/static/fa/svgs/solid/space-shuttle.svg
+pyqum/static/fa/svgs/solid/spell-check.svg
 pyqum/static/fa/svgs/solid/spider.svg
 pyqum/static/fa/svgs/solid/spinner.svg
 pyqum/static/fa/svgs/solid/splotch.svg
@@ -1570,6 +1603,7 @@ pyqum/static/fa/svgs/solid/vials.svg
 pyqum/static/fa/svgs/solid/video-slash.svg
 pyqum/static/fa/svgs/solid/video.svg
 pyqum/static/fa/svgs/solid/vihara.svg
+pyqum/static/fa/svgs/solid/voicemail.svg
 pyqum/static/fa/svgs/solid/volleyball-ball.svg
 pyqum/static/fa/svgs/solid/volume-down.svg
 pyqum/static/fa/svgs/solid/volume-mute.svg
@@ -1581,6 +1615,7 @@ pyqum/static/fa/svgs/solid/walking.svg
 pyqum/static/fa/svgs/solid/wallet.svg
 pyqum/static/fa/svgs/solid/warehouse.svg
 pyqum/static/fa/svgs/solid/water.svg
+pyqum/static/fa/svgs/solid/wave-square.svg
 pyqum/static/fa/svgs/solid/weight-hanging.svg
 pyqum/static/fa/svgs/solid/weight.svg
 pyqum/static/fa/svgs/solid/wheelchair.svg
@@ -1639,12 +1674,13 @@ pyqum/static/js/mach/bdr.js
 pyqum/static/js/mach/dc.js
 pyqum/static/js/mach/dso.js
 pyqum/static/js/mach/mach.js
+pyqum/static/js/mach/na.js
 pyqum/static/js/mach/sg.js
 pyqum/static/js/mach/vsa.js
 pyqum/static/js/mssn/all.js
 pyqum/static/js/mssn/char.js
-pyqum/static/js/mssn/data.js
 pyqum/static/js/mssn/mssn.js
+pyqum/static/js/mssn/char/fresp.js
 pyqum/static/ui/jquery-ui.css
 pyqum/static/ui/jquery-ui.js
 pyqum/static/ui/jquery-ui.min.css
@@ -1674,10 +1710,11 @@ pyqum/templates/blog/machn/bdr.html
 pyqum/templates/blog/machn/dc.html
 pyqum/templates/blog/machn/dso.html
 pyqum/templates/blog/machn/machine.html
+pyqum/templates/blog/machn/na.html
 pyqum/templates/blog/machn/sg.html
 pyqum/templates/blog/machn/vsa.html
 pyqum/templates/blog/msson/all.html
 pyqum/templates/blog/msson/char.html
-pyqum/templates/blog/msson/data.html
 pyqum/templates/blog/msson/mission.html
+pyqum/templates/blog/msson/char/fresp.html
 pyqum/templates/guide/papers.html

@@ -245,7 +245,7 @@ $(function () {
 });
 
 
-// on-fly settings
+// pending: oscilloscope for DC Amp Box
 $(function () {
     $('select.dc#history').on('change', function () {
         var P_Ch = $('select.dc[name="P_Ch"]').val();
@@ -412,7 +412,43 @@ $(function() {
     });
 });
 
-
+// show keithley's page
+$(function() {
+    $('button.dc#keithley').bind('click', function() {
+        $('div.dccontent').hide();
+        $('div.dccontent#keithley').show();
+        $('button.dc').removeClass('selected');
+        $('button.dc#keithley').addClass('selected');
+        return false;
+    });
+});
+// toggle keithley connection
+$(function () {
+    $('input.dc#init-keithley').click(function () { 
+        //indicate it is still running:
+        $( "i.dc" ).remove(); //clear previous
+        $('button.dc#keithley[name="init"]').prepend("<i class='dc fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var keitstat = $('input.dc#init-keithley').is(':checked'); //use css to respond to click / touch
+        // toggle ON-OFF connection with keithley
+        $.getJSON('/mach'+'/dc/keithley', {
+            keitstat: keitstat
+        }, function (data) {
+            $( "i.dc" ).remove(); //clear previous
+            console.log("Previous: " + data.prev);
+        });
+    });
+});
+// send keithley V-Pulse
+$(function() {
+    $('button.dc#keithley[name="vpulse-send"]').bind('click', function() {
+        $.getJSON('/mach/dc/keithley/vpulse', {
+            vset: $('input.dc#keithley[name="vpulse"]').val(),
+            pwidth: $('input.dc#keithley[name="vpulse-dur"]').val()
+        }, function(data) {
+            console.log("VI-List: " + data.VI_List);
+        });
+    });
+});
 
     
 

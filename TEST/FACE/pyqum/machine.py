@@ -20,7 +20,7 @@ from si_prefix import si_format, si_parse
 from pyqum.instrument.modular import AWG, VSA
 # seems like AWG's working-instance works differently than VSA's
 awgsess = AWG.InitWithOptions()
-from pyqum.instrument.benchtop import DSO, PNA, YOKO
+from pyqum.instrument.benchtop import DSO, PNA, YOKO, KEIT
 # dsobench = DSO.Initiate()
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
@@ -312,17 +312,11 @@ def nacloset():
     status = NA[natype].close(nabench[natype])
     del NA[natype],nabench[natype]
     return jsonify(message=status)
-@bp.route('/na/preset', methods=['GET'])
-def napreset():
-    natype = request.args.get('natype')
-    status = NA[natype].preset(nabench[natype])
-    del NA[natype],nabench[natype]
-    return jsonify(message=status)
 @bp.route('/na/set/freqrange', methods=['GET'])
 def nasetfreqrange():
     natype = request.args.get('natype')
     freqrange = waveform(request.args.get('freqrange'))
-    frequnit = request.args.get('frequnit')[0]
+    frequnit = request.args.get('frequnit').replace("Hz","")
     NA[natype].sweep(nabench[natype], action=['Set', 'ON', freqrange.count])
     fstart, fstop = si_parse(str(freqrange.data[0])+frequnit), si_parse(str(freqrange.data[-1])+frequnit)
     NA[natype].sweep(nabench[natype], action=['Set', 'ON', freqrange.count])
@@ -340,42 +334,51 @@ def nasetpowa():
 def nasetifb():
     natype = request.args.get('natype')
     ifb = request.args.get('ifb')
-    ifbunit = request.args.get('ifbunit')[0]
+    ifbunit = request.args.get('ifbunit').replace("Hz","")
     stat = NA[natype].ifbw(nabench[natype], action=['Set', si_parse(ifb + ifbunit)])
     message = 'ifb: %s <%s>' %(stat[1], stat[0])
     return jsonify(message=message)
-@bp.route('/na/set/ave', methods=['GET'])
-def nasetave():
+@bp.route('/na/set/autoscale', methods=['GET'])
+def nasetautoscale():
     natype = request.args.get('natype')
-    ave = request.args.get('ave')
-    stat = NA[natype].averag(nabench[natype], action=['Set', ave])
-    message = 'average: %s <%s>' %(stat[1], stat[0])
-    return jsonify(message=message)
-@bp.route('/na/set/sparam', methods=['GET'])
-def nasetsparam():
+    status = NA[natype].autoscal(nabench[natype])
+    return jsonify(message=status)
+@bp.route('/na/set/scanning', methods=['GET'])
+def nasetscanning():
     natype = request.args.get('natype')
-    sparam = request.args.get('sparam')
-    stat = NA[natype].setrace(nabench[natype], Mparam=[sparam], window='D1')
-    message = 'S-parameter: <%s>' %stat
-    return jsonify(message=message)
+    scan = int(request.args.get('scan'))
+    NA[natype].rfports(nabench[natype], action=['Set', scan])
+    status = NA[natype].scanning(nabench[natype], scan)
+    return jsonify(message=status)
 @bp.route('/na/set/sweep', methods=['GET'])
 def nasetsweep():
     natype = request.args.get('natype')
+    s21, s11 = int(request.args.get('s21')), int(request.args.get('s11'))
+    s22, s12 = int(request.args.get('s22')), int(request.args.get('s12'))
+    mparam = ['S11']*s11 + ['S22']*s22 + ['S21']*s21 + ['S12']*s12
+    mwindow = 'D1_2_3'[:len(mparam)*2]
+    mreturn = NA[natype].setrace(nabench[natype], Mparam=mparam, window=mwindow)
+    print("sweeping %s"%mreturn)
     NA[natype].rfports(nabench[natype], action=['Set', 'ON'])
-    NA[natype].measure(nabench[natype])
+    stat = NA[natype].measure(nabench[natype])
+    swptime = NA[natype].sweep(nabench[natype])[1]['TIME']
     NA[natype].autoscal(nabench[natype])
     NA[natype].rfports(nabench[natype], action=['Set', 'OFF'])
-    return jsonify()
+    return jsonify(sweep_complete=bool(stat[1]), swptime=swptime)
 @bp.route('/na/get', methods=['GET'])
 def naget():
     natype = request.args.get('natype')
     message = {}
     try:
-        # message['frequency'] = si_format(float(NA[natype].frequency(nabench[natype])[1]['CW']),precision=3) + "Hz" # frequency
-        message['power'] = str(NA[natype].power(nabench[natype])[1]['LEVEL']) + " dBm" # power (fixed unit)
-        message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natype])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb
-        message['ave'] = str(NA[natype].averag(nabench[natype])[1]['COUNT']) # ave
-        message['rfports'] = int(NA[natype].rfports(nabench[natype])[1]['STATE']) # rf output
+        start_val, start_unit = si_format(float(NA[natype].linfreq(nabench[natype])[1]['START']),precision=1).split(" ")
+        stop_val, stop_unit = si_format(float(NA[natype].linfreq(nabench[natype])[1]['STOP']),precision=1).split(" ")
+        stop_conversion = si_parse("1%s"%stop_unit) / si_parse("1%s"%start_unit) # equalizing both unit-range:
+        message['start-frequency'] = "%s %sHz" %(start_val,start_unit) # start-frequency
+        message['stop-frequency'] = "%s %sHz" %(float(stop_val)*stop_conversion,start_unit) # stop-frequency
+        message['sweep-points'] = int(NA[natype].sweep(nabench[natype])[1]['POINTS']) # sweep-points
+        message['power'] = "%.1f dBm" %float(NA[natype].power(nabench[natype])[1]['LEVEL']) # power (fixed unit)
+        message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natype])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb (adjusted by si_prefix)
+        message['s21'] = int('S21' in NA[natype].getrace(nabench[natype]))
     except:
         raise
         message = dict(status='%s is not connected' %natype)
@@ -539,6 +542,22 @@ def dc_yokogawa_onoff():
     YOKO.output(yokog, 1)
     YOKO.output(yokog, 0)
     return jsonify()
+# KEITHLEY 2400
+@bp.route('/dc/keithley', methods=['GET'])
+def dckeithley():
+    keitstat = request.args.get('keitstat')
+    if keitstat == 'true':
+        global keith
+        keith = KEIT.Initiate()
+    elif keitstat == 'false':
+        KEIT.close(keith, True)
+    return jsonify()
+@bp.route('/dc/keithley/vpulse', methods=['GET'])
+def dc_keithley_vpulse():
+    vset = float(request.args.get('vset'))
+    pwidth = float(request.args.get("pwidth"))
+    return_width, VI_List = KEIT.single_pulse(keith, pwidth*1e-3, vset)
+    return jsonify(return_width=return_width, VI_List=VI_List)
 # Amplifier Box
 @bp.route('/dc/amplifier', methods=['GET'])
 def dcamplifier():

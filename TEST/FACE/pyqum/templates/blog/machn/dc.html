@@ -12,6 +12,7 @@
     <div class="tab2">
     <form method='GET'>
         <button class='dc' id='yokogawa' name="init">YOKOGAWA</button>
+        <button class='dc' id='keithley' name="init">KEITHLEY</button>
         <button class='dc' id='amplifier'>AMPLIFIER</button>
         <button class='dc' id='wavein'>WAVE-IN</button>
         <button class='dc' id='ivcurve'>I-Vb</button> 
@@ -49,7 +50,7 @@
                 <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vwave' value="V"></div>
             </div>
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-10" id='left'><label>P-Width</label></div>
+                <div class="col-10" id='left'><label>Delay</label></div>
                 <div class="col-12" id='left'><input class='dc scale' id="yokogawa" name='vwave-dur' type="text" value="10"/></div>
                 <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vwave-dur' value="ms"></div>
                 <div class="col-5" id='left'></div>
@@ -61,7 +62,35 @@
         </div>
     </div>
 
-    <!-- Amplifier Box -->
+    <!-- KEITHLEY -->
+    <div class="dccontent" id="keithley">
+        <div class="container">
+            <div class="row"> <!-- NEW ROW for ON-OFF SWITCH -->
+                <div class="col-15" id='right'>
+                    <label class="dc switch">
+                        <input class="dc" id='init-keithley' type="checkbox">
+                        <div class="slider smooth">
+                            <span class="on">ON</span><span class="off">OFF</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-10" id='left'><label>V Pulse</label></div>
+                <div class="col-12" id='left'><input class='dc scale' id="keithley" name='vpulse' type="text" value="10"/></div>
+                <div class="col-10" id='left'><input class="dc unit" id="keithley" name='vpulse' value="V"></div>
+                <div class="col-5" id='left'></div>
+                <div class="col-10" id='left'><label>Duration</label></div>
+                <div class="col-12" id='left'><input class='dc scale' id="keithley" name='vpulse-dur' type="text" value="20"/></div>
+                <div class="col-10" id='left'><input class="dc unit" id="keithley" name='vpulse-dur' value="ms"></div>
+                <div class="col-15" id='right'><button class='dc push_button w-95 blue' id='keithley' name='vpulse-send'>SEND</button></div>
+                <div class="col-15" id='right'><button class='dc push_button w-95 red' id='keithley' name='onoff-send'>ON-OFF</button></div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- DC Amplifier Box -->
     <div class="dccontent" id="amplifier">
         <div class="container">
             

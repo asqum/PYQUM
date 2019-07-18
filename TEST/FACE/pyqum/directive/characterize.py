@@ -6,7 +6,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
-from flask import request, session
+from flask import request, session, current_app, g, Flask
 from numpy import linspace, sin, pi, prod, array
 from pyqum.instrument.benchtop import ENA
 from pyqum.instrument.logger import settings, clocker
@@ -48,9 +48,9 @@ def TESTC(tag="", datadensity=1, instr=[], corder={}, comment='', dayindex='', t
             yield data
             data = []
 
-# @settings(session['user_name'], 'Sam')
-@settings('ABC', 'Sam')
-def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['ENA'], datadensity=2):
+@settings(2, 'Sam')
+# @settings('abc', 'Sam')
+def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['ENA']):
     '''Characterizing Frequency Response:
     C-Order: S-Parameter, IF-Bandwidth, Power, Frequency
     Before dayindex: freely customized by user
@@ -58,7 +58,7 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     In-betweens: depends on mode / high interaction with the system
     '''
     # pushing pre-measurement parameters to settings:
-    yield tag, datadensity, instr, corder, comment, dayindex, taskentry
+    yield session['user_name'], tag, instr, corder, comment, dayindex, taskentry
 
     # User-defined Controlling-PARAMETER(s) ======================================================================================
     Sparam = waveform(corder['S-Parameter'])
@@ -67,10 +67,12 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     freq = waveform(corder['Frequency'])
     
     # Buffer setting(s):
-    buffersize = freq.count * datadensity
+    buffersize = freq.count * 2 #data density of 2 due to IQ
+    # Total data points:
+    datasize = prod([waveform(x).count for x in corder.values()]) * 2 #data density of 2 due to IQ
     
     # Pre-loop settings:
-    bench = ENA.Initiate()
+    bench = ENA.Initiate(True)
     ENA.dataform(bench, action=['Set', 'REAL32'])
     # Freq-sweep-range settings:
     ENA.sweep(bench, action=['Set', 'ON', freq.count])
@@ -78,7 +80,6 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     ENA.linfreq(bench, action=['Set', fstart, fstop])
 
     # User-defined Measurement-FLOW ==============================================================================================
-    datasize = prod([waveform(x).count for x in corder.values()]) * datadensity
     for i in range(resumepoint//buffersize,datasize//buffersize):
 
         # Registerring parameter(s)
