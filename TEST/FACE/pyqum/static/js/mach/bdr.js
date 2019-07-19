@@ -116,6 +116,9 @@ $(function () {
             $('div.bdr#startT').empty();
             $('div.bdr#startT').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
             append($('<span style="color: red;"></span>').text(data.startimeT));;
+            $('div.bdr#T_recent').empty();
+            $('div.bdr#T_recent').append($('<h4 style="color: darkblue;"></h4>').text("Latest T: ")).
+            append($('<span style="color: red;"></span>').text(data.T[data.T.length-1]));;
             // access sessions:
             // console.log("User: " + $.session.get('abc'));
         });

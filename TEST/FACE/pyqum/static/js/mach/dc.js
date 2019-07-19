@@ -242,6 +242,7 @@ $(function () {
                 gaugeVg2.update({colorValueBoxBackground: 'grey' }); }
         });
     });
+    // return false;
 });
 
 
@@ -378,6 +379,7 @@ $(function () {
             $( "i.dc" ).remove(); //clear previous
             console.log("Previous: " + data.prev);
         });
+        // return false;
     });
 });
 // send yokogawa V-Pulse
@@ -389,6 +391,7 @@ $(function() {
         }, function(data) {
             console.log("SweepTime: " + data.SweepTime);
         });
+        return false;
     });
 });
 // send yokogawa on-off
@@ -397,6 +400,7 @@ $(function() {
         $.getJSON('/mach/dc/yokogawa/onoff', {
         }, function(data) {
         });
+        return false;
     });
 });
 // send yokogawa V-Wave
@@ -409,6 +413,7 @@ $(function() {
         }, function(data) {
             console.log("SweepTime: " + data.SweepTime);
         });
+        return false;
     });
 });
 
@@ -436,6 +441,7 @@ $(function () {
             $( "i.dc" ).remove(); //clear previous
             console.log("Previous: " + data.prev);
         });
+        // return false;
     });
 });
 // send keithley V-Pulse
@@ -445,10 +451,168 @@ $(function() {
             vset: $('input.dc#keithley[name="vpulse"]').val(),
             pwidth: $('input.dc#keithley[name="vpulse-dur"]').val()
         }, function(data) {
-            console.log("VI-List: " + data.VI_List);
+            console.log("time(s): " + data.t);
+            console.log("V(V): " + data.V);
+            console.log("I(A): " + data.I);
+            // $('p.keit.status').text("Return: " + String(data.I));
+            
+            let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
+                name: 'V',
+                line: {color: 'rgb(23, 151, 6)', width: 2.5},
+                yaxis: 'y' };
+            let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', 
+                name: 'I',
+                line: {color: 'blue', width: 2.5},
+                yaxis: 'y2' };
+
+            let layout = {
+                legend: {x: 1.08},
+                height: $(window).height()*0.8,
+                width: $(window).width()*0.7,
+                xaxis: {
+                    zeroline: false,
+                    title: "<b>time(s)</b>",
+                    titlefont: {size: 18},
+                    tickfont: {size: 18},
+                    tickwidth: 3,
+                    linewidth: 3 
+                },
+                yaxis: {
+                    zeroline: false,
+                    // title: '<b>Amp(dB)</b>',
+                    titlefont: {size: 18},
+                    tickfont: {size: 18},
+                    tickwidth: 3,
+                    linewidth: 3
+                },
+                yaxis2: {
+                    zeroline: false,
+                    title: '<b>I(A)</b>', 
+                    titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
+                    tickfont: {color: 'rgb(148, 103, 189)', size: 18},
+                    tickwidth: 3,
+                    linewidth: 3, 
+                    overlaying: 'y', 
+                    side: 'right'
+                },
+                title: '',
+                annotations: [{
+                    xref: 'paper',
+                    yref: 'paper',
+                    x: 0.03,
+                    xanchor: 'right',
+                    y: 1.05,
+                    yanchor: 'bottom',
+                    text: '<b>V(V)</b>',
+                    font: {size: 18},
+                    showarrow: false,
+                    textangle: 0
+                  }]
+                };
+            
+            $.each(data.t, function(i, val) {traceL.x.push(val);});
+            $.each(data.V, function(i, val) {traceL.y.push(val);});
+            $.each(data.t, function(i, val) {traceR.x.push(val);});
+            $.each(data.I, function(i, val) {traceR.y.push(val);});
+
+            var Trace = [traceL, traceR]
+            Plotly.newPlot('dc-keith-chart', Trace, layout, {showSendToCloud: true});
         });
     });
+    return false;
 });
+
+// show ivcurve's page
+$(function() {
+    $('button.dc#ivcurve').bind('click', function() {
+        $('div.dccontent').hide();
+        $('div.dccontent#ivcurve').show();
+        $('button.dc').removeClass('selected');
+        $('button.dc#ivcurve').addClass('selected');
+        return false;
+    });
+});
+// do ivcurve measurement
+$(function () {
+    $('button.dc#ivcurve[name="sweep"]').click(function () { 
+        //indicate it is still running:
+        $( "i.dc" ).remove(); //clear previous
+        $('button.dc#ivcurve[name="init"]').prepend("<i class='dc fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var vrange = $('input.dc#ivcurve[name="vrange"]').val();
+        var mdelay = $('input.dc#ivcurve[name="mdelay"]').val();
+        var mwaiting = $('input.dc#ivcurve[name="mwaiting"]').val();
+        // toggle ON-OFF connection with ivcurve
+        $.getJSON('/mach'+'/dc/measure/ivcurve', {
+            vrange: vrange, mdelay: mdelay, mwaiting: mwaiting
+        }, function (data) {
+            $( "i.dc" ).remove(); //clear previous
+            console.log("DC IVb Measurement: " + data.state);
+            let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
+                name: 'I',
+                line: {color: 'rgb(23, 151, 6)', width: 2.5},
+                yaxis: 'y' };
+            let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', 
+                name: 'V0',
+                line: {color: 'blue', width: 2.5},
+                yaxis: 'y2' };
+
+            let layout = {
+                legend: {x: 1.08},
+                height: $(window).height()*0.8,
+                width: $(window).width()*0.7,
+                xaxis: {
+                    zeroline: false,
+                    title: "<b>Vb(V)</b>",
+                    titlefont: {size: 18},
+                    tickfont: {size: 18},
+                    tickwidth: 3,
+                    linewidth: 3 
+                },
+                yaxis: {
+                    zeroline: false,
+                    // title: '<b>Amp(dB)</b>',
+                    titlefont: {size: 18},
+                    tickfont: {size: 18},
+                    tickwidth: 3,
+                    linewidth: 3
+                },
+                yaxis2: {
+                    zeroline: false,
+                    title: '<b>V0(V)</b>', 
+                    titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
+                    tickfont: {color: 'rgb(148, 103, 189)', size: 18},
+                    tickwidth: 3,
+                    linewidth: 3, 
+                    overlaying: 'y', 
+                    side: 'right'
+                },
+                title: '',
+                annotations: [{
+                    xref: 'paper',
+                    yref: 'paper',
+                    x: 0.03,
+                    xanchor: 'right',
+                    y: 1.05,
+                    yanchor: 'bottom',
+                    text: '<b>I(A)</b>',
+                    font: {size: 18},
+                    showarrow: false,
+                    textangle: 0
+                  }]
+                };
+            
+            $.each(data.Vb, function(i, val) {traceL.x.push(val);});
+            $.each(data.I, function(i, val) {traceL.y.push(val);});
+            $.each(data.Vb, function(i, val) {traceR.x.push(val);});
+            $.each(data.V0, function(i, val) {traceR.y.push(val);});
+
+            var Trace = [traceL, traceR]
+            Plotly.newPlot('dc-measureivcurve-chart', Trace, layout, {showSendToCloud: true});
+        });
+        return false;
+    });
+});
+
 
     
 

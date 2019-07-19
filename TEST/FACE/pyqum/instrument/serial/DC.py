@@ -110,12 +110,14 @@ class measure:
     '''perform all sort of dc measurements
     sample_rate: max 500K spread over all channels
     '''
-    def __init__(self, sample_rate=500000, initial_delay=0, duty_cycle=0.5, samps_per_chan=1):
-        self.sample_rate = sample_rate
+    def __init__(self, delay=1e-3, waiting=1e-3, initial_delay=0, samps_per_chan=1):
         self.initial_delay = initial_delay
-        self.duty_cycle = duty_cycle
+        # max sample_rate = 500000
+        self.sample_rate = 1 / (delay + waiting)
+        self.duty_cycle = delay / (delay + waiting)
         self.samps_per_chan = samps_per_chan
-        self.electrode = openall(aof=0, aii=0, aif=5, write=True, clock=True, sample_rate=sample_rate, initial_delay=initial_delay, duty_cycle=duty_cycle, samps_per_chan=samps_per_chan)
+        self.electrode = openall(aof=0, aii=0, aif=5, write=True, clock=True, sample_rate=self.sample_rate, initial_delay=initial_delay, duty_cycle=self.duty_cycle, samps_per_chan=samps_per_chan)
+        self.state = True
 
     def IVb(self, active_waveform):
         self.write_task = self.electrode['write_task']
@@ -141,6 +143,7 @@ class measure:
         self.write_task.close()
         self.read_task.close()
         self.clock_task.close()
+        self.state = False
 
 
 # w.write([0, 0, 0, 0], auto_start=True)
@@ -163,15 +166,15 @@ def test():
     A.close()
 
     # Test Streaming IV-curve
-    X0 = waveform("0 to -10 *500 to 10 *1000 to 0 * 500 ") # waveform("0 to 5 *700 to 10*1300 to 0 * 1000"), waveform("0 to 3 *700  to 1*1500 to 7*500 to 0 * 300")
-    M = measure(sample_rate=1000, duty_cycle=0.5, samps_per_chan=X0.count)
+    X0 = waveform("0 to -10 *1000 to 10 *2000 to 0 * 1000 ") # waveform("0 to 5 *700 to 10*1300 to 0 * 1000"), waveform("0 to 3 *700  to 1*1500 to 7*500 to 0 * 300")
+    M = measure(delay=5e-3, waiting=5e-3, samps_per_chan=X0.count)
     read_values = M.IVb(X0.data)
     V0 = read_values[0]
-    V = read_values[3]/(A.Rb)
-    curve([range(X0.count),range(V.size)], [array(X0.data)/A.Division,list(V0)], "Channel #0", "arb time", "V(V)", ["-k","or"])
+    I = read_values[3]/(A.Rb)
+    curve([range(X0.count),range(I.size)], [array(X0.data)/A.Division,list(V0)], "Channel #0", "arb time", "V(V)", ["-k","or"])
     # print(list(V))
-    curve([array(X0.data)/A.Division], [list(V)], "IVb", "V", "I", [".k"])
-    curve([array(X0.data[:-1])/A.Division], [derivative(array(X0.data)/A.Division, V)[1]], "IVb", "V", "I", [".k"])
+    curve([array(X0.data)/A.Division], [list(I)], "IVb", "V", "I", [".k"])
+    curve([array(X0.data[:-1])/A.Division], [derivative(array(X0.data)/A.Division, I)[1]], "IVb", "V", "I", [".k"])
     M.close()
     
     return
@@ -182,4 +185,6 @@ def test():
 
 
 # test()
+
+
 

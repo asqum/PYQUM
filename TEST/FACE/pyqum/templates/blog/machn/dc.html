@@ -15,7 +15,7 @@
         <button class='dc' id='keithley' name="init">KEITHLEY</button>
         <button class='dc' id='amplifier'>AMPLIFIER</button>
         <button class='dc' id='wavein'>WAVE-IN</button>
-        <button class='dc' id='ivcurve'>I-Vb</button> 
+        <button class='dc' id='ivcurve' name="init">I-Vb</button> 
         
     </form>
     </div>
@@ -78,14 +78,20 @@
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                 <div class="col-10" id='left'><label>V Pulse</label></div>
                 <div class="col-12" id='left'><input class='dc scale' id="keithley" name='vpulse' type="text" value="10"/></div>
-                <div class="col-10" id='left'><input class="dc unit" id="keithley" name='vpulse' value="V"></div>
+                <div class="col-10" id='left'><input class="dc unit" id="keithley" name='vpulse' value="V" readonly></div>
                 <div class="col-5" id='left'></div>
                 <div class="col-10" id='left'><label>Duration</label></div>
                 <div class="col-12" id='left'><input class='dc scale' id="keithley" name='vpulse-dur' type="text" value="20"/></div>
-                <div class="col-10" id='left'><input class="dc unit" id="keithley" name='vpulse-dur' value="ms"></div>
+                <div class="col-10" id='left'><input class="dc unit" id="keithley" name='vpulse-dur' value="ms" readonly></div>
                 <div class="col-15" id='right'><button class='dc push_button w-95 blue' id='keithley' name='vpulse-send'>SEND</button></div>
                 <div class="col-15" id='right'><button class='dc push_button w-95 red' id='keithley' name='onoff-send'>ON-OFF</button></div>
             </div>
+
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <p class="keit status"></p>
+            </div>
+
+            <div id="dc-keith-chart"></div>
             
         </div>
     </div>
@@ -153,6 +159,31 @@
                 
             </div>
            
+        </div>
+    </div>
+
+    <!-- IV Curve -->
+    <div class="dccontent" id="ivcurve">
+        <div class="container">
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-10" id='left'><label>V Range</label></div>
+                <div class="col-49" id='left'><input class='dc scale' id="ivcurve" name='vrange' type="text" value="0 to -10 *1000 to 10 *2000 to 0 * 1000"/></div>
+                <div class="col-10" id='left'><input class="dc unit" id="ivcurve" name='vrange' value="V" readonly></div>
+                <div class="col-15" id='right'><button class='dc push_button w-95 blue' id='ivcurve' name='sweep'>SWEEP</button></div>
+            </div>
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-10" id='left'><label>Delay time</label></div>
+                <div class="col-12" id='left'><input class='dc scale' id="ivcurve" name='mdelay' type="text" value="1"/></div>
+                <div class="col-10" id='left'><input class="dc unit" id="ivcurve" name='mdelay' value="ms" readonly></div>
+                <div class="col-5" id='left'></div>
+                <div class="col-10" id='left'><label>Waiting time</label></div>
+                <div class="col-12" id='left'><input class='dc scale' id="ivcurve" name='mwaiting' type="text" value="1"/></div>
+                <div class="col-10" id='left'><input class="dc unit" id="ivcurve" name='mwaiting' value="ms" readonly></div>
+                <div class="col-15" id='right'><button class='dc push_button w-95 blue' id='ivcurve' name='save'>SAVE</button></div>
+            </div>
+
+            <div id="dc-measureivcurve-chart"></div>
+            
         </div>
     </div>
 

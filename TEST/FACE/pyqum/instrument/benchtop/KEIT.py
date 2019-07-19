@@ -30,15 +30,15 @@ def Initiate(reset=False):
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
         if reset:
-            bench.write('RC') #Clear buffer memory
+            stat = bench.write('RC') #Clear buffer memory
         else:
-            stat = bench.write(':SYSTem:PRESet') #No header; DC current in V; Single sweep
+            stat = bench.write(':SYSTem:PRESet')
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 15000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
-        # print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
     except: 
-        raise
+        # raise
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
         bench = "disconnected"
@@ -49,8 +49,8 @@ def single_pulse(bench, width, height):
        ON: 20ms, OFF: 50ms
     '''
     # set compliances
-    bench.write(":SENS:CURR:PROT 0.8")
-    bench.write(":SENS:CURR:RANGe 0.8")
+    bench.write(":SENS:CURR:PROT 0.08")
+    bench.write(":SENS:CURR:RANGe 0.08")
 
     # set range
     # bench.write(":SENS:VOLT:RANGe %s" %height)
@@ -60,19 +60,20 @@ def single_pulse(bench, width, height):
     bench.write(":TRIG:COUN 3")
     bench.write(":SOUR:DEL %s" %width)
 
-    return_width = bench.query("SOUR:DEL?")
+    return_width = float(bench.query("SOUR:DEL?"))
     bench.write(":SOUR:VOLT:MODE LIST")
     bench.write(":OUTPUT ON")
 
     bench.write(":FORMAT:ELEM VOLT,CURR")
-    VI_List = bench.query(":READ?")
+    VI_List = [float(x) for x in bench.query(":READ?").split(',')]
     
     return return_width, VI_List
 
 
 def close(bench, reset=False):
+    bench.write(":OUTPUT OFF")
     if reset:
-        bench.write(":OUTPUT OFF")
+        bench.write(':SYSTem:PRESet')
         set_status(mdlname, dict(config='return to zero-off'))
     else: set_status(mdlname, dict(config='previous'))
     try:

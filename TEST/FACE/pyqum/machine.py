@@ -557,8 +557,11 @@ def dc_keithley_vpulse():
     vset = float(request.args.get('vset'))
     pwidth = float(request.args.get("pwidth"))
     return_width, VI_List = KEIT.single_pulse(keith, pwidth*1e-3, vset)
-    return jsonify(return_width=return_width, VI_List=VI_List)
-# Amplifier Box
+    t = [x*return_width for x in range(len(VI_List)//2)]
+    print("t: %s" %t)
+    V, I = VI_List[0::2], VI_List[1::2]
+    return jsonify(return_width=return_width, V=V, I=I, t=t)
+# AMPLIFIER Box
 @bp.route('/dc/amplifier', methods=['GET'])
 def dcamplifier():
     ampstat = request.args.get('ampstat')
@@ -575,13 +578,16 @@ def dcamplifier():
 def dcamplifiersense():
     state = Amp.state
     if state:
+        global Amp_Rb, Amp_Div
         Amp.sensehardpanel()
         VSP = '%.1f'%Amp.VSupplyP[0]
         VSN = '%.1f'%Amp.VSupplyN[0]
         Sym = Amp.Symmetry
         BM = Amp.BiasMode
-        Rb = si_format(Amp.Rb, precision=0).replace(' ','').upper()
-        Div = si_format(Amp.Division, precision=0).replace(' ','').upper()
+        Amp_Rb = Amp.Rb
+        Rb = si_format(Amp_Rb, precision=0).replace(' ','').upper()
+        Amp_Div = Amp.Division
+        Div = si_format(Amp_Div, precision=0).replace(' ','').upper()
         Vg1, Vg2 = Amp.VgMode1, Amp.VgMode2
         gain1 = si_format(Amp.VGain1, precision=0).replace(' ','').upper()
         gain2 = si_format(Amp.VGain2, precision=0).replace(' ','').upper()
@@ -589,6 +595,22 @@ def dcamplifiersense():
         VSP, VSN, Sym, BM, Rb, Div, gain1, gain2, Vg1, Vg2 = None, None, None, None, None, None, None, None, None, None
         print('DC disconnected')
     return jsonify(state=state, VSP=VSP, VSN=VSN, Sym=Sym, BM=BM, Rb=Rb, Div=Div, Vg1=Vg1, Vg2=Vg2, gain1=gain1, gain2=gain2)
+# DC Measurements
+@bp.route('/dc/measure/ivcurve', methods=['GET'])
+def dcmeasureivcurve():
+    V0, I, Vb = [], [], []
+    vrange = waveform(request.args.get('vrange'))
+    mdelay = float(request.args.get('mdelay'))
+    mwaiting = float(request.args.get('mwaiting'))
+    ivcurve = DC.measure(delay=mdelay*1e-3, waiting=mwaiting*1e-3, samps_per_chan=vrange.count)
+    print("DC Measurement Started")
+    read_values = ivcurve.IVb(vrange.data)
+    V0 = list(read_values[0]) #ai0
+    I = list(read_values[3] / Amp_Rb) #ai3
+    Vb = [x/Amp_Div for x in vrange.data]
+    ivcurve.close()
+    print("DC Measurement Closed")
+    return jsonify(state=ivcurve.state, V0=V0, I=I, Vb=Vb)
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
