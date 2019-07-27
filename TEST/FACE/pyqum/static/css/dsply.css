@@ -12,7 +12,7 @@
     padding-left: 0%;
     float: left;
     background-color: #333333;
-    width: 6%; /*should align w/ margin-left for tabcontent! */
+    width: 7%; /*should align w/ margin-left for tabcontent! */
     height: 93vh;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch; /*momentum scroll*/
@@ -34,7 +34,8 @@
     color: #333333;
 }
 .tab button.active {
-    /* background-color: #ccc; */
+    color: blue;
+    font-weight: 777;
     background-color: gold;
 }
 .tabcontent {
@@ -42,66 +43,30 @@
     display: none;
     float: left;
     padding: 0px 0.5%;
-    width: 93%;
+    width: 93%; /*100 - tab/margin - 2*padding */
     height: 100vh; /*essential for mobile browsing*/
     margin-left: 6%;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch; /*momentum scroll*/
 }
-
-/* Vertical Tabs #2 *//* Instrument content page */
-.tab2 {
-    position: fixed;
-    align-content: space-around;
-    padding-left: 0%;
-    float: left;
-    background-color: #f1f1f1;
-    width: 12%;
-    height: 93vh;
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch; /*momentum scroll*/
-}
-.tab2 button {
+.tabrow {
+    width:95%;
     display: block;
-    padding: 12px 8.8%; /*vertical horizontal padding*/
-    width: 100%;
-    border: none;
-    outline: none;
-    text-align: left;
-    cursor: pointer;
-    transition: 0.3s;
+    float: right;
+    padding: 2px;
 }
-.tab2 button:hover {
-    background-color: rgb(98, 245, 233);
-}
-.tab2 button.active {
-    /* background-color: #ccc; */
-    background-color: gold;
-}
-
-/* missions */
-div.charcontent, div.datacontent {
-    position: fixed;
-    display: block;
-    float: left;
-    /* margin-top: 32px; */
-    margin-left: 12%;
-    padding-left: 2.5%;
-    padding-right: 2.5%;
-    width: 77%;
-    height: 100vh;
-    /* margin-bottom: 64px; */
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch; /*momentum scroll*/
-}
-
-/* Only allow ALL-page to show-up when loading machine.html */
 .tabcontent#all {
+    position: fixed;
     display: block;
+    width: 93%; /*100 - tab/margin - 2*padding */
+    margin-left: 6%;
+    height: 100vh; /*essential for mobile browsing*/
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
 }
 
 /* Modified Tabs */
-.reset, .generate {
+.connect, .reset, .generate {
     background-color: #4CAF50;
     color: white;
 }
@@ -113,10 +78,32 @@ div.charcontent, div.datacontent {
     background-color: darkslategray;
 }
 .selected {
+    color: blue;
+    font-weight: 777;
     background-color: gold;
 }
 .newupdate {
     background-color: rgb(255, 145, 0);
+}
+.setvalue {
+    color: rgb(29, 7, 153);
+    font-weight: 777;
+    background-color: rgb(13, 230, 78);
+}
+.getvalue {
+    color: rgb(219, 12, 12);
+    font-weight: 777;
+    background-color: rgb(241, 239, 110);
+}
+.unit {
+    color: rgb(49, 48, 48);
+    font-weight: 777;
+}
+
+/* for AI-Bridge */
+.suggestion {
+    background-color: rgb(203, 124, 240);
+    /* background-color: rgb(240, 20, 166); */
 }
 
 /* special adjustment to jobcontent due to the absence of instrlog */
@@ -135,29 +122,7 @@ img {
 }
 
 /* Chart */
-#data-chart-01, #char-chart-01 {
+#bdr-chart-01 {
     padding-top: 2rem;
     height: 100%;
 }
-
-
-/* Instrument's Log */
-/* .slider {
-    position: fixed;
-    background-color: darkblue;
-    color: white;
-    cursor: pointer;
-    padding: 8px;
-    width: 100%;
-    border: none;
-    text-align: left;
-    outline: none;
-    font-size: 13px;
-}
-.slider h4 {
-    color: white;
-}
-.active, .slider:hover {
-    background-color: #555;
-} */
-

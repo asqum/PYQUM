@@ -380,7 +380,7 @@ def naget():
         message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natype])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb (adjusted by si_prefix)
         message['s21'] = int('S21' in NA[natype].getrace(nabench[natype]))
     except:
-        raise
+        # raise
         message = dict(status='%s is not connected' %natype)
     return jsonify(message=message)
 

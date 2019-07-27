@@ -34,3 +34,25 @@ $(function () {
         });
     });
 });
+
+//stream
+$(function () {
+    $('button.streamj').click(function () {
+        var i = 0;
+        var streamj = function () { setTimeout( function() {
+            
+            $.getJSON('/mssn'+'/all/streamjson', {
+                sj: i
+            }, function(data){
+                console.log("data:" + data.sj);
+            });
+            console.log("i: " + i);
+            i = i + 1;
+            requestAnimationFrame(streamj);
+        }, 100);
+    };
+    requestAnimationFrame(streamj);
+        
+    });
+    return false;
+});

@@ -65,7 +65,7 @@ def output(bench, state=0, keeprev=True):
 
 def sweep(bench, wave, pulsewidth=0.3, sweeprate=7):
     '''
-    sweeprate in V/s
+    sweeprate in V/s or A/s
     pulsewidth: waiting/staying/settling/stabilization time in sec
     Voltage Range (AUTO): R2: 10mV; R3: 100mV; R4: 1V; R5: 10V; R6: 30V
     '''
@@ -111,7 +111,7 @@ def close(bench, reset=False):
 def test(detail=True):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
-    s = Initiate()
+    s = Initiate(current=True)
     if eval(debugger):
         output(s, 1)
         # sweep(s, 0, 7, 371)
@@ -122,8 +122,8 @@ def test(detail=True):
         # sweep(s, V, V)
         # V = 12 * factor
         # sweep(s, V, V)
-        V_set = 10
-        sweep(s, "%sto0*1"%V_set, pulsewidth=10, sweeprate=V_set*60) # max sweep rate
+        V_set = 0.001
+        sweep(s, "%sto0*7"%V_set, pulsewidth=10, sweeprate=V_set/5)
     else: print(Fore.RED + "Basic IO Test")
     close(s, True)
     return

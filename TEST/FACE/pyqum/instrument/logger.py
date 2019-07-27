@@ -56,13 +56,13 @@ def status_code(status):
     if status == 0:
         return "Success!"
     else: return "error %s" % status
-
 def output_code(output):
     if output == "1":
         return "ON"
     elif output == "0":
         return "OFF"
 
+# log, get & set status for both machines & missions (instr = real OR virtual instruments like tasks)
 def loginstr(instr_name):
     '''[Existence, Assigned Path] = loginstr(Instrument's name)
     '''
@@ -70,7 +70,6 @@ def loginstr(instr_name):
     pqfile = Path(INSTR_PATH) / pyqumfile
     existence = exists(pqfile) and stat(pqfile).st_size > 0
     return existence, pqfile
-
 def get_status(instr_name):
     '''Get Instrument Status from LOG
     '''
@@ -81,7 +80,6 @@ def get_status(instr_name):
         with open(instr_log[1]) as jfile:
             instrument = json.load(jfile) # in json format
     return instrument
-
 def set_status(instr_name, info):
     '''Set Instrument Status for LOG
     * <info> must be a DICT'''
@@ -200,23 +198,29 @@ def translate_scpi(Name, instance, a, b):
 
     return status, ans
 
+# Execution
 class measurement:
     '''Initialize Measurement:\n
         1. Assembly Path based on Mission
         2. Checking Database if any (daylist)
+        3. Used for sending status to the front-end via JS
     '''
-    def __init__(self, mission, task, usr_name='USR', sample='Sample'):
+    def __init__(self, mission, task, usr_name='USR', sample='Sample', loopcount=[], loop_dur=[]):
         # Primary parameters (mission & task is auto-detected by OS)
-        self.mission = mission
-        self.task = task
-        self.usr_name = usr_name
-        self.sample = sample
+        self.mission, self.task = mission, task
+        self.usr_name, self.sample = usr_name, sample
         self.mssnpath = Path(USR_PATH) / usr_name / sample / mission
-        self.place = ", ".join(location()) #current location
+        self.loopcount, self.loop_dur = loopcount, loop_dur
+        #current location
+        self.place = ", ".join(location()) 
         
         # FOR Resume / Access operation:
         try:
             daylist = [d for d in listdir(self.mssnpath) if isdir(self.mssnpath / d)]
+            # filter out non task-specific
+            for i,d in enumerate(daylist):
+                if not [t for t in listdir(self.mssnpath / d) if t.split('.')[0] == self.task]:
+                    daylist.pop(i)
             daylist.sort(key=lambda x: getmtime(self.mssnpath / x))
             self.daylist = daylist
         except:
@@ -274,11 +278,11 @@ class measurement:
                     break
                 else:
                     task_index += 1
+        
         # from database:
         else:
             try:
                 self.day = self.daylist[index]
-                print(Back.GREEN + "Day selected: %s"%self.day)
                 self.taskentries = [int(t.split('(')[1][:-1]) for t in listdir(self.mssnpath / self.day) if t.split('.')[0] == self.task]
                 self.taskentries.sort(reverse=False) #ascending order
             except(ValueError): 
@@ -413,28 +417,39 @@ class measurement:
             datapie.truncate(self.datalocation+7+keepdata)
         return "FILE IS RESET"
         
-# Setting up Measurement
+    def searchcomment(self, keyword=""):
+        filelist = []
+        for d in self.daylist:
+            filelist += [(self.mssnpath / d / t) for t in listdir(self.mssnpath / d) if t.split('.')[0] == self.task]
+        return filelist
+
+
+# Setting up Measurement (Law-maker)
 def settings(datadensity=1, sample='Sample'):
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
-        usr_name, tag, instr, corder, comment, dayindex, taskentry = next(Generator)
+        usr_name, tag, instr, corder, comment, dayindex, taskentry, testeach = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
-        M = measurement(mission, task, usr_name, sample)
+        M = measurement(mission, task, usr_name, sample) #M-Initialization
         if type(dayindex) is str:
-            pass # For Initialization
+            pass # Only M-Initialization (everytime when click a task)
         elif type(dayindex) is int:
-            M.selectday(dayindex, corder, instr, datadensity, comment, tag)
-            M.selectmoment(taskentry)
-            print(Back.BLUE + "moment(file) selected: %s"%M.filename)
-            try:
-                for i,x in enumerate(Generator): #yielding data from measurement-module
-                    print('\n' + Fore.GREEN + 'Writing Data...')
-                    M.insertdata(x)
-                    # sleep(3) #for debugging purposes
-            except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
-        
+            if testeach:
+                M.loopcount, M.loop_dur = next(Generator)
+            else:
+                M.selectday(dayindex, corder, instr, datadensity, comment, tag)
+                # print(Back.GREEN + "Day selected: %s"%self.day)
+                M.selectmoment(taskentry)
+                # print(Back.BLUE + "moment(file) selected: %s"%M.filename)
+                try:
+                    for i,x in enumerate(Generator): #yielding data from measurement-module
+                        print('\n' + Fore.GREEN + 'Writing Data loop-%s' %i)
+                        M.insertdata(x)
+                        # sleep(3) #for debugging purposes
+                except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
+
         # Measurement Object/Session:
         return M
     return wrapper

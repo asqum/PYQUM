@@ -12,6 +12,7 @@
     <div class="tab2">
         <button class='bdr' id='history'>HISTORY</button>
         <button class='bdr' id='warmup'>WARM UP</button> 
+        <button class='bdr' id='samples'>SAMPLES</button>
     </div>
     
     <!-- page content based on button clicked -->
@@ -35,7 +36,8 @@
                     <option value={{i+1}}>P{{i+1}}</option>
                     {% endfor %}</select>
                 </div>
-                <div class='bdr' id='startP'></div>
+                <div class="col-10" id='left'><div class='bdr' id='startP'></div></div>
+                <div class="col-10" id='left'><div class='bdr' id='P_recent'></div></div>
             </div>
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                 <div class="col-15" id='left'></div>
@@ -59,8 +61,21 @@
         </div>
     </div>
 
-    <div class="bdrcontent" id="temperature">
+    <div class="bdrcontent" id="warmup">
         <div class="container">
+            
+        </div>
+    </div>
+
+    <div class="bdrcontent" id="samples">
+        <div class="container">
+            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <h2 class="bdr" id="samples">Currently in BlueFors Dilution Refrigerator:</h2>
+            </div>
+            <div class="row"> <!-- New Row for Parameter-label -->
+                <div class="col" id='left' style='width:30%'><label>Switch 1</label></div>
+                <div class="col" id='left' style='width:30%'><label>Switch 2</label></div>
+            </div>
             
         </div>
     </div>

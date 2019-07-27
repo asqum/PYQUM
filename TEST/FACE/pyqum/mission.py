@@ -4,9 +4,11 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
-import requests
-from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
+import requests, json
+from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context
 from numpy import array, unwrap
+from time import sleep
+from datetime import timedelta
 
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
@@ -24,55 +26,87 @@ bp = Blueprint(myname, __name__, url_prefix='/mssn')
 # Main
 @bp.route('/')
 def show():
-    return render_template("blog/msson/mission.html", encryp=encryp)
+	return render_template("blog/msson/mission.html", encryp=encryp)
 
 # ALL
 @bp.route('/all', methods=['GET'])
 def all(): 
-    # Test Bed # All Task # Great Work
-    return render_template("blog/msson/all.html")
+	# Test Bed # All Task # Great Work
+	return render_template("blog/msson/all.html")
 @bp.route('/all/test', methods=['GET'])
 def alltest():
-    i = request.args.get('idea')
-    print(Back.MAGENTA + 'i: %s'%i)
-    return jsonify(i=i)
+	i = request.args.get('idea')
+	print(Back.MAGENTA + 'i: %s'%i)
+	return jsonify(i=i)
 @bp.route('/all/insertopt', methods=['GET'])
 def allinsertopt():
-    x = [100, 200, 300, 400, 500, 600, 777]
-    return jsonify(x=x)
+	x = [100, 200, 300, 400, 500, 600, 777]
+	return jsonify(x=x)
+@bp.route('/all/streamjson', methods=['GET','POST'])
+def allstreamjson():
+	sj = int(request.args.get('sj'))*2
+	sleep(1)
+	return jsonify(sj=sj)
 
 # CHAR:
 @bp.route('/char', methods=['GET'])
 def char(): 
-    return render_template("blog/msson/char.html")
+	return render_template("blog/msson/char.html")
 
 # CHAR -> F-Response
 @bp.route('/char/fresp', methods=['GET'])
 def char_fresp(): 
-    return render_template("blog/msson/char/fresp.html")
+	return render_template("blog/msson/char/fresp.html")
+# Initialize and list days specific to task
 @bp.route('/char/fresp/init', methods=['GET'])
 def char_fresp_init(): 
-    global M_fresp
-    M_fresp = F_Response()
-    # ifb = eval(str(request.args.get('ifb')))
-    return jsonify(daylist=M_fresp.daylist)
+	global M_fresp
+	set_status("F_Response", dict(repeat=False))
+	M_fresp = F_Response() # initializing Law Maker -> Executioner
+	# ifb = eval(str(request.args.get('ifb')))
+	return jsonify(daylist=M_fresp.daylist)
+# list task entries based on day picked
 @bp.route('/char/fresp/time', methods=['GET'])
 def char_fresp_time():
-    wday = int(request.args.get('wday'))
-    M_fresp.selectday(wday)
-    return jsonify(taskentries=M_fresp.taskentries)
+	wday = int(request.args.get('wday'))
+	M_fresp.selectday(wday)
+	return jsonify(taskentries=M_fresp.taskentries)
+# adjust settings input for certain instruments' set
+@bp.route('/char/fresp/settings', methods=['GET'])
+def char_fresp_settings():
+	wday = int(request.args.get('wday'))
+	M_fresp.selectday(wday)
+	return jsonify(taskentries=M_fresp.taskentries)
+# new measurement setup
 @bp.route('/char/fresp/new', methods=['GET'])
 def char_fresp_new():
+	global Run_fresp
 	wday = int(request.args.get('wday'))
 	sparam = request.args.get('sparam')
 	ifb = request.args.get('ifb')
 	powa = request.args.get('powa')
 	freq = request.args.get('freq')
 	comment = request.args.get('comment').replace("\"","")
+	simulate = bool(int(request.args.get('simulate')))
 	CORDER = {'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
-	Run_fresp = F_Response(corder=CORDER, comment=comment, tag='', dayindex=wday)
-	Run_fresp.accesstructure()
-	return jsonify(complete=str(Run_fresp.data_complete))
+	Run_fresp = F_Response(corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
+	return jsonify(testeach=simulate)
+# ETA (Estimated Time of Arrival for the WHOLE measurement)
+@bp.route('/char/fresp/eta100', methods=['GET'])
+def char_fresp_eta100():
+	eta_time_100 = sum([a*b for a,b in zip(Run_fresp.loopcount, Run_fresp.loop_dur)])
+	return jsonify(eta_time_100=str(timedelta(seconds=eta_time_100)))
+# toggle between repeat or not
+@bp.route('/char/fresp/repeat', methods=['GET'])
+def char_fresp_repeat():
+	set_status("F_Response", dict(repeat=bool(int(request.args.get('repeat')))))
+	return jsonify(repeat=get_status("F_Response")['repeat'])
+# search through logs of data specific to task
+@bp.route('/char/fresp/search', methods=['GET'])
+def char_fresp_search():
+	filelist = M_fresp.searchcomment()
+	return jsonify(filelist=str(filelist))
+# list set-parameters based on selected task-entry
 @bp.route('/char/fresp/access', methods=['GET'])
 def char_fresp_access():
 	wmoment = int(request.args.get('wmoment'))
@@ -88,8 +122,9 @@ def char_fresp_access():
 	c_fresp_address = cdatasearch(M_fresp.resumepoint-1, c_fresp_structure)
 	return jsonify(data_progress=data_progress, corder=M_fresp.corder, comment=M_fresp.comment, 
 		csparam=csparam.data[0:c_fresp_address[0]+1], cifb=cifb.data[0:c_fresp_address[1]+1], cpowa=cpowa.data[0:c_fresp_address[2]+1], cfreq=cfreq.data)
-@bp.route('/char/fresp/update', methods=['GET'])
-def char_fresp_update():
+# Resume the unfinished measurement
+@bp.route('/char/fresp/resume', methods=['GET'])
+def char_fresp_resume():
 	wday = int(request.args.get('wday'))
 	wmoment = int(request.args.get('wmoment'))
 	sparam = request.args.get('sparam')
@@ -109,8 +144,8 @@ def char_fresp_1ddata():
 	except(ValueError): iifb = request.args.get('iifb')
 	try: ipowa = int(request.args.get('ipowa'))
 	except(ValueError): ipowa = request.args.get('ipowa')
-	# try: ifreq = int(request.args.get('ifreq'))
-	# except(ValueError): ifreq = request.args.get('ifreq')
+	try: ifreq = int(request.args.get('ifreq'))
+	except(ValueError): ifreq = request.args.get('ifreq')
 	M_fresp.loadata()
 	selectedata=M_fresp.selectedata
 	selected = [selectedata[gotocdata([isparam, iifb, ipowa, x], c_fresp_structure)] for x in range(waveform(M_fresp.corder['Frequency']).count*M_fresp.datadensity)]

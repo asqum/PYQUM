@@ -1,12 +1,23 @@
 // Frequency Response 
+$(document).ready(function(){
+    $("a.new#fresp-eta").text('ETA: ');
+});
+
+// Global variables:
+window.selecteday = ''
 
 // hiding parameter settings:
-$('.modal-toggle').on('click', function(e) {
+$('.modal-toggle.new').on('click', function(e) {
     e.preventDefault();
-    $('.modal').toggleClass('is-visible');
-    // revert back to default option upon leaving dialogue box
-    $('select.char#fresp[name="wday"]').val('');
-    return false;
+    $('.modal.new').toggleClass('is-visible');
+    // revert back to previous option upon leaving dialogue box
+    $('select.char#fresp[name="wday"]').val(selecteday);
+});
+$('.modal-toggle.search').on('click', function(e) {
+    e.preventDefault();
+    $('.modal.search').toggleClass('is-visible');
+    // revert back to previous option upon leaving dialogue box
+    $('select.char#fresp[name="wday"]').val(selecteday);
 });
 
 // show F-Response's daylist
@@ -20,6 +31,7 @@ $(function() {
         }, function (data) {
             $('select.char#fresp[name="wday"]').empty();
             $('select.char#fresp[name="wday"]').append($('<option>', { text: 'pick a day', value: '' }));
+            $('select.char#fresp[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
             $('select.char#fresp[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
             $.each(data.daylist, function(i,v){
                 $('select.char#fresp[name="wday"]').append($('<option>', {
@@ -32,16 +44,21 @@ $(function() {
     });
 });
 
-// list time OR new run based on day picked
+// actions based on day picked
 $(function () {
     $('select.char#fresp[name="wday"]').on('change', function () {
-        // Make global variable:
+        $('input.char.data').removeClass("plotted");
+        // make global wday
         window.wday = $('select.char#fresp[name="wday"]').val();
-        console.log("Day Picked: " + wday);
         if (Number(wday) < 0) {
-            // brings up parameter-input panel:
-            $('.modal').toggleClass('is-visible');
+            // brings up parameter-input panel for new measurement:
+            $('.modal.new').toggleClass('is-visible');
+
+        } else if (wday == 's') {
+            // brings up search panel:
+            $('.modal.search').toggleClass('is-visible');
         } else {
+            selecteday = wday
             $.getJSON('/mssn/char/fresp/time', {
                 wday: wday
             }, function (data) {
@@ -63,21 +80,54 @@ $('input.char#fresp-run').bind('click', function() {
     var powa = $('input.char#fresp[name="powa"]').val();
     var freq = $('input.char#fresp[name="freq"]').val();
     var comment = JSON.stringify($('textarea.char#fresp[name="ecomment"]').val());
+    // Simulate or Real run?
+    var simulate = $('input.char#fresp[name="simulate"]').is(':checked')?1:0; //use css to respond to click / touch
+    console.log("simulate: " + simulate);
     // var comment = $('textarea.char#fresp[name="comment"]').val();
     $.getJSON('/mssn/char/fresp/new', {
-        wday: wday, sparam: sparam, ifb: ifb, powa: powa, freq: freq, comment: comment
+        wday: wday, sparam: sparam, ifb: ifb, powa: powa, freq: freq, comment: comment, simulate: simulate
+    }, function (data) { 
+        console.log("test each loop: " + data.testeach);      
+        $( "i.fresp" ).remove(); //clear previous
+    });
+    return false;
+});
+// click to estimate ETA
+$("a.new#fresp-eta").bind('click', function() {
+    $.getJSON('/mssn/char/fresp/eta100', {
     }, function (data) {
-        $('select.char#fresp[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
-        $.each(data.taskentries, function(i,v){ $('select.char#fresp[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
-        console.log("complete: " + data.complete);
+        $("a.new#fresp-eta").text('ETA in ' + String(data.eta_time_100));
+    });
+});
+// click to set repeat or once
+$('input.char#fresp[name="repeat"]').bind('click', function() {
+    $.getJSON('/mssn/char/fresp/repeat', {
+        repeat: $('input.char#fresp[name="repeat"]').is(':checked')?1:0
+    }, function (data) {
+        console.log("Repeat: " + data.repeat);
+    });
+});
+
+// click to search:
+$('input.char#fresp[name="search"]').change( function() {
+    $( "i.fresp" ).remove(); //clear previous
+    $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    // waveform commands
+    
+    // var comment = $('textarea.char#fresp[name="comment"]').val();
+    $.getJSON('/mssn/char/fresp/search', {
+        
+    }, function (data) {
+        
+        console.log("complete: " + data.filelist);
         $( "i.fresp" ).remove(); //clear previous
     });
     return false;
 });
 
-// Click to Update File
+// Click to resume File
 $(function () {
-    $('button.char#fresp-update').on('click', function () {
+    $('button.char#fresp-resume').on('click', function () {
         $( "i.fresp" ).remove(); //clear previous
         $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // waveform commands
@@ -85,7 +135,7 @@ $(function () {
         var ifb = $('input.char#fresp[name="ifb"]').val();
         var powa = $('input.char#fresp[name="powa"]').val();
         var freq = $('input.char#fresp[name="freq"]').val();
-        $.getJSON('/mssn/char/fresp/update', {
+        $.getJSON('/mssn/char/fresp/resume', {
             wday: wday, wmoment: wmoment, sparam: sparam, ifb: ifb, powa: powa, freq: freq
         }, function (data) {
         });
@@ -207,8 +257,9 @@ $(function () {
             Plotly.newPlot('char-fresp-chart', Trace, layout, {showSendToCloud: true});
             
         });
-        return false;
+        $('input.char#1d-data').addClass("plotted");
     });
+    return false;
 });
 
 

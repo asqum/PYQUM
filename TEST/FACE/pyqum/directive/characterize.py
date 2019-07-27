@@ -6,10 +6,12 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
-from flask import request, session, current_app, g, Flask
+from time import time
 from numpy import linspace, sin, pi, prod, array
+from flask import request, session, current_app, g, Flask
+
 from pyqum.instrument.benchtop import ENA
-from pyqum.instrument.logger import settings, clocker
+from pyqum.instrument.logger import settings, clocker, get_status
 from pyqum.instrument.analyzer import curve, IQAP, UnwraPhase
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 
@@ -50,7 +52,7 @@ def TESTC(tag="", datadensity=1, instr=[], corder={}, comment='', dayindex='', t
 
 @settings(2, 'Sam')
 # @settings('abc', 'Sam')
-def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['ENA']):
+def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['ENA'], testeach=False):
     '''Characterizing Frequency Response:
     C-Order: S-Parameter, IF-Bandwidth, Power, Frequency
     Before dayindex: freely customized by user
@@ -58,19 +60,16 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     In-betweens: depends on mode / high interaction with the system
     '''
     # pushing pre-measurement parameters to settings:
-    yield session['user_name'], tag, instr, corder, comment, dayindex, taskentry
+    yield session['user_name'], tag, instr, corder, comment, dayindex, taskentry, testeach
 
     # User-defined Controlling-PARAMETER(s) ======================================================================================
     Sparam = waveform(corder['S-Parameter'])
     ifb = waveform(corder['IF-Bandwidth'])
     powa = waveform(corder['Power'])
     freq = waveform(corder['Frequency'])
-    
-    # Buffer setting(s):
-    buffersize = freq.count * 2 #data density of 2 due to IQ
     # Total data points:
     datasize = prod([waveform(x).count for x in corder.values()]) * 2 #data density of 2 due to IQ
-    
+
     # Pre-loop settings:
     bench = ENA.Initiate(True)
     ENA.dataform(bench, action=['Set', 'REAL32'])
@@ -79,31 +78,51 @@ def F_Response(tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     fstart, fstop = freq.data[0]*1e9, freq.data[-1]*1e9
     ENA.linfreq(bench, action=['Set', fstart, fstop])
 
+    # Buffer setting(s) for certain loop(s):
+    buffersize_1 = freq.count * 2 #data density of 2 due to IQ
+    
     # User-defined Measurement-FLOW ==============================================================================================
-    for i in range(resumepoint//buffersize,datasize//buffersize):
+    if testeach: # measure-time contribution from each measure-loop
+        loopcount, loop_dur = [], []
+        stage, prev = clocker(0) # Marking starting point of time:
+    measure_loop_1 = range(resumepoint//buffersize_1,datasize//buffersize_1) # saving chunck by chunck improves speed a lot!
+    while True:
+        for i in measure_loop_1:
 
-        # Registerring parameter(s)
-        caddress = cdatasearch(i, [Sparam.count,ifb.count,powa.count])
+            # Registerring parameter(s)
+            caddress = cdatasearch(i, [Sparam.count,ifb.count,powa.count])
 
-        # saving chunck by chunck improves speed a lot!
-        # if not (i+1)%buffersize or i==datasize-1: #multiples of buffersize / reached the destination
-        ENA.setrace(bench, Mparam=[Sparam.data[caddress[0]]], window='D1')
-        ENA.ifbw(bench, action=['Set', ifb.data[caddress[1]]])
-        ENA.power(bench, action=['Set', powa.data[caddress[2]]])
-        # start sweeping:
-        stat = ENA.sweep(bench) #getting the estimated sweeping time
-        print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
-        print("Operation Complete: %s" %bool(ENA.measure(bench)[1]))
-        # adjusting display on ENA:
-        ENA.autoscal(bench)
-        ENA.selectrace(bench, action=['Set', 'para 1 calc 1'])
-        data = ENA.sdata(bench)
-        # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
-        print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize*100), end='\r', flush=True)
-        yield data
+            # setting each c-order:
+            ENA.setrace(bench, Mparam=[Sparam.data[caddress[0]]], window='D1')
+            ENA.ifbw(bench, action=['Set', ifb.data[caddress[1]]])
+            ENA.power(bench, action=['Set', powa.data[caddress[2]]])
 
-    ENA.rfports(bench, action=['Set', 'OFF'])
-    ENA.close(bench)
+            # start sweeping:
+            stat = ENA.sweep(bench) #getting the estimated sweeping time
+            print("Time-taken for this loop would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
+            print("Operation Complete: %s" %bool(ENA.measure(bench)))
+            # adjusting display on ENA:
+            ENA.autoscal(bench)
+            ENA.selectrace(bench, action=['Set', 'para 1 calc 1'])
+            data = ENA.sdata(bench)
+            # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
+            print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
+            
+            # test for the last loop if there is
+            if testeach: # test each measure-loop:
+                loopcount += [len(measure_loop_1)]
+                loop_dur += [time() - prev]
+                stage, prev = clocker(stage, prev) # Marking time
+                ENA.close(bench)
+                yield loopcount, loop_dur
+                
+            else:
+                yield data
+
+        if not get_status("F_Response")['repeat']:
+            ENA.close(bench)
+            return
+
     # ============================================================================================================================
 
 def test():

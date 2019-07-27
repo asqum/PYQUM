@@ -110,15 +110,23 @@ $(function () {
             console.log(traceP.x);
             console.log(traceP.y);
             console.log(traceT.y);
+
+            // For Pressure
             $('div.bdr#startP').empty();
             $('div.bdr#startP').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
             append($('<span style="color: red;"></span>').text(data.startimeP));
+            $('div.bdr#P_recent').empty();
+            $('div.bdr#P_recent').append($('<h4 style="color: darkblue;"></h4>').text("Latest P: ")).
+            append($('<span style="color: red;"></span>').text(data.P[data.P.length-1]));;
+            
+            // For Temperature
             $('div.bdr#startT').empty();
             $('div.bdr#startT').append($('<h4 style="color: darkblue;"></h4>').text("starting: ")).
             append($('<span style="color: red;"></span>').text(data.startimeT));;
             $('div.bdr#T_recent').empty();
             $('div.bdr#T_recent').append($('<h4 style="color: darkblue;"></h4>').text("Latest T: ")).
             append($('<span style="color: red;"></span>').text(data.T[data.T.length-1]));;
+
             // access sessions:
             // console.log("User: " + $.session.get('abc'));
         });
@@ -126,24 +134,26 @@ $(function () {
     });
 });
 
-//autoscale on submit (override input defaults)
-$('input.bdr#autoscale').bind('click', function () {
-    $( "i.bdr" ).remove(); //clear previous
-    $('button.bdr#settings').prepend("<i class='bdr fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-    $.getJSON('/mach'+'/bdr/autoscale', {
-    }, function (data) {
-        $( "i.bdr" ).remove(); //clear previous
-        $('input.bdr[name="rnge"]').val(data.yrange);
-        $('input.bdr[name="scal"]').val(data.yscale);
-        $('input.bdr[name="ofset"]').val(data.yoffset);
-        $('input.bdr[name="rnge2"]').val(data.yrange2);
-        $('input.bdr[name="scal2"]').val(data.yscale2);
-        $('input.bdr[name="ofset2"]').val(data.yoffset2);
-        $('input.bdr[name="trnge"]').val(data.trange);
-        $('input.bdr[name="tdelay"]').val(data.tdelay);
-        $('input.bdr[name="tscal"]').val(data.tscale);
+//show warmup's page
+$(function() {
+    $('button.bdr#warmup').bind('click', function() {
+        $('div.bdrcontent').hide();
+        $('div.bdrcontent#warmup').show();
+        $('button.bdr').removeClass('selected');
+        $('button.bdr#warmup').addClass('selected');
+        return false;
     });
-    return false;
+});
+
+//show samples' page
+$(function() {
+    $('button.bdr#samples').bind('click', function() {
+        $('div.bdrcontent').hide();
+        $('div.bdrcontent#samples').show();
+        $('button.bdr').removeClass('selected');
+        $('button.bdr#samples').addClass('selected');
+        return false;
+    });
 });
 
 // Plotly Chart
@@ -167,16 +177,7 @@ $('input.bdr#autoscale').bind('click', function () {
 //     marker: { size: 12 }
 //     };
 
-//show warmup's page
-$(function() {
-    $('button.bdr#warmup').bind('click', function() {
-        $('div.bdrcontent').hide();
-        $('div.bdrcontent#warmup').show();
-        $('button.bdr').removeClass('selected');
-        $('button.bdr#warmup').addClass('selected');
-        return false;
-    });
-});
+
 
     
 
