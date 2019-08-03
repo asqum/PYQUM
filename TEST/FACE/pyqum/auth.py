@@ -40,6 +40,10 @@ def load_logged_in_user():
         g.user = get_db().execute(
             'SELECT * FROM user WHERE id = ?', (user_id,)
         ).fetchone()
+        # list users who are eligible for measurement: (under construction)
+        g.measurement = get_db().execute(
+            'SELECT * FROM user WHERE measurement = ?', ("allowed",)
+        ).fetchone()
 
 
 @bp.route('/register', methods=('GET', 'POST'))
@@ -99,11 +103,16 @@ def login():
             error = 'Awaiting Approval...'
 
         if error is None:
-            # store the user id in a new session and return to the index
+            # store the user id in a new SESSION and return to the index
             session.clear()
             session['user_id'] = user['id']
             session['user_name'] = user['username']
-            print("Logged-in Successfully!")
+            session['user_measurement'] = user['measurement']
+            # measurement related:
+            session['c_fresp_structure'] = []
+            session['run_clearance'] = False
+            session['people'] = ""
+            print("%s has logged-in Successfully!" %session['user_name'] )
             return redirect(url_for('index'))
 
         print(error)

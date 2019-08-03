@@ -1,13 +1,26 @@
 //when page is loading:
 $(document).ready(function(){
     $('div.charcontent').hide();
+    $.getJSON('/mssn'+'/char/loadusers', {
+    }, function (data){
+        $('select.char#users').empty().append($('<option>', { text: 'Pick', value: 'pick' }));
+        $.each(data.shared_users, function(i,v){ $('select.char#users').append($('<option>', { text: v, value: v })); });
+    });
+    return false;
 });
 
-
-
-
-
-
+// pick people from users list:
+$('select.char#users').on('change', function () {
+    $('div.charcontent').hide();
+    var people = $('select.char#users').val();
+    $.getJSON('/mssn'+'/char/activeuser', {
+        people: people
+    }, function (data){
+        console.log(data.message);
+        console.log("Permission to run: " + data.run_permission);
+    });
+    return false;
+});
 
 
 //autoscale on submit (override input defaults)
@@ -20,12 +33,6 @@ $('input.char#autoscale').bind('click', function () {
         $('input.char[name="rnge"]').val(data.yrange);
         $('input.char[name="scal"]').val(data.yscale);
         $('input.char[name="ofset"]').val(data.yoffset);
-        $('input.char[name="rnge2"]').val(data.yrange2);
-        $('input.char[name="scal2"]').val(data.yscale2);
-        $('input.char[name="ofset2"]').val(data.yoffset2);
-        $('input.char[name="trnge"]').val(data.trange);
-        $('input.char[name="tdelay"]').val(data.tdelay);
-        $('input.char[name="tscal"]').val(data.tscale);
     });
     return false;
 });

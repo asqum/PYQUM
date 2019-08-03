@@ -228,7 +228,7 @@ def test(detail=True):
 			print(setrace(bench, Mparam=['S21','S43'], window='D1_2'))
 			power(bench, action=['Set', -35])
 			power(bench)
-			N = 1000
+			N = 3000
 			# sweep(bench, action=['Set', 'OFF 10', N])
 			sweep(bench, action=['Set', 'ON', N])
 			f_start, f_stop = 0.7e9, 18e9
@@ -273,8 +273,8 @@ def test(detail=True):
 			rfports(bench)
 
 			# Plotting trace:
-			yI, yQ, Amp, Pha = IQAP(array(data))
-			curve(range(len(data)//2), Amp, 'CW-Amp time-series', 'arb time', 'Amp(dB)')
+			# yI, yQ, Amp, Pha = IQAP(array(data))
+			# curve(range(len(data)//2), Amp, 'CW-Amp time-series', 'arb time', 'Amp(dB)')
 
 			# TEST SCPI ZONE:
 			# bench.write(':SYSTem:PRESet')

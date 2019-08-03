@@ -3,6 +3,7 @@ MANIFEST.in
 setup.cfg
 setup.py
 pyqum/__init__.py
+pyqum/apache.py
 pyqum/auth.py
 pyqum/authschema.sql
 pyqum/blog.py
@@ -19,6 +20,7 @@ pyqum.egg-info/requires.txt
 pyqum.egg-info/top_level.txt
 pyqum/static/css/anime.css
 pyqum/static/css/button.css
+pyqum/static/css/dsply.css
 pyqum/static/css/mach.css
 pyqum/static/css/modal.css
 pyqum/static/css/mssn.css
@@ -1659,6 +1661,7 @@ pyqum/static/js/Clock.js
 pyqum/static/js/base.js
 pyqum/static/js/gauge.min.js
 pyqum/static/js/jquery.min.js
+pyqum/static/js/jquerysession.js
 pyqum/static/js/plotly-latest.min.js
 pyqum/static/js/script.js
 pyqum/static/js/auth/user.js
@@ -1680,6 +1683,7 @@ pyqum/static/js/mach/vsa.js
 pyqum/static/js/mssn/all.js
 pyqum/static/js/mssn/char.js
 pyqum/static/js/mssn/mssn.js
+pyqum/static/js/mssn/char/cwsweep.js
 pyqum/static/js/mssn/char/fresp.js
 pyqum/static/ui/jquery-ui.css
 pyqum/static/ui/jquery-ui.js
@@ -1716,5 +1720,6 @@ pyqum/templates/blog/machn/vsa.html
 pyqum/templates/blog/msson/all.html
 pyqum/templates/blog/msson/char.html
 pyqum/templates/blog/msson/mission.html
+pyqum/templates/blog/msson/char/cwsweep.html
 pyqum/templates/blog/msson/char/fresp.html
 pyqum/templates/guide/papers.html

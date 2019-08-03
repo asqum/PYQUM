@@ -63,7 +63,7 @@ def output(bench, state=0, keeprev=True):
         status = 'Error'
     return status
 
-def sweep(bench, wave, pulsewidth=0.3, sweeprate=7):
+def sweep(bench, wave, pulsewidth=0.035, sweeprate=0.7):
     '''
     sweeprate in V/s or A/s
     pulsewidth: waiting/staying/settling/stabilization time in sec

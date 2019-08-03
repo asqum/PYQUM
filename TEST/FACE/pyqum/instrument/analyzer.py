@@ -24,17 +24,16 @@ def derivative(x, y, step=1):
     return X[1::], dydx
 
 # Extract IQ (to be changed to take in list instead of np.array)
-def IQAP(datas):
+def IQAP(I, Q): # datas
     # Slicing datas into IQ-data
-    # print("half datas length: %s" %(len(datas)/2))
-    IQdata = datas.reshape(len(datas)//2, 2)
-    Idata, Qdata = IQdata[:,0], IQdata[:,1]
-    yI, yQ = [float(i) for i in Idata], [float(i) for i in Qdata]
-    Amp, Pha = [], []
-    for i in zip(yI, yQ):
-        Amp.append(20*log10(sqrt(i[0]**2 + i[1]**2)))
-        Pha.append(arctan2(i[1], i[0])) # -pi < phase < pi
-    return yI, yQ, Amp, Pha
+    # IQdata = datas.reshape(len(datas)//2, 2) # sort out interlaced IQ-pairs into I-list & Q-list
+    # Idata, Qdata = IQdata[:,0], IQdata[:,1]
+    # yI, yQ = [float(i) for i in Idata], [float(i) for i in Qdata]
+    # Amp, Pha = [], []
+    # for i in zip(yI, yQ):
+    Amp = 20*log10(sqrt(I**2 + Q**2))
+    Pha = arctan2(Q, I) # -pi < phase < pi
+    return Amp, Pha
 
 # moving average
 def smooth(y, box_pts):

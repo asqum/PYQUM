@@ -3,7 +3,7 @@
 <head>
     <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/char/fresp.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/char/cwsweep.js') }}"></script>
 </head>
 
 <body class='char'>
@@ -11,34 +11,34 @@
 <div class="container">
 
         <div class="row"> <!-- New Role for File-status -->
-            <div class="col-25" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char' id="fresp" name="wmoment" type="text"></select></div>
+            <div class="col-25" id='left'><select class='char' id="cwsweep" name="wday" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char' id="cwsweep" name="wmoment" type="text"></select></div>
             <div class="col-20" id='left'>
-                <ul class="data-status" id="fresp">
-                    <li><span class="bar data-progress" id="fresp"></span><h3>Data Progress</h3></li>
+                <ul class="data-status" id="cwsweep">
+                    <li><span class="bar data-progress" id="cwsweep"></span><h3>Data Progress</h3></li>
                 </ul>
             </div>
-            <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="fresp-eta"></a></div></div>
-            <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="fresp-rcount"></a></div></div>
+            <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="cwsweep-eta"></a></div></div>
+            <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="cwsweep-rcount"></a></div></div>
         </div>
 
         <div class="row">
             <!-- Read-only Comment -->
             <div class="col" id='left' style="width:49%">
-                <textarea class='char' id="fresp" name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
+                <textarea class='char' id="cwsweep" name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
             </div>
             <!-- Editable Note -->
             <div class="col" id='left' style="width:49%">
-                <textarea class='char' id="fresp" name="note" type="text" rows="15" cols="73">--note--</textarea>
+                <textarea class='char' id="cwsweep" name="note" type="text" rows="15" cols="73">--note--</textarea>
             </div>
         </div>
 
         <div class="row">
-            <div class="col-15" id='left'><button class="char push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
+            <div class="col-15" id='left'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
             {% if g.user['measurement'] %}
-                <div class="col-15" id='left'><button class="char push_button w-95 blue" id="fresp-resume">RESUME</button></div>
+                <div class="col-15" id='left'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
             {% endif %}
-            <div class="col-15" id='left'><button class="char push_button w-95 blue" id="fresp-savecsv">DOWNLOAD CSV</button></div>
+            <div class="col-15" id='left'><button class="char push_button w-95 blue" id="cwsweep-savecsv">DOWNLOAD CSV</button></div>
         </div>
 
         <!-- optional parameters line #1 -->
@@ -52,33 +52,33 @@
             <!-- <div class="col-20" id='left'></div>
             <div class="col-20" id='left'></div>
             <div class="col-20" id='left'></div> -->
-            <div class="col-20" id='left'><select class='char' id="fresp" name="c-fluxbias" type="text"></select></div>
+            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-fluxbias" type="text"></select></div>
         </div>
 
         <!-- basic parameters line #2 -->
         <div class="row">
             <div class="col-20" id='left'><label>S-Parameter</label></div>
             <div class="col-20" id='left'><label>IF-Bandwidth (Hz)</label></div>
-            <div class="col-20" id='left'><label>Power (dBm)</label></div>
             <div class="col-20" id='left'><label>Frequency (GHz)</label></div>
+            <div class="col-20" id='left'><label>Power (dBm)</label></div>
         </div>
         <div class="row">
-            <div class="col-20" id='left'><select class='char' id="fresp" name="c-sparam" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="fresp" name="c-ifb" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="fresp" name="c-powa" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="fresp" name="c-freq" type="text"></select></div>
+            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-sparam" type="text"></select></div>
+            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-ifb" type="text"></select></div>
+            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-freq" type="text"></select></div>
+            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-powa" type="text"></select></div>
         </div>
 
         <div class="row"> <!-- New Role for Data Assembly -->
-            <div class="col-20" id='left'><input class='char data' id='fresp' name='1d-data' type="submit" value="1D-Data"/></div>
-            <div class="col-20" id='left'><input class='char data' id='fresp' name='2d-data' type="submit" value="2D-Data"/></div>
+            <div class="col-20" id='left'><input class='char data' id="cwsweep" name='1d-data' type="submit" value="1D-Data"/></div>
+            <div class="col-20" id='left'><input class='char data' id="cwsweep" name='2d-data' type="submit" value="2D-Data"/></div>
         </div>
 
-        <div id="char-fresp-chart"></div>
+        <div id="char-cwsweep-chart"></div>
         
         <!-- Brings up dialogue box for parameter settings -->
-        <div class="modal new fresp">
-            <div class="modal-overlay modal-toggle new fresp"></div>
+        <div class="modal new cwsweep">
+            <div class="modal-overlay modal-toggle new cwsweep"></div>
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
                     <h2 class="modal-heading">Setting up Measurement:</h2>
@@ -97,44 +97,44 @@
                             <!-- <div class="col-20" id='left'></div>
                             <div class="col-20" id='left'></div>
                             <div class="col-20" id='left'></div>  -->
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="fluxbias" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="fluxbias" type="text" value="OPT,"/></div>
                         </div>
                         <!-- Basic Parameters -->
                         <div class="row">
                             <div class="col-20" id='left'><label>S-Parameter</label></div>
                             <div class="col-20" id='left'><label>IF-Bandwidth (Hz)</label></div>
-                            <div class="col-20" id='left'><label>Power (dBm)</label></div>
                             <div class="col-20" id='left'><label>Frequency (GHz)</label></div>
+                            <div class="col-20" id='left'><label>Power (dBm)</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="sparam" type="text" value="S21,"/></div>
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="ifb" type="text" value="1000"/></div>
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="powa" type="text" value="-37 to 1 * 137"/></div> 
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="freq" type="text" value="5 to 9 * 3000"/></div>
+                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="sparam" type="text" value="S21,"/></div>
+                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="ifb" type="text" value="1000"/></div>
+                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="freq" type="text" value="5 to 9 * 3000"/></div>
+                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="powa" type="text" value="-37 to 1 * 137"/></div> 
                         </div>
                         <!-- Comment -->
                         <div class="row">
                             <div class="col-75" id='left'>
-                                <textarea class='char' id="fresp" name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
+                                <textarea class='char' id="cwsweep" name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUN MODE -->
                             <div class="col-15" id='left'>
-                                <label class="switch"><input class='char' id=fresp name='repeat' type="checkbox">
+                                <label class="switch"><input class='char' id=cwsweep name='repeat' type="checkbox">
                                     <div class="slider smooth"><span class="on">REPEAT</span><span class="off">ONCE</span></div>
                                 </label>
                             </div>
                             <div class="col-15" id='left'>
-                                <label class="switch"><input class='char' id=fresp name='simulate' type="checkbox">
+                                <label class="switch"><input class='char' id=cwsweep name='simulate' type="checkbox">
                                     <div class="slider smooth"><span class="on">TEST ETA</span><span class="off">LOGGED</span></div>
                                 </label>
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUNNING -->
                             {% if g.user['measurement'] %}
-                                <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-run"  type="submit" value="RUN"/></div>
+                                <div class="col-15" id='left'><input class="char modal-toggle new cwsweep" id="cwsweep-run"  type="submit" value="RUN"/></div>
                             {% endif %}
-                            <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-cancel" type="submit" value="CANCEL"/></div>
+                            <div class="col-15" id='left'><input class="char modal-toggle new cwsweep" id="cwsweep-cancel" type="submit" value="CANCEL"/></div>
                         </div>
                     </div>
                 </div>
@@ -142,8 +142,8 @@
         </div>
 
         <!-- Brings up dialogue box for parameter settings -->
-        <div class="modal search fresp">
-            <div class="modal-overlay modal-toggle search fresp"></div>
+        <div class="modal search cwsweep">
+            <div class="modal-overlay modal-toggle search cwsweep"></div>
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
                     <h2 class="modal-heading">Searching Measurement:</h2>
@@ -152,10 +152,10 @@
                 <div class="modal-body">
                     <div class="modal-content">
                         <div class="row"> <!-- New Row for Parameter-input -->
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="search" type="text" value="search here"/></div>
+                            <div class="col-20" id='left'><input class='char' id='cwsweep' name="search" type="text" value="search here"/></div>
                         </div>
                         <div class="row"> <!-- New Row for EXECUTION -->
-                            <div class="col-15" id='left'><input class="char modal-toggle search fresp" id="fresp-cancel" type="submit" value="CANCEL"/></div>
+                            <div class="col-15" id='left'><input class="char modal-toggle search cwsweep" id="cwsweep-cancel" type="submit" value="CANCEL"/></div>
                         </div>
                     </div>
                 </div>

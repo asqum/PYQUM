@@ -96,13 +96,24 @@ def test():
     #     %(i, cdatasearch(i, [8,10,10,2]), gotocdata(cdatasearch(i, [8,10,10,2]), [8,10,10,2])))
         # sleep(0.3)
     print("location: %s" %(cdatasearch(8080807, [1,4,101,20002])))
-    command = "1 to 1 * 0"
-    command = "0 1   2   to  10  * 1 TO  20  *1 25 26  to35*  1to 70 *  5 73  75   to80  *5 81 82 to  101*  8"
+    # converting between addresses with different base structure:
+    c_struct = [10, 5, 35, 15]
+    c_struct.append(c_struct.pop(c_struct.index(5)))
+    C_order_corrected = []
+    for a in range(c_struct[0]):
+        for b in range(c_struct[1]):
+            for c in range(c_struct[2]):
+                for d in range(c_struct[3]):
+                    C_order_corrected.append(gotocdata([a,d,b,c], [10, 5, 35, 15]))
+    print("This much has just stand corrected: %s" %len(C_order_corrected))
+
+    # command = "1 to 1 * 0"
+    # command = "0 1   2   to  10  * 1 TO  20  *1 25 26  to35*  1to 70 *  5 73  75   to80  *5 81 82 to  101*  8"
     # command = "100    12  37              77   81  "
     # command = '1 to 10 *           12 to     25 *    7'
     # command = ",s12 ,s21, s22,s11 ,   S22,S12,S21"
     command = "S,"
-    command = "10.0to0.0*1"
+    # command = "10.0to0.0*1"
     wave = waveform(command)
     if wave.count == len(wave.data):
         print("Waveform of length %s is:\n %s" %(wave.count, wave.data))

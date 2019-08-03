@@ -614,5 +614,28 @@ $(function () {
 });
 
 
+// saving data to client's PC:
+$('button.dc#ivcurve[name="save"]').on('click', function () {
+    console.log("SAVING FILE");
+    $.ajax({
+        // url: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/172905/test.pdf',
+        url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/test.pyqumabc',
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = 'test.json';
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        }
+    });
+});
+
     
 

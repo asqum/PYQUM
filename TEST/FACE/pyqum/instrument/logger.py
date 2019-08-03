@@ -11,6 +11,7 @@ from time import time, sleep
 from contextlib import suppress
 from numpy import prod, mean, rad2deg
 import inspect, json, wrapt, struct, geocoder, ast
+from pandas import DataFrame
 
 from pyqum.instrument.toolbox import waveform
 
@@ -26,6 +27,7 @@ pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename
 MAIN_PATH = Path(pyfilename).parents[6] / "MEGAsync" / "CONFIG"
 INSTR_PATH = MAIN_PATH / "INSTLOG" # 2 levels up the path
 USR_PATH = MAIN_PATH / "USRLOG"
+PORTAL = MAIN_PATH / "PORTAL"
 
 def location():
     place = []
@@ -90,6 +92,12 @@ def set_status(instr_name, info):
     with open(loginstr(instr_name)[1], 'w') as jfile:
         json.dump(instrument, jfile)
 
+# save data in csv for export and be used by clients:
+def set_csv(data_dict, filename):
+    df = DataFrame(data_dict, columns= [x for x in data_dict.keys()])
+    export_csv = df.to_csv (Path(PORTAL) / filename, index = None, header=True)
+    return export_csv
+
 class address:
     '''Use Built-in Params as Default
     Set <reset=False> to directly load from LOG if it contains "address" 
@@ -97,7 +105,6 @@ class address:
     def __init__(self):
         with open(MAIN_PATH / 'Address' / 'address.json') as ad:
             self.book = json.load(ad)
-
     def lookup(self, instr_name, level=0):
         '''level: alternative address's index (1,2,3...)'''
         self.instr_name = instr_name
@@ -108,16 +115,27 @@ class address:
             else: self.rs = self.book[self.instr_name]["resource"]
         except(KeyError): self.rs = None # checking if instrument in database
         return self.rs
-
     def visible(self):
         self.vis = []
         for k,v in self.book.items():
             if v["visible"]:
                 self.vis.append(k)
         return self.vis
-
     def update_status(self):
         set_status(self.instr_name,dict(address=self.rs))
+
+class specification:
+    '''lookup specifications for each instruments
+    '''
+    def __init__(self):
+        with open(MAIN_PATH / 'SPECS' / 'specification.json') as spec:
+            self.book = json.load(spec)
+    def lookup(self, instr_name, characteristic):
+        try: self.limit = self.book[instr_name][characteristic]['limit']
+        except(KeyError): self.limit = None
+        try: self.range = self.book[instr_name][characteristic]['range']
+        except(KeyError): self.range = None
+        return
     
 # Debugger settings
 def debug(mdlname, state=False):
@@ -217,12 +235,15 @@ class measurement:
         # FOR Resume / Access operation:
         try:
             daylist = [d for d in listdir(self.mssnpath) if isdir(self.mssnpath / d)]
+            print("There are %s days" %len(daylist))
             # filter out non task-specific
+            relatedays = []
             for i,d in enumerate(daylist):
-                if not [t for t in listdir(self.mssnpath / d) if t.split('.')[0] == self.task]:
-                    daylist.pop(i)
-            daylist.sort(key=lambda x: getmtime(self.mssnpath / x))
-            self.daylist = daylist
+                task_relevant_time = [t for t in listdir(self.mssnpath / d) if t.split('.')[0] == self.task]
+                if task_relevant_time:
+                    relatedays.append(d)
+            relatedays.sort(key=lambda x: getmtime(self.mssnpath / x))
+            self.daylist = relatedays
         except:
             self.daylist = []
             print("Mission is EMPTY")
@@ -426,12 +447,18 @@ class measurement:
 
 # Setting up Measurement (Law-maker)
 def settings(datadensity=1, sample='Sample'):
+    '''
+    Before dayindex: freely customized by user
+    From instr onward: value set is intrinsic to the task
+    In-betweens: depends on mode / high interaction with the system
+    '''
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
         usr_name, tag, instr, corder, comment, dayindex, taskentry, testeach = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
+        # print("task: %s" %task)
         M = measurement(mission, task, usr_name, sample) #M-Initialization
         if type(dayindex) is str:
             pass # Only M-Initialization (everytime when click a task)

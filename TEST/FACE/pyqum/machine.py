@@ -5,7 +5,7 @@ from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 from importlib import import_module as im
-from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session
+from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
 
 # Error handling
@@ -595,7 +595,7 @@ def dcamplifiersense():
         VSP, VSN, Sym, BM, Rb, Div, gain1, gain2, Vg1, Vg2 = None, None, None, None, None, None, None, None, None, None
         print('DC disconnected')
     return jsonify(state=state, VSP=VSP, VSN=VSN, Sym=Sym, BM=BM, Rb=Rb, Div=Div, Vg1=Vg1, Vg2=Vg2, gain1=gain1, gain2=gain2)
-# DC Measurements
+# DC Measurements (IV-curves)
 @bp.route('/dc/measure/ivcurve', methods=['GET'])
 def dcmeasureivcurve():
     V0, I, Vb = [], [], []
@@ -611,6 +611,13 @@ def dcmeasureivcurve():
     ivcurve.close()
     print("DC Measurement Closed")
     return jsonify(state=ivcurve.state, V0=V0, I=I, Vb=Vb)
+
+
+# Download File:
+@bp.route('/uploads/<path:filename>', methods=['GET', 'POST'])
+def download(filename):
+    uploads = "C:/Users/ASQUM/Documents/MEGAsync/CONFIG/PORTAL"
+    return send_from_directory(directory=uploads, filename=filename)
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
