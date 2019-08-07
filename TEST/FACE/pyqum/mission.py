@@ -152,7 +152,7 @@ def char_fresp_access():
 	M_fresp[session['user_name']].accesstructure()
 	data_progress = M_fresp[session['user_name']].data_progress
 	try: cfluxbias = waveform(M_fresp[session['user_name']].corder['Flux-Bias'])
-	except(KeyError): cfluxbias = waveform('O,')
+	except(KeyError): cfluxbias = waveform('opt,')
 	csparam = waveform(M_fresp[session['user_name']].corder['S-Parameter'])
 	cifb = waveform(M_fresp[session['user_name']].corder['IF-Bandwidth'])
 	cpowa = waveform(M_fresp[session['user_name']].corder['Power'])
@@ -189,7 +189,7 @@ def char_fresp_1ddata():
 	M_fresp[session['user_name']].loadata()
 	selectedata = M_fresp[session['user_name']].selectedata
 	ifluxbias = request.args.get('ifluxbias')
-	if ifluxbias == "o": ifluxbias = '0' # for backward compatibility
+	# if ifluxbias == "o": ifluxbias = '0' # for backward compatibility
 	isparam = request.args.get('isparam')
 	iifb = request.args.get('iifb')
 	ipowa = request.args.get('ipowa')
@@ -229,34 +229,32 @@ def char_fresp_2ddata():
 	# M_fresp[session['user_name']].loadata()
 	# selectedata = M_fresp[session['user_name']].selectedata
 	ifluxbias = request.args.get('ifluxbias')
-	if ifluxbias == "o": ifluxbias = '0' # for backward compatibility
+	# if ifluxbias == "o": ifluxbias = '0' # for backward compatibility
 	isparam = request.args.get('isparam')
 	iifb = request.args.get('iifb')
 	ipowa = request.args.get('ipowa')
 	ifreq = request.args.get('ifreq')
 	x, y, ZZ = [], [], []
-	if session['ifluxbias'] == "x" and session['ifreq'] == "y":
+	dict_for_MPW = {
+			"pqfile": str(M_fresp[session['user_name']].pqfile), "datalocation": M_fresp[session['user_name']].datalocation, "writtensize": M_fresp[session['user_name']].writtensize,
+			"c_fresp_structure": session['c_fresp_structure'], "ifluxbias": ifluxbias, "isparam": isparam, "iifb": iifb, "ipowa": ipowa, "ifreq": ifreq,
+		}
+	set_status("MPW", dict_for_MPW)
+	if ifluxbias == "x" and ifreq == "y":
 		print("X: Flux-Bias, Y: Frequency")
 		xtitle, ytitle = "<b>Flux-Bias(V)</b>", "<b>frequency(GHz)</b>"
 		x, y = waveform(M_fresp[session['user_name']].corder['Flux-Bias']).data[0:session['c_fresp_address'][0]+1], waveform(M_fresp[session['user_name']].corder['Frequency']).data
 		x_count, y_count = session['c_fresp_address'][0]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
-		
-		dict_for_MPW = {
-			"pqfile": str(M_fresp[session['user_name']].pqfile), "datalocation": M_fresp[session['user_name']].datalocation, "writtensize": M_fresp[session['user_name']].writtensize,
-			"c_fresp_structure": session['c_fresp_structure'], "isparam": isparam, "iifb": iifb, "ipowa": ipowa
-		}
-		set_status("MPW", dict_for_MPW)
 
 		stage, prev = clocker(0)
-		CMD = ["python", "-c", "from pyqum.directive import multiprocessor as mp; mp.worker_fresp(%s,%s)"%(y_count,x_count)]
+		CMD = ["python", "-c", "from pyqum.directive import multiprocessor as mp; print(mp.worker_fresp(%s,%s))"%(y_count,x_count)]
 		with Popen(CMD, stdout=PIPE, shell=True) as proc:
-			output = proc.stdout.read().decode("utf-8")
-			print("result: %s" %output)
-			# os.kill(proc.pid, signal.SIGTERM) # terminate parent process
+			output = json.loads(proc.stdout.read().decode("utf-8").replace("\'", "\""))
+			os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
 		stage, prev = clocker(stage, prev) # Marking time
 
 		# slow iteration method:
-		Amp, Pha = [], []
+		# Amp, Pha = [], []
 		# for j in range(y_count):
 		# 	I = [selectedata[gotocdata([x, int(session['isparam']), int(session['iifb']), int(session['ipowa']), 2*j], session['c_fresp_structure'])] for x in range(x_count)]
 		# 	Q = [selectedata[gotocdata([x, int(session['isparam']), int(session['iifb']), int(session['ipowa']), 2*j+1], session['c_fresp_structure'])] for x in range(x_count)]
@@ -269,12 +267,30 @@ def char_fresp_2ddata():
 		print("x is of length %s and of type %s" %(len(x),type(x)))
 		print("y is of length %s and of type %s" %(len(y),type(y)))
 		
-		Amp = get_status("MPW")["Amp"]
+		Amp = output['rA']
 		print("Amp of shape %s" %str(array(Amp).shape))
 		ZZ = Amp
 		
-	elif session['isparam'] == "x":
-		pass
+	elif ipowa == "x" and ifreq == "y":
+		print("X: Power, Y: Frequency")
+		xtitle, ytitle = "<b>Power(V)</b>", "<b>frequency(GHz)</b>"
+		x, y = waveform(M_fresp[session['user_name']].corder['Power']).data[0:session['c_fresp_address'][3]+1], waveform(M_fresp[session['user_name']].corder['Frequency']).data
+		x_count, y_count = session['c_fresp_address'][3]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
+
+		stage, prev = clocker(0)
+		CMD = ["python", "-c", "from pyqum.directive import multiprocessor as mp; print(mp.worker_fresp(%s,%s,%s,%s))"%(y_count,x_count,'"freq"','"powa"')]
+		with Popen(CMD, stdout=PIPE, shell=True) as proc:
+			output = json.loads(proc.stdout.read().decode("utf-8").replace("\'", "\""))
+			os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
+		stage, prev = clocker(stage, prev) # Marking time
+
+		print("x is of length %s and of type %s" %(len(x),type(x)))
+		print("y is of length %s and of type %s" %(len(y),type(y)))
+		
+		Amp = output['rA']
+		print("Amp of shape %s" %str(array(Amp).shape))
+		ZZ = Amp
+
 	elif session['iifb'] == "x":
 		pass
 	
@@ -395,7 +411,7 @@ def char_cwsweep_1ddata():
 	M_cwsweep[session['user_name']].loadata()
 	selectedata = M_cwsweep[session['user_name']].selectedata
 	ifluxbias = request.args.get('ifluxbias')
-	if ifluxbias == "o": ifluxbias = '0' # for backward compatibility
+	# if ifluxbias == "o": ifluxbias = '0' # for backward compatibility
 	isparam = request.args.get('isparam')
 	iifb = request.args.get('iifb')
 	ipowa = request.args.get('ipowa')
@@ -435,7 +451,7 @@ def char_cwsweep_2ddata():
 	M_cwsweep[session['user_name']].loadata()
 	selectedata = M_cwsweep[session['user_name']].selectedata
 	session['ifluxbias'] = request.args.get('ifluxbias')
-	if session['ifluxbias'] == "o": session['ifluxbias'] = '0' # for backward compatibility
+	# if session['ifluxbias'] == "o": session['ifluxbias'] = '0' # for backward compatibility
 	session['isparam'] = request.args.get('isparam')
 	session['iifb'] = request.args.get('iifb')
 	session['ipowa'] = request.args.get('ipowa')

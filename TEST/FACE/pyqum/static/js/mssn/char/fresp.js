@@ -179,7 +179,7 @@ $(function () {
             // load narrated comment:
             $('textarea.char#fresp[name="comment"]').text(data.comment);
             // load c-range for each command:
-            $('select.char#fresp[name="c-fluxbias"]').empty().append($('<option>', { text: 'OPT', value: 'o' }))
+            $('select.char#fresp[name="c-fluxbias"]').empty()//.append($('<option>', { text: 'OPT', value: 'o' }))
                 .append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
             $.each(data.cfluxbias_data, function(i,v){ $('select.char#fresp[name="c-fluxbias"]').append($('<option>', { text: v, value: i })); });
             $('select.char#fresp[name="c-sparam"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));

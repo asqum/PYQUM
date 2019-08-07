@@ -238,7 +238,7 @@ class measurement:
             print("There are %s days" %len(daylist))
             # filter out non task-specific
             relatedays = []
-            for i,d in enumerate(daylist):
+            for d in daylist:
                 task_relevant_time = [t for t in listdir(self.mssnpath / d) if t.split('.')[0] == self.task]
                 if task_relevant_time:
                     relatedays.append(d)
@@ -438,10 +438,9 @@ class measurement:
             datapie.truncate(self.datalocation+7+keepdata)
         return "FILE IS RESET"
         
-    def searchcomment(self, keyword=""):
+    def searchcomment(self, wday, keyword):
         filelist = []
-        for d in self.daylist:
-            filelist += [(self.mssnpath / d / t) for t in listdir(self.mssnpath / d) if t.split('.')[0] == self.task]
+        filelist += [(self.mssnpath / wday / t) for t in listdir(self.mssnpath / wday) if t.split('.')[0] == self.task]
         return filelist
 
 
