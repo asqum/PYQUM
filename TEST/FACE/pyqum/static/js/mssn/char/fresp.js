@@ -149,10 +149,10 @@ $(function () {
             if (data.resumepoint == data.datasize) {
                 console.log("The data was already complete!")
             } else { console.log("The data has just been completed")};
+            $( "i.fresp" ).remove(); //clear previous
         });
-        $( "i.fresp" ).remove(); //clear previous
+        return false;
     });
-    return false;
 });
 
 // access data based on time picked
@@ -179,8 +179,7 @@ $(function () {
             // load narrated comment:
             $('textarea.char#fresp[name="comment"]').text(data.comment);
             // load c-range for each command:
-            $('select.char#fresp[name="c-fluxbias"]').empty()//.append($('<option>', { text: 'OPT', value: 'o' }))
-                .append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+            $('select.char#fresp[name="c-fluxbias"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
             $.each(data.cfluxbias_data, function(i,v){ $('select.char#fresp[name="c-fluxbias"]').append($('<option>', { text: v, value: i })); });
             $('select.char#fresp[name="c-sparam"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
             $.each(data.csparam_data, function(i,v){ $('select.char#fresp[name="c-sparam"]').append($('<option>', { text: v, value: i })); });
@@ -322,7 +321,7 @@ $(function () {
                 },
                 yaxis: {
                     zeroline: false,
-                    // title: '<b>Amp(dB)</b>',
+                    title: data.ytitle,
                     titlefont: {size: 18},
                     tickfont: {size: 18},
                     tickwidth: 3,
@@ -337,7 +336,7 @@ $(function () {
                     xanchor: 'right',
                     y: 1.05,
                     yanchor: 'bottom',
-                    text: data.ytitle,
+                    text: '',
                     font: {size: 18},
                     showarrow: false,
                     textangle: 0

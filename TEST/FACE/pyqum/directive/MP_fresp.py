@@ -1,3 +1,7 @@
+'''
+Multi Processor for fresp 2D-plotting:
+'''
+
 import sys, struct
 from numpy import array
 from multiprocessing import Pool

@@ -186,6 +186,9 @@ def sdata(bench):
 	if stat[1]['DATA'] == 'REAL32': #PENDING: testing REAL (64bit)
 		#convert the transferred ieee-encoded binaries into list (faster)
 		datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True)
+	elif stat[1]['DATA'] == 'REAL': #PENDING: testing REAL (64bit)
+		#convert the transferred ieee-encoded binaries into list (faster)
+		datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=True)
 	elif stat[1]['DATA'] == 'ASCii':
 		#convert the transferred ascii-encoded binaries into list (slower)
 		datas = bench.query_ascii_values(sdatacore)
@@ -215,7 +218,7 @@ def close(bench, reset=True):
 
 # Test Zone
 def test(detail=True):
-	from pyqum.instrument.analyzer import curve, IQAP, UnwraPhase
+	from pyqum.instrument.analyzer import curve, IQAParray, UnwraPhase
 	from pyqum.instrument.toolbox import waveform
 
 	bench = Initiate(False)
@@ -264,7 +267,7 @@ def test(detail=True):
 			print("Ready: %s" %bool(measure(bench)))
 			autoscal(bench)
 
-			dataform(bench, action=['Set', 'REAL32'])
+			dataform(bench, action=['Set', 'REAL'])
 			selectrace(bench, action=['Set', 'para 1 calc 1'])
 			data = sdata(bench)
 			print("Data [Type: %s, Length: %s]" %(type(data), len(data)))
@@ -273,8 +276,8 @@ def test(detail=True):
 			rfports(bench)
 
 			# Plotting trace:
-			# yI, yQ, Amp, Pha = IQAP(array(data))
-			# curve(range(len(data)//2), Amp, 'CW-Amp time-series', 'arb time', 'Amp(dB)')
+			yI, yQ, Amp, Pha = IQAParray(array(data))
+			curve(range(len(data)//2), Amp, 'CW-Amp time-series', 'arb time', 'Amp(dB)')
 
 			# TEST SCPI ZONE:
 			# bench.write(':SYSTem:PRESet')

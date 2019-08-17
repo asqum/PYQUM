@@ -4,14 +4,15 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from pathlib import Path
-from os import listdir, stat, SEEK_END
+from os import mkdir, listdir, stat, SEEK_END
 from os.path import exists, getsize, getmtime, join, isdir
 from datetime import datetime
 from time import time, sleep
 from contextlib import suppress
-from numpy import prod, mean, rad2deg
+from numpy import prod, mean, rad2deg, array
 import inspect, json, wrapt, struct, geocoder, ast
 from pandas import DataFrame
+from tables import open_file, Filters, Float32Atom, Float64Atom, StringCol, IsDescription
 
 from pyqum.instrument.toolbox import waveform
 
@@ -372,11 +373,12 @@ class measurement:
             self.datadensity = [x for x in self.datacontainer.values()][0]['data-density']
             self.comment = [x for x in self.datacontainer.values()][0]['comment']
             # Derive judging tools:
-            self.datasize = prod([waveform(x).count for x in self.corder.values()]) * self.datadensity
+            self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
             self.data_progress = int(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)
-            self.data_mismatch = self.writtensize%waveform([i for i in self.corder.values()][-1]).count*8 # counts for the last key of c-order
+            Last_Corder = [i for i in self.corder.values()][-1] # for the last key of c-order
+            self.data_mismatch = self.writtensize%waveform(Last_Corder).count*waveform(Last_Corder).inner_repeat*8 # counts & inner-repeats
             print(Back.WHITE + Fore.BLACK + "Data starts from %s-byth on the file with size of %sbytes" %(self.datalocation, self.filesize))
             if not self.writtensize%8:
                 self.resumepoint = self.writtensize//8
@@ -438,10 +440,58 @@ class measurement:
             datapie.truncate(self.datalocation+7+keepdata)
         return "FILE IS RESET"
         
-    def searchcomment(self, wday, keyword):
+    def searchcomment(self, wday, keyword): # still pending
         filelist = []
         filelist += [(self.mssnpath / wday / t) for t in listdir(self.mssnpath / wday) if t.split('.')[0] == self.task]
         return filelist
+
+    def mkanalysis(self, entry):
+        '''
+        prerequisite: selectmoment
+        '''
+        self.analysisfolder = "%s_analysis(%s)" %(self.task, entry)
+        self.analysispath = self.mssnpath / self.day / self.analysisfolder
+        try:
+            mkdir(self.analysispath)
+            status = "Folder <%s> created successfully" %self.analysisfolder
+        except(FileExistsError):
+            status = "Folder <%s> already existed" %self.analysisfolder
+        except: status = "Check the path"
+        return status
+
+    def savanalysis(self, adataname, adatarray):
+        '''
+        prerequisite: accesstructure, mkanalysis
+        '''
+        m, n = adatarray.shape[0], adatarray.shape[1]
+        with open_file(self.analysispath / (self.analysisfolder + ".h5"), 'w') as f:
+            filters = Filters(complevel=5, complib='blosc')
+            acontainer = f.create_carray(f.root, adataname, Float64Atom(), shape=(m, n), filters=filters)
+            acontainer[:,:] = adatarray
+            # Create a table in the root directory and append data...
+            class About(IsDescription):
+                task   = StringCol(len(self.task), pos=1)   # N-character String
+                comment   = StringCol(len(self.comment), pos=2)   # N-character String
+            tableroot = f.create_table(f.root, 'info', About, "A table at root", Filters(1))
+            tableroot.append([(self.task, self.comment)]) # , ("Mediterranean", 11, -1, 11*11, 11**2), ("Adriatic", 12, -2, 12*12, 12**2)])
+
+        return
+
+    def loadanalysis(self, adataname, atype='matrix'):
+        '''
+        prerequisite: accesstructure, mkanalysis
+        return: list
+        '''
+        with open_file(self.analysispath / (self.analysisfolder + ".h5"), 'r') as f:
+            print ("\nContents of the table in root:\n", f.root.info[:])
+            data = []
+            if atype == 'matrix':
+                loaded = eval('f.root.%s' %adataname)
+                print ("\nMatrix Data shape: %s,%s" %loaded[:,:].shape)
+                for aslice in loaded[:,:]:
+                    data.append(aslice)
+
+        return data
 
 
 # Setting up Measurement (Law-maker)
@@ -494,6 +544,7 @@ def test():
     print(ad.lookup("TEST", 2))
     print(ad.visible())
     print(lisample('USR'))
+
     return
     
 # test()

@@ -36,6 +36,17 @@ class waveform:
     def __init__(self, command):
         # defaulting to lower case
         self.command = command.lower()
+
+        # special treatment to inner-repeat command:
+        self.inner_repeat = 1
+        if ' r ' in self.command:
+            # inner_repeat: the repeat-counts indicated after the ' r ', determining how every .data's element will be repeated
+            # correcting back ("auto-purify") the command-string after having retrieved repeat-count:
+            self.command, self.inner_repeat = self.command.split(' r ')
+            while " " in self.inner_repeat:
+                self.inner_repeat = self.inner_repeat.replace(" ","")
+            self.inner_repeat = int(self.inner_repeat)
+
         # get rid of multiple spacings
         while " "*2 in self.command:
             self.command = self.command.replace(" "*2," ")
@@ -46,7 +57,7 @@ class waveform:
         while " to" in self.command or "to " in self.command:
             self.command = self.command.replace(" to","to")
             self.command = self.command.replace("to ","to")
-
+        
         command = self.command.split(" ") + [""]
         # 1. building function generator:
         if command[0].lower() == "fx":
@@ -80,7 +91,8 @@ class waveform:
                     except:
                         print("Invalid command")
                         pass
-                else: self.data.append(float(cmd))
+                else: self.data.append(float(cmd))     
+
 
 def match(List, Value):
     '''matching closest value in a list
