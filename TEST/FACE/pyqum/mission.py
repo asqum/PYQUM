@@ -248,11 +248,11 @@ def char_fresp_2ddata():
 		x_count, y_count = session['c_fresp_address'][0]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
 
 		stage, prev = clocker(0)
-		CMD = ["python", "-c", "from pyqum.directive import multiprocessor as mp; print(mp.worker_fresp(%s,%s))"%(y_count,x_count)]
+		CMD = ["python", "-c", "from pyqum.directive import MP_fresp as mp; print(mp.worker(%s,%s))"%(y_count,x_count)]
 		with Popen(CMD, stdout=PIPE, shell=True) as proc:
 			output = json.loads(proc.stdout.read().decode("utf-8").replace("\'", "\""))
-			try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
-			except: pass
+			# try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
+			# except: pass
 		stage, prev = clocker(stage, prev) # Marking time
 
 		# slow iteration method:
@@ -280,11 +280,11 @@ def char_fresp_2ddata():
 		x_count, y_count = session['c_fresp_address'][3]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
 
 		stage, prev = clocker(0)
-		CMD = ["python", "-c", "from pyqum.directive import multiprocessor as mp; print(mp.worker_fresp(%s,%s,%s,%s))"%(y_count,x_count,'"freq"','"powa"')]
+		CMD = ["python", "-c", "from pyqum.directive import MP_fresp as mp; print(mp.worker(%s,%s,%s,%s))"%(y_count,x_count,'"freq"','"powa"')]
 		with Popen(CMD, stdout=PIPE, shell=True) as proc:
 			output = json.loads(proc.stdout.read().decode("utf-8").replace("\'", "\""))
-			try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
-			except: pass
+			# try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
+			# except: pass
 		stage, prev = clocker(stage, prev) # Marking time
 
 		print("x is of length %s and of type %s" %(len(x),type(x)))
@@ -420,7 +420,7 @@ def char_cwsweep_1ddata():
 	iifb = request.args.get('iifb')
 	ifreq = request.args.get('ifreq')
 	ipowa = request.args.get('ipowa')
-	if ifluxbias == "x":
+	if "x" in ifluxbias:
 		title = "<b>Flux-Bias(V)</b>"
 		selected_sweep = M_cwsweep[session['user_name']].corder['Flux-Bias']
 		selected_progress = waveform(selected_sweep).data[0:session['c_cwsweep_address'][0]+1]
@@ -434,11 +434,11 @@ def char_cwsweep_1ddata():
 		# averaging up those power repeats:
 		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, session['c_cwsweep_address'][0]+1), axis=0))
 		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, session['c_cwsweep_address'][0]+1), axis=0))
-	elif isparam == "x":
+	elif "x" in isparam:
 		pass
-	elif iifb == "x":
+	elif "x" in iifb:
 		pass
-	elif ifreq == "x":
+	elif "x" in ifreq:
 		title = "<b>frequency(GHz)</b>"
 		selected_sweep = M_cwsweep[session['user_name']].corder['Frequency']
 		selected_progress = waveform(selected_sweep).data[0:session['c_cwsweep_address'][3]+1]
@@ -452,7 +452,7 @@ def char_cwsweep_1ddata():
 		# averaging up those power repeats:
 		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, session['c_cwsweep_address'][3]+1), axis=0))
 		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, session['c_cwsweep_address'][3]+1), axis=0))
-	elif ipowa == "x":
+	elif "x" in ipowa:
 		title = "<b>Power(dBm)</b>"
 		selected_sweep = M_cwsweep[session['user_name']].corder['Power']
 		xpowa = waveform(selected_sweep)
@@ -464,11 +464,18 @@ def char_cwsweep_1ddata():
 		selected_I = list(mean(array(selected_Ir).reshape(xpowa.count, xpowa_repeat), axis=1)) #-->
 		selected_Q = list(mean(array(selected_Qr).reshape(xpowa.count, xpowa_repeat), axis=1)) #-->
 
+	# assembly amplitude & phase:
 	MagPha = [IQAP(x[0],x[1]) for x in zip(selected_I, selected_Q)]
 	Amp, Pha = [], []
 	for i,j in MagPha:
 		Amp.append(i); Pha.append(j)
+
+	# to avoid exception when encountering recursive parameters:
+	if "c" in ifluxbias + isparam + iifb + ifreq + ipowa:
+		selected_progress = list(range(len(selected_progress)))
+
 	x1, y1, y2 = selected_progress, Amp, list(UnwraPhase(selected_progress, Pha)) #list(unwrap(Pha)) 
+
 	global data_dict
 	data_dict = {title: x1, 'Amplitude': y1, 'UPhase': y2, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
 	return jsonify(x1=x1, y1=y1, y2=y2, title=title)
@@ -485,7 +492,7 @@ def char_cwsweep_2ddata():
 	x, y, ZZ = [], [], []
 	dict_for_MPW = {
 			"pqfile": str(M_cwsweep[session['user_name']].pqfile), "datalocation": M_cwsweep[session['user_name']].datalocation, "writtensize": M_cwsweep[session['user_name']].writtensize,
-			"c_cwsweep_structure": session['c_cwsweep_structure'], "ifluxbias": ifluxbias, "isparam": isparam, "iifb": iifb, "ipowa": ipowa, "ifreq": ifreq,
+			"c_cwsweep_structure": session['c_cwsweep_structure'], "ifluxbias": ifluxbias, "isparam": isparam, "iifb": iifb, "ifreq": ifreq, "ipowa": ipowa
 		}
 	set_status("MPW", dict_for_MPW)
 	if ifluxbias == "x" and ifreq == "y":

@@ -157,7 +157,7 @@ def notify(recipient, subject, body):
             usr = scrypt.decrypt(BOOK['mK'], 'whatdouwant?', maxtime=0.73)
     except: 
         print("DUDE!")
-        pass
+        raise
     msg = MIMEMultipart()
     msg['From'] = usr
     msg['To'] = recipient
@@ -186,7 +186,7 @@ def test():
     # initializationspeed()
     notify('ufocrew@gmail.com', 'Test', 'Success')
     # store_pwd()
-    print(scanserial()[0])
+    # print(scanserial()[0])
     return
 
 # test()

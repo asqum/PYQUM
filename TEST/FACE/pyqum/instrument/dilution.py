@@ -63,7 +63,7 @@ class bluefors:
             Tlog = list([x.split(',') for x in L.split('\n')[:-1]])
             t, T = [datetime.strptime(x[1], '%H:%M:%S') for x in Tlog], [float(x[2]) for x in Tlog]
             startime = t[0].strftime('%H:%M:%S')
-            t = [(x-t[0]).total_seconds()/3600 for x in t]
+            t = [(x-t[0]).total_seconds()/3600 for x in t] # in hour(s)
             if Unit.upper() == 'C':
                 T = [x - 273 for x in T]
         except:
@@ -138,29 +138,68 @@ class scroll(bluefors):
         output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
         return output[1]
 
+class warmup(bluefors):
+    '''Initialize the scrolls'''
+    def __init__(self, connect):
+        super().__init__()
+        self.connect = connect
+    
+    def status(self):
+        self.connect.write(("status e1302p=30\n").encode('ascii'))
+        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
+        return output[1]
+
+    def off(self, Channel):
+        self.connect.write(("off e1302%s\n"%Channel).encode('ascii'))
+        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
+        return output[1]
+
+    def on(self, Channel):
+        self.connect.write(("on e1302%s\n"%Channel).encode('ascii'))
+        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
+        return output[1]
+
 def test():
+    from scipy.stats import linregress
+    from pyqum.instrument.network import notify
+    from time import sleep
+
     b = bluefors()
-    b.selectday(b.whichday())
-    Ch = 5
-    P = b.pressurelog(Ch)
-    curve(P[1], P[2], "P%s Starting %s"%(Ch, P[0]), "t(hr)", "P(mbar)")
-    t, dPdt = derivative(P[1], P[2], 3)
-    curve(t, dPdt, "dP%s/dt Starting %s"%(Ch, P[0]), "t(hr)", "dP/dt(mbar/hr)")
-    # Ch = 2
-    # T_unit = 'C'
-    # T = b.temperature(2, T_unit)
+    # b.selectday(b.whichday())
+    b.selectday(len(b.Days)-1)
+
+    # Ch = 5
+    # P = b.pressurelog(Ch)
+    # curve(P[1], P[2], "P%s Starting %s"%(Ch, P[0]), "t(hr)", "P(mbar)")
+    # t, dPdt = derivative(P[1], P[2], 3)
+    # curve(t, dPdt, "dP%s/dt Starting %s"%(Ch, P[0]), "t(hr)", "dP/dt(mbar/hr)")
+
+    Ch, T_unit = 2, 'C'
+    while True:
+        T = b.temperaturelog(Ch, T_unit)
+        print("Current 4K-plate Temperature: %s" %T[2][len(T[2])-7:-1])
+        reg = linregress(T[1][len(T[2])-7:-1], T[2][len(T[2])-7:-1])
+        ETA = (28-T[2][-1]) / reg[0]
+        print("ETA for T%s in %s hour(s)" %(Ch,ETA))
+        sleep(10)
+        if ETA < 0:
+            # notify('ufocrew@gmail.com', 'T2', 'Exceeding 28C')
+            break
+
     # curve(T[1], T[2], "T%s Starting %s"%(Ch, T[0]), "t(hr)", "T(%s)"%T_unit)
     # t, dTdt = derivative(T[1], T[2], 3)
     # curve(t, dTdt, "dT%s/dt Starting %s"%(Ch, T[0]), "t(hr)", "dT/dt(%s/hr)"%T_unit)    
-    if b.connecting():
-        v, s = valve(b.connect), scroll(b.connect)
-        print(v.status(17))
-        print("P2: %s"%b.gauge(2))
-        print(s.status(2))
-        # print("ON Scroll2: %s"%s.on(2).upper())
-        if int(input("TURN OFF SCROLL2(0/1)? ")):
-            print("OFF Scroll2: %s"%s.off(2).upper())
-        b.close()
+
+    # if b.connecting():
+    #     v, s, w = valve(b.connect), scroll(b.connect), warmup(b.connect)
+    #     print(v.status(17))
+    #     print("P2: %s"%b.gauge(2))
+    #     print(s.status(2))
+    #     # print("ON Scroll2: %s"%s.on(2).upper())
+    #     # if int(input("TURN OFF SCROLL2(0/1)? ")):
+    #     #     print("OFF Scroll2: %s"%s.off(2).upper())
+    #     print("warmup heater: %s" %w.status())
+    #     b.close()
 
 # test()
 

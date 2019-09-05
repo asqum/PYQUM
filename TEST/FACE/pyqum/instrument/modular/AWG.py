@@ -497,27 +497,23 @@ def test(detail=True):
         arb_sample_rate(s, action=["Set", 1250000000])
         arb_sample_rate(s)
         
-        # seg0 = 1000
-        # seg1 = 5000
-        # seg2 = 5000
-        # Create Waveform
-        # stat = CreateArbWaveform(s, ([1]*seg0))
-        # h1 = stat[1]
-        # stat = CreateArbWaveform(s, ([0]*seg1))
-        # h2 = stat[1]
-        # stat = CreateArbWaveform(s, ([-1]*seg2))
-        # h3 = stat[1]
+        Clear_ArbMemory(s)
 
+        # 0.8ns per point:
         # CH 1
-        stat = CreateArbWaveform(s, ([0]*5000 + [1]*3000))
-        ch1 = stat[1]
-        from numpy import sin, pi
-        wave = [sin(x*0.8*0.1*2*pi) for x in range(10000)]
-        # stat = CreateArbWaveform(s, wave)
+        # stat = CreateArbWaveform(s, ([0]*5000 + [1]*1000))
         # ch1 = stat[1]
+        from numpy import sin, pi, cos
+        freq, dt = 1.25/1000, 0.8
+        wave = [0.1*sin(x*freq*dt*2*pi) - 0.0035 for x in range(10000)] # I
+        stat = CreateArbWaveform(s, wave)
+        ch1 = stat[1]
 
         # CH 2
-        stat = CreateArbWaveform(s, ([0.8]*5000 + [-1]*1000 + [i/1200 for i in range(1200)]))
+        # stat = CreateArbWaveform(s, ([0.8]*5000 + [-1]*1000 + [i/1200 for i in range(1200)]))
+        freq, dt = 1.25/1000, 0.8
+        wave = [0.1*cos(x*freq*dt*2*pi) for x in range(10000)] # Q
+        stat = CreateArbWaveform(s, wave)
         ch2 = stat[1]
 
         # Composing different sequences to each channel

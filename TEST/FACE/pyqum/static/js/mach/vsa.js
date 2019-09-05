@@ -53,7 +53,11 @@ $(function () {
     $('input.vsa#submitsettings').bind('click', function () { // the enter key code
         $.getJSON('/mach/vsa/settings', {
             // input value here:
-            acquis: $('input.vsa[name="acquis"]').val()
+            acquis: $('input.vsa[name="acquis"]').val(),
+            lofreq: $('input.vsa[name="lofreq"]').val(),
+            lopowa: $('input.vsa[name="lopowa"]').val(),
+            lobwd: $('input.vsa[name="lobwd"]').val(),
+            preselect: $('select.vsa[name="preselect"]').val()
         }, function (data) {
             $('div.vsacontent#debug').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
             $.each(data.message, function(index, value) {
@@ -94,3 +98,14 @@ $(function () {
         return false;
     });
 }); 
+
+//measure
+$(function () {
+    $('button.vsa#measure').bind('click', function () { // id become #
+        $.getJSON('/mach/vsa/measure', {
+        }, function (data) {
+            console.log(data.message);
+        });
+        return false;
+    });
+});

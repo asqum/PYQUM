@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 # dloc = "C:\\Program Files\\IVI Foundation\\IVI\Bin\\AgM9392_64.dll" #64-bit
 try:
     lib_name = find_library('AgM9392_64.dll')
+    # lib_name = find_library('AgM9392.dll')
     print(Fore.YELLOW + "%s's driver located: %s" %(mdlname, lib_name))
     dll = cdll.LoadLibrary(lib_name) #Python is 64-bit
 except: print(Fore.RED + "%s's driver not found in this server" %mdlname)
@@ -272,7 +273,24 @@ def Arm_Measure(session):
     print(Fore.LIGHTGREEN_EX + "%s's measurement Armed: %s" % (mdlname, status_code(status)))
     return status_code(status)
 
-# 2.5 Get Data
+# 2.5 Wait for Data
+def Wait_Data(session, Timeout=1000):
+    """wait for Data
+       Timeout in ms
+    """
+    AGM = dll.AgM9392_WaitForData
+    AGM.restype = c_int
+    status = AGM(c_long(session), c_int(Timeout))
+    
+    if status == 0: set_status(mdlname, {"wait_status" : "Complete"}) #logging the name and value of the attribute
+    elif status == 1: set_status(mdlname, {"wait_status" : "Complete with Timeout"}) #logging the name and value of the attribute
+    else: set_status(mdlname, {"wait_status" : "Expired"}) #logging the name and value of the attribute
+    
+    if eval(debugger):
+        print(Fore.LIGHTWHITE_EX + "Wait Status: %s" %status)
+    return status
+
+# 2.6 Get Data
 def Get_Data(session, ComplexDataBufferSize):
     """[Extracting Complex Data]
     Gets the I/Q measurement results.
@@ -282,7 +300,8 @@ def Get_Data(session, ComplexDataBufferSize):
     """
     AGM = dll.AgM9392_GetData
     AGM.restype = c_int
-    ComplexData = (c_double*int(ComplexDataBufferSize))()
+    # ComplexData = (c_double*int(ComplexDataBufferSize))() # 64bit per point
+    ComplexData = (c_float*int(ComplexDataBufferSize))() # 32bit per point
     ComplexDataActualSize = c_long()
     NumberCopied = c_long()
     status = AGM(c_long(session), c_long(ComplexDataBufferSize), byref(ComplexData), byref(ComplexDataActualSize), byref(NumberCopied))
@@ -347,6 +366,8 @@ def close(session):
 
 # Test Zone
 def test(detail=True):
+    from pyqum.instrument.analyzer import curve, IQAParray
+    from numpy import array
     debug(detail)
     print(Fore.RED + "Debugger mode: %s" %eval(debugger))
     s = InitWithOptions()
@@ -355,13 +376,13 @@ def test(detail=True):
         resource_descriptor(s)
         model(s)
         acquisition_time(s)
-        acquisition_time(s, action=["Set", 3e-5])
+        acquisition_time(s, action=["Set", 4e-6])
         preselector_enabled(s)
-        frequency(s, action=["Set", 3e9])
-        power(s, action=["Set", 10])
-        bandwidth(s)
+        frequency(s, action=["Set", 5e9])
+        power(s, action=["Set", -20])
+        bandwidth(s, action=['Set', 40e6])
         # setting trigger
-        trigger_source(s)
+        trigger_source(s, action=["Set", 1])
         trigger_delay(s)
         external_trigger_level(s)
         external_trigger_slope(s)
@@ -369,12 +390,22 @@ def test(detail=True):
         # Measure
         Init_Measure(s)
         Arm_Measure(s)
-        stat = samples_number(s)
         # Get Sample Rate
+        sr = sample_rate(s, action=['Set', 62500000])
         sr = sample_rate(s)
+        print("sampling rate: %s" %sr[1])
         # Extracting Data
-        gd = Get_Data(s, 2*stat[1])
-        display2D(gd[1]['ComplexData'], sr[1])
+        stat = samples_number(s)
+        while True:
+            try:
+                Wait_Data(s)
+            except: pass
+            gd = Get_Data(s, 2*stat[1])
+            # print(gd[1]['ComplexData'])
+            display2D(gd[1]['ComplexData'][0:len(gd[1]['ComplexData'])], sr[1])
+            I, Q, A, Pha = IQAParray(array(gd[1]['ComplexData']))
+            print("Plotting %s IQ-pairs" %len(I))
+            curve(I,Q,"","","")
 
     else: print(Fore.RED + "Basic IO Test")
     close(s)

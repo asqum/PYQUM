@@ -16,6 +16,9 @@
         <button class='vsa' id='about'>ABOUT</button>
         <button class='vsa' id='debug'>DEBUG</button>
         <button class='vsa' id='settings'>SETTINGS</button> 
+
+        <button class='vsa' id='measure'><i class="fas fa-volume-up" style="font-size:15px;color:lightgreen;"></i> MEASURE</button>
+        <button class='vsa' id='playing'><i class="fas fa-volume-up" style="font-size:15px;color:lightgreen;"></i> PLAYING</button>
         
     </form>
     </div>
@@ -27,8 +30,23 @@
         <div class="container">
             <form method='GET'>
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-25" id='left'><label>Set Acquisition Time (s)</label></div>
-                <div class="col-75" id='left'><input class='vsa' id="settings" name='acquis' type="text" value="1e-6"/></div>
+                <div class="col-20" id='left'><label>Acquisition Time (s)</label></div>
+                <div class="col-20" id='left'><input class='vsa' id="settings" name='acquis' type="text" value="4e-6"/></div>
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-20" id='left'><label>LO Frequency (GHz)</label></div>
+                <div class="col-20" id='left'><input class='vsa' id="settings" name='lofreq' type="text" value="5"/></div>
+                <div class="col-20" id='left'><label>LO Power (dBm)</label></div>
+                <div class="col-20" id='left'><input class='vsa' id="settings" name='lopowa' type="text" value="-20"/></div>
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-20" id='left'><label>LO Bandwidth (MHz)</label></div>
+                <div class="col-20" id='left'><input class='vsa' id="settings" name='lobwd' type="text" value="40"/></div>
+                <div class="col-20" id='left'><label>Preselector</label></div>
+                <div class="col-20" id='left'><select class='vsa' id="settings" name="preselect">
+                    <option value=1>Enabled</option>
+                    <option value=0 selected>Disabled</option></select>
+                </div>
                 </div>
 
                 <div class="row"> <!-- SUBMIT BUTTON -->

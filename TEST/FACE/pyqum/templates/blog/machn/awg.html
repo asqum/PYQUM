@@ -89,15 +89,42 @@
         </div>
     </div>
 
-    <div class="awgcontent" id="settings-squarewave">
+    <!-- <div class="awgcontent" id="settings-squarewave">
         <div class="container">
             
             <h3> 3a. Waveform Construction: </h3>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+            <div class="row">
                 <div class="col-25" id='left'><label>IF (MHz)</label></div>
                 <div class="col-75" id='left'><input class='awg' id="settings" name="pointnum2", type='text', value='50'/></div>
 
                 <div class="col-15" id='left'><input class='awg' id='set-squarewave' type="submit" value="Construct"/></div>
+            </div>
+              
+        </div>
+    </div> -->
+
+    <div class="awgcontent" id="settings-ifwave">
+        <div class="container">
+            
+            <h3> 3a. IF - Waveform Construction: </h3>
+            <div class="row">
+                <div class="col-20" id='left'><label>Function</label></div>
+                <div class="col-20" id='left'><select class='awg' id="settings" name="iffunction">
+                    <option value='sin' selected>sin</option>
+                    <option value='cos'>cos</option>
+                    <!-- <option value='custom'>custom</option> -->
+                </select></div>
+                <div class="col-20" id='left'><label>Frequency (MHz)</label></div>
+                <div class="col-20" id='left'><input class='awg' id="settings" name="iffreq", type='text', value='1.25'/></div>
+            </div>
+            <div class="row">
+                <div class="col-20" id='left'><label>Amplitude (V)</label></div>
+                <div class="col-20" id='left'><input class='awg' id="settings" name="ifvoltag", type='text', value='0.1'/></div>
+                <div class="col-20" id='left'><label>Offset (V)</label></div>
+                <div class="col-20" id='left'><input class='awg' id="settings" name="ifoffset", type='text', value='0'/></div>
+            </div>
+            <div class="row">
+                <div class="col-15" id='left'><input class='awg' id='set-ifwave' type="submit" value="Construct"/></div>
             </div>
               
         </div>
