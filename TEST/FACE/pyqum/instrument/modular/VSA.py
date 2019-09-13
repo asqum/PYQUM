@@ -378,8 +378,8 @@ def test(detail=True):
         acquisition_time(s)
         acquisition_time(s, action=["Set", 4e-6])
         preselector_enabled(s)
-        frequency(s, action=["Set", 5e9])
-        power(s, action=["Set", -20])
+        frequency(s, action=["Set", 6e9])
+        power(s, action=["Set", -25])
         bandwidth(s, action=['Set', 40e6])
         # setting trigger
         trigger_source(s, action=["Set", 1])
@@ -387,25 +387,21 @@ def test(detail=True):
         external_trigger_level(s)
         external_trigger_slope(s)
         trigger_timeout(s)
-        # Measure
+
+        # Measure-loop
         Init_Measure(s)
-        Arm_Measure(s)
-        # Get Sample Rate
-        sr = sample_rate(s, action=['Set', 62500000])
         sr = sample_rate(s)
         print("sampling rate: %s" %sr[1])
-        # Extracting Data
         stat = samples_number(s)
         while True:
-            try:
-                Wait_Data(s)
-            except: pass
+            Arm_Measure(s)
             gd = Get_Data(s, 2*stat[1])
             # print(gd[1]['ComplexData'])
             display2D(gd[1]['ComplexData'][0:len(gd[1]['ComplexData'])], sr[1])
             I, Q, A, Pha = IQAParray(array(gd[1]['ComplexData']))
             print("Plotting %s IQ-pairs" %len(I))
             curve(I,Q,"","","")
+            if bool(input("press enter (any key) to continue (stop)")): break
 
     else: print(Fore.RED + "Basic IO Test")
     close(s)
