@@ -15,6 +15,8 @@ datalocation = get_status("MPW")["datalocation"]
 writtensize = get_status("MPW")["writtensize"]
 c_fresp_structure = get_status("MPW")["c_fresp_structure"]
 ifluxbias = get_status("MPW")["ifluxbias"]
+ixyfreq = get_status("MPW")["ixyfreq"]
+ixypowa = get_status("MPW")["ixypowa"]
 isparam = get_status("MPW")["isparam"]
 iifb = get_status("MPW")["iifb"]
 ipowa = get_status("MPW")["ipowa"]
@@ -25,8 +27,8 @@ with open(pqfile, 'rb') as datapie:
 	pie = datapie.read(writtensize)
 	selectedata = list(struct.unpack('>' + 'd'*((writtensize)//8), pie))
 
-# y: freq, x: fluxbias
-def assembler_freq_fluxbias(args):
+# y: xyfreq, x: fluxbias
+def assembler_xyfreq_fluxbias(args):
 	(y,x) = args
 	I = selectedata[gotocdata([x,int(isparam),int(iifb),int(ipowa),2*y],c_fresp_structure)]
 	Q = selectedata[gotocdata([x,int(isparam),int(iifb),int(ipowa),2*y+1],c_fresp_structure)]
@@ -45,7 +47,7 @@ def scanner(a, b):
 	for i in a:
 		for j in b:
 			yield i, j
-def worker(y_count,x_count,y="freq",x="fluxbias"):		
+def worker(y_count,x_count,y="xyfreq",x="fluxbias"):		
 	pool = Pool()
 	IQ = pool.map(eval("assembler_%s_%s" %(y,x)), scanner(range(y_count),range(x_count)), max(x_count,y_count))
 	pool.close(); pool.join()

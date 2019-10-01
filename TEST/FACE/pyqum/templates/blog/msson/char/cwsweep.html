@@ -34,25 +34,32 @@
         </div>
 
         <div class="row">
-            <div class="col-15" id='left'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
+            <div class="col-15" id='left'>
+                <label class="cwsweep switch">
+                    <input class="cwsweep" id='live-update' type="checkbox">
+                    <div class="slider"><span class="on">LIVE</span><span class="off">UPDATE</span></div>
+                </label>
+            </div>
             {% if g.user['measurement'] %}
                 <div class="col-15" id='left'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
+                <div class="col-15" id='left'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div>
+                <div class="col-15" id='left'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
             {% endif %}
             <div class="col-15" id='left'><button class="char push_button w-95 blue" id="cwsweep-savecsv">DOWNLOAD CSV</button></div>
         </div>
 
         <!-- optional parameters line #1 -->
         <div class="row">
-            <!-- <div class="col-20" id='left'></div>
-            <div class="col-20" id='left'></div>
-            <div class="col-20" id='left'></div> -->
-            <div class="col-20" id='left'><label>Flux-Bias (V)</label></div>
+            <!-- <div class="col-20" id='left'></div> -->
+            <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
+            <div class="col-20" id='left'><label>XY-Frequency (GHz)</label></div>
+            <div class="col-20" id='left'><label>XY-Power (dBm)</label></div>
         </div>
         <div class="row">
-            <!-- <div class="col-20" id='left'></div>
-            <div class="col-20" id='left'></div>
-            <div class="col-20" id='left'></div> -->
+            <!-- <div class="col-20" id='left'></div> -->
             <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-fluxbias" type="text"></select></div>
+            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-xyfreq" type="text"></select></div>
+            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-xypowa" type="text"></select></div> 
         </div>
 
         <!-- basic parameters line #2 -->
@@ -88,16 +95,16 @@
                     <div class="modal-content">
                         <!-- Optional Parameters -->
                         <div class="row">
-                            <!-- <div class="col-20" id='left'><label></label></div>
-                            <div class="col-20" id='left'><label></label></div>
-                            <div class="col-20" id='left'><label></label></div> -->
-                            <div class="col-20" id='left'><label>Flux-Bias (V)</label></div>
+                            <!-- <div class="col-20" id='left'><label></label></div> -->
+                            <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
+                            <div class="col-20" id='left'><label>XY-Frequency (GHz)</label></div>
+                            <div class="col-20" id='left'><label>XY-Power (dBm)</label></div> 
                         </div>
                         <div class="row">
-                            <!-- <div class="col-20" id='left'></div>
-                            <div class="col-20" id='left'></div>
-                            <div class="col-20" id='left'></div>  -->
+                            <!-- <div class="col-20" id='left'></div> -->
                             <div class="col-20" id='left'><input class='char' id="cwsweep" name="fluxbias" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="xyfreq" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="xypowa" type="text" value="OPT,"/></div>
                         </div>
                         <!-- Basic Parameters -->
                         <div class="row">

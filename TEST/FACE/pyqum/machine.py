@@ -21,7 +21,7 @@ from pyqum.instrument.modular import AWG, VSA
 from pyqum.instrument.benchtop import DSO, PNA, YOKO, KEIT
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
-from pyqum.instrument.toolbox import match, waveform
+from pyqum.instrument.toolbox import match, waveform, pauselog
 
 encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
@@ -440,7 +440,7 @@ def naget():
 		stop_conversion = si_parse("1%s"%stop_unit) / si_parse("1%s"%start_unit) # equalizing both unit-range:
 		message['start-frequency'] = "%s %sHz" %(start_val,start_unit) # start-frequency
 		message['stop-frequency'] = "%s %sHz" %(float(stop_val)*stop_conversion,start_unit) # stop-frequency
-		message['sweep-points'] = int(NA[natype].sweep(nabench[natype])[1]['POINTS']) # sweep-points
+		message['step-points'] = int(NA[natype].sweep(nabench[natype])[1]['POINTS']) - 1 # step-points in waveform
 		message['power'] = "%.1f dBm" %float(NA[natype].power(nabench[natype])[1]['LEVEL']) # power (fixed unit)
 		message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natype])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb (adjusted by si_prefix)
 		message['s21'] = int('S21' in NA[natype].getrace(nabench[natype]))
@@ -537,6 +537,7 @@ def dsoabout():
 def bdr():
 	global b
 	b = bluefors()
+	print("User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
 	return render_template("blog/machn/bdr.html", Days=b.Days)
 @bp.route('/bdr/history', methods=['GET'])
 def bdrhistory():
@@ -562,13 +563,17 @@ def bdrhistory():
 	else:
 		[startimeP, tp2, P2, P_stat2] = [startimeP, tp, P, P_stat]
 		[startimeT, tt2, T2] = [startimeT, tt, T]
+	
 	# align the time-stamp:
 	# T_max = max([tt[-1], tt2[-1], tp[-1], tp2[-1]])
 	# tt = [x + abs(tt[-1]-T_max) for x in tt]
 	# tt2 = [x + abs(tt2[-1]-T_max) for x in tt2]
 	# tp = [x + abs(tp[-1]-T_max) for x in tp]
 	# tp2 = [x + abs(tp2[-1]-T_max) for x in tp2]
-	return jsonify(startimeP=startimeP, startimeT=startimeT, tp=tp, P=P, P_stat=P_stat, tt=tt, T=T, tp2=tp2, P2=P2, P_stat2=P_stat2, tt2=tt2, T2=T2)
+
+	log = pauselog() #disable logging (NOT applicable on Apache)
+
+	return jsonify(log=str(log), startimeP=startimeP, startimeT=startimeT, tp=tp, P=P, P_stat=P_stat, tt=tt, T=T, tp2=tp2, P2=P2, P_stat2=P_stat2, tt2=tt2, T2=T2)
 
 # DC
 @bp.route('/dc', methods=['GET'])
@@ -581,7 +586,7 @@ def dcyokogawa():
 	yokostat = request.args.get('yokostat')
 	if yokostat == 'true':
 		global yokog
-		yokog = YOKO.Initiate()
+		yokog = YOKO.Initiate(current=True) # pending: V/A option
 		prev = YOKO.previous(yokog)
 	elif yokostat == 'false':
 		prev = YOKO.previous(yokog)

@@ -6,12 +6,13 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
-from time import time
+from time import time, sleep
 from numpy import linspace, sin, pi, prod, array
 from flask import request, session, current_app, g, Flask
 
+from pyqum.instrument.benchtop import PSGV as PSG0
 from pyqum.instrument.benchtop import ENA, YOKO
-from pyqum.instrument.logger import settings, clocker, get_status
+from pyqum.instrument.logger import settings, clocker, get_status, set_status
 from pyqum.instrument.analyzer import curve, IQAP, UnwraPhase
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 
@@ -57,7 +58,9 @@ def TESTC(tag="", datadensity=1, instr=[], corder={}, comment='', dayindex='', t
 			print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
 			yield data
 			data = []
-
+			
+# **********************************************************************************************************************************************************
+# 1. FREQUENCY RESPONSE MEASUREMENT:
 @settings(2, 'Sam') # data-density, sample-name
 def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['YOKO','ENA'], testeach=False):
 	'''Characterizing Frequency Response:
@@ -84,7 +87,7 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
 	ENA.linfreq(bench, action=['Set', fstart, fstop]) # Linear Freq-sweep-range
 	# YOKO:
 	if "opt" not in fluxbias.data: # check if it is in optional-state
-		yokog = YOKO.Initiate()
+		yokog = YOKO.Initiate(current=True) # pending option
 		YOKO.output(yokog, 1)
 
 	# Buffer setting(s) for certain loop(s):
@@ -102,7 +105,7 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
 	if resumepoint > 0:
 		caddress = cdatasearch(resumepoint//buffersize_1, cstructure)
 		# Only those involved in virtual for-loop need to be pre-set here:
-		YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=0.07)
+		YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3)
 		ENA.setrace(bench, Mparam=[Sparam.data[caddress[1]]], window='D1')
 		ENA.ifbw(bench, action=['Set', ifb.data[caddress[2]]])
 
@@ -118,9 +121,10 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
 				if "opt" not in fluxbias.data: # check if it is in optional-state
 					if testeach: # test each measure-loop:
 						loopcount += [fluxbias.count]
-						loop_dur += [abs(fluxbias.data[0]-fluxbias.data[1])/0.2 + 35*1e-3]
+						if fluxbias.count > 1: loop_dur += [abs(fluxbias.data[0]-fluxbias.data[1])/0.2 + 35*1e-3]
+						else: loop_dur += [0]
 						stage, prev = clocker(stage, prev) # Marking time
-					else: YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=0.07)
+					else: YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3)
 					
 			if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
 				ENA.setrace(bench, Mparam=[Sparam.data[caddress[1]]], window='D1')
@@ -160,18 +164,20 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
 				YOKO.close(yokog, True)
 			return
 
-	# ============================================================================================================================
-
+# **********************************************************************************************************************************************************
+# 2. CONTINUOUS-WAVE SWEEPING:
 @settings(2, 'Sam') # data-density, sample-name
-def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['YOKO','ENA'], testeach=False):
+def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['PSG','YOKO','ENA'], testeach=False):
 	'''Continuous Wave Sweeping:
-	C-Order: Flux-Bias, S-Parameter, IF-Bandwidth, Frequency, Power
+	C-Order: Flux-Bias, XY-Frequency, XY-Power, S-Parameter, IF-Bandwidth, Frequency, Power
 	'''
 	# pushing pre-measurement parameters to settings:
 	yield user, tag, instr, corder, comment, dayindex, taskentry, testeach
 
 	# User-defined Controlling-PARAMETER(s) ======================================================================================
 	fluxbias = waveform(corder['Flux-Bias'])
+	xyfreq = waveform(corder['XY-Frequency'])
+	xypowa = waveform(corder['XY-Power'])
 	Sparam = waveform(corder['S-Parameter'])
 	ifb = waveform(corder['IF-Bandwidth'])
 	freq = waveform(corder['Frequency'])
@@ -190,18 +196,24 @@ def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resu
 	bench = ENA.Initiate(True)
 	ENA.dataform(bench, action=['Set', 'REAL'])
 	if powa_repeat == 1: 
+		# collect swept power-data every measure-loop
 		ENA.sweep(bench, action=['Set', 'ON', powa.count])
 		ENA.power(bench, action=['Set', '', powa.data[0], powa.data[-1]]) # for power sweep (set pstart & pstop)
 		buffersize_1 = powa.count * 2 # (buffer) data density of 2 due to IQ
 	else: 
+		# collect repetitive power-data every measure-loop
 		ENA.sweep(bench, action=['Set', 'ON', powa_repeat])
-		# need to set anew in every measure loop
 		buffersize_1 = powa_repeat * 2 # (buffer) data density of 2 due to IQ
-	
+
 	# YOKO:
-	if "opt" not in fluxbias.data: # check if it is in optional-state
-		yokog = YOKO.Initiate()
+	if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
+		yokog = YOKO.Initiate(current=True) # pending option
 		YOKO.output(yokog, 1)
+
+	# PSG:
+	if "opt" not in xyfreq.data: # check if it is in optional-state / serious-state
+		sogo = PSG0.Initiate() # pending option
+		PSG0.rfoutput(sogo, action=['Set', 1])
 
 	# User-defined Measurement-FLOW ==============================================================================================
 	if testeach: # measure-time contribution from each measure-loop
@@ -209,17 +221,21 @@ def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resu
 		stage, prev = clocker(0) # Marking starting point of time
 	
 	# Registerring parameter(s)-structure
-	if powa_repeat == 1: cstructure = [fluxbias.count,Sparam.count,ifb.count,freq.count,1] # just single CW
-	else: cstructure = [fluxbias.count,Sparam.count,ifb.count,freq.count,powa.count] # take CW average by repeating
+	if powa_repeat == 1: cstructure = [fluxbias.count, xyfreq.count, xypowa.count, Sparam.count, ifb.count, freq.count, 1] # just single CW
+	else: cstructure = [fluxbias.count, xyfreq.count, xypowa.count, Sparam.count, ifb.count, freq.count, powa.count] # take CW average by repeating
 	
 	# set previous parameters based on resumepoint:
 	if resumepoint//buffersize_1 > 0:
 		caddress = cdatasearch(resumepoint//buffersize_1, cstructure)
 		# Only those involved in virtual for-loop need to be pre-set here:
+		# Optionals:
 		YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=0.07)
-		ENA.setrace(bench, Mparam=[Sparam.data[caddress[1]]], window='D1')
-		ENA.ifbw(bench, action=['Set', ifb.data[caddress[2]]])
-		ENA.cwfreq(bench, action=['Set', freq.data[caddress[3]]*1e9])
+		PSG0.frequency(sogo, action=['Set', str(xyfreq.data[caddress[1]]) + "GHz"])
+		PSG0.power(sogo, action=['Set', str(xypowa.data[caddress[2]]) + "dBm"])
+		# Basics:
+		ENA.setrace(bench, Mparam=[Sparam.data[caddress[3]]], window='D1')
+		ENA.ifbw(bench, action=['Set', ifb.data[caddress[4]]])
+		ENA.cwfreq(bench, action=['Set', freq.data[caddress[5]]*1e9])
 
 	measure_loop_1 = range(resumepoint//buffersize_1,datasize//buffersize_1) # saving chunck by chunck improves speed a lot!
 	while True:
@@ -229,25 +245,37 @@ def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resu
 			caddress = cdatasearch(i, cstructure)
 
 			# setting each c-order (From High to Low level of execution):
+			# ***************************************************************
+			# Optionals:
 			if not i%prod(cstructure[1::]): # virtual for-loop using exact-multiples condition
 				if "opt" not in fluxbias.data: # check if it is in optional-state
-					if testeach: # test each measure-loop:
+					if testeach: # adding instrument transition-time between set-values:
 						loopcount += [fluxbias.count]
-						loop_dur += [abs(fluxbias.data[0]-fluxbias.data[1])/0.2 + 35*1e-3]
+						if fluxbias.count > 1: loop_dur += [abs(fluxbias.data[0]-fluxbias.data[1])/0.2 + 35*1e-3]
+						else: loop_dur += [0]
 						stage, prev = clocker(stage, prev) # Marking time
-					else: YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=0.07)
-					
+					else: YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=1.3)
+			
 			if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
-				ENA.setrace(bench, Mparam=[Sparam.data[caddress[1]]], window='D1')
+				if "opt" not in xyfreq.data: # check if it is in optional-state
+					PSG0.frequency(sogo, action=['Set', str(xyfreq.data[caddress[1]]) + "GHz"])
 
 			if not i%prod(cstructure[3::]): # virtual for-loop using exact-multiples condition
-				ENA.ifbw(bench, action=['Set', ifb.data[caddress[2]]])
+				if "opt" not in xypowa.data: # check if it is in optional-state
+					PSG0.power(sogo, action=['Set', str(xypowa.data[caddress[2]]) + "dBm"])
 
+			# Basics:
 			if not i%prod(cstructure[4::]): # virtual for-loop using exact-multiples condition
-				ENA.cwfreq(bench, action=['Set', freq.data[caddress[3]]*1e9])
+				ENA.setrace(bench, Mparam=[Sparam.data[caddress[3]]], window='D1')
+
+			if not i%prod(cstructure[5::]): # virtual for-loop using exact-multiples condition
+				ENA.ifbw(bench, action=['Set', ifb.data[caddress[4]]])
+
+			if not i%prod(cstructure[6::]): # virtual for-loop using exact-multiples condition
+				ENA.cwfreq(bench, action=['Set', freq.data[caddress[5]]*1e9])
 
 			if powa_repeat > 1:
-				ENA.power(bench, action=['Set', '', powa.data[caddress[4]], powa.data[caddress[4]]]) # same as the whole measure-loop
+				ENA.power(bench, action=['Set', '', powa.data[caddress[6]], powa.data[caddress[6]]]) # same as the whole measure-loop
 
 			# start sweeping:
 			stat = ENA.sweep(bench) #getting the estimated sweeping time
@@ -265,20 +293,29 @@ def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resu
 				loop_dur += [time() - prev]
 				stage, prev = clocker(stage, prev) # Marking time
 				ENA.close(bench)
+				if "opt" not in xyfreq.data: # check if it is in optional-state
+					PSG0.close(sogo, False)
 				if "opt" not in fluxbias.data: # check if it is in optional-state
 					YOKO.close(yokog, False)
 				yield loopcount, loop_dur
 				
 			else:
-				yield data
+				if get_status("CW_Sweep")['pause']:
+					break
+				else:
+					yield data
+
 
 		if not get_status("CW_Sweep")['repeat']:
+			set_status("CW_Sweep", dict(pause=True))
 			ENA.close(bench)
+			if "opt" not in xyfreq.data: # check if it is in optional-state
+				PSG0.rfoutput(sogo, action=['Set', 0])
+				PSG0.close(sogo, False)
 			if "opt" not in fluxbias.data: # check if it is in optional-state
-				YOKO.close(yokog, True)
+				YOKO.output(yokog, 0)
+				YOKO.close(yokog, False)
 			return
-
-	# ============================================================================================================================
 
 
 def test():

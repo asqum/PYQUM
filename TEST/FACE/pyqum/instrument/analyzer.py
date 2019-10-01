@@ -1,4 +1,5 @@
 '''For analyzing data'''
+
 from numpy import ones, convolve, log10, sqrt, arctan2, diff, array, unwrap, gradient
 from scipy.fftpack import rfft, rfftfreq, irfft
 from sklearn.preprocessing import minmax_scale
@@ -65,6 +66,8 @@ def UnwraPhase(X, Pha, Flatten=True, Normalized=True):
         UPHA = minmax_scale(UPHA)
     return UPHA
     
+# Fitting
+
 
 
 def test():

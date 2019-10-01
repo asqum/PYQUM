@@ -1,5 +1,6 @@
 '''TOOLBOX for all other modules'''
 
+import logging
 from time import sleep
 from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin
 
@@ -93,13 +94,18 @@ class waveform:
                         pass
                 else: self.data.append(float(cmd))     
 
-
 def match(List, Value):
     '''matching closest value in a list
     and return the index thereof
     '''
     index = abs(array(List) - Value).argmin()
     return index
+
+# pause logging for some route:
+def pauselog():
+	log = logging.getLogger('werkzeug')
+	log.disabled = True
+	return log
 
 
 def test():

@@ -118,4 +118,10 @@ def create_app(test_config=None):
     import webbrowser
     # webbrowser.open("http://127.0.0.1:5200/", new=2)
 
+    # disable process log
+    # import logging
+    # log = logging.getLogger('werkzeug')
+    # log.disabled = True
+    # app.logger.disabled = True
+
     return app

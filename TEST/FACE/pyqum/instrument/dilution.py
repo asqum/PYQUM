@@ -32,7 +32,7 @@ class bluefors:
     def selectday(self, index):
         try:
             self.Date = self.Days[index]
-            print("Date selected: %s"%self.Date)
+            # print("Date selected: %s"%self.Date)
         except(ValueError): 
             print("index might be out of range")
             pass

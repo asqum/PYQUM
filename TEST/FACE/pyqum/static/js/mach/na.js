@@ -38,7 +38,7 @@ $(function () {
                     $('input.na#settings').addClass('getvalue');
                     // output freq range:
                     var freqrange = data.message['start-frequency'].split(' ')[0] + " to " + data.message['stop-frequency'].split(' ')[0] + " * "
-                                        + data.message['sweep-points'];
+                                        + data.message['step-points'];
                     $('input.na.scale#settings[name="freqrange"]').val(freqrange);
                     $('input.na.unit#settings[name="freqrange"]').val(data.message['start-frequency'].split(' ')[1]);
                     // output power (w/ unit), IF-bandwidth (w/ unit) & S-Parameter:

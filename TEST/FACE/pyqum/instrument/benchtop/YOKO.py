@@ -63,7 +63,7 @@ def output(bench, state=0, keeprev=True):
         status = 'Error'
     return status
 
-def sweep(bench, wave, pulsewidth=0.035, sweeprate=0.7):
+def sweep(bench, wave, pulsewidth=0.035, sweeprate=1.2):
     '''
     sweeprate in V/s or A/s
     pulsewidth: waiting/staying/settling/stabilization time in sec
@@ -81,7 +81,7 @@ def sweep(bench, wave, pulsewidth=0.035, sweeprate=0.7):
             #smoothen the transition by interpolating points as much as possible:
             SweepRange = waveform("%sto%s*%s" %(v_prev, V, int(abs(V-v_prev) * GPIBspeed / sweeprate))).data
             for v in SweepRange:
-                bench.write('SA%.5fE'%v) #Set Voltage
+                bench.write('SA%.8fE'%v) #Set Voltage (V) or Current (A)
             if eval(debugger):
                 print(Fore.YELLOW + "Staying %.5fV..." %V)
                 with suppress(NameError):
@@ -122,8 +122,10 @@ def test(detail=True):
         # sweep(s, V, V)
         # V = 12 * factor
         # sweep(s, V, V)
-        V_set = 0.001
-        sweep(s, "%sto0*7"%V_set, pulsewidth=10, sweeprate=V_set/5)
+        V_set = 0.00012345
+        sweep(s, "%sto0*15"%V_set, pulsewidth=7)
+        s.write('SA%.8fE'%0.0014837)
+        sleep(10)
     else: print(Fore.RED + "Basic IO Test")
     close(s, True)
     return

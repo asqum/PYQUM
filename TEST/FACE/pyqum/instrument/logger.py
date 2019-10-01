@@ -374,7 +374,7 @@ class measurement:
             self.comment = [x for x in self.datacontainer.values()][0]['comment']
             # Derive judging tools:
             self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
-            self.data_progress = int(self.writtensize / (self.datasize*8) * 100)
+            self.data_progress = float(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)
             Last_Corder = [i for i in self.corder.values()][-1] # for the last key of c-order
