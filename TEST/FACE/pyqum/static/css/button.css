@@ -302,6 +302,33 @@
 	background-image:-o-linear-gradient(top, #3EACBA, #48C6D4);
 	background-image:linear-gradient(top, #3EACBA, #48C6D4);
 }
+.push_button.green {
+	text-shadow:-1px -1px 0 rgb(30, 109, 49);
+	background: rgb(30, 109, 49);
+	border:1px solid rgb(30, 109, 49);
+	
+	background-image:-webkit-linear-gradient(top, rgb(15, 204, 56), rgb(10, 150, 40));
+	background-image:-moz-linear-gradient(top, rgb(15, 204, 56), rgb(10, 150, 40));
+	background-image:-ms-linear-gradient(top, rgb(15, 204, 56), rgb(10, 150, 40));
+	background-image:-o-linear-gradient(top, rgb(15, 204, 56), rgb(10, 150, 40));
+	background-image:linear-gradient(to bottom, rgb(15, 204, 56), rgb(10, 150, 40));
+	
+	-webkit-border-radius:5px;
+	-moz-border-radius:5px;
+	border-radius:5px;
+	
+	-webkit-box-shadow:0 1px 0 rgba(255, 255, 255, .5) inset, 0 -1px 0 rgba(255, 255, 255, .1) inset, 0 4px 0 rgb(30, 109, 49), 0 4px 2px rgba(0, 0, 0, .5);
+	-moz-box-shadow:0 1px 0 rgba(255, 255, 255, .5) inset, 0 -1px 0 rgba(255, 255, 255, .1) inset, 0 4px 0 rgb(30, 109, 49), 0 4px 2px rgba(0, 0, 0, .5);
+	box-shadow:0 1px 0 rgba(255, 255, 255, .5) inset, 0 -1px 0 rgba(255, 255, 255, .1) inset, 0 4px 0 rgb(30, 109, 49), 0 4px 2px rgba(0, 0, 0, .5);
+}
+.push_button.green:hover {
+	background: #F66C7B;
+	background-image:-webkit-linear-gradient(top, rgb(15, 204, 56), rgb(15, 204, 56));
+	background-image:-moz-linear-gradient(top, rgb(15, 204, 56), rgb(15, 204, 56));
+	background-image:-ms-linear-gradient(top, rgb(15, 204, 56), rgb(15, 204, 56));
+	background-image:-o-linear-gradient(top, rgb(15, 204, 56), rgb(15, 204, 56));
+	background-image:linear-gradient(top, rgb(15, 204, 56), rgb(15, 204, 56));
+}
 
 /* 3. Benn Flat UI */
 /* css for the shiny buttons */

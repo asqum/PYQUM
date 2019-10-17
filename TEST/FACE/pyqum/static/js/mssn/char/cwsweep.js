@@ -1,13 +1,80 @@
-// Frequency Response 
+// CW Sweep: 
 $(document).ready(function(){
     $("a.new#cwsweep-eta").text('ETA: ');
-    $("a.new#cwsweep-rcount").text('R#: ');
+    get_repeat_cwsweep();
 });
 
 // Global variables:
 window.selecteday = ''
 
-function accessdata() {
+// *functions are shared across all missions!
+function transpose(a) {
+    // Calculate the width and height of the Array
+    var w = a.length || 0;
+    var h = a[0] instanceof Array ? a[0].length : 0;
+    // In case it is a zero matrix, no transpose routine needed.
+    if(h === 0 || w === 0) { return []; }
+    /**
+     * @var {Number} i Counter
+     * @var {Number} j Counter
+     * @var {Array} t Transposed data is stored in this array.
+     */
+    var i, j, t = [];
+    // Loop through every item in the outer array (height)
+    for(i=0; i<h; i++) {
+      // Insert a new row (array)
+      t[i] = [];
+      // Loop through every item per item in outer array (width)
+      for(j=0; j<w; j++) {
+        // Save transposed data.
+        t[i][j] = a[j][i];
+      }
+    }
+    return t;
+  };
+function set_repeat_cwsweep() {
+    $.getJSON('/mssn/char/cwsweep/setrepeat', {
+        repeat: $('input.char#cwsweep[name="repeat"]').is(':checked')?1:0
+    }, function(data) {
+        $( "i.cwsweep-repeat" ).remove(); //clear previous
+        if (data.repeat == true) {
+            $('button.char#cwsweep').prepend("<i class='cwsweep-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        };
+    });
+};
+function get_repeat_cwsweep() {
+    $.getJSON('/mssn/char/cwsweep/getrepeat', {
+    }, function (data) {
+        console.log("Repeat: " + data.repeat);
+        $('input.char#cwsweep[name="repeat"]').prop("checked", data.repeat);
+        $( "i.cwsweep-repeat" ).remove(); //clear previous
+        if (data.repeat == true) {
+            $('button.char#cwsweep').prepend("<i class='cwsweep-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        };
+    });
+};
+function listimes_cwsweep() {
+    $('input.char.data').removeClass("plotted");
+    // make global wday
+    window.wday = $('select.char#cwsweep[name="wday"]').val();
+    if (Number(wday) < 0) {
+        // brings up parameter-input panel for new measurement:
+        $('.modal.new').toggleClass('is-visible');
+
+    } else if (wday == 's') {
+        // brings up search panel:
+        $('.modal.search').toggleClass('is-visible');
+    } else {
+        selecteday = wday
+        $.getJSON('/mssn/char/cwsweep/time', {
+            wday: wday
+        }, function (data) {
+            $('select.char#cwsweep[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.taskentries, function(i,v){ $('select.char#cwsweep[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
+        }); 
+    };
+};
+function accessdata_cwsweep() {
     // Make global variable:
     window.wmoment = $('select.char#cwsweep[name="wmoment"]').val();
     $('.data-progress#cwsweep').css({"width": 0}).text('accessing...');
@@ -40,42 +107,173 @@ function accessdata() {
         // load c-range for each command:
         // SCROLL: scroll out repeated data (the exact reverse of averaging)
         
+        // REPEATS:
+        $('select.char#cwsweep[name="c-repeat"]').empty();
+        if (data.data_repeat > 1) {
+            $('select.char#cwsweep[name="c-repeat"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        };
+        for (i = 0; i < data.data_repeat; i++) { $('select.char#cwsweep[name="c-repeat"]').append($('<option>', { text: i+1, value: i })); };
+
         // OPTIONALS:
-        $('select.char#cwsweep[name="c-fluxbias"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-            .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        $('select.char#cwsweep[name="c-fluxbias"]').empty();
+        if (data.cfluxbias_data.length > 1) {
+            $('select.char#cwsweep[name="c-fluxbias"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        };
         $.each(data.cfluxbias_data, function(i,v){ $('select.char#cwsweep[name="c-fluxbias"]').append($('<option>', { text: v, value: i })); });
 
-        $('select.char#cwsweep[name="c-xyfreq"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-            .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        $('select.char#cwsweep[name="c-xyfreq"]').empty()
+        if (data.cxyfreq_data.length > 1) {
+            $('select.char#cwsweep[name="c-xyfreq"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        };
         $.each(data.cxyfreq_data, function(i,v){ $('select.char#cwsweep[name="c-xyfreq"]').append($('<option>', { text: v, value: i })); });
-
-        $('select.char#cwsweep[name="c-xypowa"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-            .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        
+        $('select.char#cwsweep[name="c-xypowa"]').empty()
+        if (data.cxypowa_data.length > 1) {
+            $('select.char#cwsweep[name="c-xypowa"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        };
         $.each(data.cxypowa_data, function(i,v){ $('select.char#cwsweep[name="c-xypowa"]').append($('<option>', { text: v, value: i })); });
-
+        
         // BASICS:
-        $('select.char#cwsweep[name="c-sparam"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-            .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        $('select.char#cwsweep[name="c-sparam"]').empty()
+        if (data.csparam_data.length > 1) {
+            $('select.char#cwsweep[name="c-sparam"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        };
         $.each(data.csparam_data, function(i,v){ $('select.char#cwsweep[name="c-sparam"]').append($('<option>', { text: v, value: i })); });
-
-        $('select.char#cwsweep[name="c-ifb"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-            .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        
+        $('select.char#cwsweep[name="c-ifb"]').empty()
+        if (data.cifb_data.length > 1) {
+            $('select.char#cwsweep[name="c-ifb"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        };
         $.each(data.cifb_data, function(i,v){ $('select.char#cwsweep[name="c-ifb"]').append($('<option>', { text: v, value: i })); });
-
-        $('select.char#cwsweep[name="c-freq"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-            .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        
+        $('select.char#cwsweep[name="c-freq"]').empty()
+        if (data.cfreq_data.length > 1) {
+            $('select.char#cwsweep[name="c-freq"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        };
         $.each(data.cfreq_data, function(i,v){ $('select.char#cwsweep[name="c-freq"]').append($('<option>', { text: v, value: i })); });
-
-        $('select.char#cwsweep[name="c-powa"]').empty().append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-            .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        
+        $('select.char#cwsweep[name="c-powa"]').empty()
+        if (data.cpowa_data.length > 1) {
+            $('select.char#cwsweep[name="c-powa"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+        };
         $.each(data.cpowa_data, function(i,v){ $('select.char#cwsweep[name="c-powa"]').append($('<option>', { text: v, value: i })); });
         
         // load data progress:
-        var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%"
-        console.log("Progress: " + data_progress)
+        var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
         $('.data-progress#cwsweep').css({"width": data_progress}).text(data_progress);
+        $('.data-eta#cwsweep').text("data: " + data.measureacheta + " until completion");
+        console.log("Progress: " + data_progress);
     });
     return false;
+};
+function plot2D(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
+    console.log("Plotting 2D");
+         
+    // Frame assembly:
+    let trace = {
+        z: [], x: [], y: [], zsmooth: 'best',
+        mode: 'lines', type: 'heatmap', colorscale: colorscal,
+        name: 'L (' + wday + ', ' + wmoment + ')',
+        line: {color: 'rgb(23, 151, 6)', width: 2.5}, yaxis: 'y' };
+    
+    let layout = {
+        legend: {x: 1.08},
+        height: $(window).height()*0.8,
+        width: $(window).width()*0.7,
+        xaxis: {
+            zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        yaxis: {
+            zeroline: false, // title: '<b>Amp(dB)</b>',
+            titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        title: '',
+        annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom',
+            text: ytitle, font: {size: 18}, showarrow: false, textangle: 0 }] };
+
+    // Data GROOMING:
+    // 1. Normalization along x-axis (dip)
+    if (plotype == 'normalXdip') {
+        var ZZNML = [];
+        $.each(ZZ, function(i, Z) {
+            var Zrow = []
+            var zmin = Math.min.apply(Math, Z);
+            var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) {
+                var znml = (z-zmax)/(zmax-zmin);
+                Zrow.push(znml);
+            });
+            ZZNML.push(Zrow);
+        });
+        ZZ = ZZNML;
+
+    // 2. Normalization along x-axis (peak)
+    } else if (plotype == 'normalXpeak') {
+        var ZZNML = [];
+        $.each(ZZ, function(i, Z) {
+            var Zrow = []
+            var zmin = Math.min.apply(Math, Z);
+            var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) {
+                var znml = (z-zmin)/(zmax-zmin);
+                Zrow.push(znml);
+            });
+            ZZNML.push(Zrow);
+        });
+        ZZ = ZZNML;
+
+    // 3. Normalization along y-axis (dip)
+    } else if (plotype == 'normalYdip') {
+        ZZ = transpose(ZZ);
+        var ZZNML = [];
+        $.each(ZZ, function(i, Z) {
+            var Zrow = []
+            var zmin = Math.min.apply(Math, Z);
+            var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) {
+                var znml = (z-zmax)/(zmax-zmin);
+                Zrow.push(znml);
+            });
+            ZZNML.push(Zrow);
+        });
+        ZZ = transpose(ZZNML);
+
+    // 4. Normalization along y-axis (peak)
+    } else if (plotype == 'normalYpeak') {
+        ZZ = transpose(ZZ);
+        var ZZNML = [];
+        $.each(ZZ, function(i, Z) {
+            var Zrow = []
+            var zmin = Math.min.apply(Math, Z);
+            var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) {
+                var znml = (z-zmin)/(zmax-zmin);
+                Zrow.push(znml);
+            });
+            ZZNML.push(Zrow);
+        });
+        ZZ = transpose(ZZNML);
+    };
+
+    // Pushing Data into TRACE:
+    $.each(x, function(i, val) {trace.x.push(val);});
+    $.each(y, function(i, val) {trace.y.push(val);});
+    $.each(ZZ, function(i, Z) {
+        var Zrow = []
+        $.each(Z, function(i, val) { Zrow.push(val); });
+        trace.z.push(Zrow);
+    });
+    console.log("1st z-trace: " + trace.z[0][0]);
+
+    // Plotting the Chart using assembled TRACE:
+    var Trace = [trace]
+    Plotly.newPlot('char-' + mission + '-chart', Trace, layout, {showSendToCloud: true});
 };
 
 // hiding parameter settings:
@@ -103,11 +301,17 @@ $(function() {
         }, function (data) {
             console.log("run status: " + data.run_status);
             if (data.run_status == true) {
-                $( "i.cwsweep" ).remove(); //clear previous
-                $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+                $( "i.cwsweep-run" ).remove(); //clear previous
+                $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
             } else {};
             $('select.char#cwsweep[name="wday"]').empty();
-            $('select.char#cwsweep[name="wday"]').append($('<option>', { text: 'pick a day', value: '' }));
+            $('select.char#cwsweep[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
+            $.each(data.daylist.reverse(), function(i,v){
+                $('select.char#cwsweep[name="wday"]').append($('<option>', {
+                    text: v,
+                    value: data.daylist.length - 1 - i
+                }));
+            });
             $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
             if (data.run_permission == false) {
                 $('input.char#cwsweep-run').hide();
@@ -115,47 +319,23 @@ $(function() {
             } else {
                 $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
             };
-            $.each(data.daylist, function(i,v){
-                $('select.char#cwsweep[name="wday"]').append($('<option>', {
-                    text: v,
-                    value: i
-                }));
-            });
         });
         return false;
     });
 });
 
-// actions based on day picked
+// list times based on day picked
 $(function () {
     $('select.char#cwsweep[name="wday"]').on('change', function () {
-        $('input.char.data').removeClass("plotted");
-        // make global wday
-        window.wday = $('select.char#cwsweep[name="wday"]').val();
-        if (Number(wday) < 0) {
-            // brings up parameter-input panel for new measurement:
-            $('.modal.new').toggleClass('is-visible');
-
-        } else if (wday == 's') {
-            // brings up search panel:
-            $('.modal.search').toggleClass('is-visible');
-        } else {
-            selecteday = wday
-            $.getJSON('/mssn/char/cwsweep/time', {
-                wday: wday
-            }, function (data) {
-                $('select.char#cwsweep[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
-                $.each(data.taskentries, function(i,v){ $('select.char#cwsweep[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
-            }); 
-        };
+        listimes_cwsweep();
     });
     return false;
 });
 
 // click to run:
 $('input.char#cwsweep-run').bind('click', function() {
-    $( "i.cwsweep" ).remove(); //clear previous
-    $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    $( "i.cwsweep-run" ).remove(); //clear previous
+    $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
     var fluxbias = $('input.char#cwsweep[name="fluxbias"]').val();
     var xyfreq = $('input.char#cwsweep[name="xyfreq"]').val();
@@ -176,7 +356,7 @@ $('input.char#cwsweep-run').bind('click', function() {
         comment: comment, simulate: simulate
     }, function (data) { 
         console.log("test each loop: " + data.testeach);      
-        $( "i.cwsweep" ).remove(); //clear previous
+        $( "i.cwsweep-run" ).remove(); //clear previous
     });
     return false;
 });
@@ -184,16 +364,12 @@ $('input.char#cwsweep-run').bind('click', function() {
 $("a.new#cwsweep-eta").bind('click', function() {
     $.getJSON('/mssn/char/cwsweep/eta100', {
     }, function (data) {
-        $("a.new#cwsweep-eta").text('ETA in ' + String(data.eta_time_100));
+        $("a.new#cwsweep-eta").text('ETA in\n' + String(data.eta_time_100));
     });
 });
 // click to set repeat or once
 $('input.char#cwsweep[name="repeat"]').bind('click', function() {
-    $.getJSON('/mssn/char/cwsweep/repeat', {
-        repeat: $('input.char#cwsweep[name="repeat"]').is(':checked')?1:0
-    }, function (data) {
-        console.log("Repeat: " + data.repeat);
-    });
+    set_repeat_cwsweep();
 });
 
 // click to search: (pending)
@@ -256,7 +432,7 @@ $(function () {
 // access data based on time picked
 $(function () {
     $('select.char#cwsweep[name="wmoment"]').on('change', function () {
-        accessdata();
+        accessdata_cwsweep();
     });
     return false;
 });
@@ -265,13 +441,14 @@ $(function () {
 $(function () {
     $('input.cwsweep#live-update').click(function () { 
         //indicate it is still running:
-        $( "i.cwsweep" ).remove(); //clear previous
-        $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $( "i.cwsweeplive" ).remove(); //clear previous
+        $('button.char#cwsweep').prepend("<i class='cwsweeplive fa fa-wifi fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         var livestat = $('input.cwsweep#live-update').is(':checked'); //use css to respond to click / touch
         if (livestat == true) {
-            var cwsweeploop = setInterval(accessdata, 6000);
+            var cwsweeploop = setInterval(accessdata_cwsweep, 6000);
             $('input.cwsweep#live-update').click(function () {
                 clearInterval(cwsweeploop);
+                $( "i.cwsweeplive" ).remove(); //clear previous
             });
         };
         // 'else' didn't do much to stop it!
@@ -281,8 +458,9 @@ $(function () {
 // plot 1D-data based on c-parameters picked
 $(function () {
     $('input.char#cwsweep[name="1d-data"]').on('click', function () {
-        $( "i.cwsweep" ).remove(); //clear previous
-        $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-file fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $( "i.cwsweep1d" ).remove(); //clear previous
+        $('button.char#cwsweep').prepend("<i class='cwsweep1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var irepeat = $('select.char#cwsweep[name="c-repeat"]').val();
         var ifluxbias = $('select.char#cwsweep[name="c-fluxbias"]').val();
         var ixyfreq = $('select.char#cwsweep[name="c-xyfreq"]').val();
         var ixypowa = $('select.char#cwsweep[name="c-xypowa"]').val();
@@ -292,7 +470,7 @@ $(function () {
         var ipowa = $('select.char#cwsweep[name="c-powa"]').val();
         console.log("Picked: " + isparam);
         $.getJSON('/mssn/char/cwsweep/1ddata', {
-            ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
+            irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
         }, function (data) {
             console.log(data.xtitle);
             
@@ -357,17 +535,18 @@ $(function () {
 
             var Trace = [traceL, traceR]
             Plotly.newPlot('char-cwsweep-chart', Trace, layout, {showSendToCloud: true});
-            $( "i.cwsweep" ).remove(); //clear previous
+            $( "i.cwsweep1d" ).remove(); //clear previous
         });
     });
     return false;
 });
 
-// plot 2D-data based on c-parameters picked
+// assemble 2D-data based on c-parameters picked
 $(function () {
     $('input.char#cwsweep[name="2d-data"]').on('click', function () {
-        $( "i.cwsweep" ).remove(); //clear previous
-        $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-file fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $( "i.cwsweep2d" ).remove(); //clear previous
+        $('button.char#cwsweep').prepend("<i class='cwsweep2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var irepeat = $('select.char#cwsweep[name="c-repeat"]').val();
         var ifluxbias = $('select.char#cwsweep[name="c-fluxbias"]').val();
         var ixyfreq = $('select.char#cwsweep[name="c-xyfreq"]').val();
         var ixypowa = $('select.char#cwsweep[name="c-xypowa"]').val();
@@ -377,78 +556,49 @@ $(function () {
         var ipowa = $('select.char#cwsweep[name="c-powa"]').val();
         console.log("Picked: " + isparam);
         $.getJSON('/mssn/char/cwsweep/2ddata', {
-            ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
+            irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
         }, function (data) {
-            console.log(data.xtitle);
-            
-            let trace = {
-                z: [],
-                x: [],
-                y: [],
-                mode: 'lines', type: 'heatmap', 
-                name: 'L (' + wday + ', ' + wmoment + ')',
-                line: {color: 'rgb(23, 151, 6)', width: 2.5},
-                yaxis: 'y' };
-            
-            let layout = {
-                legend: {x: 1.08},
-                height: $(window).height()*0.8,
-                width: $(window).width()*0.7,
-                xaxis: {
-                    zeroline: false,
-                    title: data.xtitle,
-                    titlefont: {size: 18},
-                    tickfont: {size: 18},
-                    tickwidth: 3,
-                    linewidth: 3,
-                    mirror: true 
-                },
-                yaxis: {
-                    zeroline: false,
-                    // title: '<b>Amp(dB)</b>',
-                    titlefont: {size: 18},
-                    tickfont: {size: 18},
-                    tickwidth: 3,
-                    linewidth: 3,
-                    mirror: true
-                },
-                title: '',
-                annotations: [{
-                    xref: 'paper',
-                    yref: 'paper',
-                    x: 0.03,
-                    xanchor: 'right',
-                    y: 1.05,
-                    yanchor: 'bottom',
-                    text: data.ytitle,
-                    font: {size: 18},
-                    showarrow: false,
-                    textangle: 0
-                  }]
-                };
-            
-            
-            $.each(data.x, function(i, val) {trace.x.push(val);});
-            $.each(data.y, function(i, val) {trace.y.push(val);});
-            $.each(data.ZZ, function(i, Z) {
-                var Zrow = []
-                $.each(Z, function(i, val) {
-                    Zrow.push(val);
-                });
-                trace.z.push(Zrow);
-            });
-            // console.log("z-trace: " + trace.z);
-
-            var Trace = [trace]
-            Plotly.newPlot('char-cwsweep-chart', Trace, layout, {showSendToCloud: true});
-            $( "i.cwsweep" ).remove(); //clear previous
+            window.x = data.x;
+            window.y = data.y;
+            window.ZZA = data.ZZA;
+            window.ZZP = data.ZZP;
+            window.xtitle = data.xtitle;
+            window.ytitle = data.ytitle;
+            // Amplitude (default) or Phase
+            $('select.char.data#cwsweep[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }));
+            // Data grooming
+            $('select.char.data#cwsweep[name="2d-type"]').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+                .append($('<option>', { text: 'normalYdip', value: 'normalYdip' })).append($('<option>', { text: 'normalYpeak', value: 'normalYpeak' }))
+                .append($('<option>', { text: 'normalXdip', value: 'normalXdip' })).append($('<option>', { text: 'normalXpeak', value: 'normalXpeak' }));
+            // Data color-scaling
+            $('select.char.data#cwsweep[name="2d-colorscale"]').empty().append($('<option>', { text: 'YlOrRd', value: 'YlOrRd' }))
+                .append($('<option>', { text: 'YlGnBu', value: 'YlGnBu' })).append($('<option>', { text: 'RdBu', value: 'RdBu' }))
+                .append($('<option>', { text: 'Portland', value: 'Portland' })).append($('<option>', { text: 'Picnic', value: 'Picnic' }))
+                .append($('<option>', { text: 'Jet', value: 'Jet' })).append($('<option>', { text: 'Hot', value: 'Hot' }))
+                .append($('<option>', { text: 'Greys', value: 'Greys' })).append($('<option>', { text: 'Greens', value: 'Greens' }))
+                .append($('<option>', { text: 'Electric', value: 'Electric' })).append($('<option>', { text: 'Earth', value: 'Earth' }))
+                .append($('<option>', { text: 'Bluered', value: 'Bluered' })).append($('<option>', { text: 'Blackbody', value: 'Blackbody' }))
+                .append($('<option>', { text: 'Blues', value: 'Blues' })).append($('<option>', { text: 'Viridis', value: 'Viridis' }));
+            plot2D(x, y, ZZA, xtitle, ytitle, 
+                $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
+                $('select.char.data#cwsweep[name="2d-colorscale"]').val());
+            $( "i.cwsweep2d" ).remove(); //clear previous
         });
     });
     return false;
 });
 
+$('select.char.data#cwsweep').on('change', function() {
+    if ($('select.char.data#cwsweep[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
+    else if ($('select.char.data#cwsweep[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
+    plot2D(x, y, ZZ, xtitle, ytitle, 
+        $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
+        $('select.char.data#cwsweep[name="2d-colorscale"]').val());
+    return false;
+});
+
 // saving exported csv-data to client's PC:
-$('button.char#cwsweep-savecsv').on('click', function () {
+$('button.char#cwsweep-savecsv').on('click', function() {
     console.log("SAVING FILE");
     $.getJSON('/mssn/char/cwsweep/export/1dcsv', {
         // merely for security screening purposes

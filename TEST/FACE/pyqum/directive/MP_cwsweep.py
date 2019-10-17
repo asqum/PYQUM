@@ -7,13 +7,14 @@ from numpy import array
 from multiprocessing import Pool
 
 from pyqum.instrument.logger import get_status, set_status
-from pyqum.instrument.toolbox import cdatasearch, gotocdata
+from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP
 
 pqfile = get_status("MPW")["pqfile"]
 datalocation = get_status("MPW")["datalocation"]
 writtensize = get_status("MPW")["writtensize"]
-c_fresp_structure = get_status("MPW")["c_fresp_structure"]
+c_cwsweep_structure = get_status("MPW")["c_cwsweep_structure"]
+irepeat = get_status("MPW")["irepeat"]
 ifluxbias = get_status("MPW")["ifluxbias"]
 ixyfreq = get_status("MPW")["ixyfreq"]
 ixypowa = get_status("MPW")["ixypowa"]
@@ -21,35 +22,90 @@ isparam = get_status("MPW")["isparam"]
 iifb = get_status("MPW")["iifb"]
 ipowa = get_status("MPW")["ipowa"]
 ifreq = get_status("MPW")["ifreq"]
+powa_order = get_status("MPW")["powa_order"]
+powa_wave = waveform(powa_order)
+powa_repeat = powa_wave.inner_repeat
 
 with open(pqfile, 'rb') as datapie:
 	datapie.seek(datalocation+7)
 	pie = datapie.read(writtensize)
 	selectedata = list(struct.unpack('>' + 'd'*((writtensize)//8), pie))
 
-# y: xyfreq, x: fluxbias
-def assembler_xyfreq_fluxbias(args):
+# y: xyfreq, x: repeat
+def assembler_xyfreq_repeat(args):
 	(y,x) = args
-	I = selectedata[gotocdata([x,int(isparam),int(iifb),int(ipowa),2*y],c_fresp_structure)]
-	Q = selectedata[gotocdata([x,int(isparam),int(iifb),int(ipowa),2*y+1],c_fresp_structure)]
+	I, Q = 0, 0
+	for i_prepeat in range(powa_repeat):
+		r_powa = int(ipowa) * powa_repeat + i_prepeat # from the beginning position of repeating power
+		I += selectedata[gotocdata([x,int(ifluxbias),y,int(ixypowa),int(isparam),int(iifb),int(ifreq),2*r_powa],c_cwsweep_structure)]
+		Q += selectedata[gotocdata([x,int(ifluxbias),y,int(ixypowa),int(isparam),int(iifb),int(ifreq),2*r_powa+1],c_cwsweep_structure)]
+	I /= powa_repeat
+	Q /= powa_repeat
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
 
-# y: freq, x: powa
-def assembler_freq_powa(args):
+# y: xyfreq, x: fluxbias
+def assembler_xyfreq_fluxbias(args):
 	(y,x) = args
-	I = selectedata[gotocdata([int(ifluxbias),int(isparam),int(iifb),x,2*y],c_fresp_structure)]
-	Q = selectedata[gotocdata([int(ifluxbias),int(isparam),int(iifb),x,2*y+1],c_fresp_structure)]
+	I, Q = 0, 0
+	for i_prepeat in range(powa_repeat):
+		r_powa = int(ipowa) * powa_repeat + i_prepeat # from the beginning position of repeating power
+		I += selectedata[gotocdata([int(irepeat),x,y,int(ixypowa),int(isparam),int(iifb),int(ifreq),2*r_powa],c_cwsweep_structure)]
+		Q += selectedata[gotocdata([int(irepeat),x,y,int(ixypowa),int(isparam),int(iifb),int(ifreq),2*r_powa+1],c_cwsweep_structure)]
+	I /= powa_repeat
+	Q /= powa_repeat
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
+
+# y: xypowa, x: xyfreq
+def assembler_xypowa_xyfreq(args):
+	(y,x) = args
+	I, Q = 0, 0
+	for i_prepeat in range(powa_repeat):
+		r_powa = int(ipowa) * powa_repeat + i_prepeat # from the beginning position of repeating power
+		I += selectedata[gotocdata([int(irepeat),int(ifluxbias),x,y,int(isparam),int(iifb),int(ifreq),2*r_powa],c_cwsweep_structure)]
+		Q += selectedata[gotocdata([int(irepeat),int(ifluxbias),x,y,int(isparam),int(iifb),int(ifreq),2*r_powa+1],c_cwsweep_structure)]
+	I /= powa_repeat
+	Q /= powa_repeat
+	Amp,P = IQAP(I,Q)
+	return I, Q, Amp, P
+
+# y: powa, x: xyfreq
+def assembler_powa_xyfreq(args):
+	(y,x) = args
+	I, Q = 0, 0
+	for i_prepeat in range(powa_repeat):
+		r_powa = y * powa_repeat + i_prepeat # from the beginning position of repeating power
+		I += selectedata[gotocdata([int(irepeat),int(ifluxbias),x,int(ixypowa),int(isparam),int(iifb),int(ifreq),2*r_powa],c_cwsweep_structure)]
+		Q += selectedata[gotocdata([int(irepeat),int(ifluxbias),x,int(ixypowa),int(isparam),int(iifb),int(ifreq),2*r_powa+1],c_cwsweep_structure)]
+	I /= powa_repeat
+	Q /= powa_repeat
+	Amp,P = IQAP(I,Q)
+	return I, Q, Amp, P
+
+
+# pending:
+# y: freq, x: fluxbias
+def assembler_freq_fluxbias(args):
+	(y,x) = args
+	I, Q = 0, 0
+	for i_prepeat in range(powa_repeat):
+		r_powa = int(ipowa) * powa_repeat + i_prepeat # from the beginning position of repeating power
+		I += selectedata[gotocdata([int(irepeat),x,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),y,2*r_powa],c_cwsweep_structure)]
+		Q += selectedata[gotocdata([int(irepeat),x,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),y,2*r_powa+1],c_cwsweep_structure)]
+	I /= powa_repeat
+	Q /= powa_repeat
+	Amp,P = IQAP(I,Q)
+	return I, Q, Amp, P
+
 
 def scanner(a, b):
 	for i in a:
 		for j in b:
 			yield i, j
-def worker(y_count,x_count,y="xyfreq",x="fluxbias"):		
+def worker(y_count,x_count,y_name="xyfreq",x_name="fluxbias"):		
 	pool = Pool()
-	IQ = pool.map(eval("assembler_%s_%s" %(y,x)), scanner(range(y_count),range(x_count)), max(x_count,y_count))
+	IQ = pool.map(eval("assembler_%s_%s" %(y_name,x_name)), scanner(range(y_count),range(x_count)), max(x_count,y_count))
 	pool.close(); pool.join()
 	rI, rQ, rA, rP = [], [], [], []
 	for i,j,k,l in IQ:

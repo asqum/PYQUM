@@ -11,15 +11,18 @@
 <div class="container">
 
         <div class="row"> <!-- New Role for File-status -->
-            <div class="col-25" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
             <div class="col-10" id='left'><select class='char' id="fresp" name="wmoment" type="text"></select></div>
             <div class="col-20" id='left'>
                 <ul class="data-status" id="fresp">
-                    <li><span class="bar data-progress" id="fresp"></span><h3>Data Progress</h3></li>
+                    <li>
+                        <span class="bar data-progress" id="fresp"></span>
+                        <h4 class="data-eta" id="fresp"></h4>
+                    </li>
                 </ul>
             </div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="fresp-eta"></a></div></div>
-            <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="fresp-rcount"></a></div></div>
+            
         </div>
 
         <div class="row">
@@ -34,9 +37,16 @@
         </div>
 
         <div class="row">
-            <div class="col-15" id='left'><button class="char push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
+            <div class="col-15" id='left'>
+                <label class="fresp switch">
+                    <input class="fresp" id='live-update' type="checkbox">
+                    <div class="slider"><span class="on">LIVE</span><span class="off">UPDATE</span></div>
+                </label>
+            </div>
             {% if g.user['measurement'] %}
                 <div class="col-15" id='left'><button class="char push_button w-95 blue" id="fresp-resume">RESUME</button></div>
+                <div class="col-15" id='left'><button class="char push_button w-95 red" id="fresp-pause">PAUSE</button></div>
+                <div class="col-15" id='left'><button class="char push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
             {% endif %}
             <div class="col-15" id='left'><button class="char push_button w-95 blue" id="fresp-savecsv">DOWNLOAD CSV</button></div>
         </div>
@@ -72,6 +82,8 @@
         <div class="row"> <!-- New Role for Data Assembly -->
             <div class="col-20" id='left'><input class='char data' id='fresp' name='1d-data' type="submit" value="1D-Data"/></div>
             <div class="col-20" id='left'><input class='char data' id='fresp' name='2d-data' type="submit" value="2D-Data"/></div>
+            <div class="col-10" id='right'><select class='char data' id="fresp" name="2d-amphase" type="text"></select></div>
+            <div class="col-10" id='right'><select class='char data' id="fresp" name="2d-type" type="text"></select></div>
         </div>
 
         <div id="char-fresp-chart"></div>

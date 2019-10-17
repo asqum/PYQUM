@@ -287,7 +287,7 @@ class measurement:
                 self.pqfile = self.mssnpath / self.day / self.filename
 
                 # assembly the file-header(time, place, c-parameters):
-                usr_bag = bytes("{'%s': {'place': '%s', 'data-density': %s, 'c-order': %s, 'instrument': %s, 'comment': '%s', 'tag': '%s'}}" %(self.moment, self.place, self.datadensity, self.corder, self.instr, self.comment, self.tag), 'utf-8')
+                usr_bag = bytes('{"%s": {"place": "%s", "data-density": %s, "c-order": %s, "instrument": %s, "comment": "%s", "tag": "%s"}}' %(self.moment, self.place, self.datadensity, self.corder, self.instr, self.comment, self.tag), 'utf-8')
                 usr_bag += b'\x02' + bytes("ACTS", 'utf-8') + b'\x03\x04' # ACTS
                 
                 # check if the file exists and not blank:
@@ -331,21 +331,17 @@ class measurement:
             self.pqfile = self.mssnpath / self.day / self.filename
         return
 
-    def listime(self):
-        '''list all the logged time for each day
-            Pre-requisite: selectday
-            effect: open every task file to extract the time-stamp
-        '''
-        startimes = []
-        for k in self.taskentries:
-            self.selectmoment(k)
-            with open(self.pqfile, 'rb') as datapie:
-                datapie.seek(2)
-                bite = datapie.read(5)
-                startimes.append("(%s)%s"%(k,bite.decode('utf-8')))
-        self.startimes = startimes
-        print("For %s, we have: %s"%(self.day, ', '.join(self.startimes)))
-        return
+    def startime(self):
+        '''return the started time for selected measurement file
+            Pre-requisite: selectday, selectmoment
+        '''     
+        with open(self.pqfile, 'rb') as datapie:
+            datapie.seek(2)
+            bite = datapie.read(5)
+            startime = bite.decode('utf-8')
+        
+        print("Measurement started at %s" %(startime))
+        return startime
 
     def accesstructure(self):
         '''Get User-Data's container & location from LOG
@@ -493,6 +489,10 @@ class measurement:
 
         return data
 
+    def savenote(self):
+
+        return
+
 
 # Setting up Measurement (Law-maker)
 def settings(datadensity=1, sample='Sample'):
@@ -534,6 +534,10 @@ def lisample(usr):
     samples = [d for d in listdir(USR_PATH / usr) if isdir(USR_PATH / usr / d)]
     return samples
 
+def lismission(usr, sample, mission):
+    log = {}
+    daylist = [d for d in listdir(USR_PATH / usr / sample / mission) if isdir(USR_PATH / usr / sample / mission /d)]
+    return daylist
 
 # TEST
 def test():
@@ -543,7 +547,8 @@ def test():
     print(ad.lookup("YOKO"))
     print(ad.lookup("TEST", 2))
     print(ad.visible())
-    print(lisample('USR'))
+    print(lisample('abc'))
+    print(lismission('abc','Sam','characterize'))
 
     return
     

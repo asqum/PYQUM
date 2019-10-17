@@ -3,7 +3,7 @@
 .data-status { 
 	list-style: none;
 	font: 12px "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
-	width: 296px;
+	width: 250px;
 	margin: 7px 0px 0px 5px;
 	position: relative;
 	line-height: 2em;
@@ -26,7 +26,7 @@
 	box-shadow: 0 1px 0px #bebbb9 inset, 0 1px 0 #fcfcfc;	  
 }
 
-.data-status li h3 { 
+.data-status li h3, .data-status li h4, .data-status li h5 { 
 	position:relative; 
 	top:-25px;
 }
@@ -43,6 +43,7 @@
 
 .data-progress {
 	width:0%;
+	max-width: 100%;
 	-moz-animation:html-css 2s ease-out;
     -webkit-animation:html-css 2s ease-out;
     --zero: rgb(136, 182, 136);

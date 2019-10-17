@@ -14,7 +14,7 @@ from contextlib import suppress
 # Scientific
 from scipy import constants as cnst
 from si_prefix import si_format, si_parse
-from numpy import cos, sin, pi
+from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal
 
 # Load instruments
 from pyqum.instrument.modular import AWG, VSA
@@ -533,16 +533,20 @@ def dsoabout():
 	return jsonify(message=message)
 
 # BDR
-@bp.route('/bdr', methods=['GET'])
+@bp.route('/bdr')
 def bdr():
+	# monitoring traffic:
+	print("User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
+	return render_template("blog/machn/bdr.html")
+@bp.route('/bdr/init', methods=['GET'])
+def bdrinit():
 	global b
 	b = bluefors()
-	print("User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
-	return render_template("blog/machn/bdr.html", Days=b.Days)
+	return jsonify(Days=b.Days)
 @bp.route('/bdr/history', methods=['GET'])
 def bdrhistory():
-	global b
-	wday = b.Days.index(request.args.get('wday'))
+	global b, bdrlogs
+	wday = int(request.args.get('wday'))
 	P_Ch = int(request.args.get('P_Ch'))
 	T_Ch = int(request.args.get('T_Ch'))
 	P_Ch2 = int(request.args.get('P_Ch2'))
@@ -563,6 +567,9 @@ def bdrhistory():
 	else:
 		[startimeP, tp2, P2, P_stat2] = [startimeP, tp, P, P_stat]
 		[startimeT, tt2, T2] = [startimeT, tt, T]
+
+	bdrlogs = dict(bdr_P=P,bdr_T=T)
+	# print("T: %s"%bdrlogs['bdr_%s'%('T')][-15:])
 	
 	# align the time-stamp:
 	# T_max = max([tt[-1], tt2[-1], tp[-1], tp2[-1]])
@@ -572,8 +579,22 @@ def bdrhistory():
 	# tp2 = [x + abs(tp2[-1]-T_max) for x in tp2]
 
 	log = pauselog() #disable logging (NOT applicable on Apache)
-
 	return jsonify(log=str(log), startimeP=startimeP, startimeT=startimeT, tp=tp, P=P, P_stat=P_stat, tt=tt, T=T, tp2=tp2, P2=P2, P_stat2=P_stat2, tt2=tt2, T2=T2)
+@bp.route('/bdr/history/forecast', methods=['GET'])
+def bdrhistoryforecast():
+	# logging interval: 1 min
+	# original unit: mbar, K
+	target = float(request.args.get('target'))
+	predicting = str(request.args.get('predicting'))
+	sampling = 37
+	y = bdrlogs['bdr_%s'%predicting][-sampling:] # last 15 points
+	coeff = polyfit(array(range(sampling)), array(y), 1) # 1: linear fit
+	coeff[-1] -= target
+	eta_time = roots(coeff)
+	eta_time = ["%.3f"%(x.real/60) for x in eta_time if isreal(x)] # convert to hours
+	# fore = poly1d(coeff)
+	
+	return jsonify(eta_time=list(eta_time))
 
 # DC
 @bp.route('/dc', methods=['GET'])

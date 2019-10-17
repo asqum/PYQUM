@@ -105,7 +105,8 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
 	if resumepoint > 0:
 		caddress = cdatasearch(resumepoint//buffersize_1, cstructure)
 		# Only those involved in virtual for-loop need to be pre-set here:
-		YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3)
+		if "opt" not in fluxbias.data: # check if it is in optional-state
+			YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3)
 		ENA.setrace(bench, Mparam=[Sparam.data[caddress[1]]], window='D1')
 		ENA.ifbw(bench, action=['Set', ifb.data[caddress[2]]])
 
@@ -156,9 +157,13 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
 				yield loopcount, loop_dur
 				
 			else:
-				yield data
+				if get_status("F_Response")['pause']:
+					break
+				else:
+					yield data
 
 		if not get_status("F_Response")['repeat']:
+			set_status("F_Response", dict(pause=True))
 			ENA.close(bench)
 			if "opt" not in fluxbias.data: # check if it is in optional-state
 				YOKO.close(yokog, True)
@@ -229,9 +234,11 @@ def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resu
 		caddress = cdatasearch(resumepoint//buffersize_1, cstructure)
 		# Only those involved in virtual for-loop need to be pre-set here:
 		# Optionals:
-		YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=0.07)
-		PSG0.frequency(sogo, action=['Set', str(xyfreq.data[caddress[1]]) + "GHz"])
-		PSG0.power(sogo, action=['Set', str(xypowa.data[caddress[2]]) + "dBm"])
+		if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
+			YOKO.sweep(yokog, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=0.07)
+		if "opt" not in xyfreq.data: # check if it is in optional-state / serious-state
+			PSG0.frequency(sogo, action=['Set', str(xyfreq.data[caddress[1]]) + "GHz"])
+			PSG0.power(sogo, action=['Set', str(xypowa.data[caddress[2]]) + "dBm"])
 		# Basics:
 		ENA.setrace(bench, Mparam=[Sparam.data[caddress[3]]], window='D1')
 		ENA.ifbw(bench, action=['Set', ifb.data[caddress[4]]])

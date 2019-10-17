@@ -115,7 +115,7 @@ def test():
     print("\nThe depth of Test_DATA is %s" %dict_depth(Test_DATA))
 
     DATA = deepcopy(Test_DATA)
-    for x in [100, 200, 300, 'David', 'is good']:
+    for x in [100, 200, 300, 'David', 'is good', 'is']:
         paths = search_allpaths(Test_DATA, x)
         print("\n%s result(s) FOUND for [%s]:" %(len(paths), x))
         for p in paths:

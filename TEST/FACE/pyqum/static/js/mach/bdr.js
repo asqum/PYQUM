@@ -1,6 +1,12 @@
 //when page is loading:
 $(document).ready(function(){
     $('div.bdrcontent').hide();
+    $("a.new#bdr-forecast-P").text('Forecast P');
+    $("a.new#bdr-forecast-T").text('Forecast T');
+    // // passive select:
+    // var latestday = $('select.bdr[name="wday"] option:last').val();
+    // console.log("Latest: " + latestday);
+    // $('select.bdr[name="wday"]').val(latestday);
 });
 
 function bdr_plot() {
@@ -8,6 +14,8 @@ function bdr_plot() {
     var T_Ch = $('select.bdr[name="T_Ch"]').val();
     var P_Ch2 = $('select.bdr[name="P_Ch2"]').val();
     var T_Ch2 = $('select.bdr[name="T_Ch2"]').val();
+    $("a.new#bdr-forecast-P").text('Forecast P' + P_Ch);
+    $("a.new#bdr-forecast-T").text('Forecast T' + T_Ch);
     $.getJSON('/mach/bdr/history', {
         // input value here:
         wday: $('select.bdr[name="wday"]').val(),
@@ -139,39 +147,67 @@ function bdr_plot() {
     return false;
 };
 
-//show history's page
+//show history's page and load Days
 $(function() {
     $('button.bdr#history').bind('click', function() {
         $('div.bdrcontent').hide();
         $('div.bdrcontent#history').show();
         $('button.bdr').removeClass('selected');
         $('button.bdr#history').addClass('selected');
+        $.getJSON('/mach/bdr/init', {
+        }, function (data) {
+            $('select.bdr#history[name="wday"]').empty();
+            $('select.bdr#history[name="wday"]').append($('<option>', { text: 'Currently:', value: '' }));
+            $.each(data.Days.reverse(), function(i,v){
+                $('select.bdr#history[name="wday"]').append($('<option>', {
+                    text: v,
+                    value: data.Days.length - 1 - i
+                }));
+            });
+        });
         return false;
     });
 });
-
 // manual update
 $(function () {
     $('select.bdr#history').on('change', function () {
         bdr_plot();
     });
 });
-
 // live update
 $(function () {
     $('input.bdr#live-update').click(function () { 
-        //indicate it is still running:
-        $( "i.bdr" ).remove(); //clear previous
-        $('button.bdr#history').prepend("<i class='bdr fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         var livestat = $('input.bdr#live-update').is(':checked'); //use css to respond to click / touch
         if (livestat == true) {
-            var bdrloop = setInterval(bdr_plot, 1000);
+            bdr_plot();
+            //indicate it is still running:
+            $( "i.bdr" ).remove(); //clear previous
+            $('button.bdr#history').prepend("<i class='bdr fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            var bdrloop = setInterval(bdr_plot, 15000);
             $('input.bdr#live-update').click(function () {
                 clearInterval(bdrloop); 
                 $( "i.bdr" ).remove(); //clear previous
             });
         };
         // 'else' didn't do much to stop it!
+    });
+});
+// Forecast P
+$("a.new#bdr-forecast-P").bind('click', function() {
+    $.getJSON('/mach/bdr/history/forecast', {
+        target: $('input.bdr#history[name="forecast"]').val(),
+        predicting: "P"
+    }, function (data) {
+        $("a.new#bdr-forecast-P").text('ETA in >' + String(data.eta_time) + ' hours');
+    });
+});
+// Forecast T
+$("a.new#bdr-forecast-T").bind('click', function() {
+    $.getJSON('/mach/bdr/history/forecast', {
+        target: $('input.bdr#history[name="forecast"]').val(),
+        predicting: "T"
+    }, function (data) {
+        $("a.new#bdr-forecast-T").text('ETA in >' + String(data.eta_time) + ' hours');
     });
 });
 
