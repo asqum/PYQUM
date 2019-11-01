@@ -439,7 +439,8 @@ def char_cwsweep_access():
 	csparam_data = csparam.data[0:session['c_cwsweep_address'][4]+1]
 	cifb_data = cifb.data[0:session['c_cwsweep_address'][5]+1]
 	cfreq_data = cfreq.data[0:session['c_cwsweep_address'][6]+1]
-	cpowa_data = cpowa.data[0:(session['c_cwsweep_address'][7]+1)//cpowa_repeat]  # (to be adjusted ***)
+	cpowa_data = cpowa.data[0:(session['c_cwsweep_address'][7]+1)//cpowa_repeat//2]  # (to be adjusted ***)
+	# print("cpowa_data: %s" %cpowa_data)
 	return jsonify(data_progress=data_progress, measureacheta=measureacheta, corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
 		data_repeat=data_repeat, cfluxbias_data=cfluxbias_data, cxyfreq_data=cxyfreq_data, cxypowa_data=cxypowa_data,
 		csparam_data=csparam_data, cifb_data=cifb_data, cfreq_data=cfreq_data, cpowa_data=cpowa_data)
@@ -482,65 +483,87 @@ def char_cwsweep_1ddata():
 	if "x" in ifluxbias:
 		xtitle = "<b>Flux-Bias(V/A)</b>"
 		selected_sweep = M_cwsweep[session['user_name']].corder['Flux-Bias']
-		selected_progress = waveform(selected_sweep).data[0:session['c_cwsweep_address'][1]+1]
+		
+		if int(irepeat) < session['c_cwsweep_address'][0]: # address's part before x
+			# print("Well within Progress!")
+			xsweep = range(session['c_cwsweep_structure'][1]) # can access full-range if selection is well within progress resume-point
+		else: xsweep = range(session['c_cwsweep_address'][1]+1) # can only access until progress resume-point
+
 		selected_Ir, selected_Qr = [], []
 		for i_prepeat in range(ipowa_repeat):
 			r_powa = int(ipowa) * ipowa_repeat + i_prepeat # from the beginning position of repeating power
-			selected_Ir += [selectedata[gotocdata([int(irepeat), x, int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa], session['c_cwsweep_structure'])] for x in range(session['c_cwsweep_address'][1]+1)]
-			selected_Qr += [selectedata[gotocdata([int(irepeat), x, int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa+1], session['c_cwsweep_structure'])] for x in range(session['c_cwsweep_address'][1]+1)]
+			selected_Ir += [selectedata[gotocdata([int(irepeat), x, int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa], session['c_cwsweep_structure'])] for x in xsweep]
+			selected_Qr += [selectedata[gotocdata([int(irepeat), x, int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa+1], session['c_cwsweep_structure'])] for x in xsweep]
 		# AVERAGE up those power repeats:
-		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, session['c_cwsweep_address'][1]+1), axis=0))
-		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, session['c_cwsweep_address'][1]+1), axis=0))
+		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, len(xsweep)), axis=0))
+		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, len(xsweep)), axis=0))
 	elif "x" in ixyfreq:
 		xtitle = "<b>XY-Frequency(GHz)</b>"
 		selected_sweep = M_cwsweep[session['user_name']].corder['XY-Frequency']
-		selected_progress = waveform(selected_sweep).data[0:session['c_cwsweep_address'][2]+1]
+		
+		if [int(irepeat), int(ifluxbias)] < session['c_cwsweep_address'][0:2]: # address's part before x
+			xsweep = range(session['c_cwsweep_structure'][2]) # can access full-range if selection is well within progress resume-point
+		else: xsweep = range(session['c_cwsweep_address'][2]+1) # can only access until progress resume-point
+		
 		selected_Ir, selected_Qr = [], []
 		for i_prepeat in range(ipowa_repeat):
 			r_powa = int(ipowa) * ipowa_repeat + i_prepeat # from the beginning position of repeating power
-			selected_Ir += [selectedata[gotocdata([int(irepeat), int(ifluxbias), x, int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa], session['c_cwsweep_structure'])] for x in range(session['c_cwsweep_address'][2]+1)]
-			selected_Qr += [selectedata[gotocdata([int(irepeat), int(ifluxbias), x, int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa+1], session['c_cwsweep_structure'])] for x in range(session['c_cwsweep_address'][2]+1)]
+			selected_Ir += [selectedata[gotocdata([int(irepeat), int(ifluxbias), x, int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa], session['c_cwsweep_structure'])] for x in xsweep]
+			selected_Qr += [selectedata[gotocdata([int(irepeat), int(ifluxbias), x, int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa+1], session['c_cwsweep_structure'])] for x in xsweep]
 		# AVERAGE up those power repeats:
-		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, session['c_cwsweep_address'][2]+1), axis=0))
-		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, session['c_cwsweep_address'][2]+1), axis=0))
+		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, len(xsweep)), axis=0))
+		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, len(xsweep)), axis=0))
 	elif "x" in ixypowa:
 		xtitle = "<b>XY-Power(dBm)</b>"
 		selected_sweep = M_cwsweep[session['user_name']].corder['XY-Power']
-		selected_progress = waveform(selected_sweep).data[0:session['c_cwsweep_address'][3]+1]
+		
+		if [int(irepeat), int(ifluxbias), int(ixyfreq)] < session['c_cwsweep_address'][0:3]: # address's part before x
+			xsweep = range(session['c_cwsweep_structure'][3]) # can access full-range if selection is well within progress resume-point
+		else: xsweep = range(session['c_cwsweep_address'][3]+1) # can only access until progress resume-point
+		
 		selected_Ir, selected_Qr = [], []
 		for i_prepeat in range(ipowa_repeat):
 			r_powa = int(ipowa) * ipowa_repeat + i_prepeat # from the beginning position of repeating power
-			selected_Ir += [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), x, int(isparam), int(iifb), int(ifreq), 2*r_powa], session['c_cwsweep_structure'])] for x in range(session['c_cwsweep_address'][3]+1)]
-			selected_Qr += [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), x, int(isparam), int(iifb), int(ifreq), 2*r_powa+1], session['c_cwsweep_structure'])] for x in range(session['c_cwsweep_address'][3]+1)]
+			selected_Ir += [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), x, int(isparam), int(iifb), int(ifreq), 2*r_powa], session['c_cwsweep_structure'])] for x in xsweep]
+			selected_Qr += [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), x, int(isparam), int(iifb), int(ifreq), 2*r_powa+1], session['c_cwsweep_structure'])] for x in xsweep]
 		# AVERAGE up those power repeats:
-		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, session['c_cwsweep_address'][3]+1), axis=0))
-		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, session['c_cwsweep_address'][3]+1), axis=0))
+		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, len(xsweep)), axis=0))
+		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, len(xsweep)), axis=0))
 	
 	elif "x" in isparam:
 		pass
 	elif "x" in iifb:
 		pass
+
 	elif "x" in ifreq:
 		xtitle = "<b>frequency(GHz)</b>"
 		selected_sweep = M_cwsweep[session['user_name']].corder['Frequency']
-		selected_progress = waveform(selected_sweep).data[0:session['c_cwsweep_address'][6]+1]
+		
+		if [int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb)] < session['c_cwsweep_address'][0:6]: # address's part before x
+			xsweep = range(session['c_cwsweep_structure'][6]) # can access full-range if selection is well within progress resume-point
+		else: xsweep = range(session['c_cwsweep_address'][6]+1) # can only access until progress resume-point
+		
 		selected_Ir, selected_Qr = [], []
 		for i_prepeat in range(ipowa_repeat):
 			r_powa = int(ipowa) * ipowa_repeat + i_prepeat # from the beginning position of repeating power
-			selected_Ir += [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), x, 2*r_powa], session['c_cwsweep_structure'])] for x in range(session['c_cwsweep_address'][6]+1)]
-			selected_Qr += [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), x, 2*r_powa+1], session['c_cwsweep_structure'])] for x in range(session['c_cwsweep_address'][6]+1)]
+			selected_Ir += [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), x, 2*r_powa], session['c_cwsweep_structure'])] for x in xsweep]
+			selected_Qr += [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), x, 2*r_powa+1], session['c_cwsweep_structure'])] for x in xsweep]
 		# AVERAGE up those power repeats:
-		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, session['c_cwsweep_address'][6]+1), axis=0))
-		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, session['c_cwsweep_address'][6]+1), axis=0))
+		selected_I = list(mean(array(selected_Ir).reshape(ipowa_repeat, len(xsweep)), axis=0))
+		selected_Q = list(mean(array(selected_Qr).reshape(ipowa_repeat, len(xsweep)), axis=0))
 	elif "x" in ipowa:
 		xtitle = "<b>Power(dBm)</b>"
 		xpowa_repeat = ipowa_repeat
-		selected_progress = xpowa.data[0:(session['c_cwsweep_address'][7]+1)//xpowa_repeat]
-		selected_Ir = [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*x], session['c_cwsweep_structure'])] for x in range((session['c_cwsweep_address'][7]+1) // 2)]
-		selected_Qr = [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*x+1], session['c_cwsweep_structure'])] for x in range((session['c_cwsweep_address'][7]+1) // 2)]
+		
+		if [int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq)] < session['c_cwsweep_address'][0:7]: # address's part before x
+			xsweep = range(session['c_cwsweep_structure'][7] // 2) # can access full-range if selection is well within progress resume-point
+		else: xsweep = range((session['c_cwsweep_address'][7]+1) // 2) # can only access until progress resume-point
+		
+		selected_Ir = [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*x], session['c_cwsweep_structure'])] for x in xsweep]
+		selected_Qr = [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*x+1], session['c_cwsweep_structure'])] for x in xsweep]
 		# AVERAGE up those repeated IQ-pairs:
-		selected_I = list(mean(array(selected_Ir).reshape(xpowa.count, xpowa_repeat), axis=1)) #-->
-		selected_Q = list(mean(array(selected_Qr).reshape(xpowa.count, xpowa_repeat), axis=1)) #-->
+		selected_I = list(mean(array(selected_Ir).reshape(len(xsweep)//xpowa_repeat, xpowa_repeat), axis=1)) #-->
+		selected_Q = list(mean(array(selected_Qr).reshape(len(xsweep)//xpowa_repeat, xpowa_repeat), axis=1)) #-->
 
 	# assembly amplitude & phase:
 	MagPha = [IQAP(x[0],x[1]) for x in zip(selected_I, selected_Q)]
@@ -548,15 +571,19 @@ def char_cwsweep_1ddata():
 	for i,j in MagPha:
 		Amp.append(i); Pha.append(j)
 
+	# x-range:
+	if "x" in ipowa: selected_progress = xpowa.data[0:(len(xsweep) // xpowa_repeat)]
+	else: selected_progress = waveform(selected_sweep).data[0:len(xsweep)]
+
 	# to avoid exception when encountering recursive parameters:
 	if "c" in ixyfreq + ixypowa + ifluxbias + isparam + iifb + ifreq + ipowa:
 		selected_progress = list(range(len(selected_progress)))
 
-	x1, y1, y2 = selected_progress, Amp, list(UnwraPhase(selected_progress, Pha)) #list(unwrap(Pha)) 
+	x1, y1, yup, yp = selected_progress, Amp, list(UnwraPhase(selected_progress, Pha)), Pha #list(unwrap(Pha)) 
 
 	global data_dict
-	data_dict = {xtitle: x1, 'Amplitude': y1, 'UPhase': y2, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
-	return jsonify(x1=x1, y1=y1, y2=y2, xtitle=xtitle)
+	data_dict = {xtitle: x1, 'Amplitude': y1, 'UPhase': yup, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
+	return jsonify(x1=x1, y1=y1, yup=yup, yp=yp, x1title=xtitle)
 
 # Pending renovation below:
 @bp.route('/char/cwsweep/2ddata', methods=['GET'])
@@ -590,12 +617,20 @@ def char_cwsweep_2ddata():
 		print(Back.RED + "The data is NOT YET complete!")
 
 	# Selecting 2D options:
+	# REPEAT:
+	if irepeat == "x" and ifluxbias == "y":
+		x_name, y_name = "repeat", "fluxbias"
+		print("X: REPEAT#, Y: Flux-Bias")
+		xtitle, ytitle = "<b>REPEAT#</b>", "<b>Flux-Bias(V/A)</b>"
+		x, y = list(range(session['c_cwsweep_address'][0]+offset)), waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data
+		x_count, y_count = session['c_cwsweep_address'][0]+offset, waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).count
 	if irepeat == "x" and ixyfreq == "y":
 		x_name, y_name = "repeat", "xyfreq"
 		print("X: REPEAT#, Y: XY-Frequency")
 		xtitle, ytitle = "<b>REPEAT#</b>", "<b>XY-Frequency(GHz)</b>"
 		x, y = list(range(session['c_cwsweep_address'][0]+offset)), waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data
 		x_count, y_count = session['c_cwsweep_address'][0]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).count
+	# ONCE:
 	elif ifluxbias == "x" and ixyfreq == "y":
 		x_name, y_name = "fluxbias", "xyfreq"
 		print("X: Flux-Bias, Y: XY-Frequency")
@@ -608,6 +643,12 @@ def char_cwsweep_2ddata():
 		xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>XY-Power(dBm)</b>"
 		x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['XY-Power']).data
 		x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Power']).count
+	elif ixyfreq == "x" and ifreq == "y":
+		x_name, y_name = "xyfreq", "freq"
+		print("X: XY-Frequency, Y: Frequency")
+		xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probe-Frequency(GHz)</b>"
+		x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['Frequency']).data
+		x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['Frequency']).count
 	elif ixyfreq == "x" and ipowa == "y":
 		x_name, y_name = "xyfreq", "powa"
 		print("X: XY-Frequency, Y: Power")

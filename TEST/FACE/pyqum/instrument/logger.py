@@ -5,7 +5,7 @@ init(autoreset=True) #to convert termcolor to wins color
 
 from pathlib import Path
 from os import mkdir, listdir, stat, SEEK_END
-from os.path import exists, getsize, getmtime, join, isdir
+from os.path import exists, getsize, getmtime, join, isdir, getctime
 from datetime import datetime
 from time import time, sleep
 from contextlib import suppress
@@ -25,10 +25,12 @@ __email__ = "teikhui@phys.sinica.edu.tw"
 __status__ = "development"
 
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
-MAIN_PATH = Path(pyfilename).parents[6] / "MEGAsync" / "CONFIG"
-INSTR_PATH = MAIN_PATH / "INSTLOG" # 2 levels up the path
+MAIN_PATH = Path(pyfilename).parents[7] / "HODOR" / "CONFIG"
+INSTR_PATH = MAIN_PATH / "INSTLOG"
 USR_PATH = MAIN_PATH / "USRLOG"
-PORTAL = MAIN_PATH / "PORTAL"
+PORTAL_PATH = MAIN_PATH / "PORTAL"
+ADDRESS_PATH = MAIN_PATH / "Address"
+SPECS_PATH = MAIN_PATH / "SPECS"
 
 def location():
     place = []
@@ -96,7 +98,7 @@ def set_status(instr_name, info):
 # save data in csv for export and be used by clients:
 def set_csv(data_dict, filename):
     df = DataFrame(data_dict, columns= [x for x in data_dict.keys()])
-    export_csv = df.to_csv (Path(PORTAL) / filename, index = None, header=True)
+    export_csv = df.to_csv (Path(PORTAL_PATH) / filename, index = None, header=True)
     return export_csv
 
 class address:
@@ -104,7 +106,7 @@ class address:
     Set <reset=False> to directly load from LOG if it contains "address" 
     '''
     def __init__(self):
-        with open(MAIN_PATH / 'Address' / 'address.json') as ad:
+        with open(ADDRESS_PATH / "address.json") as ad:
             self.book = json.load(ad)
     def lookup(self, instr_name, level=0):
         '''level: alternative address's index (1,2,3...)'''
@@ -129,7 +131,7 @@ class specification:
     '''lookup specifications for each instruments
     '''
     def __init__(self):
-        with open(MAIN_PATH / 'SPECS' / 'specification.json') as spec:
+        with open(SPECS_PATH / "specification.json") as spec:
             self.book = json.load(spec)
     def lookup(self, instr_name, characteristic):
         try: self.limit = self.book[instr_name][characteristic]['limit']
@@ -243,7 +245,7 @@ class measurement:
                 task_relevant_time = [t for t in listdir(self.mssnpath / d) if t.split('.')[0] == self.task]
                 if task_relevant_time:
                     relatedays.append(d)
-            relatedays.sort(key=lambda x: getmtime(self.mssnpath / x))
+            relatedays.sort(key=lambda x: getctime(self.mssnpath / x))
             self.daylist = relatedays
         except:
             self.daylist = []

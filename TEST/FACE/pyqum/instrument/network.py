@@ -22,7 +22,7 @@ from email import encoders
 from pyqum.instrument.logger import address
 
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
-MAIN_PATH = Path(pyfilename).parents[6] / "MEGAsync" / "CONFIG"
+MAIN_PATH = Path(pyfilename).parents[7] / "HODOR" / "CONFIG"
 HIDDEN_PATH = MAIN_PATH / "QuDATA" / "HIDDEN"
 hdfile = Path(HIDDEN_PATH) / "HD.pyqum"
 

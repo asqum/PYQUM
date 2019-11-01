@@ -17,30 +17,43 @@ SET FLASK_ENV=development
 
 ::Get Parent Directory
 for %%a in (%cd%) do set "p_dir=%%~dpa"
-::Up many levels
-for %%a in (%p_dir:~0,-16%) do set "p2_dir=%%~dpa"
+::Up many levels by 25%
+for %%a in (%p_dir:~0,-25%) do set "p2_dir=%%~dpa"
 echo Up until: %p2_dir%
 
 ::Check Database Existence
-IF EXIST "%p2_dir%MEGAsync\CONFIG\pyqum.sqlite" (
+IF EXIST "%p2_dir%HODOR\CONFIG\pyqum.sqlite" (
     ECHO Database Found
+    goto clearpycache
 ) ELSE (
-    flask init-db
-    ECHO New Database Created
+    ECHO NO Database was found in this path
+    goto dboption
     )
 
+:dboption
+    set /p answer=Create New Database (Y/N)?
+    if /i "%answer:~,1%" EQU "Y" (
+        flask init-db
+        ECHO New Database Created)
+    if /i "%answer:~,1%" EQU "N" (
+        echo Think about it
+        goto tq)
+    echo Please type Y or N
+    goto dboption
+
 ::Preventing PyCache::
-REM ECHO Before: Prevent PyCache: %PYTHONDONTWRITEBYTECODE%
-if "%PYTHONDONTWRITEBYTECODE%"=="1" (
-    echo pycache already disabled
-) else (
-    ::locally (in RAM)
-    REM set PYTHONDONTWRITEBYTECODE=1
-    ::globally (user specific)
-    SETX PYTHONDONTWRITEBYTECODE 1
-    echo pycache just fucked
-)
-REM echo After: Prevent PyCache: %PYTHONDONTWRITEBYTECODE%
+:clearpycache
+    REM ECHO Before: Prevent PyCache: %PYTHONDONTWRITEBYTECODE%
+    if "%PYTHONDONTWRITEBYTECODE%"=="1" (
+        echo pycache already disabled
+    ) else (
+        ::locally (in RAM)
+        REM set PYTHONDONTWRITEBYTECODE=1
+        ::globally (user specific)
+        SETX PYTHONDONTWRITEBYTECODE 1
+        echo pycache just fucked
+    )
+    REM echo After: Prevent PyCache: %PYTHONDONTWRITEBYTECODE%
 
 REM PAUSE
 ::BYPASS to WEB

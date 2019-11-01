@@ -22,7 +22,11 @@
                 </ul>
             </div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="cwsweep-eta"></a></div></div>
-            
+            {% if g.user['measurement'] %}
+                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
+                <div class="col-10" id='right'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div>
+                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
+            {% endif %}
         </div>
 
         <div class="row">
@@ -36,6 +40,35 @@
             </div>
         </div>
 
+        <!-- optional parameters line #1 -->
+        <div class="row">
+            <div class="col-15" id='left'><label>REPEAT#</label></div>
+            <div class="col-15" id='left'><label>Flux-Bias (V/A)</label></div>
+            <div class="col-15" id='left'><label>XY-Frequency (GHz)</label></div>
+            <div class="col-15" id='left'><label>XY-Power (dBm)</label></div>
+        </div>
+        <div class="row">
+            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-repeat" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-fluxbias" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-xyfreq" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-xypowa" type="text"></select></div> 
+        </div>
+
+        <!-- basic parameters line #2 -->
+        <div class="row">
+            <div class="col-15" id='left'><label>S-Parameter</label></div>
+            <div class="col-15" id='left'><label>IF-Bandwidth (Hz)</label></div>
+            <div class="col-15" id='left'><label>Frequency (GHz)</label></div>
+            <div class="col-15" id='left'><label>Power (dBm)</label></div>
+        </div>
+        <div class="row">
+            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-sparam" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-ifb" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-freq" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-powa" type="text"></select></div>
+        </div>
+
+        <!-- Check, Plot & Download Data -->
         <div class="row">
             <div class="col-10" id='left'>
                 <label class="cwsweep switch">
@@ -43,48 +76,18 @@
                     <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
                 </label>
             </div>
-            {% if g.user['measurement'] %}
-                <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
-                <div class="col-10" id='left'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div>
-                <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
-            {% endif %}
+            <div class="col-10" id='left'><input class='char data' id="cwsweep" name='1d-data' type="submit" value="1D-Data"/></div>
+            <div class="col-10" id='left'><input class='char data' id="cwsweep" name='2d-data' type="submit" value="2D-Data"/></div>
             <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-savecsv">CSV</button></div>
         </div>
 
-        <!-- optional parameters line #1 -->
+        <!-- Data Assembly and Grooming -->
         <div class="row">
-            <div class="col-20" id='left'><label>REPEAT#</label></div>
-            <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
-            <div class="col-20" id='left'><label>XY-Frequency (GHz)</label></div>
-            <div class="col-20" id='left'><label>XY-Power (dBm)</label></div>
-        </div>
-        <div class="row">
-            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-repeat" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-fluxbias" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-xyfreq" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-xypowa" type="text"></select></div> 
-        </div>
-
-        <!-- basic parameters line #2 -->
-        <div class="row">
-            <div class="col-20" id='left'><label>S-Parameter</label></div>
-            <div class="col-20" id='left'><label>IF-Bandwidth (Hz)</label></div>
-            <div class="col-20" id='left'><label>Frequency (GHz)</label></div>
-            <div class="col-20" id='left'><label>Power (dBm)</label></div>
-        </div>
-        <div class="row">
-            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-sparam" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-ifb" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-freq" type="text"></select></div>
-            <div class="col-20" id='left'><select class='char' id="cwsweep" name="c-powa" type="text"></select></div>
-        </div>
-
-        <div class="row"> <!-- New Role for Data Assembly -->
-            <div class="col-10" id='left'><input class='char data' id="cwsweep" name='1d-data' type="submit" value="1D-Data"/></div>
-            <div class="col-10" id='left'><input class='char data' id="cwsweep" name='2d-data' type="submit" value="2D-Data"/></div>
-            <div class="col-10" id='right'><select class='char data' id="cwsweep" name="2d-amphase" type="text"></select></div>
-            <div class="col-10" id='right'><select class='char data' id="cwsweep" name="2d-type" type="text"></select></div>
-            <div class="col-10" id='right'><select class='char data' id="cwsweep" name="2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="1d-phase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="2d-amphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="2d-direction" type="text"></select></div>
         </div>
 
         <div id="char-cwsweep-chart"></div>

@@ -268,6 +268,19 @@ def burst_count(session, Type='Int32', RepCap='', AttrID=1250350, buffsize=0, ac
     return session, Type, RepCap, AttrID, buffsize, action
 
 @Attribute
+#define AGM933X_ATTR_REF_CLOCK_SOURCE 1250002
+def ref_clock_source(session, Type='Int32', RepCap='', AttrID=1250002, buffsize=0, action=['Get', '']):
+    """The source of the reference clock. 
+    The function generator derives frequencies and sample rates that it uses to generate waveforms from the reference clock. 
+    The allowable sources are PXI backplane, External clock, or Internal clock. Selecting the internal clock source is essentially equivalent to having no reference clock. 
+    Compact PCI chassis do not have a 10MHz backplane reference clock.
+    0: AGM933X_VAL_REF_CLOCK_INTERNAL:     The function generator produces the reference clock signal internally. 
+    1: AGM933X_VAL_REF_CLOCK_EXTERNAL:     The function generator receives the reference clock signal from an external source. 
+    2: AGM933X_VAL_REF_CLOCK_RTSI_CLOCK:   The function generator receives the reference clock signal from the RTSI clock source. 
+    """
+    return session, Type, RepCap, AttrID, buffsize, action
+
+@Attribute
 #define AGM933X_ATTR_MARKER_DELAY 1150061
 def marker_delay(session, Type='Real64', RepCap='', AttrID=1150061, buffsize=0, action=['Get', '']):
     """[Marker Delay <real64>]
@@ -478,13 +491,15 @@ def test(detail=True):
         output_clock_freq(s)
 
         # Setting Marker:
-        active_marker(s, action=["Set", "1"])
+        # ref_clock_source(s, action=["Set", 0])
+        # ref_clock_source(s)
+        active_marker(s, action=["Set", "3"])
         active_marker(s)
         marker_source(s, action=["Set", 7])
         marker_source(s)
-        marker_delay(s, action=["Set", 2e-7])
+        marker_delay(s, action=["Set", 1e-7])
         marker_delay(s)
-        marker_pulse_width(s, action=["Set", 2.5e-7])
+        marker_pulse_width(s, action=["Set", 1e-7])
         marker_pulse_width(s)
 
         # Preparing AWGenerator
@@ -502,17 +517,16 @@ def test(detail=True):
         # 0.8ns per point:
         # CH 1
         # stat = CreateArbWaveform(s, ([0]*5000 + [1]*1000))
-        # ch1 = stat[1]
         from numpy import sin, pi, cos
-        freq, dt = 1.25/1000, 0.8
-        wave = [0.1*sin(x*freq*dt*2*pi) - 0.0035 for x in range(10000)] # I
+        freq, dt = 100/1000, 0.8
+        wave = [0.7*sin(x*freq*dt*2*pi) for x in range(10000)] # I
         stat = CreateArbWaveform(s, wave)
         ch1 = stat[1]
 
         # CH 2
-        # stat = CreateArbWaveform(s, ([0.8]*5000 + [-1]*1000 + [i/1200 for i in range(1200)]))
-        freq, dt = 1.25/1000, 0.8
-        wave = [0.1*cos(x*freq*dt*2*pi) for x in range(10000)] # Q
+        # stat = CreateArbWaveform(s, ([0]*5000 + [1]*1000))
+        freq, dt = 100/1000, 0.8
+        wave = [0.7*cos(x*freq*dt*2*pi) for x in range(10000)] # Q
         stat = CreateArbWaveform(s, wave)
         ch2 = stat[1]
 

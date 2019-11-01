@@ -98,8 +98,8 @@ def awgabort():
 	global awgsess
 	status = AWG.Abort_Gen(awgsess)
 	return jsonify(message=status)
-@bp.route('/awg/settings-marker', methods=['GET'])
-def awgsettingsmarker():
+@bp.route('/awg/settings-main', methods=['GET'])
+def awgsettingsmain():
 	global awgsess
 	message = []
 	active = request.args.get('active')
@@ -114,11 +114,6 @@ def awgsettingsmarker():
 	source = request.args.get('source')
 	stat = AWG.marker_source(awgsess, action=['Set',int(source)])
 	message += ['marker source: %s <%s>' %(stat[1], status_code(stat[0]))]
-	return jsonify(message=message)
-@bp.route('/awg/settings-prepare', methods=['GET'])
-def awgsettingsprepare():
-	global awgsess
-	message = []
 	predist = request.args.get('predist')
 	stat = AWG.predistortion_enabled(awgsess, action=['Set',int(predist)])
 	message += ['predistortion enabled: %s <%s>' %(stat[1], status_code(stat[0]))]
@@ -129,77 +124,83 @@ def awgsettingsprepare():
 	stat = AWG.arb_sample_rate(awgsess, action=['Set',float(samprat)])
 	message += ['sample rate: %s <%s>' %(stat[1], status_code(stat[0]))]
 	return jsonify(message=message)
-@bp.route('/awg/settings-squarewave', methods=['GET'])
-def awgsettingssquarewave():
-	global awgsess, seqhandl
-	message = []
-	# Shaping parameters
-	voltag = []
-	voltag.append(float(request.args.get('voltag1')))
-	voltag.append(float(request.args.get('voltag2')))
-	pointnum = []
-	pointnum.append(int(request.args.get('pointnum1')))
-	pointnum.append(int(request.args.get('pointnum2')))
-	wavefom = ([voltag[0]]*pointnum[0] + [voltag[1]]*pointnum[1])
-	stat = AWG.CreateArbWaveform(awgsess, wavefom)
-	print(Fore.YELLOW + "Arb Waveform Created: %s"%stat[0])
-	message += ['Waveform created: %s <%s>' %(stat[1], status_code(stat[0]))]
-	stat = AWG.CreateArbSequence(awgsess, [stat[1]], [1]) # loop# canbe >1 if longer sequence is needed in the future!
-	print(Fore.YELLOW + "Arb Sequence Created: %s"%stat[0])
-	seqhandl = stat[1]
-	print("seq handle in set-waveform is %s"%seqhandl)
-	message += ['Sequence assembled: %s <%s>' %(stat[1], status_code(stat[0]))]
-
-	return jsonify(message=message)
-
 @bp.route('/awg/settings-ifwave', methods=['GET'])
 def awgsettingsifwave():
-	global awgsess, seqhandl
+	global awgsess
+	AWG.Clear_ArbMemory(awgsess)
 	samplingrate = AWG.arb_sample_rate(awgsess)[1]
 	dt = 1e9/samplingrate # in ns
 	message = []
+
 	# Shaping parameters
-	iffunction = request.args.get('iffunction')
-	iffreq = float(request.args.get('iffreq'))
-	ifvoltag = float(request.args.get('ifvoltag'))
-	ifoffset = float(request.args.get('ifoffset'))
-	wavefom = [ifvoltag * eval(iffunction + '(x*%s*%s/1000*2*pi)'%(dt,iffreq)) + ifoffset for x in range(10000)]
+	# Channel 1:
+	iffunction1 = request.args.get('iffunction1')
+	ifdesign1 = request.args.get('ifdesign1')
+	iffreq1 = float(request.args.get('iffreq1'))
+	ifvoltag1 = float(request.args.get('ifvoltag1'))
+	ifoffset1 = float(request.args.get('ifoffset1'))
+	outputch1 = request.args.get('outputch1')
+	oupfiltr1 = request.args.get('oupfiltr1')
+	oupconfig1 = request.args.get('oupconfig1')
+	# Channel 2:
+	iffunction2 = request.args.get('iffunction2')
+	ifdesign2 = request.args.get('ifdesign2')
+	iffreq2 = float(request.args.get('iffreq2'))
+	ifvoltag2 = float(request.args.get('ifvoltag2'))
+	ifoffset2 = float(request.args.get('ifoffset2'))
+	outputch2 = request.args.get('outputch2')
+	oupfiltr2 = request.args.get('oupfiltr2')
+	oupconfig2 = request.args.get('oupconfig2')
+	
+	channel = '1'
+	if iffunction1 == 'arb':
+		wavefom = [x for x in list(waveform(ifdesign1).data)]
+	else: wavefom = [ifvoltag1 * eval(iffunction1 + '(x*%s*%s/1000*2*pi)'%(dt,iffreq1)) + ifoffset1 for x in range(10000)]
 	stat = AWG.CreateArbWaveform(awgsess, wavefom)
-	print(Fore.YELLOW + "Arb Waveform Created: %s"%stat[0])
-	message += ['Waveform created: %s <%s>' %(stat[1], status_code(stat[0]))]
-	stat = AWG.CreateArbSequence(awgsess, [stat[1]], [1]) # loop# canbe >1 if longer sequence is needed in the future!
-	print(Fore.YELLOW + "Arb Sequence Created: %s"%stat[0])
-	seqhandl = stat[1]
-	print("seq handle in set-waveform is %s"%seqhandl)
-	message += ['Sequence assembled: %s <%s>' %(stat[1], status_code(stat[0]))]
-
-	return jsonify(message=message)
-
-@bp.route('/awg/settings-channel', methods=['GET'])
-def awgsettingschannel():
-	global awgsess, seqhandl
-	print("seq handle in set-channel is %s"%seqhandl)
-	message = [] 
-	channel = request.args.get('channel')
+	message += ['Waveform channel %s: %s <%s>' %(channel, stat[1], status_code(stat[0]))]
+	status, seqhandl = AWG.CreateArbSequence(awgsess, [stat[1]], [1]) # loop# canbe >1 if longer sequence is needed in the future!
+	message += ['Sequence channel %s: %s <%s>' %(channel, seqhandl, status_code(status))]
 	stat = AWG.arb_sequence_handle(awgsess, RepCap=channel, action=["Set", seqhandl])
-	message += ['Sequence embeded: %s <%s>' %(stat[1], status_code(stat[0]))]
-	outputch = request.args.get('outputch')
-	stat = AWG.output_enabled(awgsess, RepCap=channel, action=["Set", int(outputch)])
+	message += ['Sequence channel %s embeded: %s <%s>' %(channel, stat[1], status_code(stat[0]))]
+	stat = AWG.output_enabled(awgsess, RepCap=channel, action=["Set", int(outputch1)])
 	message += ['output channel %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
-	oupfiltr = request.args.get('oupfiltr')
-	stat = AWG.output_filter_enabled(awgsess, RepCap=channel, action=["Set", int(oupfiltr)])
+	stat = AWG.output_filter_enabled(awgsess, RepCap=channel, action=["Set", bool(oupfiltr1)])
 	message += ['output filter channel %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
-
-	# temporary:
+	stat = AWG.output_config(awgsess, RepCap=channel, action=["Set", int(oupconfig1)])
+	message += ['output configuration %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
+	# MISC:
 	AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
-	AWG.output_config(awgsess, RepCap=channel, action=["Set", 0])
 	AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.25])
 	AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
 	AWG.operation_mode(awgsess, RepCap=channel, action=["Set", 0])
 	AWG.trigger_source_adv(awgsess, RepCap=channel, action=["Set", 0])
 	AWG.burst_count(awgsess, RepCap=channel, action=["Set", 1000001])
 
-	return jsonify(message=message)
+	channel = '2'
+	if iffunction2 == 'arb':
+		wavefom = [x for x in list(waveform(ifdesign2).data)]
+	else: wavefom = [ifvoltag2 * eval(iffunction2 + '(x*%s*%s/1000*2*pi)'%(dt,iffreq2)) + ifoffset2 for x in range(10000)]
+	stat = AWG.CreateArbWaveform(awgsess, wavefom)
+	message += ['Waveform channel %s: %s <%s>' %(channel, stat[1], status_code(stat[0]))]
+	status, seqhandl = AWG.CreateArbSequence(awgsess, [stat[1]], [1]) # loop# canbe >1 if longer sequence is needed in the future!
+	message += ['Sequence channel %s: %s <%s>' %(channel, seqhandl, status_code(status))]
+	stat = AWG.arb_sequence_handle(awgsess, RepCap=channel, action=["Set", seqhandl])
+	message += ['Sequence channel %s embeded: %s <%s>' %(channel, stat[1], status_code(stat[0]))]
+	stat = AWG.output_enabled(awgsess, RepCap=channel, action=["Set", int(outputch2)])
+	message += ['output channel %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
+	stat = AWG.output_filter_enabled(awgsess, RepCap=channel, action=["Set", bool(oupfiltr2)])
+	message += ['output filter channel %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
+	stat = AWG.output_config(awgsess, RepCap=channel, action=["Set", int(oupconfig2)])
+	message += ['output configuration %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
+	# MISC:
+	AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
+	AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.25])
+	AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
+	AWG.operation_mode(awgsess, RepCap=channel, action=["Set", 0])
+	AWG.trigger_source_adv(awgsess, RepCap=channel, action=["Set", 0])
+	AWG.burst_count(awgsess, RepCap=channel, action=["Set", 1000001])
+
+	return jsonify(message=message, wavefom=wavefom)
 
 # VSA
 @bp.route('/vsa', methods=['GET'])

@@ -8,7 +8,7 @@ init(autoreset=True) #to convert termcolor to wins color
 
 from pathlib import Path
 pyfilename = Path(__file__).resolve() # current pyscript filename (usually with path)
-MAIN_PATH = Path(pyfilename).parents[5] / "MEGAsync" / "CONFIG"
+DB_PATH = Path(pyfilename).parents[6] / "HODOR" / "CONFIG"
 
 # For Database
 def get_db():
@@ -16,6 +16,7 @@ def get_db():
     is unique for each request and will be reused if this is called
     again.
     """
+    # print("Accessing Database from:\n %s" %current_app.config['DATABASE'])
     if 'db' not in g:
         g.db = sqlite3.connect(
             current_app.config['DATABASE'],
@@ -66,7 +67,7 @@ def stream_template(template_name, **context):
 # equivalent to app.py
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
-    app = Flask(__name__, instance_relative_config=True,instance_path=MAIN_PATH)
+    app = Flask(__name__, instance_relative_config=True,instance_path=DB_PATH)
     app.config.from_mapping(
         # a default secret that should be overridden by instance config
         SECRET_KEY='good',

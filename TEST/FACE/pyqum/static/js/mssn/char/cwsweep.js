@@ -70,7 +70,7 @@ function listimes_cwsweep() {
             wday: wday
         }, function (data) {
             $('select.char#cwsweep[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
-            $.each(data.taskentries, function(i,v){ $('select.char#cwsweep[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
+            $.each(data.taskentries, function(i,v){ $('select.char#cwsweep[name="wmoment"]').append($('<option>', { id: i, text: v, value: v })); });
         }); 
     };
 };
@@ -174,6 +174,72 @@ function accessdata_cwsweep() {
     });
     return false;
 };
+function plot1D(x1,y1,y2,xtitle) {
+    console.log(xtitle);
+    
+    let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'L (' + wday + ', ' + wmoment + ')',
+        line: {color: 'rgb(23, 151, 6)', width: 2.5},
+        yaxis: 'y' };
+    let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'R (' + wday + ', ' + wmoment + ')',
+        line: {color: 'blue', width: 2.5},
+        yaxis: 'y2' };
+
+    let layout = {
+        legend: {x: 1.08},
+        height: $(window).height()*0.8,
+        width: $(window).width()*0.7,
+        xaxis: {
+            zeroline: false,
+            title: xtitle,
+            titlefont: {size: 18},
+            tickfont: {size: 18},
+            tickwidth: 3,
+            linewidth: 3 
+        },
+        yaxis: {
+            zeroline: false,
+            // title: '<b>Amp(dB)</b>',
+            titlefont: {size: 18},
+            tickfont: {size: 18},
+            tickwidth: 3,
+            linewidth: 3
+        },
+        yaxis2: {
+            zeroline: false,
+            title: '<b>U-Pha(rad)</b>', 
+            titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
+            tickfont: {color: 'rgb(148, 103, 189)', size: 18},
+            tickwidth: 3,
+            linewidth: 3, 
+            overlaying: 'y', 
+            side: 'right'
+        },
+        title: '',
+        annotations: [{
+            xref: 'paper',
+            yref: 'paper',
+            x: 0.03,
+            xanchor: 'right',
+            y: 1.05,
+            yanchor: 'bottom',
+            text: '<b>Amp(dB)</b>',
+            font: {size: 18},
+            showarrow: false,
+            textangle: 0
+          }]
+        };
+    
+    $.each(x1, function(i, val) {traceL.x.push(val);});
+    $.each(y1, function(i, val) {traceL.y.push(val);});
+    $.each(x1, function(i, val) {traceR.x.push(val);});
+    $.each(y2, function(i, val) {traceR.y.push(val);});
+
+    var Trace = [traceL, traceR]
+    Plotly.newPlot('char-cwsweep-chart', Trace, layout, {showSendToCloud: true});
+    $( "i.cwsweep1d" ).remove(); //clear previous
+};
 function plot2D(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
     console.log("Plotting 2D");
          
@@ -191,11 +257,11 @@ function plot2D(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
         xaxis: {
             zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
         yaxis: {
-            zeroline: false, // title: '<b>Amp(dB)</b>',
+            zeroline: false, title: ytitle,
             titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
         title: '',
         annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom',
-            text: ytitle, font: {size: 18}, showarrow: false, textangle: 0 }] };
+            text: "", font: {size: 18}, showarrow: false, textangle: 0 }] };
 
     // Data GROOMING:
     // 1. Normalization along x-axis (dip)
@@ -455,7 +521,7 @@ $(function () {
     });
 });
 
-// plot 1D-data based on c-parameters picked
+// assemble 1D-data based on c-parameters picked
 $(function () {
     $('input.char#cwsweep[name="1d-data"]').on('click', function () {
         $( "i.cwsweep1d" ).remove(); //clear previous
@@ -472,72 +538,26 @@ $(function () {
         $.getJSON('/mssn/char/cwsweep/1ddata', {
             irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
         }, function (data) {
-            console.log(data.xtitle);
-            
-            let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
-                name: 'L (' + wday + ', ' + wmoment + ')',
-                line: {color: 'rgb(23, 151, 6)', width: 2.5},
-                yaxis: 'y' };
-            let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', 
-                name: 'R (' + wday + ', ' + wmoment + ')',
-                line: {color: 'blue', width: 2.5},
-                yaxis: 'y2' };
-
-            let layout = {
-                legend: {x: 1.08},
-                height: $(window).height()*0.8,
-                width: $(window).width()*0.7,
-                xaxis: {
-                    zeroline: false,
-                    title: data.xtitle,
-                    titlefont: {size: 18},
-                    tickfont: {size: 18},
-                    tickwidth: 3,
-                    linewidth: 3 
-                },
-                yaxis: {
-                    zeroline: false,
-                    // title: '<b>Amp(dB)</b>',
-                    titlefont: {size: 18},
-                    tickfont: {size: 18},
-                    tickwidth: 3,
-                    linewidth: 3
-                },
-                yaxis2: {
-                    zeroline: false,
-                    title: '<b>U-Pha(rad)</b>', 
-                    titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
-                    tickfont: {color: 'rgb(148, 103, 189)', size: 18},
-                    tickwidth: 3,
-                    linewidth: 3, 
-                    overlaying: 'y', 
-                    side: 'right'
-                },
-                title: '',
-                annotations: [{
-                    xref: 'paper',
-                    yref: 'paper',
-                    x: 0.03,
-                    xanchor: 'right',
-                    y: 1.05,
-                    yanchor: 'bottom',
-                    text: '<b>Amp(dB)</b>',
-                    font: {size: 18},
-                    showarrow: false,
-                    textangle: 0
-                  }]
-                };
-            
-            $.each(data.x1, function(i, val) {traceL.x.push(val);});
-            $.each(data.y1, function(i, val) {traceL.y.push(val);});
-            $.each(data.x1, function(i, val) {traceR.x.push(val);});
-            $.each(data.y2, function(i, val) {traceR.y.push(val);});
-
-            var Trace = [traceL, traceR]
-            Plotly.newPlot('char-cwsweep-chart', Trace, layout, {showSendToCloud: true});
-            $( "i.cwsweep1d" ).remove(); //clear previous
+            window.x1 = data.x1;
+            window.y1 = data.y1;
+            window.yp = data.yp;
+            window.yup = data.yup;
+            window.x1title = data.x1title;
+            // Phase option
+            $('select.char.data#cwsweep[name="1d-phase"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
+            plot1D(x1,y1,yp,x1title);
         });
     });
+    return false;
+});
+$('select.char.data#cwsweep').on('change', function() {
+    if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "Pha") {
+        console.log("Pha mode");
+        plot1D(x1,y1,yp,x1title);
+    } else if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "UPha") {
+        console.log("UPha mode");
+        plot1D(x1,y1,yup,x1title);
+    };
     return false;
 });
 
@@ -579,6 +599,8 @@ $(function () {
                 .append($('<option>', { text: 'Electric', value: 'Electric' })).append($('<option>', { text: 'Earth', value: 'Earth' }))
                 .append($('<option>', { text: 'Bluered', value: 'Bluered' })).append($('<option>', { text: 'Blackbody', value: 'Blackbody' }))
                 .append($('<option>', { text: 'Blues', value: 'Blues' })).append($('<option>', { text: 'Viridis', value: 'Viridis' }));
+            // Transpose or not
+            $('select.char.data#cwsweep[name="2d-direction"]').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
             plot2D(x, y, ZZA, xtitle, ytitle, 
                 $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
                 $('select.char.data#cwsweep[name="2d-colorscale"]').val());
@@ -587,13 +609,18 @@ $(function () {
     });
     return false;
 });
-
 $('select.char.data#cwsweep').on('change', function() {
     if ($('select.char.data#cwsweep[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
     else if ($('select.char.data#cwsweep[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
-    plot2D(x, y, ZZ, xtitle, ytitle, 
-        $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
-        $('select.char.data#cwsweep[name="2d-colorscale"]').val());
+    if ($('select.char.data#cwsweep[name="2d-direction"]').val() == "rotate") {
+        plot2D(y, x, transpose(ZZ), ytitle, xtitle, 
+            $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
+            $('select.char.data#cwsweep[name="2d-colorscale"]').val());
+    } else {
+        plot2D(x, y, ZZ, xtitle, ytitle, 
+            $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
+            $('select.char.data#cwsweep[name="2d-colorscale"]').val());
+    };
     return false;
 });
 

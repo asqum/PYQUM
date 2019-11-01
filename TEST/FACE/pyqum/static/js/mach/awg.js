@@ -4,6 +4,10 @@
 //when page is loading:
 $(document).ready(function(){
     $('div.awgcontent').hide();
+    $('input.awg.ch1').parent().hide();
+    $('input.awg.ch1.cosin').parent().show();
+    $('input.awg.ch2').parent().hide();
+    $('input.awg.ch2.cosin').parent().show();
 });
 
 //show debug's page
@@ -55,121 +59,101 @@ $(function () {
 $(function() {
     $('button.awg#settings').bind('click', function() {
         $('div.awgcontent').hide();
-        $('div.awgcontent#settings-marker').show(); //first-page of settings
+        $('div.awgcontent#settings-main').show(); //first-page of settings
         $('button.awg').removeClass('selected');
         $('button.awg#settings').addClass('selected');
         return false;
     });
 });
 
-// set marker
-function awgmarker () {
-    $.getJSON('/mach/awg/settings-marker', {
+// main settings
+function awgmain () {
+    $.getJSON('/mach/awg/settings-main', {
         active: $('select.awg[name="active"]').val(),
         delay: $('input.awg[name="delay"]').val(),
         pulsew: $('input.awg[name="pulsew"]').val(),
-        source: $('select.awg[name="source"]').val()}, 
-    function(data) {
-        logdebug(data);
-        console.log("setting awg-marker: " + data.message);
-    }); 
-}
-         
-// set prepare
-function awgprepare () {
-    $.getJSON('/mach/awg/settings-prepare', {
+        source: $('select.awg[name="source"]').val(),
         predist: $('select.awg[name="predist"]').val(),
         outpmode: $('select.awg[name="outpmode"]').val(),
         samprat: $('select.awg[name="samprat"]').val()}, 
-    function(data) {logdebug(data);}); 
-        console.log("setting awg-prepare!");
-}
-
-// set squarewave
-function awgsquarewave () {
-    $.getJSON('/mach/awg/settings-squarewave', {
-        voltag1: $('input.awg[name="voltag1"]').val(),
-        pointnum1: $('input.awg[name="pointnum1"]').val(),
-        voltag2: $('input.awg[name="voltag2"]').val(),
-        pointnum2: $('input.awg[name="pointnum2"]').val()}, 
-    function(data) {logdebug(data);
-        console.log("setting awg-squarewave");
+    function(data) {
+        logdebug(data);
+        console.log("setting awg-main: " + data.message);
     }); 
-}
+};
 
 // set ifwave
 function awgifwave () {
     $.getJSON('/mach/awg/settings-ifwave', {
-        iffunction: $('select.awg[name="iffunction"]').val(),
-        iffreq: $('input.awg[name="iffreq"]').val(),
-        ifvoltag: $('input.awg[name="ifvoltag"]').val(),
-        ifoffset: $('input.awg[name="ifoffset"]').val()
+        iffunction1: $('select.awg.ch1[name="iffunction"]').val(),
+        ifdesign1: $('input.awg.ch1[name="ifdesign"]').val(),
+        iffreq1: $('input.awg.ch1[name="iffreq"]').val(),
+        ifvoltag1: $('input.awg.ch1[name="ifvoltag"]').val(),
+        ifoffset1: $('input.awg.ch1[name="ifoffset"]').val(),
+        outputch1: $('select.awg.ch1[name="outputch"]').val(),
+        oupfiltr1: $('select.awg.ch1[name="oupfiltr"]').val(),
+        oupconfig1: $('select.awg.ch1[name="oupconfig"]').val(),
+        iffunction2: $('select.awg.ch2[name="iffunction"]').val(),
+        ifdesign2: $('input.awg.ch2[name="ifdesign"]').val(),
+        iffreq2: $('input.awg.ch2[name="iffreq"]').val(),
+        ifvoltag2: $('input.awg.ch2[name="ifvoltag"]').val(),
+        ifoffset2: $('input.awg.ch2[name="ifoffset"]').val(),
+        outputch2: $('select.awg.ch2[name="outputch"]').val(),
+        oupfiltr2: $('select.awg.ch2[name="oupfiltr"]').val(),
+        oupconfig2: $('select.awg.ch2[name="oupconfig"]').val()
     }, 
     function(data) {
         logdebug(data);
         console.log("setting awg-ifwave: " + data.message);
+        console.log(data.wavefom);
     }); 
-}
+};
 
-// set channel
-function awgchannel () {
-    $.getJSON('/mach/awg/settings-channel', {
-        channel: $('select.awg[name="channel"]').val(),
-        outputch: $('select.awg[name="outputch"]').val(),
-        oupfiltr: $('select.awg[name="oupfiltr"]').val()}, 
-    function(data) {logdebug(data);}); 
-        console.log("setting awg-channel!");
-}
+// main -> ifwave
+$(function () {
+    $('input.awg#set-main').bind('click', function () {
+        $('div.awgcontent#settings-main').hide();
+        $('div.awgcontent#settings-ifwave').show(); }); 
+    return false;
+});
 
-//settings' forward sequences
+// Adjust input based on different function type:
 $(function () {
-    $('input.awg#set-marker').bind('click', function () {
-        $('div.awgcontent#settings-marker').hide();
-        $('div.awgcontent#settings-prepare').show(); }); });
+    $('select.awg.ch1#settings[name="iffunction"]').on('change', function () {
+        $('input.awg.ch1').parent().hide();
+        if ($('select.awg.ch1#settings[name="iffunction"]').val()=="arb") {
+            $('input.awg.ch1.arb').parent().show();
+        } else if ($('select.awg.ch1#settings[name="iffunction"]').val()=="cos") {
+            $('input.awg.ch1.cosin').parent().show();
+        } else if ($('select.awg.ch1#settings[name="iffunction"]').val()=="sin") {
+            $('input.awg.ch1.cosin').parent().show();
+        };
+        return false;
+    });
+});
 $(function () {
-    $('input.awg#set-prepare').bind('click', function () {
-        $('div.awgcontent#settings-prepare').hide();
-        $('div.awgcontent#settings-ifwave').show(); }); });
-//settings' backward sequences
-$(function () {
-    $('input.awg#bato-marker').bind('click', function () {
-        $('div.awgcontent#settings-prepare').hide();
-        $('div.awgcontent#settings-marker').show(); }); });
-$(function () {
-    $('input.awg#bato-prepare').bind('click', function () {
-        $('div.awgcontent#settings-ifwave').hide();
-        $('div.awgcontent#settings-prepare').show(); }); });
-//settings:  looping squarewave <-> channel
-$(function () {
-    $('input.awg#set-ifwave').bind('click', function () {
-        $('div.awgcontent#settings-ifwave').hide();
-        $('div.awgcontent#settings-channel').show(); }); });
-$(function () {
-    $('input.awg#set-channel').bind('click', function () {
-        $('div.awgcontent#settings-channel').hide();
-        $('div.awgcontent#settings-ifwave').show(); }); });
+    $('select.awg.ch2#settings[name="iffunction"]').on('change', function () {
+        $('input.awg.ch2').parent().hide();
+        if ($('select.awg.ch2#settings[name="iffunction"]').val()=="arb") {
+            $('input.awg.ch2.arb').parent().show();
+        } else if ($('select.awg.ch2#settings[name="iffunction"]').val()=="cos") {
+            $('input.awg.ch2.cosin').parent().show();
+        } else if ($('select.awg.ch2#settings[name="iffunction"]').val()=="sin") {
+            $('input.awg.ch2.cosin').parent().show();
+        };
+        return false;
+    });
+});
 
 // settings: execution
 $(function () {
-    $('input.awg#set-marker').bind('click', function () {
-        console.log("set-up marker");
-        awgmarker(); return false; }); });
-$(function () {
-    $('input.awg#set-prepare').bind('click', function () {
-        console.log("set-up prepare");
-        awgprepare(); return false; }); });
-$(function () {
-    $('input.awg#set-squarewave').bind('click', function () {
-        console.log("set-up square-wave");
-        awgsquarewave(); return false; }); });
+    $('input.awg#set-main').bind('click', function () {
+        console.log("set-up main");
+        awgmain(); return false; }); });
 $(function () {
     $('input.awg#set-ifwave').bind('click', function () {
         console.log("set-up if-wave");
         awgifwave(); return false; }); });
-$(function () {
-    $('input.awg#set-channel').bind('click', function () {
-        console.log("set-up channels");
-        awgchannel(); return false; }); });
 
 //reset
 $(function () {
