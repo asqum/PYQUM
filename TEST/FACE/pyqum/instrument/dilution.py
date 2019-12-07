@@ -3,11 +3,11 @@
 
 from pathlib import Path
 from datetime import datetime
-from time import mktime
+from time import mktime, sleep
 from os import listdir
 from numpy import diff
 from telnetlib import Telnet, IAC, NOP
-from pyqum.instrument.analyzer import derivative, curve
+from pyqum.instrument.analyzer import derivative, curve, cleantrace
 
 class bluefors:
 
@@ -36,24 +36,6 @@ class bluefors:
         except(ValueError): 
             print("index might be out of range")
             pass
-    
-    def pressurelog(self, Channel):
-        try:
-            LogFile = self.LogPath / self.Date / ("maxigauge " + self.Date + ".log")
-            with open(LogFile, 'r') as L:
-                L = L.read()
-            Plog = L.split('\n')[:-1]
-            Plog = [x for x in Plog if ',,' not in x] #filter-out bad logs
-            t = [datetime.strptime(x.split("CH")[0][:-1].split(',')[1], '%H:%M:%S') for x in Plog]
-            startime = t[0].strftime('%H:%M:%S')
-            t = [(x-t[0]).total_seconds()/3600 for x in t]
-            P = [float(x.split("CH")[Channel][14:21]) for x in Plog]
-            P_stat = [int(x.split("CH")[Channel][11]) for x in Plog]
-        except:
-            startime, t, P, P_stat = '', [], [], []
-            pass
-
-        return startime, t, P, P_stat
 
     def temperaturelog(self, Channel, Unit='K'):
         try:
@@ -62,15 +44,94 @@ class bluefors:
                 L = L.read()
             Tlog = list([x.split(',') for x in L.split('\n')[:-1]])
             t, T = [datetime.strptime(x[1], '%H:%M:%S') for x in Tlog], [float(x[2]) for x in Tlog]
-            startime = t[0].strftime('%H:%M:%S')
-            t = [(x-t[0]).total_seconds()/3600 for x in t] # in hour(s)
+            daystart = datetime.strptime('00:00:00', '%H:%M:%S')
+            t = [(x-daystart).total_seconds()/3600 for x in t] # converted to time lapsed in hour(s)
             if Unit.upper() == 'C':
                 T = [x - 273 for x in T]
-        except:
-            startime, t, T = 'NOT FOUND', [], []
+        
+        except(FileNotFoundError):
+            t, T = ['~ '], ['~ ']
+            pass
+        if not T: t, T = ['Nil '], ['Nil '] # check for empty-list
+
+        return t, T
+
+    def pressurelog(self, Channel):
+        try:
+            LogFile = self.LogPath / self.Date / ("maxigauge " + self.Date + ".log")
+            with open(LogFile, 'r') as L:
+                L = L.read()
+            stat = 'CH%s' %Channel
+            Plog = list([x.split(',') for x in L.split('\n')[:-1]])
+            t, P, P_stat = [datetime.strptime(x[1], '%H:%M:%S') for x in Plog if stat in x], [float(x[x.index(stat)+3]) for x in Plog if stat in x], [float(x[x.index(stat)+2]) for x in Plog if stat in x]
+            daystart = datetime.strptime('00:00:00', '%H:%M:%S')
+            t = [(x-daystart).total_seconds()/3600 for x in t] # converted to time lapsed in hour(s)
+        
+        except(FileNotFoundError):
+            t, P, P_stat = ['~ '], ['~ '], ['~ ']
+            pass
+        if not P: t, P, P_stat = ['Nil '], ['Nil '], ['Nil '] # check for empty-list
+
+        return t, P, P_stat
+
+    def flowmeterlog(self):
+        try:
+            LogFile = self.LogPath / self.Date / ("Flowmeter " + self.Date + ".log")
+            with open(LogFile, 'r') as L:
+                L = L.read()
+            Flog = list([x.split(',') for x in L.split('\n')[:-1]])
+            t, F = [datetime.strptime(x[1], '%H:%M:%S') for x in Flog], [float(x[2]) for x in Flog]
+            daystart = datetime.strptime('00:00:00', '%H:%M:%S')
+            t = [(x-daystart).total_seconds()/3600 for x in t] # converted to time lapsed in hour(s)
+            
+        except(FileNotFoundError):
+            t, F = ['~ '], ['~ ']
+            pass
+        if not F: t, F = ['Nil '], ['Nil '] # check for empty-list
+
+        return t, F
+
+    def statuslog(self, stat):
+        try:
+            LogFile = self.LogPath / self.Date / ("Status_" + self.Date + ".log")
+            with open(LogFile, 'r') as L:
+                L = L.read()
+            Slog = list([x.split(',') for x in L.split('\n')[:-1]])
+            # List equipments' Status:
+            t, S = [datetime.strptime(x[1], '%H:%M:%S') for x in Slog if stat in x], [float(x[x.index(stat)+1]) for x in Slog if stat in x]
+            daystart = datetime.strptime('00:00:00', '%H:%M:%S')
+            t = [(x-daystart).total_seconds()/3600 for x in t] # converted to time lapsed in hour(s)
+
+        except(FileNotFoundError):
+            t, S = ['~ '], ['~ ']
+            pass
+        if not S: t, S = ['Nil '], ['Nil '] # check for empty-list
+
+        return t, S
+
+    def channellog(self, stat):
+        try:
+            LogFile = self.LogPath / self.Date / ("Channels " + self.Date + ".log")
+            with open(LogFile, 'r') as L:
+                L = L.read()
+            Vlog = list([x.split(',') for x in L.split('\n')[:-1]])
+            # List equipments' Status:
+            t, V = [datetime.strptime(x[1], '%H:%M:%S') for x in Vlog if stat in x], [int(x[x.index(stat)+1]) for x in Vlog if stat in x]
+            daystart = datetime.strptime('00:00:00', '%H:%M:%S')
+            t = [(x-daystart).total_seconds()/3600 for x in t] # converted to time lapsed in hour(s)
+            
+        except(FileNotFoundError):
+            t, V = ['~ '], ['~ ']
             pass
 
-        return startime, t, T
+        # Post processing:
+        if not V:
+             t, V = ['Nil '], ['Nil '] # check for empty-list
+        
+        # Cleanup repeating progress:
+        t = [t[i] for i in cleantrace(V)]
+
+        return t, V
 
     def connecting(self, ip="192.168.1.23", port=8325):
         try:
@@ -95,65 +156,78 @@ class bluefors:
             pass 
             print("Check the IP/Port and connection speed!")
             return None
-        
-    def gauge(self, Channel):
-            self.connect.write(("mgstatus %s\n"%Channel).encode('ascii'))
-            output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
-            return output[1]
 
+class control(bluefors):
+    '''Initialize the control-panel'''
+    def __init__(self):
+        super().__init__()
+        self.connecting()
+        self.selectday(len(self.Days)-1) #Get the latest
+    
+    def status(self, Node="v", Channel=""):
+        self.connect.write(("status %s%s\n"%(Node,Channel)).encode('ascii'))
+        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
+        print(output[1].upper())
+        return output[1]
+
+    def maxigauge(self, Channel):
+        self.connect.write(("mgstatus %s\n"%Channel).encode('ascii'))
+        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
+        print(output[1].upper())
+        return output[1]
+
+    def on(self, Node="v", Channel=""):
+        '''Turn on <Node> of channel-<Channel>'''
+        self.connect.write(("on %s%s\n"%(Node,Channel)).encode('ascii'))
+        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
+        print("%s%s was turned ON: %s"%(Node,Channel,output[1].upper()))
+        return output[1]
+    
+    def off(self, Node="v", Channel=""):
+        '''Turn off <Node> of channel-<Channel>'''
+        self.connect.write(("off %s%s\n"%(Node,Channel)).encode('ascii'))
+        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
+        print("%s%s was turned OFF: %s"%(Node,Channel,output[1].upper()))
+        return output[1]
+
+    def condense_circ(self):
+        self.on('v',5)
+        sleep(3)
+        self.on('v',6)
+        sleep(3)
+        self.on('compressor')
+        sleep(5)
+        self.off('v',4)
+
+    def prepare_circ(self):
+        self.off('compressor')
+        sleep(2)
+        self.off('v',6)
+        sleep(2)
+        if self.pressurelog(3)[2][-1] < 800: # attn: use maxigauge instead!
+            self.off('v',5)
+            self.off('v',7)
+        else: print("Please close V5 then V7 manually after P3<800")
+        
     def close(self):
         self.connect.write("exit\n".encode('ascii'))
         self.connect.close()
         print("Dilution's server disconnected!")
-
-class valve(bluefors):
-    '''Initialize the valves'''
-    def __init__(self, connect):
-        super().__init__()
-        self.connect = connect
     
-    def status(self, Channel):
-        self.connect.write(("status v%s\n"%Channel).encode('ascii'))
-        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
-        return output[1]
 
-class scroll(bluefors):
+class warmup(bluefors): #to be verified..
     '''Initialize the scrolls'''
     def __init__(self, connect):
         super().__init__()
         self.connect = connect
-    
-    def status(self, Channel):
-        self.connect.write(("status scroll%s\n"%Channel).encode('ascii'))
-        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
-        return output[1]
-
-    def off(self, Channel):
-        self.connect.write(("off scroll%s\n"%Channel).encode('ascii'))
-        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
-        return output[1]
-
-    def on(self, Channel):
-        self.connect.write(("on scroll%s\n"%Channel).encode('ascii'))
-        output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
-        return output[1]
-
-class warmup(bluefors):
-    '''Initialize the scrolls'''
-    def __init__(self, connect):
-        super().__init__()
-        self.connect = connect
-    
     def status(self):
         self.connect.write(("status e1302p=30\n").encode('ascii'))
         output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
         return output[1]
-
     def off(self, Channel):
         self.connect.write(("off e1302%s\n"%Channel).encode('ascii'))
         output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
         return output[1]
-
     def on(self, Channel):
         self.connect.write(("on e1302%s\n"%Channel).encode('ascii'))
         output = self.connect.read_until(b"\r\n").decode('ascii').replace('\r\n','').split(": ")
@@ -162,11 +236,14 @@ class warmup(bluefors):
 def test():
     from scipy.stats import linregress
     from pyqum.instrument.network import notify
-    from time import sleep
 
     b = bluefors()
     # b.selectday(b.whichday())
-    b.selectday(len(b.Days)-1)
+    b.selectday(len(b.Days)-2) #latest reading
+
+    valve = 'compressor'
+    V = b.channellog(valve)
+    curve(V[0], V[1], valve, "t(hr)", "State")
 
     # Ch = 5
     # P = b.pressurelog(Ch)
@@ -174,32 +251,31 @@ def test():
     # t, dPdt = derivative(P[1], P[2], 3)
     # curve(t, dPdt, "dP%s/dt Starting %s"%(Ch, P[0]), "t(hr)", "dP/dt(mbar/hr)")
 
-    Ch, T_unit = 2, 'C'
-    while True:
-        T = b.temperaturelog(Ch, T_unit)
-        print("Current 4K-plate Temperature: %s" %T[2][len(T[2])-7:-1])
-        reg = linregress(T[1][len(T[2])-7:-1], T[2][len(T[2])-7:-1])
-        ETA = (28-T[2][-1]) / reg[0]
-        print("ETA for T%s in %s hour(s)" %(Ch,ETA))
-        sleep(10)
-        if ETA < 0:
-            # notify('ufocrew@gmail.com', 'T2', 'Exceeding 28C')
-            break
+    # F = b.flowmeterlog()
+    # curve(F[1], F[2], "Flow Starting %s"%(F[0]), "t(hr)", "Flow(mmol/s)")
+
+    # Ch, T_unit = 2, 'C'
+    # while True:
+    #     T = b.temperaturelog(Ch, T_unit)
+    #     print("Current 4K-plate Temperature: %s" %T[2][len(T[2])-7:-1])
+    #     reg = linregress(T[1][len(T[2])-7:-1], T[2][len(T[2])-7:-1])
+    #     ETA = (28-T[2][-1]) / reg[0]
+    #     print("ETA for T%s in %s hour(s)" %(Ch,ETA))
+    #     sleep(10)
+    #     if ETA < 0:
+    #         # notify('ufocrew@gmail.com', 'T2', 'Exceeding 28C')
+    #         break
 
     # curve(T[1], T[2], "T%s Starting %s"%(Ch, T[0]), "t(hr)", "T(%s)"%T_unit)
     # t, dTdt = derivative(T[1], T[2], 3)
     # curve(t, dTdt, "dT%s/dt Starting %s"%(Ch, T[0]), "t(hr)", "dT/dt(%s/hr)"%T_unit)    
 
-    # if b.connecting():
-    #     v, s, w = valve(b.connect), scroll(b.connect), warmup(b.connect)
-    #     print(v.status(17))
-    #     print("P2: %s"%b.gauge(2))
-    #     print(s.status(2))
-    #     # print("ON Scroll2: %s"%s.on(2).upper())
-    #     # if int(input("TURN OFF SCROLL2(0/1)? ")):
-    #     #     print("OFF Scroll2: %s"%s.off(2).upper())
-    #     print("warmup heater: %s" %w.status())
-    #     b.close()
+    # Control-panel:
+    # c = control()
+    # c.maxigauge(3)
+    # c.status('v',5)
+    # c.prepare_circ()
+    # c.close()
 
 # test()
 

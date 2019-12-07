@@ -1,8 +1,8 @@
 {% extends 'base.html' %} 
 {% block title %}WELCOME TO PYQUM v0.1{% endblock %}
 
-{% block header %}
-
+{% block head %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/auth/posts.js') }}"></script>
 {% endblock %}
 
 {% block content %} 
@@ -17,10 +17,12 @@
 </div>
 {% endif %}
 
-{% for post in posts %}
+<div class="posts"></div>
 
-<div class="container" id="post">
-    <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+<!-- {% for post in posts %} -->
+
+<!-- <div class="container" id="post">
+    <div class="row">
         <div class="title">{{ post['title'] }}</div>
     </div>
     <div class='row'>
@@ -32,16 +34,17 @@
         </div>
     </div>
     <div class='row'>
-        <p class="body">{{ post['body'] }}</p>
-        <p class="body">{{ "123<p>123</p>" }}</p>
+        <p class="body posts">
+            {{ post['body'] }}
+        </p>
     </div>
-</div>
+</div> -->
 
-{% if not loop.last %}
+<!-- {% if not loop.last %}
 <hr>
-{% endif %}
+{% endif %} -->
 
-{% endfor %} 
+<!-- {% endfor %}  -->
 
 </body>
 

@@ -66,10 +66,37 @@ def UnwraPhase(X, Pha, Flatten=True, Normalized=True):
         UPHA = minmax_scale(UPHA)
     return UPHA
     
+def cleantrace(V):
+    '''take out repeating element(s) from a trace / list in a progressing manner.
+    1. Please note that it is NOT removing duplicate(s) per se
+    2. Intrusive: V will be modified directly by this method'''
+    turn = 0
+    order = [x for x in range(len(V))] # V's indexes
+    if len(V) > 1:
+        while turn < len(V) - 1:
+            if V[turn] == V[turn+1]:
+                V.pop(turn+1)
+                order.pop(turn+1)
+                # print(turn)
+            else: 
+                turn += 1        
+        return order
+    else: return order
+
+
 # Fitting
 
 
 
 def test():
-
+    x = [1,2,2,2,3,3,3,3,3,3,3.5,5,5,5,5,5,5,5,7,7,7,8,8,8,8,8,8,12,12,13,12,12,12,10,8,7,5,5,5,5,5,3]
+    y = [1,2,2,2,3,3,3,3,3,3,3.5,5,5,5,5,5,5,5,7,7,7,8,8,8,8,8,8,12,12,13,12,12,12,10,8,7,5,5,5,5,5,3]
+    print('x-before: %s' %x)
+    order = cleantrace(x)
+    print('x-after: %s' %x)
+    ycleaned = [y[i] for i in order]
+    print('order:\n%s\ny-cleaned:\n%s' %(order, ycleaned))
     return
+
+# test()
+

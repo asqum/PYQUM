@@ -98,7 +98,7 @@ def set_status(instr_name, info):
 # save data in csv for export and be used by clients:
 def set_csv(data_dict, filename):
     df = DataFrame(data_dict, columns= [x for x in data_dict.keys()])
-    export_csv = df.to_csv (Path(PORTAL_PATH) / filename, index = None, header=True)
+    export_csv = df.to_csv(Path(PORTAL_PATH) / filename, index = None, header=True)
     return export_csv
 
 class address:
@@ -181,7 +181,7 @@ def translate_scpi(Name, instance, a, b):
 
         for i in range(len(parakeys)):
             if str(action[i+1]) == '':
-                paravalues.append("NIL") # allow for arbitrary choosing
+                paravalues.append("NIL") # allow for arbitrary choosing (turn-off certain parameter(s))
             elif ' ' in str(action[i+1]) and not "'" in str(action[i+1]): #set parameters for each header by certain parakey
                 actionwords = str(action[i+1]).split(' ')
                 oddwords, evenwords, J = actionwords[1::2], actionwords[0::2], []

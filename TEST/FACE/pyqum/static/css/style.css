@@ -40,8 +40,8 @@ body {
     text-shadow: -1.3px 0 darkblue, 0 1.3px darkblue, 1.3px 0 darkblue, 0 -1.3px darkblue;
 }
 h1, h2, h3, h4, h5, h6 {
-    font-family: serif;
-    color: #377ba8;
+    font-family: 'Times New Roman', Times, serif;
+    color: #06062e;
     margin: 0.35rem 0;
 }
 hr {
@@ -375,9 +375,9 @@ a.action {
     font-style: italic;
     color: grey;
 } */
-.body {
+.posts .body {
     font-family: 'Times New Roman', Times, serif;
-    font-size: 1.4em;
+    font-size: 1.2em;
 }
 
 /* Sliders */

@@ -552,35 +552,26 @@ def bdrhistory():
 	T_Ch = int(request.args.get('T_Ch'))
 	P_Ch2 = int(request.args.get('P_Ch2'))
 	T_Ch2 = int(request.args.get('T_Ch2'))
+	OptionS = request.args.get('OptS')
+	OptionV = request.args.get('OptV')
+
 	b = bluefors()
 	b.selectday(wday)
-	[startimeP, tp, P, P_stat] = b.pressurelog(P_Ch)
-	[startimeT, tt, T] = b.temperaturelog(T_Ch)
-	if P_Ch2 > 0 and T_Ch2 > 0:
-		[startimeP, tp2, P2, P_stat2] = b.pressurelog(P_Ch2)
-		[startimeT, tt2, T2] = b.temperaturelog(T_Ch2)
-	elif P_Ch2 > 0:
-		[startimeP, tp2, P2, P_stat2] = b.pressurelog(P_Ch2)
-		[startimeT, tt2, T2] = [startimeT, tt, T]
-	elif T_Ch2 > 0:
-		[startimeP, tp2, P2, P_stat2] = [startimeP, tp, P, P_stat]
-		[startimeT, tt2, T2] = b.temperaturelog(T_Ch2)
-	else:
-		[startimeP, tp2, P2, P_stat2] = [startimeP, tp, P, P_stat]
-		[startimeT, tt2, T2] = [startimeT, tt, T]
 
-	bdrlogs = dict(bdr_P=P,bdr_T=T)
+	tp, P, P_stat = b.pressurelog(P_Ch)
+	tt, T = b.temperaturelog(T_Ch)
+	tp2, P2, P_stat2 = b.pressurelog(P_Ch2)
+	tt2, T2 = b.temperaturelog(T_Ch2)
+
+	if OptionS == 'flow': tos, Opts = b.flowmeterlog()
+	else: tos, Opts = b.statuslog(OptionS)
+	tov, Optv = b.channellog(OptionV)
+
+	bdrlogs = dict(bdr_P=P,bdr_T=T) # for forecast
 	# print("T: %s"%bdrlogs['bdr_%s'%('T')][-15:])
-	
-	# align the time-stamp:
-	# T_max = max([tt[-1], tt2[-1], tp[-1], tp2[-1]])
-	# tt = [x + abs(tt[-1]-T_max) for x in tt]
-	# tt2 = [x + abs(tt2[-1]-T_max) for x in tt2]
-	# tp = [x + abs(tp[-1]-T_max) for x in tp]
-	# tp2 = [x + abs(tp2[-1]-T_max) for x in tp2]
 
 	log = pauselog() #disable logging (NOT applicable on Apache)
-	return jsonify(log=str(log), startimeP=startimeP, startimeT=startimeT, tp=tp, P=P, P_stat=P_stat, tt=tt, T=T, tp2=tp2, P2=P2, P_stat2=P_stat2, tt2=tt2, T2=T2)
+	return jsonify(log=str(log), tp=tp, P=P, P_stat=P_stat, tt=tt, T=T, tp2=tp2, P2=P2, P_stat2=P_stat2, tt2=tt2, T2=T2, tos=tos, Opts=Opts, tov=tov, Optv=Optv)
 @bp.route('/bdr/history/forecast', methods=['GET'])
 def bdrhistoryforecast():
 	# logging interval: 1 min
@@ -708,7 +699,7 @@ def dcmeasureivcurve():
 # Download File:
 @bp.route('/uploads/<path:filename>', methods=['GET', 'POST'])
 def download(filename):
-	uploads = "C:/Users/ASQUM/Documents/MEGAsync/CONFIG/PORTAL"
+	uploads = "C:/Users/ASQUM/HODOR/CONFIG/PORTAL"
 	return send_from_directory(directory=uploads, filename=filename)
 
 

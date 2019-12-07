@@ -6,7 +6,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 
 import json, time, random, itertools, glob
 from flask import (
-    Flask, Blueprint, flash, g, redirect, render_template, request, url_for, Response,
+    Flask, Blueprint, flash, g, redirect, render_template, request, url_for, Response, jsonify,
     stream_with_context
 )
 from werkzeug.exceptions import abort
@@ -18,17 +18,27 @@ bp = Blueprint(myname, __name__) # to create endpoint for {{url_for(blog.XXX)}}
 
 @bp.route('/')
 def index():
+    """render index.html"""
+    return render_template('blog/index.html')
+
+@bp.route('/posts')
+def posts():
     """Show all the posts, most recent first."""
     db = get_db()
     posts = db.execute(
         'SELECT p.id, title, body, created, author_id, username'
-        ' FROM post p JOIN user u ON p.author_id = u.id'
-        ' ORDER BY created DESC'
+        ' FROM post p JOIN user u ON p.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
+        ' ORDER BY modified DESC' # ordered by modified
     ).fetchall()
-    for p in posts:
-        print("Posts: %s" %p['body'])
-    return render_template('blog/index.html', posts=posts)
+    # JSON-Serialization:
+    posts = [dict(p) for p in posts] # if (g.user['id'] == p['author_id'])] # convert sqlite3.row into dictionary
 
+    if g.user is None:
+        guserid = g.user
+    else:
+        guserid = g.user['id']
+
+    return jsonify(posts=posts,guserid=guserid)
 
 def get_post(id, check_author=True):
     """Get a post and its author by id.
@@ -104,8 +114,8 @@ def update(id):
         else:
             db = get_db()
             db.execute(
-                'UPDATE post SET title = ?, body = ? WHERE id = ?',
-                (title, body, id)
+                'UPDATE post SET title = ?, body = ?, modified = ? WHERE id = ?',
+                (title, body, time.strftime('%Y-%m-%d %H:%M:%S'), id)
             )
             db.commit()
             return redirect(url_for('blog.index'))

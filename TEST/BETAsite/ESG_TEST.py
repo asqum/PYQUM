@@ -1,9 +1,9 @@
-# This prototype uses heavy hybrid with VI
+# ESG TEST:
 import matplotlib.pyplot as plt
 import visa, time
 import numpy as np
 
-# vsa
+# esg
 rm = visa.ResourceManager()
 esg = rm.open_resource('GPIB0::27::INSTR') #establishing connection using GPIB# with the machine
 esg.read_termination = '\n' #omit termination tag from output 

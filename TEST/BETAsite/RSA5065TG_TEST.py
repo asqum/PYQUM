@@ -1,4 +1,5 @@
 '''
+RiGoL Spectrum Analyzer (up to 6.5GHz)
 Prerequisition: NI-MAX, NI-488.2, NI-VISA, NI-DAQ, pip install pyvisa
 If problems persist:
 1. BOTH PC and Instrument have to be restarted;
