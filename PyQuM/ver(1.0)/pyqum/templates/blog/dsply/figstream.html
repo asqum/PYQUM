@@ -1,0 +1,24 @@
+<!doctype html>
+
+<head>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/stream.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>  
+</head>
+
+<body class="fig">
+    <div style="padding:16px;margin-top:35px;"></div>
+    <div>
+        <h5 id="counter"></h5>
+        <canvas id="canvas" style="display: block; width: 1000px; height: 500px;" width="100" height="100" class="chartjs-render-monitor"></canvas>
+    </div>
+    {% for item in data %}
+        <script>
+            document.getElementById("counter").innerHTML = "COUNT: " + {{item[0] + 1}};
+            SChart("canvas", {{item[1] | tojson}});
+        </script>
+    {% endfor %}
+
+</body>
+
+</html>

@@ -1,0 +1,64 @@
+<!doctype html> <!--extended from parent: machine.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/sg.js') }}"></script>
+</head>
+
+<body class="mach">
+<div>
+
+    <div class="tab2">
+    <form method='GET'>
+        <!-- <div><select class='sg' id="settings" name='sgtype' type="text">
+                <option value='select' selected>-select-</option>
+                <option value='PSGV'>PSGV</option>
+                <option value='PSGA'>PSGA</option>
+                <option value='ESG' >ESG </option>
+                <option value='MXG' >MXG </option>
+        </select></div> -->
+        <button class='sg' id='sgtype' name='PSGV'>PSGV</button>
+        <button class='sg' id='sgtype' name='PSGA'>PSGA</button>
+        <button class='sg' id='sgtype' name='ESG'>ESG</button>
+        <button class='sg' id='sgtype' name='MXG'>MXG</button>
+
+        <button class='sg' id='log'>INSTR-LOG</button>
+        
+    </form>
+    </div>
+
+    <div class="sgcontent" id="log"></div>
+    <div class="sgcontent" id="settings">
+        <div class="container">
+            <form method='GET'>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-10" id='left'><label>Frequency</label></div>
+                    <div class="col-12" id='left'><input class='sg scale' id="settings" name='freq' type="text" value=""/></div>
+                    <div class="col-10" id='left'><input class="sg unit" id="settings" name='freq' value="GHz"></div>
+                    <!-- Close / Reset -->
+                    <div class="col-15" id='right'>
+                        <button class='sg push_button w-95 red' id='closet'>CLOSE</button>
+                    </div>
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-10" id='left'><label>Power</label></div>
+                    <div class="col-12" id='left'><input class='sg scale' id="settings" name='powa' type="text" value=""/></div>
+                    <div class="col-10" id='left'><input class="sg unit" id="settings" name='powa' value="dBm"></div>
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-10" id='left'><label>RF port</label></div>
+                    <div class="col-20" id='left'>
+                        <label class="switch"><input class='sg' id=settings name='oupt' type="checkbox">
+                            <div class="slider smooth"><span class="on">ON</span><span class="off">OFF</span></div>
+                        </label>
+                    </div>
+                </div>
+                
+                
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

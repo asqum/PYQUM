@@ -1,6 +1,7 @@
-# from pyqum.instrument.analyzer import test
-from pyqum.instrument.benchtop import DSA8 as ds
+# from pyqum.instrument import analyzer as subject
+# from pyqum.instrument.benchtop import DSA8 as subject
+from pyqum.instrument.modular import VSA as subject
 
-ds.test()
+subject.test()
 
 

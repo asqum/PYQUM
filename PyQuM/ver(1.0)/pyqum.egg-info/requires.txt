@@ -1,0 +1,14 @@
+numpy
+flask
+geocoder
+scrypt
+pyvisa
+nidaqmx
+colorama
+si-prefix
+typed-ast
+peakutils
+
+[test]
+pytest
+coverage

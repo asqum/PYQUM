@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+
+{% block head %}
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script type="text/javascript" src="{{ url_for('static', filename='js/auth/measurement.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<body class="user">
+  <div class="container" id="user">
+    <form method="post">
+
+        <div class="row">
+          <div class="col-8" id='left'>
+            <label for="sample">Sample</label>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-15" id='left'>
+              <select name="sample" id="sample" required>
+              </select>
+          </div>
+        </div>
+        
+        <div class="row"> <!-- SUBMIT BUTTON -->
+        <div class="col-8" id='left'></div>
+        <div class="col-15" id='left'><input type="submit" value="GO"></div>
+        </div>
+
+    </form>
+  </div>
+</body>
+{% endblock %}

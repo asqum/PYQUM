@@ -1,0 +1,128 @@
+/* Test */
+.atest {
+    align-content: center;
+    font-size: 35pt;
+    color: red;
+}
+
+/* Vertical Tabs #1 */
+.tab {
+    position: fixed;
+    align-content: space-around;
+    padding-left: 0%;
+    float: left;
+    background-color: #333333;
+    width: 7%; /*should align w/ margin-left for tabcontent! */
+    height: 93vh;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+.tab button {
+    background-color: inherit;
+    color: white;
+    display: block;
+    padding: 12px 8.8%; /*vertical horizontal padding*/
+    width: 100%;
+    border: none;
+    outline: none;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.tab button:hover {
+    background-color: white;
+    color: #333333;
+}
+.tab button.active {
+    color: blue;
+    font-weight: 777;
+    background-color: gold;
+}
+.tabcontent {
+    position: fixed;
+    display: none;
+    float: left;
+    padding: 0px 0.5%;
+    width: 93%; /*100 - tab/margin - 2*padding */
+    height: 100vh; /*essential for mobile browsing*/
+    margin-left: 6%;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+.tabrow {
+    width:95%;
+    display: block;
+    float: right;
+    padding: 2px;
+}
+.tabcontent#all {
+    position: fixed;
+    display: block;
+    width: 93%; /*100 - tab/margin - 2*padding */
+    margin-left: 6%;
+    height: 100vh; /*essential for mobile browsing*/
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+
+/* Modified Tabs */
+.connect, .reset, .generate {
+    background-color: #4CAF50;
+    color: white;
+}
+.close, .abort {
+    background-color: tomato;
+    color: white;
+}
+.error {
+    background-color: darkslategray;
+}
+.selected {
+    color: blue;
+    font-weight: 777;
+    background-color: gold;
+}
+.newupdate {
+    background-color: rgb(255, 145, 0);
+}
+.setvalue {
+    color: rgb(29, 7, 153);
+    font-weight: 777;
+    background-color: rgb(13, 230, 78);
+}
+.getvalue {
+    color: rgb(219, 12, 12);
+    font-weight: 777;
+    background-color: rgb(241, 239, 110);
+}
+.unit {
+    color: rgb(49, 48, 48);
+    font-weight: 777;
+}
+
+/* for AI-Bridge */
+.suggestion {
+    background-color: rgb(203, 124, 240);
+    /* background-color: rgb(240, 20, 166); */
+}
+
+/* special adjustment to jobcontent due to the absence of instrlog */
+div.allcontent {
+    position: fixed;
+    display: block;
+    width: 94%;
+    height: 93vh;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+img {
+    object-fit: contain;
+    display: block;
+    width: 70%;
+}
+
+/* Chart */
+#bdr-chart-01 {
+    padding-top: 2rem;
+    height: 100%;
+}
