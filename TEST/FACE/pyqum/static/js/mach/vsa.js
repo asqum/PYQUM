@@ -79,6 +79,7 @@ function vsaplotIQA(x1,y1,y2,y3,xtitle,ytitle) {
 
 function vsaplotPhase(x1,y1,xtitle,ytitle) {
     console.log(xtitle);
+    var maxscal = Math.max([Math.max(x1), Math.max(y1)]);
     
     let trace1 = {x: [], y: [], mode: 'markers', marker: { line_width: 1, symbol: 'circle', size: 16}, 
         name: 'I',
@@ -90,6 +91,7 @@ function vsaplotPhase(x1,y1,xtitle,ytitle) {
         height: $(window).height()*0.66,
         width: $(window).width()*0.7,
         xaxis: {
+            domain: [-maxscal*1.2, maxscal*1.2],
             zeroline: false,
             title: xtitle,
             titlefont: {size: 18},
@@ -100,6 +102,7 @@ function vsaplotPhase(x1,y1,xtitle,ytitle) {
             zerolinecolor: 'rgb(74, 134, 232)',
         },
         yaxis: {
+            domain: [-maxscal*1.2, maxscal*1.2],
             zeroline: false,
             title: ytitle,
             titlefont: {size: 18},
@@ -134,18 +137,16 @@ function vsaplotPhase(x1,y1,xtitle,ytitle) {
 
 function vsaplay() {
     $.getJSON('/mach/vsa/play', {
+        average: $('select.vsa#average').val(),
+        avenum: $('input.vsa#settings[name="avenum"]').val(),
     }, function (data) {
         console.log(data.log);
+        $('div#vsa-status').empty().append($('<h4 style="color: red;"></h4>').text(data.nIQpair + 'pairs of IQ extracted!'));
 
         window.t = data.t;
         window.I = data.I;
         window.Q = data.Q;
         window.A = data.A;
-
-        if ($('select.vsa#average').val()==1) {
-            console.log("averaging mode");
-
-        };
 
         vsaplotIQA(t, I, Q, A, "time(s)", "IQA(V)");
         $( "i.vsaplay" ).remove(); //clear previous
@@ -230,6 +231,7 @@ $(function () {
     $('button.vsa#reset').bind('click', function () { // id become #
         $.getJSON('/mach/vsa/reset', {
         }, function (data) {
+            console.log('AWG Status: ' + data.message);
             if (data.message != 0){
                 $('button.vsa').removeClass('error');
                 $('button.vsa#close').removeClass('close');

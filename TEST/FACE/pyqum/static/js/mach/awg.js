@@ -264,9 +264,10 @@ $(function () {
 
 //reset
 $(function () {
-    $('button.awg#reset').bind('click', function () { // id become #
+    $('button.awg#reset').on('click', function () { // id become #
         $.getJSON('/mach/awg/reset', {
         }, function (data) {
+            console.log('AWG Status: ' + data.message);
             if (data.message != 0){
                 $('button.awg').removeClass('error');
                 $('button.awg#close').removeClass('close');

@@ -1,4 +1,4 @@
-'''TOOLBOX for all other modules'''
+'''For building, extracting, searching....... '''
 
 import logging
 from time import sleep
@@ -99,7 +99,7 @@ def squarewave(totaltime, ontime, delay, scale=1, dt=0.8, diff=False):
         totaltime: total duration (minimum: 1000*0.8ns ~ 1us)
         ontime: +1V duration
         delay: duration before ontime
-        scale: -1 to 1 output level
+        scale: -1 to 1 output level in V
         dt: time-resolution of AWG in ns
         diff: 0V -> -1V if True
     '''
@@ -108,6 +108,7 @@ def squarewave(totaltime, ontime, delay, scale=1, dt=0.8, diff=False):
     offpoints = round((totaltime - ontime - delay) / dt)
     padding = 8 - (delaypoints + onpoints + offpoints)%8 # so that total-points is the multiples of 8
     if diff: Voff = -scale
+    elif (ontime == totaltime): Voff = 1 # always ON
     else: Voff = 0
     wave = [Voff] * delaypoints + [scale] * onpoints + [Voff] * (offpoints + padding)
     return wave

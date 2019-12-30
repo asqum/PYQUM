@@ -78,7 +78,7 @@ def all_measurequm_out():
 @bp.route('/char', methods=['GET'])
 def char(): 
     print('User %s is allowed to run measurement: %s'%(g.user['username'],session['run_clearance']))
-    samplename = get_status("MSSN")['sample']
+    samplename = get_status("MSSN")[session['user_name']]['sample']
     return render_template("blog/msson/char.html", samplename=samplename, people=session['people'])
 
 # CHAR -> 1. F-Response ============================================================================================================================================

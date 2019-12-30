@@ -1,0 +1,228 @@
+<!doctype html> <!--extended from parent: mission.html, which in turn inherited base.html-->
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/char/sqepulse.js') }}"></script>
+</head>
+
+<body class='char'>
+
+<div class="container">
+
+        <div class="row"> <!-- New Role for File-status -->
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="wday" type="text"></select></div>
+            <div class="col-7" id='left'><select class='char' id="sqepulse" name="wmoment" type="text"></select></div>
+            <div class="col-20" id='left'>
+                <ul class="data-status" id="sqepulse">
+                    <li>
+                        <span class="bar data-progress" id="sqepulse"></span>
+                        <h4 class="data-eta" id="sqepulse"></h4>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="sqepulse-eta"></a></div></div>
+            {% if g.user['measurement'] %}
+                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="sqepulse-resume">RESUME</button></div>
+                <div class="col-10" id='right'><button class="char push_button w-95 red" id="sqepulse-pause">PAUSE</button></div>
+                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="sqepulse-savenote">SAVE NOTE</button></div>
+            {% endif %}
+        </div>
+
+        <div class="row">
+            <!-- Read-only Comment -->
+            <div class="col" id='left' style="width:49%">
+                <textarea class='char' id="sqepulse" name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
+            </div>
+            <!-- Editable Note -->
+            <div class="col" id='left' style="width:49%">
+                <textarea class='char' id="sqepulse" name="note" type="text" rows="15" cols="73">--note--</textarea>
+            </div>
+        </div>
+
+        <!-- optional parameters line #1 -->
+        <div class="row">
+            <div class="col-15" id='left'><label>REPEAT#</label></div>
+            <div class="col-15" id='left'><label>Flux-Bias (V/A)</label></div>
+            <div class="col-15" id='left'><label>XY-Frequency (GHz)</label></div>
+            <div class="col-15" id='left'><label>XY-Power (dBm)</label></div>
+        </div>
+        <div class="row">
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-repeat" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-fluxbias" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-xyfreq" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-xypowa" type="text"></select></div> 
+        </div>
+
+        <!-- basic parameters line #2 -->
+        <div class="row">
+            <div class="col-15" id='left'><label>S-Parameter</label></div>
+            <div class="col-15" id='left'><label>IF-Bandwidth (Hz)</label></div>
+            <div class="col-15" id='left'><label>Frequency (GHz)</label></div>
+            <div class="col-15" id='left'><label>Power (dBm)</label></div>
+        </div>
+        <div class="row">
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-sparam" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-ifb" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-freq" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-powa" type="text"></select></div>
+        </div>
+
+        <!-- Check, Plot & Download Data -->
+        <div class="row">
+            <div class="col-10" id='left'>
+                <label class="sqepulse switch">
+                    <input class="sqepulse" id='live-update' type="checkbox">
+                    <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
+                </label>
+            </div>
+            <div class="col-10" id='left'><input class='char data' id="sqepulse" name='1d-data' type="submit" value="1D-Data"/></div>
+            <div class="col-10" id='left'><input class='char data' id="sqepulse" name='2d-data' type="submit" value="2D-Data"/></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="sqepulse-savecsv">CSV</button></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 red" id="sqepulse-datareset">CLIP</button></div>
+        </div>
+
+        <!-- Data Assembly and Grooming -->
+        <div class="row">
+            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="1d-phase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="2d-amphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="2d-direction" type="text"></select></div>
+        </div>
+
+        <div id="char-sqepulse-announcement"></div>
+
+        <div id="char-sqepulse-chart"></div>
+        
+        <!-- Brings up dialogue box for parameter settings -->
+        <div class="modal new sqepulse">
+            <div class="modal-overlay modal-toggle new sqepulse"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading">Setting up Measurement:</h2>
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <!-- Optional Parameters -->
+                        <div class="row">
+                            <!-- <div class="col-20" id='left'><label></label></div> -->
+                            <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
+                            <div class="col-20" id='left'><label>XY-Frequency (GHz)</label></div>
+                            <div class="col-20" id='left'><label>XY-Power (dBm)</label></div> 
+                        </div>
+                        <div class="row">
+                            <!-- <div class="col-20" id='left'></div> -->
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="fluxbias" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="xyfreq" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="xypowa" type="text" value="OPT,"/></div>
+                        </div>
+                        <!-- Basic Parameters -->
+                        <div class="row">
+                            <div class="col-20" id='left'><label>S-Parameter</label></div>
+                            <div class="col-20" id='left'><label>IF-Bandwidth (Hz)</label></div>
+                            <div class="col-20" id='left'><label>Frequency (GHz)</label></div>
+                            <div class="col-20" id='left'><label>Power (dBm)</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="sparam" type="text" value="S21,"/></div>
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="ifb" type="text" value="1000"/></div>
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="freq" type="text" value="5 to 9 * 3000"/></div>
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="powa" type="text" value="-37 to 1 * 137 r 700"/></div> 
+                        </div>
+                        <!-- Comment -->
+                        <div class="row">
+                            <div class="col-75" id='left'>
+                                <textarea class='char' id="sqepulse" name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
+                            </div>
+                        </div>
+                        <div class="row"> <!-- New Row for RUN MODE -->
+                            <div class="col-15" id='left'>
+                                <label class="switch"><input class='char' id=sqepulse name='repeat' type="checkbox">
+                                    <div class="slider smooth"><span class="on">REPEAT</span><span class="off">ONCE</span></div>
+                                </label>
+                            </div>
+                            <div class="col-15" id='left'>
+                                <label class="switch"><input class='char' id=sqepulse name='simulate' type="checkbox">
+                                    <div class="slider smooth"><span class="on">TEST ETA</span><span class="off">LOGGED</span></div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="row"> <!-- New Row for RUNNING -->
+                            {% if g.user['measurement'] %}
+                                <div class="col-15" id='left'><input class="char modal-toggle new sqepulse" id="sqepulse-run"  type="submit" value="RUN"/></div>
+                            {% endif %}
+                            <div class="col-15" id='left'><input class="char modal-toggle new sqepulse" id="sqepulse-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brings up dialogue box for searching -->
+        <div class="modal search sqepulse">
+            <div class="modal-overlay modal-toggle search sqepulse"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading">Searching Measurement:</h2>
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <div class="row"> <!-- New Row for Parameter-input -->
+                            <div class="col-20" id='left'><input class='char' id='sqepulse' name="search" type="text" value="search here"/></div>
+                        </div>
+                        <div class="row"> <!-- New Row for EXECUTION -->
+                            <div class="col-15" id='left'><input class="char modal-toggle search sqepulse" id="sqepulse-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brings up dialogue box for data-reset -->
+        <div class="modal data-reset sqepulse">
+            <div class="modal-overlay modal-toggle data-reset sqepulse"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading" style="color:red">DATA RESET: PLEASE CONSIDER IT CAREFULLY. THIS ACTION CANNOT BE UNDONE.</h2>
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <div class="row">
+                            <div class="col-20" id='left'><label>File Owner Password:</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="ownerpassword" type="password"/></div>   
+                        </div>
+
+                        <div class="row">
+                            <div class="col-20" id='left'><label>Truncate After:</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="truncateafter" type="text"/></div>   
+                        </div>
+
+                        <div class="row">
+                            <div class="col-10" id='left'><input class="char modal-toggle data-reset sqepulse" id="sqepulse-reset" type="submit" value="RESET"/></div>
+                            <div class="col-10" id='left'><input class="char modal-toggle data-reset sqepulse" id="sqepulse-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="char sqepulse confirm">
+            <h1>Confirm your action</h1>
+            <p>Are you really <em>really</em> <strong>really</strong> sure that you want to make changes to the FILE?</p>
+            <button class="char sqepulse reset-no" autofocus>NO</button>
+            <button class="char sqepulse reset-yes">YES</button>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

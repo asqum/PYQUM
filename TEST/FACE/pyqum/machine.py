@@ -14,7 +14,7 @@ from contextlib import suppress
 # Scientific
 from scipy import constants as cnst
 from si_prefix import si_format, si_parse
-from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt
+from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean
 
 # Load instruments
 from pyqum.instrument.modular import AWG, VSA
@@ -158,7 +158,7 @@ def awgsettingsifwave():
 		channel = str(ch + 1)
 		stat = AWG.output_enabled(awgsess, RepCap=channel, action=["Set", int(outputch[ch])])
 		message += ['output channel %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
-		stat = AWG.output_filter_enabled(awgsess, RepCap=channel, action=["Set", bool(oupfiltr[ch])])
+		stat = AWG.output_filter_enabled(awgsess, RepCap=channel, action=["Set", bool(int(oupfiltr[ch]))])
 		message += ['output filter channel %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
 		stat = AWG.output_config(awgsess, RepCap=channel, action=["Set", int(oupconfig[ch])])
 		message += ['output configuration %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
@@ -283,15 +283,26 @@ def vsasettings():
 @bp.route('/vsa/play', methods=['GET'])
 def vsaplay():
 	global vsasess, vsasn, vsasr
+	t = [(i+1)/vsasr for i in range(vsasn)]
+	average = int(request.args.get('average'))
+
+	if average: avenum = int(request.args.get('avenum'))
+	else: avenum = 1
 	
-	# Start Measure:
-	VSA.Arm_Measure(vsasess)
-	gd = VSA.Get_Data(vsasess, 2*vsasn)
-	I, Q, Amp, Pha = IQAParray(array(gd[1]['ComplexData']))
+	# Start Measure Loop:
+	iqdata = []
+	for i in range(avenum):
+		VSA.Arm_Measure(vsasess)
+		gd = VSA.Get_Data(vsasess, 2*vsasn)
+		iqdata.append(gd[1]['ComplexData'])
+		nloop = i
+	iqdata = mean(array(iqdata), axis=0)
+	
+	I, Q, Amp, Pha = IQAParray(iqdata)
 	A = [sqrt(i**2+q**2) for (i,q) in zip(I,Q)]
 	
 	log = pauselog() #disable logging (NOT applicable on Apache)
-	return jsonify(log=str(log), t=[i/vsasr for i in range(vsasn)], I=I, Q=Q, A=A, Amp=Amp, Pha=Pha)
+	return jsonify(nIQpair=vsasn, nloop=nloop, log=str(log), t=t, I=I, Q=Q, A=A, Amp=Amp, Pha=Pha)
 @bp.route('/vsa/about', methods=['GET'])
 def vsaabout():
 	global vsasess
@@ -629,10 +640,12 @@ def dc():
 # YOKOGAWA 7651
 @bp.route('/dc/yokogawa', methods=['GET'])
 def dcyokogawa():
+	global yokog
 	yokostat = request.args.get('yokostat')
+	ykvaunit = bool(int(request.args.get('ykvaunit')))
+	print("Current mode: %s" %ykvaunit)
 	if yokostat == 'true':
-		global yokog
-		yokog = YOKO.Initiate(current=True) # pending: V/A option
+		yokog = YOKO.Initiate(current=ykvaunit)
 		prev = YOKO.previous(yokog)
 	elif yokostat == 'false':
 		prev = YOKO.previous(yokog)
@@ -640,6 +653,7 @@ def dcyokogawa():
 	return jsonify(prev=prev)
 @bp.route('/dc/yokogawa/vwave', methods=['GET'])
 def dc_yokogawa_vwave():
+	global yokog
 	YOKO.output(yokog, 1)
 	vwave = request.args.get('vwave') #V-waveform command
 	pwidth = float(request.args.get("pwidth")) #ms
@@ -648,6 +662,7 @@ def dc_yokogawa_vwave():
 	return jsonify(SweepTime=stat[1])
 @bp.route('/dc/yokogawa/vpulse', methods=['GET'])
 def dc_yokogawa_vpulse():
+	global yokog
 	YOKO.output(yokog, 1)
 	vset = float(request.args.get('vset'))
 	pwidth = float(request.args.get("pwidth"))
@@ -655,6 +670,7 @@ def dc_yokogawa_vpulse():
 	return jsonify(SweepTime=stat[1])
 @bp.route('/dc/yokogawa/onoff', methods=['GET'])
 def dc_yokogawa_onoff():
+	global yokog
 	YOKO.output(yokog, 1)
 	YOKO.output(yokog, 0)
 	return jsonify()

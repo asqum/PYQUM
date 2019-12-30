@@ -23,8 +23,10 @@
     <!-- YOKOGAWA -->
     <div class="dccontent" id="yokogawa">
         <div class="container">
+
+            <!-- Connecting -->
             <div class="row"> <!-- NEW ROW for ON-OFF SWITCH -->
-                <div class="col-15" id='right'>
+                <div class="col-12" id='left'>
                     <label class="dc switch">
                         <input class="dc" id='init-yokogawa' type="checkbox">
                         <div class="slider smooth">
@@ -32,33 +34,59 @@
                         </div>
                     </label>
                 </div>
+                <div class="col-10" id='left'>
+                    <select class='dc' id="yk-va-unit">
+                        <option value=0 selected>Voltage</option>
+                        <option value=1>Current</option>
+                    </select>
+                </div>
             </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+
+            <!-- Sending Pulse -->
+            <div class="row">
                 <div class="col-10" id='left'><label>V Pulse</label></div>
-                <div class="col-12" id='left'><input class='dc scale' id="yokogawa" name='vpulse' type="text" value="28"/></div>
-                <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vpulse' value="V"></div>
                 <div class="col-5" id='left'></div>
+                <div class="col-space" id='left'></div>
                 <div class="col-10" id='left'><label>Duration</label></div>
-                <div class="col-12" id='left'><input class='dc scale' id="yokogawa" name='vpulse-dur' type="text" value="0"/></div>
-                <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vpulse-dur' value="ms"></div>
-                <div class="col-15" id='right'><button class='dc push_button w-95 blue' id='yokogawa' name='vpulse-send'>SEND</button></div>
-                <div class="col-15" id='right'><button class='dc push_button w-95 red' id='yokogawa' name='onoff-send'>ON-OFF</button></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-10" id='left'><label>V Wave</label></div>
-                <div class="col-49" id='left'><input class='dc scale' id="yokogawa" name='vwave' type="text" value="5"/></div>
-                <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vwave' value="V"></div>
-            </div>
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-10" id='left'><label>Delay</label></div>
-                <div class="col-12" id='left'><input class='dc scale' id="yokogawa" name='vwave-dur' type="text" value="10"/></div>
-                <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vwave-dur' value="ms"></div>
                 <div class="col-5" id='left'></div>
-                <div class="col-10" id='left'><label>Rate</label></div>
-                <div class="col-12" id='left'><input class='dc scale' id="yokogawa" name='vwave-rate' type="text" value="8"/></div>
-                <div class="col-10" id='left'><input class="dc unit" id="yokogawa" name='vwave-rate' value="V/s"></div>
-                <div class="col-15" id='right'><button class='dc push_button w-95 blue' id='yokogawa' name='vwave-sweep'>SWEEP</button></div>
             </div>
+            <div class="row">
+                <div class="col-10" id='left'><input class='dc scale yokogawa' id="yk-vpulse" name='' type="text" value="0"/></div>
+                <div class="col-5" id='left'><input class="dc vaunit yokogawa" value="V"></div>
+                <div class="col-space" id='left'></div>
+                <div class="col-10" id='left'><input class='dc scale yokogawa' id="yk-vpulse-dur" name='' type="text" value="0"/></div>
+                <div class="col-5" id='left'><input class="dc tunit yokogawa" value="ms"></div>
+                <div class="col-space" id='left'></div>
+                <div class="col-12" id='left'><button class='dc push_button w-95 blue yokogawa' id='yk-vpulse-send' name=''>SEND</button></div>
+                <div class="col-12" id='left'><button class='dc push_button w-95 red yokogawa' id='yk-onoff-send' name=''>ON-OFF</button></div>
+            </div>
+            <div class="row"></div>
+
+            <!-- Sweeping -->
+            <div class="row">
+                <div class="col-25" id='left'><label>V Wave</label></div>
+                <div class="col-5" id='left'></div>
+                <div class="col-space" id='left'></div>
+                <div class="col-10" id='left'><label>Delay</label></div>
+                <div class="col-5" id='left'></div>
+                <div class="col-space" id='left'></div>
+                <div class="col-10" id='left'><label>Rate</label></div>
+                <div class="col-5" id='left'></div>
+            </div>
+            <div class="row">
+                <div class="col-25" id='left'><input class='dc scale yokogawa' id="yk-vwave" name='' type="text" value="0"/></div>
+                <div class="col-5" id='left'><input class="dc vaunit yokogawa" value="V"></div>
+                <div class="col-space" id='left'></div>
+                <div class="col-10" id='left'><input class='dc scale yokogawa' id="yk-vwave-dur" name='' type="text" value="10"/></div>
+                <div class="col-5" id='left'><input class="dc tunit yokogawa" value="ms"></div>
+                <div class="col-space" id='left'></div>
+                <div class="col-10" id='left'><input class='dc scale yokogawa' id="yk-vwave-rate" name='' type="text" value="8"/></div>
+                <div class="col-5" id='left'><input class="dc vasunit yokogawa" id="yk-vwave-rate-unit" name='' value="V/s"></div> 
+                <div class="col-space" id='left'></div>
+                <div class="col-12" id='left'><button class='dc push_button w-95 blue yokogawa' id='yk-vwave-sweep' name=''>SWEEP</button></div>
+            </div>
+            <div class="row"></div>
+            
         </div>
     </div>
 

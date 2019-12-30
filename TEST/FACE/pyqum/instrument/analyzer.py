@@ -67,6 +67,7 @@ def FFT_deNoise(y, dx, noise_level, noise_filter=0.1):
     return f, spectrum, w_clean, y_clean
 
 def UnwraPhase(X, Pha, Flatten=True, Normalized=True):
+    '''unwrap, flatten & normalized'''
     UPHA = unwrap(Pha)
     if Flatten:
         UPHA = gradient(UPHA, X)

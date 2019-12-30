@@ -358,6 +358,7 @@ $(function () {
 // show yokogawa's page
 $(function() {
     $('button.dc#yokogawa').bind('click', function() {
+        window.ykvaunit = $('select.dc#yk-va-unit').val();
         $('div.dccontent').hide();
         $('div.dccontent#yokogawa').show();
         $('button.dc').removeClass('selected');
@@ -365,29 +366,42 @@ $(function() {
         return false;
     });
 });
+// update yokogawa unit
+$(function () {
+    $('select.dc#yk-va-unit').on('change', function () {
+        ykvaunit = $('select.dc#yk-va-unit').val();
+        if (ykvaunit == 1) {
+            $('input.dc.yokogawa.vaunit').val('A');
+            $('input.dc.yokogawa.vasunit').val('A/s');
+        } else if (ykvaunit == 0) {
+            $('input.dc.yokogawa.vaunit').val('V');
+            $('input.dc.yokogawa.vasunit').val('V/s');
+        }
+    });
+    return false;
+});
 // toggle yokogawa connection
 $(function () {
     $('input.dc#init-yokogawa').click(function () { 
         //indicate it is still running:
         $( "i.dc" ).remove(); //clear previous
         $('button.dc#yokogawa[name="init"]').prepend("<i class='dc fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var yokostat = $('input.dc#init-yokogawa').is(':checked'); //use css to respond to click / touch
-        // toggle ON-OFF connection with yokogawa
+        var yokostat = $('input.dc#init-yokogawa').is(':checked'); //use css to respond to click / touch // toggle ON-OFF connection with yokogawa
         $.getJSON('/mach'+'/dc/yokogawa', {
-            yokostat: yokostat
+            yokostat: yokostat, ykvaunit: ykvaunit,
         }, function (data) {
             $( "i.dc" ).remove(); //clear previous
             console.log("Previous: " + data.prev);
         });
-        // return false;
+        // return false; //this would prevent toggle effect!!!
     });
 });
 // send yokogawa V-Pulse
 $(function() {
-    $('button.dc#yokogawa[name="vpulse-send"]').bind('click', function() {
+    $('button.dc.yokogawa#yk-vpulse-send').bind('click', function() {
         $.getJSON('/mach/dc/yokogawa/vpulse', {
-            vset: $('input.dc#yokogawa[name="vpulse"]').val(),
-            pwidth: $('input.dc#yokogawa[name="vpulse-dur"]').val()
+            vset: $('input.dc.yokogawa#yk-vpulse').val(),
+            pwidth: $('input.dc.yokogawa#yk-vpulse-dur').val()
         }, function(data) {
             console.log("SweepTime: " + data.SweepTime);
         });
@@ -396,7 +410,7 @@ $(function() {
 });
 // send yokogawa on-off
 $(function() {
-    $('button.dc#yokogawa[name="onoff-send"]').bind('click', function() {
+    $('button.dc.yokogawa#yk-onoff-send').bind('click', function() {
         $.getJSON('/mach/dc/yokogawa/onoff', {
         }, function(data) {
         });
@@ -405,11 +419,11 @@ $(function() {
 });
 // send yokogawa V-Wave
 $(function() {
-    $('button.dc#yokogawa[name="vwave-sweep"]').bind('click', function() {
+    $('button.dc.yokogawa#yk-vwave-sweep').bind('click', function() {
         $.getJSON('/mach/dc/yokogawa/vwave', {
-            vwave: $('input.dc#yokogawa[name="vwave"]').val(),
-            pwidth: $('input.dc#yokogawa[name="vwave-dur"]').val(),
-            swprate: $('input.dc#yokogawa[name="vwave-rate"]').val()
+            vwave: $('input.dc.yokogawa#yk-vwave').val(),
+            pwidth: $('input.dc.yokogawa#yk-vwave-dur').val(),
+            swprate: $('input.dc.yokogawa#yk-vwave-rate').val(),
         }, function(data) {
             console.log("SweepTime: " + data.SweepTime);
         });

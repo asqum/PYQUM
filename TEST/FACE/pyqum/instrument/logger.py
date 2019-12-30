@@ -1,4 +1,4 @@
-'''For logging file'''
+'''For logging status, address and data'''
 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
@@ -370,8 +370,13 @@ class measurement:
             self.corder = [x for x in self.datacontainer.values()][0]['c-order']
             self.datadensity = [x for x in self.datacontainer.values()][0]['data-density']
             self.comment = [x for x in self.datacontainer.values()][0]['comment']
-            # Derive judging tools:
-            self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
+
+            # Estimate data size based on version of your data:
+            if 'C-Structure'in self.corder:
+                self.datasize = int(prod([waveform(self.corder[param]).count * waveform(self.corder[param]).inner_repeat  for param in self.corder['C-Structure']], dtype='uint64')) * 2 #data density of 2 due to IQ
+            else:
+                self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
+
             self.data_progress = float(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)

@@ -265,8 +265,8 @@ def usersamples_update():
 @bp.route('/user/samples/meal', methods=['GET'])
 def usersamples_meal():
     sname = request.args.get('sname')
-    set_status("MSSN", dict(sample=sname))
-    return jsonify(sname=get_status("MSSN")['sample'])
+    set_status("MSSN", {session['user_name']: dict(sample=sname)})
+    return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
