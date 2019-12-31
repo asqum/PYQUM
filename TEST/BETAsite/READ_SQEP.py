@@ -36,19 +36,25 @@ if True:
     print('cstructure: %s' %cstructure)
     timesweep = range(waveform(Logs.corder['Sampling-Time']).count*Logs.datadensity)
 
+    # choosing c-parameters:
+    C = dict(xyiflvl='XY-ifLevel', tau='XY-Pulse-Width')
+    C_option = input("Choose among c-constants: (%s)" %[x for x in C.keys()])
+    C_index = input("Enter index 0-%s << "%(waveform(Logs.corder[C[C_option]]).count - 1))
+    print("C-parameter <%s> set at {%s}" %(C[C_option],waveform(Logs.corder[C[C_option]]).data[int(C_index)]))
+
     # choosing x-parameters:
     X = dict(xy='XY-Frequency', ro='RO-Frequency', rabi='XY-Pulse-Width', t1='RO-Pulse-Delay')
-    X_option = input("Please enter your choice: (%s)" %[x for x in X.keys()])
+    X_option = input("Choose among x-parameters: (%s)" %[x for x in X.keys()])
+    xdata = waveform(Logs.corder[X[X_option]]).data # x-range
+    print('%s is selected as X' %X[X_option])
     
     # write address based on x-parameter picked:
-    # caddress = '[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,t]'
     caddress = '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,t]'
+    # replacing x-variable:
     caddress = caddress[:2*CStructure.index(X[X_option])+1] + 'i' + caddress[2*CStructure.index(X[X_option])+2:]
+    # replacing c-constant:
+    caddress = caddress[:2*CStructure.index(C[C_option])+1] + C_index + caddress[2*CStructure.index(C[C_option])+2:]
     print("C-Address: %s" %(caddress))
-    
-    # loading parameters' range
-    xdata = waveform(Logs.corder[X[X_option]]).data
-    print('%s is selected as X' %X[X_option])
 
     # Sweep first curve to decide:
     IQdata = array([alldata[gotocdata([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x], cstructure)] for x in timesweep])
@@ -89,7 +95,7 @@ if True:
     X = xdata[firstpoint:lastpoint]
     if X_option == 'rabi' or X_option == 't1':
         if input("Press Any-Keys (Enter) to normalize (skip)"):
-            curve(X,minmax_scale(array(iA)),'Accumulated-Phase by Vdt','t(ns)','A(V)^2','ok')
+            curve(X,minmax_scale(array(iA)),'Accumulated-Phase by Vdt','t(ns)','A(V)','ok')
             curve(X,minmax_scale(array(Asquare)),'Population by V^2dt','t(ns)','P','.k')
             # curve(X,minmax_scale(array(Isquare)),'I-Population','t(ns)','<I(V)^2>',':k')
             # curve(X,minmax_scale(array(Qsquare)),'Q-Population','t(ns)','<Q(V)^2>',':k')

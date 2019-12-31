@@ -41,10 +41,14 @@ def location():
     toleratedeg = rad2deg(toleratekm / eaRth)
     g = geocoder.ip('me')
     gps = g.latlng #[latitude, longitude]
-    if mean([abs(i-j) for i,j in zip(gps, [25.0478, 121.532])]) < toleratedeg:
-        place.append('AS')
-    if mean([abs(i-j) for i,j in zip(gps, [25.0478, 121.532])]) < toleratedeg*10:
-        place.append('Taipei')
+    try:
+        if mean([abs(i-j) for i,j in zip(gps, [25.0478, 121.532])]) < toleratedeg:
+            place.append('AS')
+        if mean([abs(i-j) for i,j in zip(gps, [25.0478, 121.532])]) < toleratedeg*10:
+            place.append('Taipei')
+    except: 
+        print("Location service may not be available. Please check.")
+        pass
     
     return place
 

@@ -496,7 +496,7 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 					if '+' in ropdelay.data[0]: rooffset = float(ropdelay.data[0].split('+')[1])
 					else: rooffset = 0 # default value
 					ifdelay = float(xypdelay.data[caddress[structure.index('XY-Pulse-Delay')]]), float(xypwidth.data[caddress[structure.index('XY-Pulse-Width')]]) + rooffset
-					print("lock xy-pulse-width at %sns" %ifdelay[1])
+					print("RO-Pulse Delays behind XY-Pulse for %sns" %(ifdelay[1]-ifdelay[0]))
 				else: 
 					ifdelay = float(xypdelay.data[caddress[structure.index('XY-Pulse-Delay')]]), float(ropdelay.data[caddress[structure.index('RO-Pulse-Delay')]])
 
@@ -530,7 +530,7 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 			VSA.preselector_enabled(vsasess, action=['Set',False]) # disable preselector to allow the highest bandwidth of 250MHz
 			
 			if "lockro" in lofreq.data:
-				print("Locking on RO at %s" %(rofreq.data[caddress[structure.index('RO-Frequency')]]))
+				print("Locking on RO at %sGHz" %(rofreq.data[caddress[structure.index('RO-Frequency')]]))
 				VSA.frequency(vsasess, action=['Set',float(rofreq.data[caddress[structure.index('RO-Frequency')]])*1e9])
 			else:
 				VSA.frequency(vsasess, action=['Set',float(lofreq.data[caddress[structure.index('LO-Frequency')]])*1e9])
@@ -544,11 +544,11 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 				# trigger-delay sync with xy-pulse-width for Rabi measurement:
 				VSA.trigger_delay(vsasess, action=['Set', float(adcdelay.data[caddress[structure.index('ADC-delay')]]) + \
 					float(xypwidth.data[caddress[structure.index('XY-Pulse-Width')]])*1e-9 + rooffset*1e-9])
-				print("Delay with XY-Pulse for %sns" %int(VSA.trigger_delay(vsasess)[1]/1e-9))
+				print("ACQ delays with XY-Pulse for %sns" %int(VSA.trigger_delay(vsasess)[1]/1e-9))
 			elif "lockropdelay" in str(adcdelay.data[0]):
 				# trigger-delay sync with ro-pulse-delay for T1 measurement:
 				VSA.trigger_delay(vsasess, action=['Set', float(ropdelay.data[caddress[structure.index('RO-Pulse-Delay')]])*1e-9])
-				print("Delay with RO-Pulse for %sns" %int(VSA.trigger_delay(vsasess)[1]/1e-9))
+				print("ACQ delays with RO-Pulse for %sns" %int(VSA.trigger_delay(vsasess)[1]/1e-9))
 			else:
 				VSA.trigger_delay(vsasess, action=['Set', float(adcdelay.data[caddress[structure.index('ADC-delay')]])]) 
 
