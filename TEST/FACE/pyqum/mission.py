@@ -8,7 +8,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 import requests, json
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
-from numpy import array, unwrap, mean, trunc
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape
 from time import sleep, strptime, mktime 
 from datetime import timedelta, datetime
 
@@ -16,7 +16,7 @@ from pyqum import get_db
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, set_csv, clocker
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase
-from pyqum.directive.characterize import F_Response, CW_Sweep
+from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
 
 # Scientific Constants
 from scipy import constants as cnst
@@ -90,7 +90,7 @@ def char_fresp():
 def char_fresp_init(): 
     run_status = not get_status("F_Response")['pause']
     global M_fresp
-    try: print(Fore.GREEN + "Connected M-USER(s): %s" %M_fresp.keys())
+    try: print(Fore.GREEN + "Connected F-Resp M-USER(s): %s" %M_fresp.keys())
     except: M_fresp = {}
     # set_status("F_Response", dict(repeat=False))
     M_fresp[session['user_name']] = F_Response(session['people']) # initializing Law Maker -> Executioner
@@ -115,6 +115,7 @@ def char_fresp_new():
     if session['run_clearance']:
         set_status("F_Response", dict(pause=False))
         global Run_fresp # need to be removed in the future for security sake
+        Run_fresp = {}
         wday = int(request.args.get('wday'))
         print("wday: %s" %wday)
         fluxbias = request.args.get('fluxbias')
@@ -125,13 +126,13 @@ def char_fresp_new():
         comment = request.args.get('comment').replace("\"","")
         simulate = bool(int(request.args.get('simulate')))
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
-        Run_fresp = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
+        Run_fresp['TOKEN'] = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
     else: all()
     return jsonify(testeach=simulate)
 # ETA (Estimated Time of Arrival for the WHOLE measurement)
 @bp.route('/char/fresp/eta100', methods=['GET'])
 def char_fresp_eta100():
-    eta_time_100 = sum([a*b for a,b in zip(Run_fresp.loopcount, Run_fresp.loop_dur)])
+    eta_time_100 = sum([a*b for a,b in zip(Run_fresp['TOKEN'].loopcount, Run_fresp['TOKEN'].loop_dur)])
     print(Fore.RED + "ETA: %s" %str(timedelta(seconds=eta_time_100)))
     eta_time_100 = str(timedelta(seconds=eta_time_100)).split('.')[0]
     return jsonify(eta_time_100=eta_time_100)
@@ -345,7 +346,7 @@ def char_cwsweep_init():
     global M_cwsweep
 
     # check currently-connected users:
-    try: print(Fore.GREEN + "Connected M-USER(s): %s" %M_cwsweep.keys())
+    try: print(Fore.GREEN + "Connected CW-Sweep M-USER(s): %s" %M_cwsweep.keys())
     except: M_cwsweep = {}
 
     # check configuration:
@@ -379,6 +380,7 @@ def char_cwsweep_new():
     if session['run_clearance']:
         set_status("CW_Sweep", dict(pause=False))
         global Run_cwsweep # for ETA calculation as well
+        Run_cwsweep = {}
         wday = int(request.args.get('wday'))
         print("wday: %s" %wday)
         fluxbias = request.args.get('fluxbias')
@@ -391,13 +393,13 @@ def char_cwsweep_new():
         comment = request.args.get('comment').replace("\"","")
         simulate = bool(int(request.args.get('simulate')))
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
-        Run_cwsweep = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
+        Run_cwsweep['TOKEN'] = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
     else: all()
     return jsonify(testeach=simulate)
 # ETA (Estimated Time of Arrival for the WHOLE measurement)
 @bp.route('/char/cwsweep/eta100', methods=['GET'])
 def char_cwsweep_eta100():
-    eta_time_100 = sum([a*b for a,b in zip(Run_cwsweep.loopcount, Run_cwsweep.loop_dur)])
+    eta_time_100 = sum([a*b for a,b in zip(Run_cwsweep['TOKEN'].loopcount, Run_cwsweep['TOKEN'].loop_dur)])
     print(Fore.RED + "ETA: %s" %str(timedelta(seconds=eta_time_100)))
     eta_time_100 = str(timedelta(seconds=eta_time_100)).split('.')[0]
     return jsonify(eta_time_100=eta_time_100)
@@ -499,13 +501,14 @@ def char_cwsweep_trackdata():
     # list data position in file:
     try:
         data_location = {}
-        data_location['fluxbias'] = gotocdata([session['c_cwsweep_structure'][0]-1, int(ifluxbias), 0, 0, 0, 0, 0, 0], session['c_cwsweep_structure'])
-        data_location['xyfreq'] = gotocdata([session['c_cwsweep_structure'][0]-1, session['c_cwsweep_structure'][1]-1, int(ixyfreq), 0, 0, 0, 0, 0], session['c_cwsweep_structure'])
-        data_location['xypowa'] = gotocdata([session['c_cwsweep_structure'][0]-1, session['c_cwsweep_structure'][1]-1, session['c_cwsweep_structure'][0]-1, int(ixypowa), 0, 0, 0, 0], session['c_cwsweep_structure'])
+        data_location['fluxbias'] = int(gotocdata([session['c_cwsweep_structure'][0]-1, int(ifluxbias), 0, 0, 0, 0, 0, 0], session['c_cwsweep_structure']))
+        data_location['xyfreq'] = int(gotocdata([session['c_cwsweep_structure'][0]-1, session['c_cwsweep_structure'][1]-1, int(ixyfreq), 0, 0, 0, 0, 0], session['c_cwsweep_structure']))
+        data_location['xypowa'] = int(gotocdata([session['c_cwsweep_structure'][0]-1, session['c_cwsweep_structure'][1]-1, session['c_cwsweep_structure'][0]-1, int(ixypowa), 0, 0, 0, 0], session['c_cwsweep_structure']))
     except(ValueError):
         print(Back.RED + Fore.WHITE + "All parameters must be FIXED!")
         pass
 
+    # print("Data location: %s" %data_location)
     return jsonify(data_location=data_location)
 @bp.route('/char/cwsweep/resetdata', methods=['GET'])
 def char_cwsweep_resetdata():
@@ -744,6 +747,329 @@ def char_cwsweep_2ddata():
     # x = list(range(len(x))) # for repetitive data
     return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 
+
+# CHAR -> 3. SQE-Pulsing =============================================================================================================================================
+@bp.route('/char/sqepulse', methods=['GET'])
+def char_sqepulse(): 
+    return render_template("blog/msson/char/sqepulse.html")
+# Initialize and list days specific to task
+@bp.route('/char/sqepulse/init', methods=['GET'])
+def char_sqepulse_init():
+    global M_sqepulse, CStructure
+
+    # check currently-connected users:
+    try: print(Fore.GREEN + "Connected M-USER(s) for SQE-Pulse: %s" %M_sqepulse.keys())
+    except: M_sqepulse = {}
+
+    # check configuration:
+    run_status = not get_status("SQE_Pulse")['pause'] 
+    
+    # 'user_name' accessing 'people' data:
+    M_sqepulse[session['user_name']] = SQE_Pulse(session['people'])
+    print(Fore.BLUE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
+
+    # PENDING: Flexible C-Structure:
+    CStructure = {}
+    CStructure['SQE_Pulse'] = ['Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
+                'Pulse-Period', 'RO-ifLevel', 'RO-Pulse-Delay', 'RO-Pulse-Width', 'XY-ifLevel', 'XY-Pulse-Delay', 'XY-Pulse-Width', 
+                'LO-Frequency', 'LO-Power', 'ADC-delay', 'Average', 'Sampling-Time']
+
+    return jsonify(run_status=run_status, daylist=M_sqepulse[session['user_name']].daylist, run_permission=session['run_clearance'])
+# list task entries based on day picked
+@bp.route('/char/sqepulse/time', methods=['GET'])
+def char_sqepulse_time():
+    wday = int(request.args.get('wday'))
+    M_sqepulse[session['user_name']].selectday(wday)
+    return jsonify(taskentries=M_sqepulse[session['user_name']].taskentries)
+
+# adjust settings input for certain instruments' set
+@bp.route('/char/sqepulse/settings', methods=['GET'])
+def char_sqepulse_settings():
+    # under construction ***
+    # pending: YOKO switching between V and I source
+    # PSG type selection
+    return jsonify()
+
+# run NEW measurement:
+@bp.route('/char/sqepulse/new', methods=['GET'])
+def char_sqepulse_new():
+    # Check user's current queue status:
+    if session['run_clearance']:
+        set_status("SQE_Pulse", dict(pause=False))
+        global Run_sqepulse # for ETA calculation as well
+        Run_sqepulse = {}
+        wday = int(request.args.get('wday'))
+        if wday < 0: print("Running New SQE-Pulse...")
+
+        CORDER = json.loads(request.args.get('CORDER'))
+        comment = request.args.get('comment').replace("\"","")
+        simulate = bool(int(request.args.get('simulate')))
+        
+        Run_sqepulse['TOKEN'] = SQE_Pulse(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
+    else: all()
+    return jsonify(testeach=simulate)
+# ETA (Estimated Time of Arrival for the WHOLE measurement)
+@bp.route('/char/sqepulse/eta100', methods=['GET'])
+def char_sqepulse_eta100():
+    eta_time_100 = sum([a*b for a,b in zip(Run_sqepulse['TOKEN'].loopcount, Run_sqepulse['TOKEN'].loop_dur)])
+    print(Fore.RED + "ETA: %s" %str(timedelta(seconds=eta_time_100)))
+    eta_time_100 = str(timedelta(seconds=eta_time_100)).split('.')[0]
+    return jsonify(eta_time_100=eta_time_100)
+# pause the measurement:
+@bp.route('/char/sqepulse/pause', methods=['GET'])
+def char_sqepulse_pause():
+    set_status("SQE_Pulse", dict(pause=True))
+    return jsonify(pause=get_status("SQE_Pulse")['pause'])
+# toggle between repeat or not
+@bp.route('/char/sqepulse/setrepeat', methods=['GET'])
+def char_sqepulse_setrepeat():
+    set_status("SQE_Pulse", dict(repeat=bool(int(request.args.get('repeat')))))
+    return jsonify(repeat=get_status("SQE_Pulse")['repeat'])
+@bp.route('/char/sqepulse/getrepeat', methods=['GET'])
+def char_sqepulse_getrepeat():
+    return jsonify(repeat=get_status("SQE_Pulse")['repeat'])
+# search through logs of data specific to task (pending)
+@bp.route('/char/sqepulse/search', methods=['GET'])
+def char_sqepulse_search():
+    wday = int(request.args.get('wday'))
+    filelist = M_sqepulse[session['user_name']].searchcomment()
+    return jsonify(filelist=str(filelist))
+# export to csv
+@bp.route('/char/sqepulse/export/1dcsv', methods=['GET'])
+def char_sqepulse_export_1dcsv():
+    ifreq = request.args.get('ifreq') # merely for security reason to block out unsolicited visits by return None from this request
+    print("ifreq: %s" %ifreq)
+    status = None
+    if ifreq is not None:
+        set_csv(data_dict, '1Dsqepulse.csv')
+        status = "csv written"
+    return jsonify(status=status)
+# list set-parameters based on selected task-entry
+@bp.route('/char/sqepulse/access', methods=['GET'])
+def char_sqepulse_access():
+    wmoment = int(request.args.get('wmoment'))
+    M_sqepulse[session['user_name']].selectmoment(wmoment)
+    M_sqepulse[session['user_name']].accesstructure()
+    data_progress = M_sqepulse[session['user_name']].data_progress
+    data_repeat = data_progress // 100 + int(bool(data_progress % 100))
+
+    # Measurement time:
+    filetime = getmtime(M_sqepulse[session['user_name']].pqfile) # in seconds
+    startmeasure = mktime(strptime(M_sqepulse[session['user_name']].day + " " + M_sqepulse[session['user_name']].startime(), "%Y-%m-%d(%a) %H:%M")) # made into seconds
+    measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress)))
+
+    # Structure & Addresses:
+    session['c_sqepulse_structure'] = [data_repeat] + [waveform(M_sqepulse[session['user_name']].corder[param]).count for param in CStructure['SQE_Pulse']][:-1] \
+                                        + [waveform(M_sqepulse[session['user_name']].corder[CStructure['SQE_Pulse'][-1]]).count*M_sqepulse[session['user_name']].datadensity]
+    session['c_sqepulse_progress'] = cdatasearch(M_sqepulse[session['user_name']].resumepoint-1, session['c_sqepulse_structure'])
+    
+    pdata = dict()
+    for params in CStructure['SQE_Pulse']:
+        pdata[params] = waveform(M_sqepulse[session['user_name']].corder[params]).data[0:session['c_sqepulse_progress'][CStructure['SQE_Pulse'].index(params)+1]+1]
+
+    return jsonify(data_progress=data_progress, measureacheta=measureacheta, corder=M_sqepulse[session['user_name']].corder, comment=M_sqepulse[session['user_name']].comment, 
+        data_repeat=data_repeat, pdata=pdata)
+# Resume the unfinished measurement
+@bp.route('/char/sqepulse/resume', methods=['GET'])
+def char_sqepulse_resume():
+    set_status("SQE_Pulse", dict(pause=False))
+    wday = int(request.args.get('wday'))
+    wmoment = int(request.args.get('wmoment'))
+    CORDER = json.loads(request.args.get('CORDER'))
+    M_sqepulse[session['user_name']].accesstructure()
+    SQE_Pulse(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_sqepulse[session['user_name']].resumepoint)
+    return jsonify(resumepoint=str(M_sqepulse[session['user_name']].resumepoint), datasize=str(M_sqepulse[session['user_name']].datasize))
+
+@bp.route('/char/sqepulse/trackdata', methods=['GET'])
+def char_sqepulse_trackdata():
+    # PENDING 
+    data_location = None
+    return jsonify(data_location=data_location)
+@bp.route('/char/sqepulse/resetdata', methods=['GET'])
+def char_sqepulse_resetdata():
+    ownerpassword = request.args.get('ownerpassword')
+    truncateafter = int(request.args.get('truncateafter'))
+
+    db = get_db()
+    people = db.execute(
+        'SELECT password FROM user WHERE username = ?', (session['people'],)
+    ).fetchone()
+
+    if check_password_hash(people['password'], ownerpassword):
+        message = M_sqepulse[session['user_name']].resetdata(truncateafter)
+    else:
+        message = 'PASSWORD NOT VALID'
+
+    return jsonify(message=message)
+
+# Chart is supposedly shared by all measurements (under construction for multi-purpose)
+@bp.route('/char/sqepulse/1ddata', methods=['GET'])
+def char_sqepulse_1ddata():
+    print(Fore.GREEN + "User %s is plotting 1D-Data" %session['user_name'])
+    M_sqepulse[session['user_name']].loadata()
+    selectedata = M_sqepulse[session['user_name']].selectedata
+    print("Data length: %s" %len(selectedata))
+    
+    # load parameter indexes from json call:
+    irepeat = request.args.get('irepeat')
+    if "x" in irepeat:
+        pass # PENDING CONSTRUCTION TO SWEEP REPEATED MEASUREMENT
+
+    cselect = json.loads(request.args.get('cselect'))
+    # print("Selected: %s" %cselect)
+    for k in cselect.keys():
+        if "x" in cselect[k]:
+            xtitle = "<b>" + k + "</b>"
+            cselection = (",").join([s for s in cselect.values()])
+            selected_caddress = [irepeat] + [s for s in cselect.values()]
+            # Sweep-command:
+            selected_sweep = M_sqepulse[session['user_name']].corder[k]
+            # Selecting Sweep-indexes based on current data-progress:
+            parent_address = selected_caddress[:CStructure['SQE_Pulse'].index(k)+1] # address's part before x
+            if [int(s) for s in parent_address] <= session['c_sqepulse_progress'][0:len(parent_address)]: # minor draw-back: The very last portion of ongoing measured data will not be accessible, thus have to wait until all that last portion is collected!
+                if CStructure['SQE_Pulse'].index(k) == len(CStructure['SQE_Pulse'])-1 :
+                    isweep = range(session['c_sqepulse_structure'][-1]//M_sqepulse[session['user_name']].datadensity)
+                else:
+                    isweep = range(session['c_sqepulse_structure'][CStructure['SQE_Pulse'].index(k)+1]) # can access full-range if selection is well within progress resume-point
+                print(Back.WHITE + Fore.BLACK + "Well within Progress with sweep length of %s" %len(isweep))
+            else: isweep = range(session['c_sqepulse_progress'][CStructure['SQE_Pulse'].index(k)+1]+1) # can only access until progress resume-point
+            Idata = zeros(len(isweep))
+            Qdata = zeros(len(isweep))
+            for i in isweep:
+                selected_caddress[CStructure['SQE_Pulse'].index(k)+1] = i
+                if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
+                    srange = request.args.get('srange').split("-") # sample range
+                    if [int(srange[1]) , int(srange[0])] > [session['c_sqepulse_structure'][-1]] * 2:
+                        print(Back.WHITE + Fore.RED + "Out of range")
+                    else:
+                        # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
+                        slength = int(srange[1]) - int(srange[0]) + 1
+                        # Assemble stacks of selected c-address for this sample range:
+                        selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * slength)
+                        selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * slength)
+                        
+                        selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1))
+                        selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1)) + ones(slength)
+                        # Compressing I & Q of this sample range:
+                        selectedata = array(selectedata)
+                        Idata[i] = mean(selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])])
+                        Qdata[i] = mean(selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]) 
+
+                else:
+                    selected_caddress = [int(s) for s in selected_caddress]
+                    Basic = selected_caddress[-1]
+                    # Extracting I & Q:
+                    Idata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], session['c_sqepulse_structure'])]
+                    Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], session['c_sqepulse_structure'])]
+            Adata = sqrt(Idata**2 + Qdata**2)    
+
+    print("Structure: %s" %session['c_sqepulse_structure'])
+    # print("I: %s" %Idata[0])
+    # print("Q: %s" %Qdata[0])    
+    # x-range:
+    selected_progress = waveform(selected_sweep).data[0:len(isweep)]
+
+    # facilitate index location for range clipping:
+    if "c" in cselection:
+        selected_progress = list(range(len(selected_progress)))
+
+    x, yI, yQ, yA = selected_progress, list(Idata), list(Qdata), list(Adata)
+
+    global data_dict
+    data_dict = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, "exported by": session['user_name']}
+    
+    return jsonify(x=x, yI=yI, yQ=yQ, yA=yA, xtitle=xtitle)
+
+# Pending renovation below:
+@bp.route('/char/sqepulse/2ddata', methods=['GET'])
+def char_sqepulse_2ddata():
+    irepeat = request.args.get('irepeat')
+    ifluxbias = request.args.get('ifluxbias')
+    ixyfreq = request.args.get('ixyfreq')
+    ixypowa = request.args.get('ixypowa')
+    isparam = request.args.get('isparam')
+    iifb = request.args.get('iifb')
+    ipowa = request.args.get('ipowa')
+    ifreq = request.args.get('ifreq')
+
+    # pre-transform ipowa:
+    powa_order = M_sqepulse[session['user_name']].corder['Power']
+
+    # preparing MPW dictionary
+    dict_for_MPW = {
+            "pqfile": str(M_sqepulse[session['user_name']].pqfile), "datalocation": M_sqepulse[session['user_name']].datalocation, "writtensize": M_sqepulse[session['user_name']].writtensize,
+            "c_sqepulse_structure": session['c_sqepulse_structure'], "irepeat": irepeat, "ifluxbias": ifluxbias, "ixyfreq": ixyfreq, "ixypowa": ixypowa, 
+            "isparam": isparam, "iifb": iifb, "ifreq": ifreq, "ipowa": ipowa, "powa_order": powa_order
+        }
+    set_status("MPW", dict_for_MPW)
+
+    # Check progress:
+    if not M_sqepulse[session['user_name']].data_progress%100:
+        offset = 1
+        print(Fore.GREEN + "The data is complete: we can see the whole picture now")
+    else: 
+        offset = 0 # to avoid incomplete array error
+        print(Back.RED + "The data is NOT YET complete!")
+
+    # Selecting 2D options:
+    # REPEAT:
+    if irepeat == "x" and ifluxbias == "y":
+        x_name, y_name = "repeat", "fluxbias"
+        print("X: REPEAT#, Y: Flux-Bias")
+        xtitle, ytitle = "<b>REPEAT#</b>", "<b>Flux-Bias(V/A)</b>"
+        x, y = list(range(session['c_sqepulse_progress'][0]+offset)), waveform(M_sqepulse[session['user_name']].corder['Flux-Bias']).data
+        x_count, y_count = session['c_sqepulse_progress'][0]+offset, waveform(M_sqepulse[session['user_name']].corder['Flux-Bias']).count
+    if irepeat == "x" and ixyfreq == "y":
+        x_name, y_name = "repeat", "xyfreq"
+        print("X: REPEAT#, Y: XY-Frequency")
+        xtitle, ytitle = "<b>REPEAT#</b>", "<b>XY-Frequency(GHz)</b>"
+        x, y = list(range(session['c_sqepulse_progress'][0]+offset)), waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data
+        x_count, y_count = session['c_sqepulse_progress'][0]+offset, waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).count
+    # ONCE:
+    elif ifluxbias == "x" and ixyfreq == "y":
+        x_name, y_name = "fluxbias", "xyfreq"
+        print("X: Flux-Bias, Y: XY-Frequency")
+        xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>XY-Frequency(GHz)</b>"
+        x, y = waveform(M_sqepulse[session['user_name']].corder['Flux-Bias']).data[0:session['c_sqepulse_progress'][1]+offset], waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data
+        x_count, y_count = session['c_sqepulse_progress'][1]+offset, waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).count
+    elif ixyfreq == "x" and ixypowa == "y":
+        x_name, y_name = "xyfreq", "xypowa"
+        print("X: XY-Frequency, Y: XY-Power")
+        xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>XY-Power(dBm)</b>"
+        x, y = waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data[0:session['c_sqepulse_progress'][2]+offset], waveform(M_sqepulse[session['user_name']].corder['XY-Power']).data
+        x_count, y_count = session['c_sqepulse_progress'][2]+offset, waveform(M_sqepulse[session['user_name']].corder['XY-Power']).count
+    elif ixyfreq == "x" and ifreq == "y":
+        x_name, y_name = "xyfreq", "freq"
+        print("X: XY-Frequency, Y: Frequency")
+        xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probe-Frequency(GHz)</b>"
+        x, y = waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data[0:session['c_sqepulse_progress'][2]+offset], waveform(M_sqepulse[session['user_name']].corder['Frequency']).data
+        x_count, y_count = session['c_sqepulse_progress'][2]+offset, waveform(M_sqepulse[session['user_name']].corder['Frequency']).count
+    elif ixyfreq == "x" and ipowa == "y":
+        x_name, y_name = "xyfreq", "powa"
+        print("X: XY-Frequency, Y: Power")
+        xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probing-Power(dBm)</b>"
+        x, y = waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data[0:session['c_sqepulse_progress'][2]+offset], waveform(M_sqepulse[session['user_name']].corder['Power']).data
+        x_count, y_count = session['c_sqepulse_progress'][2]+offset, waveform(M_sqepulse[session['user_name']].corder['Power']).count
+
+    # fast iteration method (parallel computing):
+    stage, prev = clocker(0)
+    CMD = ["python", "-c", "from pyqum.directive import MP_sqepulse as mp; print(mp.worker(%s,%s,'%s','%s'))"%(y_count,x_count,y_name,x_name)]
+    with Popen(CMD, stdout=PIPE, shell=True) as proc:
+        doutput = proc.stdout.read().decode("utf-8")
+        output = json.loads(doutput.replace("\'", "\""))
+        # try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
+        # except: pass
+    Amp = output['rA']
+    Pha = output['rP']
+    stage, prev = clocker(stage, prev) # Marking time
+
+    print("x is of length %s and of type %s" %(len(x),type(x)))
+    print("y is of length %s and of type %s" %(len(y),type(y)))
+    print("Amp of shape %s" %str(array(Amp).shape))
+    ZZA, ZZP = Amp, Pha
+    
+    # x = list(range(len(x))) # for repetitive data
+    return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 
 
 

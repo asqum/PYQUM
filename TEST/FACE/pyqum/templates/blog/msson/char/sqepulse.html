@@ -11,8 +11,8 @@
 <div class="container">
 
         <div class="row"> <!-- New Role for File-status -->
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="wday" type="text"></select></div>
-            <div class="col-7" id='left'><select class='char' id="sqepulse" name="wmoment" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="wday" type="text"></select></div>
+            <div class="col-7" id='left'><select class='char sqepulse' id="wmoment" type="text"></select></div>
             <div class="col-20" id='left'>
                 <ul class="data-status" id="sqepulse">
                     <li>
@@ -32,40 +32,69 @@
         <div class="row">
             <!-- Read-only Comment -->
             <div class="col" id='left' style="width:49%">
-                <textarea class='char' id="sqepulse" name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
+                <textarea class='char sqepulse' id="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
             </div>
             <!-- Editable Note -->
             <div class="col" id='left' style="width:49%">
-                <textarea class='char' id="sqepulse" name="note" type="text" rows="15" cols="73">--note--</textarea>
+                <textarea class='char sqepulse' id="note" type="text" rows="15" cols="73">--note--</textarea>
             </div>
         </div>
 
-        <!-- optional parameters line #1 -->
+        <!-- Accessing Parameters -->
         <div class="row">
             <div class="col-15" id='left'><label>REPEAT#</label></div>
+        </div>
+        <div class="row">
+            <div class="col-15" id='left'><select class='char sqepulse' id="repeat" type="text"></select></div>
+        </div>
+
+        <div class="row">
             <div class="col-15" id='left'><label>Flux-Bias (V/A)</label></div>
             <div class="col-15" id='left'><label>XY-Frequency (GHz)</label></div>
             <div class="col-15" id='left'><label>XY-Power (dBm)</label></div>
+            <div class="col-15" id='left'><label>RO-Frequency (GHz)</label></div>
+            <div class="col-15" id='left'><label>RO-Power (dBm)</label></div>
+            <div class="col-15" id='left'><label>Pulse-Period (ns)</label></div>
         </div>
         <div class="row">
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-repeat" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-fluxbias" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-xyfreq" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-xypowa" type="text"></select></div> 
+            <div class="col-15" id='left'><select class='char sqepulse' id="Flux-Bias" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="XY-Frequency" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="XY-Power" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="RO-Frequency" type="text"></select></div> 
+            <div class="col-15" id='left'><select class='char sqepulse' id="RO-Power" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="Pulse-Period" type="text"></select></div> 
         </div>
 
-        <!-- basic parameters line #2 -->
         <div class="row">
-            <div class="col-15" id='left'><label>S-Parameter</label></div>
-            <div class="col-15" id='left'><label>IF-Bandwidth (Hz)</label></div>
-            <div class="col-15" id='left'><label>Frequency (GHz)</label></div>
-            <div class="col-15" id='left'><label>Power (dBm)</label></div>
+            <div class="col-15" id='left'><label>RO-IF-Level (V)</label></div>
+            <div class="col-15" id='left'><label>RO-Pulse-Delay (ns)</label></div>
+            <div class="col-15" id='left'><label>RO-Pulse-Width (ns)</label></div>
+            <div class="col-15" id='left'><label>XY-IF-Level (V)</label></div>
+            <div class="col-15" id='left'><label>XY-Pulse-Delay (ns)</label></div>
+            <div class="col-15" id='left'><label>XY-Pulse-Width (ns)</label></div>
         </div>
         <div class="row">
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-sparam" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-ifb" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-freq" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="sqepulse" name="c-powa" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="RO-ifLevel" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="RO-Pulse-Delay" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="RO-Pulse-Width" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="XY-ifLevel" type="text"></select></div> 
+            <div class="col-15" id='left'><select class='char sqepulse' id="XY-Pulse-Delay" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="XY-Pulse-Width" type="text"></select></div> 
+        </div>
+
+        <div class="row">
+            <div class="col-15" id='left'><label>LO-Frequency (GHz)</label></div>
+            <div class="col-15" id='left'><label>LO-Power dBm)</label></div>
+            <div class="col-15" id='left'><label>ADC-delay (s)</label></div>
+            <div class="col-15" id='left'><label>Average (#)</label></div>
+            <div class="col-15" id='left'><label>Sampling-Time (2ns)</label></div>
+        </div>
+        <div class="row">
+            <div class="col-15" id='left'><select class='char sqepulse' id="LO-Frequency" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="LO-Power" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="ADC-delay" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char sqepulse' id="Average" type="text"></select></div> 
+            <div class="col-15" id='left'><select class='char sqepulse' id="Sampling-Time" type="text"></select></div>
         </div>
 
         <!-- Check, Plot & Download Data -->
@@ -76,19 +105,21 @@
                     <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
                 </label>
             </div>
-            <div class="col-10" id='left'><input class='char data' id="sqepulse" name='1d-data' type="submit" value="1D-Data"/></div>
-            <div class="col-10" id='left'><input class='char data' id="sqepulse" name='2d-data' type="submit" value="2D-Data"/></div>
+            <!-- <div class="col-10" id='left'><input class='char data sqepulse' id="1a-data" type="submit" value="1A-Data"/></div> -->
+            <div class="col-10" id='left'><input class='char data sqepulse' id="sample-range" type="text" value="173-800"/></div>
+            <div class="col-10" id='left'><input class='char data sqepulse' id="1d-data" type="submit" value="1D-Data"/></div>
+            <div class="col-10" id='left'><input class='char data sqepulse' id="2d-data" type="submit" value="2D-Data"/></div>
             <div class="col-10" id='left'><button class="char push_button w-95 blue" id="sqepulse-savecsv">CSV</button></div>
             <div class="col-10" id='left'><button class="char push_button w-95 red" id="sqepulse-datareset">CLIP</button></div>
         </div>
 
         <!-- Data Assembly and Grooming -->
         <div class="row">
-            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="1d-phase" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="2d-amphase" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="2d-type" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="2d-colorscale" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="sqepulse" name="2d-direction" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data sqepulse' id="1d-phase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data sqepulse' id="2d-amphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data sqepulse' id="2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data sqepulse' id="2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data sqepulse' id="2d-direction" type="text"></select></div>
         </div>
 
         <div id="char-sqepulse-announcement"></div>
@@ -105,56 +136,86 @@
                     
                 <div class="modal-body">
                     <div class="modal-content">
-                        <!-- Optional Parameters -->
+
+                        <!-- Input Parameters -->
                         <div class="row">
-                            <!-- <div class="col-20" id='left'><label></label></div> -->
-                            <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
-                            <div class="col-20" id='left'><label>XY-Frequency (GHz)</label></div>
-                            <div class="col-20" id='left'><label>XY-Power (dBm)</label></div> 
+                            <div class="col-16" id='left'><label>Flux-Bias (V/A)</label></div>
+                            <div class="col-16" id='left'><label>XY-Frequency (GHz)</label></div>
+                            <div class="col-16" id='left'><label>XY-Power (dBm)</label></div>
+                            <div class="col-16" id='left'><label>RO-Frequency (GHz)</label></div>
+                            <div class="col-16" id='left'><label>RO-Power (dBm)</label></div>
+                            <div class="col-16" id='left'><label>Pulse-Period (ns)</label></div>
                         </div>
                         <div class="row">
-                            <!-- <div class="col-20" id='left'></div> -->
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="fluxbias" type="text" value="OPT,"/></div>
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="xyfreq" type="text" value="OPT,"/></div>
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="xypowa" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="Flux-Bias" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-Frequency" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-Power" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Frequency" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Power" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="Pulse-Period" type="text" value="OPT,"/></div>
                         </div>
-                        <!-- Basic Parameters -->
+
                         <div class="row">
-                            <div class="col-20" id='left'><label>S-Parameter</label></div>
-                            <div class="col-20" id='left'><label>IF-Bandwidth (Hz)</label></div>
-                            <div class="col-20" id='left'><label>Frequency (GHz)</label></div>
-                            <div class="col-20" id='left'><label>Power (dBm)</label></div>
+                            <div class="col-16" id='left'><label>RO-IF-Level (V)</label></div>
+                            <div class="col-16" id='left'><label>RO-Pulse-Delay (ns)</label></div>
+                            <div class="col-16" id='left'><label>RO-Pulse-Width (ns)</label></div>
+                            <div class="col-16" id='left'><label>XY-IF-Level (V)</label></div>
+                            <div class="col-16" id='left'><label>XY-Pulse-Delay (ns)</label></div>
+                            <div class="col-16" id='left'><label>XY-Pulse-Width (ns)</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="sparam" type="text" value="S21,"/></div>
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="ifb" type="text" value="1000"/></div>
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="freq" type="text" value="5 to 9 * 3000"/></div>
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="powa" type="text" value="-37 to 1 * 137 r 700"/></div> 
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-ifLevel" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Pulse-Delay" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Pulse-Width" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-ifLevel" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-Pulse-Delay" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-Pulse-Width" type="text" value="OPT,"/></div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-16" id='left'><label>LO-Frequency (GHz)</label></div>
+                            <div class="col-16" id='left'><label>LO-Power dBm)</label></div>
+                            <div class="col-16" id='left'><label>ADC-delay (s)</label></div>
+                            <div class="col-16" id='left'><label>Average (#)</label></div>
+                            <div class="col-16" id='left'><label>Sampling-Time (2ns)</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-16" id='left'><input class='char sqepulse' id="LO-Frequency" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="LO-Power" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="ADC-delay" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="Average" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="Sampling-Time" type="text" value="OPT,"/></div>
+                        </div>
+
                         <!-- Comment -->
                         <div class="row">
                             <div class="col-75" id='left'>
-                                <textarea class='char' id="sqepulse" name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
+                                <textarea class='char sqepulse' id="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
                             </div>
                         </div>
-                        <div class="row"> <!-- New Row for RUN MODE -->
+
+                        <!-- Repeat & Simulate -->
+                        <div class="row">
                             <div class="col-15" id='left'>
-                                <label class="switch"><input class='char' id=sqepulse name='repeat' type="checkbox">
+                                <label class="switch"><input class='char sqepulse' id='repeat' type="checkbox">
                                     <div class="slider smooth"><span class="on">REPEAT</span><span class="off">ONCE</span></div>
                                 </label>
                             </div>
                             <div class="col-15" id='left'>
-                                <label class="switch"><input class='char' id=sqepulse name='simulate' type="checkbox">
+                                <label class="switch"><input class='char sqepulse' id=simulate type="checkbox">
                                     <div class="slider smooth"><span class="on">TEST ETA</span><span class="off">LOGGED</span></div>
                                 </label>
                             </div>
                         </div>
-                        <div class="row"> <!-- New Row for RUNNING -->
+
+                        <!-- RUN -->
+                        <div class="row"> 
                             {% if g.user['measurement'] %}
                                 <div class="col-15" id='left'><input class="char modal-toggle new sqepulse" id="sqepulse-run"  type="submit" value="RUN"/></div>
                             {% endif %}
                             <div class="col-15" id='left'><input class="char modal-toggle new sqepulse" id="sqepulse-cancel" type="submit" value="CANCEL"/></div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -171,7 +232,7 @@
                 <div class="modal-body">
                     <div class="modal-content">
                         <div class="row"> <!-- New Row for Parameter-input -->
-                            <div class="col-20" id='left'><input class='char' id='sqepulse' name="search" type="text" value="search here"/></div>
+                            <div class="col-20" id='left'><input class='char sqepulse' id='search' type="text" value="search here"/></div>
                         </div>
                         <div class="row"> <!-- New Row for EXECUTION -->
                             <div class="col-15" id='left'><input class="char modal-toggle search sqepulse" id="sqepulse-cancel" type="submit" value="CANCEL"/></div>
@@ -195,14 +256,14 @@
                             <div class="col-20" id='left'><label>File Owner Password:</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="ownerpassword" type="password"/></div>   
+                            <div class="col-20" id='left'><input class='char sqepulse' id="ownerpassword" type="password"/></div>   
                         </div>
 
                         <div class="row">
                             <div class="col-20" id='left'><label>Truncate After:</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="sqepulse" name="truncateafter" type="text"/></div>   
+                            <div class="col-20" id='left'><input class='char sqepulse' id="truncateafter" type="text"/></div>   
                         </div>
 
                         <div class="row">
@@ -213,7 +274,6 @@
                 </div>
             </div>
         </div>
-
         <div class="char sqepulse confirm">
             <h1>Confirm your action</h1>
             <p>Are you really <em>really</em> <strong>really</strong> sure that you want to make changes to the FILE?</p>
@@ -226,3 +286,4 @@
 </body>
 
 </html>
+

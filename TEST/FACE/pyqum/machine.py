@@ -150,6 +150,13 @@ def awgsettingsifwave():
 	message, WaveForms = [], []
 	WAVE, ZWAVE = [], []
 
+	# PRESET Output:
+	for ch in range(2):
+		channel = str(ch + 1)
+		AWG.output_config(awgsess, RepCap=channel, action=["Set", 0]) # Single-ended
+		AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
+		AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.5])
+		AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
 	# Output Settings:
 	outputch = [request.args.get('outputch1'), request.args.get('outputch2')]
 	oupfiltr = [request.args.get('oupfiltr1'), request.args.get('oupfiltr2')]
@@ -163,8 +170,9 @@ def awgsettingsifwave():
 		stat = AWG.output_config(awgsess, RepCap=channel, action=["Set", int(oupconfig[ch])])
 		message += ['output configuration %s: %s <%s>' %(channel, output_code(stat[1]), status_code(stat[0]))]
 		AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
-		AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.25])
+		AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.5])
 		AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
+		
 
 	# Waveform Construction:
 	ifperiod = float(request.args.get('ifperiod'))
@@ -190,8 +198,7 @@ def awgsettingsifwave():
 		# stat, zwave = AWG.CreateArbWaveform(awgsess, [0]*10000)
 		# message += ['Waveform channel %s: %s <%s>' %(channel, zwave, status_code(stat))]
 		# ZWAVE.append(zwave)
-		WaveForms.append(wavefom * 3) # Collecting waveforms to plot on mach
-		
+		WaveForms.append(wavefom * 3) # Collecting waveforms to plot on mach	
 	# Building Sequences:
 	for ch in range(2):
 		channel = str(ch + 1)	
@@ -200,6 +207,7 @@ def awgsettingsifwave():
 		# Channel Assignment:
 		stat = AWG.arb_sequence_handle(awgsess, RepCap=channel, action=["Set", seqhandl])
 		message += ['Sequence channel %s embeded: %s <%s>' %(channel, stat[1], status_code(stat[0]))]
+		
 
 	# Trigger Settings:
 	for ch in range(2):
@@ -302,7 +310,7 @@ def vsaplay():
 	A = [sqrt(i**2+q**2) for (i,q) in zip(I,Q)]
 	
 	log = pauselog() #disable logging (NOT applicable on Apache)
-	return jsonify(nIQpair=vsasn, nloop=nloop, log=str(log), t=t, I=I, Q=Q, A=A, Amp=Amp, Pha=Pha)
+	return jsonify(nIQpair=vsasn, nloop=nloop, log=str(log), t=t, I=list(I), Q=list(Q), A=list(A), Amp=list(Amp), Pha=list(Pha))
 @bp.route('/vsa/about', methods=['GET'])
 def vsaabout():
 	global vsasess
@@ -323,6 +331,10 @@ def vsaabout():
 	message += ['External Trigger Slope: %s (%s)' % (status[1], status_code(status[0]))]
 	status = VSA.trigger_timeout(vsasess)
 	message += ['Trigger Timeout: %s (%s)' % (status[1], status_code(status[0]))]
+	status = VSA.frequency(vsasess)
+	message += ['LO Frequency: %s (%s)' % (status[1], status_code(status[0]))]
+	status = VSA.power(vsasess)
+	message += ['LO Power: %s (%s)' % (status[1], status_code(status[0]))]
 	return jsonify(message=message)
 
 # SG
@@ -631,6 +643,20 @@ def bdrhistoryforecast():
 	# fore = poly1d(coeff)
 	
 	return jsonify(eta_time=list(eta_time))
+@bp.route('/bdr/all/status', methods=['GET'])
+def bdrallstatus():
+	dr = bluefors()
+	dr.selectday(-1)
+
+	# Logging Latest Key-Readings for ALL
+	latestreadings = {}
+	for i in range(6):
+		latestreadings.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
+	for i in [1,2,5,6,7]:
+		latestreadings.update({"T%s"%(i+1):dr.temperaturelog(i+1)[1][-1]})
+	set_status("BDR", latestreadings)
+
+	return jsonify(latestreadings)
 
 # DC
 @bp.route('/dc', methods=['GET'])

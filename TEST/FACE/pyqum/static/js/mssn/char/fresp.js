@@ -292,11 +292,11 @@ $(function () {
             console.log(data.title);
             
             let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
-                name: 'L (' + wday + ', ' + wmoment + ')',
+                name: 'Amplitude',
                 line: {color: 'rgb(23, 151, 6)', width: 2.5},
                 yaxis: 'y' };
             let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', 
-                name: 'R (' + wday + ', ' + wmoment + ')',
+                name: 'Phase',
                 line: {color: 'blue', width: 2.5},
                 yaxis: 'y2' };
 

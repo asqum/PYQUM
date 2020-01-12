@@ -73,6 +73,7 @@ def load_logged_in_user():
             ('approved',)
         ).fetchall()
         g.userlist = [dict(x) for x in g.userlist]
+        # print("USER CREDENTIALS: %s" %g.userlist)
 
         # Queue list:
         g.qumlist = get_db().execute(

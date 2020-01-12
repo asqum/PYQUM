@@ -175,7 +175,7 @@ function accessdata_cwsweep() {
     });
     return false;
 };
-function plot1D(x1,y1,y2,xtitle) {
+function plot1D_cwsweep(x1,y1,y2,xtitle) {
     console.log(xtitle);
     
     let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
@@ -241,7 +241,7 @@ function plot1D(x1,y1,y2,xtitle) {
     Plotly.newPlot('char-cwsweep-chart', Trace, layout, {showSendToCloud: true});
     $( "i.cwsweep1d" ).remove(); //clear previous
 };
-function plot2D(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
+function plot2D_cwsweep(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
     console.log("Plotting 2D");
          
     // Frame assembly:
@@ -565,7 +565,7 @@ $(function () {
             window.x1title = data.x1title;
             // Phase option
             $('select.char.data#cwsweep[name="1d-phase"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
-            plot1D(x1,y1,yp,x1title);
+            plot1D_cwsweep(x1,y1,yp,x1title);
         });
     });
     return false;
@@ -573,10 +573,10 @@ $(function () {
 $('select.char.data#cwsweep').on('change', function() {
     if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "Pha") {
         console.log("Pha mode");
-        plot1D(x1,y1,yp,x1title);
+        plot1D_cwsweep(x1,y1,yp,x1title);
     } else if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "UPha") {
         console.log("UPha mode");
-        plot1D(x1,y1,yup,x1title);
+        plot1D_cwsweep(x1,y1,yup,x1title);
     };
     return false;
 });
@@ -621,7 +621,7 @@ $(function () {
                 .append($('<option>', { text: 'Blues', value: 'Blues' })).append($('<option>', { text: 'Viridis', value: 'Viridis' }));
             // Transpose or not
             $('select.char.data#cwsweep[name="2d-direction"]').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
-            plot2D(x, y, ZZA, xtitle, ytitle, 
+            plot2D_cwsweep(x, y, ZZA, xtitle, ytitle, 
                 $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
                 $('select.char.data#cwsweep[name="2d-colorscale"]').val());
             $( "i.cwsweep2d" ).remove(); //clear previous
@@ -633,11 +633,11 @@ $('select.char.data#cwsweep').on('change', function() {
     if ($('select.char.data#cwsweep[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
     else if ($('select.char.data#cwsweep[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
     if ($('select.char.data#cwsweep[name="2d-direction"]').val() == "rotate") {
-        plot2D(y, x, transpose(ZZ), ytitle, xtitle, 
+        plot2D_cwsweep(y, x, transpose(ZZ), ytitle, xtitle, 
             $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
             $('select.char.data#cwsweep[name="2d-colorscale"]').val());
     } else {
-        plot2D(x, y, ZZ, xtitle, ytitle, 
+        plot2D_cwsweep(x, y, ZZ, xtitle, ytitle, 
             $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
             $('select.char.data#cwsweep[name="2d-colorscale"]').val());
     };

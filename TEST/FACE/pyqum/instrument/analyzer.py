@@ -39,16 +39,11 @@ def IQAParray(datas): # datas
     '''
     IQdata = datas.reshape(len(datas)//2, 2) # sort out interlaced IQ-pairs into I-list & Q-list
     Idata, Qdata = IQdata[:,0], IQdata[:,1]
-    yI, yQ = [float(i) for i in Idata], [float(i) for i in Qdata]
-    Amp, Pha = [], []
-    for I, Q in zip(yI, yQ):
-        if I==0 and Q==0:
-            Amp.append(-1000)
-            Pha.append(0)
-        else:
-            Amp.append(20*log10(sqrt(I**2 + Q**2)))
-            Pha.append(arctan2(Q, I)) # -pi < phase < pi
-    return yI, yQ, Amp, Pha
+    # yI, yQ = [float(i) for i in Idata], [float(i) for i in Qdata]
+    Amp = 20*log10(sqrt(Idata**2 + Qdata**2))
+    Pha = arctan2(Qdata, Idata) # -pi < phase < pi
+
+    return Idata, Qdata, Amp, Pha
 
 # moving average
 def smooth(y, box_pts):

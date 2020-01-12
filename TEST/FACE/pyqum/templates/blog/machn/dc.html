@@ -26,6 +26,12 @@
 
             <!-- Connecting -->
             <div class="row"> <!-- NEW ROW for ON-OFF SWITCH -->
+                <div class="col-10" id='left'>
+                    <select class='dc' id="yk-va-unit">
+                        <option value=0 selected>Voltage</option>
+                        <option value=1>Current</option>
+                    </select>
+                </div>
                 <div class="col-12" id='left'>
                     <label class="dc switch">
                         <input class="dc" id='init-yokogawa' type="checkbox">
@@ -33,12 +39,6 @@
                             <span class="on">ON</span><span class="off">OFF</span>
                         </div>
                     </label>
-                </div>
-                <div class="col-10" id='left'>
-                    <select class='dc' id="yk-va-unit">
-                        <option value=0 selected>Voltage</option>
-                        <option value=1>Current</option>
-                    </select>
                 </div>
             </div>
 

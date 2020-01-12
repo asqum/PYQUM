@@ -2,7 +2,7 @@
 
 import logging
 from time import sleep
-from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin
+from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul
 
 def cdatasearch(Order, Structure):
     ''' Give the address of the data essentially!
@@ -17,22 +17,27 @@ def cdatasearch(Order, Structure):
     Digitmax = len(Structure)
     Structure = append(Structure, [1])
     for i in range(Digitmax):
-        dgit = floor(((Order)%prod(Structure[i:]))/prod(Structure[i+1:]))
+        dgit = floor(((Order)%prod(Structure[i:],dtype=int64))/prod(Structure[i+1:],dtype=int64))
         Address.append(int(dgit))  
     return Address
 
 def gotocdata(Address, Structure):
-    '''Give the order / entry of the data'''
-    S = []
-    for i in range(len(Structure)):
-        S.append(prod(Structure[i+1:]))
-    Order = inner(Address, S)
-    return int(Order)
+    '''Give the Order / Entry of the data
+        Address: can be a stack of arrays of parameter-settings to form matrix
+        Structure: an array of the NUMBER/COUNT of variables for each parameter in the data structure
+    '''
+    Address = array(Address,dtype=int64)
+    S = flip(cumprod(flip(array(Structure,dtype=int64))))
+    S[:-1] , S[-1] = S[1:] , 1
+    Order = matmul(Address, S)
+    
+    return Order
 
 class waveform:
     '''Guidelines for Command writing:
         1. All characters will be converted to lower case
         2. Use comma separated string to represent string list
+        3. Inner-Repeat is ONLY used for CW_SWEEP
     '''
     def __init__(self, command):
         # defaulting to lower case
@@ -129,36 +134,41 @@ def pauselog():
 
 
 def test():
-    # for i in range(700):
+    # for i in range(100):
     #     print("decoding data-%s into c-%s and back into %s" 
-    #     %(i, cdatasearch(i, [8,10,10,2]), gotocdata(cdatasearch(i, [8,10,10,2]), [8,10,10,2])))
-        # sleep(0.3)
-    print("location: %s" %(cdatasearch(8080807, [1,4,101,20002])))
+    #     %(i, cdatasearch(i, [8,7,10,2]), gotocdata(cdatasearch(i, [8,7,10,2]), [8,7,10,2])))
+    #     sleep(2)
+    
+    # print("location: %s" %(gotocdata([0,8,88,778], [1,100,1000,10000])))
+    print("address: %s" %(cdatasearch(gotocdata([0,79,333,8888,12356], [1,100,1000,10000,1000000]), [1,100,1000,10000,1000000])))
+    for x in gotocdata([[0,79,333,5271,12356]]*6 + [[0,79,333,5271,12357]]*1, [1,100,1000,10000,1000000]):
+        print("address: %s" %(cdatasearch(x, [1,100,1000,10000,1000000])))
+    
     # converting between addresses with different base structure:
-    c_struct = [10, 5, 35, 15]
-    c_struct.append(c_struct.pop(c_struct.index(5)))
-    C_order_corrected = []
-    for a in range(c_struct[0]):
-        for b in range(c_struct[1]):
-            for c in range(c_struct[2]):
-                for d in range(c_struct[3]):
-                    C_order_corrected.append(gotocdata([a,d,b,c], [10, 5, 35, 15]))
-    print("This much has just stand corrected: %s" %len(C_order_corrected))
+    # c_struct = [10, 5, 35, 15]
+    # c_struct.append(c_struct.pop(c_struct.index(5)))
+    # C_order_corrected = []
+    # for a in range(c_struct[0]):
+    #     for b in range(c_struct[1]):
+    #         for c in range(c_struct[2]):
+    #             for d in range(c_struct[3]):
+    #                 C_order_corrected.append(gotocdata([a,d,b,c], [10, 5, 35, 15]))
+    # print("This much has just stand corrected: %s" %len(C_order_corrected))
 
     # command = "1 to 1 * 0"
     # command = "0 1   2   to  10  * 1 TO  20  *1 25 26  to35*  1to 70 *  5 73  75   to80  *5 81 82 to  101*  8"
     # command = "100    12  37              77   81  "
     # command = '1 to 10 *           12 to     25 *    7'
     # command = ",s12 ,s21, s22,s11 ,   S22,S12,S21"
-    command = "S,"
+    # command = "S,"
     # command = "10.0to0.0*1"
-    wave = waveform(command)
-    if wave.count == len(wave.data):
-        print("Waveform of length %s is:\n %s" %(wave.count, wave.data))
+    # wave = waveform(command)
+    # if wave.count == len(wave.data):
+    #     print("Waveform of length %s is:\n %s" %(wave.count, wave.data))
 
-    s = [0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,10,12,13,15]
-    idx = match(s, 7.3)
-    print("7.3 is nearest to %s at index %s of s" %(s[idx],idx))
+    # s = [0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,10,12,13,15]
+    # idx = match(s, 7.3)
+    # print("7.3 is nearest to %s at index %s of s" %(s[idx],idx))
 
     return
 

@@ -7,7 +7,7 @@ from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
 from time import time, sleep
-from numpy import linspace, sin, pi, prod, array, mean, sqrt
+from numpy import linspace, sin, pi, prod, array, mean, sqrt, zeros, float64
 from flask import request, session, current_app, g, Flask
 
 from pyqum.instrument.modular import AWG, VSA
@@ -305,8 +305,8 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 					'Sampling-Time'] (IQ-Bandwidth (250MHz or its HALFlings) + Acquisition-Time (dt must be multiples of 2ns))
 	'''
 	# Loading sample:
-	# sample = get_status("MSSN")[session['user_name']]['sample']
-	sample = get_status("MSSN")['abc']['sample'] # by-pass HTTP-request before interface is ready
+	sample = get_status("MSSN")[session['user_name']]['sample']
+	# sample = get_status("MSSN")['abc']['sample'] # by-pass HTTP-request before interface is ready
 
 	# pushing pre-measurement parameters to settings:
 	yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach
@@ -332,7 +332,7 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 	samptime = waveform(corder['Sampling-Time'])
 
 	# Total data points:
-	datasize = int(prod([waveform(corder[param]).count * waveform(corder[param]).inner_repeat  for param in structure], dtype='uint64')) * 2 #data density of 2 due to IQ
+	datasize = int(prod([waveform(corder[param]).count for param in structure], dtype='uint64')) * 2 #data density of 2 due to IQ
 	print("data size: %s" %datasize)
 	
 	# Pre-loop settings:
@@ -363,6 +363,13 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 	AWG.marker_delay(awgsess, action=['Set',float(0)])
 	AWG.marker_pulse_width(awgsess, action=['Set',float(1e-7)])
 	AWG.marker_source(awgsess, action=['Set',int(7)])
+	# PRESET Output:
+	for ch in range(2):
+		channel = str(ch + 1)
+		AWG.output_config(awgsess, RepCap=channel, action=["Set", 0]) # Single-ended
+		AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
+		AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.5])
+		AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
 	# output settings:
 	for ch in range(2):
 		channel = str(ch + 1)
@@ -370,7 +377,7 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 		AWG.output_filter_enabled(awgsess, RepCap=channel, action=["Set", True])
 		AWG.output_config(awgsess, RepCap=channel, action=["Set", int(2)]) # Amplified 1:2
 		AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
-		AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.25])
+		AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.5])
 		AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
 	
 	# VSA for Readout
@@ -559,14 +566,14 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 						
 			# Start Quantum machine:
 			# Start Averaging Loop:
-			avenum = averaging.data[caddress[structure.index('Average')]]
+			avenum = int(averaging.data[caddress[structure.index('Average')]])
 			vsasn = VSA.samples_number(vsasess)[1]
-			iqdata = []
-			for ave in range(int(avenum)):
+			iqdata = zeros((avenum,2*vsasn))
+			for ave in range(avenum):
 				VSA.Arm_Measure(vsasess)
 				gd = VSA.Get_Data(vsasess, 2*vsasn)
-				iqdata.append(gd[1]['ComplexData'])
-			iqdata = mean(array(iqdata), axis=0)
+				iqdata[ave,:] = array(gd[1]['ComplexData'])
+			iqdata = mean(iqdata, axis=0)
 			print("Operation Complete")
 			print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
 
