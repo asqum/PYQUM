@@ -755,7 +755,7 @@ def char_sqepulse():
 # Initialize and list days specific to task
 @bp.route('/char/sqepulse/init', methods=['GET'])
 def char_sqepulse_init():
-    global M_sqepulse, CStructure
+    global M_sqepulse, CParameters
 
     # check currently-connected users:
     try: print(Fore.GREEN + "Connected M-USER(s) for SQE-Pulse: %s" %M_sqepulse.keys())
@@ -769,8 +769,8 @@ def char_sqepulse_init():
     print(Fore.BLUE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
 
     # PENDING: Flexible C-Structure:
-    CStructure = {}
-    CStructure['SQE_Pulse'] = ['Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
+    CParameters = {}
+    CParameters['SQE_Pulse'] = ['repeat', 'Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
                 'Pulse-Period', 'RO-ifLevel', 'RO-Pulse-Delay', 'RO-Pulse-Width', 'XY-ifLevel', 'XY-Pulse-Delay', 'XY-Pulse-Width', 
                 'LO-Frequency', 'LO-Power', 'ADC-delay', 'Average', 'Sampling-Time']
 
@@ -850,8 +850,14 @@ def char_sqepulse_access():
     wmoment = int(request.args.get('wmoment'))
     M_sqepulse[session['user_name']].selectmoment(wmoment)
     M_sqepulse[session['user_name']].accesstructure()
+    corder = M_sqepulse[session['user_name']].corder
     data_progress = M_sqepulse[session['user_name']].data_progress
     data_repeat = data_progress // 100 + int(bool(data_progress % 100))
+
+    global cmd_repeat
+    cmd_repeat = {}
+    cmd_repeat[session['user_name']] = '0 to %s * %s' %(int(data_repeat-1), int(data_repeat-1))
+    corder['repeat'] = cmd_repeat[session['user_name']]
 
     # Measurement time:
     filetime = getmtime(M_sqepulse[session['user_name']].pqfile) # in seconds
@@ -859,16 +865,16 @@ def char_sqepulse_access():
     measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress)))
 
     # Structure & Addresses:
-    session['c_sqepulse_structure'] = [data_repeat] + [waveform(M_sqepulse[session['user_name']].corder[param]).count for param in CStructure['SQE_Pulse']][:-1] \
-                                        + [waveform(M_sqepulse[session['user_name']].corder[CStructure['SQE_Pulse'][-1]]).count*M_sqepulse[session['user_name']].datadensity]
+    session['c_sqepulse_structure'] = [waveform(corder[param]).count for param in CParameters['SQE_Pulse']][:-1] \
+                                        + [waveform(corder[CParameters['SQE_Pulse'][-1]]).count*M_sqepulse[session['user_name']].datadensity]
     session['c_sqepulse_progress'] = cdatasearch(M_sqepulse[session['user_name']].resumepoint-1, session['c_sqepulse_structure'])
     
     pdata = dict()
-    for params in CStructure['SQE_Pulse']:
-        pdata[params] = waveform(M_sqepulse[session['user_name']].corder[params]).data[0:session['c_sqepulse_progress'][CStructure['SQE_Pulse'].index(params)+1]+1]
+    for params in CParameters['SQE_Pulse']:
+        pdata[params] = waveform(corder[params]).data[0:session['c_sqepulse_progress'][CParameters['SQE_Pulse'].index(params)]+1]
+    print(pdata['repeat'])
 
-    return jsonify(data_progress=data_progress, measureacheta=measureacheta, corder=M_sqepulse[session['user_name']].corder, comment=M_sqepulse[session['user_name']].comment, 
-        data_repeat=data_repeat, pdata=pdata)
+    return jsonify(data_progress=data_progress, measureacheta=measureacheta, corder=corder, comment=M_sqepulse[session['user_name']].comment, pdata=pdata)
 # Resume the unfinished measurement
 @bp.route('/char/sqepulse/resume', methods=['GET'])
 def char_sqepulse_resume():
@@ -911,35 +917,41 @@ def char_sqepulse_1ddata():
     print("Data length: %s" %len(selectedata))
     
     # load parameter indexes from json call:
-    irepeat = request.args.get('irepeat')
-    if "x" in irepeat:
-        pass # PENDING CONSTRUCTION TO SWEEP REPEATED MEASUREMENT
-
     cselect = json.loads(request.args.get('cselect'))
-    # print("Selected: %s" %cselect)
+
     for k in cselect.keys():
         if "x" in cselect[k]:
             xtitle = "<b>" + k + "</b>"
             cselection = (",").join([s for s in cselect.values()])
-            selected_caddress = [irepeat] + [s for s in cselect.values()]
+            selected_caddress = [s for s in cselect.values()]
+        
             # Sweep-command:
-            selected_sweep = M_sqepulse[session['user_name']].corder[k]
-            # Selecting Sweep-indexes based on current data-progress:
-            parent_address = selected_caddress[:CStructure['SQE_Pulse'].index(k)+1] # address's part before x
-            if [int(s) for s in parent_address] <= session['c_sqepulse_progress'][0:len(parent_address)]: # minor draw-back: The very last portion of ongoing measured data will not be accessible, thus have to wait until all that last portion is collected!
-                if CStructure['SQE_Pulse'].index(k) == len(CStructure['SQE_Pulse'])-1 :
-                    isweep = range(session['c_sqepulse_structure'][-1]//M_sqepulse[session['user_name']].datadensity)
-                else:
-                    isweep = range(session['c_sqepulse_structure'][CStructure['SQE_Pulse'].index(k)+1]) # can access full-range if selection is well within progress resume-point
-                print(Back.WHITE + Fore.BLACK + "Well within Progress with sweep length of %s" %len(isweep))
-            else: isweep = range(session['c_sqepulse_progress'][CStructure['SQE_Pulse'].index(k)+1]+1) # can only access until progress resume-point
+            if k == 'repeat':
+                selected_sweep = cmd_repeat[session['user_name']]
+            else:
+                selected_sweep = M_sqepulse[session['user_name']].corder[k]
+
+            # Adjusting c-parameters range for data analysis:
+            parent_address = selected_caddress[:CParameters['SQE_Pulse'].index(k)] # address's part before x
+            if [int(s) for s in parent_address] < session['c_sqepulse_progress'][0:len(parent_address)]:
+                print(Fore.YELLOW + "selection is well within progress")
+                sweepables = session['c_sqepulse_structure'][CParameters['SQE_Pulse'].index(k)]
+            else: sweepables = session['c_sqepulse_progress'][CParameters['SQE_Pulse'].index(k)]+1
+
+            # Special treatment on the last 'buffer' parameter to factor out the data-density first: 
+            if CParameters['SQE_Pulse'].index(k) == len(CParameters['SQE_Pulse'])-1 :
+                isweep = range(sweepables//M_sqepulse[session['user_name']].datadensity)
+            else:
+                isweep = range(sweepables) # flexible access until progress resume-point
+            print(Back.WHITE + Fore.BLACK + "Sweeping %s points" %len(isweep))
+
             Idata = zeros(len(isweep))
             Qdata = zeros(len(isweep))
             for i in isweep:
-                selected_caddress[CStructure['SQE_Pulse'].index(k)+1] = i
+                selected_caddress[CParameters['SQE_Pulse'].index(k)] = i
                 if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
                     srange = request.args.get('srange').split("-") # sample range
-                    if [int(srange[1]) , int(srange[0])] > [session['c_sqepulse_structure'][-1]] * 2:
+                    if [int(srange[1]) , int(srange[0])] > [session['c_sqepulse_structure'][-1]//M_sqepulse[session['user_name']].datadensity] * 2:
                         print(Back.WHITE + Fore.RED + "Out of range")
                     else:
                         # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:

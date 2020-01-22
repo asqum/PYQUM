@@ -108,13 +108,19 @@
             <!-- <div class="col-10" id='left'><input class='char data sqepulse' id="1a-data" type="submit" value="1A-Data"/></div> -->
             <div class="col-10" id='left'><input class='char data sqepulse' id="sample-range" type="text" value="173-800"/></div>
             <div class="col-10" id='left'><input class='char data sqepulse' id="1d-data" type="submit" value="1D-Data"/></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 green" id="sqepulse-insert-1D">ADD-1D</button></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="sqepulse-savecsv">CSV-1D</button></div>
             <div class="col-10" id='left'><input class='char data sqepulse' id="2d-data" type="submit" value="2D-Data"/></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="sqepulse-savecsv">CSV</button></div>
             <div class="col-10" id='left'><button class="char push_button w-95 red" id="sqepulse-datareset">CLIP</button></div>
         </div>
 
         <!-- Data Assembly and Grooming -->
         <div class="row">
+            <div class="col-10" id='left'><select class='char data sqepulse' id="1d-VdBm" type="text">
+                <option value='V'>V</option>
+                <option value='dBm'>dBm</option>
+            </select></div>
+
             <div class="col-10" id='left'><select class='char data sqepulse' id="1d-phase" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="2d-amphase" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="2d-type" type="text"></select></div>
@@ -197,7 +203,7 @@
                         <!-- Repeat & Simulate -->
                         <div class="row">
                             <div class="col-15" id='left'>
-                                <label class="switch"><input class='char sqepulse' id='repeat' type="checkbox">
+                                <label class="switch"><input class='char sqepulse repeat' type="checkbox">
                                     <div class="slider smooth"><span class="on">REPEAT</span><span class="off">ONCE</span></div>
                                 </label>
                             </div>

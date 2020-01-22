@@ -9,7 +9,7 @@ $(document).ready(function(){
 window.selecteday = ''
 
 // PENDING: Flexible C-Structure:
-var SQEPulse_Structure = ['Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
+var SQEPulse_Parameters = ['repeat', 'Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
 'Pulse-Period', 'RO-ifLevel', 'RO-Pulse-Delay', 'RO-Pulse-Width', 'XY-ifLevel', 'XY-Pulse-Delay', 'XY-Pulse-Width', 
 'LO-Frequency', 'LO-Power', 'ADC-delay', 'Average', 'Sampling-Time'];
 
@@ -40,7 +40,7 @@ function transpose(a) {
   };
 function set_repeat_sqepulse() {
     $.getJSON('/mssn/char/sqepulse/setrepeat', {
-        repeat: $('input.char.sqepulse#repeat').is(':checked')?1:0
+        repeat: $('input.char.sqepulse.repeat').is(':checked')?1:0
     }, function(data) {
         $( "i.sqepulse-repeat" ).remove(); //clear previous
         if (data.repeat == true) {
@@ -52,7 +52,7 @@ function get_repeat_sqepulse() {
     $.getJSON('/mssn/char/sqepulse/getrepeat', {
     }, function (data) {
         console.log("Repeat: " + data.repeat);
-        $('input.char.sqepulse#repeat').prop("checked", data.repeat);
+        $('input.char.sqepulse.repeat').prop("checked", data.repeat);
         $( "i.sqepulse-repeat" ).remove(); //clear previous
         if (data.repeat == true) {
             $('button.char#sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
@@ -90,27 +90,20 @@ function accessdata_sqepulse() {
     }, function (data) {
         console.log(data.corder);
 
-        // REPEATS:
-        $('select.char.sqepulse#repeat').empty();
-        if (data.data_repeat > 1) {
-            $('select.char.sqepulse#repeat').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
-        };
-        for (i = 0; i < data.data_repeat; i++) { $('select.char.sqepulse#repeat').append($('<option>', { text: i+1, value: i })); };
-
         // SCROLL: scroll out repeated data (the exact reverse of averaging)
-        $.each(SQEPulse_Structure, function(i,cs){
-            // console.log('cs: ' + cs + '\ndata: ' + data.pdata[cs]);
+        $.each(SQEPulse_Parameters, function(i,cparam){
+            // console.log('cparam: ' + cparam + '\ndata: ' + data.pdata[cparam]);
 
             // Loading data into parameter-range selectors:
-            $('select.char.sqepulse#' + cs).empty();
-            if ( data.pdata[cs].length > 1) {
-                $('select.char.sqepulse#' + cs).append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.sqepulse#' + cparam).empty();
+            if ( data.pdata[cparam].length > 1) {
+                $('select.char.sqepulse#' + cparam).append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                     .append($('<option>', { text: 'SAMPLE', value: 's' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
             };
-            $.each(data.pdata[cs], function(i,v){ $('select.char.sqepulse#' + cs).append($('<option>', { text: v, value: i })); });
+            $.each(data.pdata[cparam], function(i,v){ $('select.char.sqepulse#' + cparam).append($('<option>', { text: v, value: i })); });
 
             // Loading parameter-range into inputs for new run:
-            $('input.char.sqepulse#' + cs).val(data.corder[cs]);
+            $('input.char.sqepulse#' + cparam).val(data.corder[cparam]);
 
         });
 
@@ -167,14 +160,54 @@ function plot1D_sqepulse(x,y1,y2,y3,xtitle) {
         title: ''
         };
     
+    // I
     $.each(x, function(i, val) {traceI.x.push(val);});
     $.each(y1, function(i, val) {traceI.y.push(val);});
+    // Q
     $.each(x, function(i, val) {traceQ.x.push(val);});
     $.each(y2, function(i, val) {traceQ.y.push(val);});
+    // A (V or dBm)
     $.each(x, function(i, val) {traceA.x.push(val);});
-    $.each(y3, function(i, val) {traceA.y.push(val);});
+    if ($('select.char.data.sqepulse#1d-VdBm').val() == 'V') {
+        $.each(y3, function(i, val) {traceA.y.push(val);});
+    } else if ($('select.char.data.sqepulse#1d-VdBm').val() == 'dBm') {
+        $.each(y3, function(i, val) {
+            var val = 10*Math.log10(val**2/50*1000);
+            traceA.y.push(val);
+        });
+    };
 
     var Trace = [traceI, traceQ, traceA]
+    Plotly.newPlot('char-sqepulse-chart', Trace, layout, {showSendToCloud: true});
+    $( "i.sqepulse1d" ).remove(); //clear previous
+};
+function compare1D_sqepulse(x,y1,y2) {
+    
+    let traceA = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'Original',
+        line: {color: 'blue', width: 2.5},
+        yaxis: 'y' };
+    let traceB = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'Added',
+        line: {color: 'red', width: 2.5},
+        yaxis: 'y' };
+    
+    let layout = {
+        legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis: { zeroline: false, title: '<b>Signal(V)</b>', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        
+        title: ''
+        };
+    
+    // Original
+    $.each(x, function(i, val) {traceA.x.push(val);});
+    $.each(y1, function(i, val) {traceA.y.push(val);});
+    // Added
+    $.each(x, function(i, val) {traceB.x.push(val);});
+    $.each(y2, function(i, val) {traceB.y.push(val);});
+    
+    var Trace = [traceA, traceB]
     Plotly.newPlot('char-sqepulse-chart', Trace, layout, {showSendToCloud: true});
     $( "i.sqepulse1d" ).remove(); //clear previous
 };
@@ -345,8 +378,11 @@ $('input.char#sqepulse-run').bind('click', function() {
     
     // Assemble CORDER from parameter-inputs:
     var CORDER = {};
-    CORDER['C-Structure'] = SQEPulse_Structure;
-    $.each(SQEPulse_Structure, function(i,cs){ CORDER[cs] = $('input.char.sqepulse#' + cs).val(); });
+    CORDER['C-Structure'] = SQEPulse_Parameters;
+    $.each(SQEPulse_Parameters, function(i,cparam){ CORDER[cparam] = $('input.char.sqepulse#' + cparam).val(); });
+    CORDER['repeat'] = '0'; // factor out repeat for file-size calculation
+    console.log('CORDER["repeat"]: ' + CORDER['repeat']);
+    console.log('CORDER["Average"]: ' + CORDER['Average']);
     
     var comment = JSON.stringify($('textarea.char.sqepulse#ecomment').val());
     var simulate = $('input.char#sqepulse[name="simulate"]').is(':checked')?1:0; //use css to respond to click / touch
@@ -368,7 +404,7 @@ $("a.new#sqepulse-eta").bind('click', function() {
     });
 });
 // click to set repeat or once
-$('input.char.sqepulse#repeat').bind('click', function() {
+$('input.char.sqepulse.repeat').bind('click', function() {
     set_repeat_sqepulse();
 });
 
@@ -410,9 +446,12 @@ $(function () {
         
         // Assemble CORDER from parameter-inputs:
         var CORDER = {};
-        CORDER['C-Structure'] = SQEPulse_Structure;
-        $.each(SQEPulse_Structure, function(i,cs){ CORDER[cs] = $('input.char.sqepulse#' + cs).val(); });
-        
+        CORDER['C-Structure'] = SQEPulse_Parameters;
+        $.each(SQEPulse_Parameters, function(i,cparam){ CORDER[cparam] = $('input.char.sqepulse#' + cparam).val(); });
+        CORDER['repeat'] = '0'; // factor out repeat for file-size calculation
+        console.log('CORDER["repeat"]: ' + CORDER['repeat']);
+        console.log('CORDER["Average"]: ' + CORDER['Average']);
+
         $.getJSON('/mssn/char/sqepulse/resume', {
             wday: wday, wmoment: wmoment, CORDER: JSON.stringify(CORDER)
         }, function (data) {
@@ -473,13 +512,13 @@ $(function () {
     $('input.char.sqepulse#1d-data').on('click', function () {
         $( "i.sqepulse1d" ).remove(); //clear previous
         $('button.char#sqepulse').prepend("<i class='sqepulse1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var irepeat = $('select.char.sqepulse#repeat').val();
+        // var irepeat = $('select.char.sqepulse#repeat').val();
         var cselect = {};
-        $.each(SQEPulse_Structure, function(i,cs){ cselect[cs] = $('select.char.sqepulse#' + cs).val(); });
+        $.each(SQEPulse_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.sqepulse#' + cparam).val(); });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.char.data.sqepulse#sample-range').val();
         $.getJSON('/mssn/char/sqepulse/1ddata', {
-            irepeat: irepeat, cselect: JSON.stringify(cselect), srange: srange
+            cselect: JSON.stringify(cselect), srange: srange
         }, function (data) {
             window.x = data.x;
             window.yI = data.yI;
@@ -493,6 +532,34 @@ $(function () {
     });
     return false;
 });
+// INSERT 1D-data for comparison
+$(function () {
+    $('button.char#sqepulse-insert-1D').on('click', function () {
+        $( "i.sqepulse1d" ).remove(); //clear previous
+        $('button.char#sqepulse').prepend("<i class='sqepulse1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        // var irepeat = $('select.char.sqepulse#repeat').val();
+        var cselect = {};
+        $.each(SQEPulse_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.sqepulse#' + cparam).val(); });
+        console.log("Picked Flux: " + cselect['Flux-Bias']);
+        var srange = $('input.char.data.sqepulse#sample-range').val();
+        $.getJSON('/mssn/char/sqepulse/1ddata', {
+            cselect: JSON.stringify(cselect), srange: srange
+        }, function (data) {
+            window.x2 = data.x;
+            window.yI2 = data.yI;
+            window.yQ2 = data.yQ;
+            window.yA2 = data.yA;
+            window.xtitle2 = data.xtitle;
+            // Phase option
+            // $('select.char.data.sqepulse#1d-phase').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
+            compare1D_sqepulse(x,yA,yA2);
+        });
+    });
+    return false;
+});
+
+
+// PENDING:
 $('select.char.data.sqepulse').on('change', function() {
     if ($('select.char.data.sqepulse#1d-phase').val() == "Pha") {
         console.log("Pha mode");

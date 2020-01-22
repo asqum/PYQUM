@@ -44,6 +44,25 @@ def all():
 	# Test Bed # All Task # Great Work
 	current_usr = session['user_name']
 	return render_template("blog/machn/all.html", current_usr=current_usr)
+@bp.route('/all/status', methods=['GET'])
+def allstatus():
+	dr = bluefors()
+	dr.selectday(-1)
+
+	# Logging Latest Key-Readings for ALL
+	latestbdr = {}
+	for i in range(6):
+		latestbdr.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
+	for i in [1,2,5,6,7]:
+		latestbdr.update({"T%s"%(i+1):dr.temperaturelog(i+1)[1][-1]})
+	set_status("BDR", latestbdr)
+
+	status = {}
+	status['PSGV'] = get_status('PSGV')["state"]
+	status['AWG'] = get_status('AWG')["state"]
+
+	log = pauselog() #disable logging (NOT applicable on Apache)
+	return jsonify(log=str(log), latestbdr=latestbdr, status=status)
 
 # AWG
 @bp.route('/awg', methods=['GET'])
@@ -643,20 +662,7 @@ def bdrhistoryforecast():
 	# fore = poly1d(coeff)
 	
 	return jsonify(eta_time=list(eta_time))
-@bp.route('/bdr/all/status', methods=['GET'])
-def bdrallstatus():
-	dr = bluefors()
-	dr.selectday(-1)
 
-	# Logging Latest Key-Readings for ALL
-	latestreadings = {}
-	for i in range(6):
-		latestreadings.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
-	for i in [1,2,5,6,7]:
-		latestreadings.update({"T%s"%(i+1):dr.temperaturelog(i+1)[1][-1]})
-	set_status("BDR", latestreadings)
-
-	return jsonify(latestreadings)
 
 # DC
 @bp.route('/dc', methods=['GET'])

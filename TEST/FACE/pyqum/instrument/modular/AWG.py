@@ -45,7 +45,7 @@ def InitWithOptions(IdQuery=False, Reset=False, OptionsString='Simulate=false, D
     status = AGM(c_char_p(Resource), c_bool(IdQuery), c_bool(Reset), c_char_p(Option), byref(Session))
     msession = Session.value
     if status == 0:
-        set_status(mdlname, dict(state="Initialized Successfully", session=msession))
+        set_status(mdlname, dict(state="initialized", session=msession))
     else: 
         set_status(mdlname, dict(state="Error: " + str(status)))
         msession = get_status(mdlname)["session"]
@@ -471,7 +471,7 @@ def close(session):
     AGM.restype = c_int
     status = AGM(c_long(session))
     if status == 0:
-        set_status(mdlname, dict(state="Closed Successfully"))
+        set_status(mdlname, dict(state="closed"))
     else: set_status(mdlname, dict(state="Error: " + str(status)))
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed: %s" %(mdlname, status_code(status)))
     return status
