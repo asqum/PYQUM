@@ -1,12 +1,16 @@
-# Communicating with Benchtop GW DC-Source (Latest:2019/02)
+#!/usr/bin/env python
+'''Communicating with Benchtop RIGOL Spectrum Analyzer RSA5065-TG
+'''
+
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
-import visa
 from time import sleep
+
+import visa
 from pyqum.instrument.logger import address, set_status, status_code, debug
 from pyqum.instrument.logger import translate_scpi as Attribute
 
@@ -22,6 +26,8 @@ def Initiate():
         stat = bench.write('*CLS') #Clear buffer memory; Load preset
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 150000 #set timeout in ms
+        bench.write(":INIT:CONT ON") #continuous mode
+        sleep(3)
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
     except: 
@@ -34,27 +40,37 @@ def Initiate():
 def model(bench, action=['Get', '']):
     SCPIcore = '*IDN'  #inquiring machine identity: "who r u?"
     return mdlname, bench, SCPIcore, action
-
 @Attribute
-def channel_voltage(bench, chanum, action=['Get', '']):
-    '''This command sets the voltage of power source.\n
-        action=['Set','1']'''
-    SCPIcore = 'CHAN%s:VOLT' %chanum
+def frequency(bench, action=['Get', '']):
+    '''This command sets the signal generator output frequency for the CW frequency mode, or increments or decrements the current RF frequency setting.\n
+        action=['Set','5GHz']'''
+    SCPIcore = ':FREQ:CENT'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def fspan(bench, action=['Get', '']):
+    '''This command sets the signal generator output frequency for the CW frequency mode, or increments or decrements the current RF frequency setting.\n
+        action=['Set','150MHz']'''
+    SCPIcore = ':FREQ:SPAN'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def rbw(bench, action=['Get', '']):
+    '''This command sets the signal generator output frequency for the CW frequency mode, or increments or decrements the current RF frequency setting.\n
+        action=['Set','1MHz']'''
+    SCPIcore = ':BANDwidth:RESolution'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def vbw(bench, action=['Get', '']):
+    '''This command sets the signal generator output frequency for the CW frequency mode, or increments or decrements the current RF frequency setting.\n
+        action=['Set','100kHz']'''
+    SCPIcore = ':BANDwidth:VIDeo'
     return mdlname, bench, SCPIcore, action
 
-@Attribute
-def channel_current(bench, chanum, action=['Get', '']):
-    '''This command sets the current of power source.\n
-        action=['Set','0.01']'''
-    SCPIcore = 'CHAN%s:CURR' %chanum
-    return mdlname, bench, SCPIcore, action
+def fpower(bench, freq):
+    bench.query('*OPC?')
+    bench.write(":CALC:MARK1:MODE POS")
+    bench.write(":CALC:MARK1:X %s" %freq)
+    return bench.query(":CALCulate:MARKer1:Y?")
 
-@Attribute
-def output(bench, action=['Get', '']):
-    '''This command enables or disables the RF output. Although you can configure and engage various modulations, 
-    no signal is available at the RF OUTPUT connector until this command is executed.'''
-    SCPIcore = ':OUTPut:STATE'
-    return mdlname, bench, SCPIcore, action
 
 def close(bench, reset=True):
     if reset:
@@ -68,7 +84,7 @@ def close(bench, reset=True):
     set_status(mdlname, dict(state='disconnected'))
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
     return status
-
+        
 
 # Test Zone
 def test(detail=True):
@@ -83,13 +99,10 @@ def test(detail=True):
             # print('SCPI TEST:')
             # s.write("*SAV 00,1")
             model(s)
-            channel_voltage(s, 1)
-            channel_voltage(s, 1, action=['Set', '28'])
-            channel_current(s, 1)
-            channel_current(s, 1, action=['Set', '0.125'])
-            output(s, action=['Set', '1'])
-            # sleep(1)
-            output(s, action=['Set', '0'])
+            frequency(s)
+            frequency(s, action=['Set','5.5GHz'])
+            fspan(s)
+            fspan(s, action=['Set','150MHz'])
             
         else: print(Fore.RED + "Basic IO Test")
     if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):
@@ -97,3 +110,4 @@ def test(detail=True):
     else: state = False
     close(s, reset=state)
     return
+

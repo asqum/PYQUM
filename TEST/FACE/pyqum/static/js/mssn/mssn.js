@@ -24,5 +24,25 @@ function openTab(evt, Name) {
     evt.currentTarget.className += " active";
 } 
 
+function Normalize_Dip(Z) {
+    var Zrow = []
+    var zmin = Math.min.apply(Math, Z);
+    var zmax = Math.max.apply(Math, Z);
+    $.each(Z, function(i, z) {
+        var znml = (z-zmax)/(zmax-zmin);
+        Zrow.push(znml);
+    });
+    return Zrow;
+}
 
+function Normalize_Peak(Z) {
+    var Zrow = []
+    var zmin = Math.min.apply(Math, Z);
+    var zmax = Math.max.apply(Math, Z);
+    $.each(Z, function(i, z) {
+        var znml = (z-zmin)/(zmax-zmin);
+        Zrow.push(znml);
+    });
+    return Zrow;
+}
 

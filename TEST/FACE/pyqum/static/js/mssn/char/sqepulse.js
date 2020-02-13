@@ -181,7 +181,7 @@ function plot1D_sqepulse(x,y1,y2,y3,xtitle) {
     Plotly.newPlot('char-sqepulse-chart', Trace, layout, {showSendToCloud: true});
     $( "i.sqepulse1d" ).remove(); //clear previous
 };
-function compare1D_sqepulse(x,y1,y2) {
+function compare1D_sqepulse(x,y1,y2,normalize=false,direction='dip') {
     
     let traceA = {x: [], y: [], mode: 'lines', type: 'scatter', 
         name: 'Original',
@@ -200,6 +200,16 @@ function compare1D_sqepulse(x,y1,y2) {
         title: ''
         };
     
+    if (normalize == true) {
+        if (direction == 'dip') {
+            y1 = Normalize_Dip(y1);
+            y2 = Normalize_Dip(y2);
+        } else if (direction == 'peak') {
+            y1 = Normalize_Peak(y1);
+            y2 = Normalize_Peak(y2);
+        };
+    };
+
     // Original
     $.each(x, function(i, val) {traceA.x.push(val);});
     $.each(y1, function(i, val) {traceA.y.push(val);});
@@ -550,24 +560,24 @@ $(function () {
             window.yQ2 = data.yQ;
             window.yA2 = data.yA;
             window.xtitle2 = data.xtitle;
-            // Phase option
-            // $('select.char.data.sqepulse#1d-phase').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
-            compare1D_sqepulse(x,yA,yA2);
+
+            // Normalization Options:
+            $('select.char.data.sqepulse#compare-nml').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+                                                                .append($('<option>', { text: 'normaldip', value: 'normaldip' }))
+                                                                .append($('<option>', { text: 'normalpeak', value: 'normalpeak' }));
+
+            console.log('selected: ' + $('select.char.data.sqepulse#compare-nml').val());
+            normalize = Boolean($('select.char.data.sqepulse#compare-nml').val()!='direct');
+            direction = $('select.char.data.sqepulse#compare-nml').val().split('normal')[1];
+            compare1D_sqepulse(x,yA,yA2,normalize,direction);
         });
     });
     return false;
 });
-
-
-// PENDING:
-$('select.char.data.sqepulse').on('change', function() {
-    if ($('select.char.data.sqepulse#1d-phase').val() == "Pha") {
-        console.log("Pha mode");
-        plot1D_sqepulse(x1,y1,yp,x1title);
-    } else if ($('select.char.data.sqepulse#1d-phase').val() == "UPha") {
-        console.log("UPha mode");
-        plot1D_sqepulse(x1,y1,yup,x1title);
-    };
+$('select.char.data.sqepulse#compare-nml').on('change', function() {
+    normalize = Boolean($('select.char.data.sqepulse#compare-nml').val()!='direct');
+    direction = $('select.char.data.sqepulse#compare-nml').val().split('normal')[1];
+    compare1D_sqepulse(x,yA,yA2,normalize,direction);
     return false;
 });
 

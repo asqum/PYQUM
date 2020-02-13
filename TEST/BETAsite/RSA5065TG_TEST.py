@@ -29,26 +29,34 @@ inst.write_termination = '\n'
 # print("IO PROTOCOL: %s" %inst.get_visa_attribute(visa.constants.VI_ATTR_IO_PROT))
 # print("TERMINATION CHARACTER ENABLED: %s" %inst.get_visa_attribute(visa.constants.VI_ATTR_TERMCHAR_EN), "\n")
 
-freq_cent = 3e9
-span = 6e9
+freq_cent = 5.525e9
+span = 0.1e9
 f = np.linspace(freq_cent-span/2, freq_cent+span/2, 801, endpoint = True)
 
-inst.write("SYST:SCPI:DISP ON")
-inst.write(":FREQ:CENT %s" %freq_cent)
+inst.write(":INIT:CONT ON")
+# inst.write("SYST:SCPI:DISP ON")
+inst.write(":FREQ:CENT %s" %('5.525GHz'))
 inst.write(":FREQ:SPAN %s" %span)
-inst.write(":INIT:CONT OFF")
-inst.write(":FORM:TRAC:DATA ASCii")
-values = inst.query_ascii_values(':TRAC:DATA? TRACE1', container=np.array)
-print("DONE with length %s: %s" %(len(values),(values)))
+# inst.write(":FREQ:CENT %s;SPAN %s" %('5.525GHz',span))
+inst.write(":BANDwidth:RESolution %s" %1e6)
+inst.write(":BANDwidth:VIDeo %s" %1e5)
+
+# inst.write("*SRE 128")
+# print("Ready: %s" %inst.query('*STB?'))
+# sleep(1)
+for i in range(2):
+    inst.write(":FORM:TRAC:DATA ASCii")
+    values = inst.query_ascii_values(':TRAC:DATA? TRACE1', container=np.array)
+# print("DONE with length %s: %s" %(len(values),(values)))
 
 plt.plot(f, values, 'k')
 plt.xlabel ('Frequency (Hz)')
 plt.ylabel ('Power (dBm)')
 plt.show()
 
-# inst.write(":CALC:MARK<1>:MODE POS")
-# inst.write(":CALC:MARK<1>:X 3e9")
-# print(inst.query(":CALCulate:MARKer<1>:Y?"))
+inst.write(":CALC:MARK1:MODE POS")
+inst.write(":CALC:MARK1:X 5.5e9")
+print(inst.query(":CALCulate:MARKer1:Y?"))
 
 # fileobject = open(file1, r, 1)
 # fileobject.read()
@@ -61,3 +69,5 @@ plt.show()
 #     a1.append(i*4)
 
 # print(a1)
+
+inst.close()

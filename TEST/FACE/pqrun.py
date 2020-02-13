@@ -2,6 +2,7 @@ from pyqum import create_app
 import sys
 
 app = create_app()
+# Port, DeBuG, RLD = 5300, True, True
 Port, DeBuG, RLD = 5300, True, True
 
 def server(mode):
@@ -15,3 +16,4 @@ def server(mode):
 	
 if __name__ == "__main__":
 	server(sys.argv[1])
+

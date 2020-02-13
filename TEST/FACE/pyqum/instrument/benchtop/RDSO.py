@@ -1,4 +1,5 @@
 # Communicating with Benchtop RIGOL's Digital Storage Oscilloscope 
+
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
