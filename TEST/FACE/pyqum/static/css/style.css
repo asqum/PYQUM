@@ -299,6 +299,12 @@ select:focus option:checked {
 .col-space {
     padding: inherit; width: 0.5%;
 }
+.col-1 {
+    padding: inherit; width: 1%;
+}
+.col-2 {
+    padding: inherit; width: 2%;
+}
 .col-3 {
     padding: inherit; width: 3%;
 }
@@ -361,6 +367,9 @@ select:focus option:checked {
 }
 .col-80 {
     padding: inherit; width: 80%;
+}
+.col-88 {
+    padding: inherit; width: 88%;
 }
 
 /* Clear floats after the columns */
@@ -542,4 +551,61 @@ input:checked + .slider:before {
     background: #D6D6D6;
   }
 
+  /* Side-bar */
+  .sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: scroll;
+    transition: 0.5s;
+    padding-top: 35px;
+  }
+  .sidebar a {
+    padding: 2px 0px 2px 2px;
+    text-decoration: none;
+    font-size: 20px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+  }
+  .sidebar a:hover {
+    color: #f1f1f1;
+  }
+  .sidebar .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+  }
+  .openbtn {
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #111;
+    color: white;
+    padding: 3px 5px;
+    border: none;
+  }
+  .openbtn:hover {
+    background-color: #444;
+  }
+  #main {
+    transition: margin-left .5s;
+    padding: 16px;
+  }
+  /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+  @media screen and (max-height: 450px) {
+    .sidebar {padding-top: 15px;}
+    .sidebar a {font-size: 18px;}
+  }
   
+/* search button */
+button.search i {
+    font-size:25px;
+    color:purple;
+}
+

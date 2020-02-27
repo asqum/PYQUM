@@ -23,7 +23,8 @@ def Initiate():
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-        stat = bench.write('*CLS') #Clear buffer memory; Load preset
+        stat = bench.write('*CLS') #Clear buffer memory
+        bench.write(':SYSTem:PRESet') #Mode preset
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 150000 #set timeout in ms
         bench.write(":INIT:CONT ON") #continuous mode
@@ -64,9 +65,40 @@ def vbw(bench, action=['Get', '']):
         action=['Set','100kHz']'''
     SCPIcore = ':BANDwidth:VIDeo'
     return mdlname, bench, SCPIcore, action
-
+@Attribute
+def trigger_source(bench, action=['Get', '']):
+    '''Trigger Source:\n
+        EXTernal1| EXTernal2| IMMediate| LEVel| FMT|LINE| FRAMe| RFBurst| PERiod| FMT| VIDeo| IF| TV 
+        action=['Set','EXTernal1']'''
+    SCPIcore = ':TRIGger:SOURCe'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def preamp(bench, action=['Get', '']):
+    '''Pre-amplifier state.\n
+        action=['Set','ON']'''
+    SCPIcore = ':POW:GAIN'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def preamp_band(bench, action=['Get', '']):
+    '''Pre-amplifier bandwidth.\n
+        action=['Set','FULL']'''
+    SCPIcore = ':POW:GAIN:BAND'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def attenuation(bench, action=['Get', '']):
+    '''Attenuation.\n
+        action=['Set','0dB']'''
+    SCPIcore = ':POW:ATT'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def attenuation_auto(bench, action=['Get', '']):
+    '''Auto Attenuation mode.\n
+        action=['Set','ON']'''
+    SCPIcore = ':POW:ATT:AUTO'
+    return mdlname, bench, SCPIcore, action
 
 def fpower(bench, freq):
+    # sleep(0.3)
     bench.query('*OPC?')
     bench.write(":CALC:MARK1:MODE POS")
     bench.write(":CALC:MARK1:X %s" %freq)
@@ -104,6 +136,11 @@ def test(detail=True):
             frequency(s, action=['Set','5.5GHz'])
             fspan(s)
             fspan(s, action=['Set','150MHz'])
+            preamp(s, action=['Set','ON'])
+            preamp_band(s, action=['Set','FULL'])
+            attenuation(s, action=['Set','0dB'])
+            attenuation_auto(s, action=['Set','ON'])
+            print('Power at 5.5GHz is %s' %fpower(s, '5.5GHz'))
             
         else: print(Fore.RED + "Basic IO Test")
     if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):

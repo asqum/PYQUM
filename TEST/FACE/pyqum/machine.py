@@ -17,7 +17,7 @@ from si_prefix import si_format, si_parse
 from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean
 
 # Load instruments
-from pyqum.instrument.modular import AWG, VSA
+from pyqum.instrument.modular import AWG, VSA # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
 from pyqum.instrument.benchtop import DSO, PNA, YOKO, KEIT
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
@@ -167,7 +167,7 @@ def awgsettingsifwave():
 	samplingrate = AWG.arb_sample_rate(awgsess)[1]
 	dt = 1e9/samplingrate # in ns
 	message, WaveForms = [], []
-	WAVE, ZWAVE = [], []
+	WAVE = []
 
 	# PRESET Output:
 	for ch in range(2):
@@ -214,9 +214,6 @@ def awgsettingsifwave():
 		stat, wave = AWG.CreateArbWaveform(awgsess, wavefom)
 		message += ['Waveform channel %s: %s <%s>' %(channel, wave, status_code(stat))]
 		WAVE.append(wave)
-		# stat, zwave = AWG.CreateArbWaveform(awgsess, [0]*10000)
-		# message += ['Waveform channel %s: %s <%s>' %(channel, zwave, status_code(stat))]
-		# ZWAVE.append(zwave)
 		WaveForms.append(wavefom * 3) # Collecting waveforms to plot on mach	
 	# Building Sequences:
 	for ch in range(2):
@@ -525,89 +522,6 @@ def naget():
 		message = dict(status='%s is not connected' %natype)
 	return jsonify(message=message)
 
-# DSO
-@bp.route('/dso', methods=['GET'])
-def dso():
-	# default input/select value (pave way for future ML algorithm)
-	yrange, yscale, yoffset = 16.2, 2, 3
-	yrange2, yscale2, yoffset2 = 16.2, 2, 3
-	trange, tdelay, tscale = 520, 120, 50
-	return render_template("blog/machn/dso.html", yrange=yrange, yscale=yscale, yoffset=yoffset, yrange2=yrange2, yscale2=yscale2, yoffset2=yoffset2, trange=trange, tdelay=tdelay, tscale=tscale)
-@bp.route('/dso/autoscale', methods=['GET'])
-def dsoautoscale():
-	global dsobench
-	dsobench.write(':AUTOSCALE')
-	status = DSO.channel1(dsobench) # channel 1
-	yrange, yscale, yoffset = status[1]['RANGE'], status[1]['SCALE'], status[1]['OFFSET']
-	status = DSO.channel2(dsobench) # channel 2
-	yrange2, yscale2, yoffset2 = status[1]['RANGE'], status[1]['SCALE'], status[1]['OFFSET']
-	status = DSO.timebase(dsobench) # timebase
-	trange, tdelay, tscale = status[1]['RANGE'], status[1]['DELAY'], status[1]['SCALE']
-	trange, tdelay, tscale = float(trange)/cnst.nano, float(tdelay)/cnst.nano, float(tscale)/cnst.nano
-	return jsonify(yrange=yrange, yscale=yscale, yoffset=yoffset, yrange2=yrange2, yscale2=yscale2, yoffset2=yoffset2, trange=trange, tdelay=tdelay, tscale=tscale)
-@bp.route('/dso/reset', methods=['GET'])
-def dsoreset():
-	global dsobench
-	try:
-		dsobench = DSO.Initiate()
-		status = "Success"
-	except: status = "Error"
-	return jsonify(message=status)
-@bp.route('/dso/close', methods=['GET'])
-def dsoclose():
-	global dsobench
-	status = DSO.close(dsobench)
-	return jsonify(message=status)
-@bp.route('/dso/settings', methods=['GET'])
-def dsosettings():
-	global dsobench
-	message = []
-	rnge = request.args.get('rnge')
-	scal = request.args.get('scal')
-	ofset = request.args.get('ofset')
-	stat = DSO.channel1(dsobench, action=['Set', 'DC', rnge, scal, ofset, 'Volt', 'OFF'])
-	message += ['CHANNEL 1: %s <%s>' %(stat[1], stat[0])]
-	rnge2 = request.args.get('rnge2')
-	scal2 = request.args.get('scal2')
-	ofset2 = request.args.get('ofset2')
-	stat = DSO.channel2(dsobench, action=['Set', 'DC', rnge2, scal2, ofset2, 'Volt', 'OFF'])
-	message += ['CHANNEL 2: %s <%s>' %(stat[1], stat[0])]
-	trnge = request.args.get('trnge')
-	tdelay = request.args.get('tdelay')
-	tscal = request.args.get('tscal')
-	stat = DSO.timebase(dsobench, action=['Set', 'NORMAL', trnge + 'ns', tdelay + 'ns', tscal + 'ns'])
-	message += ['TIMEBASE: %s <%s>' %(stat[1], stat[0])]
-	avenum = request.args.get('avenum')
-	stat = DSO.acquiredata(dsobench, action=['Set', 'average', '100', avenum])
-	message += ['ACQUIRE DATA: %s <%s>' %(stat[1], stat[0])]
-	# Generate Figure
-	DSO.waveform(dsobench, action=['Set', 'max', 'channel1', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
-	ans = list(DSO.waveform(dsobench))[1]
-	y, dx = ans['DATA'], float(ans['XINCrement'])
-	unitY = list(DSO.channel1(dsobench))[1]["UNITs"]
-	DSO.display2D(dx, y, units=['s', unitY], channel=1) #Figure will be in static/img
-	DSO.waveform(dsobench, action=['Set', 'max', 'channel2', 'ascii', '?', '?']) # "error: undefined header" will appear #this will light up channel1:display
-	ans = list(DSO.waveform(dsobench))[1]
-	y, dx = ans['DATA'], float(ans['XINCrement'])
-	unitY = list(DSO.channel2(dsobench))[1]["UNITs"]
-	DSO.display2D(dx, y, units=['s', unitY], channel=2) #Figure will be in static/img
-	return jsonify(message=message)
-@bp.route('/dso/about', methods=['GET'])
-def dsoabout():
-	global dsobench
-	message = []
-	status = DSO.model(dsobench) # model
-	message += ['Model: %s (%s)' % (status[1], status[0])]
-	status = DSO.channel1(dsobench) # channel 1
-	message += ['Channel 1: %s (%s)' % (status[1], status[0])]
-	status = DSO.channel2(dsobench) # channel 2
-	message += ['Channel 2: %s (%s)' % (status[1], status[0])]
-	status = DSO.timebase(dsobench) # timebase
-	message += ['Timebase: %s (%s)' % (status[1], status[0])]
-	status = DSO.acquiredata(dsobench) # acquire data
-	message += ['Acquisition of Data: %s (%s)' % (status[1], status[0])]
-	return jsonify(message=message)
-
 # BDR
 @bp.route('/bdr')
 def bdr():
@@ -674,10 +588,12 @@ def dc():
 def dcyokogawa():
 	global yokog
 	yokostat = request.args.get('yokostat')
+	ykwhich = int(request.args.get('ykwhich'))
+	print(Fore.GREEN + "Connecting to YoKoGaWa-%s" %ykwhich)
 	ykvaunit = bool(int(request.args.get('ykvaunit')))
-	print("Current mode: %s" %ykvaunit)
+	print(Fore.YELLOW + "Current mode: %s" %ykvaunit)
 	if yokostat == 'true':
-		yokog = YOKO.Initiate(current=ykvaunit)
+		yokog = YOKO.Initiate(current=ykvaunit, which=ykwhich)
 		prev = YOKO.previous(yokog)
 	elif yokostat == 'false':
 		prev = YOKO.previous(yokog)

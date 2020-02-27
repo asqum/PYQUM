@@ -2,8 +2,8 @@ from pyqum import create_app
 import sys
 
 app = create_app()
-# Port, DeBuG, RLD = 5300, True, True
 Port, DeBuG, RLD = 5300, True, True
+# Port, DeBuG, RLD = 5300, False, False
 
 def server(mode):
 	app.secret_key = "bcsjfhksP_*$3#bcjahfqaOgvGFGhnNg"

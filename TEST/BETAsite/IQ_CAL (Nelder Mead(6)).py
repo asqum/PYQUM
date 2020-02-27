@@ -101,7 +101,7 @@ def AWG_Sinewave(ifreq,Ioffset,Qoffset,Iamp,Qamp,Iphase,Qphase):
     Reference: https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method
 '''
 def nelder_mead(x_start,
-                step=[-0.1,-0.1,0.1,-0.1,10,10], no_improve_thr=10e-6,
+                step=[-0.5,-0.5,0.5,-0.5,10,10], no_improve_thr=10e-6,
                 no_improv_break=10, max_iter=0,
                 alpha=1., gamma=2., rho=-0.5, sigma=0.5):
     '''
@@ -162,7 +162,7 @@ def nelder_mead(x_start,
         # break after no_improv_break iterations with no improvement
         print('...best so far:', best)
 
-        if best < prev_best - no_improve_thr:
+        if best < prev_best - no_improve_thr or best == prev_best:
             no_improv = 0
             prev_best = best
         else:
@@ -250,8 +250,8 @@ if __name__ == "__main__":
 #    def f(x):
 #        return math.sin(x[0]) * math.cos(x[1]) * (1. / (abs(x[2]) + 1))
 
-    # Initial = [0, 0, -1, 1, 0, 0]
-    Initial = [0.018, -0.022, 0.707, -1, -7.1, 0] # manual mirror minimized
+    Initial = [0, 0, -1, 1, 0, 0]
+    # Initial = [0.018, -0.022, 0.707, -1, -7.1, 0] # manual mirror minimized
     # Initial = [-0.00199462, -0.04195287,  0.97458273,  1.01026642, -0.02495974, -0.02041564]
     # Initial = [-0.00199462, -0.04195287,  0.97458273,  1.01026642, -0.02495974, -0.02041564] # The Best
     print("Optimized IQ parameters:\n %s" %nelder_mead(array(Initial,dtype=float64)))
@@ -264,5 +264,4 @@ AWG.close(awgsess)
 PSGA.rfoutput(saga, action=['Set', 0])
 PSGA.close(saga, False)
 RSA5.close(rsa,False)
-
 

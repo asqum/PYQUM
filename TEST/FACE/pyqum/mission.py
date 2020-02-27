@@ -153,7 +153,8 @@ def char_fresp_getrepeat():
 @bp.route('/char/fresp/search', methods=['GET'])
 def char_fresp_search():
     wday = int(request.args.get('wday'))
-    filelist = M_fresp[session['user_name']].searchcomment()
+    keyword = request.args.get('keyword')
+    filelist = M_fresp[session['user_name']].searchcomment(wday, keyword)
     return jsonify(filelist=str(filelist))
 # export to csv
 @bp.route('/char/fresp/export/1dcsv', methods=['GET'])

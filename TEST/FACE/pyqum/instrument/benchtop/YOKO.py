@@ -23,9 +23,9 @@ def debug(state=False):
 debug() # declare the debugger mode here
 
 # INITIALIZATION
-def Initiate(reset=False, current=False):
+def Initiate(reset=False, current=False, which=1):
     ad = address()
-    rs = ad.lookup(mdlname) # Instrument's Address
+    rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -49,12 +49,10 @@ def Initiate(reset=False, current=False):
 def previous(bench, log=False):
     prev = bench.query('OD')
     if log:
-        set_status(mdlname, dict(voltage=float(prev)))
+        set_status(mdlname, dict(previous=float(prev)))
     return prev
 
-def output(bench, state=0, keeprev=True):
-    '''if keeprev is False, value will return to zero!
-    '''
+def output(bench, state=0):
     try:
         bench.write('O%dE' %int(state)) #OUTPUT ON/OFF #Apparently this will return value to zero!
         status = 'Success'

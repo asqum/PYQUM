@@ -31,7 +31,8 @@ function listimes_fresp() {
 
     } else if (wday == 's') {
         // brings up search panel:
-        $('.modal.search').toggleClass('is-visible');
+        // $('.modal.search').toggleClass('is-visible');
+        $('div.fresp#fresp-search').width("100%"); //default: 21%
     } else {
         selecteday = wday
         $.getJSON('/mssn/char/fresp/time', {
@@ -108,12 +109,12 @@ $('.modal-toggle.new.fresp').on('click', function(e) {
     // revert back to previous option upon leaving dialogue box
     $('select.char#fresp[name="wday"]').val(selecteday);
 });
-$('.modal-toggle.search.fresp').on('click', function(e) {
-    e.preventDefault();
-    $('.modal.search.fresp').toggleClass('is-visible');
-    // revert back to previous option upon leaving dialogue box
-    $('select.char#fresp[name="wday"]').val(selecteday);
-});
+// $('.modal-toggle.search.fresp').on('click', function(e) {
+//     e.preventDefault();
+//     $('.modal.search.fresp').toggleClass('is-visible');
+//     // revert back to previous option upon leaving dialogue box
+//     $('select.char#fresp[name="wday"]').val(selecteday);
+// });
 
 // show F-Response's daylist
 $(function() {
@@ -194,18 +195,14 @@ $('input.char#fresp[name="repeat"]').bind('click', function() {
 });
 
 // click to search:
-$('input.char#fresp[name="search"]').change( function() {
-    $( "i.fresp" ).remove(); //clear previous
-    $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-    // waveform commands
-    
-    // var comment = $('textarea.char#fresp[name="comment"]').val();
+$('button.char.fresp[name="search"]').click( function() {
+    var keyword = $('input.char.fresp[name="search"]').val();
     $.getJSON('/mssn/char/fresp/search', {
-        
+        wday: wday,
+        keyword: keyword
     }, function (data) {
+        console.log("file(s) that contain " + keyword + ": " + data.filelist);
         
-        console.log("complete: " + data.filelist);
-        $( "i.fresp" ).remove(); //clear previous
     });
     return false;
 });
@@ -424,4 +421,12 @@ $('button.char#fresp-savecsv').on('click', function () {
         });
     });
     return false;
+});
+
+// Search box:
+$('a.fresp.closebtn').on('click', function () {
+    console.log("closing search box");
+    $('div.fresp#fresp-search').width("0");
+    // revert back to previous option upon leaving dialogue box
+    $('select.char#fresp[name="wday"]').val(selecteday);
 });

@@ -452,7 +452,7 @@ class measurement:
         
     def searchcomment(self, wday, keyword): # still pending
         filelist = []
-        filelist += [(self.mssnpath / wday / t) for t in listdir(self.mssnpath / wday) if t.split('.')[0] == self.task]
+        filelist += [(self.mssnpath / self.daylist[wday] / t) for t in listdir(self.mssnpath / self.daylist[wday]) if t.split('.')[0] == self.task]
         return filelist
 
     def mkanalysis(self, entry):

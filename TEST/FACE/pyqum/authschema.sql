@@ -1,4 +1,4 @@
--- Initialize the database.
+-- Initialize the database (from __init__).
 -- Drop any existing data and create empty tables.
 
 DROP TABLE IF EXISTS "user";
@@ -51,3 +51,15 @@ CREATE TABLE "note" (
 	"reference"	TEXT,
 	FOREIGN KEY("author_id") REFERENCES "user"("id")
 );
+
+CREATE TABLE "experiment" (
+	"id"	INTEGER PRIMARY KEY AUTOINCREMENT,
+	"user_id"	INTEGER NOT NULL,
+	"measurement"	TEXT NOT NULL,
+	"wday"	TEXT NOT NULL,
+	"wmoment"	INTEGER NOT NULL,
+	"comment"	TEXT,
+	"note"	TEXT,
+	FOREIGN KEY("user_id") REFERENCES "user"("id")
+);
+

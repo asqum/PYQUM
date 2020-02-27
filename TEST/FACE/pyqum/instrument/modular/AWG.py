@@ -446,7 +446,8 @@ def Init_Gen(session):
     AGM = dll.AgM933x_InitiateGeneration
     AGM.restype = c_int
     status = AGM(c_long(session))
-    print(Fore.GREEN + "%s's generation Initiated: %s" % (mdlname, status_code(status)))
+    if eval(debugger):
+        print(Fore.GREEN + "%s's generation Initiated: %s" % (mdlname, status_code(status)))
     return status
 
 # 2.6 Clear Arbitrary Memory
@@ -457,7 +458,8 @@ def Clear_ArbMemory(session):
     AGM = dll.AgM933x_ClearArbMemory
     AGM.restype = c_int
     status = AGM(c_long(session))
-    print(Fore.GREEN + "%s's arbitrary memory ALL Cleared: %s" % (mdlname, status_code(status)))
+    if eval(debugger):
+        print(Fore.GREEN + "%s's arbitrary memory ALL Cleared: %s" % (mdlname, status_code(status)))
     return status
 
 # 3. Composite functions based on above methods

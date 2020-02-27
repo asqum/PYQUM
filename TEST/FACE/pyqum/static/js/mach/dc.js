@@ -358,6 +358,7 @@ $(function () {
 // show yokogawa's page
 $(function() {
     $('button.dc#yokogawa').bind('click', function() {
+        window.ykwhich = $('select.dc#yk-which').val();
         window.ykvaunit = $('select.dc#yk-va-unit').val();
         $('div.dccontent').hide();
         $('div.dccontent#yokogawa').show();
@@ -365,6 +366,13 @@ $(function() {
         $('button.dc#yokogawa').addClass('selected');
         return false;
     });
+});
+// update yokogawa which
+$(function () {
+    $('select.dc#yk-which').on('change', function () {
+        ykwhich = $('select.dc#yk-which').val();
+    });
+    return false;
 });
 // update yokogawa unit
 $(function () {
@@ -388,7 +396,7 @@ $(function () {
         $('button.dc#yokogawa[name="init"]').prepend("<i class='dc fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         var yokostat = $('input.dc#init-yokogawa').is(':checked'); //use css to respond to click / touch // toggle ON-OFF connection with yokogawa
         $.getJSON('/mach'+'/dc/yokogawa', {
-            yokostat: yokostat, ykvaunit: ykvaunit,
+            yokostat: yokostat, ykvaunit: ykvaunit, ykwhich: ykwhich
         }, function (data) {
             $( "i.dc" ).remove(); //clear previous
             console.log("Previous: " + data.prev);

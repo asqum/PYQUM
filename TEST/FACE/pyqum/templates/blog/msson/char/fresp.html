@@ -8,7 +8,17 @@
 
 <body class='char'>
 
-<div class="container">
+    <div class="fresp sidebar" id="fresp-search">
+            <div class="row">
+                <a href="javascript:void(0)" class="fresp closebtn">×</a>
+            </div>
+            <div class="row">
+                <div class="col-88" id='left'><input class="char fresp" type="text" placeholder="All Data:" name="search"></div>
+                <div class="col-8" id='left'><button class="char fresp" name="search" type="submit"><i class="fas fa-search"></i></button></div>
+            </div>
+    </div>
+
+    <div class="container">
 
         <div class="row"> <!-- New Role for File-status -->
             <div class="col-15" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
@@ -154,7 +164,7 @@
         </div>
 
         <!-- Brings up dialogue box for parameter settings -->
-        <div class="modal search fresp">
+        <!-- <div class="modal search fresp">
             <div class="modal-overlay modal-toggle search fresp"></div>
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
@@ -163,16 +173,16 @@
                     
                 <div class="modal-body">
                     <div class="modal-content">
-                        <div class="row"> <!-- New Row for Parameter-input -->
+                        <div class="row">
                             <div class="col-20" id='left'><input class='char' id="fresp" name="search" type="text" value="search here"/></div>
                         </div>
-                        <div class="row"> <!-- New Row for EXECUTION -->
+                        <div class="row">
                             <div class="col-15" id='left'><input class="char modal-toggle search fresp" id="fresp-cancel" type="submit" value="CANCEL"/></div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
     </div>
 
