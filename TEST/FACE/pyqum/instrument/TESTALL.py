@@ -7,6 +7,7 @@ from pyqum.instrument import logger, reader, network, toolbox, analyzer
 from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA, ENA, PSGV, PSGA, RDSO, YOKO, GW32, KEIT, DSA8, RSA5, MXA
 from pyqum.instrument.modular import AWG, VSA
 from pyqum.instrument.serial import LAKE, DC
+from pyqum.directive import calibrate as CAL
 
 import inspect, numpy, time
 
@@ -17,7 +18,9 @@ def piqom():
 piqom()
 
 MDL = ['AWG', 'VSA', 'ENA', 'PSGV', 'PSGA', 'RDS', 'MXG', 'DSO', 'YOKO', 'LAKE', 'DC', 'GW32', 'KEIT', 'DSA8', 'RSA5', 'MXA', #instruments
-        'reader', 'logger', 'network', 'toolbox', 'analyzer'] #tools
+        'reader', 'logger', 'network', 'toolbox', 'analyzer', #tools
+        'CAL' #calibrations
+        ] 
 print("These modules are available for test:")
 print(Fore.GREEN + str(MDL))
 while True:
