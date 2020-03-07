@@ -94,6 +94,8 @@ def char_fresp_init():
     except: M_fresp = {}
     # set_status("F_Response", dict(repeat=False))
     M_fresp[session['user_name']] = F_Response(session['people']) # initializing Law Maker -> Executioner
+    print(Fore.BLUE + Back.WHITE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
+    
     return jsonify(run_status=run_status, daylist=M_fresp[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
 @bp.route('/char/fresp/time', methods=['GET'])
@@ -356,7 +358,7 @@ def char_cwsweep_init():
     
     # 'user_name' accessing 'people' data:
     M_cwsweep[session['user_name']] = CW_Sweep(session['people'])
-    print(Fore.BLUE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
+    print(Fore.BLUE + Back.WHITE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
 
     return jsonify(run_status=run_status, daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
@@ -767,7 +769,7 @@ def char_sqepulse_init():
     
     # 'user_name' accessing 'people' data:
     M_sqepulse[session['user_name']] = SQE_Pulse(session['people'])
-    print(Fore.BLUE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
+    print(Fore.BLUE + Back.WHITE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
 
     # PENDING: Flexible C-Structure:
     CParameters = {}

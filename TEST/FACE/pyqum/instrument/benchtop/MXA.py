@@ -104,7 +104,6 @@ def fpower(bench, freq):
     bench.write(":CALC:MARK1:X %s" %freq)
     return bench.query(":CALCulate:MARKer1:Y?")
 
-
 def close(bench, reset=True):
     if reset:
         bench.write('*RST') # reset to factory setting (including switch-off)

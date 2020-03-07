@@ -64,14 +64,37 @@ def vbw(bench, action=['Get', '']):
         action=['Set','100kHz']'''
     SCPIcore = ':BANDwidth:VIDeo'
     return mdlname, bench, SCPIcore, action
-
+@Attribute
+def trigger_source(bench, action=['Get', '']):
+    '''Trigger Source:\n
+        EXTernal1|EXTernal2|IMMediate|VIDeo|FMT|POWer 
+        action=['Set','EXTernal1']'''
+    SCPIcore = ':TRIGger:SOURCe'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def preamp(bench, action=['Get', '']):
+    '''Pre-amplifier state.\n
+        action=['Set','ON']'''
+    SCPIcore = ':POW:GAIN'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def attenuation(bench, action=['Get', '']):
+    '''Attenuation: 0 dB to 50 dB\n
+        action=['Set','0dB']'''
+    SCPIcore = ':POW:ATT'
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def attenuation_auto(bench, action=['Get', '']):
+    '''Auto Attenuation mode.\n
+        action=['Set','ON']'''
+    SCPIcore = ':POW:ATT:AUTO'
+    return mdlname, bench, SCPIcore, action
 
 def fpower(bench, freq):
     bench.query('*OPC?')
     bench.write(":CALC:MARK1:MODE POS")
     bench.write(":CALC:MARK1:X %s" %freq)
     return bench.query(":CALCulate:MARKer1:Y?")
-
 
 def close(bench, reset=True):
     if reset:
