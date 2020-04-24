@@ -7,9 +7,11 @@ from sklearn.preprocessing import minmax_scale
 import matplotlib.pyplot as plt
 
 # curve display
-def curve(x, y, title, xlabel, ylabel, style="-k"):
+def curve(x, y, title, xlabel, ylabel, xscal='linear', yscal='linear', basx=10, basy=2, style="-k"):
     fig, ax = plt.subplots(1, 1, sharex=True, sharey=False)
     ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    ax.set_xscale(xscal, basex=basx)
+    ax.set_yscale(yscal, basey=basy)
     if len(array(x).shape) == 1:
         ax.plot(x, y, style)
     elif len(array(x).shape) > 1:

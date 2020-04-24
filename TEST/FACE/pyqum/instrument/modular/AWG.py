@@ -278,7 +278,7 @@ def ref_clock_source(session, Type='Int32', RepCap='', AttrID=1250002, buffsize=
     Compact PCI chassis do not have a 10MHz backplane reference clock.
     0: AGM933X_VAL_REF_CLOCK_INTERNAL:     The function generator produces the reference clock signal internally. 
     1: AGM933X_VAL_REF_CLOCK_EXTERNAL:     The function generator receives the reference clock signal from an external source. 
-    2: AGM933X_VAL_REF_CLOCK_RTSI_CLOCK:   The function generator receives the reference clock signal from the RTSI clock source. 
+    101: AGM933X_VAL_REF_CLOCK_RTSI_CLOCK:   The function generator receives the reference clock signal from the RTSI clock source (PXI-Backplane). 
     """
     return session, Type, RepCap, AttrID, buffsize, action
 

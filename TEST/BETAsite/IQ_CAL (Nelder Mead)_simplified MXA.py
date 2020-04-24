@@ -7,7 +7,8 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 import copy
-from pyqum.instrument.benchtop import RSA5, PSGA, MXA
+from pyqum.instrument.benchtop import RSA5 as MXA
+from pyqum.instrument.benchtop import PSGA
 from pyqum.instrument.modular import AWG
 from pyqum.instrument.logger import status_code
 from pyqum.instrument.analyzer import curve
@@ -18,7 +19,7 @@ from numpy import sin, cos, pi, array, float64, sum, dot
 saga = PSGA.Initiate()
 PSGA.rfoutput(saga, action=['Set', 1])
 PSGA.frequency(saga, action=['Set', "5.5" + "GHz"])
-PSGA.power(saga, action=['Set', "12" + "dBm"])
+PSGA.power(saga, action=['Set', "13" + "dBm"])
 # SA
 mxa = MXA.Initiate()
 MXA.frequency(mxa, action=['Set','5.525GHz'])
@@ -281,7 +282,7 @@ if __name__ == "__main__":
     OPT.IQparams = array(Initial,dtype=float64) #overwrite initial values  
     result = OPT.nelder_mead(time = time)
     prev = result[0]
-    no_improv, no_improv_thr, no_improv_break = 0, 1e-5, 4
+    no_improv, no_improv_thr, no_improv_break = 0, 1e-5, 6
     LO, Mirror, T = [], [], []
     while True:
         time += 1

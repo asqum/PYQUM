@@ -7,7 +7,7 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 import copy
-from pyqum.instrument.benchtop import RSA5 as MXA
+from pyqum.instrument.benchtop import MXA
 from pyqum.instrument.benchtop import PSGA
 from pyqum.instrument.modular import AWG
 from pyqum.instrument.logger import status_code
@@ -154,10 +154,10 @@ class IQ_Cal:
         "tell AWG to apply DC offset(x) on I & Q"
         AWG_Sinewave(self.awgsess, 25, self.IQparams)
         "read signal amplitude at LO frequency in and assign it as score"
-        MXA.preamp(self.mxa, action=['Set','ON'])
+        MXA.preamp(self.mxa, action=['Set','OFF'])
         # MXA.attenuation(mxa, action=['Set','14dB'])
         MXA.attenuation_auto(self.mxa, action=['Set','ON'])
-        power = float((MXA.fpower(self.mxa, str(5.5 - 0.025*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(5.5 + 0.025*index)+'GHz')).split('dBm')[0])
+        power = float((MXA.fpower(self.mxa, str(self.LO_freq - self.IF_freq*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(self.LO_freq + self.IF_freq*index)+'GHz')).split('dBm')[0])
         prev_best = power
         no_improv = 0
         res = [[self.var, prev_best]]
@@ -171,7 +171,7 @@ class IQ_Cal:
             
             AWG_Sinewave(self.awgsess, 25, self.IQparams)
             "read signal amplitude at LO frequency in and assign it as score"
-            power = float((MXA.fpower(self.mxa, str(5.5 - 0.025*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(5.5 + 0.025*index)+'GHz')).split('dBm')[0])
+            power = float((MXA.fpower(self.mxa, str(self.LO_freq - self.IF_freq*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(self.LO_freq + self.IF_freq*index)+'GHz')).split('dBm')[0])
             score = power
             res.append([x, score])
 
@@ -214,7 +214,7 @@ class IQ_Cal:
             "tell AWG to apply DC offset(x) on I & Q"
             AWG_Sinewave(self.awgsess, 25, self.IQparams)
             "read signal amplitude at LO frequency in and assign it as score"
-            power = float((MXA.fpower(self.mxa, str(5.5 - 0.025*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(5.5 + 0.025*index)+'GHz')).split('dBm')[0])
+            power = float((MXA.fpower(self.mxa, str(self.LO_freq - self.IF_freq*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(self.LO_freq + self.IF_freq*index)+'GHz')).split('dBm')[0])
             rscore = power
             if res[0][1] <= rscore < res[-2][1]:
                 del res[-1]
@@ -230,7 +230,7 @@ class IQ_Cal:
                 AWG_Sinewave(self.awgsess, 25, self.IQparams)
 
                 "read signal amplitude at LO frequency in and assign it as score"
-                power = float((MXA.fpower(self.mxa, str(5.5 - 0.025*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(5.5 + 0.025*index)+'GHz')).split('dBm')[0])
+                power = float((MXA.fpower(self.mxa, str(self.LO_freq - self.IF_freq*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(self.LO_freq + self.IF_freq*index)+'GHz')).split('dBm')[0])
                 escore = power
                 if escore < rscore:
                     del res[-1]
@@ -249,7 +249,7 @@ class IQ_Cal:
             AWG_Sinewave(self.awgsess, 25, self.IQparams)
 
             "read signal amplitude at LO frequency in and assign it as score"
-            power = float((MXA.fpower(self.mxa, str(5.5 - 0.025*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(5.5 + 0.025*index)+'GHz')).split('dBm')[0])
+            power = float((MXA.fpower(self.mxa, str(self.LO_freq - self.IF_freq*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(self.LO_freq + self.IF_freq*index)+'GHz')).split('dBm')[0])
             cscore = power
             if cscore < res[-1][1]:
                 del res[-1]
@@ -267,27 +267,27 @@ class IQ_Cal:
                 AWG_Sinewave(self.awgsess, 25, self.IQparams)
 
                 "read signal amplitude at LO frequency in and assign it as score"
-                power = float((MXA.fpower(self.mxa, str(5.5 - 0.025*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(5.5 + 0.025*index)+'GHz')).split('dBm')[0])
+                power = float((MXA.fpower(self.mxa, str(self.LO_freq - self.IF_freq*index)+'GHz')).split('dBm')[0]) - index*float((MXA.fpower(self.mxa, str(self.LO_freq + self.IF_freq*index)+'GHz')).split('dBm')[0])
                 score = power
                 nres.append([redx, score])
             res = nres
 
     # start optimization:
     def run(self):
-        self.LO_Initial = float((MXA.fpower(self.mxa, str(5.5)+'GHz')).split('dBm')[0])
-        self.Mirror_Initial = float((MXA.fpower(self.mxa, str(5.475)+'GHz')).split('dBm')[0])
+        self.LO_Initial = float((MXA.fpower(self.mxa, str(self.LO_freq)+'GHz')).split('dBm')[0])
+        self.Mirror_Initial = float((MXA.fpower(self.mxa, str(self.LO_freq - self.IF_freq)+'GHz')).split('dBm')[0])
         self.settings()
         result = self.nelder_mead()
         prev = result[0]
-        no_improv, no_improv_thr, no_improv_break = 0, 1e-5, 4
+        no_improv, no_improv_thr, no_improv_break = 0, 1e-5, 6
         time, LO, Mirror, T = 0, [], [], []
         while True:
             time += 1
             if time%2: self.settings('MR',result[0], logratio = time)
             else: self.settings('LO',result[0], logratio = time)
             result = self.nelder_mead(time = time)
-            LO.append(float((MXA.fpower(self.mxa, str(5.5)+'GHz')).split('dBm')[0]) - self.LO_Initial)
-            Mirror.append(float((MXA.fpower(self.mxa, str(5.475)+'GHz')).split('dBm')[0]) - self.Mirror_Initial)
+            LO.append(float((MXA.fpower(self.mxa, str(self.LO_freq)+'GHz')).split('dBm')[0]) - self.LO_Initial)
+            Mirror.append(float((MXA.fpower(self.mxa, str(self.LO_freq - self.IF_freq)+'GHz')).split('dBm')[0]) - self.Mirror_Initial)
             print(Back.BLUE + Fore.WHITE + "Mirror has been suppressed for %s from %s" %(Mirror[-1],self.Mirror_Initial))
             T.append(time)
             ssq = sum((result[0] - prev)**2)
@@ -340,7 +340,7 @@ class IQ_Cal:
         MXA.close(self.mxa,False)
 
 def test():
-    C = IQ_Cal(5.5, 12, 0.025)
+    C = IQ_Cal(7.5, 15, 0.025)
     C.run()
     ans = input("Press any keys to close AWG, PSGA and RSA-5 ")
     C.close()
