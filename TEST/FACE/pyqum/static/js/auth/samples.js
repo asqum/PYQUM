@@ -12,16 +12,29 @@ $(document).ready(function(){
     });
 });
 
+// Pending: Loading function from other JS script/module?
+function mssnencrpytonian() {
+    return '/' + 'ghhgjad';
+};
+
 // hiding parameter settings when click outside the modal box:
 $('.modal-toggle.samples.add-details').on('click', function(e) {
     e.preventDefault();
     $('.modal.samples.add-details').toggleClass('is-visible');
+});
+$('.modal-toggle.samples.confirm-update').on('click', function(e) {
+    e.preventDefault();
+    $('.modal.samples.confirm-update').toggleClass('is-visible');
 });
 
 // toggle adding samples modal box:
 $('button.user-samples#samples-add').on('click', function(e) {
     e.preventDefault();
     $('.modal.samples.add-details').toggleClass('is-visible');
+});
+$('button.user-samples#samples-update').on('click', function(e) {
+    e.preventDefault();
+    $('.modal.samples.confirm-update').toggleClass('is-visible');
 });
 
 // MEAL: MEASURE & ANALYZE
@@ -32,7 +45,7 @@ $('button.user-samples#samples-meal').on('click', function(e) {
     }, function (data){
         console.log("Loaded Sample: " + data.sname);
     });
-    window.location.href='/mssn';
+    window.location.href=mssnencrpytonian()+'/mssn';
     return false;
 });
 
@@ -80,7 +93,8 @@ $('select.samples#samples').on('change', function(){
 })
 
 // Update samples:
-$('button.user-samples#samples-update').on('click', function(){
+$('input.user.samples.confirm-update#samples-confirm').on('click', function(e) {
+    e.preventDefault();
     console.log($('select#samples').val());
     $.getJSON('/auth/user/samples/update', {
         sname: $('select#samples').val(),
@@ -90,8 +104,11 @@ $('button.user-samples#samples-update').on('click', function(){
         prev: $('input.user-samples#update[name="prev"]').val(),
         description: $('textarea.user-samples#update[name="description"]').val(),
         history: $('textarea.user-samples#update[name="history"]').val(),
-    }, function(data){
+        ownerpassword: $('input.user-samples#ownerpassword').val(),
+    }, function (data) {
         $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
     });
-    return false;
-})
+    
+});
+
+

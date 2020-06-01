@@ -10,7 +10,8 @@ from datetime import datetime
 from time import time, sleep
 from contextlib import suppress
 from numpy import prod, mean, rad2deg, array
-import inspect, json, wrapt, struct, geocoder, ast
+import inspect, json, wrapt, struct, geocoder, ast, socket
+import netifaces as nif
 from pandas import DataFrame
 from tables import open_file, Filters, Float32Atom, Float64Atom, StringCol, IsDescription
 
@@ -32,6 +33,32 @@ PORTAL_PATH = MAIN_PATH / "PORTAL"
 ADDRESS_PATH = MAIN_PATH / "Address"
 SPECS_PATH = MAIN_PATH / "SPECS"
 
+# Pending: extract MAC from IP?
+def mac_for_ip(ip):
+    'Returns a list of MACs for interfaces that have given IP, returns None if not found'
+    for i in nif.interfaces():
+        addrs = nif.ifaddresses(i)
+        try:
+            if_mac = addrs[nif.AF_LINK][0]['addr']
+            if_ip = addrs[nif.AF_INET][0]['addr']
+        except(IndexError, KeyError): #ignore ifaces that dont have MAC or IP
+            if_mac = if_ip = None
+        if if_ip == ip:
+            return if_mac
+    return None
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
 def location():
     place = []
     # approximate radius of earth in km
@@ -50,6 +77,9 @@ def location():
         print("Location service may not be available. Please check.")
         pass
     
+    details = {'Org':g.org, 'Location': [g.city, g.country], 'Host': g.hostname, 'IP': [get_local_ip(), g.ip], 'Coordinate': [g.lat, g.lng]}
+    place.append(str(details))
+
     return place
 
 def clocker(stage, prev=0):
@@ -450,7 +480,7 @@ class measurement:
             datapie.truncate(self.datalocation+7+keepdata*8)
         return "FILE IS RESET"
         
-    def searchcomment(self, wday, keyword): # still pending
+    def searchcomment(self, wday, keyword): # still pending # might prefer SQL to handle this task
         filelist = []
         filelist += [(self.mssnpath / self.daylist[wday] / t) for t in listdir(self.mssnpath / self.daylist[wday]) if t.split('.')[0] == self.task]
         return filelist

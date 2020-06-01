@@ -6,17 +6,22 @@ from os.path import getmtime
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 import requests, json
+from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2
 from time import sleep, strptime, mktime 
 from datetime import timedelta, datetime
 
 from pyqum import get_db
-from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, set_csv, clocker
+from pyqum.instrument.dilution import bluefors
+from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, set_csv, clocker, mac_for_ip
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
+
+# Error handling
+from contextlib import suppress
 
 # Scientific Constants
 from scipy import constants as cnst
@@ -33,45 +38,80 @@ __version__ = "beta3"
 __email__ = "teikhui@phys.sinica.edu.tw"
 __status__ = "development"
 
-encryp = 'ghhgjad'
-bp = Blueprint(myname, __name__, url_prefix='/mssn')
+encryp = '/' + 'ghhgjad'
+bp = Blueprint(myname, __name__, url_prefix=encryp+'/mssn')
 
+# Current DR Status:
+def drstatus():
+    dr = bluefors()
+    dr.selectday(-1)
+
+    # Logging Latest Key-Readings for ALL
+    latestbdr = {}
+    for i in range(6):
+        latestbdr.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
+    for i in [1,2,5,6,7]:
+        latestbdr.update({"T%s"%(i+1):dr.temperaturelog(i+1)[1][-1]})
+    set_status("BDR", latestbdr)
+
+    return latestbdr
+    
 # Main
 @bp.route('/')
 def show():
-    # Security implementation:
-    if not g.user['instrument'] or not g.user['measurement']:
-        abort(404)
-    return render_template("blog/msson/mission.html", encryp=encryp)
+    print("All Status: %s"%drstatus())
+    # Filter out Stranger:
+    with suppress(KeyError):
+        print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] from %s "%(session['user_name'], session['user_id'], request.remote_addr) + Fore.LIGHTBLUE_EX + "is trying to access MISSION" )
+        # Check User's Clearances:
+        # if not g.user['instrument'] or not g.user['measurement'] or not g.user['analysis']:
+        if not g.user['analysis']:
+            print(Fore.RED + "Please check %s's Clearances for analysis!"%session['user_name'])
+            abort(404)
+        else: print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] "%(session['user_name'], session['user_id']) + Fore.LIGHTBLUE_EX + "has entered MISSION" )
+        return render_template("blog/msson/mission.html", encryp=encryp)
+    return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
 # ALL
 @bp.route('/all', methods=['GET'])
 def all(): 
-    # Test Bed # All Task # Great Work
+    # Security:
+    try: queue = g.qumlist
+    except: 
+        print("User %s has no Queue Privilege")
+        abort(404)
     return render_template("blog/msson/all.html")
 @bp.route('/all/measurequm', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_measurequm():
-    print("Queue: %s" %g.qumlist)
+    # Security:
+    try: print("Queue: %s" %g.qumlist)
+    except: abort(404)
     return jsonify(qumlist=g.qumlist, loginuser=session['user_name'])
 @bp.route('/all/measurequm/in', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_measurequm_in():
     try:
+        queue = g.qumlist
         db = get_db()
         db.execute('INSERT INTO qum (people_id) VALUES (?)', (g.user['id'],))
         db.commit()
         message = "Queued-in successfully"
-    except:
-        message = "You may have queued-in already"
+    except(AttributeError):
+        print("User %s has no Queue Privilege")
+        abort(404)
+    except(IntegrityError): message = "%s may have queued-in already" %session['user_name']
     return jsonify(message=message)
 @bp.route('/all/measurequm/out', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_measurequm_out():
     try:
+        queue = g.qumlist
         db = get_db()
         db.execute('DELETE FROM qum WHERE people_id = ?', (g.user['id'],))
         db.commit()
         message = "Queued-out successfully"
-    except:
-        message = "You may have queued-out already"
+    except(AttributeError):
+        print("User %s has no Queue Privilege")
+        abort(404)
+    except: message = "Something's wrong with %s" %session['user_name']
     return jsonify(message=message)
 
 # CHAR:
@@ -82,36 +122,39 @@ def char():
     return render_template("blog/msson/char.html", samplename=samplename, people=session['people'])
 
 # CHAR -> 1. F-Response ============================================================================================================================================
-@bp.route('/char/fresp', methods=['GET'])
+# FRESP Security layer:
+frespcryption = 'hfhajfjkafh'
+
+@bp.route('/char/' + frespcryption + '/', methods=['GET'])
 def char_fresp(): 
     return render_template("blog/msson/char/fresp.html")
 # Initialize and list days specific to task
-@bp.route('/char/fresp/init', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/init', methods=['GET'])
 def char_fresp_init(): 
     run_status = not get_status("F_Response")['pause']
     global M_fresp
     try: print(Fore.GREEN + "Connected F-Resp M-USER(s): %s" %M_fresp.keys())
     except: M_fresp = {}
     # set_status("F_Response", dict(repeat=False))
-    M_fresp[session['user_name']] = F_Response(session['people']) # initializing Law Maker -> Executioner
+    M_fresp[session['user_name']] = F_Response(session['people']) # Allowing Measurement and Access (Analysis) to be conducted independently
     print(Fore.BLUE + Back.WHITE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
     
     return jsonify(run_status=run_status, daylist=M_fresp[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
-@bp.route('/char/fresp/time', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/time', methods=['GET'])
 def char_fresp_time():
     wday = int(request.args.get('wday'))
     M_fresp[session['user_name']].selectday(wday)
     return jsonify(taskentries=M_fresp[session['user_name']].taskentries)
 
 # adjust settings input for certain instruments' set
-@bp.route('/char/fresp/settings', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/settings', methods=['GET'])
 def char_fresp_settings():
     # under construction...
     return jsonify()
 
 # NEW measurement setup
-@bp.route('/char/fresp/new', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/new', methods=['GET'])
 def char_fresp_new():
     # Check user's current queue status:
     if session['run_clearance']:
@@ -129,37 +172,40 @@ def char_fresp_new():
         simulate = bool(int(request.args.get('simulate')))
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
         Run_fresp['TOKEN'] = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
-    else: all()
-    return jsonify(testeach=simulate)
+        return jsonify(testeach=simulate)
+    else: return show()
 # ETA (Estimated Time of Arrival for the WHOLE measurement)
-@bp.route('/char/fresp/eta100', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/eta100', methods=['GET'])
 def char_fresp_eta100():
     eta_time_100 = sum([a*b for a,b in zip(Run_fresp['TOKEN'].loopcount, Run_fresp['TOKEN'].loop_dur)])
     print(Fore.RED + "ETA: %s" %str(timedelta(seconds=eta_time_100)))
     eta_time_100 = str(timedelta(seconds=eta_time_100)).split('.')[0]
     return jsonify(eta_time_100=eta_time_100)
 # pause the measurement:
-@bp.route('/char/fresp/pause', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/pause', methods=['GET'])
 def char_fresp_pause():
-    set_status("F_Response", dict(pause=True))
-    return jsonify(pause=get_status("F_Response")['pause'])
+    if session['run_clearance']: 
+        set_status("F_Response", dict(pause=True))
+        return jsonify(pause=get_status("F_Response")['pause'])
+    else: return show()
 # toggle between repeat or not
-@bp.route('/char/fresp/setrepeat', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/setrepeat', methods=['GET'])
 def char_fresp_setrepeat():
-    set_status("F_Response", dict(repeat=bool(int(request.args.get('repeat')))))
-    return jsonify(repeat=get_status("F_Response")['repeat'])
-@bp.route('/char/fresp/getrepeat', methods=['GET'])
+    if session['run_clearance']: 
+        set_status("F_Response", dict(repeat=bool(int(request.args.get('repeat')))))
+        return jsonify(repeat=get_status("F_Response")['repeat'])
+    else: return show()
+@bp.route('/char/' + frespcryption + '/getrepeat', methods=['GET'])
 def char_fresp_getrepeat():
     return jsonify(repeat=get_status("F_Response")['repeat'])
 # search through logs of data specific to task
-@bp.route('/char/fresp/search', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/search', methods=['GET'])
 def char_fresp_search():
-    wday = int(request.args.get('wday'))
     keyword = request.args.get('keyword')
-    filelist = M_fresp[session['user_name']].searchcomment(wday, keyword)
-    return jsonify(filelist=str(filelist))
+    print("Searching for %s" %keyword)
+    return jsonify()
 # export to csv
-@bp.route('/char/fresp/export/1dcsv', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/export/1dcsv', methods=['GET'])
 def char_fresp_export_1dcsv():
     ifreq = request.args.get('ifreq') # merely for security reason to block out unsolicited visits by return None from this request
     print("ifreq: %s" %ifreq)
@@ -169,7 +215,7 @@ def char_fresp_export_1dcsv():
         status = "csv written"
     return jsonify(status=status)
 # list set-parameters based on selected task-entry
-@bp.route('/char/fresp/access', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/access', methods=['GET'])
 def char_fresp_access():
     wmoment = int(request.args.get('wmoment'))
     M_fresp[session['user_name']].selectmoment(wmoment)
@@ -179,7 +225,7 @@ def char_fresp_access():
     # Measurement time:
     filetime = getmtime(M_fresp[session['user_name']].pqfile) # in seconds
     startmeasure = mktime(strptime(M_fresp[session['user_name']].day + " " + M_fresp[session['user_name']].startime(), "%Y-%m-%d(%a) %H:%M")) # made into seconds
-    measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress)))
+    measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress))) # flexible eta or completion time
 
     try: cfluxbias = waveform(M_fresp[session['user_name']].corder['Flux-Bias'])
     except(KeyError): cfluxbias = waveform('opt,')
@@ -201,22 +247,24 @@ def char_fresp_access():
         cfluxbias_data=cfluxbias_data,
         csparam_data=csparam_data, cifb_data=cifb_data, cpowa_data=cpowa_data, cfreq_data=cfreq_data)
 # Resume the unfinished measurement
-@bp.route('/char/fresp/resume', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/resume', methods=['GET'])
 def char_fresp_resume():
-    set_status("F_Response", dict(pause=False))
-    wday = int(request.args.get('wday'))
-    wmoment = int(request.args.get('wmoment'))
-    fluxbias = request.args.get('fluxbias')
-    sparam = request.args.get('sparam')
-    ifb = request.args.get('ifb')
-    powa = request.args.get('powa')
-    freq = request.args.get('freq')
-    CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
-    M_fresp[session['user_name']].accesstructure()
-    F_Response(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_fresp[session['user_name']].resumepoint)
-    return jsonify(resumepoint=str(M_fresp[session['user_name']].resumepoint), datasize=str(M_fresp[session['user_name']].datasize))
+    if session['run_clearance']: 
+        set_status("F_Response", dict(pause=False))
+        wday = int(request.args.get('wday'))
+        wmoment = int(request.args.get('wmoment'))
+        fluxbias = request.args.get('fluxbias')
+        sparam = request.args.get('sparam')
+        ifb = request.args.get('ifb')
+        powa = request.args.get('powa')
+        freq = request.args.get('freq')
+        CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
+        M_fresp[session['user_name']].accesstructure()
+        F_Response(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_fresp[session['user_name']].resumepoint)
+        return jsonify(resumepoint=str(M_fresp[session['user_name']].resumepoint), datasize=str(M_fresp[session['user_name']].datasize))
+    else: return show()
 # Chart is supposedly shared by all measurements (under construction for nulti-purpose)
-@bp.route('/char/fresp/1ddata', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/1ddata', methods=['GET'])
 def char_fresp_1ddata():
     print(Fore.GREEN + "User %s is plotting 1D-Data" %session['user_name'])
     M_fresp[session['user_name']].loadata()
@@ -262,7 +310,7 @@ def char_fresp_1ddata():
     data_dict = {title: x1, 'Amplitude': y1, 'UPhase': y2, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
     
     return jsonify(x1=x1, y1=y1, y2=y2, title=title)
-@bp.route('/char/fresp/2ddata', methods=['GET'])
+@bp.route('/char/' + frespcryption + '/2ddata', methods=['GET'])
 def char_fresp_2ddata():
     # M_fresp[session['user_name']].loadata()
     # selectedata = M_fresp[session['user_name']].selectedata
@@ -397,8 +445,8 @@ def char_cwsweep_new():
         simulate = bool(int(request.args.get('simulate')))
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         Run_cwsweep['TOKEN'] = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
-    else: all()
-    return jsonify(testeach=simulate)
+        return jsonify(testeach=simulate)
+    else: return show()
 # ETA (Estimated Time of Arrival for the WHOLE measurement)
 @bp.route('/char/cwsweep/eta100', methods=['GET'])
 def char_cwsweep_eta100():
@@ -409,13 +457,17 @@ def char_cwsweep_eta100():
 # pause the measurement:
 @bp.route('/char/cwsweep/pause', methods=['GET'])
 def char_cwsweep_pause():
-    set_status("CW_Sweep", dict(pause=True))
-    return jsonify(pause=get_status("CW_Sweep")['pause'])
+    if session['run_clearance']: 
+        set_status("CW_Sweep", dict(pause=True))
+        return jsonify(pause=get_status("CW_Sweep")['pause'])
+    else: return show()
 # toggle between repeat or not
 @bp.route('/char/cwsweep/setrepeat', methods=['GET'])
 def char_cwsweep_setrepeat():
-    set_status("CW_Sweep", dict(repeat=bool(int(request.args.get('repeat')))))
-    return jsonify(repeat=get_status("CW_Sweep")['repeat'])
+    if session['run_clearance']: 
+        set_status("CW_Sweep", dict(repeat=bool(int(request.args.get('repeat')))))
+        return jsonify(repeat=get_status("CW_Sweep")['repeat'])
+    else: return show()
 @bp.route('/char/cwsweep/getrepeat', methods=['GET'])
 def char_cwsweep_getrepeat():
     return jsonify(repeat=get_status("CW_Sweep")['repeat'])
@@ -480,20 +532,22 @@ def char_cwsweep_access():
 # Resume the unfinished measurement
 @bp.route('/char/cwsweep/resume', methods=['GET'])
 def char_cwsweep_resume():
-    set_status("CW_Sweep", dict(pause=False))
-    wday = int(request.args.get('wday'))
-    wmoment = int(request.args.get('wmoment'))
-    fluxbias = request.args.get('fluxbias')
-    xyfreq = request.args.get('xyfreq')
-    xypowa = request.args.get('xypowa')
-    sparam = request.args.get('sparam')
-    ifb = request.args.get('ifb')
-    freq = request.args.get('freq')
-    powa = request.args.get('powa')
-    CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
-    M_cwsweep[session['user_name']].accesstructure()
-    CW_Sweep(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_cwsweep[session['user_name']].resumepoint)
-    return jsonify(resumepoint=str(M_cwsweep[session['user_name']].resumepoint), datasize=str(M_cwsweep[session['user_name']].datasize))
+    if session['run_clearance']:
+        set_status("CW_Sweep", dict(pause=False))
+        wday = int(request.args.get('wday'))
+        wmoment = int(request.args.get('wmoment'))
+        fluxbias = request.args.get('fluxbias')
+        xyfreq = request.args.get('xyfreq')
+        xypowa = request.args.get('xypowa')
+        sparam = request.args.get('sparam')
+        ifb = request.args.get('ifb')
+        freq = request.args.get('freq')
+        powa = request.args.get('powa')
+        CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
+        M_cwsweep[session['user_name']].accesstructure()
+        CW_Sweep(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_cwsweep[session['user_name']].resumepoint)
+        return jsonify(resumepoint=str(M_cwsweep[session['user_name']].resumepoint), datasize=str(M_cwsweep[session['user_name']].datasize))
+    else: return show()
 
 @bp.route('/char/cwsweep/trackdata', methods=['GET'])
 def char_cwsweep_trackdata():
@@ -809,8 +863,8 @@ def char_sqepulse_new():
         simulate = bool(int(request.args.get('simulate')))
         
         Run_sqepulse['TOKEN'] = SQE_Pulse(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
-    else: all()
-    return jsonify(testeach=simulate)
+        return jsonify(testeach=simulate)
+    else: return show()
 # ETA (Estimated Time of Arrival for the WHOLE measurement)
 @bp.route('/char/sqepulse/eta100', methods=['GET'])
 def char_sqepulse_eta100():
@@ -821,13 +875,17 @@ def char_sqepulse_eta100():
 # pause the measurement:
 @bp.route('/char/sqepulse/pause', methods=['GET'])
 def char_sqepulse_pause():
-    set_status("SQE_Pulse", dict(pause=True))
-    return jsonify(pause=get_status("SQE_Pulse")['pause'])
+    if session['run_clearance']: 
+        set_status("SQE_Pulse", dict(pause=True))
+        return jsonify(pause=get_status("SQE_Pulse")['pause'])
+    else: return show()
 # toggle between repeat or not
 @bp.route('/char/sqepulse/setrepeat', methods=['GET'])
 def char_sqepulse_setrepeat():
-    set_status("SQE_Pulse", dict(repeat=bool(int(request.args.get('repeat')))))
-    return jsonify(repeat=get_status("SQE_Pulse")['repeat'])
+    if session['run_clearance']: 
+        set_status("SQE_Pulse", dict(repeat=bool(int(request.args.get('repeat')))))
+        return jsonify(repeat=get_status("SQE_Pulse")['repeat'])
+    else: return show()
 @bp.route('/char/sqepulse/getrepeat', methods=['GET'])
 def char_sqepulse_getrepeat():
     return jsonify(repeat=get_status("SQE_Pulse")['repeat'])
@@ -881,13 +939,15 @@ def char_sqepulse_access():
 # Resume the unfinished measurement
 @bp.route('/char/sqepulse/resume', methods=['GET'])
 def char_sqepulse_resume():
-    set_status("SQE_Pulse", dict(pause=False))
-    wday = int(request.args.get('wday'))
-    wmoment = int(request.args.get('wmoment'))
-    CORDER = json.loads(request.args.get('CORDER'))
-    M_sqepulse[session['user_name']].accesstructure()
-    SQE_Pulse(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_sqepulse[session['user_name']].resumepoint)
-    return jsonify(resumepoint=str(M_sqepulse[session['user_name']].resumepoint), datasize=str(M_sqepulse[session['user_name']].datasize))
+    if session['run_clearance']:
+        set_status("SQE_Pulse", dict(pause=False))
+        wday = int(request.args.get('wday'))
+        wmoment = int(request.args.get('wmoment'))
+        CORDER = json.loads(request.args.get('CORDER'))
+        M_sqepulse[session['user_name']].accesstructure()
+        SQE_Pulse(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_sqepulse[session['user_name']].resumepoint)
+        return jsonify(resumepoint=str(M_sqepulse[session['user_name']].resumepoint), datasize=str(M_sqepulse[session['user_name']].datasize))
+    else: return show()
 
 @bp.route('/char/sqepulse/trackdata', methods=['GET'])
 def char_sqepulse_trackdata():
@@ -914,7 +974,7 @@ def char_sqepulse_resetdata():
 # Chart is supposedly shared by all measurements (under construction for multi-purpose)
 @bp.route('/char/sqepulse/1ddata', methods=['GET'])
 def char_sqepulse_1ddata():
-    print(Fore.GREEN + "User %s is plotting 1D-Data" %session['user_name'])
+    print(Fore.GREEN + "User %s is plotting SQEPULSE 1D-Data" %session['user_name'])
     M_sqepulse[session['user_name']].loadata()
     selectedata = M_sqepulse[session['user_name']].selectedata
     print("Data length: %s" %len(selectedata))
@@ -925,7 +985,6 @@ def char_sqepulse_1ddata():
     for k in cselect.keys():
         if "x" in cselect[k]:
             xtitle = "<b>" + k + "</b>"
-            cselection = (",").join([s for s in cselect.values()])
             selected_caddress = [s for s in cselect.values()]
         
             # Sweep-command:
@@ -934,7 +993,7 @@ def char_sqepulse_1ddata():
             else:
                 selected_sweep = M_sqepulse[session['user_name']].corder[k]
 
-            # Adjusting c-parameters range for data analysis:
+            # Adjusting c-parameters range for data analysis based on progress:
             parent_address = selected_caddress[:CParameters['SQE_Pulse'].index(k)] # address's part before x
             if [int(s) for s in parent_address] < session['c_sqepulse_progress'][0:len(parent_address)]:
                 print(Fore.YELLOW + "selection is well within progress")
@@ -951,7 +1010,7 @@ def char_sqepulse_1ddata():
             Idata = zeros(len(isweep))
             Qdata = zeros(len(isweep))
             for i in isweep:
-                selected_caddress[CParameters['SQE_Pulse'].index(k)] = i
+                selected_caddress[CParameters['SQE_Pulse'].index(k)] = i # register x-th position
                 if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
                     srange = request.args.get('srange').split("-") # sample range
                     if [int(srange[1]) , int(srange[0])] > [session['c_sqepulse_structure'][-1]//M_sqepulse[session['user_name']].datadensity] * 2:
@@ -962,59 +1021,66 @@ def char_sqepulse_1ddata():
                         # Assemble stacks of selected c-address for this sample range:
                         selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * slength)
                         selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * slength)
-                        
+                        # sort-out interleaved IQ:
                         selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1))
                         selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1)) + ones(slength)
                         # Compressing I & Q of this sample range:
                         selectedata = array(selectedata)
-                        Idata[i] = mean(selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])])
-                        Qdata[i] = mean(selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]) 
+                        Idata[i] = mean(selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])]-0)
+                        Qdata[i] = mean(selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]-0) 
 
                 else:
+                    # Ground level Pulse shape response:
                     selected_caddress = [int(s) for s in selected_caddress]
                     Basic = selected_caddress[-1]
                     # Extracting I & Q:
                     Idata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], session['c_sqepulse_structure'])]
-                    Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], session['c_sqepulse_structure'])]
-            Adata = sqrt(Idata**2 + Qdata**2)    
-
+                    Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], session['c_sqepulse_structure'])]    
+    
     print("Structure: %s" %session['c_sqepulse_structure'])
-    # print("I: %s" %Idata[0])
-    # print("Q: %s" %Qdata[0])    
-    # x-range:
+    # x-data:
     selected_progress = waveform(selected_sweep).data[0:len(isweep)]
-
-    # facilitate index location for range clipping:
+    # IQ-data:
+    # print("I: %s" %Idata[0])
+    # print("Q: %s" %Qdata[0])
+    Adata = sqrt(Idata**2 + Qdata**2)
+    UFNPdata = UnwraPhase(selected_progress, arctan2(Qdata, Idata)) # -pi < phase < pi -> Unwrapped -> Flatten -> Normalized
+    
+    # facilitate index location (or count) for range clipping:
+    cselection = (",").join([s for s in cselect.values()])
     if "c" in cselection:
         selected_progress = list(range(len(selected_progress)))
 
-    x, yI, yQ, yA = selected_progress, list(Idata), list(Qdata), list(Adata)
+    x, yI, yQ, yA, yUFNP = selected_progress, list(Idata), list(Qdata), list(Adata), list(UFNPdata)
 
     global data_dict
-    data_dict = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, "exported by": session['user_name']}
+    data_dict = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, 'UFNP(rad/x)': yUFNP, "exported by": session['user_name']}
     
-    return jsonify(x=x, yI=yI, yQ=yQ, yA=yA, xtitle=xtitle)
+    return jsonify(x=x, yI=yI, yQ=yQ, yA=yA, yUFNP=yUFNP, xtitle=xtitle)
 
 # Pending renovation below:
 @bp.route('/char/sqepulse/2ddata', methods=['GET'])
 def char_sqepulse_2ddata():
-    irepeat = request.args.get('irepeat')
-    ifluxbias = request.args.get('ifluxbias')
-    ixyfreq = request.args.get('ixyfreq')
-    ixypowa = request.args.get('ixypowa')
-    isparam = request.args.get('isparam')
-    iifb = request.args.get('iifb')
-    ipowa = request.args.get('ipowa')
-    ifreq = request.args.get('ifreq')
+    print(Fore.GREEN + "User %s is plotting SQEPULSE 2D-Data using Multi-Process" %session['user_name'])
+    
+    # load parameter indexes from json call:
+    cselect = json.loads(request.args.get('cselect'))
 
-    # pre-transform ipowa:
-    powa_order = M_sqepulse[session['user_name']].corder['Power']
+    for k in cselect.keys():
+        if "x" in cselect[k]:
+            x_name = k
+            xtitle = "<b>" + k + "</b>"
+        if "y" in cselect[k]:
+            y_name = k
+            ytitle = "<b>" + k + "</b>"
+
+
 
     # preparing MPW dictionary
     dict_for_MPW = {
-            "pqfile": str(M_sqepulse[session['user_name']].pqfile), "datalocation": M_sqepulse[session['user_name']].datalocation, "writtensize": M_sqepulse[session['user_name']].writtensize,
-            "c_sqepulse_structure": session['c_sqepulse_structure'], "irepeat": irepeat, "ifluxbias": ifluxbias, "ixyfreq": ixyfreq, "ixypowa": ixypowa, 
-            "isparam": isparam, "iifb": iifb, "ifreq": ifreq, "ipowa": ipowa, "powa_order": powa_order
+            "pqfile": str(M_sqepulse[session['user_name']].pqfile), 
+            "datalocation": M_sqepulse[session['user_name']].datalocation, "writtensize": M_sqepulse[session['user_name']].writtensize,
+            "c_sqepulse_structure": session['c_sqepulse_structure'], "cselect": cselect
         }
     set_status("MPW", dict_for_MPW)
 
@@ -1026,45 +1092,6 @@ def char_sqepulse_2ddata():
         offset = 0 # to avoid incomplete array error
         print(Back.RED + "The data is NOT YET complete!")
 
-    # Selecting 2D options:
-    # REPEAT:
-    if irepeat == "x" and ifluxbias == "y":
-        x_name, y_name = "repeat", "fluxbias"
-        print("X: REPEAT#, Y: Flux-Bias")
-        xtitle, ytitle = "<b>REPEAT#</b>", "<b>Flux-Bias(V/A)</b>"
-        x, y = list(range(session['c_sqepulse_progress'][0]+offset)), waveform(M_sqepulse[session['user_name']].corder['Flux-Bias']).data
-        x_count, y_count = session['c_sqepulse_progress'][0]+offset, waveform(M_sqepulse[session['user_name']].corder['Flux-Bias']).count
-    if irepeat == "x" and ixyfreq == "y":
-        x_name, y_name = "repeat", "xyfreq"
-        print("X: REPEAT#, Y: XY-Frequency")
-        xtitle, ytitle = "<b>REPEAT#</b>", "<b>XY-Frequency(GHz)</b>"
-        x, y = list(range(session['c_sqepulse_progress'][0]+offset)), waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data
-        x_count, y_count = session['c_sqepulse_progress'][0]+offset, waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).count
-    # ONCE:
-    elif ifluxbias == "x" and ixyfreq == "y":
-        x_name, y_name = "fluxbias", "xyfreq"
-        print("X: Flux-Bias, Y: XY-Frequency")
-        xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>XY-Frequency(GHz)</b>"
-        x, y = waveform(M_sqepulse[session['user_name']].corder['Flux-Bias']).data[0:session['c_sqepulse_progress'][1]+offset], waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data
-        x_count, y_count = session['c_sqepulse_progress'][1]+offset, waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).count
-    elif ixyfreq == "x" and ixypowa == "y":
-        x_name, y_name = "xyfreq", "xypowa"
-        print("X: XY-Frequency, Y: XY-Power")
-        xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>XY-Power(dBm)</b>"
-        x, y = waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data[0:session['c_sqepulse_progress'][2]+offset], waveform(M_sqepulse[session['user_name']].corder['XY-Power']).data
-        x_count, y_count = session['c_sqepulse_progress'][2]+offset, waveform(M_sqepulse[session['user_name']].corder['XY-Power']).count
-    elif ixyfreq == "x" and ifreq == "y":
-        x_name, y_name = "xyfreq", "freq"
-        print("X: XY-Frequency, Y: Frequency")
-        xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probe-Frequency(GHz)</b>"
-        x, y = waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data[0:session['c_sqepulse_progress'][2]+offset], waveform(M_sqepulse[session['user_name']].corder['Frequency']).data
-        x_count, y_count = session['c_sqepulse_progress'][2]+offset, waveform(M_sqepulse[session['user_name']].corder['Frequency']).count
-    elif ixyfreq == "x" and ipowa == "y":
-        x_name, y_name = "xyfreq", "powa"
-        print("X: XY-Frequency, Y: Power")
-        xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probing-Power(dBm)</b>"
-        x, y = waveform(M_sqepulse[session['user_name']].corder['XY-Frequency']).data[0:session['c_sqepulse_progress'][2]+offset], waveform(M_sqepulse[session['user_name']].corder['Power']).data
-        x_count, y_count = session['c_sqepulse_progress'][2]+offset, waveform(M_sqepulse[session['user_name']].corder['Power']).count
 
     # fast iteration method (parallel computing):
     stage, prev = clocker(0)

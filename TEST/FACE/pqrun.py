@@ -1,7 +1,11 @@
 from pyqum import create_app
+from flaskext.noextref import NoExtRef
 import sys
 
 app = create_app()
+# Pending: Hiding certain URLs?
+noext = NoExtRef(app, safe_domains=['http://qum.phys.sinica.edu.tw:5300/'])
+
 Port, DeBuG, RLD = 5300, True, True
 # Port, DeBuG, RLD = 5300, False, False
 

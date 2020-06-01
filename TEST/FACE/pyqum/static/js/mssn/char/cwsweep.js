@@ -3,6 +3,7 @@ $(document).ready(function(){
     $('div.char.cwsweep.confirm').hide();
     $("a.new#cwsweep-eta").text('ETA: ');
     get_repeat_cwsweep();
+    window.cwsweepcomment = "";
 });
 
 // Global variables:
@@ -34,7 +35,7 @@ function transpose(a) {
     return t;
   };
 function set_repeat_cwsweep() {
-    $.getJSON('/mssn/char/cwsweep/setrepeat', {
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/setrepeat', {
         repeat: $('input.char#cwsweep[name="repeat"]').is(':checked')?1:0
     }, function(data) {
         $( "i.cwsweep-repeat" ).remove(); //clear previous
@@ -44,7 +45,7 @@ function set_repeat_cwsweep() {
     });
 };
 function get_repeat_cwsweep() {
-    $.getJSON('/mssn/char/cwsweep/getrepeat', {
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/getrepeat', {
     }, function (data) {
         console.log("Repeat: " + data.repeat);
         $('input.char#cwsweep[name="repeat"]').prop("checked", data.repeat);
@@ -61,13 +62,17 @@ function listimes_cwsweep() {
     if (Number(wday) < 0) {
         // brings up parameter-input panel for new measurement:
         $('.modal.new').toggleClass('is-visible');
+        // Update Live Informations:
+        $.getJSON('/mach/all/status', {}, function (data) {
+            $("textarea.char#cwsweep[name='ecomment']").val(cwsweepcomment + "\nUpdate: T6=" + data.latestbdr['T6']*1000 + "mK");
+        });
 
     } else if (wday == 's') {
         // brings up search panel:
         $('.modal.search.cwsweep').toggleClass('is-visible');
     } else {
         selecteday = wday
-        $.getJSON('/mssn/char/cwsweep/time', {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/time', {
             wday: wday
         }, function (data) {
             $('select.char#cwsweep[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
@@ -79,7 +84,7 @@ function accessdata_cwsweep() {
     // Make global variable:
     window.wmoment = $('select.char#cwsweep[name="wmoment"]').val();
     $('.data-progress#cwsweep').css({"width": 0}).text('accessing...');
-    $.getJSON('/mssn/char/cwsweep/access', {
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/access', {
         // input/select value here:
         wmoment: wmoment
     }, function (data) {
@@ -101,7 +106,7 @@ function accessdata_cwsweep() {
         $('input.char#cwsweep[name="freq"]').val(data.corder['Frequency']);
         $('input.char#cwsweep[name="powa"]').val(data.corder['Power']);
         // load edittable comment:
-        $('textarea.char#cwsweep[name="ecomment"]').val(data.comment);
+        cwsweepcomment = data.comment;
         // load narrated comment:
         $('textarea.char#cwsweep[name="comment"]').text(data.comment);
 
@@ -179,11 +184,11 @@ function plot1D_cwsweep(x1,y1,y2,xtitle) {
     console.log(xtitle);
     
     let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
-        name: 'L (' + wday + ', ' + wmoment + ')',
+        name: 'Amplitude (' + wday + ', ' + wmoment + ')',
         line: {color: 'rgb(23, 151, 6)', width: 2.5},
         yaxis: 'y' };
     let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', 
-        name: 'R (' + wday + ', ' + wmoment + ')',
+        name: 'UFN-Phase (' + wday + ', ' + wmoment + ')',
         line: {color: 'blue', width: 2.5},
         yaxis: 'y2' };
 
@@ -366,7 +371,7 @@ $(function() {
         $('div.charcontent#cwsweep').show();
         $('button.char').removeClass('selected');
         $('button.char#cwsweep').addClass('selected');
-        $.getJSON('/mssn/char/cwsweep/init', {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/init', {
         }, function (data) {
             console.log("run status: " + data.run_status);
             if (data.run_status == true) {
@@ -418,7 +423,7 @@ $('input.char#cwsweep-run').bind('click', function() {
     var simulate = $('input.char#cwsweep[name="simulate"]').is(':checked')?1:0; //use css to respond to click / touch
     console.log("simulate: " + simulate);
     // var comment = $('textarea.char#cwsweep[name="comment"]').val();
-    $.getJSON('/mssn/char/cwsweep/new', {
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/new', {
         wday: wday, 
         fluxbias: fluxbias, xyfreq: xyfreq, xypowa: xypowa, 
         sparam: sparam, ifb: ifb, freq: freq, powa: powa, 
@@ -431,7 +436,7 @@ $('input.char#cwsweep-run').bind('click', function() {
 });
 // click to estimate ETA
 $("a.new#cwsweep-eta").bind('click', function() {
-    $.getJSON('/mssn/char/cwsweep/eta100', {
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/eta100', {
     }, function (data) {
         $("a.new#cwsweep-eta").text('ETA in\n' + String(data.eta_time_100));
     });
@@ -448,7 +453,7 @@ $('input.char#cwsweep[name="search"]').change( function() {
     // waveform commands
     
     // var comment = $('textarea.char#cwsweep[name="comment"]').val();
-    $.getJSON('/mssn/char/cwsweep/search', {
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/search', {
         
     }, function (data) {
         
@@ -462,7 +467,7 @@ $('input.char#cwsweep[name="search"]').change( function() {
 $(function () {
     $('button.char#cwsweep-pause').on('click', function () {
         $( "i.cwsweep" ).remove(); //clear previous
-        $.getJSON('/mssn/char/cwsweep/pause', {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/pause', {
             // direct pause
         }, function(data) {
             console.log("paused: " + data.pause);
@@ -484,7 +489,7 @@ $(function () {
         var ifb = $('input.char#cwsweep[name="ifb"]').val();
         var freq = $('input.char#cwsweep[name="freq"]').val();
         var powa = $('input.char#cwsweep[name="powa"]').val();
-        $.getJSON('/mssn/char/cwsweep/resume', {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/resume', {
             wday: wday, wmoment: wmoment, 
             fluxbias: fluxbias, xyfreq: xyfreq, xypowa: xypowa, 
             sparam: sparam, ifb: ifb, freq: freq, powa: powa
@@ -528,7 +533,7 @@ $(function () {
 $(function () {
     $('select.char#cwsweep').on('change', function () {
         var fixed = this.getAttribute('name').split('c-')[1];
-        $.getJSON('/mssn/char/cwsweep/trackdata', {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/trackdata', {
             ifluxbias: $('select.char#cwsweep[name="c-fluxbias"]').val(),
             ixyfreq: $('select.char#cwsweep[name="c-xyfreq"]').val(),
             ixypowa: $('select.char#cwsweep[name="c-xypowa"]').val(),
@@ -555,7 +560,7 @@ $(function () {
         var ifreq = $('select.char#cwsweep[name="c-freq"]').val();
         var ipowa = $('select.char#cwsweep[name="c-powa"]').val();
         console.log("Picked: " + isparam);
-        $.getJSON('/mssn/char/cwsweep/1ddata', {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/1ddata', {
             irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
         }, function (data) {
             window.x1 = data.x1;
@@ -595,7 +600,7 @@ $(function () {
         var ifreq = $('select.char#cwsweep[name="c-freq"]').val();
         var ipowa = $('select.char#cwsweep[name="c-powa"]').val();
         console.log("Picked: " + isparam);
-        $.getJSON('/mssn/char/cwsweep/2ddata', {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/2ddata', {
             irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
         }, function (data) {
             window.x = data.x;
@@ -647,7 +652,7 @@ $('select.char.data#cwsweep').on('change', function() {
 // saving exported csv-data to client's PC:
 $('button.char#cwsweep-savecsv').on('click', function() {
     console.log("SAVING FILE");
-    $.getJSON('/mssn/char/cwsweep/export/1dcsv', {
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/export/1dcsv', {
         // merely for security screening purposes
         ifreq: $('select.char#cwsweep[name="c-freq"]').val()
     }, function (data) {
@@ -680,7 +685,7 @@ $('button.char#cwsweep-datareset').on('click', function () {
 $('input.char.cwsweep.data-reset#cwsweep-reset').on('click', function () {
     $('div.char.cwsweep.confirm').show();
     $('button.char.cwsweep.reset-yes').on('click', function () {
-        $.getJSON('/mssn/char/cwsweep/resetdata', {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/resetdata', {
             ownerpassword: $('input.char#cwsweep[name="ownerpassword"]').val(),
             truncateafter: $('input.char#cwsweep[name="truncateafter"]').val(),
         }, function (data) {

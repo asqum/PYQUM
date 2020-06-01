@@ -99,23 +99,22 @@ class waveform:
                         pass
                 else: self.data.append(float(cmd))     
 
-def squarewave(totaltime, ontime, delay, scale=1, dt=0.8, diff=False):
+def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8):
     '''time-unit: ns
         totaltime: total duration (minimum: 1000*0.8ns ~ 1us)
         ontime: +1V duration
         delay: duration before ontime
         scale: -1 to 1 output level in V
+        offset: to eliminate LO leakage
         dt: time-resolution of AWG in ns
-        diff: 0V -> -1V if True
     '''
     delaypoints = round(delay / dt)
     onpoints = round(ontime / dt)
     offpoints = round((totaltime - ontime - delay) / dt)
     padding = 8 - (delaypoints + onpoints + offpoints)%8 # so that total-points is the multiples of 8
-    if diff: Voff = -scale
-    elif (ontime == totaltime): Voff = 1 # always ON
-    else: Voff = 0
-    wave = [Voff] * delaypoints + [scale] * onpoints + [Voff] * (offpoints + padding)
+    if (ontime == totaltime): offset = scale # always ON or OFF
+    wave = [offset] * delaypoints + [scale] * onpoints + [offset] * (offpoints + padding)
+
     return wave
 
 

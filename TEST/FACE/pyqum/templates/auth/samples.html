@@ -83,6 +83,7 @@
       </div>
 
       <div class="row">
+        <!-- Only allow Main User to Update -->
         <div class="col-10" id='left'><button class="user-samples push_button w-95 green" id="samples-update">UPDATE</button></div>
         <div class="col-10" id='left'><button class="user-samples push_button w-95 blue" id="samples-meal">MEAL <i class="far fa-arrow-alt-circle-up"></i></button></div>
       </div>
@@ -133,7 +134,36 @@
           </div>
       </div>
 
+      <!-- Brings up dialogue box for confirming update -->
+      <div class="modal samples confirm-update">
+        <div class="modal-overlay modal-toggle samples confirm-update"></div>
+        <div class="modal-wrapper modal-transition">
+            <div class="modal-header">
+                <h2 class="modal-heading">Sample Registration:</h2>
+            </div>
+                
+            <div class="modal-body">
+                <div class="modal-content">
+                    <div class="row label">
+                      <div class="col-15" id='left'><label>Owner Password</label></div>
+                    </div>
+                    <div class="row">
+                      <div class="col-15" id='left'><input class='user-samples' id="ownerpassword" type="password"/></div>
+                    </div>
+
+                    <div class="row"> <!-- New Row for EXECUTION -->
+                      <div class="col-15" id='left'><input class="user modal-toggle confirm-update samples" id="samples-confirm" type="submit" value="CONFIRM"/></div>
+                      <div class="col-15" id='left'><input class="user modal-toggle confirm-update samples" id="samples-cancel" type="submit" value="CANCEL"/></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
     </form>
+
   </div>
         
 </body>
+
+

@@ -17,7 +17,7 @@ from si_prefix import si_format, si_parse
 from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean
 
 # Load instruments
-from pyqum.instrument.modular import AWG, VSA # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
+from pyqum.instrument.modular import AWG, VSA, KMAWG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
 from pyqum.instrument.benchtop import DSO, PNA, YOKO, KEIT
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
@@ -30,11 +30,14 @@ bp = Blueprint(myname, __name__, url_prefix='/mach')
 # Main
 @bp.route('/')
 def show():
+	# Filter out Stranger:
 	with suppress(KeyError):
-		print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s "%session['user_name'] + Fore.LIGHTBLUE_EX + "has just logged in as Guest #%s!"%session['user_id'])
-		# Security implementation:
+		print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] from %s "%(session['user_name'], session['user_id'], request.remote_addr) + Fore.LIGHTBLUE_EX + "is trying to access MACHINE" )
+		# Check User's Clearances:
 		if not g.user['instrument']:
+			print(Fore.RED + "Please check %s's Clearances for instrument!"%session['user_name'])
 			abort(404)
+		else: print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] "%(session['user_name'], session['user_id']) + Fore.LIGHTBLUE_EX + "has entered MACHINE" )
 		return render_template("blog/machn/machine.html")
 	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
@@ -170,6 +173,9 @@ def awgsettingsifwave():
 	WAVE = []
 
 	# PRESET Output:
+	'''
+	To get the BEST from AWG (M9331A). It can be considered a bug to such extent that without this, the output amplitude would be somewhat inconsistent and very much suppressed.
+	'''
 	for ch in range(2):
 		channel = str(ch + 1)
 		AWG.output_config(awgsess, RepCap=channel, action=["Set", 0]) # Single-ended
@@ -204,12 +210,13 @@ def awgsettingsifwave():
 	ifphase = float(request.args.get('ifphase1')), float(request.args.get('ifphase2'))
 	ifontime = float(request.args.get('ifontime1')), float(request.args.get('ifontime2'))
 	ifscale = float(request.args.get('ifscale1')), float(request.args.get('ifscale2'))
+	sqeifoffset = float(request.args.get('sqeifoffset1')), float(request.args.get('sqeifoffset2'))
 	ifdelay = float(request.args.get('ifdelay1')), float(request.args.get('ifdelay2'))
 	for ch in range(2):
 		channel = str(ch + 1)
 		# Create Waveforms:
 		if iffunction[ch] == 'arb': wavefom = waveform(ifdesign[ch]).data
-		elif iffunction[ch] == 'sqe': wavefom = squarewave(ifperiod, ifontime[ch], ifdelay[ch], ifscale[ch])
+		elif iffunction[ch] == 'sqe': wavefom = squarewave(ifperiod, ifontime[ch], ifdelay[ch], ifscale[ch], sqeifoffset[ch])
 		else: wavefom = [ifvoltag[ch] * eval(iffunction[ch] + '(x*%s*%s/1000*2*pi + %s/180*pi)' %(dt,iffreq[ch],ifphase[ch])) + ifoffset[ch] for x in range(Nperiod)]
 		stat, wave = AWG.CreateArbWaveform(awgsess, wavefom)
 		message += ['Waveform channel %s: %s <%s>' %(channel, wave, status_code(stat))]
@@ -567,9 +574,10 @@ def bdrhistoryforecast():
 	# original unit: mbar, K
 	target = float(request.args.get('target'))
 	predicting = str(request.args.get('predicting'))
+	# Data:
+	y = bdrlogs['bdr_%s'%predicting]
 	sampling = 37
-	y = bdrlogs['bdr_%s'%predicting][-sampling:] # last 15 points
-	coeff = polyfit(array(range(sampling)), array(y), 1) # 1: linear fit
+	coeff = polyfit(array(range(sampling)), array(y[-sampling:]), 1) # 1: linear fit
 	coeff[-1] -= target
 	eta_time = roots(coeff)
 	eta_time = ["%.3f"%(x.real/60) for x in eta_time if isreal(x)] # convert to hours

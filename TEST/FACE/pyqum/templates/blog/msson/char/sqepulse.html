@@ -22,7 +22,7 @@
                 </ul>
             </div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="sqepulse-eta"></a></div></div>
-            {% if g.user['measurement'] %}
+            {% if session['run_clearance'] %}
                 <div class="col-10" id='right'><button class="char push_button w-95 blue" id="sqepulse-resume">RESUME</button></div>
                 <div class="col-10" id='right'><button class="char push_button w-95 red" id="sqepulse-pause">PAUSE</button></div>
                 <div class="col-10" id='right'><button class="char push_button w-95 blue" id="sqepulse-savenote">SAVE NOTE</button></div>
@@ -157,9 +157,9 @@
                             <div class="col-16" id='left'><input class='char sqepulse' id="Flux-Bias" type="text" value="OPT,"/></div>
                             <div class="col-16" id='left'><input class='char sqepulse' id="XY-Frequency" type="text" value="OPT,"/></div>
                             <div class="col-16" id='left'><input class='char sqepulse' id="XY-Power" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Frequency" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Power" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="Pulse-Period" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Frequency" type="text" value="4.888 to 4.901 * 52"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Power" type="text" value="-20"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="Pulse-Period" type="text" value="15994"/></div>
                         </div>
 
                         <div class="row">
@@ -171,12 +171,12 @@
                             <div class="col-16" id='left'><label>XY-Pulse-Width (ns)</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-ifLevel" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Pulse-Delay" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Pulse-Width" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-ifLevel" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-Pulse-Delay" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-Pulse-Width" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-ifLevel" type="text" value="1"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Pulse-Delay" type="text" value="lockxypwd+0,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="RO-Pulse-Width" type="text" value="5000"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-ifLevel" type="text" value="0"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-Pulse-Delay" type="text" value="0"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="XY-Pulse-Width" type="text" value="15994"/></div>
                         </div>
 
                         <div class="row">
@@ -187,11 +187,11 @@
                             <div class="col-16" id='left'><label>Sampling-Time (2ns)</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-16" id='left'><input class='char sqepulse' id="LO-Frequency" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="LO-Power" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="ADC-delay" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="Average" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='char sqepulse' id="Sampling-Time" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="LO-Frequency" type="text" value="lockro,"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="LO-Power" type="text" value="-10"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="ADC-delay" type="text" value="0"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="Average" type="text" value="10000"/></div>
+                            <div class="col-16" id='left'><input class='char sqepulse' id="Sampling-Time" type="text" value="2 to 6000 * 2999"/></div>
                         </div>
 
                         <!-- Comment -->
@@ -217,7 +217,7 @@
 
                         <!-- RUN -->
                         <div class="row"> 
-                            {% if g.user['measurement'] %}
+                            {% if session['run_clearance'] %}
                                 <div class="col-15" id='left'><input class="char modal-toggle new sqepulse" id="sqepulse-run"  type="submit" value="RUN"/></div>
                             {% endif %}
                             <div class="col-15" id='left'><input class="char modal-toggle new sqepulse" id="sqepulse-cancel" type="submit" value="CANCEL"/></div>

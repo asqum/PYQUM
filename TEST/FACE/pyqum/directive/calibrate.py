@@ -102,6 +102,9 @@ class IQ_Cal:
         AWG.marker_pulse_width(self.awgsess, action=['Set',float(1e-7)])
         AWG.marker_source(self.awgsess, action=['Set',int(7)])
         # PRESET Output:
+        '''
+        To get the BEST from AWG (M9331A). It can be considered a bug to such extent that without this, the output amplitude would be somewhat inconsistent and very much suppressed.
+        '''
         for ch in range(2):
             channel = str(ch + 1)
             AWG.output_config(self.awgsess, RepCap=channel, action=["Set", 0]) # Single-ended

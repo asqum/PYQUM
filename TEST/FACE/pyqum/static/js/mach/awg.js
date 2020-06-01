@@ -174,6 +174,7 @@ function awgifwave () {
         ifphase1: $('input.awg.ch1[name="ifphase"]').val(),
         ifontime1: $('input.awg.ch1[name="ifontime"]').val(),
         ifscale1: $('input.awg.ch1[name="ifscale"]').val(),
+        sqeifoffset1: $('input.awg.ch1.sqe[name="ifoffset"]').val(),
         ifdelay1: $('input.awg.ch1[name="ifdelay"]').val(),
         
         iffunction2: $('select.awg.ch2[name="iffunction"]').val(),
@@ -184,6 +185,7 @@ function awgifwave () {
         ifphase2: $('input.awg.ch2[name="ifphase"]').val(),
         ifontime2: $('input.awg.ch2[name="ifontime"]').val(),
         ifscale2: $('input.awg.ch2[name="ifscale"]').val(),
+        sqeifoffset2: $('input.awg.ch2.sqe[name="ifoffset"]').val(),
         ifdelay2: $('input.awg.ch2[name="ifdelay"]').val(),
 
         outputch1: $('select.awg.ch1[name="outputch"]').val(),

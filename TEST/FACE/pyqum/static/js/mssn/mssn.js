@@ -3,6 +3,10 @@ $(document).ready(function(){
     $('button#all-tab').toggleClass('active');
 });
 
+function mssnencrpytonian() {
+    return '/' + 'ghhgjad';
+};
+
 function openTab(evt, Name) {
     // Declare all variables
     var i, tabcontent, tablinks;
@@ -25,7 +29,7 @@ function openTab(evt, Name) {
 } 
 
 function Normalize_Dip(Z) {
-    var Zrow = []
+    var Zrow = [];
     var zmin = Math.min.apply(Math, Z);
     var zmax = Math.max.apply(Math, Z);
     $.each(Z, function(i, z) {
@@ -36,7 +40,7 @@ function Normalize_Dip(Z) {
 }
 
 function Normalize_Peak(Z) {
-    var Zrow = []
+    var Zrow = [];
     var zmin = Math.min.apply(Math, Z);
     var zmax = Math.max.apply(Math, Z);
     $.each(Z, function(i, z) {
@@ -46,3 +50,16 @@ function Normalize_Peak(Z) {
     return Zrow;
 }
 
+function VdBm_Conversion(Y, selector) {
+    Y_Conv = [];
+    ytitle = '<b>Signal(' + $(selector).val() + ')</b>';
+    if ($(selector).val() == 'V') {
+        $.each(Y, function(i, val) {Y_Conv.push(val);});
+    } else if ($(selector).val() == 'dBm') {
+        $.each(Y, function(i, val) {
+            var val = 10*Math.log10(val**2/50*1000);
+            Y_Conv.push(val);
+        });
+    };
+    return {'y3': Y_Conv, 'ytitle': ytitle}; 
+}

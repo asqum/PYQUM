@@ -16,6 +16,9 @@
                 <div class="col-88" id='left'><input class="char fresp" type="text" placeholder="All Data:" name="search"></div>
                 <div class="col-8" id='left'><button class="char fresp" name="search" type="submit"><i class="fas fa-search"></i></button></div>
             </div>
+            <div class="row" id='fresp-search-result'>
+
+            </div>
     </div>
 
     <div class="container">
@@ -33,7 +36,7 @@
             </div>
 
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="fresp-eta"></a></div></div>
-            {% if g.user['measurement'] %}
+            {% if session['run_clearance'] %}
                 <div class="col-10" id='right'><button class="char push_button w-95 blue" id="fresp-resume">RESUME</button></div>
                 <div class="col-10" id='right'><button class="char push_button w-95 red" id="fresp-pause">PAUSE</button></div>
                 <div class="col-10" id='right'><button class="char push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
@@ -153,7 +156,7 @@
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUNNING -->
-                            {% if g.user['measurement'] %}
+                            {% if session['run_clearance'] %}
                                 <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-run"  type="submit" value="RUN"/></div>
                             {% endif %}
                             <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-cancel" type="submit" value="CANCEL"/></div>

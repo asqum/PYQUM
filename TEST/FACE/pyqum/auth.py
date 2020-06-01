@@ -75,20 +75,20 @@ def load_logged_in_user():
         g.userlist = [dict(x) for x in g.userlist]
         # print("USER CREDENTIALS: %s" %g.userlist)
 
-        # Queue list:
-        g.qumlist = get_db().execute(
-            'SELECT u.username FROM qum q JOIN user u ON q.people_id = u.id ORDER BY q.id ASC'
-        ).fetchall()
-        g.qumlist = [dict(x) for x in g.qumlist]
-        g.qumlist = [x['username'] for x in g.qumlist]
-
-        # check clearance:
-        try:
-            session['run_clearance'] = bool(g.qumlist[0] == g.user['username'])
-        except(IndexError):
-            session['run_clearance'] = False
-
-        # print(g.qumlist)
+        # Certain clearances required for queue-list access:
+        if g.user['instrument'] and g.user['measurement']:
+            # Queue list:
+            g.qumlist = get_db().execute(
+                'SELECT u.username FROM qum q JOIN user u ON q.people_id = u.id ORDER BY q.id ASC'
+            ).fetchall()
+            g.qumlist = [dict(x) for x in g.qumlist]
+            g.qumlist = [x['username'] for x in g.qumlist]
+            # Only first in line is allowed to run the measurement:
+            try:
+                session['run_clearance'] = bool(g.qumlist[0] == g.user['username'])
+            except(IndexError):
+                session['run_clearance'] = False
+            # print(g.qumlist)
 
 
 @bp.route('/register', methods=('GET', 'POST'))
@@ -148,11 +148,14 @@ def login():
             error = 'Awaiting Approval...'
 
         if error is None:
-            # store the user id in a new SESSION and return to the index
+            # store the user's credentials in a new SESSION (Cookies) and return to the index
             session.clear()
             session['user_id'] = user['id']
             session['user_name'] = user['username']
+            session['user_status'] = user['status']
             session['user_measurement'] = user['measurement']
+            session['user_instrument'] = user['instrument']
+            session['user_analysis'] = user['analysis']
             # measurement related:
             session['c_fresp_structure'] = []
             session['run_clearance'] = False
@@ -182,6 +185,12 @@ def user():
 def userprofile():
 
     return render_template('auth/profile.html')
+@bp.route('/user/data_indexing')
+def userdata_indexing():
+    usr_name = session['user_name']
+    print("Indexing %s's Data into Database" %usr_name)
+
+    return jsonify(usr_name=usr_name)
 
 # Sample Database Handling:
 @bp.route('/user/samples')
@@ -252,22 +261,32 @@ def usersamples_update():
     coauthors = request.args.get('coauthors')
     prev = request.args.get('prev')
     history = request.args.get('history')
+    ownerpassword = request.args.get('ownerpassword')
     db = get_db()
     try:
-        db.execute(
-            'UPDATE sample SET location = ?, fabricated = ?, description = ?, co_authors = ?, previously = ?, history = ? WHERE samplename = ?',
-            (loc, dob, description, coauthors, prev, history, sname,)
-        )
-        db.commit()
-        message = "Sample %s has been successfully updated!" %(sname)
+        people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+        if check_password_hash(people['password'], ownerpassword):
+            db.execute(
+                'UPDATE sample SET location = ?, fabricated = ?, description = ?, co_authors = ?, previously = ?, history = ? WHERE samplename = ?',
+                (loc, dob, description, coauthors, prev, history, sname,)
+            )
+            db.commit()
+            message = "Sample %s has been successfully updated!" %(sname)
+        else:
+            message = 'PASSWORD NOT VALID'
     except:
         message = "Check sample parameters"
+    print(message)
     return jsonify(message=message)
 @bp.route('/user/samples/meal', methods=['GET'])
 def usersamples_meal():
     sname = request.args.get('sname')
     set_status("MSSN", {session['user_name']: dict(sample=sname)})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
+
+
+# Experiment Database Handling:
+
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

@@ -25,6 +25,8 @@ __license__ = "GPL"
 __version__ = "beta3"
 __email__ = "teikhui@phys.sinica.edu.tw"
 __status__ = "development"
+
+yoko_choice = 0 # Left: 0 for coil; Right: 1 for Z-Line
             
 # **********************************************************************************************************************************************************
 # 1. FREQUENCY RESPONSE MEASUREMENT:
@@ -55,7 +57,7 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
     ENA.linfreq(bench, action=['Set', fstart, fstop]) # Linear Freq-sweep-range
     # YOKO:
     if "opt" not in fluxbias.data: # check if it is in optional-state
-        yokog = YOKO.Initiate(current=True) # PENDING option: choose between Voltage / Current output
+        yokog = YOKO.Initiate(current=True, which=yoko_choice) # PENDING option: choose between Voltage / Current output
         YOKO.output(yokog, 1)
 
     # Buffer setting(s) for certain loop(s):
@@ -181,7 +183,7 @@ def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resu
 
     # YOKO:
     if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
-        yokog = YOKO.Initiate(current=True) # pending option
+        yokog = YOKO.Initiate(current=True, which=yoko_choice) # pending option
         YOKO.output(yokog, 1)
 
     # PSG:
@@ -339,7 +341,7 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     # Optionals:
     # YOKO:
     if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
-        yokog = YOKO.Initiate(current=True) # pending option
+        yokog = YOKO.Initiate(current=True, which=yoko_choice) # pending option
         YOKO.output(yokog, 1)
 
     # PSGV:
@@ -364,6 +366,9 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     AWG.marker_pulse_width(awgsess, action=['Set',float(1e-7)])
     AWG.marker_source(awgsess, action=['Set',int(7)])
     # PRESET Output:
+    '''
+    To get the BEST from AWG (M9331A). It can be considered a bug to such extent that without this, the output amplitude would be somewhat inconsistent and very much suppressed.
+    '''
     for ch in range(2):
         channel = str(ch + 1)
         AWG.output_config(awgsess, RepCap=channel, action=["Set", 0]) # Single-ended

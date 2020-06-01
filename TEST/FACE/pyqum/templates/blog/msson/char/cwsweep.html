@@ -22,7 +22,7 @@
                 </ul>
             </div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="cwsweep-eta"></a></div></div>
-            {% if g.user['measurement'] %}
+            {% if session['run_clearance'] %}
                 <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
                 <div class="col-10" id='right'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div>
                 <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
@@ -150,7 +150,7 @@
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUNNING -->
-                            {% if g.user['measurement'] %}
+                            {% if session['run_clearance'] %}
                                 <div class="col-15" id='left'><input class="char modal-toggle new cwsweep" id="cwsweep-run"  type="submit" value="RUN"/></div>
                             {% endif %}
                             <div class="col-15" id='left'><input class="char modal-toggle new cwsweep" id="cwsweep-cancel" type="submit" value="CANCEL"/></div>

@@ -3,8 +3,11 @@ Multi Processor for fresp 2D-plotting:
 '''
 
 import sys, struct
+
 from numpy import array
 from multiprocessing import Pool
+from flask import g, session
+print("user %s's run clearance is %s"%(g.user['username'], session['run_clearance']))
 
 from pyqum.instrument.logger import get_status, set_status
 from pyqum.instrument.toolbox import cdatasearch, gotocdata

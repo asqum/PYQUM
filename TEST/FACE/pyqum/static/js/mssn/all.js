@@ -1,7 +1,7 @@
 function qumqueue() {
     $('p.all-qumuser#list').empty();
     $('button.all-qumuser').hide();
-    $.getJSON('/mssn'+'/all/measurequm', {
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/measurequm', {
     }, function (data) {
         console.log(data.loginuser);
         console.log(data.qumlist);
@@ -28,7 +28,7 @@ $(document).ready(function(){
 
 // Diving in
 $('button.all-qumuser#dive').on('click', function(){
-    $.getJSON('/mssn'+'/all/measurequm/in', {
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/measurequm/in', {
     }, function (data) {
         console.log(data.message);
         qumqueue();
@@ -38,7 +38,7 @@ $('button.all-qumuser#dive').on('click', function(){
 
 // Yielding out
 $('button.all-qumuser#yield').on('click', function(){
-    $.getJSON('/mssn'+'/all/measurequm/out', {
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/measurequm/out', {
     }, function (data) {
         console.log(data.message);
         qumqueue();
