@@ -1,8 +1,12 @@
 # PYQUM 
 
-**PyQuM** is an instrumentation and abstraction platform for Quantum Processor Unit (QPU)
+**PyQuM** is an instrumentation and abstraction platform for Quantum Universal Machine (QUM)
 
-created by abc123
+Created by:
+David Lee, Teik-Hui
+
+Acknowledgement:
+Academia Sinica
 
 ## Data Collection Protocol / Principle:
 * Basic dimension size determined solely by measurement tuning parameter NOT including repeat#.
