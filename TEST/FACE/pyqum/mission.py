@@ -211,7 +211,7 @@ def char_fresp_export_1dcsv():
     print("ifreq: %s" %ifreq)
     status = None
     if ifreq is not None:
-        set_csv(data_dict, '1Dfresp.csv')
+        set_csv(fresp_1Ddata, '1Dfresp.csv')
         status = "csv written"
     return jsonify(status=status)
 # list set-parameters based on selected task-entry
@@ -306,8 +306,8 @@ def char_fresp_1ddata():
     for i,j in MagPha:
         Amp.append(i); Pha.append(j)
     x1, y1, y2 = selected_progress, Amp, list(UnwraPhase(selected_progress, Pha)) #list(unwrap(Pha)) 
-    global data_dict
-    data_dict = {title: x1, 'Amplitude': y1, 'UPhase': y2, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
+    global fresp_1Ddata
+    fresp_1Ddata = {title: x1, 'Amplitude': y1, 'UPhase': y2, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
     
     return jsonify(x1=x1, y1=y1, y2=y2, title=title)
 @bp.route('/char/' + frespcryption + '/2ddata', methods=['GET'])
@@ -484,7 +484,7 @@ def char_cwsweep_export_1dcsv():
     print("ifreq: %s" %ifreq)
     status = None
     if ifreq is not None:
-        set_csv(data_dict, '1Dcwsweep.csv')
+        set_csv(cwsweep_1Ddata, '1Dcwsweep.csv')
         status = "csv written"
     return jsonify(status=status)
 # list set-parameters based on selected task-entry
@@ -708,8 +708,8 @@ def char_cwsweep_1ddata():
 
     x1, y1, yup, yp = selected_progress, Amp, list(UnwraPhase(selected_progress, Pha)), Pha #list(unwrap(Pha)) 
 
-    global data_dict
-    data_dict = {xtitle: x1, 'Amplitude': y1, 'UPhase': yup, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
+    global cwsweep_1Ddata
+    cwsweep_1Ddata = {xtitle: x1, 'Amplitude': y1, 'UPhase': yup, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
     
     return jsonify(x1=x1, y1=y1, yup=yup, yp=yp, x1title=xtitle)
 
@@ -902,7 +902,7 @@ def char_sqepulse_export_1dcsv():
     print("ifreq: %s" %ifreq)
     status = None
     if ifreq is not None:
-        set_csv(data_dict, '1Dsqepulse.csv')
+        set_csv(sqepulse_1Ddata, '1Dsqepulse.csv')
         status = "csv written"
     return jsonify(status=status)
 # list set-parameters based on selected task-entry
@@ -1053,8 +1053,8 @@ def char_sqepulse_1ddata():
 
     x, yI, yQ, yA, yUFNP = selected_progress, list(Idata), list(Qdata), list(Adata), list(UFNPdata)
 
-    global data_dict
-    data_dict = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, 'UFNP(rad/x)': yUFNP, "exported by": session['user_name']}
+    global sqepulse_1Ddata
+    sqepulse_1Ddata = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, 'UFNP(rad/x)': yUFNP, "exported by": session['user_name']}
     
     return jsonify(x=x, yI=yI, yQ=yQ, yA=yA, yUFNP=yUFNP, xtitle=xtitle)
 

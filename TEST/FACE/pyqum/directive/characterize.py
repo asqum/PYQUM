@@ -38,6 +38,7 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
     sample = get_status("MSSN")[session['user_name']]['sample']
     # pushing pre-measurement parameters to settings:
     yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach
+    set_status("F_Response", dict(active=instr))
 
     # User-defined Controlling-PARAMETER(s) ======================================================================================
     fluxbias = waveform(corder['Flux-Bias'])
@@ -149,6 +150,7 @@ def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resu
     sample = get_status("MSSN")[session['user_name']]['sample']
     # pushing pre-measurement parameters to settings:
     yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach
+    set_status("CW_Sweep", dict(active=instr))
 
     # User-defined Controlling-PARAMETER(s) ======================================================================================
     fluxbias = waveform(corder['Flux-Bias'])
@@ -312,6 +314,7 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 
     # pushing pre-measurement parameters to settings:
     yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach
+    set_status("SQE_Pulse", dict(active=instr))
 
     # ***USER_DEFINED*** Controlling-PARAMETER(s) ======================================================================================
     structure = corder['C-Structure']

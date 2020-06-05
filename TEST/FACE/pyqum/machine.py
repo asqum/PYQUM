@@ -57,7 +57,11 @@ def allstatus():
 	for i in range(6):
 		latestbdr.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
 	for i in [1,2,5,6,7]:
-		latestbdr.update({"T%s"%(i+1):dr.temperaturelog(i+1)[1][-1]})
+		latestbdr.update({"T%s"%(i):dr.temperaturelog(i)[1][-1]})
+	for i in range(21):
+		latestbdr.update({"V%s"%(i+1):dr.channellog('v%s'%(i+1))[1][-1]})
+	latestbdr.update({"Pulse-Tube":dr.channellog("pulsetube")[1][-1]})
+	latestbdr.update({"Flow":dr.flowmeterlog()[1][-1]})
 	set_status("BDR", latestbdr)
 
 	status = {}
@@ -705,8 +709,10 @@ def dcmeasureivcurve():
 @bp.route('/uploads/<path:filename>', methods=['GET', 'POST'])
 def download(filename):
 	uploads = "C:/Users/ASQUM/HODOR/CONFIG/PORTAL"
+	print(Fore.GREEN + "User %s is downloading %s" %(session['user_name'], filename))
 	return send_from_directory(directory=uploads, filename=filename)
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
+
 

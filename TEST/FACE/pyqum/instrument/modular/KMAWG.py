@@ -475,23 +475,12 @@ def test(detail=False):
     # Abort_Gen(s)
     if detail:
         # basic queries:
-        active_marker(s)
-        marker_source(s)
-        marker_delay(s)
         output_clock_freq(s)
 
         # Setting Marker:
         ref_clock_source(s)
         ref_clock_source(s, action=["Set", 0])
         ref_clock_source(s)
-        active_marker(s, action=["Set", "3"])
-        active_marker(s)
-        marker_source(s, action=["Set", 10])
-        marker_source(s)
-        marker_delay(s, action=["Set", 1e-7])
-        marker_delay(s)
-        marker_pulse_width(s, action=["Set", 1e-7])
-        marker_pulse_width(s)
 
         # Preparing AWGenerator
         output_mode_adv(s, action=["Set", 2])
