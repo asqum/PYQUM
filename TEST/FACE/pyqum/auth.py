@@ -199,7 +199,10 @@ def usersamples():
     samples = [s['samplename'] for s in g.samples]
     # Shared samples (co-authored):
     cosamples = [s['samplename'] for s in g.cosamples]
-    return render_template('auth/samples.html', samples=samples, cosamples=cosamples)
+    # Current sample:
+    try: selected_sample = get_status("MSSN")[session['user_name']]['sample']
+    except: selected_sample = 0 # For first-time user to pick a sample to begin with
+    return render_template('auth/samples.html', samples=samples, cosamples=cosamples, selected_sample=selected_sample)
 @bp.route('/user/samples/register')
 def usersamples_register():
     sname = request.args.get('sname')

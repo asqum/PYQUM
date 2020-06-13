@@ -610,7 +610,7 @@ $(function () {
             window.xtitle = data.xtitle;
             window.ytitle = data.ytitle;
             // Amplitude (default) or Phase
-            $('select.char.data#cwsweep[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }));
+            $('select.char.data#cwsweep[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha (Raw)', value: 'Pha' }));
             // Data grooming
             $('select.char.data#cwsweep[name="2d-type"]').empty().append($('<option>', { text: 'direct', value: 'direct' }))
                 .append($('<option>', { text: 'normalYdip', value: 'normalYdip' })).append($('<option>', { text: 'normalYpeak', value: 'normalYpeak' }))
@@ -667,7 +667,7 @@ $('button.char#cwsweep-savecsv').on('click', function() {
                 var a = document.createElement('a');
                 var url = window.URL.createObjectURL(data);
                 a.href = url;
-                a.download = 'data.csv';
+                a.download = '1dcwsweepdata.csv';
                 document.body.append(a);
                 a.click();
                 a.remove();

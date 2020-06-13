@@ -137,7 +137,7 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
             set_status("F_Response", dict(pause=True))
             ENA.close(bench)
             if "opt" not in fluxbias.data: # check if it is in optional-state
-                YOKO.close(yokog, True)
+                YOKO.close(yokog, False)
             return
 
 # **********************************************************************************************************************************************************

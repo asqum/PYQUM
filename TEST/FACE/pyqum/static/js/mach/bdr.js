@@ -147,12 +147,12 @@ function bdr_plot() {
         var P_current = data.P[data.P.length-1];
         if (Math.log(P_current) / Math.LN10 < 0) { P_current = P_current.toExponential(); };
         var T_current = data.T[data.T.length-1];
-        if (Math.log(T_current) / Math.LN10 < 0) { T_current = (T_current*1000).toString() + "m"; };
+        if (Math.log(T_current) / Math.LN10 < 0) { T_current = (T_current*1000).toFixed(2) + "m"; };
         console.log("T Need exponential: " + (Math.log(T_current) / Math.LN10 < 0));
         var P_current2 = data.P2[data.P2.length-1];
         if (Math.log(P_current2) / Math.LN10 < 0) { P_current2 = P_current2.toExponential(); };
         var T_current2 = data.T2[data.T2.length-1];
-        if (Math.log(T_current2) / Math.LN10 < 0) { T_current2 = (T_current2*1000).toString() + "m"; };
+        if (Math.log(T_current2) / Math.LN10 < 0) { T_current2 = (T_current2*1000).toFixed(2) + "m"; };
         var OptS_current = data.Opts[data.Opts.length-1];
         if (Math.log(OptS_current) / Math.LN10 < -2) { OptS_current = OptS_current.toExponential(); };
         var OptV_current = data.Optv[data.Optv.length-1];
@@ -162,7 +162,7 @@ function bdr_plot() {
         try{ if (P_current.toString().split(".")[1].length > 3) {  P_current = P_current.toFixed(3); }; } catch(e) {};
         try{ if (P_current2.toString().split(".")[1].length > 3) {  P_current2 = P_current2.toFixed(3); }; } catch(e) {};
         try{ if (T_current.toString().split(".")[1].length > 3) {  T_current = T_current.toFixed(3); }; } catch(e) {};
-        try{ if (T_current2.toString().split(".")[1].length > 3) {  T_current2 = T_current2.toFixed(3); }; } catch(e) {};
+        try{ if (T_current2.toString().split(".")[1].length > 3) {  T_current2 = T_current2.toFixed(3);  }; } catch(e) {};
         try{ if (OptS_current.toString().split(".")[1].length > 3) {  OptS_current = OptS_current.toFixed(3); }; } catch(e) {};
         // try{ if (OptV_current.toString().split(".")[1].length > 3) {  OptV_current = OptV_current.toFixed(3); }; } catch(e) {};
 

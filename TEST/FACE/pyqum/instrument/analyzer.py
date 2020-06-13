@@ -32,7 +32,7 @@ def IQAP(I, Q):
         Amp = -1000
         Pha = 0
     else:
-        Amp = 20*log10(sqrt(I**2 + Q**2))
+        Amp = 20*log10(sqrt(I**2 + Q**2)) # I, Q is a ratio in this formula
         Pha = arctan2(Q, I) # -pi < phase < pi
     return Amp, Pha
 def IQAParray(datas): # datas
@@ -42,7 +42,7 @@ def IQAParray(datas): # datas
     IQdata = datas.reshape(len(datas)//2, 2) # sort out interlaced IQ-pairs into I-list & Q-list
     Idata, Qdata = IQdata[:,0], IQdata[:,1]
     # yI, yQ = [float(i) for i in Idata], [float(i) for i in Qdata]
-    Amp = 20*log10(sqrt(Idata**2 + Qdata**2))
+    Amp = 20*log10(sqrt(Idata**2 + Qdata**2)) # I, Q is a ratio in this formula
     Pha = arctan2(Qdata, Idata) # -pi < phase < pi
 
     return Idata, Qdata, Amp, Pha

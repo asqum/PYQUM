@@ -682,7 +682,7 @@ $('button.char#sqepulse-savecsv').on('click', function() {
     console.log("SAVING FILE");
     $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/export/1dcsv', {
         // merely for security screening purposes
-        ifreq: $('select.char#sqepulse[name="c-freq"]').val()
+        ifreq: $('select.char.sqepulse#RO-Frequency').val()
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({

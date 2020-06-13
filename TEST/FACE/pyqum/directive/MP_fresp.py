@@ -6,8 +6,8 @@ import sys, struct
 
 from numpy import array
 from multiprocessing import Pool
-from flask import g, session
-print("user %s's run clearance is %s"%(g.user['username'], session['run_clearance']))
+# Can't print over here (multiprocess pipeline)
+# print("Running Parallel Calculation outside App Context!")
 
 from pyqum.instrument.logger import get_status, set_status
 from pyqum.instrument.toolbox import cdatasearch, gotocdata

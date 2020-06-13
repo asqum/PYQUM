@@ -49,8 +49,9 @@ def single_pulse(bench, width, height):
        ON: 20ms, OFF: 50ms
     '''
     # set compliances
-    bench.write(":SENS:CURR:PROT 0.08")
-    bench.write(":SENS:CURR:RANGe 0.08")
+    Compliance = 0.200 #0.08
+    bench.write(":SENS:CURR:PROT %s"%Compliance)
+    bench.write(":SENS:CURR:RANGe %s"%Compliance)
 
     # set range
     # bench.write(":SENS:VOLT:RANGe %s" %height)

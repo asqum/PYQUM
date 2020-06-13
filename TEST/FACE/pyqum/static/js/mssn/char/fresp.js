@@ -527,7 +527,7 @@ $('button.char#fresp-savecsv').on('click', function () {
                 var a = document.createElement('a');
                 var url = window.URL.createObjectURL(data);
                 a.href = url;
-                a.download = 'data.csv';
+                a.download = '1dfrespdata.csv';
                 document.body.append(a);
                 a.click();
                 a.remove();

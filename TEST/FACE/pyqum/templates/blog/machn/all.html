@@ -16,20 +16,21 @@
     <script>myClock("canvas")</script>
 
     <div class='row'>
-        <div class="col-10" id='left'>
-            <label class="all mach switch">
-                <input class="all mach" id='psgv-status' type="checkbox">
-                <div class="slider"><span class="on">PSGV: READY</span><span class="off">PSGV: BUSY</span></div>
-            </label>
-        </div>
-        <div class="col-10" id='left'>
-            <label class="all mach switch">
-                <input class="all mach" id='awg-status' type="checkbox">
-                <div class="slider"><span class="on">AWG: READY</span><span class="off">AWG: BUSY</span></div>
-            </label>
-        </div>
-
+        <div class="col-10" id='left'><button class="all mach push_button w-95 blue" id="all-status-update">Update</button></div>
     </div>
+    <div class='row'>
+        <div class="col-10" id='left'> 
+            <input class="all mach" id='psgv-status' type="text" readonly/>  
+        </div>
+    </div>
+    <div class='row'>
+        <div class="col-10" id='left'>
+            <input class="all mach" id='awg-status' type="text" readonly/>
+        </div>
+    </div>
+        
+
+    
 
     
 

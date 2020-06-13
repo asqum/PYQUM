@@ -1,6 +1,6 @@
 //when page is loading:
 $(document).ready(function(){
-    console.log("user is ready"); 
+    console.log("user's profile is ready"); 
 });
 
 // Registration

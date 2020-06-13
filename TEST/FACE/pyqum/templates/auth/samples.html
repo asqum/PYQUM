@@ -21,15 +21,23 @@
           <select class="samples" id="samples" name="main">
             <option value=0> -main- </option>
             {% for s in samples %}
-              <option value={{s}}>{{s}}</option>
+              {% if s==selected_sample %}
+                <option value={{s}} selected>{{s}}</option>
+              {% else %}
+                <option value={{s}}>{{s}}</option>
+              {% endif %}
             {% endfor %}
           </select>
         </div>
         <div class="col-10" id='left'>
-          <select class="samples" id="samples" name="shared">
+          <select class="samples" id="co-samples" name="shared">
             <option value=0> -shared- </option>
             {% for s in cosamples %}
-              <option value={{s}}>{{s}}</option>
+              {% if s==selected_sample %}
+                <option value={{s}} selected>{{s}}</option>
+              {% else %}
+                <option value={{s}}>{{s}}</option>
+              {% endif %}
             {% endfor %}
           </select>
         </div>
