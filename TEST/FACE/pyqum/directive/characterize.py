@@ -7,7 +7,7 @@ from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
 from time import time, sleep
-from numpy import linspace, sin, pi, prod, array, mean, sqrt, zeros, float64
+from numpy import linspace, sin, pi, prod, array, mean, sqrt, zeros, float64, ceil
 from flask import request, session, current_app, g, Flask
 
 from pyqum.instrument.modular import AWG, VSA
@@ -360,7 +360,7 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     # AWG for Control:
     awgsess = AWG.InitWithOptions()
     AWG.Abort_Gen(awgsess)
-    AWG.ref_clock_source(awgsess, action=['Set',int(1)]) # External 10MHz clock-reference
+    AWG.ref_clock_source(awgsess, action=['Set',int(0)]) # Internal(0) or External(1) 10MHz clock-reference
     AWG.predistortion_enabled(awgsess, action=['Set',True])
     AWG.output_mode_adv(awgsess, action=['Set',int(2)]) # Sequence output mode
     AWG.arb_sample_rate(awgsess, action=['Set',float(1250000000)]) # maximum sampling rate
@@ -483,6 +483,8 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 
             # Basic / Buffer:
             # VSA (Every-loop)
+            # Brute_Segmentation = True
+            avenum = int(averaging.data[caddress[structure.index('Average')]])
             VSA.acquisition_time(vsasess, action=['Set',float(samptime.count*2e-9)]) # minimum time resolution
             VSA.preselector_enabled(vsasess, action=['Set',False]) # disable preselector to allow the highest bandwidth of 250MHz
             
@@ -519,13 +521,28 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
                         
             # Start Quantum machine:
             # Start Averaging Loop:
-            avenum = int(averaging.data[caddress[structure.index('Average')]])
             vsasn = VSA.samples_number(vsasess)[1]
             iqdata = zeros((avenum,2*vsasn))
-            for ave in range(avenum):
+            # Max number of points for VSA in the buffer = 128M (assuming 32-bit floating points)
+            # BUT: M9202A doesn't support Segment Acquisition, which I'm trying to do as follows:
+            acq_segment = int(min([1e6/2/vsasn, avenum, 1])) # use 1 to default everything back to slow method
+            chunks = int(ceil(avenum/acq_segment))
+            for c in range(chunks):
                 VSA.Arm_Measure(vsasess)
+
+                # Chunks by chunks appending:
+                # VSA.Wait_Data(vsasess)
+                # if (c == chunks - 1) and avenum%acq_segment: # last partial chunck
+                #     gd = VSA.Get_Data(vsasess, 2*vsasn*(avenum%acq_segment))
+                #     print(Fore.GREEN + "Requested: %s, transferred: %s" %(2*vsasn*(avenum%acq_segment), gd[1]["NumberCopied"]))
+                #     iqdata[c*acq_segment:c*acq_segment+(avenum%acq_segment),:] = array(gd[1]['ComplexData']).reshape(avenum%acq_segment,2*vsasn)
+                # else: 
+                #     gd = VSA.Get_Data(vsasess, 2*vsasn*acq_segment)
+                #     iqdata[c*acq_segment:(c+1)*acq_segment,:] = array(gd[1]['ComplexData']).reshape(acq_segment,2*vsasn)
+
                 gd = VSA.Get_Data(vsasess, 2*vsasn)
-                iqdata[ave,:] = array(gd[1]['ComplexData'])
+                iqdata[c,:] = array(gd[1]['ComplexData'])
+            
             iqdata = mean(iqdata, axis=0)
             print("Operation Complete")
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)			

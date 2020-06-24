@@ -21,12 +21,14 @@
                     </li>
                 </ul>
             </div>
+            <div class="col-10" id='right'>
+                <label class="sqepulse switch">
+                    <input class="sqepulse" id='live-update' type="checkbox">
+                    <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
+                </label>
+            </div>
+            <div class="col-1" id='right'></div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="sqepulse-eta"></a></div></div>
-            {% if session['run_clearance'] %}
-                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="sqepulse-resume">RESUME</button></div>
-                <div class="col-10" id='right'><button class="char push_button w-95 red" id="sqepulse-pause">PAUSE</button></div>
-                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="sqepulse-savenote">SAVE NOTE</button></div>
-            {% endif %}
         </div>
 
         <div class="row">
@@ -98,31 +100,26 @@
         </div>
 
         <!-- Check, Plot & Download Data -->
-        <div class="row">
-            <div class="col-10" id='left'>
-                <label class="sqepulse switch">
-                    <input class="sqepulse" id='live-update' type="checkbox">
-                    <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
-                </label>
-            </div>
-            <!-- <div class="col-10" id='left'><input class='char data sqepulse' id="1a-data" type="submit" value="1A-Data"/></div> -->
-            <div class="col-10" id='left'><input class='char data sqepulse' id="sample-range" type="text" value="173-800"/></div>
+        <div class="row plot-options 1D">
             <div class="col-10" id='left'><input class='char data sqepulse' id="1d-data" type="submit" value="1D-Data"/></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 green" id="sqepulse-insert-1D">ADD-1D</button></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="sqepulse-savecsv">CSV-1D</button></div>
-            <div class="col-10" id='left'><input class='char data sqepulse' id="2d-data" type="submit" value="2D-Data"/></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 red" id="sqepulse-datareset">CLIP</button></div>
-        </div>
-
-        <!-- Data Assembly and Grooming -->
-        <div class="row">
             <div class="col-10" id='left'><select class='char data sqepulse' id="1d-VdBm" type="text">
                 <option value='V'>V</option>
                 <option value='dBm'>dBm</option>
             </select></div>
-
+            <div class="col-15" id='left'><input class='char data sqepulse' id="sample-range" type="text" value="100,200,500,700"/></div>
+            <div class="col-15" id='left'><select class='char data sqepulse' id="sample-mode" type="text">
+                <option value='A'>A. RSM</option>
+                <option value='B'>B. RSDM</option>
+                <option value='C'>C. MON</option>
+            </select></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 green" id="sqepulse-insert-1D">COMPARE-1D</button></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="compare-nml" type="text"></select></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="sqepulse-savecsv">CSV-1D</button></div>
+        </div>
 
+        <!-- Data Assembly and Grooming -->
+        <div class="row plot-options 2D">
+            <div class="col-10" id='left'><input class='char data sqepulse' id="2d-data" type="submit" value="2D-Data"/></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="2d-amphase" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="2d-type" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="2d-colorscale" type="text"></select></div>
@@ -229,20 +226,24 @@
         </div>
 
         <!-- Brings up dialogue box for searching -->
-        <div class="modal search sqepulse">
-            <div class="modal-overlay modal-toggle search sqepulse"></div>
+        <div class="modal manage sqepulse">
+            <div class="modal-overlay modal-toggle manage sqepulse"></div>
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
-                    <h2 class="modal-heading">Searching Measurement:</h2>
+                    <h2 class="modal-heading">Management office:</h2>
                 </div>
                     
                 <div class="modal-body">
                     <div class="modal-content">
                         <div class="row"> <!-- New Row for Parameter-input -->
-                            <div class="col-20" id='left'><input class='char sqepulse' id='search' type="text" value="search here"/></div>
+                            {% if session['run_clearance'] %}
+                                <div class="col-10" id='left'><button class="char push_button w-95 blue" id="sqepulse-resume">RESUME</button></div>
+                                <div class="col-10" id='left'><button class="char push_button w-95 red" id="sqepulse-pause">PAUSE</button></div>
+                                <div class="col-10" id='left'><button class="char push_button w-95 blue" id="sqepulse-savenote">SAVE NOTE</button></div>
+                            {% endif %}
                         </div>
                         <div class="row"> <!-- New Row for EXECUTION -->
-                            <div class="col-15" id='left'><input class="char modal-toggle search sqepulse" id="sqepulse-cancel" type="submit" value="CANCEL"/></div>
+                            <div class="col-10" id='left'><button class="char push_button w-95 red" id="sqepulse-datareset">CLIP</button></div>
                         </div>
                     </div>
                 </div>

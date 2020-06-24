@@ -73,9 +73,9 @@ function listimes_sqepulse() {
             $("textarea.char.sqepulse#ecomment").val(sqepulsecomment + "\nUpdate: T6=" + data.latestbdr['T6']*1000 + "mK");
         });
 
-    } else if (wday == 's') {
-        // brings up search panel:
-        $('.modal.search.sqepulse').toggleClass('is-visible');
+    } else if (wday == 'm') {
+        // brings up manage panel:
+        $('.modal.manage.sqepulse').toggleClass('is-visible');
     } else {
         selecteday = wday
         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/time', {
@@ -211,20 +211,27 @@ function plot1D_sqepulse(x,y1,y2,y3,y5,VdBm_selector,xtitle) {
 };
 function compare1D_sqepulse(x1,y1,x2,y2,normalize=false,direction='dip') {
     
+    // Left:
     let traceA = {x: [], y: [], mode: 'lines', type: 'scatter', 
         name: 'Original',
         line: {color: 'blue', width: 2.5},
         yaxis: 'y' };
     let traceB = {x: [], y: [], mode: 'lines', type: 'scatter', 
-        name: 'Added',
+        name: 'Compared',
         line: {color: 'red', width: 2.5},
         yaxis: 'y' };
+    // Right:
+    let traceS = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'Subtracted',
+        line: {color: 'grey', width: 2.5},
+        yaxis: 'y2' };
     
     let layout = {
         legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
         xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
         yaxis: { zeroline: false, title: '<b>Signal(V)</b>', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
-        
+        yaxis2: { zeroline: false, title: '<b>Difference(V)</b>', titlefont: {color: 'Grey', size: 18}, 
+            tickfont: {color: 'grey', size: 18}, tickwidth: 3, linewidth: 3, overlaying: 'y', side: 'right' },
         title: ''
         };
     
@@ -241,11 +248,14 @@ function compare1D_sqepulse(x1,y1,x2,y2,normalize=false,direction='dip') {
     // Original
     $.each(x1, function(i, val) {traceA.x.push(val);});
     $.each(y1, function(i, val) {traceA.y.push(val);});
-    // Added
+    // Compared
     $.each(x2, function(i, val) {traceB.x.push(val);});
     $.each(y2, function(i, val) {traceB.y.push(val);});
+    // Subtracted:
+    $.each(x2, function(i, val) { traceS.x.push(val); });
+    $.each(y2, function(i, val) { traceS.y.push(y1[i]-y2[i]); });
     
-    var Trace = [traceA, traceB]
+    var Trace = [traceA, traceB, traceS]
     Plotly.newPlot('char-sqepulse-chart', Trace, layout, {showSendToCloud: true});
     $( "i.sqepulse1d" ).remove(); //clear previous
 };
@@ -358,9 +368,11 @@ $('.modal-toggle.new.sqepulse').on('click', function(e) {
     // revert back to previous option upon leaving dialogue box
     $('select.char.sqepulse#wday').val(selecteday);
 });
-$('.modal-toggle.search.sqepulse').on('click', function(e) {
+$('.modal-toggle.manage.sqepulse').on('click', function(e) {
     e.preventDefault();
-    $('.modal.search.sqepulse').toggleClass('is-visible');
+    $('.modal.manage.sqepulse').toggleClass('is-visible');
+    // revert back to previous option upon leaving dialogue box
+    $('select.char.sqepulse#wday').val(selecteday);
 });
 $('.modal-toggle.data-reset.sqepulse').on('click', function(e) {
     e.preventDefault();
@@ -389,7 +401,7 @@ $(function() {
                     value: data.daylist.length - 1 - i
                 }));
             });
-            $('select.char.sqepulse#wday').append($('<option>', { text: '--Search--', value: 's' }));
+            $('select.char.sqepulse#wday').append($('<option>', { text: '--Manage--', value: 'm' }));
             if (data.run_permission == false) {
                 $('input.char#sqepulse-run').hide();
                 console.log("RUN BUTTON DISABLED");
@@ -548,6 +560,7 @@ $(function () {
 // assemble 1D-data based on c-parameters picked
 $(function () {
     $('input.char.sqepulse#1d-data').on('click', function () {
+        $('div#char-sqepulse-announcement').empty();
         $( "i.sqepulse1d" ).remove(); //clear previous
         $('button.char#sqepulse').prepend("<i class='sqepulse1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.char.sqepulse#repeat').val();
@@ -555,8 +568,9 @@ $(function () {
         $.each(SQEPulse_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.sqepulse#' + cparam).val(); });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.char.data.sqepulse#sample-range').val();
+        var smode = $('select.char.data.sqepulse#sample-mode').val();
         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/1ddata', {
-            cselect: JSON.stringify(cselect), srange: srange
+            cselect: JSON.stringify(cselect), srange: srange, smode: smode,
         }, function (data) {
             window.x = data.x;
             window.yI = data.yI;
@@ -567,13 +581,18 @@ $(function () {
             // Phase option
             // $('select.char.data.sqepulse#1d-phase').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
             plot1D_sqepulse(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle);
-        });
+        })
+            .fail(function(jqxhr, textStatus, error){
+                $('div#char-sqepulse-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
+                $( "i.sqepulse1d" ).remove(); //clear the status
+            });
     });
     return false;
 });
 // INSERT 1D-data for comparison
 $(function () {
     $('button.char#sqepulse-insert-1D').on('click', function () {
+        $('div#char-sqepulse-announcement').empty();
         $( "i.sqepulse1d" ).remove(); //clear previous
         $('button.char#sqepulse').prepend("<i class='sqepulse1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.char.sqepulse#repeat').val();
@@ -581,8 +600,9 @@ $(function () {
         $.each(SQEPulse_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.sqepulse#' + cparam).val(); });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.char.data.sqepulse#sample-range').val();
+        var smode = $('select.char.data.sqepulse#sample-mode').val();
         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/1ddata', {
-            cselect: JSON.stringify(cselect), srange: srange
+            cselect: JSON.stringify(cselect), srange: srange, smode: smode,
         }, function (data) {
             window.x2 = data.x;
             window.yI2 = data.yI;
@@ -600,7 +620,11 @@ $(function () {
             normalize = Boolean($('select.char.data.sqepulse#compare-nml').val()!='direct');
             direction = $('select.char.data.sqepulse#compare-nml').val().split('normal')[1];
             compare1D_sqepulse(x,yA,x2,yA2,normalize,direction);
-        });
+        })
+            .fail(function(jqxhr, textStatus, error){
+                $('div#char-sqepulse-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
+                $( "i.sqepulse1d" ).remove(); //clear the status
+            });
     });
     return false;
 });
@@ -616,35 +640,33 @@ $(VdBm_selector).on('change', function() {
 
 // assemble 2D-data based on c-parameters picked
 $(function () {
-    $('input.char#sqepulse[name="2d-data"]').on('click', function () {
+    $('input.char.sqepulse#2d-data').on('click', function () {
+        $('div#char-sqepulse-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Plotting 2D might takes some time. Please wait... "));
         $( "i.sqepulse2d" ).remove(); //clear previous
         $('button.char#sqepulse').prepend("<i class='sqepulse2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var irepeat = $('select.char#sqepulse[name="c-repeat"]').val();
-        var ifluxbias = $('select.char#sqepulse[name="c-fluxbias"]').val();
-        var ixyfreq = $('select.char#sqepulse[name="c-xyfreq"]').val();
-        var ixypowa = $('select.char#sqepulse[name="c-xypowa"]').val();
-        var isparam = $('select.char#sqepulse[name="c-sparam"]').val();
-        var iifb = $('select.char#sqepulse[name="c-ifb"]').val();
-        var ifreq = $('select.char#sqepulse[name="c-freq"]').val();
-        var ipowa = $('select.char#sqepulse[name="c-powa"]').val();
-        console.log("Picked: " + isparam);
+        // var irepeat = $('select.char.sqepulse#repeat').val();
+        var cselect = {};
+        $.each(SQEPulse_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.sqepulse#' + cparam).val(); });
+        console.log("Picked Flux: " + cselect['Flux-Bias']);
+        var srange = $('input.char.data.sqepulse#sample-range').val();
         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/2ddata', {
-            irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
+            cselect: JSON.stringify(cselect), srange: srange
         }, function (data) {
             window.x = data.x;
             window.y = data.y;
+            console.log("check y: " + y);
             window.ZZA = data.ZZA;
-            window.ZZP = data.ZZP;
+            window.ZZUP = data.ZZUP;
             window.xtitle = data.xtitle;
             window.ytitle = data.ytitle;
             // Amplitude (default) or Phase
-            $('select.char.data#sqepulse[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }));
+            $('select.char.data.sqepulse#2d-amphase').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }));
             // Data grooming
-            $('select.char.data#sqepulse[name="2d-type"]').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+            $('select.char.data.sqepulse#2d-type').empty().append($('<option>', { text: 'direct', value: 'direct' }))
                 .append($('<option>', { text: 'normalYdip', value: 'normalYdip' })).append($('<option>', { text: 'normalYpeak', value: 'normalYpeak' }))
                 .append($('<option>', { text: 'normalXdip', value: 'normalXdip' })).append($('<option>', { text: 'normalXpeak', value: 'normalXpeak' }));
             // Data color-scaling
-            $('select.char.data#sqepulse[name="2d-colorscale"]').empty().append($('<option>', { text: 'YlOrRd', value: 'YlOrRd' }))
+            $('select.char.data.sqepulse#2d-colorscale').empty().append($('<option>', { text: 'YlOrRd', value: 'YlOrRd' }))
                 .append($('<option>', { text: 'YlGnBu', value: 'YlGnBu' })).append($('<option>', { text: 'RdBu', value: 'RdBu' }))
                 .append($('<option>', { text: 'Portland', value: 'Portland' })).append($('<option>', { text: 'Picnic', value: 'Picnic' }))
                 .append($('<option>', { text: 'Jet', value: 'Jet' })).append($('<option>', { text: 'Hot', value: 'Hot' }))
@@ -653,26 +675,34 @@ $(function () {
                 .append($('<option>', { text: 'Bluered', value: 'Bluered' })).append($('<option>', { text: 'Blackbody', value: 'Blackbody' }))
                 .append($('<option>', { text: 'Blues', value: 'Blues' })).append($('<option>', { text: 'Viridis', value: 'Viridis' }));
             // Transpose or not
-            $('select.char.data#sqepulse[name="2d-direction"]').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
+            $('select.char.data.sqepulse#2d-direction').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
             plot2D_sqepulse(x, y, ZZA, xtitle, ytitle, 
-                $('select.char.data#sqepulse[name="2d-type"]').val(),'sqepulse',
-                $('select.char.data#sqepulse[name="2d-colorscale"]').val());
+                $('select.char.data.sqepulse#2d-type').val(),'sqepulse',
+                $('select.char.data.sqepulse#2d-colorscale').val());
             $( "i.sqepulse2d" ).remove(); //clear previous
-        });
+        })
+            .fail(function(jqxhr, textStatus, error){
+                $('div#char-sqepulse-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error + "(" + textStatus + ")"));
+                $( "i.sqepulse2d" ).remove(); //clear the status
+            })
+            .always(function(){
+                $('div#char-sqepulse-announcement').empty().append($('<h4 style="color: red;"></h4>').text("2D Plot Completed"));
+                $( "i.sqepulse2d" ).remove(); //clear the status
+            });
     });
     return false;
 });
-$('select.char.data#sqepulse').on('change', function() {
-    if ($('select.char.data#sqepulse[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
-    else if ($('select.char.data#sqepulse[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
-    if ($('select.char.data#sqepulse[name="2d-direction"]').val() == "rotate") {
+$('div.2D select.char.data.sqepulse').on('change', function() {
+    if ($('select.char.data.sqepulse#2d-amphase').val() == "Amp") {var ZZ = ZZA; }
+    else if ($('select.char.data.sqepulse#2d-amphase').val() == "Pha") {var ZZ = ZZUP; };
+    if ($('select.char.data.sqepulse#2d-direction').val() == "rotate") {
         plot2D_sqepulse(y, x, transpose(ZZ), ytitle, xtitle, 
-            $('select.char.data#sqepulse[name="2d-type"]').val(),'sqepulse',
-            $('select.char.data#sqepulse[name="2d-colorscale"]').val());
+            $('select.char.data.sqepulse#2d-type').val(),'sqepulse',
+            $('select.char.data.sqepulse#2d-colorscale').val());
     } else {
         plot2D_sqepulse(x, y, ZZ, xtitle, ytitle, 
-            $('select.char.data#sqepulse[name="2d-type"]').val(),'sqepulse',
-            $('select.char.data#sqepulse[name="2d-colorscale"]').val());
+            $('select.char.data.sqepulse#2d-type').val(),'sqepulse',
+            $('select.char.data.sqepulse#2d-colorscale').val());
     };
     return false;
 });

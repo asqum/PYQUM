@@ -180,7 +180,7 @@ function accessdata_cwsweep() {
     });
     return false;
 };
-function plot1D_cwsweep(x1,y1,y2,xtitle) {
+function plot1D_cwsweep(x1,y1,y2,xtitle,phasetype) {
     console.log(xtitle);
     
     let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
@@ -188,7 +188,7 @@ function plot1D_cwsweep(x1,y1,y2,xtitle) {
         line: {color: 'rgb(23, 151, 6)', width: 2.5},
         yaxis: 'y' };
     let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', 
-        name: 'UFN-Phase (' + wday + ', ' + wmoment + ')',
+        name: 'Phase (' + wday + ', ' + wmoment + ')',
         line: {color: 'blue', width: 2.5},
         yaxis: 'y2' };
 
@@ -214,7 +214,7 @@ function plot1D_cwsweep(x1,y1,y2,xtitle) {
         },
         yaxis2: {
             zeroline: false,
-            title: '<b>U-Pha(rad)</b>', 
+            title: phasetype, 
             titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
             tickfont: {color: 'rgb(148, 103, 189)', size: 18},
             tickwidth: 3,
@@ -570,7 +570,7 @@ $(function () {
             window.x1title = data.x1title;
             // Phase option
             $('select.char.data#cwsweep[name="1d-phase"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
-            plot1D_cwsweep(x1,y1,yp,x1title);
+            plot1D_cwsweep(x1,y1,yp,x1title,'<b>Raw-Pha(rad)</b>');
         });
     });
     return false;
@@ -578,10 +578,10 @@ $(function () {
 $('select.char.data#cwsweep').on('change', function() {
     if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "Pha") {
         console.log("Pha mode");
-        plot1D_cwsweep(x1,y1,yp,x1title);
+        plot1D_cwsweep(x1,y1,yp,x1title,'<b>Raw-Pha(rad)</b>');
     } else if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "UPha") {
         console.log("UPha mode");
-        plot1D_cwsweep(x1,y1,yup,x1title);
+        plot1D_cwsweep(x1,y1,yup,x1title,'<b>UFN-Pha(rad)</b>');
     };
     return false;
 });

@@ -280,7 +280,7 @@ def Arm_Measure(session):
     return status_code(status)
 
 # 2.5 Wait for Data
-def Wait_Data(session, Timeout=1000):
+def Wait_Data(session, Timeout=1000000):
     """wait for Data
        Timeout in ms
     """

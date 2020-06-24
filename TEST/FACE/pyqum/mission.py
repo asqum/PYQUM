@@ -973,6 +973,91 @@ def char_sqepulse_resetdata():
 
     return jsonify(message=message)
 
+# Pulse Response Sampler:
+def sqepulse_pulseresp_sampler(srange, selected_caddress, selectedata, mode='A'):
+    if [int(srange[1]) , int(srange[0])] > [session['c_sqepulse_structure'][-1]//M_sqepulse[session['user_name']].datadensity] * 2:
+        print(Back.WHITE + Fore.RED + "Out of range")
+    else:
+        step = (int(srange[1]) - int(srange[0])) // abs(int(srange[1]) - int(srange[0]))
+        active_len = abs(int(srange[1]) - int(srange[0]) + step)
+        # 1. ACTIVE Region of the Pulse Response:
+        # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
+        # Assemble stacks of selected c-address for this sample range:
+        selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
+        selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
+        # sort-out interleaved IQ:
+        selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+step,step))
+        selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+step,step)) + ones(active_len)
+        # Compressing I- & Q-pulse of this sample range into just one point:
+        selectedata = array(selectedata)
+        I_Pulse_active = selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])]
+        Idata_active = mean(I_Pulse_active)
+        Q_Pulse_active = selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]
+        Qdata_active = mean(Q_Pulse_active)
+        # Pre-IQAP:
+        # if mode == 'A':
+        #     A_Pulse_active = sqrt( I_Pulse_active**2 + Q_Pulse_active**2 )
+        #     Adata_active =  mean(A_Pulse_active)
+        #     P_Pulse_active = arctan2( Q_Pulse_active, I_Pulse_active )
+        #     Pdata_active =  mean(P_Pulse_active)
+        if mode == 'C':
+            A_Pulse_active = sqrt( I_Pulse_active**2 + Q_Pulse_active**2 )
+            A_Pulse_active = A_Pulse_active/A_Pulse_active[0]
+            Adata_active = mean(A_Pulse_active - A_Pulse_active[-1])
+            P_Pulse_active = arctan2( Q_Pulse_active, I_Pulse_active )
+            P_Pulse_active = P_Pulse_active/P_Pulse_active[0]
+            Pdata_active = mean(P_Pulse_active - P_Pulse_active[-1])
+
+        try:
+            step = (int(srange[3]) - int(srange[2])) // abs(int(srange[3]) - int(srange[2]))
+            relax_len = abs(int(srange[3]) - int(srange[2]) + step)
+            # 2. RELAXED Region of the Pulse Response:
+            # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
+            # Assemble stacks of selected c-address for this sample range:
+            selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * relax_len)
+            selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * relax_len)
+            # sort-out interleaved IQ:
+            selected_caddress_I[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+step,step))
+            selected_caddress_Q[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+step,step)) + ones(relax_len)
+            # Compressing I & Q of this sample range:
+            selectedata = array(selectedata)
+            I_Pulse_relax = selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])]
+            Idata_relax = mean(I_Pulse_relax)
+            Q_Pulse_relax = selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]
+            Qdata_relax = mean(Q_Pulse_relax)
+            # Pre-IQAP:
+            # if mode == 'A':
+            #     A_Pulse_relax = sqrt( I_Pulse_relax**2 + Q_Pulse_relax**2 )
+            #     Adata_relax =  mean(A_Pulse_relax)
+            #     P_Pulse_relax = arctan2( Q_Pulse_relax, I_Pulse_relax )
+            #     Pdata_relax =  mean(P_Pulse_relax)
+            if mode == 'C':
+                A_Pulse_relax = sqrt( I_Pulse_relax**2 + Q_Pulse_relax**2 )
+                A_Pulse_relax = A_Pulse_relax/A_Pulse_relax[0]
+                Adata_relax = mean(A_Pulse_relax - A_Pulse_relax[-1])
+                P_Pulse_relax = arctan2( Q_Pulse_relax, I_Pulse_relax )
+                P_Pulse_relax = P_Pulse_relax/P_Pulse_relax[0]
+                Pdata_relax = mean(P_Pulse_relax - P_Pulse_relax[-1])
+        except(IndexError): Idata_relax, Qdata_relax, Adata_relax, Pdata_relax = 0, 0, 0, 0
+
+        # Independent IQ (Deviation)
+        dIdata = Idata_active - Idata_relax
+        dQdata = Qdata_active - Qdata_relax
+
+        # Post-IQAP:
+        # PENDING: VECTORIZE THIS:
+        if mode == 'A': # root square mean (same as mean root square!)
+            Adata = sqrt(Idata_active**2+Qdata_active**2) - sqrt(Idata_relax**2+Qdata_relax**2)
+            Pdata = arctan2(Qdata_active, Idata_active) - arctan2(Qdata_relax, Idata_relax) # -pi < phase < pi
+        elif mode == 'B': # root square deviation mean
+            Adata = sqrt(dIdata**2 + dQdata**2)
+            Pdata = arctan2(dQdata, dIdata) # -pi < phase < pi
+        elif mode == 'C': # mean offset normalize
+            Adata = Adata_active - Adata_relax
+            Pdata = Pdata_active - Pdata_relax
+        
+    return dIdata, dQdata, Adata, Pdata
+
 # Chart is supposedly shared by all measurements (under construction for multi-purpose)
 @bp.route('/char/sqepulse/1ddata', methods=['GET'])
 def char_sqepulse_1ddata():
@@ -1011,180 +1096,165 @@ def char_sqepulse_1ddata():
 
             Idata = zeros(len(isweep))
             Qdata = zeros(len(isweep))
+            Adata = zeros(len(isweep))
+            Pdata = zeros(len(isweep))
             for i in isweep:
                 selected_caddress[CParameters['SQE_Pulse'].index(k)] = i # register x-th position
                 if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
-                    srange = request.args.get('srange').split("-") # sample range
-                    if [int(srange[1]) , int(srange[0])] > [session['c_sqepulse_structure'][-1]//M_sqepulse[session['user_name']].datadensity] * 2:
-                        print(Back.WHITE + Fore.RED + "Out of range")
-                    else:
-                        # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
-                        slength = int(srange[1]) - int(srange[0]) + 1
-                        # Assemble stacks of selected c-address for this sample range:
-                        selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * slength)
-                        selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * slength)
-                        # sort-out interleaved IQ:
-                        selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1))
-                        selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1)) + ones(slength)
-                        # Compressing I & Q of this sample range:
-                        selectedata = array(selectedata)
-                        Idata[i] = mean(selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])]-0)
-                        Qdata[i] = mean(selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]-0) 
-
+                    srange = request.args.get('srange').split(",") # sample range
+                    smode = request.args.get('smode') # sampling mode
+                    Idata[i], Qdata[i], Adata[i], Pdata[i] = sqepulse_pulseresp_sampler(srange, selected_caddress, selectedata, mode=smode)
                 else:
                     # Ground level Pulse shape response:
                     selected_caddress = [int(s) for s in selected_caddress]
                     Basic = selected_caddress[-1]
                     # Extracting I & Q:
                     Idata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], session['c_sqepulse_structure'])]
-                    Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], session['c_sqepulse_structure'])]    
+                    Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], session['c_sqepulse_structure'])]
+                    Adata[i] = sqrt(Idata[i]**2 + Qdata[i]**2)
+                    Pdata[i] = arctan2(Qdata[i], Idata[i]) # -pi < phase < pi    
     
+    # Improvisation before pending vectorization on the sampler:
+
+
     print("Structure: %s" %session['c_sqepulse_structure'])
     # x-data:
     selected_progress = waveform(selected_sweep).data[0:len(isweep)]
-    # IQ-data:
-    # print("I: %s" %Idata[0])
-    # print("Q: %s" %Qdata[0])
-    Adata = sqrt(Idata**2 + Qdata**2)
-    UFNPdata = UnwraPhase(selected_progress, arctan2(Qdata, Idata)) # -pi < phase < pi -> Unwrapped -> Flatten -> Normalized
-    
     # facilitate index location (or count) for range clipping:
     cselection = (",").join([s for s in cselect.values()])
     if "c" in cselection:
         selected_progress = list(range(len(selected_progress)))
 
-    x, yI, yQ, yA, yUFNP = selected_progress, list(Idata), list(Qdata), list(Adata), list(UFNPdata)
+    x, yI, yQ, yA, yUFNP = selected_progress, list(Idata), list(Qdata), list(Adata), list(Pdata)
 
     global sqepulse_1Ddata
     sqepulse_1Ddata = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, 'UFNP(rad/x)': yUFNP, "exported by": session['user_name']}
     
     return jsonify(x=x, yI=yI, yQ=yQ, yA=yA, yUFNP=yUFNP, xtitle=xtitle)
 
-# Pending renovation below:
 @bp.route('/char/sqepulse/2ddata', methods=['GET'])
 def char_sqepulse_2ddata():
-    print(Fore.GREEN + "User %s is plotting SQEPULSE 2D-Data using Multi-Process" %session['user_name'])
+    print(Fore.GREEN + "User %s is plotting SQEPULSE 2D-Data using vectorization" %session['user_name'])
+    M_sqepulse[session['user_name']].loadata()
+    selectedata = M_sqepulse[session['user_name']].selectedata
+    print("Data length: %s" %len(selectedata))
     
     # load parameter indexes from json call:
     cselect = json.loads(request.args.get('cselect'))
 
-    for k in cselect.keys():
-        if "x" in cselect[k]:
-            x_name = k
-            xtitle = "<b>" + k + "</b>"
-            # Sweep-command:
-            if k == 'repeat':
-                selected_sweep = cmd_repeat[session['user_name']]
-            else:
-                selected_sweep = M_sqepulse[session['user_name']].corder[k]
-        if "y" in cselect[k]:
-            y_name = k
-            ytitle = "<b>" + k + "</b>"
-
-
-
-
-
-    # preparing MPW dictionary
-    # dict_for_MPW = {
-    #         "pqfile": str(M_sqepulse[session['user_name']].pqfile), 
-    #         "datalocation": M_sqepulse[session['user_name']].datalocation, "writtensize": M_sqepulse[session['user_name']].writtensize,
-    #         "c_sqepulse_structure": session['c_sqepulse_structure'], "cselect": cselect
-    #     }
-    # set_status("MPW", dict_for_MPW)
-
-    # Check progress:
-    if not M_sqepulse[session['user_name']].data_progress%100:
-        offset = 1
-        print(Fore.GREEN + "The data is complete: we can see the whole picture now")
+    try:
+        x_loc = [k for k in cselect.values()].index('x')
+        selected_x = [c for c in cselect.keys()][x_loc]
+        y_loc = [k for k in cselect.values()].index('y')
+        selected_y = [c for c in cselect.keys()][y_loc]
+        xtitle = "<b>" + selected_x + "</b>"
+        ytitle = "<b>" + selected_y + "</b>"
+        selected_caddress = [s for s in cselect.values()]
+    except: 
+        print("x and y parameters not selected or not valid")
+        
+    # Adjusting c-parameters range for data analysis based on progress:
+    parent_address = selected_caddress[:CParameters['SQE_Pulse'].index(selected_x)] # address's part before x (higher-level data)
+    if [int(s) for s in parent_address] < session['c_sqepulse_progress'][0:len(parent_address)]: # must be matched with the parameter-select-range on the front-page
+        print(Fore.YELLOW + "selection is well within progress")
+        sweepables = [session['c_sqepulse_structure'][CParameters['SQE_Pulse'].index(selected_x)], session['c_sqepulse_structure'][CParameters['SQE_Pulse'].index(selected_y)]]
     else: 
-        offset = 0 # to avoid incomplete array error
-        print(Back.RED + "The data is NOT YET complete!")
+        sweepables = [session['c_sqepulse_progress'][CParameters['SQE_Pulse'].index(selected_x)]+1, session['c_sqepulse_progress'][CParameters['SQE_Pulse'].index(selected_y)]+1]
 
+            
+    # flexible access until progress resume-point
+    xsweep = range(sweepables[0])
+    if CParameters['SQE_Pulse'].index(selected_y) == len(CParameters['SQE_Pulse'])-1 :
+        # Special treatment on the last 'buffer' parameter to factor out the data-density first:
+        ysweep = range(sweepables[1]//M_sqepulse[session['user_name']].datadensity)
+    else:
+        ysweep = range(sweepables[1]) 
+    print(Back.WHITE + Fore.BLACK + "Sweeping %s x-points" %len(xsweep))
+    print(Back.WHITE + Fore.BLACK + "Sweeping %s y-points" %len(ysweep))
 
-    # fast iteration method (parallel computing):
-    stage, prev = clocker(0)
-    # CMD = ["python", "-c", "from pyqum.directive import MP_sqepulse as mp; print(mp.worker(%s,%s,'%s','%s'))"%(y_count,x_count,y_name,x_name)]
-    # with Popen(CMD, stdout=PIPE, shell=True) as proc:
-    #     doutput = proc.stdout.read().decode("utf-8")
-    #     output = json.loads(doutput.replace("\'", "\""))
-    #     # try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
-    #     # except: pass
-    # Amp = output['rA']
-    # Pha = output['rP']
-    stage, prev = clocker(stage, prev) # Marking time
+    Idata = zeros([len(ysweep), len(xsweep)])
+    Qdata = zeros([len(ysweep), len(xsweep)])
+    for j in ysweep:
+        selected_caddress[CParameters['SQE_Pulse'].index(selected_y)] = j # register y-th position
+        for i in xsweep:
+            selected_caddress[CParameters['SQE_Pulse'].index(selected_x)] = i # register x-th position
+            if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
+                srange = request.args.get('srange').split(",") # sample range
 
-    print("x is of length %s and of type %s" %(len(x),type(x)))
-    print("y is of length %s and of type %s" %(len(y),type(y)))
-    print("Amp of shape %s" %str(array(Amp).shape))
-    ZZA, ZZP = Amp, Pha
+                if [int(srange[1]) , int(srange[0])] > [session['c_sqepulse_structure'][-1]//M_sqepulse[session['user_name']].datadensity] * 2:
+                    print(Back.WHITE + Fore.RED + "Out of range")
+                else:
+                    # ACTIVE Region of the Pulse Response:
+                    # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
+                    active_len = int(srange[1]) - int(srange[0]) + 1
+                    # Assemble stacks of selected c-address for this sample range:
+                    selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
+                    selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
+                    # sort-out interleaved IQ:
+                    selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1))
+                    selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1)) + ones(active_len)
+                    # Compressing I & Q of this sample range:
+                    selectedata = array(selectedata)
+                    Idata_active = mean(selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])])
+                    Qdata_active = mean(selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]) 
+
+                    try:
+                        # RELAXED Region of the Pulse Response:
+                        # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
+                        relax_len = int(srange[3]) - int(srange[2]) + 1
+                        # Assemble stacks of selected c-address for this sample range:
+                        selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * relax_len)
+                        selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * relax_len)
+                        # sort-out interleaved IQ:
+                        selected_caddress_I[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+1))
+                        selected_caddress_Q[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+1)) + ones(relax_len)
+                        # Compressing I & Q of this sample range:
+                        selectedata = array(selectedata)
+                        Idata_relax = mean(selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])])
+                        Qdata_relax = mean(selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]) 
+                    except(IndexError): Idata_relax, Qdata_relax = 0, 0
+
+                    Idata[j,i] = Idata_active - Idata_relax
+                    Qdata[j,i] = Qdata_active - Qdata_relax
+
+            else:
+                # Ground level Pulse shape response:
+                selected_caddress = [int(s) for s in selected_caddress]
+                Basic = selected_caddress[-1]
+                # Extracting I & Q:
+                Idata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], session['c_sqepulse_structure'])]
+                Qdata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], session['c_sqepulse_structure'])]  
+
+    print("Mapping complete. Structure: %s" %session['c_sqepulse_structure'])
     
-    # x = list(range(len(x))) # for repetitive data
-    return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
+    # x-data:
+    if 'repeat' in xtitle: selected_xsweep = cmd_repeat[session['user_name']]
+    else: selected_xsweep = M_sqepulse[session['user_name']].corder[selected_x]
+    x = waveform(selected_xsweep).data[0:len(xsweep)]
+
+    # y-data:
+    selected_ysweep = M_sqepulse[session['user_name']].corder[selected_y]
+    y = waveform(selected_ysweep).data[0:len(ysweep)]
+    
+    # IQ-data:
+    # print("I: %s" %Idata[0])
+    # print("Q: %s" %Qdata[0])
+    Adata = sqrt(Idata**2 + Qdata**2)
+    UPdata = unwrap(arctan2(Qdata, Idata)) # -pi < phase < pi -> Unwrapped
+    
+    ZZI, ZZQ, ZZA, ZZUP = Idata.tolist(), Qdata.tolist(), Adata.tolist(), UPdata.tolist()
+
+    global sqepulse_2Ddata
+    sqepulse_2Ddata = {xtitle: x, ytitle: y, "exported by": session['user_name']}
+
+    return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 
 # Assembling 2D mesh for 2D-plot above:
 def assembler_sqepulse(args):
 	(y,x) = args # y-, x-position
 
-	selected_caddress = [s for s in cselect.values()]
-        
 	
 
-	# Adjusting c-parameters range for data analysis based on progress:
-	parent_address = selected_caddress[:CParameters['SQE_Pulse'].index(k)] # address's part before x
-	if [int(s) for s in parent_address] < session['c_sqepulse_progress'][0:len(parent_address)]:
-		print(Fore.YELLOW + "selection is well within progress")
-		sweepables = session['c_sqepulse_structure'][CParameters['SQE_Pulse'].index(k)]
-	else: sweepables = session['c_sqepulse_progress'][CParameters['SQE_Pulse'].index(k)]+1
-
-	# Special treatment on the last 'buffer' parameter to factor out the data-density first: 
-	if CParameters['SQE_Pulse'].index(k) == len(CParameters['SQE_Pulse'])-1 :
-		isweep = range(sweepables//M_sqepulse[session['user_name']].datadensity)
-	else:
-		isweep = range(sweepables) # flexible access until progress resume-point
-	print(Back.WHITE + Fore.BLACK + "Sweeping %s points" %len(isweep))
-
-	Idata = zeros(len(isweep))
-	Qdata = zeros(len(isweep))
-	for i in isweep:
-		selected_caddress[CParameters['SQE_Pulse'].index(k)] = i # register x-th position
-		if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
-			srange = request.args.get('srange').split("-") # sample range
-			if [int(srange[1]) , int(srange[0])] > [session['c_sqepulse_structure'][-1]//M_sqepulse[session['user_name']].datadensity] * 2:
-				print(Back.WHITE + Fore.RED + "Out of range")
-			else:
-				# FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
-				slength = int(srange[1]) - int(srange[0]) + 1
-				# Assemble stacks of selected c-address for this sample range:
-				selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * slength)
-				selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * slength)
-				# sort-out interleaved IQ:
-				selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1))
-				selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1)) + ones(slength)
-				# Compressing I & Q of this sample range:
-				selectedata = array(selectedata)
-				Idata[i] = mean(selectedata[gotocdata(selected_caddress_I, session['c_sqepulse_structure'])]-0)
-				Qdata[i] = mean(selectedata[gotocdata(selected_caddress_Q, session['c_sqepulse_structure'])]-0) 
-
-		else:
-			# Ground level Pulse shape response:
-			selected_caddress = [int(s) for s in selected_caddress]
-			Basic = selected_caddress[-1]
-			# Extracting I & Q:
-			Idata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], session['c_sqepulse_structure'])]
-			Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], session['c_sqepulse_structure'])]    
-
-
-
-
-
-	I, Q = 0, 0
-	for i_prepeat in range(powa_repeat):
-		r_powa = int(ipowa) * powa_repeat + i_prepeat # from the beginning position of repeating power
-		I += selectedata[gotocdata([x,y,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),int(ifreq),2*r_powa],c_cwsweep_structure)]
-		Q += selectedata[gotocdata([x,y,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),int(ifreq),2*r_powa+1],c_cwsweep_structure)]
-	I /= powa_repeat
-	Q /= powa_repeat
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
 
