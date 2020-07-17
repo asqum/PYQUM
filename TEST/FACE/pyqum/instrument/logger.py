@@ -435,7 +435,7 @@ class measurement:
             with open(self.pqfile, 'rb') as datapie:
                 datapie.seek(self.datalocation+7)
                 pie = datapie.read(self.writtensize)
-                self.selectedata = list(struct.unpack('>' + 'd'*((self.writtensize)//8), pie))
+                self.selectedata = array(struct.unpack('>' + 'd'*((self.writtensize)//8), pie))
         except:
             # raise
             print("\ndata not found")

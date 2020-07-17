@@ -2,7 +2,7 @@
 
 import logging
 from time import sleep
-from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul
+from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul, transpose, ones
 
 def cdatasearch(Order, Structure):
     ''' Give the address of the data essentially!
@@ -23,14 +23,23 @@ def cdatasearch(Order, Structure):
 
 def gotocdata(Address, Structure):
     '''Give the Order / Entry of the data
-        Address: can be a stack of arrays of parameter-settings to form matrix
-        Structure: an array of the NUMBER/COUNT of variables for each parameter in the data structure
+        Address: can be a stack of arrays of parameter-settings to form 2D-matrix
+        Structure: an 1D-array of the NUMBER/COUNT of variables for each parameter in the data structure
     '''
     Address = array(Address,dtype=int64)
-    S = flip(cumprod(flip(array(Structure,dtype=int64))))
-    S[:-1] , S[-1] = S[1:] , 1
-    Order = matmul(Address, S)
-    
+    Structure = array(Structure,dtype=int64)
+    try:
+        if Structure.ndim == 1:
+            S = flip(cumprod(flip(Structure)))
+            S[:-1] , S[-1] = S[1:] , 1
+            Order = matmul(Address, S)
+        # if Structure.ndim == 2: # Allow 2D-Address (Still PENDING)
+        #     S = flip(cumprod(flip(Structure),axis=1))
+        #     # print("Address: %s, Structure: %s, S: %s" %(str(Address.shape), str(array(Structure).shape), str(S.shape)))
+        #     S[:, :-1] , S[:, -1] = S[:, 1:] , ones(len(S[:, -1]))
+        #     Order = matmul(Address, transpose(S)).diagonal().astype(int)
+        #     print("Order: %s"%Order)
+    except: print("Please Check if the Structure dimension is 1D")
     return Order
 
 class waveform:
@@ -99,7 +108,7 @@ class waveform:
                         pass
                 else: self.data.append(float(cmd))     
 
-def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8):
+def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8, clock_multiples=8, ramsey=0, ringup=0):
     '''time-unit: ns
         totaltime: total duration (minimum: 1000*0.8ns ~ 1us)
         ontime: +1V duration
@@ -111,7 +120,9 @@ def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8):
     delaypoints = round(delay / dt)
     onpoints = round(ontime / dt)
     offpoints = round((totaltime - ontime - delay) / dt)
-    padding = 8 - (delaypoints + onpoints + offpoints)%8 # so that total-points is the multiples of 8
+    padding = 0 # no padding by default!
+    # keep total-points to be the multiples of clock_multiples of specific instruments
+    if (delaypoints + onpoints + offpoints)%clock_multiples: padding = clock_multiples - (delaypoints + onpoints + offpoints)%clock_multiples
     if (ontime == totaltime): offset = scale # always ON or OFF
     wave = [offset] * delaypoints + [scale] * onpoints + [offset] * (offpoints + padding)
 
@@ -139,8 +150,16 @@ def test():
     #     sleep(2)
     
     # print("location: %s" %(gotocdata([0,8,88,778], [1,100,1000,10000])))
+    print("First check:")
     print("address: %s" %(cdatasearch(gotocdata([0,79,333,8888,12356], [1,100,1000,10000,1000000]), [1,100,1000,10000,1000000])))
+    print("Second check (List of Addresses):")
     for x in gotocdata([[0,79,333,5271,12356]]*6 + [[0,79,333,5271,12357]]*1, [1,100,1000,10000,1000000]):
+        print("address: %s" %(cdatasearch(x, [1,100,1000,10000,1000000])))
+    print("Third check (Array of Addresses):")
+    A = [0,79,333,5271,12356]
+    B = ones([8,1])*array(A)
+    B[:,-1] = range(12300,12308,1)
+    for x in gotocdata(B, [1,100,1000,10000,1000000]):
         print("address: %s" %(cdatasearch(x, [1,100,1000,10000,1000000])))
     
     # converting between addresses with different base structure:

@@ -7,10 +7,11 @@ from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
 from time import time, sleep
-from numpy import linspace, sin, pi, prod, array, mean, sqrt, zeros, float64, ceil
+from numpy import linspace, sin, pi, prod, array, mean, sqrt, zeros, float64, ceil, power, arctan2, floor
 from flask import request, session, current_app, g, Flask
 
-from pyqum.instrument.modular import AWG, VSA
+from pyqum.instrument.modular import VSA
+from pyqum.instrument.benchtop import TKAWG as AWG
 from pyqum.instrument.benchtop import PSGV as PSG0
 from pyqum.instrument.benchtop import PSGA as PSG1
 from pyqum.instrument.benchtop import ENA, YOKO
@@ -314,9 +315,10 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 
     # pushing pre-measurement parameters to settings:
     yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach
-    set_status("SQE_Pulse", dict(active=instr))
+    set_status("SQE_Pulse", dict(msg='measurement started', active=instr))
 
     # ***USER_DEFINED*** Controlling-PARAMETER(s) ======================================================================================
+    config = corder['C-Config']
     structure = corder['C-Structure']
     fluxbias = waveform(corder['Flux-Bias'])
     averaging = waveform(corder['Average'])
@@ -358,35 +360,24 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     PSG1.rfoutput(saga, action=['Set', 1])
 
     # AWG for Control:
-    awgsess = AWG.InitWithOptions()
-    AWG.Abort_Gen(awgsess)
-    AWG.ref_clock_source(awgsess, action=['Set',int(0)]) # Internal(0) or External(1) 10MHz clock-reference
-    AWG.predistortion_enabled(awgsess, action=['Set',True])
-    AWG.output_mode_adv(awgsess, action=['Set',int(2)]) # Sequence output mode
-    AWG.arb_sample_rate(awgsess, action=['Set',float(1250000000)]) # maximum sampling rate
-    AWG.active_marker(awgsess, action=['Set','1']) # master
-    AWG.marker_delay(awgsess, action=['Set',float(0)])
-    AWG.marker_pulse_width(awgsess, action=['Set',float(1e-7)])
-    AWG.marker_source(awgsess, action=['Set',int(7)])
+    ifperiod = pperiod.data[0] # PENDING: make pulse-period a peripheral (a constant config every scheduled run)
+    awgsess = AWG.Initiate()
+    AWG.clock(awgsess, action=['Set', 'EFIXed',2.5e9])
+    AWG.clear_waveform(awgsess,'all')
+    AWG.alloff(awgsess, action=['Set',1])
     # PRESET Output:
-    '''
-    To get the BEST from AWG (M9331A). It can be considered a bug to such extent that without this, the output amplitude would be somewhat inconsistent and very much suppressed.
-    '''
-    for ch in range(2):
+    '''Prepare DAC:'''
+    for ch in range(4):
         channel = str(ch + 1)
-        AWG.output_config(awgsess, RepCap=channel, action=["Set", 0]) # Single-ended
-        AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
-        AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.5])
-        AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
-    # output settings:
-    for ch in range(2):
-        channel = str(ch + 1)
-        AWG.output_enabled(awgsess, RepCap=channel, action=["Set", int(1)])  # ON
-        AWG.output_filter_enabled(awgsess, RepCap=channel, action=["Set", True])
-        AWG.output_config(awgsess, RepCap=channel, action=["Set", int(2)]) # Amplified 1:2
-        AWG.output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
-        AWG.arb_gain(awgsess, RepCap=channel, action=["Set", 0.5])
-        AWG.output_impedance(awgsess, RepCap=channel, action=["Set", 50])
+        AWG.prepare_DAC(awgsess, channel, int(ifperiod*2.5))
+    # Turn on all 4 channels:
+    AWG.compose_DAC(awgsess, 1, array(squarewave(ifperiod, 0, 0, 1, dt=0.4, clock_multiples=1)))
+    AWG.compose_DAC(awgsess, 2, array(squarewave(ifperiod, 0, 0, 1, dt=0.4, clock_multiples=1)))
+    AWG.compose_DAC(awgsess, 3, array(squarewave(ifperiod, 0, 0, 1, dt=0.4, clock_multiples=1)))
+    AWG.compose_DAC(awgsess, 4, array(squarewave(ifperiod, 0, 0, 1, dt=0.4, clock_multiples=1)))
+    AWG.alloff(awgsess, action=['Set',0])
+    AWG.ready(awgsess)
+    AWG.play(awgsess)
     
     # VSA for Readout
     vsasess = VSA.InitWithOptions()
@@ -441,53 +432,36 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
                         if "opt" not in ropowa.data: # check if it is in optional-state
                             PSG1.power(saga, action=['Set', str(ropowa.data[caddress[structure.index('RO-Power')]]) + "dBm"])
 
+            # Basic
             # AWG (Every-loop)
-            if "opt" not in pperiod.data: # check if it is in optional-state
-                AWG.Clear_ArbMemory(awgsess)
-                WAVE = []
+            # define waveforms' elements:
+            ifontime = float(xypwidth.data[caddress[structure.index('XY-Pulse-Width')]]), float(ropwidth.data[caddress[structure.index('RO-Pulse-Width')]])
+            if "lockxypwd" in str(ropdelay.data[0]): 
+                if '+' in str(ropdelay.data[0]): rooffset = float(ropdelay.data[0].split('+')[1])
+                else: rooffset = 0 # default value
+                ifdelay = float(xypdelay.data[caddress[structure.index('XY-Pulse-Delay')]]), float(xypwidth.data[caddress[structure.index('XY-Pulse-Width')]]) + rooffset
+                print("RO-Pulse Delays behind XY-Pulse for %sns" %(ifdelay[1]-ifdelay[0]))
+            else: 
+                ifdelay = float(xypdelay.data[caddress[structure.index('XY-Pulse-Delay')]]), float(ropdelay.data[caddress[structure.index('RO-Pulse-Delay')]])
+            ifscale = float(xyiflevel.data[caddress[structure.index('XY-ifLevel')]]), float(roiflevel.data[caddress[structure.index('RO-ifLevel')]])
+            
+            # assigning I-channels for XY and RO:
+            AWG.compose_DAC(awgsess, 1, array(squarewave(ifperiod, ifontime[0], ifdelay[0], ifscale[0],  dt=0.4, clock_multiples=1)))
+            AWG.compose_DAC(awgsess, 3, array(squarewave(ifperiod, ifontime[1], ifdelay[1], ifscale[1],  dt=0.4, clock_multiples=1)), 1, 200) # put marker on RO channel-I
+            print('Waveform is Ready: %s' %str(AWG.ready(awgsess)))
                 
-                # construct waveform:
-                ifperiod = pperiod.data[caddress[structure.index('Pulse-Period')]]
-                ifscale = float(xyiflevel.data[caddress[structure.index('XY-ifLevel')]]), float(roiflevel.data[caddress[structure.index('RO-ifLevel')]])
-
-                if "lockxypwd" in str(ropdelay.data[0]): 
-                    if '+' in str(ropdelay.data[0]): rooffset = float(ropdelay.data[0].split('+')[1])
-                    else: rooffset = 0 # default value
-                    ifdelay = float(xypdelay.data[caddress[structure.index('XY-Pulse-Delay')]]), float(xypwidth.data[caddress[structure.index('XY-Pulse-Width')]]) + rooffset
-                    print("RO-Pulse Delays behind XY-Pulse for %sns" %(ifdelay[1]-ifdelay[0]))
-                else: 
-                    ifdelay = float(xypdelay.data[caddress[structure.index('XY-Pulse-Delay')]]), float(ropdelay.data[caddress[structure.index('RO-Pulse-Delay')]])
-
-                ifontime = float(xypwidth.data[caddress[structure.index('XY-Pulse-Width')]]), float(ropwidth.data[caddress[structure.index('RO-Pulse-Width')]])
-                for ch in range(2):
-                    channel = str(ch + 1)
-                    wavefom = squarewave(ifperiod, ifontime[ch], ifdelay[ch], ifscale[ch]) # in ns
-                    stat, wave = AWG.CreateArbWaveform(awgsess, wavefom)
-                    print('Waveform channel %s: %s <%s>' %(channel, wave, status_code(stat)))
-                    WAVE.append(wave)
-                # Building Sequences:
-                for ch in range(2):
-                    channel = str(ch + 1)	
-                    status, seqhandl = AWG.CreateArbSequence(awgsess, [WAVE[ch]], [1]) # loop# canbe >1 if longer sequence is needed in the future!
-                    # print('Sequence channel %s: %s <%s>' %(channel, seqhandl, status_code(status)))
-                    # Channel Assignment:
-                    stat = AWG.arb_sequence_handle(awgsess, RepCap=channel, action=["Set", seqhandl])
-                    # print('Sequence channel %s embeded: %s <%s>' %(channel, stat[1], status_code(stat[0])))
-                # Trigger Settings:
-                for ch in range(2):
-                    channel = str(ch + 1)
-                    AWG.operation_mode(awgsess, RepCap=channel, action=["Set", 0])
-                    AWG.trigger_source_adv(awgsess, RepCap=channel, action=["Set", 0])
-                AWG.Init_Gen(awgsess)
-                AWG.Send_Pulse(awgsess, 1)
-
             # Basic / Buffer:
             # VSA (Every-loop)
-            # Brute_Segmentation = True
             avenum = int(averaging.data[caddress[structure.index('Average')]])
-            VSA.acquisition_time(vsasess, action=['Set',float(samptime.count*2e-9)]) # minimum time resolution
+            if config['lock-period'] == 'yes': 
+                recurrence = int(min([floor(256e6/ifperiod), avenum])) 
+                avenum = int(ceil(avenum / recurrence))
+            else: #default
+                recurrence = 1
+            VSA.acquisition_time(vsasess, action=['Set',float(recurrence*samptime.count*2e-9)]) # minimum time resolution
             VSA.preselector_enabled(vsasess, action=['Set',False]) # disable preselector to allow the highest bandwidth of 250MHz
-            
+            print(Fore.YELLOW + "Recurrence: %s" %recurrence)
+
             if "lockro" in str(lofreq.data[0]):
                 if '+' in str(lofreq.data[0]): lof_offset = float(lofreq.data[0].split('+')[1])
                 elif '-' in str(lofreq.data[0]): lof_offset = -float(lofreq.data[0].split('-')[1])
@@ -522,28 +496,32 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             # Start Quantum machine:
             # Start Averaging Loop:
             vsasn = VSA.samples_number(vsasess)[1]
-            iqdata = zeros((avenum,2*vsasn))
-            # Max number of points for VSA in the buffer = 128M (assuming 32-bit floating points)
+            if (vsasn%recurrence) and (recurrence>1):
+                errormsg = "Period must be multiples of 2ns"
+                set_status("SQE_Pulse", dict(msg=errormsg, pause=True))
+                print(Fore.RED + errormsg)
+                break
+            iqdata = zeros((avenum*recurrence,int(2*vsasn/recurrence)))
+            # Max number of points for VSA in the buffer = 128MS
             # BUT: M9202A doesn't support Segment Acquisition, which I'm trying to do as follows:
-            acq_segment = int(min([1e6/2/vsasn, avenum, 1])) # use 1 to default everything back to slow method
-            chunks = int(ceil(avenum/acq_segment))
-            for c in range(chunks):
+            for c in range(avenum):
                 VSA.Arm_Measure(vsasess)
-
-                # Chunks by chunks appending:
-                # VSA.Wait_Data(vsasess)
-                # if (c == chunks - 1) and avenum%acq_segment: # last partial chunck
-                #     gd = VSA.Get_Data(vsasess, 2*vsasn*(avenum%acq_segment))
-                #     print(Fore.GREEN + "Requested: %s, transferred: %s" %(2*vsasn*(avenum%acq_segment), gd[1]["NumberCopied"]))
-                #     iqdata[c*acq_segment:c*acq_segment+(avenum%acq_segment),:] = array(gd[1]['ComplexData']).reshape(avenum%acq_segment,2*vsasn)
-                # else: 
-                #     gd = VSA.Get_Data(vsasess, 2*vsasn*acq_segment)
-                #     iqdata[c*acq_segment:(c+1)*acq_segment,:] = array(gd[1]['ComplexData']).reshape(acq_segment,2*vsasn)
-
                 gd = VSA.Get_Data(vsasess, 2*vsasn)
-                iqdata[c,:] = array(gd[1]['ComplexData'])
+                # iqdata[c*recurrence:(c+1)*recurrence,:] = array(gd[1]['ComplexData']).reshape(recurrence,int(2*vsasn/recurrence))
+                iqdata[c,:] = mean(array(gd[1]['ComplexData']).reshape(recurrence,int(2*vsasn/recurrence)), axis=0)
+            # exporting data for saving
+            endata = zeros(int(2*vsasn/recurrence))
             
-            iqdata = mean(iqdata, axis=0)
+            if config['data-option'] == 'AP':
+                print(Fore.BLUE + "%s mode:" %config)
+                idata, qdata = iqdata[:,0::2], iqdata[:,1::2]
+                Adata = mean(sqrt(power(idata,2) + power(qdata,2)), axis=0)
+                Pdata = mean(arctan2(qdata, idata), axis=0)
+                endata[0::2], endata[1::2] = Adata, Pdata
+            else: #default
+                print(Fore.BLUE + "%s mode:" %config)
+                iqdata = mean(iqdata, axis=0)
+                endata = iqdata
             print("Operation Complete")
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)			
             
@@ -567,14 +545,14 @@ def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, res
                 if get_status("SQE_Pulse")['pause']:
                     break
                 else:
-                    yield list(iqdata)
+                    yield list(endata)
 
 
         if not get_status("SQE_Pulse")['repeat']:
-            set_status("SQE_Pulse", dict(pause=True))
+            set_status("SQE_Pulse", dict(msg='measurement concluded', pause=True))
             VSA.close(vsasess)
             if "opt" not in pperiod.data: # check if it is in optional-state
-                AWG.Abort_Gen(awgsess)
+                AWG.alloff(awgsess, action=['Set',1])
                 AWG.close(awgsess)
             if "opt" not in xyfreq.data: # check if it is in optional-state
                 PSG0.rfoutput(sogo, action=['Set', 0])

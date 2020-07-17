@@ -9,7 +9,7 @@ import requests, json
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64
 from time import sleep, strptime, mktime 
 from datetime import timedelta, datetime
 
@@ -553,18 +553,21 @@ def char_cwsweep_resume():
 
 @bp.route('/char/cwsweep/trackdata', methods=['GET'])
 def char_cwsweep_trackdata():
-    ifluxbias = request.args.get('ifluxbias')
-    ixyfreq = request.args.get('ixyfreq')
-    ixypowa = request.args.get('ixypowa')
-
+    fixed = request.args.get('fixed')
+    fixedvalue = request.args.get('fixedvalue')
+    cparam = ['repeat','fluxbias','xyfreq','xypowa','sparam','ifb','freq','powa']
     # list data position in file:
     try:
-        data_location = {}
-        data_location['fluxbias'] = int(gotocdata([session['c_cwsweep_structure'][0]-1, int(ifluxbias), 0, 0, 0, 0, 0, 0], session['c_cwsweep_structure']))
-        data_location['xyfreq'] = int(gotocdata([session['c_cwsweep_structure'][0]-1, session['c_cwsweep_structure'][1]-1, int(ixyfreq), 0, 0, 0, 0, 0], session['c_cwsweep_structure']))
-        data_location['xypowa'] = int(gotocdata([session['c_cwsweep_structure'][0]-1, session['c_cwsweep_structure'][1]-1, session['c_cwsweep_structure'][0]-1, int(ixypowa), 0, 0, 0, 0], session['c_cwsweep_structure']))
+        try:
+            fixed_caddress = array(session['c_cwsweep_structure'],dtype=int64)-1
+            fixed_caddress[cparam.index(fixed)] = int(fixedvalue)
+            fixed_caddress[cparam.index(fixed)+1:] = 0
+        except(IndexError): raise
+        data_location = int(gotocdata(fixed_caddress, session['c_cwsweep_structure']))
+    
+    # except: raise
     except(ValueError):
-        print(Back.RED + Fore.WHITE + "All parameters must be FIXED!")
+        print(Back.RED + Fore.WHITE + "All parameters before branch must be FIXED!")
         pass
 
     # print("Data location: %s" %data_location)
@@ -814,7 +817,7 @@ def char_sqepulse():
 # Initialize and list days specific to task
 @bp.route('/char/sqepulse/init', methods=['GET'])
 def char_sqepulse_init():
-    global M_sqepulse, CParameters
+    global M_sqepulse, CParameters, sqepulse_1Ddata
 
     # check currently-connected users:
     try: print(Fore.GREEN + "Connected M-USER(s) for SQE-Pulse: %s" %M_sqepulse.keys())
@@ -832,6 +835,10 @@ def char_sqepulse_init():
     CParameters['SQE_Pulse'] = ['repeat', 'Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
                 'Pulse-Period', 'RO-ifLevel', 'RO-Pulse-Delay', 'RO-Pulse-Width', 'XY-ifLevel', 'XY-Pulse-Delay', 'XY-Pulse-Width', 
                 'LO-Frequency', 'LO-Power', 'ADC-delay', 'Average', 'Sampling-Time']
+
+    # Initialize 1D Data-Holder:
+    try: print(Fore.CYAN + "Connected M-USER(s) holding SQE-Pulse's 1D-DATA: %s" %sqepulse_1Ddata.keys())
+    except: sqepulse_1Ddata = {}
 
     return jsonify(run_status=run_status, daylist=M_sqepulse[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
@@ -891,6 +898,9 @@ def char_sqepulse_setrepeat():
 @bp.route('/char/sqepulse/getrepeat', methods=['GET'])
 def char_sqepulse_getrepeat():
     return jsonify(repeat=get_status("SQE_Pulse")['repeat'])
+@bp.route('/char/sqepulse/getmessage', methods=['GET'])
+def char_sqepulse_getmessage():
+    return jsonify(msg=get_status("SQE_Pulse")['msg'])
 # search through logs of data specific to task (pending)
 @bp.route('/char/sqepulse/search', methods=['GET'])
 def char_sqepulse_search():
@@ -904,9 +914,9 @@ def char_sqepulse_export_1dcsv():
     print("ifreq: %s" %ifreq)
     status = None
     if ifreq is not None:
-        set_csv(sqepulse_1Ddata, '1Dsqepulse.csv')
+        set_csv(sqepulse_1Ddata[session['user_name']], '1Dsqepulse[%s].csv'%session['user_name'])
         status = "csv written"
-    return jsonify(status=status)
+    return jsonify(status=status, user_name=session['user_name'])
 # list set-parameters based on selected task-entry
 @bp.route('/char/sqepulse/access', methods=['GET'])
 def char_sqepulse_access():
@@ -953,8 +963,24 @@ def char_sqepulse_resume():
 
 @bp.route('/char/sqepulse/trackdata', methods=['GET'])
 def char_sqepulse_trackdata():
-    # PENDING 
-    data_location = None
+    fixed = request.args.get('fixed')
+    fixedvalue = request.args.get('fixedvalue')
+    # list data position in file:
+    try:
+        data_location = None
+        try:
+            fixed_caddress = array(session['c_sqepulse_structure'],dtype=int64)-1
+            fixed_caddress[CParameters['SQE_Pulse'].index(fixed)] = int(fixedvalue)
+            fixed_caddress[CParameters['SQE_Pulse'].index(fixed)+1:] = 0
+        except(IndexError): raise
+        data_location = int(gotocdata(fixed_caddress, session['c_sqepulse_structure']))
+    
+    # except: raise
+    except(ValueError):
+        print(Back.RED + Fore.WHITE + "All parameters before branch must be FIXED!")
+        pass
+
+    # print("Data location: %s" %data_location)
     return jsonify(data_location=data_location)
 @bp.route('/char/sqepulse/resetdata', methods=['GET'])
 def char_sqepulse_resetdata():
@@ -1007,6 +1033,11 @@ def sqepulse_pulseresp_sampler(srange, selected_caddress, selectedata, mode='A')
             P_Pulse_active = arctan2( Q_Pulse_active, I_Pulse_active )
             P_Pulse_active = P_Pulse_active/P_Pulse_active[0]
             Pdata_active = mean(P_Pulse_active - P_Pulse_active[-1])
+        if mode == 'D':
+            A_Pulse_active = I_Pulse_active**2 + Q_Pulse_active**2 # Power
+            Adata_active = mean(A_Pulse_active)
+            P_Pulse_active = arctan2( Q_Pulse_active, I_Pulse_active )
+            Pdata_active = mean(P_Pulse_active)
 
         try:
             step = (int(srange[3]) - int(srange[2])) // abs(int(srange[3]) - int(srange[2]))
@@ -1038,6 +1069,11 @@ def sqepulse_pulseresp_sampler(srange, selected_caddress, selectedata, mode='A')
                 P_Pulse_relax = arctan2( Q_Pulse_relax, I_Pulse_relax )
                 P_Pulse_relax = P_Pulse_relax/P_Pulse_relax[0]
                 Pdata_relax = mean(P_Pulse_relax - P_Pulse_relax[-1])
+            if mode == 'D':
+                A_Pulse_relax = I_Pulse_relax**2 + Q_Pulse_relax**2 # Power
+                Adata_relax = mean(A_Pulse_relax)
+                P_Pulse_relax = arctan2( Q_Pulse_relax, I_Pulse_relax )
+                Pdata_relax = mean(P_Pulse_relax)
         except(IndexError): Idata_relax, Qdata_relax, Adata_relax, Pdata_relax = 0, 0, 0, 0
 
         # Independent IQ (Deviation)
@@ -1046,14 +1082,18 @@ def sqepulse_pulseresp_sampler(srange, selected_caddress, selectedata, mode='A')
 
         # Post-IQAP:
         # PENDING: VECTORIZE THIS:
-        if mode == 'A': # root square mean (same as mean root square!)
+        # A and B converge for only 2-range (differ for 4-range)
+        if mode == 'A': # deviation of root square mean(range) (same as mean root square!)
             Adata = sqrt(Idata_active**2+Qdata_active**2) - sqrt(Idata_relax**2+Qdata_relax**2)
             Pdata = arctan2(Qdata_active, Idata_active) - arctan2(Qdata_relax, Idata_relax) # -pi < phase < pi
-        elif mode == 'B': # root square deviation mean
+        elif mode == 'B': # root square deviation mean(range)
             Adata = sqrt(dIdata**2 + dQdata**2)
             Pdata = arctan2(dQdata, dIdata) # -pi < phase < pi
         elif mode == 'C': # mean offset normalize
             Adata = Adata_active - Adata_relax
+            Pdata = Pdata_active - Pdata_relax
+        elif mode == 'D': # RMS (Power-like)
+            Adata = sqrt(Adata_active) - sqrt(Adata_relax)
             Pdata = Pdata_active - Pdata_relax
         
     return dIdata, dQdata, Adata, Pdata
@@ -1099,6 +1139,7 @@ def char_sqepulse_1ddata():
             Adata = zeros(len(isweep))
             Pdata = zeros(len(isweep))
             for i in isweep:
+                # PENDING: VECTORIZATION OR MULTI-PROCESS
                 selected_caddress[CParameters['SQE_Pulse'].index(k)] = i # register x-th position
                 if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
                     srange = request.args.get('srange').split(",") # sample range
@@ -1126,9 +1167,7 @@ def char_sqepulse_1ddata():
         selected_progress = list(range(len(selected_progress)))
 
     x, yI, yQ, yA, yUFNP = selected_progress, list(Idata), list(Qdata), list(Adata), list(Pdata)
-
-    global sqepulse_1Ddata
-    sqepulse_1Ddata = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, 'UFNP(rad/x)': yUFNP, "exported by": session['user_name']}
+    sqepulse_1Ddata[session['user_name']] = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, 'UFNP(rad/x)': yUFNP, "exported by": session['user_name']}
     
     return jsonify(x=x, yI=yI, yQ=yQ, yA=yA, yUFNP=yUFNP, xtitle=xtitle)
 

@@ -529,18 +529,16 @@ $(function () {
     });
 });
 
-// tracking data position based on certain parameter
+// tracking data position based on certain parameter (PENDING: Need to be tested after code modification been done)
 $(function () {
     $('select.char#cwsweep').on('change', function () {
         var fixed = this.getAttribute('name').split('c-')[1];
+        var fixedvalue = $('select.char#cwsweep[name="c-' + fixed + '"]').val();
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/trackdata', {
-            ifluxbias: $('select.char#cwsweep[name="c-fluxbias"]').val(),
-            ixyfreq: $('select.char#cwsweep[name="c-xyfreq"]').val(),
-            ixypowa: $('select.char#cwsweep[name="c-xypowa"]').val(),
+            fixed: fixed, fixedvalue: fixedvalue,
         }, function (data) {
-            console.log('data position for xyfreq is ' + data.data_location.xyfreq);
-            console.log('data position for xypowa is ' + data.data_location.xypowa);
-            $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text(fixed + ' is fixed at ' + data.data_location[fixed]));
+            console.log('data position for branch ' + fixed + ' is ' + data.data_location);
+            $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text(fixed + ' is fixed at ' + data.data_location));
         })
     });
     return false;

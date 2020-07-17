@@ -139,6 +139,7 @@ function vsaplay() {
     $.getJSON('/mach/vsa/play', {
         average: $('select.vsa#average').val(),
         avenum: $('input.vsa#settings[name="avenum"]').val(),
+        dephase: $('select.vsa#dephase').val(),
     }, function (data) {
         console.log(data.log);
         $('div#vsa-status').empty().append($('<h4 style="color: red;"></h4>').text(data.nIQpair + 'pairs of IQ extracted!'));

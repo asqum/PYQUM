@@ -52,14 +52,14 @@ function Normalize_Peak(Z) {
 
 function VdBm_Conversion(Y, selector) {
     Y_Conv = [];
-    ytitle = '<b>Signal(' + $(selector).val() + ')</b>';
+    yunit = $(selector).val();
     if ($(selector).val() == 'V') {
         $.each(Y, function(i, val) {Y_Conv.push(val);});
     } else if ($(selector).val() == 'dBm') {
         $.each(Y, function(i, val) {
-            var val = 10*Math.log10(val**2/50*1000);
+            var val = 10*Math.log10(0.5*(val**2)/50*1000);
             Y_Conv.push(val);
         });
     };
-    return {'y3': Y_Conv, 'ytitle': ytitle}; 
+    return {'y': Y_Conv, 'yunit': yunit}; 
 }

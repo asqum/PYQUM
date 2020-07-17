@@ -11,6 +11,8 @@ from functools import wraps #facilitate wrapper's comments
 from ctypes import c_int, c_bool, c_char_p, byref, cdll, c_char, c_long, c_double, c_float
 from ctypes.util import find_library
 from pyqum.instrument.logger import address, get_status, set_status, status_code
+from pyqum.instrument.toolbox import squarewave
+from time import sleep
 
 # dloc = "C:\\Program Files\\IVI Foundation\\IVI\Bin\\AgM933x_64.dll" #64-bit
 try:
@@ -462,9 +464,6 @@ def Clear_ArbMemory(session):
         print(Fore.GREEN + "%s's arbitrary memory ALL Cleared: %s" % (mdlname, status_code(status)))
     return status
 
-# 3. Composite functions based on above methods
-
-
 # 4. close
 def close(session):
     '''[Close the connection]
@@ -478,6 +477,75 @@ def close(session):
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed: %s" %(mdlname, status_code(status)))
     return status
 
+# 3. Composite functions based on above methods
+def prepare_DAC(awgsess):
+    # NOTE: This AWG had been decommissioned as of 2020/7/4
+    # PENDING: to be adjusted
+    # awgsess = AWG.InitWithOptions()
+    Abort_Gen(awgsess)
+    ref_clock_source(awgsess, action=['Set',int(0)]) # Internal(0) or External(1) 10MHz clock-reference
+    predistortion_enabled(awgsess, action=['Set',True])
+    output_mode_adv(awgsess, action=['Set',int(2)]) # Sequence output mode
+    arb_sample_rate(awgsess, action=['Set',float(1250000000)]) # maximum sampling rate
+    active_marker(awgsess, action=['Set','1']) # master
+    marker_delay(awgsess, action=['Set',float(0)])
+    marker_pulse_width(awgsess, action=['Set',float(1e-7)])
+    marker_source(awgsess, action=['Set',int(7)])
+    for ch in range(2):
+        channel = str(ch + 1)
+        output_config(awgsess, RepCap=channel, action=["Set", 0]) # Single-ended
+        output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
+        arb_gain(awgsess, RepCap=channel, action=["Set", 0.5])
+        output_impedance(awgsess, RepCap=channel, action=["Set", 50])
+    # output settings:
+    for ch in range(2):
+        channel = str(ch + 1)
+        output_enabled(awgsess, RepCap=channel, action=["Set", int(1)])  # ON
+        output_filter_enabled(awgsess, RepCap=channel, action=["Set", True])
+        output_config(awgsess, RepCap=channel, action=["Set", int(2)]) # Amplified 1:2
+        output_filter_bandwidth(awgsess, RepCap=channel, action=["Set", 0])
+        arb_gain(awgsess, RepCap=channel, action=["Set", 0.5])
+        output_impedance(awgsess, RepCap=channel, action=["Set", 50])
+    return awgsess
+def compose_DAC(awgsess,pperiod,xyiflevel,xypdelay,xypwidth,roiflevel,ropdelay,ropwidth):
+    # PENDING: to be adjusted
+    Clear_ArbMemory(awgsess)
+    WAVE = []
+    
+    # construct waveform:
+    ifperiod = pperiod.data[caddress[structure.index('Pulse-Period')]]
+    ifscale = float(xyiflevel.data[caddress[structure.index('XY-ifLevel')]]), float(roiflevel.data[caddress[structure.index('RO-ifLevel')]])
+
+    if "lockxypwd" in str(ropdelay.data[0]): 
+        if '+' in str(ropdelay.data[0]): rooffset = float(ropdelay.data[0].split('+')[1])
+        else: rooffset = 0 # default value
+        ifdelay = float(xypdelay.data[caddress[structure.index('XY-Pulse-Delay')]]), float(xypwidth.data[caddress[structure.index('XY-Pulse-Width')]]) + rooffset
+        print("RO-Pulse Delays behind XY-Pulse for %sns" %(ifdelay[1]-ifdelay[0]))
+    else: 
+        ifdelay = float(xypdelay.data[caddress[structure.index('XY-Pulse-Delay')]]), float(ropdelay.data[caddress[structure.index('RO-Pulse-Delay')]])
+
+    ifontime = float(xypwidth.data[caddress[structure.index('XY-Pulse-Width')]]), float(ropwidth.data[caddress[structure.index('RO-Pulse-Width')]])
+    for ch in range(2):
+        channel = str(ch + 1)
+        wavefom = squarewave(ifperiod, ifontime[ch], ifdelay[ch], ifscale[ch]) # in ns
+        stat, wave = CreateArbWaveform(awgsess, wavefom)
+        print('Waveform channel %s: %s <%s>' %(channel, wave, status_code(stat)))
+        WAVE.append(wave)
+    # Building Sequences:
+    for ch in range(2):
+        channel = str(ch + 1)	
+        status, seqhandl = CreateArbSequence(awgsess, [WAVE[ch]], [1]) # loop# canbe >1 if longer sequence is needed in the future!
+        # print('Sequence channel %s: %s <%s>' %(channel, seqhandl, status_code(status)))
+        # Channel Assignment:
+        stat = arb_sequence_handle(awgsess, RepCap=channel, action=["Set", seqhandl])
+        # print('Sequence channel %s embeded: %s <%s>' %(channel, stat[1], status_code(stat[0])))
+    # Trigger Settings:
+    for ch in range(2):
+        channel = str(ch + 1)
+        operation_mode(awgsess, RepCap=channel, action=["Set", 0])
+        trigger_source_adv(awgsess, RepCap=channel, action=["Set", 0])
+    Init_Gen(awgsess)
+    Send_Pulse(awgsess, 1)
 
 # 5. Test Zone
 def test(detail=True):

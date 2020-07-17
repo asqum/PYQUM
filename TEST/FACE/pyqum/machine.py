@@ -6,7 +6,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
-from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
+from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, clocker
 
 # Error handling
 from contextlib import suppress
@@ -14,7 +14,7 @@ from contextlib import suppress
 # Scientific
 from scipy import constants as cnst
 from si_prefix import si_format, si_parse
-from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean
+from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean, power
 
 # Load instruments
 from pyqum.instrument.modular import AWG, VSA, KMAWG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
@@ -320,24 +320,52 @@ def vsaplay():
 	global vsasess, vsasn, vsasr
 	t = [(i+1)/vsasr for i in range(vsasn)]
 	average = int(request.args.get('average'))
+	dephase = int(request.args.get('dephase'))
 
 	if average: avenum = int(request.args.get('avenum'))
 	else: avenum = 1
 	
 	# Start Measure Loop:
 	iqdata = []
+	stage, prev = clocker(0) # Marking starting point of time
+	print("\nCollecting Data from PXI")
 	for i in range(avenum):
 		VSA.Arm_Measure(vsasess)
 		gd = VSA.Get_Data(vsasess, 2*vsasn)
 		iqdata.append(gd[1]['ComplexData'])
 		nloop = i
-	iqdata = mean(array(iqdata), axis=0)
+
+	if dephase: # Phase-Drift compensation (A->I,0->Q) [Mean Root Square]
+		print("Using MRS method:")
+		iqdata = array(iqdata)
+		stage, prev = clocker(stage, prev) # Marking time
+
+		print("\nManaging acquired %s pairs of data into I and Q, then calculating A" %(len(iqdata)//2))
+		I, Q = iqdata[:,0::2], iqdata[:,1::2]
+		A = sqrt(power(I,2) + power(Q,2))
+		stage, prev = clocker(stage, prev) # Marking time
+		
+		print("\nAveraging A, I, Q:")
+		A = mean(A, axis=0)
+		I = mean(I, axis=0)
+		Q = mean(Q, axis=0)
+		stage, prev = clocker(stage, prev) # Marking time
 	
-	I, Q, Amp, Pha = IQAParray(iqdata)
-	A = [sqrt(i**2+q**2) for (i,q) in zip(I,Q)]
+	else: # For stable IQ [Root Square Mean]
+		print("Using RSM method:")
+		iqdata = mean(array(iqdata), axis=0)
+		stage, prev = clocker(stage, prev) # Marking time
+
+		print("\nManaging acquired %s pairs of data into I and Q" %(len(iqdata)//2))
+		I, Q = iqdata[0::2], iqdata[1::2]
+		stage, prev = clocker(stage, prev) # Marking time
+		
+		print("\nCalculating A")
+		A = sqrt(power(I,2) + power(Q,2))
+		stage, prev = clocker(stage, prev) # Marking time
 	
 	log = pauselog() #disable logging (NOT applicable on Apache)
-	return jsonify(nIQpair=vsasn, nloop=nloop, log=str(log), t=t, I=list(I), Q=list(Q), A=list(A), Amp=list(Amp), Pha=list(Pha))
+	return jsonify(nIQpair=vsasn, nloop=nloop, log=str(log), t=t, I=list(I), Q=list(Q), A=list(A))
 @bp.route('/vsa/about', methods=['GET'])
 def vsaabout():
 	global vsasess

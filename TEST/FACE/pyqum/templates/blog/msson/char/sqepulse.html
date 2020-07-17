@@ -29,6 +29,8 @@
             </div>
             <div class="col-1" id='right'></div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="sqepulse-eta"></a></div></div>
+            <div class="col-20" id='right'><div class="buttons"><a class="char new btn green" id="sqepulse-msg"></a></div></div>
+            
         </div>
 
         <div class="row">
@@ -99,18 +101,29 @@
             <div class="col-15" id='left'><select class='char sqepulse' id="Sampling-Time" type="text"></select></div>
         </div>
 
+        <!-- Measurement Configuration -->
+        <div class="row configuration">
+            <div id="char-sqepulse-configuration"></div>
+        </div>
+
+
         <!-- Check, Plot & Download Data -->
         <div class="row plot-options 1D">
             <div class="col-10" id='left'><input class='char data sqepulse' id="1d-data" type="submit" value="1D-Data"/></div>
-            <div class="col-10" id='left'><select class='char data sqepulse' id="1d-VdBm" type="text">
+            <div class="col-5" id='left'><select class='char data sqepulse' id="1d-VdBm" type="text">
                 <option value='V'>V</option>
                 <option value='dBm'>dBm</option>
             </select></div>
             <div class="col-15" id='left'><input class='char data sqepulse' id="sample-range" type="text" value="100,200,500,700"/></div>
             <div class="col-15" id='left'><select class='char data sqepulse' id="sample-mode" type="text">
-                <option value='A'>A. RSM</option>
-                <option value='B'>B. RSDM</option>
-                <option value='C'>C. MON</option>
+                <option value='A'>A. DRSMr (standard)</option>
+                <option value='B'>B. RSDMr</option>
+                <option value='C'>C. MON (pulswipe)</option>
+                <option value='D'>D. RMS (poweroot)</option>
+            </select></div>
+            <div class="col-10" id='left'><select class='char data sqepulse' id="1d-mode" type="text">
+                <option value='lines'>Line</option>
+                <option value='markers'>Marker</option>
             </select></div>
             <div class="col-10" id='left'><button class="char push_button w-95 green" id="sqepulse-insert-1D">COMPARE-1D</button></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="compare-nml" type="text"></select></div>
@@ -120,7 +133,11 @@
         <!-- Data Assembly and Grooming -->
         <div class="row plot-options 2D">
             <div class="col-10" id='left'><input class='char data sqepulse' id="2d-data" type="submit" value="2D-Data"/></div>
-            <div class="col-10" id='left'><select class='char data sqepulse' id="2d-amphase" type="text"></select></div>
+            <div class="col-5" id='left'><select class='char data sqepulse' id="2d-VdBm" type="text">
+                <option value='V'>V</option>
+                <option value='dBm'>dBm</option>
+            </select></div>
+            <div class="col-10" id='left'><select class='char data sqepulse' id="2d-iqamphase" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="2d-type" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="2d-colorscale" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data sqepulse' id="2d-direction" type="text"></select></div>
@@ -136,6 +153,7 @@
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
                     <h2 class="modal-heading">Setting up Measurement:</h2>
+                    <h4 style="color: red;">1. Please limit the data-size within 1M (fast) and 1G (slow) points</h4>
                 </div>
                     
                 <div class="modal-body">
@@ -196,6 +214,24 @@
                             <div class="col-75" id='left'>
                                 <textarea class='char sqepulse' id="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
                             </div>
+                        </div>
+
+                        <!-- Configurations -->
+                        <div class="row configuration">
+                            <div class="col-16" id='left'><label>Data Options</label></div>
+                            <div class="col-16" id='left'><label>Lock PPeriod</label></div>
+                            
+                        </div>
+                        <div class="row configuration">
+                            <div class="col-16" id='left'><select class='char config sqepulse' id="data-option" type="text">
+                                <option value='default' selected>IQ</option>
+                                <option value='AP'>De-Phase</option>
+                            </select></div>
+                            <div class="col-16" id='left'><select class='char config sqepulse' id="lock-period" type="text">
+                                <option value='yes'>YES</option>
+                                <option value='default' selected>NO</option>
+                            </select></div>
+                            
                         </div>
 
                         <!-- Repeat & Simulate -->
@@ -271,7 +307,8 @@
                             <div class="col-20" id='left'><label>Truncate After:</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char sqepulse' id="truncateafter" type="text"/></div>   
+                            <div class="col-20" id='left'><input class='char sqepulse' id="truncateafter" type="text"/></div> 
+                            <div class="col-10" id='left'><label>point(s)</label></div>  
                         </div>
 
                         <div class="row">
