@@ -267,27 +267,35 @@ def test(detail=True):
             waveformpick(s, action=['Get','0'])
 
             # To be put in directives:
-            level = 0.03
-            ch = [3,4]
+            level = [0.7, 0.2]
+            ch = [1,2,3,4]
             clock(s, action=['Set', 'EFIXed',2.5e9])
             clear_waveform(s,'all')
             alloff(s, action=['Set',1])
-            prepare_DAC(s, ch[0], 20000)
-            prepare_DAC(s, ch[1], 20000)
-            compose_DAC(s, ch[0], array(squarewave(8000, 1000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
+
+            # Prepare all channels:
+            for i in range(4):
+                prepare_DAC(s, ch[i], 20000)
+            # Compose each waveforms into respective channels:
+            compose_DAC(s, ch[0], array(squarewave(8000, 100, 0, level[0], dt=0.4, clock_multiples=1)), 1, 200)
+            compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level[0], dt=0.4, clock_multiples=1)))
+            compose_DAC(s, ch[2], array(squarewave(8000, 100, 0, level[1], dt=0.4, clock_multiples=1)), 1, 200)
+            compose_DAC(s, ch[3], array(squarewave(8000, 0, 0, level[1], dt=0.4, clock_multiples=1)))
+            
             alloff(s, action=['Set',0])
             ready(s)
             print("Play: %s" %str(play(s)))
-            sleep(7)
-            compose_DAC(s, ch[0], array(squarewave(8000, 2000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
-            sleep(7)
-            compose_DAC(s, ch[0], array(squarewave(8000, 3000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
-            sleep(7)
-            compose_DAC(s, ch[0], array(squarewave(8000, 5000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
+
+            # Changing waveform on the fly:
+            # sleep(7)
+            # compose_DAC(s, ch[0], array(squarewave(8000, 2000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
+            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
+            # sleep(7)
+            # compose_DAC(s, ch[0], array(squarewave(8000, 3000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
+            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
+            # sleep(7)
+            # compose_DAC(s, ch[0], array(squarewave(8000, 5000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
+            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
 
             ch = 3
             runmode(s, ch)

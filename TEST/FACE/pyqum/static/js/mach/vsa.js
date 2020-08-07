@@ -21,9 +21,10 @@ function vsaplotIQA(x1,y1,y2,y3,xtitle,ytitle) {
         name: 'Q',
         line: {color: 'red', width: 2.5},
         yaxis: 'y' };
-    let trace3 = {x: [], y: [], mode: 'lines', type: 'scatter', 
+    let trace3 = {x: [], y: [], mode: 'lines', type: 'scattergl', 
         name: 'A',
         line: {color: 'black', width: 2.5},
+        // marker: {symbol: 'circle', size: 10, color: 'black'},
         yaxis: 'y' };
 
     let layout = {
@@ -72,18 +73,21 @@ function vsaplotIQA(x1,y1,y2,y3,xtitle,ytitle) {
     $.each(x1, function(i, val) {trace3.x.push(val);});
     $.each(y3, function(i, val) {trace3.y.push(val);});
 
+    console.log("Finished assembled Trace(s)");
     var Trace = [trace1, trace2, trace3];
     Plotly.newPlot('vsa-IQAP-chart', Trace, layout, {showSendToCloud: true});
     // $( "i.cwsweep1d" ).remove(); //clear previous
 };
 
 function vsaplotPhase(x1,y1,xtitle,ytitle) {
+    var maxscal = Math.max([Math.max(Math.abs(x1)), Math.max(Math.abs(y1))]);
+    maxscal = maxscal * 1.2;
     console.log(xtitle);
-    var maxscal = Math.max([Math.max(x1), Math.max(y1)]);
     
-    let trace1 = {x: [], y: [], mode: 'markers', marker: { line_width: 1, symbol: 'circle', size: 16}, 
-        name: 'I',
-        line: {color: 'blue', width: 2.5},
+    let traceIQ = {x: [], y: [], mode: 'markers', type: 'scattergl',
+        name: 'IQ',
+        // line: {color: 'blue', width: 2.5},
+        marker: {symbol: 'circle', size: 16, color: 'purple'},
         yaxis: 'y' };
 
     let layout = {
@@ -91,7 +95,7 @@ function vsaplotPhase(x1,y1,xtitle,ytitle) {
         height: $(window).height()*0.66,
         width: $(window).width()*0.7,
         xaxis: {
-            domain: [-maxscal*1.2, maxscal*1.2],
+            domain: [-maxscal, maxscal],
             zeroline: false,
             title: xtitle,
             titlefont: {size: 18},
@@ -102,7 +106,7 @@ function vsaplotPhase(x1,y1,xtitle,ytitle) {
             zerolinecolor: 'rgb(74, 134, 232)',
         },
         yaxis: {
-            domain: [-maxscal*1.2, maxscal*1.2],
+            domain: [-maxscal, maxscal],
             zeroline: false,
             title: ytitle,
             titlefont: {size: 18},
@@ -127,11 +131,12 @@ function vsaplotPhase(x1,y1,xtitle,ytitle) {
           }]
         };
     
-    $.each(x1, function(i, val) {trace1.x.push(val);});
-    $.each(y1, function(i, val) {trace1.y.push(val);});
+    $.each(x1, function(i, val) {traceIQ.x.push(val);});
+    $.each(y1, function(i, val) {traceIQ.y.push(val);});
 
-    var Trace = [trace1];
-    Plotly.newPlot('vsa-IQAP-chart', Trace, layout, {showSendToCloud: true});
+    var Trace = [traceIQ];
+    Plotly.newPlot('vsa-IQAP-chart', Trace, layout, {showSendToCloud: false});
+    console.log("Finished plotting Trace(s)");
     // $( "i.cwsweep1d" ).remove(); //clear previous
 };
 
@@ -150,6 +155,7 @@ function vsaplay() {
         window.A = data.A;
 
         vsaplotIQA(t, I, Q, A, "time(s)", "IQA(V)");
+        // vsaplotPhase(I, Q, "I(V)", "Q(V)");
         $( "i.vsaplay" ).remove(); //clear previous
     });
 };

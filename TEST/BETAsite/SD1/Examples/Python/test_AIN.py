@@ -5,11 +5,11 @@ import keysightSD1
 
 # MODULE CONSTANTS
 PRODUCT = ""
-CHASSIS = 1
+CHASSIS = 0
 # change slot number to your value
-SLOT = 6
+SLOT = 8
 
-CHANNEL = 0
+CHANNEL = 1
 
 # CREATE AND OPEN MODULE
 module = keysightSD1.SD_AIN()
@@ -30,7 +30,7 @@ else:
 	CYCLES = 500
 	TRIGGER_DELAY = 0
 
-	module.DAQconfig(CHANNEL, POINTS_PER_CYCLE, CYCLES, TRIGGER_DELAY, keysightSD1.SD_TriggerModes.SWHVITRIG_CYCLE)
+	print(module.DAQconfig(CHANNEL, POINTS_PER_CYCLE, CYCLES, TRIGGER_DELAY, keysightSD1.SD_TriggerModes.EXTTRIG))
 	module.DAQstart(CHANNEL)
 
 	# READ DATA

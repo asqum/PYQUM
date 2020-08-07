@@ -108,7 +108,7 @@ class waveform:
                         pass
                 else: self.data.append(float(cmd))     
 
-def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8, clock_multiples=8, ramsey=0, ringup=0):
+def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8, clock_multiples=8, Ramsey_delay=0, Hahn_echo='off', ringup=0):
     '''time-unit: ns
         totaltime: total duration (minimum: 1000*0.8ns ~ 1us)
         ontime: +1V duration

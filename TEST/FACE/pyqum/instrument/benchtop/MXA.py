@@ -132,14 +132,19 @@ def test(detail=True):
             # s.write("*SAV 00,1")
             model(s)
             frequency(s)
-            frequency(s, action=['Set','5.5GHz'])
+            frequency(s, action=['Set','6GHz'])
             fspan(s)
             fspan(s, action=['Set','150MHz'])
-            preamp(s, action=['Set','ON'])
+            
+            rbw(s, action=['Set','1MHz'])
+            vbw(s, action=['Set','100kHz'])
+            trigger_source(s, action=['Set','IMMediate'])
+
+            preamp(s, action=['Set','OFF'])
             preamp_band(s, action=['Set','FULL'])
             attenuation(s, action=['Set','0dB'])
             attenuation_auto(s, action=['Set','ON'])
-            print('Power at 5.5GHz is %s' %fpower(s, '5.5GHz'))
+            print('Power at 6GHz is %s' %fpower(s, '6GHz'))
             
         else: print(Fore.RED + "Basic IO Test")
     if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):

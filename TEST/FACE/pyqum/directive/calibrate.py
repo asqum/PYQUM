@@ -1,6 +1,7 @@
 """
 Created on Wed Jan 15 11:17:10 2020
 @author: mesch
+@co-author: LTH
 """
 
 from colorama import init, Fore, Back
