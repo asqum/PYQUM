@@ -1,0 +1,225 @@
+<!doctype html> <!--extended from parent: machine.html, which in turn inherited base.html-->
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/awg.js') }}"></script>
+</head>
+
+<body class="mach">
+<div>
+
+    <div class="tab2">
+    <form method='GET'>
+        <button class='awg' id='reset'><i class="fa fa-refresh" style="font-size:15px;color:lightgreen;"></i> RESET</button>
+        <button class='awg' id='close'><i class="fa fa-times-circle" style="font-size:15px;color:red;"></i> CLOSE</button>
+
+        <button class='awg' id='about'>ABOUT</button>
+        <button class='awg' id='debug'>DEBUG</button>
+        <button class='awg' id='settings'>SETTINGS</button> 
+        
+        <button class='awg' id='generate'><i class="fas fa-volume-up" style="font-size:15px;color:lightgreen;"></i> GENERATE</button>
+        <button class='awg' id='abort'><i class="fa fa-times-circle" style="font-size:15px;color:red;"></i> ABORT</button>
+    </form>
+    </div>
+
+    <div class="awgcontent" id="debug"></div>
+    <div class="awgcontent" id="about"></div>
+
+    <div class="awgcontent" id="settings-main">
+        <div class="container">
+
+            <h3> Main Settings: </h3>
+            <div class="row label">
+                <div class="col-12" id='left'><label>Reference Clock</label></div>
+                <div class="col-12" id='left'><label>Predistortion</label></div>
+                <div class="col-12" id='left'><label>Output Mode</label></div>
+                <div class="col-12" id='left'><label>Sample Rate</label></div>
+            </div>
+            <div class="row">
+                <div class="col-12" id='left'><select class='awg' id="settings" name="refclk">
+                    <option value=0>Internal</option>
+                    <option value=1 selected>External</option>
+                    <option value=101>PXI-Backplane</option>
+                </select></div>
+                <div class="col-12" id='left'><select class='awg' id="settings" name="predist">
+                    <option value=1 selected>Enabled</option>
+                    <option value=0>Disabled</option>
+                </select></div>
+                <div class="col-12" id='left'><select class='awg' id="settings" name="outpmode">
+                    <option value=1>Arbitrary</option>
+                    <option value=2 selected>Sequence</option>
+                    <option value=3>Advanced Sequence</option>
+                </select></div>
+                <div class="col-12" id='left'><select class='awg' id="settings" name="samprat">
+                    <option value=1250000000 selected>1250000000</option>
+                    <option value=625000000>625000000</option>
+                    <option value=312500000>312500000</option>
+                </select></div>
+            </div>
+
+            <!-- setting markers -->
+            <div class="row label">
+                <div class="col-12" id='left'><label>Marker</label></div>
+                <div class="col-12" id='left'><label>Source</label></div>
+                <div class="col-12" id='left'><label>Delay (s)</label></div>
+                <div class="col-12" id='left'><label>P-Width (s)</label></div>
+            </div>
+            <div class="row">
+                <div class="col-12" id='left'><select class='awg' id="settings" name='active'>
+                    {% for i in range(4) %}
+                    <option value={{i+1}} {% if i+1 == 1 %} selected {% endif %}>{{i+1}}</option>
+                    {% endfor %}</select></div>
+                <div class="col-12" id='left'><select class='awg' id="settings" name='source'>
+                    {% for i in range(10) %}
+                    <option value={{i+1}} {% if i+1 == 7 %} selected {% endif %}>{{i+1}}</option>
+                    {% endfor %}</select></div>
+                <div class="col-12" id='left'><input class='awg' id="settings" name='delay' type="text" value="0"/></div>
+                <div class="col-12" id='left'><input class='awg' id="settings" name='pulsew' type="text" value="1e-7"/></div>
+            </div>
+
+            <div class="row">
+                <div class="col-12" id='left'><input class='awg' id='set-main' type="submit" value="Set"/></div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="awgcontent" id="settings-ifwave">
+        <div class="container">
+            
+            <div class="row">
+                <div class="col-10" id='left'><label>IF-Period (ns)</label></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><input class='awg' id="settings" name="ifperiod", type='text', value='15994'/></div>
+            </div>
+
+            <div class="row">
+                <div class="col-10" id='left'><label>CHannel 1</label></div>
+            </div>
+
+            <div class="row">
+                <div class="col-10" id='left'><label>Waveform</label></div>
+                <div class="col-25" id='left'><label class='awg ch1 arb'>Design</label></div>
+                <div class="col-12" id='left'><label class='awg ch1 cosin'>Frequency (MHz)</label></div>
+                <div class="col-10" id='left'><label class='awg ch1 cosin'>Amplitude (V)</label></div>
+                <div class="col-10" id='left'><label class='awg ch1 cosin'>Offset (V)</label></div>
+                <div class="col-10" id='left'><label class='awg ch1 cosin'>Phase (deg)</label></div>
+                <div class="col-12" id='left'><label class='awg ch1 sqe'>On-time (ns)</label></div>
+                <div class="col-12" id='left'><label class='awg ch1 sqe'>Scale (V)</label></div>
+                <div class="col-12" id='left'><label class='awg ch1 sqe'>Offset (V)</label></div>
+                <div class="col-12" id='left'><label class='awg ch1 sqe'>Delay (ns)</label></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><select class='awg ch1' id="settings" name="iffunction">
+                    <option value='sqe'>square</option>
+                    <option value='sin' selected>sin</option>
+                    <option value='cos'>cosine</option>
+                    <option value='arb'>arbitrary</option>
+                </select></div>
+                <div class="col-25" id='left'><input class='awg ch1 arb' id="settings" name="ifdesign", type='text', value='0to0*9949 1to1*49'/></div>
+                <div class="col-12" id='left'><input class='awg ch1 cosin' id="settings" name="iffreq", type='text', value='100'/></div>
+                <div class="col-10" id='left'><input class='awg ch1 cosin' id="settings" name="ifvoltag", type='text', value='1'/></div>
+                <div class="col-10" id='left'><input class='awg ch1 cosin' id="settings" name="ifoffset", type='text', value='0'/></div>
+                <div class="col-10" id='left'><input class='awg ch1 cosin' id="settings" name="ifphase", type='text', value='0'/></div>
+                <div class="col-12" id='left'><input class='awg ch1 sqe' id="settings" name="ifontime", type='text', value='15994'/></div>
+                <div class="col-12" id='left'><input class='awg ch1 sqe' id="settings" name="ifscale", type='text', value='1'/></div>
+                <div class="col-12" id='left'><input class='awg ch1 sqe' id="settings" name="ifoffset", type='text', value='0'/></div>
+                <div class="col-12" id='left'><input class='awg ch1 sqe' id="settings" name="ifdelay", type='text', value='0'/></div>
+            </div>
+
+            <div class="row">
+                <div class="col-10" id='left'><label>Output</label></div>
+                <div class="col-10" id='left'><label>Filter</label></div>
+                <div class="col-15" id='left'><label>Configuration</label></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><select class='awg ch1' id="settings" name="outputch">
+                    <option value=1 selected>ON</option>
+                    <option value=0>OFF</option>
+                </select></div>
+                <div class="col-10" id='left'><select class='awg ch1' id="settings" name="oupfiltr">
+                    <option value=1 selected>Enabled</option>
+                    <option value=0>Disabled</option>
+                </select></div>
+                <div class="col-15" id='left'><select class='awg ch1' id="settings" name="oupconfig">
+                    <option value=0>Single-ended</option>
+                    <option value=1>Differential</option>
+                    <option value=2 selected>Amplified</option>
+                </select></div>
+            </div>
+
+            <div class="row">
+                <div class="col-10" id='left'><label>CHannel 2</label></div>
+            </div>
+
+            <div class="row">
+                <div class="col-10" id='left'><label>Waveform</label></div>
+                <div class="col-25" id='left'><label class='awg ch2 arb'>Design</label></div>
+                <div class="col-12" id='left'><label class='awg ch2 cosin'>Frequency (MHz)</label></div>
+                <div class="col-10" id='left'><label class='awg ch2 cosin'>Amplitude (V)</label></div>
+                <div class="col-10" id='left'><label class='awg ch2 cosin'>Offset (V)</label></div>
+                <div class="col-10" id='left'><label class='awg ch2 cosin'>Phase (deg)</label></div>
+                <div class="col-12" id='left'><label class='awg ch2 sqe'>On-time (ns)</label></div>
+                <div class="col-12" id='left'><label class='awg ch2 sqe'>Scale (V)</label></div>
+                <div class="col-12" id='left'><label class='awg ch2 sqe'>Offset (V)</label></div>
+                <div class="col-12" id='left'><label class='awg ch2 sqe'>Delay (ns)</label></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><select class='awg ch2' id="settings" name="iffunction">
+                    <option value='sqe'>square</option>
+                    <option value='sin'>sin</option>
+                    <option value='cos' selected>cosine</option>
+                    <option value='arb'>arbitrary</option>
+                </select></div>
+                <div class="col-25" id='left'><input class='awg ch2 arb' id="settings" name="ifdesign", type='text', value='0to0*4999 1to1*4999'/></div>
+                <div class="col-12" id='left'><input class='awg ch2 cosin' id="settings" name="iffreq", type='text', value='100'/></div>
+                <div class="col-10" id='left'><input class='awg ch2 cosin' id="settings" name="ifvoltag", type='text', value='1'/></div>
+                <div class="col-10" id='left'><input class='awg ch2 cosin' id="settings" name="ifoffset", type='text', value='0'/></div>
+                <div class="col-10" id='left'><input class='awg ch2 cosin' id="settings" name="ifphase", type='text', value='0'/></div>
+                <div class="col-12" id='left'><input class='awg ch2 sqe' id="settings" name="ifontime", type='text', value='200'/></div>
+                <div class="col-12" id='left'><input class='awg ch2 sqe' id="settings" name="ifscale", type='text', value='1'/></div>
+                <div class="col-12" id='left'><input class='awg ch2 sqe' id="settings" name="ifoffset", type='text', value='0'/></div>
+                <div class="col-12" id='left'><input class='awg ch2 sqe' id="settings" name="ifdelay", type='text', value='0'/></div>
+            </div>
+
+            <div class="row">
+                <div class="col-10" id='left'><label>Output</label></div>
+                <div class="col-10" id='left'><label>Filter</label></div>
+                <div class="col-15" id='left'><label>Configuration</label></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><select class='awg ch2' id="settings" name="outputch">
+                    <option value=1 selected>ON</option>
+                    <option value=0>OFF</option>
+                </select></div>
+                <div class="col-10" id='left'><select class='awg ch2' id="settings" name="oupfiltr">
+                    <option value=1>Enabled</option>
+                    <option value=0 selected>Disabled</option>
+                </select></div>
+                <div class="col-15" id='left'><select class='awg ch2' id="settings" name="oupconfig">
+                    <option value=0 selected>Single-ended</option>
+                    <option value=1>Differential</option>
+                    <option value=2>Amplified</option>
+                </select></div>
+            </div>
+
+            <div class="row">
+                <div class="col-15" id='left'><input class='awg' id='set-ifwave' type="submit" value="Construct"/></div>
+            </div>
+
+            <!-- <div class="row">
+                <div class="col-75" id='left'><label></label></div>
+                <div class="col-75" id='left'><label></label></div>
+            </div> -->
+            
+            <div id="awg-waveform-chart"></div>
+
+        </div> 
+    </div>
+    
+</div>
+</body>
+
+</html>

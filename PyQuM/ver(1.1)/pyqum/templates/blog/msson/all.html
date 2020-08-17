@@ -1,0 +1,51 @@
+<html>
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Compartmentalization of JS modules so that lower level doesn't have access to upper layer if this html is rendered directly -->
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/all.js') }}"></script>
+</head>
+
+<body>
+
+<div class="all clock"></div>
+<!--<div class="atest">THIS IS A TEST PAGE</div>-->
+
+<div style="background-color: black;">
+    <h3 style="color: white;">Welcome to Measurement:</h3>
+</div>
+
+{% if g.user['instrument'] and g.user['measurement'] %}
+    <div class="row">
+        <div class="col" id='left'>
+            <div class='all-mssn' id='qum'></div>
+        </div>
+        <div class="col-12" id='left'>
+            <label class="all-mssn switch">
+                <input class="all-mssn" id='live-update' type="checkbox">
+                <div class="slider">
+                    <span class="on">Queueing</span><span class="off">Queued</span>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-75" id='left'>
+            <p class='all-qumuser' id="list"></p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-10" id='left'>
+            <button class="all-qumuser push_button w-95 green" id="dive">DIVE</button>
+            <button class="all-qumuser push_button w-95 red" id="yield">YIELD</button>
+        </div>
+        <div class="col-10" id='left'></div>
+    </div>
+{% endif %}
+
+</body>
+
+</html>

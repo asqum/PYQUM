@@ -1,0 +1,41 @@
+<!doctype html> <!--extended from parent: mission.html, which in turn inherited base.html-->
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/char.js') }}"></script>
+</head>
+
+<body class="mssn">
+
+    <div>
+
+        <div class="tab2">
+            <input class='char loaded' id='samples' type='submit' value={{ samplename }}></input>
+            <input class='char people' id='samples' type='submit' value={{ people }}></input>
+            <button class='char' id='fresp'>F-Response</button>
+            <button class='char' id='cwsweep'>CW-Sweep</button>
+            <button class='char' id='sqepulse'>SQE-Pulse</button>
+            
+        </div>
+
+        <script>
+            $(function(){
+                $("div#fresp").load("{{ url_for('mission.char_fresp') }}");
+                $("div#cwsweep").load("{{ url_for('mission.char_cwsweep') }}");
+                $("div#sqepulse").load("{{ url_for('mission.char_sqepulse') }}");
+                
+            });
+        </script>
+        
+        <!-- page content based on button clicked -->
+        <div class="charcontent" id="fresp"></div>
+        <div class="charcontent" id="cwsweep"></div>
+        <div class="charcontent" id="sqepulse"></div>
+        
+    
+    </div>
+
+</body>
+
+</html>

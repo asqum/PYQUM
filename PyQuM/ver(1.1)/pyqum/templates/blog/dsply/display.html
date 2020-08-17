@@ -1,0 +1,34 @@
+{% extends 'base.html' %} 
+{% block title %}Display{% endblock %}
+
+{% block head %}
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dsply.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='js/dsply/dsply.js') }}"></script>
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML" async></script>
+  <script src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js"></script>
+  
+{% endblock %}
+
+{% if g.user %}
+
+{% block header %}
+<div class="tab">
+  <button class="tablinks fig" id="static">Static</button>
+  <button class="tablinks fig" id="dynamic">Dynamic</button>
+  <button class="tablinks fig" id="stream">Stream</button>
+  <button class="tablinks fig" id="concurrent">Concurrent</button>
+  <button class="tablinks fig" id="game-01">Game 01</button>
+</div>
+{% endblock %}
+
+
+{% block content %}{% endblock %}
+
+
+{% endif %}
+
+
+

@@ -1,0 +1,37 @@
+{% extends 'base.html' %} 
+{% block title %}WELCOME TO PYQUM v0.1{% endblock %}
+
+{% block head %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/auth/posts.js') }}"></script>
+{% endblock %}
+
+{% block content %} 
+
+<body class="home">
+
+{% if g.user %}
+<div class="container" id="post">
+
+    <div class='row'>
+        <div class='col-8' id='left'>
+            <h2>LaBooK </h2>
+        </div>
+        <div class='col-8' id='left'>
+            <a class="action" href="{{ url_for('blog.create') }}"><h5>New</h5></a>
+        </div>
+    </div>
+
+    <div class='row'>
+        <div class="posts"></div>
+    </div>
+        
+    
+
+</div>
+{% endif %}
+
+
+
+</body>
+
+{% endblock %}
