@@ -44,7 +44,7 @@ $(function () {
             } else {$('button.sg#sgtype[name='+sgtype+']').addClass('error');}
         })
         .done(function(data) {
-            $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text("ACCESSING " + sgtype));
+            $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("ACCESSING " + sgtype));
         })
         .fail(function(jqxhr, textStatus, error){
             $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
@@ -68,7 +68,7 @@ $('input.sg[name="oupt"]').change( function () { // the enter key code
         };
     })
     .done(function(data) {
-        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RF-PORT TOGGLED SUCCESSFULLY"));
+        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("RF-PORT TOGGLED SUCCESSFULLY"));
     })
     .fail(function(jqxhr, textStatus, error){
         $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
@@ -85,7 +85,7 @@ $('input.sg[name="freq"]').change( function () { // the enter key code
         $('input.sg#settings[name="freq"]').removeClass('getvalue').addClass('setvalue');
     })
     .done(function(data) {
-        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text("FREQUENCY ADJUSTED SUCCESSFULLY"));
+        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("FREQUENCY ADJUSTED SUCCESSFULLY"));
     })
     .fail(function(jqxhr, textStatus, error){
         $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
@@ -102,7 +102,7 @@ $('input.sg[name="powa"]').change( function () { // the enter key code
         $('input.sg#settings[name="powa"]').removeClass('getvalue').addClass('setvalue');
     })
     .done(function(data) {
-        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text("POWER ADJUSTED SUCCESSFULLY"));
+        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("POWER ADJUSTED SUCCESSFULLY"));
     })
     .fail(function(jqxhr, textStatus, error){
         $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
@@ -144,7 +144,7 @@ $('button.sg#closet').bind('click', function () {
         } else {$('button.sg').addClass('error');}         
     })
     .done(function(data) {
-        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text("CLOSED SUCCESSFULLY"));
+        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("CLOSED SUCCESSFULLY"));
     })
     .fail(function(jqxhr, textStatus, error){
         $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
