@@ -30,7 +30,8 @@ else:
 	CYCLES = 1
 	TRIGGER_DELAY = 0
 
-	print(module.DAQconfig(CHANNEL, POINTS_PER_CYCLE, CYCLES, TRIGGER_DELAY, keysightSD1.SD_TriggerModes.EXTTRIG))
+	# print(module.DAQconfig(CHANNEL, POINTS_PER_CYCLE, CYCLES, TRIGGER_DELAY, keysightSD1.SD_TriggerModes.EXTTRIG))
+	print(module.DAQconfig(CHANNEL, POINTS_PER_CYCLE, CYCLES, TRIGGER_DELAY, keysightSD1.SD_TriggerModes.AUTOTRIG))
 	print(module.DAQstart(CHANNEL))
 
 	# READ DATA
