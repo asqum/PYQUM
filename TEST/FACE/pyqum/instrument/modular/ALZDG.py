@@ -23,7 +23,7 @@ class ATS9371:
     # NPT: Multiple Records without Pre-Trigger Samples:
     # Configures a board for acquisition
     def ConfigureBoard_NPT(self, samplesPerSec=1000000000.0, 
-                            triggerDelay_sec = 888*1e-9):
+                            triggerDelay_sec = 0*1e-9):
         board = self.board
 
         # CLOCK:

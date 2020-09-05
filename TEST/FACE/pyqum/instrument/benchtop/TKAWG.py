@@ -267,7 +267,7 @@ def test(detail=True):
             waveformpick(s, action=['Get','0'])
 
             # To be put in directives:
-            level = [0.7, 0.2]
+            level = [0.3, 0.2]
             ch = [1,2,3,4]
             clock(s, action=['Set', 'EFIXed',2.5e9])
             clear_waveform(s,'all')
