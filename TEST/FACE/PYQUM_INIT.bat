@@ -62,30 +62,39 @@ REM PAUSE
 :pyqum
     ::ECHO INITIATE AWG
     ::python -c "from pyqum.instrument.modular import AWG; print(AWG.InitWithOptions())"
-    set /p answer=WEB or LOCAL (W/L)?
-    if /i "%answer:~,1%" EQU "W" (
-        echo Running WEB
-        goto web)
+    set /p answer=WEB Production (P), Development (D) or LOCAL (L)?
+    if /i "%answer:~,1%" EQU "P" (
+        echo Running WEB Production
+        goto production)
+    if /i "%answer:~,1%" EQU "D" (
+        echo Running WEB Development
+        goto development)
     if /i "%answer:~,1%" EQU "L" (
-        echo Running LOCAL
+        echo Running WEB Local
         goto local)
-    echo Please type W for Web or L for Local
+    echo Please type P (Production), D (Development) or L (Local)
     goto pyqum
 
 :local
-    ECHO STARTING APP as Local
+    ECHO STARTING APP as Local Web
     python pqrun.py local
     goto tq
 
-:web
-    ECHO STARTING APP as Web Server
-    python pqrun.py web
+:development
+    ECHO STARTING APP as Development Web
+    python pqrun.py development
     ::start server using batch command:
     ::flask run --host=127.0.0.1 --port=5200 
-    ::the above method will make AWG's initialization depends on VSA's
+    goto tq
+
+:production
+    ECHO STARTING APP as Production Web 
+    python pqrun.py production
     goto tq
 
 :tq
     ECHO Thank you :)
 
 PAUSE
+
+

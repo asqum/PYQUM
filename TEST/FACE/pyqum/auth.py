@@ -78,17 +78,17 @@ def load_logged_in_user():
         # Certain clearances required for queue-list access:
         if g.user['instrument'] and g.user['measurement']:
             # Queue list:
-            g.qumlist = get_db().execute(
-                'SELECT u.username FROM qum q JOIN user u ON q.people_id = u.id ORDER BY q.id ASC'
+            g.CHAR0_queue = get_db().execute(
+                'SELECT u.username FROM CHAR0 q JOIN user u ON q.people_id = u.id ORDER BY q.id ASC'
             ).fetchall()
-            g.qumlist = [dict(x) for x in g.qumlist]
-            g.qumlist = [x['username'] for x in g.qumlist]
+            g.CHAR0_queue = [dict(x) for x in g.CHAR0_queue]
+            g.CHAR0_queue = [x['username'] for x in g.CHAR0_queue]
             # Only first in line is allowed to run the measurement:
             try:
-                session['run_clearance'] = bool(g.qumlist[0] == g.user['username'])
+                session['run_clearance'] = bool(g.CHAR0_queue[0] == g.user['username'])
             except(IndexError):
                 session['run_clearance'] = False
-            # print(g.qumlist)
+            # print(g.CHAR0_queue)
 
 
 @bp.route('/register', methods=('GET', 'POST'))

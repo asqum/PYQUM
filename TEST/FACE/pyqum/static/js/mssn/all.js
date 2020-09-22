@@ -4,14 +4,14 @@ function qumqueue() {
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/measurequm', {
     }, function (data) {
         console.log(data.loginuser);
-        console.log(data.qumlist);
-        console.log(data.qumlist.indexOf(data.loginuser));
-        if (data.qumlist.indexOf(data.loginuser) === -1 || data.qumlist.length === 0) {
+        console.log(data.CHAR0_queue);
+        console.log(data.CHAR0_queue.indexOf(data.loginuser));
+        if (data.CHAR0_queue.indexOf(data.loginuser) === -1 || data.CHAR0_queue.length === 0) {
             $('div > button.all-qumuser#dive').show();
         } else {
             $('div > button.all-qumuser#yield').show();
         };
-        $.each(data.qumlist, function(i,v){
+        $.each(data.CHAR0_queue, function(i,v){
             console.log('i: ' + i + ', v: ' + v);
             $('p.all-qumuser#list').append("<h3 class='body'>" + v + "</h3>");
         });

@@ -77,7 +77,7 @@ def show():
 @bp.route('/all', methods=['GET'])
 def all(): 
     # Security:
-    try: queue = g.qumlist
+    try: queue = g.CHAR0_queue
     except: 
         print("User %s has no Queue Privilege")
         abort(404)
@@ -85,13 +85,13 @@ def all():
 @bp.route('/all/measurequm', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_measurequm():
     # Security:
-    try: print("Queue: %s" %g.qumlist)
+    try: print("Queue: %s" %g.CHAR0_queue)
     except: abort(404)
-    return jsonify(qumlist=g.qumlist, loginuser=session['user_name'])
+    return jsonify(CHAR0_queue=g.CHAR0_queue, loginuser=session['user_name'])
 @bp.route('/all/measurequm/in', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_measurequm_in():
     try:
-        queue = g.qumlist
+        queue = g.CHAR0_queue
         db = get_db()
         db.execute('INSERT INTO qum (people_id) VALUES (?)', (g.user['id'],))
         db.commit()
@@ -104,7 +104,7 @@ def all_measurequm_in():
 @bp.route('/all/measurequm/out', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_measurequm_out():
     try:
-        queue = g.qumlist
+        queue = g.CHAR0_queue
         db = get_db()
         db.execute('DELETE FROM qum WHERE people_id = ?', (g.user['id'],))
         db.commit()
@@ -1288,14 +1288,7 @@ def char_sqepulse_2ddata():
 
     return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 
-# Assembling 2D mesh for 2D-plot above:
-def assembler_sqepulse(args):
-	(y,x) = args # y-, x-position
 
-	
-
-	Amp,P = IQAP(I,Q)
-	return I, Q, Amp, P
 
 
 
@@ -1303,3 +1296,4 @@ def assembler_sqepulse(args):
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
 
 
+# OK
