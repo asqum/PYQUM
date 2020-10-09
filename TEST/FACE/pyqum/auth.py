@@ -79,10 +79,15 @@ def load_logged_in_user():
         if g.user['instrument'] and g.user['measurement']:
             # Queue list:
             g.CHAR0_queue = get_db().execute(
-                'SELECT u.username FROM CHAR0 q JOIN user u ON q.people_id = u.id ORDER BY q.id ASC'
+                'SELECT u.username, j.task\n' +  
+                    'FROM user u\n' + 
+                    'INNER JOIN job j ON j.user_id = u.id\n' +
+                    'INNER JOIN CHAR0 c ON c.job_id = j.id\n' + 
+                    'ORDER BY c.id ASC'
             ).fetchall()
             g.CHAR0_queue = [dict(x) for x in g.CHAR0_queue]
             g.CHAR0_queue = [x['username'] for x in g.CHAR0_queue]
+            # g.CHAR0_queue = ['abc'] #bypass before queue system is up
             # Only first in line is allowed to run the measurement:
             try:
                 session['run_clearance'] = bool(g.CHAR0_queue[0] == g.user['username'])

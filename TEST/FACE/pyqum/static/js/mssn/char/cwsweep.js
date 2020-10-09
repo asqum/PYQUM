@@ -114,63 +114,63 @@ function accessdata_cwsweep() {
         // SCROLL: scroll out repeated data (the exact reverse of averaging)
         
         // REPEATS:
-        $('select.char#cwsweep[name="c-repeat"]').empty();
+        $('select.char.cwsweep.parameter#c-repeat').empty();
         if (data.data_repeat > 1) {
-            $('select.char#cwsweep[name="c-repeat"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.cwsweep.parameter#c-repeat').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                 .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        for (i = 0; i < data.data_repeat; i++) { $('select.char#cwsweep[name="c-repeat"]').append($('<option>', { text: i+1, value: i })); };
+        for (i = 0; i < data.data_repeat; i++) { $('select.char.cwsweep.parameter#c-repeat').append($('<option>', { text: i+1, value: i })); };
 
         // OPTIONALS:
-        $('select.char#cwsweep[name="c-fluxbias"]').empty();
+        $('select.char.cwsweep.parameter#c-fluxbias').empty();
         if (data.cfluxbias_data.length > 1) {
-            $('select.char#cwsweep[name="c-fluxbias"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.cwsweep.parameter#c-fluxbias').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                 .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cfluxbias_data, function(i,v){ $('select.char#cwsweep[name="c-fluxbias"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cfluxbias_data, function(i,v){ $('select.char.cwsweep.parameter#c-fluxbias').append($('<option>', { text: v, value: i })); });
 
-        $('select.char#cwsweep[name="c-xyfreq"]').empty()
+        $('select.char.cwsweep.parameter#c-xyfreq').empty()
         if (data.cxyfreq_data.length > 1) {
-            $('select.char#cwsweep[name="c-xyfreq"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.cwsweep.parameter#c-xyfreq').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                 .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cxyfreq_data, function(i,v){ $('select.char#cwsweep[name="c-xyfreq"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cxyfreq_data, function(i,v){ $('select.char.cwsweep.parameter#c-xyfreq').append($('<option>', { text: v, value: i })); });
         
-        $('select.char#cwsweep[name="c-xypowa"]').empty()
+        $('select.char.cwsweep.parameter#c-xypowa').empty()
         if (data.cxypowa_data.length > 1) {
-            $('select.char#cwsweep[name="c-xypowa"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.cwsweep.parameter#c-xypowa').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                 .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cxypowa_data, function(i,v){ $('select.char#cwsweep[name="c-xypowa"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cxypowa_data, function(i,v){ $('select.char.cwsweep.parameter#c-xypowa').append($('<option>', { text: v, value: i })); });
         
         // BASICS:
-        $('select.char#cwsweep[name="c-sparam"]').empty()
+        $('select.char.cwsweep.parameter#c-sparam').empty()
         if (data.csparam_data.length > 1) {
-            $('select.char#cwsweep[name="c-sparam"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.cwsweep.parameter#c-sparam').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                 .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.csparam_data, function(i,v){ $('select.char#cwsweep[name="c-sparam"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.csparam_data, function(i,v){ $('select.char.cwsweep.parameter#c-sparam').append($('<option>', { text: v, value: i })); });
         
-        $('select.char#cwsweep[name="c-ifb"]').empty()
+        $('select.char.cwsweep.parameter#c-ifb').empty()
         if (data.cifb_data.length > 1) {
-            $('select.char#cwsweep[name="c-ifb"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.cwsweep.parameter#c-ifb').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                 .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cifb_data, function(i,v){ $('select.char#cwsweep[name="c-ifb"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cifb_data, function(i,v){ $('select.char.cwsweep.parameter#c-ifb').append($('<option>', { text: v, value: i })); });
         
-        $('select.char#cwsweep[name="c-freq"]').empty()
+        $('select.char.cwsweep.parameter#c-freq').empty()
         if (data.cfreq_data.length > 1) {
-            $('select.char#cwsweep[name="c-freq"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.cwsweep.parameter#c-freq').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                 .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cfreq_data, function(i,v){ $('select.char#cwsweep[name="c-freq"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cfreq_data, function(i,v){ $('select.char.cwsweep.parameter#c-freq').append($('<option>', { text: v, value: i })); });
         
-        $('select.char#cwsweep[name="c-powa"]').empty()
+        $('select.char.cwsweep.parameter#c-powa').empty()
         if (data.cpowa_data.length > 1) {
-            $('select.char#cwsweep[name="c-powa"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+            $('select.char.cwsweep.parameter#c-powa').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                 .append($('<option>', { text: 'SCROLL', value: 'sc' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cpowa_data, function(i,v){ $('select.char#cwsweep[name="c-powa"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cpowa_data, function(i,v){ $('select.char.cwsweep.parameter#c-powa').append($('<option>', { text: v, value: i })); });
         
         // load data progress:
         var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
@@ -531,9 +531,9 @@ $(function () {
 
 // tracking data position based on certain parameter (PENDING: Need to be tested after code modification been done)
 $(function () {
-    $('select.char#cwsweep').on('change', function () {
-        var fixed = this.getAttribute('name').split('c-')[1];
-        var fixedvalue = $('select.char#cwsweep[name="c-' + fixed + '"]').val();
+    $('select.char.cwsweep.parameter').on('change', function () {
+        var fixed = this.getAttribute('id').split('c-')[1];
+        var fixedvalue = $('select.char.cwsweep.parameter#c-' + fixed).val();
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/trackdata', {
             fixed: fixed, fixedvalue: fixedvalue,
         }, function (data) {
@@ -549,14 +549,14 @@ $(function () {
     $('input.char#cwsweep[name="1d-data"]').on('click', function () {
         $( "i.cwsweep1d" ).remove(); //clear previous
         $('button.char#cwsweep').prepend("<i class='cwsweep1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var irepeat = $('select.char#cwsweep[name="c-repeat"]').val();
-        var ifluxbias = $('select.char#cwsweep[name="c-fluxbias"]').val();
-        var ixyfreq = $('select.char#cwsweep[name="c-xyfreq"]').val();
-        var ixypowa = $('select.char#cwsweep[name="c-xypowa"]').val();
-        var isparam = $('select.char#cwsweep[name="c-sparam"]').val();
-        var iifb = $('select.char#cwsweep[name="c-ifb"]').val();
-        var ifreq = $('select.char#cwsweep[name="c-freq"]').val();
-        var ipowa = $('select.char#cwsweep[name="c-powa"]').val();
+        var irepeat = $('select.char.cwsweep.parameter#c-repeat').val();
+        var ifluxbias = $('select.char.cwsweep.parameter#c-fluxbias').val();
+        var ixyfreq = $('select.char.cwsweep.parameter#c-xyfreq').val();
+        var ixypowa = $('select.char.cwsweep.parameter#c-xypowa').val();
+        var isparam = $('select.char.cwsweep.parameter#c-sparam').val();
+        var iifb = $('select.char.cwsweep.parameter#c-ifb').val();
+        var ifreq = $('select.char.cwsweep.parameter#c-freq').val();
+        var ipowa = $('select.char.cwsweep.parameter#c-powa').val();
         console.log("Picked: " + isparam);
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/1ddata', {
             irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
@@ -589,14 +589,14 @@ $(function () {
     $('input.char#cwsweep[name="2d-data"]').on('click', function () {
         $( "i.cwsweep2d" ).remove(); //clear previous
         $('button.char#cwsweep').prepend("<i class='cwsweep2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var irepeat = $('select.char#cwsweep[name="c-repeat"]').val();
-        var ifluxbias = $('select.char#cwsweep[name="c-fluxbias"]').val();
-        var ixyfreq = $('select.char#cwsweep[name="c-xyfreq"]').val();
-        var ixypowa = $('select.char#cwsweep[name="c-xypowa"]').val();
-        var isparam = $('select.char#cwsweep[name="c-sparam"]').val();
-        var iifb = $('select.char#cwsweep[name="c-ifb"]').val();
-        var ifreq = $('select.char#cwsweep[name="c-freq"]').val();
-        var ipowa = $('select.char#cwsweep[name="c-powa"]').val();
+        var irepeat = $('select.char.cwsweep.parameter#c-repeat').val();
+        var ifluxbias = $('select.char.cwsweep.parameter#c-fluxbias').val();
+        var ixyfreq = $('select.char.cwsweep.parameter#c-xyfreq').val();
+        var ixypowa = $('select.char.cwsweep.parameter#c-xypowa').val();
+        var isparam = $('select.char.cwsweep.parameter#c-sparam').val();
+        var iifb = $('select.char.cwsweep.parameter#c-ifb').val();
+        var ifreq = $('select.char.cwsweep.parameter#c-freq').val();
+        var ipowa = $('select.char.cwsweep.parameter#c-powa').val();
         console.log("Picked: " + isparam);
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/2ddata', {
             irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa

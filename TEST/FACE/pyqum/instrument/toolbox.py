@@ -2,6 +2,7 @@
 
 import logging
 from time import sleep
+from math import trunc
 from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul, transpose, ones
 
 def cdatasearch(Order, Structure):
@@ -117,14 +118,20 @@ def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8, clock_multip
         offset: to eliminate LO leakage
         dt: time-resolution of AWG in ns
     '''
+    totalpoints = int(clock_multiples*trunc(totaltime / dt / clock_multiples)) + int(bool((totaltime / dt)%clock_multiples))*clock_multiples # keep total-points to be the multiples of clock_multiples of specific instruments
     delaypoints = round(delay / dt)
     onpoints = round(ontime / dt)
-    offpoints = round((totaltime - ontime - delay) / dt)
-    padding = 0 # no padding by default!
-    # keep total-points to be the multiples of clock_multiples of specific instruments
-    if (delaypoints + onpoints + offpoints)%clock_multiples: padding = clock_multiples - (delaypoints + onpoints + offpoints)%clock_multiples
-    if (ontime == totaltime): offset = scale # always ON or OFF
-    wave = [offset] * delaypoints + [scale] * onpoints + [offset] * (offpoints + padding)
+
+    if Ramsey_delay==0: # normal pulse sequence
+        offpoints = totalpoints - delaypoints - onpoints
+        wave = [offset]*delaypoints + [scale]*onpoints + [offset]*offpoints
+    elif Ramsey_delay>0:
+        Ramsey_points = round(Ramsey_delay / dt)
+        offpoints = totalpoints - delaypoints - 2*onpoints - Ramsey_points
+        wave = [offset]*delaypoints + [scale]*onpoints + [offset]*Ramsey_points + [scale]*onpoints + [offset]*offpoints
+    else:
+        wave = []
+        print("Invalid Ramsey!")
 
     return wave
 

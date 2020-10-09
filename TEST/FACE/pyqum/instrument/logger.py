@@ -15,6 +15,7 @@ import netifaces as nif
 from pandas import DataFrame
 from tables import open_file, Filters, Float32Atom, Float64Atom, StringCol, IsDescription
 
+from pyqum import get_db
 from pyqum.instrument.toolbox import waveform
 
 __author__ = "Teik-Hui Lee"
@@ -142,22 +143,21 @@ class address:
     def __init__(self):
         with open(ADDRESS_PATH / "address.json") as ad:
             self.book = json.load(ad)
-    def lookup(self, instr_name, level=0):
-        '''level: alternative address's index (1,2,3...)'''
+        
+    def lookup(self, instr_name, label=1):
+        '''Lookup from the database instead from the book'''
+        
         self.instr_name = instr_name
-        self.level = level
-        try:
-            if self.level: #False if 0
-                self.rs = self.book[self.instr_name]["alternative"][self.level-1]
-            else: self.rs = self.book[self.instr_name]["resource"]
-        except(KeyError): self.rs = None # checking if instrument in database
-        return self.rs
-    def visible(self):
-        self.vis = []
-        for k,v in self.book.items():
-            if v["visible"]:
-                self.vis.append(k)
-        return self.vis
+        self.rs = get_db().execute(
+            'SELECT m.address\n' +
+            'FROM machine m\n' +
+            'WHERE m.codename = ?',
+            ('%s_%s'%(instr_name,label),)
+        ).fetchone()
+
+        print('resource: %s' %self.rs[0])
+        return self.rs[0]
+    
     def update_status(self):
         set_status(self.instr_name,dict(address=self.rs))
 
@@ -555,7 +555,7 @@ def settings(datadensity=1):
         # print("task: %s" %task)
         M = measurement(mission, task, usr_name, sample) #M-Initialization
         if type(dayindex) is str:
-            pass # Only M-Initialization (everytime when click a task)
+            pass # ONLY M-INITIALIZATION (everytime when click a task) for the LATTER data access
         elif type(dayindex) is int:
             if testeach:
                 M.loopcount, M.loop_dur = next(Generator)
