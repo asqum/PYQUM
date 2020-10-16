@@ -12,20 +12,21 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate():
+def Initiate(which):
     ad = address()
-    rs = ad.lookup(mdlname) # Instrument's Address
+    rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
         stat = bench.write('*CLS') #Clear buffer memory; Load preset
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 150000 #set timeout in ms
-        set_status(mdlname, dict(state='connected'))
-        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+        set_status(mdlname, dict(state='connected'), which)
+        print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat[1])[-7:]))
+        ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
-        set_status(mdlname, dict(state='DISCONNECTED'))
-        print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
+        set_status(mdlname, dict(state='DISCONNECTED'), which)
+        print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
         bench = "disconnected"
     return bench
 
@@ -104,23 +105,25 @@ def Lfoutput(bench, action=['Get', '']):
     SCPIcore = 'SOURce:LFOutput:STATE'
     return mdlname, bench, SCPIcore, action
 
-def close(bench, reset=True):
+def close(bench, which, reset=True):
     if reset:
         bench.write('*RST') # reset to factory setting (including switch-off)
-        set_status(mdlname, dict(config='reset'))
-    else: set_status(mdlname, dict(config='previous'))
+        set_status(mdlname, dict(config='reset'), which)
+    else: set_status(mdlname, dict(config='previous'), which)
     try:
         bench.close() #None means Success?
         status = "Success"
+        ad = address()
+        ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
-    set_status(mdlname, dict(state='disconnected'))
-    print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
+    set_status(mdlname, dict(state='disconnected with %s' %status), which)
+    print(Back.WHITE + Fore.BLACK + "%s's connection Closed with %s" %(mdlname,status))
     return status
         
 
 # Test Zone
-def test(detail=True):
-    s = Initiate()
+def test(bench, detail=True):
+    s = bench
     if s is "disconnected":
         pass
     else:
@@ -148,9 +151,9 @@ def test(detail=True):
             Lfamp(s)
             Lfoutput(s, action=['Set', 'ON'])
         else: print(Fore.RED + "Basic IO Test")
-    if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):
-        state = True
-    else: state = False
-    close(s, reset=state)
-    return
+    # if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):
+    #     state = True
+    # else: state = False
+    # close(s, reset=state)
+    return 'Success'
 

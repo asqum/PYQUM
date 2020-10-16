@@ -15,6 +15,7 @@ import netifaces as nif
 from pandas import DataFrame
 from tables import open_file, Filters, Float32Atom, Float64Atom, StringCol, IsDescription
 
+from flask import session
 from pyqum import get_db
 from pyqum.instrument.toolbox import waveform
 
@@ -103,31 +104,31 @@ def output_code(output):
         return "OFF"
 
 # log, get & set status for both machines & missions (instr = real OR virtual instruments like tasks)
-def loginstr(instr_name):
-    '''[Existence, Assigned Path] = loginstr(Instrument's name)
+def loginstr(instr_name, label=1):
+    '''[Existence, Assigned Path] = loginstr(Instrument's name, Instrument's index/queue)
     '''
-    pyqumfile = instr_name + "status.pyqum"
+    pyqumfile = instr_name + "_" + str(label) + "_status.pyqum"
     pqfile = Path(INSTR_PATH) / pyqumfile
     existence = exists(pqfile) and stat(pqfile).st_size > 0
     return existence, pqfile
-def get_status(instr_name):
+def get_status(instr_name, label=1):
     '''Get Instrument Status from LOG
     '''
-    instr_log = loginstr(instr_name)
+    instr_log = loginstr(instr_name, label)
     if instr_log[0] == False:
         instrument = None # No such Instrument
     else:
         with open(instr_log[1]) as jfile:
             instrument = json.load(jfile) # in json format
     return instrument
-def set_status(instr_name, info):
+def set_status(instr_name, info, label=1):
     '''Set Instrument Status for LOG
     * <info> must be a DICT'''
     instrument = get_status(instr_name)
     if instrument is None:
         instrument = {}
     instrument.update(info)
-    with open(loginstr(instr_name)[1], 'w') as jfile:
+    with open(loginstr(instr_name, label)[1], 'w') as jfile:
         json.dump(instrument, jfile)
 
 # save data in csv for export and be used by clients:
@@ -158,8 +159,12 @@ class address:
         print('resource: %s' %self.rs[0])
         return self.rs[0]
     
-    def update_status(self):
-        set_status(self.instr_name,dict(address=self.rs))
+    def update_machine(self,connected,codename):
+        ''' connected: 0 or 1, codename = <instr>-<label/index> '''
+        db = get_db()
+        db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
+        db.commit()
+        return
 
 class specification:
     '''lookup specifications for each instruments

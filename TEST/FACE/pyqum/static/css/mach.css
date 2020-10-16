@@ -78,7 +78,7 @@
 }
 
 /* machines */
-div.dccontent, div.bdrcontent, div.awgcontent, div.vsacontent, div.nacontent, div.sgcontent, div.dsocontent {
+div.dccontent, div.bdrcontent, div.awgcontent, div.tkawgcontent, div.vsacontent, div.alzdgcontent, div.nacontent, div.sgcontent, div.dsocontent {
     position: fixed;
     display: block;
     float: left;

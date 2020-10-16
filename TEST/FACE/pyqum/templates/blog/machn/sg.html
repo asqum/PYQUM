@@ -10,17 +10,18 @@
 
     <div class="tab2">
     <form method='GET'>
-        <!-- <div><select class='sg' id="settings" name='sgtype' type="text">
+        <!-- <div><select class='sg' id="settings" name='sgname' type="text">
                 <option value='select' selected>-select-</option>
                 <option value='PSGV'>PSGV</option>
                 <option value='PSGA'>PSGA</option>
                 <option value='ESG' >ESG </option>
                 <option value='MXG' >MXG </option>
         </select></div> -->
-        <button class='sg' id='sgtype' name='PSGV'>PSGV</button>
-        <button class='sg' id='sgtype' name='PSGA'>PSGA</button>
-        <button class='sg' id='sgtype' name='ESG'>ESG</button>
-        <button class='sg' id='sgtype' name='MXG'>MXG</button>
+        <button class='sg' id='sgname' name='PSGV-1'>PSGV-1</button>
+        <button class='sg' id='sgname' name='PSGA-1'>PSGA-1</button>
+        <button class='sg' id='sgname' name='PSGA-2'>PSGA-2</button>
+        <button class='sg' id='sgname' name='ESG-1'>ESG-1</button>
+        <button class='sg' id='sgname' name='MXG-1'>MXG-1</button>
 
         <button class='sg' id='log'>INSTR-LOG</button>
         
@@ -31,6 +32,13 @@
     <div class="sgcontent" id="settings">
         <div class="container">
             <form method='GET'>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-10" id='left'><label>Attention</label></div>
+                    <div class="col-30" id='left'>
+                        <div class='sg' id="sg-current-user"></div>
+                    </div>
+                </div>
+
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                     <div class="col-10" id='left'><label>Frequency</label></div>
                     <div class="col-12" id='left'><input class='sg scale' id="settings" name='freq' type="text" value=""/></div>

@@ -24,8 +24,10 @@
       $("div#bdr").load("{{ url_for('machine.bdr') }}");
       $("div#na").load("{{ url_for('machine.na') }}");
       $("div#sg").load("{{ url_for('machine.sg') }}"); 
-      $("div#awg").load("{{ url_for('machine.awg') }}");
-      $("div#vsa").load("{{ url_for('machine.vsa') }}");
+      $("div#tkawg").load("{{ url_for('machine.tkawg') }}");
+      // $("div#awg").load("{{ url_for('machine.awg') }}");
+      // $("div#vsa").load("{{ url_for('machine.vsa') }}");
+      $("div#alzdg").load("{{ url_for('machine.alzdg') }}");
     });
 </script> 
 
@@ -38,9 +40,13 @@
   <button class="tablinks" id="na-tab"  onclick="openTab(event, 'na')"> NA </button>
   <!-- Signal Generators -->
   <button class="tablinks" id="sg-tab"  onclick="openTab(event, 'sg')"> SG </button>
+  <!-- Tektronix AWG -->
+  <button class="tablinks" id="tkawg-tab" onclick="openTab(event, 'tkawg')">TKAWG</button>
   <!-- PXI Temporal Dynamic Instruments -->
-  <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
-  <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button>
+  <!-- <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
+  <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button> -->
+  <!-- AlazarTech DIG -->
+  <button class="tablinks" id="alzdg-tab" onclick="openTab(event, 'alzdg')">ALZDG</button>
 </div>
 
 <div id="all" class="tabcontent"></div>
@@ -48,8 +54,10 @@
 <div id="bdr" class="tabcontent"></div>
 <div id="na" class="tabcontent"></div>
 <div id="sg" class="tabcontent"></div>
-<div id="awg" class="tabcontent"></div>
-<div id="vsa" class="tabcontent"></div>
+<div id="tkawg" class="tabcontent"></div>
+<!-- <div id="awg" class="tabcontent"></div>
+<div id="vsa" class="tabcontent"></div> -->
+<div id="alzdg" class="tabcontent"></div>
 {% endif %}
 
 </body>

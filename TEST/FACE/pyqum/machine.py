@@ -17,8 +17,9 @@ from si_prefix import si_format, si_parse
 from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean, power
 
 # Load instruments
-from pyqum.instrument.modular import AWG, VSA, KMAWG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
-from pyqum.instrument.benchtop import DSO, PNA, YOKO, KEIT
+from pyqum import get_db
+from pyqum.instrument.modular import AWG, VSA, KMAWG, ALZDG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
+from pyqum.instrument.benchtop import DSO, PNA, YOKO, KEIT, TKAWG
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
 from pyqum.instrument.toolbox import match, waveform, pauselog, squarewave
@@ -41,7 +42,7 @@ def show():
 		return render_template("blog/machn/machine.html")
 	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
-# ALL
+# region: ALL
 @bp.route('/all', methods=['POST', 'GET'])
 def all(): 
 	# Test Bed # All Task # Great Work
@@ -66,12 +67,13 @@ def allstatus():
 
 	status = {}
 	status['PSGV'] = get_status('PSGV')["state"]
-	status['AWG'] = get_status('AWG')["state"]
+	status['TKAWG'] = get_status('TKAWG')["state"]
 
 	log = pauselog() #disable logging (NOT applicable on Apache)
 	return jsonify(log=str(log), latestbdr=latestbdr, status=status)
+# endregion
 
-# AWG
+# region: AWG
 @bp.route('/awg', methods=['GET'])
 def awg(): 
 	return render_template("blog/machn/awg.html")
@@ -244,8 +246,9 @@ def awgsettingsifwave():
 		# AWG.burst_count(awgsess, RepCap=channel, action=["Set", 1000001])
 
 	return jsonify(message=message, WaveForms=WaveForms, t=[i*dt for i in range(len(wavefom)*3)])
+# endregion
 
-# VSA
+# region: VSA
 @bp.route('/vsa', methods=['GET'])
 def vsa(): 
 	return render_template("blog/machn/vsa.html")
@@ -391,8 +394,9 @@ def vsaabout():
 	status = VSA.power(vsasess)
 	message += ['LO Power: %s (%s)' % (status[1], status_code(status[0]))]
 	return jsonify(message=message)
+# endregion
 
-# SG
+# region: SG (user-specific)
 @bp.route('/sg', methods=['GET'])
 def sg(): 
 	global sgbench, SG
@@ -401,64 +405,172 @@ def sg():
 	return render_template("blog/machn/sg.html")
 @bp.route('/sg/log', methods=['GET'])
 def sglog():
-	log = get_status(request.args.get('sgtype'))
+	log = get_status(request.args.get('sgname').split('-')[0], request.args.get('sgname').split('-')[1])
 	return jsonify(log=log)
 @bp.route('/sg/connect', methods=['GET'])
 def sgconnect():
-	sgtype = request.args.get('sgtype')
-	if sgtype not in sgbench.keys():
+	sgname = '%s-%s' %(request.args.get('sgname'),session['user_name'])
+	sgtype, sglabel, sguser = sgname.split('-')[0], sgname.split('-')[1], sgname.split('-')[2]
+	if '%s-%s'%(sgtype,sglabel) not in ['%s-%s'%(x.split('-')[0],x.split('-')[1]) for x in sgbench.keys()]:
 		try:
 			SG[sgtype] = im("pyqum.instrument.benchtop.%s" %sgtype)
-			sgbench[sgtype] = SG[sgtype].Initiate()
-			message = "Successfully connected to %s" %sgtype
+			sgbench[sgname] = SG[sgtype].Initiate(sglabel)
+			message = "Successfully connected to %s-%s by %s" %(sgtype,sglabel,sguser)
 		except:
-			message = "Please check %s's connection configuration or interface" %sgtype
-	else: message = "%s is already linked-up" %sgtype
-	linkedsg = [x for x in sgbench.keys()]
-	print(linkedsg)
+			message = "Please check if %s-%s's connection configuration is OK or is it being used!" %(sgtype,sglabel)
+	else: 
+		db = get_db()
+		somebody_else = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(sgtype,sglabel),)).fetchone()[0]
+		message = "%s-%s is being connected to %s" %(sgtype,sglabel,somebody_else)
+	linkedsg = ['%s-%s'%(x.split('-')[0],x.split('-')[1]) for x in sgbench.keys()]
+	print(Fore.WHITE + "Connected SG: %s" %linkedsg)
 	return jsonify(message=message,linkedsg=linkedsg)
 @bp.route('/sg/closet', methods=['GET'])
 def sgcloset():
-	sgtype = request.args.get('sgtype')
-	status = SG[sgtype].close(sgbench[sgtype])
-	del SG[sgtype],sgbench[sgtype]
+	sgname, sgtype = '%s-%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
+	status = SG[sgtype].close(sgbench[sgname], sgname.split('-')[1])
+	del sgbench[sgname]
 	return jsonify(message=status)
 @bp.route('/sg/set/freq', methods=['GET'])
 def sgsetfreq():
-	sgtype = request.args.get('sgtype')
+	sgname, sgtype = '%s-%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
 	freq = request.args.get('freq')
 	frequnit = request.args.get('frequnit')
-	stat = SG[sgtype].frequency(sgbench[sgtype], action=['Set', freq + frequnit])
+	stat = SG[sgtype].frequency(sgbench[sgname], action=['Set', freq + frequnit])
 	message = 'frequency: %s <%s>' %(stat[1], stat[0])
 	return jsonify(message=message) #message will go to debug log
 @bp.route('/sg/set/powa', methods=['GET'])
 def sgsetpowa():
-	sgtype = request.args.get('sgtype')
+	sgname, sgtype = '%s-%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
 	powa = request.args.get('powa')
 	powaunit = request.args.get('powaunit')
-	stat = SG[sgtype].power(sgbench[sgtype], action=['Set', powa + powaunit])
+	stat = SG[sgtype].power(sgbench[sgname], action=['Set', powa + powaunit])
 	message = 'power: %s <%s>' %(stat[1], stat[0])
 	return jsonify(message=message) #message will go to debug log
 @bp.route('/sg/set/oupt', methods=['GET'])
 def sgsetoupt():
-	sgtype = request.args.get('sgtype')
+	sgname, sgtype = '%s-%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
 	oupt = request.args.get('oupt')
-	stat = SG[sgtype].rfoutput(sgbench[sgtype], action=['Set',int(oupt)])
+	stat = SG[sgtype].rfoutput(sgbench[sgname], action=['Set',int(oupt)])
 	message = 'RF output: %s <%s>' %(stat[1], stat[0])
 	return jsonify(message=message) #message will go to debug log
 @bp.route('/sg/get', methods=['GET'])
 def sgget():
-	sgtype = request.args.get('sgtype')
+	sgname, sgtype = '%s-%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
 	message = {}
 	try:
-		message['frequency'] = si_format(float(SG[sgtype].frequency(sgbench[sgtype])[1]['CW']),precision=3) + "Hz" # frequency
-		message['power'] = si_format(float(SG[sgtype].power(sgbench[sgtype])[1]['AMPLITUDE']),precision=1) + "dBm" # power
-		message['rfoutput'] = int(SG[sgtype].rfoutput(sgbench[sgtype])[1]['STATE']) # rf output
+		message['frequency'] = si_format(float(SG[sgtype].frequency(sgbench[sgname])[1]['CW']),precision=3) + "Hz" # frequency
+		message['power'] = si_format(float(SG[sgtype].power(sgbench[sgname])[1]['AMPLITUDE']),precision=1) + "dBm" # power
+		message['rfoutput'] = int(SG[sgtype].rfoutput(sgbench[sgname])[1]['STATE']) # rf output
 	except:
 		message = dict(status='%s is not connected' %sgtype)
 	return jsonify(message=message)
+# endregion
 
-# NA
+# region: TKAWG
+@bp.route('/tkawg', methods=['GET'])
+def tkawg(): 
+	global tkawgbench
+	try: print(Fore.GREEN + "\nConnected TKAWG: %s" %tkawgbench.keys())
+	except: 
+		print(Fore.BLUE + "\nTKAWG status log not yet initialized")
+		tkawgbench = {}
+	return render_template("blog/machn/tkawg.html")
+@bp.route('/tkawg/log', methods=['GET'])
+def tkawglog():
+	tkawglabel = request.args.get('tkawglabel')
+	log = get_status(tkawglabel.split('-')[0], tkawglabel.split('-')[1])
+	return jsonify(log=log)
+@bp.route('/tkawg/connect', methods=['GET'])
+def tkawgconnect():
+	tkawglabel = request.args.get('tkawglabel')
+	if tkawglabel not in tkawgbench.keys():
+		try:
+			tkawgbench[tkawglabel] = TKAWG.Initiate(tkawglabel.split('-')[1])
+			message = "Successfully connected to %s" %tkawglabel
+		except:
+			message = "Please check %s's connection configuration or interface" %tkawglabel
+	else: message = "%s is already linked-up" %tkawglabel
+	linkedtkawg = [x for x in tkawgbench.keys()]
+	# print(linkedtkawg)
+	return jsonify(message=message,linkedtkawg=linkedtkawg)
+@bp.route('/tkawg/closet', methods=['GET'])
+def tkawgcloset():
+	tkawglabel = request.args.get('tkawglabel')
+	status = TKAWG.close(tkawgbench[tkawglabel], tkawglabel.split('-')[1])
+	del tkawgbench[tkawglabel]
+	return jsonify(message=status)
+@bp.route('/tkawg/testing', methods=['GET'])
+def tkawgtesting():
+	tkawglabel = request.args.get('tkawglabel')
+	status = TKAWG.test(tkawgbench[tkawglabel])
+	return jsonify(message=status)
+@bp.route('/tkawg/set/clockfreq', methods=['GET'])
+def tkawgsetclockfreq():
+	tkawglabel = request.args.get('tkawglabel')
+	clockfreq = request.args.get('clockfreq')
+	clockfrequnit = request.args.get('clockfrequnit')[0]
+	stat = TKAWG.clock(tkawgbench[tkawglabel], action=['Set', 'EFIXed', si_parse(clockfreq + clockfrequnit)])
+	message = 'frequency: %s <%s>' %(stat[1], stat[0])
+	return jsonify(message=message) #message will go to debug log
+@bp.route('/tkawg/get', methods=['GET'])
+def tkawgget():
+	tkawglabel = request.args.get('tkawglabel')
+	message = {}
+	try:
+		message['clockfreq'] = si_format(float(TKAWG.clock(tkawgbench[tkawglabel])[1]['SRATe']),precision=3) + "S/s" # clock-frequency
+		message['model'] = TKAWG.model(tkawgbench[tkawglabel])[1]['IDN']
+	except:
+		message = dict(status='%s is not connected or busy or error' %tkawglabel)
+	print("message: %s" %message)
+	return jsonify(message=message)
+# endregion
+
+# region: ALZDG
+@bp.route('/alzdg', methods=['GET'])
+def alzdg(): 
+	global alzdgboard
+	try: print(Fore.GREEN + "\nConnected ALZDG: %s" %alzdgboard.keys())
+	except: 
+		print(Fore.BLUE + "\nTKAWG status log not yet initialized")
+		alzdgboard = {}
+	return render_template("blog/machn/alzdg.html")
+@bp.route('/alzdg/log', methods=['GET'])
+def alzdglog():
+	log = get_status(request.args.get('alzdglabel').split('-')[0], 1)
+	return jsonify(log=log)
+@bp.route('/alzdg/connect', methods=['GET'])
+def alzdgconnect():
+	alzdglabel = request.args.get('alzdglabel')
+	if alzdglabel not in alzdgboard.keys():
+		try:
+			alzdgboard[alzdglabel] = ALZDG.Initiate(alzdglabel.split('-')[1])
+			message = "Successfully connected to %s" %alzdglabel
+		except:
+			message = "Please check %s's connection configuration or interface" %alzdglabel
+	else: message = "%s is already linked-up" %alzdglabel
+	linkedalzdg = [x for x in alzdgboard.keys()]
+	# print(linkedalzdg)
+	return jsonify(message=message,linkedalzdg=linkedalzdg)
+
+@bp.route('/alzdg/testing', methods=['GET'])
+def alzdgtesting():
+	alzdglabel = request.args.get('alzdglabel')
+	status = ALZDG.test(alzdgboard[alzdglabel])
+	return jsonify(message=status)
+@bp.route('/alzdg/get', methods=['GET'])
+def alzdgget():
+	alzdglabel = request.args.get('alzdglabel')
+	message = {}
+	try:
+		message['model'] = ALZDG.model(alzdgboard[alzdglabel])
+	except:
+		message = dict(status='%s is not connected or busy or error' %alzdglabel)
+	print("message: %s" %message)
+	return jsonify(message=message)
+# endregion
+
+# region: NA
 @bp.route('/na', methods=['GET'])
 def na(): 
 	global nabench, NA
@@ -560,8 +672,9 @@ def naget():
 		# raise
 		message = dict(status='%s is not connected' %natype)
 	return jsonify(message=message)
+# endregion
 
-# BDR
+# region: BDR
 @bp.route('/bdr')
 def bdr():
 	# monitoring traffic:
@@ -616,9 +729,9 @@ def bdrhistoryforecast():
 	# fore = poly1d(coeff)
 	
 	return jsonify(eta_time=list(eta_time))
+# endregion
 
-
-# DC
+# region: DC
 @bp.route('/dc', methods=['GET'])
 def dc():
 	print("loading dc.html")
@@ -731,6 +844,7 @@ def dcmeasureivcurve():
 	ivcurve.close()
 	print("DC Measurement Closed")
 	return jsonify(state=ivcurve.state, V0=V0, I=I, Vb=Vb)
+# endregion
 
 
 # Download File:

@@ -1,0 +1,61 @@
+<!doctype html> <!--extended from parent: machine.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/alzdg.js') }}"></script>
+</head>
+
+<body class="mach">
+<div>
+
+    <div class="tab2">
+    <form method='GET'>
+        <button class='alzdg label' id='ALZDG-1'>ALZDG-1</button>
+        <button class='alzdg label' id='ALZDG-2'>ALZDG-2</button>
+        <button class='alzdg' id='log'>INSTR-LOG</button>
+        
+    </form>
+    </div>
+
+    <div class="alzdgcontent" id="log"></div>
+    <div class="alzdgcontent" id="settings">
+        <div class="container">
+            <form method='GET'>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-10" id='left'><label>Status</label></div>
+                    <div class="col-20" id='left'>
+                        <div class='alzdg' id="alzdg-status"></div>
+                    </div>
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-10" id='left'><label>Model</label></div>
+                    <div class="col-20" id='left'>
+                        <div class='alzdg' id="alzdg-model"></div>
+                    </div>
+                    <!-- Test Script -->
+                    <div class="col-15" id='right'>
+                        <button class='alzdg push_button w-95 red' id='testing'>TEST</button>
+                    </div>
+                </div>
+
+                
+                
+                <!-- <div class="row">
+                    <div class="col-10" id='left'><label>RF port</label></div>
+                    <div class="col-20" id='left'>
+                        <label class="switch"><input class='alzdg settings' id="alloff" type="checkbox">
+                            <div class="slider smooth"><span class="on">ON</span><span class="off">OFF</span></div>
+                        </label>
+                    </div>
+                </div> -->
+                
+
+                
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
