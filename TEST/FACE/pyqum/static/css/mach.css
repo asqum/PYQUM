@@ -11,7 +11,7 @@
     align-content: space-around;
     padding-left: 0%;
     float: left;
-    background-color: #333333;
+    background-color: #070707;
     width: 6%; /*should align w/ margin-left for tabcontent! */
     height: 93vh;
     overflow-y: scroll;
@@ -29,14 +29,29 @@
     cursor: pointer;
     transition: 0.3s;
 }
+/* for supportive instrument (widest variety) */
+.tab button.support {
+    background-color: #6d6c6c;
+}
+/* for continuous measurement (Mid-level variety) */
+.tab button.continuous-rf {
+    background-color: #3d3d3d;
+}
+/* for pulsed measurement (Rare & Developing variety) */
+.tab button.pulse-rf {
+    background-color: #111111;
+}
 .tab button:hover {
-    background-color: white;
+    background-color:rgb(251, 255, 0);
     color: #333333;
 }
 .tab button.active {
-    color: blue;
-    font-weight: 777;
-    background-color: gold;
+    color: rgb(251, 255, 0);
+    font-weight: 950;
+    /* background-color: rgb(241, 230, 165); */
+}
+.tab button.active:hover {
+    background-color:inherit;
 }
 .tabcontent {
     position: fixed;
@@ -103,6 +118,10 @@ div.dccontent, div.bdrcontent, div.awgcontent, div.tkawgcontent, div.vsacontent,
     background-color: #4CAF50;
     color: white;
 }
+.wait {
+    background-color: #ec6ce6;
+    color: white;
+}
 .close, .abort {
     background-color: tomato;
     color: white;
@@ -131,6 +150,11 @@ div.dccontent, div.bdrcontent, div.awgcontent, div.tkawgcontent, div.vsacontent,
 .unit {
     color: rgb(49, 48, 48);
     font-weight: 777;
+}
+
+/* label */
+label.parameter {
+    text-align: right;
 }
 
 /* for AI-Bridge */

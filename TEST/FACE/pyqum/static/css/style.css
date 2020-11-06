@@ -142,6 +142,9 @@ label.left {
 label.right {
     text-align: right;
 }
+label.channel {
+    color: blue;
+}
 input[type=submit] {
     background-color: #4CAF50;
     color: white;

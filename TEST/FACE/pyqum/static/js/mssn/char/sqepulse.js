@@ -73,8 +73,8 @@ function listimes_sqepulse() {
         // brings up parameter-input panel for new measurement:
         $('.modal.new').toggleClass('is-visible');
         // Update Live Informations:
-        $.getJSON('/mach/all/status', {}, function (data) {
-            $("textarea.char.sqepulse#ecomment").val(sqepulsecomment + "\nUpdate: T6=" + data.latestbdr['T6']*1000 + "mK");
+        $.getJSON('/mach/all/mxc', {}, function (data) {
+            $("textarea.char.sqepulse#ecomment").val(sqepulsecomment + "\nUpdate: T6=" + data.mxcmk + "mK");
         });
 
     } else if (wday == 'm') {

@@ -1,6 +1,8 @@
 <!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/util.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/button.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
@@ -20,8 +22,11 @@
         
     <title>{% block title %}{% endblock %} - PyQuM</title>
     
-    <script type="text/javascript" src="{{ url_for('static', filename='js/gauge.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- 
+        Stop using the script since its old version was too slow to load, while new version syntax has been overhauled!
+        <script type="text/javascript" src="{{ url_for('static', filename='js/gauge.min.js') }}"></script> 
+    -->
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='ui/jquery-ui.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquerysession.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/plotly-latest.min.js') }}"></script>

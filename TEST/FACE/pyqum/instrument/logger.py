@@ -15,7 +15,7 @@ import netifaces as nif
 from pandas import DataFrame
 from tables import open_file, Filters, Float32Atom, Float64Atom, StringCol, IsDescription
 
-from flask import session
+from flask import session, g
 from pyqum import get_db
 from pyqum.instrument.toolbox import waveform
 
@@ -160,11 +160,22 @@ class address:
         return self.rs[0]
     
     def update_machine(self,connected,codename):
-        ''' connected: 0 or 1, codename = <instr>-<label/index> '''
+        ''' 
+        Update SQL Database:
+        connected: 0 or 1, codename = <instr>-<label/index> 
+        '''
         db = get_db()
         db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
         db.commit()
         return
+    # def machine_list(self,category):
+    #     machlist = get_db().execute(
+    #         'SELECT m.codename, m.connected\n' +  
+    #         'FROM machine m\n' +
+    #         'WHERE m.category = ?'
+    #         (category,)
+    #     ).fetchall()
+    #     return machlist
 
 class specification:
     '''lookup specifications for each instruments
@@ -307,7 +318,7 @@ class measurement:
         return k-1 #index
 
     # Secondary parameters
-    def selectday(self, index, corder={}, instr=[], datadensity=1, comment='', tag=''):
+    def selectday(self, index, corder={}, perimeter={}, instr=[], datadensity=1, comment='', tag=''):
         '''corder: {parameters: <waveform>}\n'''
 
         # New operation if "new" is selected:
@@ -317,6 +328,7 @@ class measurement:
             self.moment = now.strftime("%H:%M:%f")
             # estimating data size from parameters:
             self.corder = corder
+            self.perimeter = perimeter
             self.instr = instr
             self.datadensity = datadensity
             self.comment = comment
@@ -328,7 +340,7 @@ class measurement:
                 self.pqfile = self.mssnpath / self.day / self.filename
 
                 # assembly the file-header(time, place, c-parameters):
-                usr_bag = bytes('{"%s": {"place": "%s", "data-density": %s, "c-order": %s, "instrument": %s, "comment": "%s", "tag": "%s"}}' %(self.moment, self.place, self.datadensity, self.corder, self.instr, self.comment, self.tag), 'utf-8')
+                usr_bag = bytes('{"%s": {"place": "%s", "data-density": %s, "c-order": %s, "perimeter": %s, "instrument": %s, "comment": "%s", "tag": "%s"}}' %(self.moment, self.place, self.datadensity, self.corder, self.perimeter, self.instr, self.comment, self.tag), 'utf-8')
                 usr_bag += b'\x02' + bytes("ACTS", 'utf-8') + b'\x03\x04' # ACTS
                 
                 # check if the file exists and not blank:
@@ -338,6 +350,20 @@ class measurement:
                     with open(self.pqfile, 'wb') as datapie:
                         # Initialize blank file w/ user bag
                         datapie.write(usr_bag)
+
+                    # Logging onto SQL Database for every New Measurement:
+                    try:
+                        db = get_db()
+                        samplename = get_status("MSSN")[session['user_name']]['sample']
+                        sample_id = db.execute('SELECT s.id FROM sample s WHERE s.samplename = ?', (samplename,)).fetchone()[0]
+                        db.execute('INSERT INTO job (user_id, sample_id, task, dateday, wmoment, parameter, perimeter, instrument, comment, tag) VALUES (?,?,?,?,?,?,?,?,?,?)', 
+                                                    (g.user['id'],sample_id,self.task,self.day,task_index,str(self.corder),str(self.perimeter),str(self.instr),self.comment,self.tag))
+                        db.commit()
+                        print(Fore.GREEN + Back.WHITE + "Successfully register the data into SQL Database")
+                    except: 
+                        print(Fore.RED + Back.WHITE + "Check all database input parameters")
+                        raise
+
                     break
                 else:
                     task_index += 1
@@ -554,7 +580,7 @@ def settings(datadensity=1):
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
-        usr_name, sample, tag, instr, corder, comment, dayindex, taskentry, testeach = next(Generator)
+        usr_name, sample, tag, instr, corder, comment, dayindex, taskentry, testeach, perimeter = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
         # print("task: %s" %task)
@@ -565,7 +591,7 @@ def settings(datadensity=1):
             if testeach:
                 M.loopcount, M.loop_dur = next(Generator)
             else:
-                M.selectday(dayindex, corder, instr, datadensity, comment, tag)
+                M.selectday(dayindex, corder, perimeter, instr, datadensity, comment, tag)
                 # print(Back.GREEN + "Day selected: %s"%self.day)
                 M.selectmoment(taskentry)
                 # print(Back.BLUE + "moment(file) selected: %s"%M.filename)
@@ -596,7 +622,6 @@ def test():
     ad = address()
     print(ad.lookup("YOKO"))
     print(ad.lookup("TEST", 2))
-    print(ad.visible())
     print(lisample('abc'))
     print(lismission('abc','Sam','characterize'))
 

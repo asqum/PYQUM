@@ -25,7 +25,7 @@
 
         <div class="row"> <!-- New Role for File-status -->
             <div class="col-15" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char' id="fresp" name="wmoment" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char' id="fresp" name="wmoment" type="number"></select></div>
             <div class="col-20" id='left'>
                 <ul class="data-status" id="fresp">
                     <li>
@@ -101,7 +101,7 @@
 
         <div id="char-fresp-chart"></div>
         
-        <!-- Brings up dialogue box for parameter settings -->
+        <!-- Brings up dialogue box for parameter settings and run measurements-->
         <div class="modal new fresp">
             <div class="modal-overlay modal-toggle new fresp"></div>
             <div class="modal-wrapper modal-transition">
@@ -111,17 +111,16 @@
                     
                 <div class="modal-body">
                     <div class="modal-content">
+                        <!-- Selecting Instruments -->
+                        <div class="row">
+                            <div class="col-10" id='left'><select class='char fresp instr' name="DC" type="text"></select></div>
+                            <div class="col-10" id='left'><select class='char fresp instr' name="NA" type="text"></select></div>
+                        </div>
                         <!-- Optional Parameters -->
                         <div class="row">
-                            <!-- <div class="col-20" id='left'><label></label></div>
-                            <div class="col-20" id='left'><label></label></div>
-                            <div class="col-20" id='left'><label></label></div> -->
                             <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
                         </div>
                         <div class="row">
-                            <!-- <div class="col-20" id='left'></div>
-                            <div class="col-20" id='left'></div>
-                            <div class="col-20" id='left'></div>  -->
                             <div class="col-20" id='left'><input class='char' id="fresp" name="fluxbias" type="text" value="OPT,"/></div>
                         </div>
                         <!-- Basic Parameters -->

@@ -454,21 +454,11 @@ def char_cwsweep_new():
         simulate = bool(int(request.args.get('simulate')))
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         
-        # Logging onto SQL Database for every New Measurement:
-        try:
-            now = datetime.now() #current day & time
-            dateday = now.strftime("%Y-%m-%d(%a)")
-            db = get_db()
-            samplename = get_status("MSSN")[session['user_name']]['sample']
-            sample_id = db.execute('SELECT s.id FROM sample s WHERE s.samplename = ?', (samplename,)).fetchone()[0]
-            db.execute('INSERT INTO job (user_id, sample_id, task, dateday, parameter, comment) VALUES (?,?,?,?,?,?)', (g.user['id'],sample_id,'CW_Sweep',dateday,str(CORDER),comment))
-            db.commit()
+        
 
-            # Start Running:
-            Run_cwsweep['TOKEN'] = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
-        except: 
-            print("Check all database input parameters")
-            pass
+        # Start Running:
+        Run_cwsweep['TOKEN'] = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
+        
 
         return jsonify(testeach=simulate)
     else: return show()

@@ -7,7 +7,7 @@ mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
 # from __future__ import division
 import ctypes
-from numpy import array, zeros, ceil, empty
+from numpy import array, zeros, ceil, empty, float32
 import os
 import signal
 import sys
@@ -65,6 +65,7 @@ def Initiate(which):
         board = ats.Board(rs['systemId'],rs['boardId'])
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized" % (mdlname))
+        ad.update_machine(1, "%s_%s"%(mdlname,which)) # update SQL Database
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
@@ -122,16 +123,16 @@ def ConfigureBoard_NPT(board, triggerDelay_sec = 0*1e-9, samplesPerSec=100000000
     # Configure AUX I/O connector as required
     board.configureAuxIO(ats.AUX_OUT_TRIGGER, 0)
     
-    dt = 1 / samplesPerSec # in sec
-    return dt
+    # dt = 1 / samplesPerSec # in sec
+    return "Configure Board Successfully"
     
 
-def AcquireData_NPT(board, dt, recordtime, recordsum, OPT_DMA_Buffer_Size=32):
+def AcquireData_NPT(board, recordtime, recordsum, OPT_DMA_Buffer_Size=32, dt=1/1000000000.0):
     '''
     board: given by {Initiate}
-    dt: given by {ConfigureBoard}
-    recordtime (s): The duration of pulse response of interest
-    recordsum: Total sum of records to be acquired for fedility test or fast averaging
+    dt (s): given by {ConfigureBoard}
+    recordtime (s): The duration of pulse response of interest (at least 9*128ns)
+    recordsum: Total sum of records to be acquired for fidelity test or fast averaging
     OPT_DMA_Buffer_Size (MB): Optimal Buffer size for DMA transfer between CPU and the board PER Channel
     '''
 
@@ -156,6 +157,7 @@ def AcquireData_NPT(board, dt, recordtime, recordsum, OPT_DMA_Buffer_Size=32):
 
     # SAMPLES:
     # Configure the number of samples/bytes per record.
+    recordtime = max(9*128e-9, 128e-9*ceil(recordtime/128e-9)) # only accept multiples of 128 samples
     postTriggerSamples = recordtime / dt
     postTriggerSamples = int(ceil(postTriggerSamples / 128.)*128) # force it into multiples of 128
     bytesPerSample = (bitsPerSample.value + 7) // 8
@@ -174,7 +176,7 @@ def AcquireData_NPT(board, dt, recordtime, recordsum, OPT_DMA_Buffer_Size=32):
     # DATA:
     # Allocate DMA buffers
     bytesPerBuffer = bytesPerRecord * recordsPerBuffer * channelCount
-    # print("Buffer size: %sMB" %(bytesPerBuffer/1e6))
+    print("Buffer size: %sMB" %(bytesPerBuffer/1024/1024))
 
     if bytesPerSample > 1: sample_type = ctypes.c_uint16
     else: sample_type = ctypes.c_uint8
@@ -215,7 +217,7 @@ def AcquireData_NPT(board, dt, recordtime, recordsum, OPT_DMA_Buffer_Size=32):
         #
         # Samples are arranged in the buffer as follows: S0A, S0B, ..., S1A, S1B, ... with SXY the sample number X of channel Y.
         # Preparing data basket:
-        data_V = zeros([recordsPerBuffer*buffersPerAcquisition, postTriggerSamples, channelCount])
+        data_V = zeros([recordsPerBuffer*buffersPerAcquisition, postTriggerSamples, channelCount], dtype=float32) # use 32-Bit to support Quadro-GPU calculation
 
         # Collecting buffers:
         while (buffersCompleted < buffersPerAcquisition and not ats.enter_pressed()):
@@ -253,27 +255,28 @@ def AcquireData_NPT(board, dt, recordtime, recordsum, OPT_DMA_Buffer_Size=32):
 
     return data_V, transferTime_sec, recordsPerBuffer, buffersPerAcquisition
 
-def close(board): # PENDING: Clear Memory thoroughly
-    try:
-        board.close() #None means Success?
-        status = "Success"
-    except: 
-        raise
-        status = "Error"
-    set_status(mdlname, dict(state='disconnected'))
+def close(which): # PENDING: Clear Memory thoroughly
+    '''
+    ATS-SDK maintains a list of board handles in order to support master-slave board systems. 
+    The SDK creates board handles when it is loaded into memory, and destroys these handles when it is unloaded from memory. 
+    An application should not need to close a board handle.
+    '''
+    set_status(mdlname, dict(state='disconnected'), which)
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
-    return status
+    ad = address()
+    ad.update_machine(0, "%s_%s"%(mdlname,which)) # update SQL Database
+    return "Success"
 
 
 def test(board):
-    # board = ATS9371(which=1)
-    dt = board.ConfigureBoard_NPT(triggerDelay_sec=0)
-    
+    ConfigureBoard_NPT(board, triggerDelay_sec=0)
+    dt = 1/1000000000.0
+
     N = 5
     for i in range(1):
         DMA_transfer_size = 2**(N-i)
         print("\nMaximum DMA Buffer PER Channel: %sMB" %DMA_transfer_size)
-        ACQ = board.AcquireData_NPT(dt, 1e-6, 512000, DMA_transfer_size)
+        ACQ = AcquireData_NPT(board, 1e-6, 512000, DMA_transfer_size)
 
     DATA = ACQ[0] 
     recordsPerBuffer = ACQ[2]

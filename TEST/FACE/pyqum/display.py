@@ -25,6 +25,10 @@ def figstatic():
         return datas
     return render_template('blog/dsply/figstatic.html', datas=fetch()) #this is where it really goes
 
+# Static
+@bp.route('/fastream')
+def fastream():
+    return render_template('blog/dsply/fastream.html')
 
 # Setting shared variables
 x = np.arange(0, 12, 0.1)

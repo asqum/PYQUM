@@ -18,13 +18,14 @@ def Initiate(which):
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
+        # bench = rm.open_resource('TCPIP0::192.168.1.35::INSTR') #debugging connection
         stat = bench.write('*CLS') #Clear buffer memory; Load preset
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 150000 #set timeout in ms
         set_status(mdlname, dict(state='connected'), which)
         print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat[1])[-7:]))
         ad.update_machine(1, "%s_%s"%(mdlname,which))
-    except: 
+    except:
         set_status(mdlname, dict(state='DISCONNECTED'), which)
         print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
         bench = "disconnected"

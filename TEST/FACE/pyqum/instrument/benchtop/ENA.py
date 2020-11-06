@@ -16,9 +16,9 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate(reset=False):
+def Initiate(reset=False, which=1, MaxChannel=2):
 	ad = address()
-	rs = ad.lookup(mdlname) # Instrument's Address
+	rs = ad.lookup(mdlname, which) # Instrument's Address
 	rm = visa.ResourceManager()
 	try:
 		bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -27,12 +27,18 @@ def Initiate(reset=False):
 		else:
 			bench.write(':ABORt;:INIT:CONT OFF;') #hold the trigger
 			stat = bench.write('*CLS') #Clear buffer memory;
-			bench.write('OUTPut:STATE ON') #open the port
+			bench.write('OUTPut:STATE ON') #open the port (E5071C only has one Source)
+		# Allocating Channels:
+		if MaxChannel == 1:
+			bench.write(':DISPlay:SPLit D1')
+		elif MaxChannel == 2:
+			bench.write(':DISPlay:SPLit D1_2')
 		bench.write("SENS:CORR:EXT:AUTO:RESet") #clear port-extension auto-correction
 		bench.read_termination = '\n' #omit termination tag from output 
 		bench.timeout = 80000000 #set timeout in ms
 		set_status(mdlname, dict(state='connected'))
 		print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+		ad.update_machine(1, "%s_%s"%(mdlname,which))
 	except: 
 		set_status(mdlname, dict(state='DISCONNECTED'))
 		print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
@@ -126,7 +132,7 @@ def selectrace(bench, action=['Set'] + ['par 1']):
 	return mdlname, bench, SCPIcore, action
 
 # Setting Trace
-def setrace(bench, Mparam=['S11','S21','S12','S22'], window='D1'):
+def setrace(bench, channel=1, Mparam=['S11','S21','S12','S22'], window='D1'):
 	'''window = {D<Tr#...>: {#repeat: linewidth, _:next-line}}
 	'''
 	bench.write("CALC:PAR:COUN %d" %len(Mparam))
@@ -135,6 +141,7 @@ def setrace(bench, Mparam=['S11','S21','S12','S22'], window='D1'):
 		bench.write("CALC:PAR%d:DEF %s" %(iTrace + 1, S)) #setting trace name
 		Mreturn.append(bench.query("CALC:PAR%d:DEF?" %(iTrace + 1)))
 		bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(iTrace + 1)) #pre-auto-scale
+	bench.write("DISPlay:WINDow%s:ACT" %channel)
 	bench.write("DISPlay:WINDow:SPLit %s" %window)
 	return Mreturn #same as <Mparam>
 
@@ -199,21 +206,19 @@ def preset(bench):
 	stat = bench.write(':SYSTem:PRESet')
 	return stat
 
-def close(bench, reset=True):
+def close(bench, reset=True, which=1):
+	if reset:
+		bench.write(':OUTPut:STATe OFF')
+		set_status(mdlname, dict(config='reset-off'))
+	else: set_status(mdlname, dict(config='previous'))
 	try:
-		if reset:
-			bench.write(':OUTPut:STATe OFF')
-			set_status(mdlname, dict(config='reset-off'))
-		else: set_status(mdlname, dict(config='previous'))
-		try:
-			bench.close() #None means Success?
-			status = "Success"
-		except: status = "Error"
-		set_status(mdlname, dict(state='disconnected'))
-		print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
-	except: 
-		status = "disconnected per se!!!"
-		pass
+		bench.close() #None means Success?
+		status = "Success"
+		ad = address()
+		ad.update_machine(0, "%s_%s"%(mdlname,which))
+	except: status = "Error"
+	set_status(mdlname, dict(state='disconnected'))
+	print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
 	return status
 
 # Test Zone

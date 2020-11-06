@@ -11,7 +11,7 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 from numpy import array
 import array as arr
 
-from pyqum.instrument.toolbox import squarewave
+from pyqum.instrument.composer import squarewave, pulser
 from time import sleep
 debugger = debug(mdlname)
 
@@ -269,7 +269,7 @@ def test(bench, detail=True):
             waveformpick(s, action=['Get','0'])
 
             # To be put in directives:
-            level = [0.3, 0.2]
+            level = [0.35, 0.5]
             ch = [1,2,3,4]
             clock(s, action=['Set', 'EFIXed', 2.5e9])
             clear_waveform(s,'all')
@@ -279,9 +279,9 @@ def test(bench, detail=True):
             for i in range(4):
                 prepare_DAC(s, ch[i], 20000)
             # Compose each waveforms into respective channels:
-            compose_DAC(s, ch[0], array(squarewave(8000, 100, 0, level[0], dt=0.4, clock_multiples=1, Ramsey_delay=100)), 1, 200)
+            compose_DAC(s, ch[0], array(pulser(8000, 300, 0, level[0], dt=0.4, clock_multiples=1, Ramsey_delay=0)), 1, 200)
             compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level[0], dt=0.4, clock_multiples=1)))
-            compose_DAC(s, ch[2], array(squarewave(8000, 100, 0, level[1], dt=0.4, clock_multiples=1)), 1, 200)
+            compose_DAC(s, ch[2], array(pulser(8000, 100, 0, level[1], dt=0.4, clock_multiples=1)), 1, 200)
             compose_DAC(s, ch[3], array(squarewave(8000, 0, 0, level[1], dt=0.4, clock_multiples=1)))
             
             alloff(s, action=['Set',0])
