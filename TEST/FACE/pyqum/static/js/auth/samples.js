@@ -1,5 +1,6 @@
 //when page is loading:
 $(document).ready(function(){
+    // Previous select-values: 
     var mainsample = $('select.samples[name="main"]').val();
     // console.log("Main: " + mainsample);
     var sharedsample = $('select.samples[name="shared"]').val();

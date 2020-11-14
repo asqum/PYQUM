@@ -16,6 +16,7 @@ function acquire_play(callback) {
         window.recordsum = data.recordsPerBuff*data.buffersPerAcq
         $('input.alzdg.settings[name="recordtime-scale"]').val(data.datalen);
         $('input.alzdg.settings[name="recordsum-scale"]').val(recordsum);
+        $('select.alzdg.data.handling').val("select");
         
         $('div#alzdg-playdata-settings').show();
         $( "i.alzdg" ).remove(); //clear processing animation

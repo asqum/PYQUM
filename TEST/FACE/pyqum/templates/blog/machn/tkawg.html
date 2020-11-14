@@ -52,6 +52,7 @@
                     <div class="col-20" id='left'>
                         <div class='tkawg' id="tkawg-model"></div>
                     </div>
+
                     
                 </div>
 
@@ -59,14 +60,7 @@
                     <div class="col-12" id='left'><label class='parameter'>Clock Rate</label></div>
                     <div class="col-12" id='left'><input class="tkawg scale settings clockfreq" type="text" value=""/></div>
                     <div class="col-10" id='left'><input class="tkawg unit settings clockfreq" value=""/></div>
-                    <!-- All-Off -->
-                    <div class="col-15" id='right'>
-                        <button class='tkawg push_button w-95 red' id='tkawg-alloff'>ALL OFF</button>
-                    </div>
-                    <!-- Clear Waveform -->
-                    <div class="col-15" id='right'>
-                        <button class='tkawg push_button w-95 red' id='tkawg-clearall'>CLEAR ALL</button>
-                    </div>
+                    
                 </div>
                 
             </form>
@@ -77,20 +71,81 @@
     <div class="tkawgcontent setchannels">
         <div class="container">
             <form method='GET'>
-                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                    <div class="col-12" id='left'><label class='parameter'>Amplitude</label></div>
-                    <div class="col-12" id='left'><input class="tkawg scale setchannels source-amplitude" type="text" value=""/></div>
-                    <div class="col-10" id='left'><input class="tkawg unit setchannels source-amplitude" value=""/></div>
-                    <div class="col-3" id='left'></div>
-                    <div class="col-12" id='left'><label class='parameter'>Offset</label></div>
-                    <div class="col-12" id='left'><input class="tkawg scale setchannels source-offset" type="text" value=""/></div>
-                    <div class="col-10" id='left'><input class="tkawg unit setchannels source-offset" value=""/></div>
+                <!-- Channel Status -->
+                <div class="row">
+                    <div class="col-12" id='left'><label class='parameter'>Status</label></div>
+                    <div class="col-49" id='left'>
+                        <div class='tkawg' id="tkawg-chstatus"></div>
+                    </div>
+
+                    <!-- PLAY -->
+                    <div class="col-10" id='right'><button class='tkawg push_button w-95 green' id='tkawg-play'>PLAY</button></div>
+                    <!-- STOP -->
+                    <div class="col-10" id='right'><button class='tkawg push_button w-95 red' id='tkawg-stop'>STOP</button></div>
                 </div>
 
-                
+                <!-- Pulse Width, Height * Max-level - Offset -->
+                <div class="row">
+                    <div class="col-12" id='left'><label class='parameter'>Pulse Width</label></div>
+                    <div class="col-7" id='left'>
+                        <input style="color:blue;" class="tkawg scale setchannels pulse-width" type="number" value='100'/>
+                    </div>
+                    <div class="col-3" id='left'><input class="tkawg unit setchannels pulse-width" value="ns"/></div>
+
+                    <div class="col-8" id='left'><label class='parameter'>Height</label></div>
+                    <div class="col-7" id='left'>
+                        <input style="color:blue;" class="tkawg scale setchannels pulse-height" type="number" value=0.53 min=0 max=1 step=0.05/>
+                    </div>
+                    <div class="col-8" id='left'><input class="tkawg scale setchannels source-amplitude" type="number" value=750 min=0 max=750/></div>
+                    <div class="col-7" id='left'><input class="tkawg unit setchannels source-amplitude" value=""/></div>
+                    
+                    <div class="col-8" id='left'><label class='parameter'>Offset</label></div>
+                    <div class="col-7" id='left'><input class="tkawg scale setchannels source-offset" type="text" value=""/></div>
+                    <div class="col-3" id='left'><input class="tkawg unit setchannels source-offset" value=""/></div>
+                    
+                    <!-- Clear Waveform -->
+                    <div class="col-10" id='right'><button class='tkawg push_button w-95 red' id='tkawg-clearall'>CLEAR MEM</button></div>
+                    <!-- All-Off -->
+                    <div class="col-10" id='right'><button class='tkawg push_button w-95 red' id='tkawg-alloff'>ALL OFF</button></div>
+                </div>
+
+                <!-- Shapes -->
+                <div class="row">
+                    <!-- Output state for each channel -->
+                    <div class="col-12" id='left'>
+                        <label class="switch"><input class='tkawg setchannels output' type="checkbox">
+                            <div class="slider smooth"><span class="on">ON</span><span class="off">OFF</span></div>
+                        </label>
+                    </div>
+                    <div class="col-6" id='left'><input class="tkawg shapes setchannels" type="submit" value="FLAT"/></div>
+                    <div class="col-6" id='left'><input class="tkawg shapes setchannels" type="submit" value="GAUSS UP"/></div>
+                    <div class="col-6" id='left'><input class="tkawg shapes setchannels" type="submit" value="GAUSS DN"/></div>
+
+                </div>
+                    
+                <!-- Score -->
+                <div class="row">
+                    <!-- SET CHANNEL -->
+                    <div class="col-12" id='left'><button class='tkawg push_button w-95 blue' id='tkawg-score'>SCORE</button></div>
+                    <div class="col-60" id='left'>
+                        <textarea class='tkawg score setchannels' type="text" rows="3" cols="73" style="color:blue;"></textarea>
+                    </div>
+
+                    <!-- Initiate Score starting with Pulse Period -->
+                    <div class="col-20" id='right'>
+                        <div class="row">
+                            <input class="tkawg initscore" type="submit" value="INIT SCORE W/ PERIOD"/>
+                        </div>
+                        <div class="row">
+                            <div class="col-66" id='left'><input style="color:blue;" class="tkawg scale setchannels pulse-period" type="number" value='8000'/></div>
+                            <div class="col-25" id='left'><input style="color:blue;" class="tkawg unit setchannels pulse-period" value="ns"/></div>
+                        </div>
+                    </div>
+                </div>
                 
 
-                
+                <div id="tkawg-IQAP-chart"></div>
+
             </form>
         </div>
     </div>

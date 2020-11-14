@@ -1,16 +1,30 @@
 //when page is loading:
 $(document).ready(function(){
-    // $('div.all.good').hide()
-    // setInterval(digitalclock, 1000);
+    updatemachlist();
 });
 
 function digitalclock(){
     $('div.all.clock').empty();
     $('div.all.clock').append($('<h4 style="background-color: yellow;"></h4>').text(Date($.now())));   
-}
+};
+
+function updatemachlist() {
+    var statecolor = ['green', 'red'];
+    $('table.mach tbody.all.machine-update').empty();
+    $.getJSON('/mach/all/machine', { }, function (data) {
+        $.each(data.machlist, function(i,val) {
+            $('table.mach tbody.all.machine-update').append('<tr></tr>')
+                                                    .append('<td>' + val.codename + '</td><td style="background-color: ' + 
+                                                    statecolor[parseInt(val.connected)] + ';"> </td><td>' + val.username + 
+                                                    '</td><td><button class="push_button w-95 blue"></button></td>');
+        });
+    });
+};
 
 
-
-// PENDING: use SQL-database instead to do search status
-
+$('button.mach.all.machine-update').click(function() {
+    updatemachlist();
+    console.log('Machine list updated!');
+    return false;
+})
 

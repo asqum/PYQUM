@@ -1,55 +1,61 @@
 # Aim to compose a lyric for Qubit
 
-from numpy import linspace
+from math import trunc
+from numpy import linspace, power, exp, array, zeros
 
-def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8, clock_multiples=8, Ramsey_delay=0, Hahn_echo='off', ringup=0):
-    '''TO BE DEPRECATED ONCE IT HAS BEEN FULLY REPLACED BY PULSER
+class pulser:
     '''
-    totalpoints = int(clock_multiples*trunc(totaltime / dt / clock_multiples)) + int(bool((totaltime / dt)%clock_multiples))*clock_multiples # keep total-points to be the multiples of clock_multiples of specific instruments
-    delaypoints = round(delay / dt)
-    onpoints = round(ontime / dt)
-
-    if Ramsey_delay==0: # normal pulse sequence
-        offpoints = totalpoints - delaypoints - onpoints
-        wave = [offset]*delaypoints + [scale]*onpoints + [offset]*offpoints
-    elif Ramsey_delay>0:
-        Ramsey_points = round(Ramsey_delay / dt)
-        offpoints = totalpoints - delaypoints - 2*onpoints - Ramsey_points
-        wave = [offset]*delaypoints + [scale]*onpoints + [offset]*Ramsey_points + [scale]*onpoints + [offset]*offpoints
-    else:
-        wave = []
-        print("Invalid Ramsey!")
-
-    return wave
-# Next generation of Pulse Assembly:
-def pulser(totaltime, ontime, delay, scale=1, offset=0, dt=0.8, clock_multiples=8, Ramsey_delay=0, Hahn_echo='off', ringup=0, shape='Gaussian'):
-    '''time-unit: ns
-        totaltime: total duration (minimum: 1000*0.8ns ~ 1us)
-        ontime: +1V duration
-        delay: duration before ontime
-        scale: -1 to 1 output level in V
-        offset: to eliminate LO leakage
-        dt: time-resolution of AWG in ns
+    Next generation of Pulse Assembly:\n
+    All time-units in ns\n
+    dt: time-resolution of AWG in ns\n
+    clock_multiples: depends on AWG model, waveform must consist of certain multiple of points\n
+    score: analogous to music score, basically a set of syntatical instructions to build the "music": \n
+            "ns=<totaltime>; <shape>/<param#1>/.../<param#n>, pulse-width, pulse-height; ... ..."
+    NOTE: implement delay as one of the beats for the sake of simplicity, instead of seperated parameter. (Ex: to delay 100ns, write: "flat,100,0")
     '''
-    totalpoints = int(clock_multiples*trunc(totaltime / dt / clock_multiples)) + int(bool((totaltime / dt)%clock_multiples))*clock_multiples # keep total-points to be the multiples of clock_multiples of specific instruments
-    delaypoints = round(delay / dt)
-    onpoints = round(ontime / dt)
+    def __init__(self, dt=0.8, clock_multiples=8, 
+                score='Gaussup/6,100,1; Flat,100,1; Gaussdn/6,100,1; Pause,300,1; Gaussup/6,100,1; Flat,100,1; Gaussdn/6,100,1;'):
+        self.dt = dt
+        self.score = score.replace(" ","").replace("\n","").lower() # get rid of multiple spacings and lower the cases
+        self.totaltime = float(self.score.split(";")[0].split('ns=')[1])
+        self.totalpoints = int(clock_multiples*trunc(self.totaltime / dt / clock_multiples)) + int(bool((self.totaltime / dt)%clock_multiples))*clock_multiples
+        self.beatime, self.music = 0, zeros([self.totalpoints])
+        self.timeline = linspace(0, self.totaltime, self.totalpoints)
 
-    if shape == 'Square':
-        pulsing = [scale]*onpoints
-    elif shape == 'Gaussian':
-        sigma = ontime / 6
-        pulsing = list(scale * exp(-power((linspace(0, ontime, onpoints) - ontime/2), 2) / 2 / (sigma**2)))
+    def song(self):
+        '''
+        compose the song based on the score given
+        '''
+        for beat in self.score.split(";")[1:]:
+            if beat == '': break # for the last semicolon
 
-    if Ramsey_delay==0: # normal pulse sequence
-        offpoints = totalpoints - delaypoints - onpoints
-        wave = [offset]*delaypoints + pulsing + [offset]*offpoints
-    elif Ramsey_delay>0:
-        Ramsey_points = round(Ramsey_delay / dt)
-        offpoints = totalpoints - delaypoints - 2*onpoints - Ramsey_points
-        wave = [offset]*delaypoints + pulsing + [offset]*Ramsey_points + pulsing + [offset]*offpoints
-    else:
-        wave = []
-        print("Invalid Ramsey!")
+            pulsewidth = float(beat.split(',')[1])
+            pulseheight = float(beat.split(',')[2])
+            self.beatime += pulsewidth
+            duration = range(round(self.beatime/self.dt) - round(pulsewidth/self.dt), round(self.beatime/self.dt))
 
-    return wave
+            # Shapes of Tones:
+            if beat.split(',')[0].split('/')[0] == 'flat':
+                self.music[duration] = pulseheight
+                
+            elif beat.split(',')[0].split('/')[0] == 'gaussup':
+                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
+                else: sfactor = float(beat.split(',')[0].split('/')[1])
+                sigma = pulsewidth / sfactor
+                self.music[duration] = pulseheight * exp(-power((linspace(0, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth), 2) / 2 / (sigma**2))
+
+            elif beat.split(',')[0].split('/')[0] == 'gaussdn':
+                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
+                else: sfactor = float(beat.split(',')[0].split('/')[1])
+                sigma = pulsewidth / sfactor
+                self.music[duration] = pulseheight * exp(-power((linspace(pulsewidth, 0, round(pulsewidth/self.dt)) - pulsewidth), 2) / 2 / (sigma**2))
+
+            else: pass
+
+        return
+
+
+# test
+# abc = pulser(dt=0.4, clock_multiples=1, score='NS=10; Flat/,2,0;Gaussup/,4,0.5;gA uss dn/,4,0.5;')
+# abc.song()
+# print("%sns music:\n%s" %(abc.totaltime, abc.music))

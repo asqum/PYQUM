@@ -2,8 +2,7 @@
 
 import logging
 from time import sleep
-from math import trunc
-from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul, transpose, ones, power, exp
+from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul, transpose, ones
 
 def cdatasearch(Order, Structure):
     ''' Give the address of the data essentially!
@@ -75,7 +74,7 @@ class waveform:
             self.command = self.command.replace("to ","to")
         
         command = self.command.split(" ") + [""]
-        # 1. building function generator:
+        # 1. building function generator: (Still PENDING, Refer 'composer')
         if command[0].lower() == "fx":
             pass
         # 2. building string list:

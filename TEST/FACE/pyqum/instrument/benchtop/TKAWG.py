@@ -11,7 +11,7 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 from numpy import array
 import array as arr
 
-from pyqum.instrument.composer import squarewave, pulser
+from pyqum.instrument.composer import pulser
 from time import sleep
 debugger = debug(mdlname)
 
@@ -266,45 +266,56 @@ def test(bench, detail=True):
             model(s)
             clock(s)
             waveformlist(s)
-            waveformpick(s, action=['Get','0'])
+            # waveformpick(s, action=['Get','0'])
 
             # To be put in directives:
-            level = [0.35, 0.5]
             ch = [1,2,3,4]
-            clock(s, action=['Set', 'EFIXed', 2.5e9])
+            # clock(s, action=['Set', 'EFIXed', 2.5e9])
             clear_waveform(s,'all')
             alloff(s, action=['Set',1])
 
+            dt = 0.4
+            wavelength = 20000 # points
             # Prepare all channels:
             for i in range(4):
-                prepare_DAC(s, ch[i], 20000)
-            # Compose each waveforms into respective channels:
-            compose_DAC(s, ch[0], array(pulser(8000, 300, 0, level[0], dt=0.4, clock_multiples=1, Ramsey_delay=0)), 1, 200)
-            compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level[0], dt=0.4, clock_multiples=1)))
-            compose_DAC(s, ch[2], array(pulser(8000, 100, 0, level[1], dt=0.4, clock_multiples=1)), 1, 200)
-            compose_DAC(s, ch[3], array(squarewave(8000, 0, 0, level[1], dt=0.4, clock_multiples=1)))
+                prepare_DAC(s, ch[i], wavelength)
+
+            # Compose songs for each channel:
+            song1 = pulser(dt, 1, score='ns=%s;GAUSS UP/,250,0.3;GAUSS DN/,250,0.3;'%(wavelength*dt))
+            song1.song()
+            song2 = pulser(dt, 1, score='ns=%s;Flat,0,0'%(wavelength*dt))
+            song2.song()
+            song3 = pulser(dt, 1, score='ns=%s;Flat,800,0.5'%(wavelength*dt))
+            song3.song()
+            song4 = pulser(dt, 1, score='ns=%s;Flat,0,0'%(wavelength*dt))
+            song4.song()
+
+            # Inject each song into respective channels:
+            compose_DAC(s, ch[0], song1.music, 1, 200)
+            compose_DAC(s, ch[1], song2.music)
+            compose_DAC(s, ch[2], song3.music, 1, 200)
+            compose_DAC(s, ch[3], song4.music)
             
             alloff(s, action=['Set',0])
             ready(s)
             print("Play: %s" %str(play(s)))
 
             # Changing waveform on the fly:
-            # sleep(7)
-            # compose_DAC(s, ch[0], array(squarewave(8000, 2000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
-            # sleep(7)
-            # compose_DAC(s, ch[0], array(squarewave(8000, 3000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
-            # sleep(7)
-            # compose_DAC(s, ch[0], array(squarewave(8000, 5000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
+            sleep(3)
+            song1 = pulser(dt, 1, score='ns=%s;GAUSS UP/,350,0.3;GAUSS DN/,350,0.3;'%(wavelength*dt))
+            song1.song()
+            compose_DAC(s, ch[0], song1.music, 1, 200)
+            sleep(3)
+            song1 = pulser(dt, 1, score='ns=%s;GAUSS UP/,200,0.3;Flat,300,0.3;GAUSS DN/,200,0.3;'%(wavelength*dt))
+            song1.song()
+            compose_DAC(s, ch[0], song1.music, 1, 200)
 
-            ch = 3
-            runmode(s, ch)
-            output(s, ch)
-            sourcelevel(s, ch)
-            sourceresolution(s, ch)
-            runstate(s)
+            # ch = 3
+            # runmode(s, ch)
+            # output(s, ch)
+            # sourcelevel(s, ch)
+            # sourceresolution(s, ch)
+            # runstate(s)
 
         else: print(Fore.RED + "Basic IO Test")
     # if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):

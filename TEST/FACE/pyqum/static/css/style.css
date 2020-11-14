@@ -365,6 +365,9 @@ select:focus option:checked {
 .col-60 {
     padding: inherit; width: 60%;
 }
+.col-66 {
+    padding: inherit; width: 66%;
+}
 .col-75 {
     padding: inherit; width: 75%;
 }
@@ -373,6 +376,9 @@ select:focus option:checked {
 }
 .col-88 {
     padding: inherit; width: 88%;
+}
+.col-97 {
+    padding: inherit; width: 97%;
 }
 
 /* Clear floats after the columns */

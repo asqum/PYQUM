@@ -38,7 +38,7 @@
     background-color: #3d3d3d;
 }
 /* for pulsed measurement (Rare & Developing variety) */
-.tab button.pulse-rf {
+.tab button.pulse-rf, .tab button.diagnostic {
     background-color: #111111;
 }
 .tab button:hover {

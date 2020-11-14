@@ -1,20 +1,24 @@
 function qumqueue() {
-    $('p.all-qumuser#list').empty();
     $('button.all-qumuser').hide();
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/measurequm', {
     }, function (data) {
         console.log(data.loginuser);
         console.log(data.CHAR0_queue);
-        console.log(data.CHAR0_queue.indexOf(data.loginuser));
-        if (data.CHAR0_queue.indexOf(data.loginuser) === -1 || data.CHAR0_queue.length === 0) {
+        var CHAR0_queue_userlist = [];
+        $('table.mssn tbody.all.mssn-queue-update').empty();
+        $.each(data.CHAR0_queue, function(i,val){
+            CHAR0_queue_userlist.push(val.username);
+            $('table.mssn tbody.all.mssn-queue-update').append('<tr></tr>')
+                                                    .append('<td>' + val.task + '</td><td>' + val.startime + '</td><td>' + val.samplename +
+                                                    '</td><td>' + val.location + '</td><td>' + val.username + '</td><td>' + val.instrument + 
+                                                    '</td><td><button class="all-char-0 push_button w-95 red">YIELD</button></td>');
+        });
+        console.log(CHAR0_queue_userlist.indexOf(data.loginuser));
+        if (CHAR0_queue_userlist.indexOf(data.loginuser) === -1 || CHAR0_queue_userlist.length === 0) {
             $('div > button.all-qumuser#dive').show();
         } else {
             $('div > button.all-qumuser#yield').show();
         };
-        $.each(data.CHAR0_queue, function(i,v){
-            console.log('i: ' + i + ', v: ' + v);
-            $('p.all-qumuser#list').append("<h3 class='body'>" + v + "</h3>");
-        });
     });
     return false;
 };

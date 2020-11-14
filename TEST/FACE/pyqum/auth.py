@@ -1,3 +1,5 @@
+'''For Arrangements of Authorizations & Clearances'''
+
 # Loading Basics
 from colorama import init, Back, Fore
 init(autoreset=True) #to convert termcolor to wins color
@@ -34,7 +36,7 @@ def load_logged_in_user():
     """
     If a user id is stored in the session, load the user object from
     the database into ``g.user``.
-    This will be executed everytime a route (app-instance) is called upon!
+    This will be executed EVERYTIME a ROUTE (app-instance) is called upon!
     """
     user_id = session.get('user_id')
     if user_id is None:
@@ -65,35 +67,48 @@ def load_logged_in_user():
         ).fetchall()
         g.cosamples = [dict(x) for x in g.cosamples]
 
-        # ALL approved users' clearances:
-        g.userlist = get_db().execute(
-            'SELECT u.id, username, measurement, instrument, analysis'
-            ' FROM user u WHERE u.status = ?'
-            ' ORDER BY id DESC',
-            ('approved',)
-        ).fetchall()
-        g.userlist = [dict(x) for x in g.userlist]
-        # print("USER CREDENTIALS: %s" %g.userlist)
-
-        # Certain clearances required for queue-list access:
+        # Provide user's clearances for each Queue (CHAR0, QPC0):
         if g.user['instrument'] and g.user['measurement']:
-            # Queue list:
+            
+            # NOTE: Queue CHAR0:
             g.CHAR0_queue = get_db().execute(
-                'SELECT u.username, j.task\n' +  
-                    'FROM user u\n' + 
-                    'INNER JOIN job j ON j.user_id = u.id\n' +
-                    'INNER JOIN CHAR0 c ON c.job_id = j.id\n' + 
-                    'ORDER BY c.id ASC'
+                '''
+                SELECT j.task, j.startime, s.samplename, s.location, u.username, j.instrument
+                FROM user u
+                INNER JOIN CHAR0 c ON c.job_id = j.id
+                INNER JOIN job j ON j.user_id = u.id
+                INNER JOIN sample s ON s.id = j.sample_id
+                ORDER BY c.id ASC
+                '''
             ).fetchall()
             g.CHAR0_queue = [dict(x) for x in g.CHAR0_queue]
-            g.CHAR0_queue = [x['username'] for x in g.CHAR0_queue]
-            # g.CHAR0_queue = ['abc'] #bypass before queue system is up
-            # Only first in line is allowed to run the measurement:
             try:
-                session['run_clearance'] = bool(g.CHAR0_queue[0] == g.user['username'])
-            except(IndexError):
-                session['run_clearance'] = False
-            # print(g.CHAR0_queue)
+                # Only FIRST in line for that queue is allowed to run the measurement:
+                session['run_CHAR0'] = bool( g.CHAR0_queue[0]['username']==g.user['username'] and 
+                                                g.CHAR0_queue[0]['samplename']==get_status("MSSN")[session['user_name']]['sample'] )
+            except(IndexError, KeyError):
+                session['run_CHAR0'] = False
+            # print(Fore.BLACK + Back.WHITE + "Clearance for CHAR0: %s"%session['run_CHAR0'])
+
+            # NOTE: Queue QPC0:
+            g.QPC0_queue = get_db().execute(
+                '''
+                SELECT j.task, j.startime, s.samplename, s.location, u.username, j.instrument
+                FROM user u
+                INNER JOIN QPC0 c ON c.job_id = j.id
+                INNER JOIN job j ON j.user_id = u.id
+                INNER JOIN sample s ON j.sample_id = s.id
+                ORDER BY c.id ASC
+                '''
+            ).fetchall()
+            g.QPC0_queue = [dict(x) for x in g.QPC0_queue]
+            try:
+                # Only FIRST in line for that queue is allowed to run the measurement:
+                session['run_QPC0'] = bool( g.QPC0_queue[0]['username']==g.user['username'] and 
+                                                g.QPC0_queue[0]['samplename']==get_status("MSSN")[session['user_name']]['sample'] )
+            except(IndexError, KeyError):
+                session['run_QPC0'] = False
+            # print(Fore.BLACK + Back.WHITE + "Clearance for QPC0: %s"%session['run_QPC0'])
 
 
 @bp.route('/register', methods=('GET', 'POST'))
@@ -152,6 +167,7 @@ def login():
         elif user['status'].upper() != 'APPROVED':
             error = 'Awaiting Approval...'
 
+        # Entering the system after being vetted:
         if error is None:
             # store the user's credentials in a new SESSION (Cookies) and return to the index
             session.clear()
@@ -169,6 +185,18 @@ def login():
             session['people'] = None
             print("%s has logged-in Successfully!" %session['user_name'] )
             return redirect(url_for('index'))
+
+            g.userlist = None
+            if user['management'] == "oversee":
+                # ALL approved users' credentials:
+                g.userlist = get_db().execute(
+                    'SELECT u.id, username, measurement, instrument, analysis'
+                    ' FROM user u WHERE u.status = ?'
+                    ' ORDER BY id DESC',
+                    ('approved',)
+                ).fetchall()
+                g.userlist = [dict(x) for x in g.userlist]
+            print(Fore.RED + Back.WHITE + "USER CREDENTIALS: %s" %g.userlist)
 
         print(error)
         flash(error)
@@ -288,7 +316,11 @@ def usersamples_update():
     return jsonify(message=message)
 @bp.route('/user/samples/meal', methods=['GET'])
 def usersamples_meal():
+    '''Double Log which USER is using which SAMPLE:'''
     sname = request.args.get('sname')
+    # SESSION (Cookies):
+    session['user_current_sample'] = sname
+    # JSON:
     set_status("MSSN", {session['user_name']: dict(sample=sname)})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 

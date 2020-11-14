@@ -32,20 +32,25 @@
 {% if g.user %}
 <div class="tab">
   <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button>
+
+  <!-- Support: Dilution Refrigerator -->
   <button class="tablinks support" id="bdr-tab" onclick="openTab(event, 'bdr')">BDR</button>
-  <!-- DC Source-->
+  <!-- Support: DC Source-->
   <button class="tablinks support" id="dc-tab" onclick="openTab(event, 'dc')">DC</button>
-  <!-- Network Analyzer -->
+
+  <!-- Continuous: Network Analyzer -->
   <button class="tablinks continuous-rf" id="na-tab"  onclick="openTab(event, 'na')"> NA </button>
-  <!-- Signal Generators -->
+  <!-- Continuous: Signal Generators -->
   <button class="tablinks continuous-rf" id="sg-tab"  onclick="openTab(event, 'sg')"> SG </button>
-  <!-- Tektronix AWG -->
+
+  <!-- Pulse: Tektronix AWG -->
   <button class="tablinks pulse-rf" id="tkawg-tab" onclick="openTab(event, 'tkawg')">TKAWG</button>
-  <!-- PXI Temporal Dynamic Instruments -->
-  <!-- <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
-  <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button> -->
-  <!-- AlazarTech DIG -->
+  <!-- Pulse: AlazarTech DIG -->
   <button class="tablinks pulse-rf" id="alzdg-tab" onclick="openTab(event, 'alzdg')">ALZDG</button>
+  
+  
+  <!-- Diagnostic: Spectrum Analyzer -->
+  <button class="tablinks diagnostic" id="sa-tab" onclick="openTab(event, 'sa')">SA</button>
 </div>
 
 <div id="all" class="tabcontent"></div>

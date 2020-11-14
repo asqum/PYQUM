@@ -18,7 +18,7 @@ from pyqum.instrument.benchtop import ENA, YOKO
 from pyqum.instrument.logger import settings, clocker, get_status, set_status, status_code
 from pyqum.instrument.analyzer import curve, IQAP, UnwraPhase, IQAParray
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from pyqum.instrument.composer import squarewave, pulser
+from pyqum.instrument.composer import pulser
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"

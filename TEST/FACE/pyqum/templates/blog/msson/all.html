@@ -32,17 +32,56 @@
     </div>
 
     <div class="row">
-        <div class="col-75" id='left'>
-            <p class='all-qumuser' id="list"></p>
-        </div>
+        <select class='all mssn queue'>
+            <option value='CHAR0'>CHAR-0</option>
+            <option value='QPC0'>QPC-0</option>
+        </select>
     </div>
-
+    <div class="row">
+        <table class="mssn content-table">
+            <thead>
+            <tr>
+                <th>Task</th>
+                <th>Since</th>
+                <th>Sample</th> 
+                <th>Wiring</th>
+                <th>User</th>
+                <th>Instrument</th>
+                <th>Action</th>   
+            </tr>
+            </thead>
+            <tbody class="all mssn-queue-update"></tbody>
+        </table>
+    </div>
     <div class="row">
         <div class="col-10" id='left'>
             <button class="all-qumuser push_button w-95 green" id="dive">DIVE</button>
             <button class="all-qumuser push_button w-95 red" id="yield">YIELD</button>
         </div>
         <div class="col-10" id='left'></div>
+    </div>
+
+    <div class="row">
+        <select class='all mssn job'>
+            <!-- Display Latest 10 Jobs -->
+            <option value=0>--select--</option>
+        </select>
+    </div>
+    <div class="row">
+        <table class="mssn content-table">
+            <thead>
+            <tr>
+                <th>Task</th>
+                <th>Since</th>
+                <th>Sample</th> 
+                <th>Wiring</th>
+                <th>User</th>
+                <th>Instrument</th>
+                <th>Action</th>   
+            </tr>
+            </thead>
+            <tbody class="all mssn-job-update"></tbody>
+        </table>
     </div>
 {% endif %}
 

@@ -24,6 +24,7 @@ from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
 from pyqum.instrument.toolbox import match, waveform, pauselog
 from pyqum.instrument.analyzer import IQAParray
+from pyqum.instrument.composer import pulser
 
 encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
@@ -42,12 +43,24 @@ def show():
 		return render_template("blog/machn/machine.html")
 	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
-# region: ALL
+# region: ALL (for Machine Overview)
 @bp.route('/all', methods=['POST', 'GET'])
 def all(): 
-	# Test Bed # All Task # Great Work
 	current_usr = session['user_name']
 	return render_template("blog/machn/all.html", current_usr=current_usr)
+@bp.route('/all/machine', methods=['GET'])
+def allmachine():
+	g.machlist = get_db().execute(
+		'''
+		SELECT m.codename, connected, u.username
+		FROM machine m
+		INNER JOIN user u ON m.user_id = u.id
+		ORDER BY m.id DESC
+		'''
+	).fetchall()
+	g.machlist = [dict(x) for x in g.machlist]
+	# print("machine list:\n%s"%g.machlist)
+	return jsonify(machlist=g.machlist)
 @bp.route('/all/mxc', methods=['GET'])
 def allmxc():
 	dr = bluefors()
@@ -229,8 +242,34 @@ def tkawggetchannels():
 	Channel = request.args.get('Channel')
 	level = TKAWG.sourcelevel(tkawgbench[tkawgtag], Channel)[1]
 	message = {}
-	message['source-amplitude'], message['source-offset'] = si_format(float(level['AMPLITUDE']), precision=3) + "V", si_format(float(level['OFFSET']), precision=3) + "V"
+	message['source-amplitude'], message['source-offset'] = si_format(float(level['AMPLITUDE']), precision=3) + "Vpp", si_format(float(level['OFFSET']), precision=3) + "V"
+	message['chstate'] = int(TKAWG.output(tkawgbench[tkawgtag], Channel)[1]['STATE'])
+	try: message['score'] = get_status(tkawglabel.split('-')[0], tkawglabel.split('-')[1])['SCORE-%s'%Channel]
+	except(KeyError): message['score'] = 'ns=8000;\n' # default score
 	return jsonify(message=message)
+@bp.route('/tkawg/set/channels', methods=['GET'])
+def tkawgsetchannels():
+	tkawglabel = request.args.get('tkawglabel')
+	tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
+	Channel = int(request.args.get('Channel'))
+	score = request.args.get('score')
+	maxlevel = si_parse(request.args.get('maxlvl') + request.args.get('maxlvlunit')[0])
+	set_status(tkawglabel.split('-')[0], {'SCORE-%s'%Channel: score}, tkawglabel.split('-')[1])
+	dt = round(1/float(TKAWG.clock(tkawgbench[tkawgtag])[1]['SRATe'])/1e-9, 2)
+	pulseq = pulser(dt=dt, clock_multiples=1, score=score)
+	pulseq.song()
+	TKAWG.prepare_DAC(tkawgbench[tkawgtag], Channel, pulseq.totalpoints, maxlevel)
+	TKAWG.compose_DAC(tkawgbench[tkawgtag], Channel, pulseq.music, 1, 200)
+	# TKAWG.compose_DAC(tkawgbench[tkawgtag], 1, pulser(8000, 0, dt=0.4, clock_multiples=1, score='GAUSS UP/,600,0.37;GAUSS DN/,600,0.37;'), 1, 200)
+	return jsonify(music=list(pulseq.music), timeline=list(pulseq.timeline))
+@bp.route('/tkawg/output/channels', methods=['GET'])
+def tkawgoutputchannels():
+	tkawglabel = request.args.get('tkawglabel')
+	tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
+	Channel = int(request.args.get('Channel'))
+	state = request.args.get('state')
+	status = TKAWG.output(tkawgbench[tkawgtag], Channel, action=['Set',state])
+	return jsonify(status=status)
 @bp.route('/tkawg/get', methods=['GET'])
 def tkawgget():
 	tkawglabel = request.args.get('tkawglabel')
@@ -239,10 +278,27 @@ def tkawgget():
 	try:
 		message['clockfreq'] = si_format(float(TKAWG.clock(tkawgbench[tkawgtag])[1]['SRATe']),precision=3) + "S/s" # clock-frequency
 		message['model'] = TKAWG.model(tkawgbench[tkawgtag])[1]['IDN']
+		message['runstate'] = int(TKAWG.runstate(tkawgbench[tkawgtag])[1]['RSTATE'])
+		try: message['wlist'] = [x.split('-')[1] for x in TKAWG.waveformlist(tkawgbench[tkawgtag])[1]['LIST'].replace('\"','').split(',')]
+		except(IndexError): message['wlist'] = []
 	except:
 		message = dict(status='%s is not connected or busy or error' %tkawglabel)
 	print("message: %s" %message)
 	return jsonify(message=message)
+@bp.route('/tkawg/play', methods=['GET'])
+def tkawgplay():
+	tkawglabel = request.args.get('tkawglabel')
+	tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
+	TKAWG.alloff(tkawgbench[tkawgtag], action=['Set',0])
+	TKAWG.ready(tkawgbench[tkawgtag])
+	status = TKAWG.play(tkawgbench[tkawgtag])
+	return jsonify(status=status)
+@bp.route('/tkawg/stop', methods=['GET'])
+def tkawgstop():
+	tkawglabel = request.args.get('tkawglabel')
+	tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
+	status = TKAWG.stop(tkawgbench[tkawgtag])
+	return jsonify(status=status)
 # endregion
 
 # region: ALZDG (user-specific)
@@ -319,7 +375,8 @@ def alzdgplaydata():
 	trace_A = sqrt(power(trace_I, 2) + power(trace_Q, 2))
 	t = t_data[alzdgtag]
 	# print(Fore.CYAN + "plotting trace #%s"%tracenum)
-	return jsonify(I=list(trace_I.astype(float64)), Q=list(trace_Q.astype(float64)), A=list(trace_A.astype(float64)), t=t) # JSON only supports float64 conversion (to str-list eventually)
+	log = pauselog() #disable logging (NOT applicable on Apache)
+	return jsonify(log=str(log), I=list(trace_I.astype(float64)), Q=list(trace_Q.astype(float64)), A=list(trace_A.astype(float64)), t=t) # JSON only supports float64 conversion (to str-list eventually)
 @bp.route('/alzdg/closet', methods=['GET'])
 def alzdgcloset():
 	alzdglabel = request.args.get('alzdglabel')
