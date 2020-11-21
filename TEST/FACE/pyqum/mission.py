@@ -12,10 +12,11 @@ from werkzeug.security import check_password_hash
 from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64
 from time import sleep, strptime, mktime 
 from datetime import timedelta, datetime
+from random import random
 
 from pyqum import get_db
 from pyqum.instrument.dilution import bluefors
-from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, set_csv, clocker, mac_for_ip
+from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
@@ -80,39 +81,74 @@ def show():
 # region: ALL
 @bp.route('/all', methods=['GET'])
 def all(): 
+    # RESET CLEARANCE:
+    session['run_clearance'] = False
     # Security:
-    try: queue = g.CHAR0_queue
+    try: 
+        lisqueue('QPC0')
+        queues = g.Queue
     except: 
+        # raise
         print("User %s has no Queue Privilege")
         abort(404)
     return render_template("blog/msson/all.html")
-@bp.route('/all/measurequm', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
-def all_measurequm():
+@bp.route('/all/job', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
+def all_job():
+    queue = request.args.get('queue')
+    try: missioname = get_db().execute( "SELECT mission FROM queue WHERE system = ?", (queue,) ).fetchone()['mission']
+    except: missioname = None
+    # print("mission: %s" %missioname)
+    owner, username, samplename = session['people'], session['user_name'], get_status("MSSN")[session['user_name']]['sample']
+    
+    maxlist = 8
+    joblist = lisjob(username, samplename, queue, maxlist) # job is listed with login-user
+    for j in joblist:
+        try:
+            meas = measurement(mission=missioname, task=j['task'], owner=owner, sample=samplename) # but data is stored according to the owner of the sample
+            meas.selectday(meas.daylist.index(j['dateday']))
+            meas.selectmoment(j['wmoment'])
+            meas.accesstructure()
+            j['progress'] = meas.data_progress
+        except(ValueError): j['progress'] = 0
+        # PENDING: LOG Calculated Progress interactively into SQL-Database for fast retrieval
+
     # Security:
-    try: print("Queue: %s" %g.CHAR0_queue)
+    try: print(Fore.GREEN + "User %s is accessing the jobs" %g.user['username'])
     except: abort(404)
-    return jsonify(CHAR0_queue=g.CHAR0_queue, loginuser=session['user_name'])
-@bp.route('/all/measurequm/in', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
-def all_measurequm_in():
+    return jsonify(loginuser=session['user_name'], joblist=joblist, samplename=samplename)
+@bp.route('/all/queue', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
+def all_queue():
+    queue = request.args.get('queue')
+    lisqueue(queue)
+    # Security:
+    try: print("Queue: %s" %g.Queue[queue])
+    except: abort(404)
+    return jsonify(QUEUE=g.Queue[queue], loginuser=session['user_name'])
+# @bp.route('/all/queue/in', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
+# def all_queue_in():
+#     try:
+#         queue = request.args.get('queue')
+#         lisqueue(queue)
+#         Que = g.Queue[queue] #used to check clearance through attribute-error
+
+#         db = get_db()
+#         db.execute('INSERT INTO CHAR0 (job_id) VALUES (?)', (g.user['id'],))
+#         db.commit()
+#         message = ""
+#     except(AttributeError):
+#         print("User %s has no Queue Privilege")
+#         abort(404)
+#     except(IntegrityError): message = "%s may have queued-in already" %session['user_name']
+#     return jsonify(message=message)
+@bp.route('/all/queue/out', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
+def all_queue_out():
     try:
-        queue = g.CHAR0_queue #used to check clearance through attribute-error
-        db = get_db()
-        db.execute('INSERT INTO CHAR0 (job_id) VALUES (?)', (g.user['id'],))
-        db.commit()
-        message = "Queued-in successfully"
-    except(AttributeError):
-        print("User %s has no Queue Privilege")
-        abort(404)
-    except(IntegrityError): message = "%s may have queued-in already" %session['user_name']
-    return jsonify(message=message)
-@bp.route('/all/measurequm/out', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
-def all_measurequm_out():
-    try:
-        queue = g.CHAR0_queue
-        db = get_db()
-        db.execute('DELETE FROM CHAR0 WHERE job_id = ?', (g.user['id'],))
-        db.commit()
-        message = "Queued-out successfully"
+        queue = request.args.get('queue')
+        lisqueue(queue)
+        Que = g.Queue[queue] #used to check clearance through attribute-error
+        
+        JID = request.args.get('JID')
+        message = qout(queue,JID)
     except(AttributeError):
         print("User %s has no Queue Privilege")
         abort(404)
@@ -123,7 +159,7 @@ def all_measurequm_out():
 # region: CHAR:
 @bp.route('/char', methods=['GET'])
 def char(): 
-    print('User %s is allowed to run measurement: %s'%(g.user['username'],session['run_CHAR0']))
+    print('User %s is allowed to run measurement: %s'%(g.user['username'],session['run_clearance']))
     samplename = get_status("MSSN")[session['user_name']]['sample']
     return render_template("blog/msson/char.html", samplename=samplename, people=session['people'])
 # endregion
@@ -146,7 +182,7 @@ def char_fresp_init():
     M_fresp[session['user_name']] = F_Response(session['people']) # Allowing Measurement and Access (Analysis) to be conducted independently
     print(Fore.BLUE + Back.WHITE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
     
-    return jsonify(run_status=run_status, daylist=M_fresp[session['user_name']].daylist, run_permission=session['run_CHAR0'])
+    return jsonify(run_status=run_status, daylist=M_fresp[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
 @bp.route('/char/' + frespcryption + '/time', methods=['GET'])
 def char_fresp_time():
@@ -164,9 +200,9 @@ def char_fresp_settings():
 @bp.route('/char/' + frespcryption + '/new', methods=['GET'])
 def char_fresp_new():
     # Check user's current queue status:
-    if session['run_CHAR0']:
-        set_status("F_Response", dict(pause=False))
-        global Run_fresp # need to be removed in the future for security sake
+    if session['run_clearance']:
+        set_status("F_Response", dict(pause=False)) # PENDING: is this the right place???
+        global Run_fresp, TOKEN # need to be removed in the future for security sake
         Run_fresp = {}
         wday = int(request.args.get('wday'))
         print("wday: %s" %wday)
@@ -178,27 +214,28 @@ def char_fresp_new():
         comment = request.args.get('comment').replace("\"","")
         simulate = bool(int(request.args.get('simulate')))
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
-        Run_fresp['TOKEN'] = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
+        TOKEN = 'TOKEN%s' %random()
+        Run_fresp[TOKEN] = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, testeach=simulate)
         return jsonify(testeach=simulate)
     else: return show()
 # ETA (Estimated Time of Arrival for the WHOLE measurement)
 @bp.route('/char/' + frespcryption + '/eta100', methods=['GET'])
 def char_fresp_eta100():
-    eta_time_100 = sum([a*b for a,b in zip(Run_fresp['TOKEN'].loopcount, Run_fresp['TOKEN'].loop_dur)])
+    eta_time_100 = sum([a*b for a,b in zip(Run_fresp[TOKEN].loopcount, Run_fresp[TOKEN].loop_dur)])
     print(Fore.RED + "ETA: %s" %str(timedelta(seconds=eta_time_100)))
     eta_time_100 = str(timedelta(seconds=eta_time_100)).split('.')[0]
     return jsonify(eta_time_100=eta_time_100)
 # pause the measurement:
 @bp.route('/char/' + frespcryption + '/pause', methods=['GET'])
 def char_fresp_pause():
-    if session['run_CHAR0']: 
+    if session['run_clearance']: 
         set_status("F_Response", dict(pause=True))
         return jsonify(pause=get_status("F_Response")['pause'])
     else: return show()
 # toggle between repeat or not
 @bp.route('/char/' + frespcryption + '/setrepeat', methods=['GET'])
 def char_fresp_setrepeat():
-    if session['run_CHAR0']: 
+    if session['run_clearance']: 
         set_status("F_Response", dict(repeat=bool(int(request.args.get('repeat')))))
         return jsonify(repeat=get_status("F_Response")['repeat'])
     else: return show()
@@ -232,7 +269,9 @@ def char_fresp_access():
     # Measurement time:
     filetime = getmtime(M_fresp[session['user_name']].pqfile) # in seconds
     startmeasure = mktime(strptime(M_fresp[session['user_name']].day + " " + M_fresp[session['user_name']].startime(), "%Y-%m-%d(%a) %H:%M")) # made into seconds
-    measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress))) # flexible eta or completion time
+    
+    if data_progress==0: measureacheta=0
+    else: measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress))) # flexible eta or completion time
 
     try: cfluxbias = waveform(M_fresp[session['user_name']].corder['Flux-Bias'])
     except(KeyError): cfluxbias = waveform('opt,')
@@ -256,7 +295,7 @@ def char_fresp_access():
 # Resume the unfinished measurement
 @bp.route('/char/' + frespcryption + '/resume', methods=['GET'])
 def char_fresp_resume():
-    if session['run_CHAR0']: 
+    if session['run_clearance']: 
         set_status("F_Response", dict(pause=False))
         wday = int(request.args.get('wday'))
         wmoment = int(request.args.get('wmoment'))
@@ -417,7 +456,7 @@ def char_cwsweep_init():
     M_cwsweep[session['user_name']] = CW_Sweep(session['people'])
     print(Fore.BLUE + Back.WHITE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
 
-    return jsonify(run_status=run_status, daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_CHAR0'])
+    return jsonify(run_status=run_status, daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
 @bp.route('/char/cwsweep/time', methods=['GET'])
 def char_cwsweep_time():
@@ -437,7 +476,7 @@ def char_cwsweep_settings():
 @bp.route('/char/cwsweep/new', methods=['GET'])
 def char_cwsweep_new():
     # Check user's current queue status:
-    if session['run_CHAR0']:
+    if session['run_clearance']:
         set_status("CW_Sweep", dict(pause=False))
         global Run_cwsweep # for ETA calculation as well
         Run_cwsweep = {}
@@ -472,14 +511,14 @@ def char_cwsweep_eta100():
 # pause the measurement:
 @bp.route('/char/cwsweep/pause', methods=['GET'])
 def char_cwsweep_pause():
-    if session['run_CHAR0']: 
+    if session['run_clearance']: 
         set_status("CW_Sweep", dict(pause=True))
         return jsonify(pause=get_status("CW_Sweep")['pause'])
     else: return show()
 # toggle between repeat or not
 @bp.route('/char/cwsweep/setrepeat', methods=['GET'])
 def char_cwsweep_setrepeat():
-    if session['run_CHAR0']: 
+    if session['run_clearance']: 
         set_status("CW_Sweep", dict(repeat=bool(int(request.args.get('repeat')))))
         return jsonify(repeat=get_status("CW_Sweep")['repeat'])
     else: return show()
@@ -547,7 +586,7 @@ def char_cwsweep_access():
 # Resume the unfinished measurement
 @bp.route('/char/cwsweep/resume', methods=['GET'])
 def char_cwsweep_resume():
-    if session['run_CHAR0']:
+    if session['run_clearance']:
         set_status("CW_Sweep", dict(pause=False))
         wday = int(request.args.get('wday'))
         wmoment = int(request.args.get('wmoment'))
@@ -855,7 +894,7 @@ def char_sqepulse_init():
     try: print(Fore.CYAN + "Connected M-USER(s) holding SQE-Pulse's 1D-DATA: %s" %sqepulse_1Ddata.keys())
     except: sqepulse_1Ddata = {}
 
-    return jsonify(run_status=run_status, daylist=M_sqepulse[session['user_name']].daylist, run_permission=session['run_CHAR0'])
+    return jsonify(run_status=run_status, daylist=M_sqepulse[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
 @bp.route('/char/sqepulse/time', methods=['GET'])
 def char_sqepulse_time():
@@ -875,7 +914,7 @@ def char_sqepulse_settings():
 @bp.route('/char/sqepulse/new', methods=['GET'])
 def char_sqepulse_new():
     # Check user's current queue status:
-    if session['run_CHAR0']:
+    if session['run_clearance']:
         set_status("SQE_Pulse", dict(pause=False))
         global Run_sqepulse # for ETA calculation as well
         Run_sqepulse = {}
@@ -899,14 +938,14 @@ def char_sqepulse_eta100():
 # pause the measurement:
 @bp.route('/char/sqepulse/pause', methods=['GET'])
 def char_sqepulse_pause():
-    if session['run_CHAR0']: 
+    if session['run_clearance']: 
         set_status("SQE_Pulse", dict(pause=True))
         return jsonify(pause=get_status("SQE_Pulse")['pause'])
     else: return show()
 # toggle between repeat or not
 @bp.route('/char/sqepulse/setrepeat', methods=['GET'])
 def char_sqepulse_setrepeat():
-    if session['run_CHAR0']: 
+    if session['run_clearance']: 
         set_status("SQE_Pulse", dict(repeat=bool(int(request.args.get('repeat')))))
         return jsonify(repeat=get_status("SQE_Pulse")['repeat'])
     else: return show()
@@ -966,7 +1005,7 @@ def char_sqepulse_access():
 # Resume the unfinished measurement
 @bp.route('/char/sqepulse/resume', methods=['GET'])
 def char_sqepulse_resume():
-    if session['run_CHAR0']:
+    if session['run_clearance']:
         set_status("SQE_Pulse", dict(pause=False))
         wday = int(request.args.get('wday'))
         wmoment = int(request.args.get('wmoment'))
@@ -1307,7 +1346,7 @@ def char_sqepulse_2ddata():
 # region: MANI:
 @bp.route('/mani', methods=['GET'])
 def mani(): 
-    print('User %s is allowed to run measurement: %s'%(g.user['username'],session['run_QPC0']))
+    print('User %s is allowed to run measurement: %s'%(g.user['username'],session['run_clearance']))
     samplename = get_status("MSSN")[session['user_name']]['sample']
     return render_template("blog/msson/mani.html", samplename=samplename, people=session['people'])
 # endregion
@@ -1343,7 +1382,7 @@ def mani_singleqb_init():
     try: print(Fore.CYAN + "Connected M-USER(s) holding SQE-Pulse's 1D-DATA: %s" %singleqb_1Ddata.keys())
     except: singleqb_1Ddata = {}
 
-    return jsonify(run_status=run_status, daylist=M_singleqb[session['user_name']].daylist, run_permission=session['run_QPC0'])
+    return jsonify(run_status=run_status, daylist=M_singleqb[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
 @bp.route('/mani/singleqb/time', methods=['GET'])
 def mani_singleqb_time():
@@ -1363,7 +1402,7 @@ def mani_singleqb_settings():
 @bp.route('/mani/singleqb/new', methods=['GET'])
 def mani_singleqb_new():
     # Check user's current queue status:
-    if session['run_QPC0']:
+    if session['run_clearance']:
         set_status("SQE_Pulse", dict(pause=False))
         global Run_singleqb # for ETA calculation as well
         Run_singleqb = {}
@@ -1387,14 +1426,14 @@ def mani_singleqb_eta100():
 # pause the measurement:
 @bp.route('/mani/singleqb/pause', methods=['GET'])
 def mani_singleqb_pause():
-    if session['run_QPC0']: 
+    if session['run_clearance']: 
         set_status("SQE_Pulse", dict(pause=True))
         return jsonify(pause=get_status("SQE_Pulse")['pause'])
     else: return show()
 # toggle between repeat or not
 @bp.route('/mani/singleqb/setrepeat', methods=['GET'])
 def mani_singleqb_setrepeat():
-    if session['run_QPC0']: 
+    if session['run_clearance']: 
         set_status("SQE_Pulse", dict(repeat=bool(int(request.args.get('repeat')))))
         return jsonify(repeat=get_status("SQE_Pulse")['repeat'])
     else: return show()
@@ -1454,7 +1493,7 @@ def mani_singleqb_access():
 # Resume the unfinished measurement
 @bp.route('/mani/singleqb/resume', methods=['GET'])
 def mani_singleqb_resume():
-    if session['run_QPC0']:
+    if session['run_clearance']:
         set_status("SQE_Pulse", dict(pause=False))
         wday = int(request.args.get('wday'))
         wmoment = int(request.args.get('wmoment'))

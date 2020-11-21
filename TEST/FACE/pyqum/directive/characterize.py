@@ -16,7 +16,7 @@ from flask import request, session, current_app, g, Flask
 # from pyqum.instrument.benchtop import PSGA
 # from pyqum.instrument.benchtop import ENA, YOKO
 from importlib import import_module as im
-from pyqum.instrument.logger import settings, clocker, get_status, set_status, status_code
+from pyqum.instrument.logger import settings, clocker, get_status, set_status, status_code, qout
 from pyqum.instrument.analyzer import curve, IQAP, UnwraPhase, IQAParray
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 
@@ -33,15 +33,17 @@ yoko_choice = 1 # Left: 1 for coil; Right: 2 for Z-Line
 # **********************************************************************************************************************************************************
 # 1. FREQUENCY RESPONSE MEASUREMENT:
 @settings(2) # data-density
-def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, testeach=False, perimeter={}):
+def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, testeach=False, perimeter={}, queue=''):
     '''Characterizing Frequency Response:
     C-Order: Flux-Bias, S-Parameter, IF-Bandwidth, Power, Frequency
     '''
-    instr['DC'], instr['NA'] = 'YOKO_1', 'ENA_1'
+    queue = 'CHAR0' # bypass queue UI-selection
+    set_status("MSSN", {session['user_name']: dict(sample=get_status("MSSN")[session['user_name']]['sample'], queue=queue)})
+    instr['DC'], instr['NA'] = 'YOKO_1', 'ENA_1' # bypass instruments UI-selection
 
     sample = get_status("MSSN")[session['user_name']]['sample']
     # pushing pre-measurement parameters to settings:
-    yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach, perimeter
+    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, testeach, perimeter, queue
     set_status("F_Response", dict(active=instr))
 
     # User-defined Controlling-PARAMETER(s) ======================================================================================
@@ -124,7 +126,8 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
             data = NA.sdata(nabench)
             # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
-            
+            # yield data # bypass testeach
+
             # test for the last loop if there is
             if testeach: # test each measure-loop:
                 loopcount += [len(measure_loop_1)]
@@ -136,9 +139,12 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
                 yield loopcount, loop_dur
                 
             else:
+                print(Fore.YELLOW + "\nData Size: %s" %datasize)
                 if get_status("F_Response")['pause']:
+                    # qout(queue, g.jobidlist[queue][0])
                     break
                 else:
+                    print(Fore.YELLOW + "Pushing Data into file...")
                     yield data
 
         if not get_status("F_Response")['repeat']:
@@ -146,20 +152,22 @@ def F_Response(user, tag="", corder={}, comment='', dayindex='', taskentry=0, re
             NA.close(nabench)
             if "opt" not in fluxbias.data: # check if it is in optional-state
                 DC.close(dcbench, False)
+            qout(queue, g.jobidlist[queue][0])
             return
 
 # **********************************************************************************************************************************************************
 # 2. CONTINUOUS-WAVE SWEEPING:
 @settings(2) # data-density
-def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, testeach=False, perimeter={}):
+def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, testeach=False, perimeter={}, queue=''):
     '''Continuous Wave Sweeping:
     C-Order: Flux-Bias, XY-Frequency, XY-Power, S-Parameter, IF-Bandwidth, Frequency, Power
     '''
-    instr['DC'], instr['SG'], instr['NA'] = 'YOKO_1', 'PSGA_1', 'ENA_1'
+    queue = 'CHAR0' # bypass queue UI-selection
+    instr['DC'], instr['SG'], instr['NA'] = 'YOKO_1', 'PSGA_1', 'ENA_1' # bypass instruments UI-selection
 
     sample = get_status("MSSN")[session['user_name']]['sample']
     # pushing pre-measurement parameters to settings:
-    yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach, perimeter
+    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, testeach, perimeter, queue
     set_status("CW_Sweep", dict(active=instr))
 
     # User-defined Controlling-PARAMETER(s) ======================================================================================
@@ -316,12 +324,12 @@ def CW_Sweep(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resu
 # **********************************************************************************************************************************************************
 # 3. Square-wave Pulse measurement
 @settings(2) # data-density
-def SQE_Pulse(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, testeach=False, perimeter={}):
+def SQE_Pulse(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, testeach=False, perimeter={}):
     '''!DEPRECATED!
     Square-Pulse Measurement with VSA (retired).
     '''
     sample = get_status("MSSN")[session['user_name']]['sample']
-    yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach, perimeter
+    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, testeach, perimeter, ''
 
 
 def test():

@@ -6,7 +6,7 @@
   
   .content-table {
     border-collapse: collapse;
-    margin: 25px 0;
+    margin: 3px 0;
     font-size: 0.9em;
     min-width: 400px;
     border-radius: 5px 5px 0 0;
@@ -19,6 +19,12 @@
     color: #ffffff;
     text-align: left;
     font-weight: bold;
+  }
+  .mssn-QUEUE thead tr {
+    background-color: #395aec;
+  }
+  .mssn-JOB thead tr {
+    background-color: #009879;
   }
   
   .content-table th,

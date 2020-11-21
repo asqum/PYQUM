@@ -36,11 +36,11 @@
             </div>
 
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="fresp-eta"></a></div></div>
-            {% if session['run_clearance'] %}
-                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="fresp-resume">RESUME</button></div>
-                <div class="col-10" id='right'><button class="char push_button w-95 red" id="fresp-pause">PAUSE</button></div>
-                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
-            {% endif %}
+            <!-- RUN RELATED BUTTONS -->
+            <div class="col-10" id='right'><button class="char fresp run push_button w-95 blue" id="fresp-resume">RESUME</button></div>
+            <div class="col-10" id='right'><button class="char fresp run push_button w-95 red" id="fresp-pause">PAUSE</button></div>
+            <div class="col-10" id='right'><button class="char fresp run push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
+            
             
         </div>
 
@@ -155,10 +155,16 @@
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUNNING -->
-                            {% if session['run_clearance'] %}
-                                <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-run"  type="submit" value="RUN"/></div>
-                            {% endif %}
+                            
+                            <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-run"  type="submit" value="RUN"/></div>
+                            
                             <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" id='left'><label class='parameter'>Queue system: </label></div>
+                            <div class="col-49" id='left'>
+                                <div class='fresp queue-system'></div>
+                            </div>
                         </div>
                     </div>
                 </div>

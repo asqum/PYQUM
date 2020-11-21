@@ -234,18 +234,32 @@ $('.modal-toggle.new.fresp').on('click', function(e) {
 // show F-Response's daylist
 $(function() {
     $('button.char#fresp').bind('click', function() {
+        $('div.fresp.queue-system').empty().append($('<h4 style="color: blue;"></h4>').text(qsystem));
         $('div.charcontent').hide();
         $('div.charcontent#fresp').show();
         $('button.char').removeClass('selected');
         $('button.char#fresp').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/init', {
         }, function (data) {
+            // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
+            window.run_permission = data.run_permission;
+            console.log("run permission: " + run_permission);
+            if (run_permission == false) {
+                $('input.char#fresp-run').hide();
+                $('button.char.fresp.run').hide();
+                console.log("RUN BUTTON DISABLED");
+            } else {
+                $('input.char#fresp-run').show();
+                $('button.char.fresp.run').show();
+                console.log("RUN BUTTON ENABLED");
+            };
+            // Check Run Status:
             console.log("run status: " + data.run_status);
-            console.log("run permission: " + data.run_permission);
             if (data.run_status == true) {
                 $( "i.fresp" ).remove(); //clear previous
                 $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
             } else {};
+            // List Days:
             $('select.char#fresp[name="wday"]').empty();
             $('select.char#fresp[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
@@ -255,12 +269,7 @@ $(function() {
                 }));
             });
             $('select.char#fresp[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
-            if (data.run_permission == false) {
-                $('input.char#fresp-run').hide();
-                console.log("RUN BUTTON DISABLED");
-            } else {
-                $('select.char#fresp[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
-            };
+            $('select.char#fresp[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
         });
         return false;
     });

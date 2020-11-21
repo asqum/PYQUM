@@ -168,9 +168,9 @@ def sgget():
 @bp.route('/tkawg', methods=['GET'])
 def tkawg(): 
 	global tkawgbench
-	try: print(Fore.GREEN + "\nConnected TKAWG: %s" %tkawgbench.keys())
+	try: print(Fore.GREEN + "Connected TKAWG: %s" %tkawgbench.keys())
 	except: 
-		print(Fore.BLUE + "\nTKAWG status log not yet initialized")
+		print(Fore.BLUE + "TKAWG status log not yet initialized")
 		tkawgbench = {}
 	return render_template("blog/machn/tkawg.html")
 @bp.route('/tkawg/log', methods=['GET'])
@@ -305,9 +305,9 @@ def tkawgstop():
 @bp.route('/alzdg', methods=['GET'])
 def alzdg(): 
 	global alzdgboard
-	try: print(Fore.GREEN + "\nConnected ALZDG: %s" %alzdgboard.keys())
+	try: print(Fore.GREEN + "Connected ALZDG: %s" %alzdgboard.keys())
 	except: 
-		print(Fore.BLUE + "\nALZDG status log not yet initialized")
+		print(Fore.BLUE + "ALZDG status log not yet initialized")
 		alzdgboard = {}
 	return render_template("blog/machn/alzdg.html")
 @bp.route('/alzdg/log', methods=['GET'])
@@ -530,7 +530,7 @@ def naget():
 @bp.route('/bdr')
 def bdr():
 	# monitoring traffic:
-	print("User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
+	print(Fore.GREEN + "User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
 	return render_template("blog/machn/bdr.html")
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():

@@ -67,49 +67,6 @@ def load_logged_in_user():
         ).fetchall()
         g.cosamples = [dict(x) for x in g.cosamples]
 
-        # Provide user's clearances for each Queue (CHAR0, QPC0):
-        if g.user['instrument'] and g.user['measurement']:
-            
-            # NOTE: Queue CHAR0:
-            g.CHAR0_queue = get_db().execute(
-                '''
-                SELECT j.task, j.startime, s.samplename, s.location, u.username, j.instrument
-                FROM user u
-                INNER JOIN CHAR0 c ON c.job_id = j.id
-                INNER JOIN job j ON j.user_id = u.id
-                INNER JOIN sample s ON s.id = j.sample_id
-                ORDER BY c.id ASC
-                '''
-            ).fetchall()
-            g.CHAR0_queue = [dict(x) for x in g.CHAR0_queue]
-            try:
-                # Only FIRST in line for that queue is allowed to run the measurement:
-                session['run_CHAR0'] = bool( g.CHAR0_queue[0]['username']==g.user['username'] and 
-                                                g.CHAR0_queue[0]['samplename']==get_status("MSSN")[session['user_name']]['sample'] )
-            except(IndexError, KeyError):
-                session['run_CHAR0'] = False
-            # print(Fore.BLACK + Back.WHITE + "Clearance for CHAR0: %s"%session['run_CHAR0'])
-
-            # NOTE: Queue QPC0:
-            g.QPC0_queue = get_db().execute(
-                '''
-                SELECT j.task, j.startime, s.samplename, s.location, u.username, j.instrument
-                FROM user u
-                INNER JOIN QPC0 c ON c.job_id = j.id
-                INNER JOIN job j ON j.user_id = u.id
-                INNER JOIN sample s ON j.sample_id = s.id
-                ORDER BY c.id ASC
-                '''
-            ).fetchall()
-            g.QPC0_queue = [dict(x) for x in g.QPC0_queue]
-            try:
-                # Only FIRST in line for that queue is allowed to run the measurement:
-                session['run_QPC0'] = bool( g.QPC0_queue[0]['username']==g.user['username'] and 
-                                                g.QPC0_queue[0]['samplename']==get_status("MSSN")[session['user_name']]['sample'] )
-            except(IndexError, KeyError):
-                session['run_QPC0'] = False
-            # print(Fore.BLACK + Back.WHITE + "Clearance for QPC0: %s"%session['run_QPC0'])
-
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
@@ -268,7 +225,7 @@ def usersamples_access():
             ' WHERE s.samplename = ?',
             (sname,)
         ).fetchone()
-        sample_cv = dict(sample_cv) # convert sqlite3.row into dictionary
+        sample_cv = dict(sample_cv) # convert sqlite3.row into dictionary for this select format
 
         sample_owner = db.execute(
             'SELECT u.id, username'
@@ -276,7 +233,7 @@ def usersamples_access():
             ' WHERE s.samplename = ?',
             (sname,)
         ).fetchone()
-        sample_owner = dict(sample_owner) # convert sqlite3.row into dictionary
+        sample_owner = dict(sample_owner) # convert sqlite3.row into dictionary for this select format
 
         session['people'] = sample_owner['username']
         saved = bool(sname in lisample(session['people'])) # saved?

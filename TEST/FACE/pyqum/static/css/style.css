@@ -42,7 +42,8 @@ body {
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Times New Roman', Times, serif;
     color: #06062e;
-    margin: 0.35rem 0;
+    margin: 0.68rem 0;
+    /* padding: 0.6em 0.07em 0.4em 0.12em; */
 }
 hr {
 border: none;
@@ -132,7 +133,7 @@ label.parameter {
     word-wrap: break-word;
     /* y-up x-right y-down x-left -> Clock-wise! */
     /* margin-top: 17px; */
-    padding: 0.2em 0.5em 0em 0.5em;
+    padding: 0.6em 0.37em 0.4em 0.12em; /*top right bottom left*/
     display: block;
     font-weight: 600;
 }
