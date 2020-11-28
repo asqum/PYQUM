@@ -581,6 +581,12 @@ def bdrhistoryforecast():
 	# fore = poly1d(coeff)
 	
 	return jsonify(eta_time=list(eta_time))
+@bp.route('/bdr/samples/queues', methods=['GET'])
+def bdrsamplesqueues():
+	db = get_db()
+	bdrqlist = db.execute("SELECT system, samplename FROM queue ORDER BY id ASC").fetchall()
+	bdrqlist = [dict(x) for x in bdrqlist]
+	return jsonify(bdrqlist=bdrqlist)
 # endregion
 
 # region: DC

@@ -4,6 +4,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
+from keyboard import press
 import json, time, random, itertools, glob
 from flask import (
     Flask, Blueprint, flash, g, redirect, render_template, request, url_for, Response, jsonify,
@@ -20,6 +21,12 @@ bp = Blueprint(myname, __name__) # to create endpoint for {{url_for(blog.XXX)}}
 def index():
     """render index.html"""
     return render_template('blog/index.html')
+
+@bp.route('/reset')
+def reset():
+    '''simulate press-enter-key in cmd to clear the possible clog!'''
+    # press('enter')
+    return jsonify(message='OK')
 
 @bp.route('/posts')
 def posts():

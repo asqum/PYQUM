@@ -31,7 +31,7 @@ __status__ = "development"
 # **********************************************************************************************************************************************************
 # 1. Single-Qubit Control:
 @settings(2) # data-density
-def Single_Qubit(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['YOKO', 'PSGV', 'PSGA', 'TKAWG', 'ALZDG'], testeach=False):
+def Single_Qubit(user, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr=['YOKO', 'PSGV', 'PSGA', 'TKAWG', 'ALZDG']):
     '''
     Time-domain Square-wave measurement:
     C-Structure: ['Flux-Bias', 
@@ -45,7 +45,7 @@ def Single_Qubit(user, tag="", corder={}, comment='', dayindex='', taskentry=0, 
     # sample = get_status("MSSN")['abc']['sample'] # by-pass HTTP-request before interface is ready
 
     # pushing pre-measurement parameters to settings:
-    yield user, sample, tag, instr, corder, comment, dayindex, taskentry, testeach
+    yield user, sample, tag, instr, corder, comment, dayindex, taskentry
     set_status("SQE_Pulse", dict(msg='measurement started', active=instr))
 
     # ***USER_DEFINED*** Controlling-PARAMETER(s) ======================================================================================
@@ -118,9 +118,6 @@ def Single_Qubit(user, tag="", corder={}, comment='', dayindex='', taskentry=0, 
     print("Buffer-size: %s" %buffersize_1)
 
     # User-defined Measurement-FLOW ==============================================================================================
-    if testeach: # measure-time contribution from each measure-loop
-        loopcount, loop_dur = [], []
-        stage, prev = clocker(0) # Marking starting point of time
     
     # Registerring parameter(s)-structure
     cstructure = [waveform(corder[param]).count for param in structure][:-1] # The last one will become a buffer
@@ -142,12 +139,7 @@ def Single_Qubit(user, tag="", corder={}, comment='', dayindex='', taskentry=0, 
                     # YOKO
                     if structure[j] == 'Flux-Bias':
                         if "opt" not in fluxbias.data: # check if it is in optional-state
-                            if testeach: # adding instrument transition-time between set-values:
-                                loopcount += [fluxbias.count]
-                                if fluxbias.count > 1: loop_dur += [abs(fluxbias.data[0]-fluxbias.data[1])/0.2 + 35*1e-3] # manually calculating time without really setting parameter on the instrument
-                                else: loop_dur += [0]
-                                stage, prev = clocker(stage, prev) # Marking time
-                            else: YOKO.sweep(yokog, str(fluxbias.data[caddress[structure.index('Flux-Bias')]]), pulsewidth=77*1e-3, sweeprate=0.0007) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
+                            YOKO.sweep(yokog, str(fluxbias.data[caddress[structure.index('Flux-Bias')]]), pulsewidth=77*1e-3, sweeprate=0.0007) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
 
                     # PSG
                     if structure[j] == 'XY-Frequency':
@@ -256,27 +248,10 @@ def Single_Qubit(user, tag="", corder={}, comment='', dayindex='', taskentry=0, 
             print("Operation Complete")
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)			
             
-            # test for the last loop if there is
-            if testeach: # test each measure-loop:
-                loopcount += [len(measure_loop_1)]
-                loop_dur += [time() - prev]
-                stage, prev = clocker(stage, prev) # Marking time
-                VSA.close(vsasess)
-                if "opt" not in pperiod.data: # check if it is in optional-state
-                    AWG.close(awgsess)
-                if "opt" not in xyfreq.data: # check if it is in optional-state
-                    PSG0.close(sogo, False)
-                if "opt" not in rofreq.data: # check if it is in optional-state
-                    PSG1.close(saga, False)
-                if "opt" not in fluxbias.data: # check if it is in optional-state
-                    YOKO.close(yokog, False)
-                yield loopcount, loop_dur
-                
+            if get_status("SQE_Pulse")['pause']:
+                break
             else:
-                if get_status("SQE_Pulse")['pause']:
-                    break
-                else:
-                    yield list(endata)
+                yield list(endata)
 
 
         if not get_status("SQE_Pulse")['repeat']:

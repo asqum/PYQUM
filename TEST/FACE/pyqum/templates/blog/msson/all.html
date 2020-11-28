@@ -8,85 +8,95 @@
 </head>
 
 <body>
+    <div class="allcontent">
 
-<div class="all clock"></div>
-<!--<div class="atest">THIS IS A TEST PAGE</div>-->
+        <div class="all clock"></div>
 
-<div style="background-color: black;">
-    <h3 class='all-mssn-news' style="color: white;"></h3>
-</div>
-
-{% if g.user['instrument'] and g.user['measurement'] %}
-    <div class="row" style="color: blue;">
-        <div class="col-15" id='left'><label class='parameter left'>CHOOSE YOUR QUEUE: </label></div>
-        <div class="col-10" id='left'>
-            <select class='all mssn queue'>
-                <option value='lobby'>--select--</option>
-                <option value='CHAR0'>CHAR-0</option>
-                <option value='QPC0'>QPC-0</option>
-            </select>
+        <div style="background-color: black;">
+            <h3 class='all-mssn-news' style="color: white;"></h3>
         </div>
+        <div style="background-color: red;">
+            <h3 class='all-mssn-warning' style="color: white;"></h3>
+        </div>
+
         
-        <div class="col-10" id='right'>
-            <label class="all-mssn switch">
-                <input class="all-mssn" id='live-update' type="checkbox">
-                <div class="slider">
-                    <span class="on">LIVE</span><span class="off">UPDATE</span>
+            <div class="row" style="color: blue;">
+                <div class="col-15" id='left'><label class='parameter left'>CHOOSE YOUR QUEUE: </label></div>
+                <div class="col-10" id='left'>
+                    <select class='all mssn queue'>
+                        <option value='lobby'>--system--</option>
+                        {% for s in systemlist %}
+                        {% if s==queue %}
+                            <option value={{s}} selected>{{s}}</option>
+                        {% else %}
+                            <option value={{s}}>{{s}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
                 </div>
-            </label>
-        </div>
-    </div>
-    
-    <div class="row">
-        <table class="mssn-QUEUE content-table">
-            <thead>
-            <tr>
-                <th>JobID</th>
-                <th>Task</th>
-                <th>Since</th>
-                <th>Sample</th> 
-                <th>Wiring</th>
-                <th>User</th>
-                <th>Instrument</th>
-                <th>Status</th> 
-                <th>Action</th>  
-            </tr>
-            </thead>
-            <tbody class="all mssn-queue-update"></tbody>
-        </table>
-    </div>
-    <!-- <div class="row">
-        <div class="col-10" id='left'>
-            <button class="all-qumuser push_button w-95 green" id="dive">DIVE</button>
-            <button class="all-qumuser push_button w-95 red" id="yield">YIELD</button>
-        </div>
-        <div class="col-10" id='left'></div>
-    </div> -->
+                
+                <div class="col-10" id='right'>
+                    <label class="all-mssn switch">
+                        <input class="all-mssn" id='live-update' type="checkbox">
+                        <div class="slider">
+                            <span class="on">LIVE</span><span class="off">UPDATE</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="row">
+                <table class="mssn-QUEUE content-table">
+                    <thead>
+                    <tr>
+                        <th>JobID</th>
+                        <th>Task</th>
+                        <th>Since</th>
+                        <th>Sample</th> 
+                        <th>Wiring</th>
+                        <th>User</th>
+                        <th>Instrument</th>
+                        <th>Status</th> 
+                        <th>Action</th>  
+                    </tr>
+                    </thead>
+                    <tbody class="all mssn-queue-update"></tbody>
+                </table>
+            </div>
+            <!-- <div class="row">
+                <div class="col-10" id='left'>
+                    <button class="all-qumuser push_button w-95 green" id="dive">DIVE</button>
+                    <button class="all-qumuser push_button w-95 red" id="yield">YIELD</button>
+                </div>
+                <div class="col-10" id='left'></div>
+            </div> -->
 
-    <div class="row">
-        <div class="col-49" id='left'><label class='parameter empty'></label></div>
-    </div>
-    <div class="row">
-        <div class="col-49" id='left'><label class='parameter empty'></label></div>
-    </div>
-    <div class="row all-job-by-sample" style="color: rgb(15, 88, 12);"></div>
-    <div class="row">
-        <table class="mssn-JOB content-table">
-            <thead>
-            <tr>
-                <th>JobID</th>
-                <th>Task</th>
-                <th>Since</th>
-                <th>Instrument</th>
-                <th>Progress (%)</th>
-                <th>Comment</th>   
-            </tr>
-            </thead>
-            <tbody class="all mssn-job-update"></tbody>
-        </table>
-    </div>
-{% endif %}
+            <div class="row">
+                <div class="col-49" id='left'><label class='parameter empty'></label></div>
+            </div>
+            <div class="row">
+                <div class="col-49" id='left'><label class='parameter empty'></label></div>
+            </div>
+            <div class="row all-job-by-sample" style="color: rgb(15, 88, 12);"></div>
+            <div class="row">
+                <table class="mssn-JOB content-table">
+                    <thead>
+                    <tr>
+                        <th>JobID</th>
+                        <th>Data</th>
+                        <th>Task</th>
+                        <th>Since</th>
+                        <th>Instrument</th>
+                        <th>Progress (%)</th>
+                        <th>Comment</th>   
+                    </tr>
+                    </thead>
+                    <tbody class="all mssn-job-update"></tbody>
+                </table>
+            </div>
+        
 
+    </div>
 </body>
 
 </html>

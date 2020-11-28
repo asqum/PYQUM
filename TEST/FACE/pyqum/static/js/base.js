@@ -139,6 +139,7 @@ $(function () {
         // jQuery('script').each(function(){
         //     jQuery(this).attr('src',jQuery(this).attr('src')+ '?' + (new Date()).getTime());
         //     });
+        // $.getJSON('/reset', {}, function(data){ console.log("RESET: " + data.message)}); // press enter to clear the fog
         return false;
     });
 });

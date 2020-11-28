@@ -22,11 +22,10 @@
                 </ul>
             </div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="cwsweep-eta"></a></div></div>
-            {% if session['run_clearance'] %}
-                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
-                <div class="col-10" id='right'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div>
-                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
-            {% endif %}
+            <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
+            <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
+            <!-- <div class="col-10" id='right'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div> -->
+                
         </div>
 
         <div class="row">
@@ -138,11 +137,11 @@
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUN MODE -->
-                            <div class="col-15" id='left'>
+                            <!-- <div class="col-15" id='left'>
                                 <label class="switch"><input class='char' id=cwsweep name='repeat' type="checkbox">
                                     <div class="slider smooth"><span class="on">REPEAT</span><span class="off">ONCE</span></div>
                                 </label>
-                            </div>
+                            </div> -->
                             <div class="col-15" id='left'>
                                 <label class="switch"><input class='char' id=cwsweep name='simulate' type="checkbox">
                                     <div class="slider smooth"><span class="on">TEST ETA</span><span class="off">LOGGED</span></div>

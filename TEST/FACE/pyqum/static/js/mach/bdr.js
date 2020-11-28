@@ -3,10 +3,7 @@ $(document).ready(function(){
     $('div.bdrcontent').hide();
     $("a.new#bdr-forecast-P").text('Forecast P');
     $("a.new#bdr-forecast-T").text('Forecast T');
-    // // passive select:
-    // var latestday = $('select.bdr[name="wday"] option:last').val();
-    // console.log("Latest: " + latestday);
-    // $('select.bdr[name="wday"]').val(latestday);
+    
 });
 
 function bdr_plot() {
@@ -288,6 +285,17 @@ $(function() {
         $('div.bdrcontent#samples').show();
         $('button.bdr').removeClass('selected');
         $('button.bdr#samples').addClass('selected');
+        // QUEUE SYSTEMS:
+        $('table.BDR-QUEUE thead.samples.bdr-queue-update tr').empty();
+        $('table.BDR-QUEUE tbody.samples.bdr-queue-update tr').empty();
+        $.getJSON('/mach/bdr/samples/queues', { }, function (data) {
+            $.each(data.bdrqlist, function (i,val) {
+                $('table.BDR-QUEUE thead.samples.bdr-queue-update tr').append('<th>' + val.system + '</th>');
+                $('table.BDR-QUEUE tbody.samples.bdr-queue-update tr').append('<td>' + val.samplename + '</td>');
+            });
+            
+        });
+        
         return false;
     });
 });

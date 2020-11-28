@@ -6,12 +6,13 @@
   
   .content-table {
     border-collapse: collapse;
-    margin: 3px 0;
+    margin: 3px 0 10px 0;
     font-size: 0.9em;
     min-width: 400px;
     border-radius: 5px 5px 0 0;
-    overflow: hidden;
+    overflow: scroll;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    height: 100%;
   }
   
   .content-table thead tr {
@@ -25,6 +26,9 @@
   }
   .mssn-JOB thead tr {
     background-color: #009879;
+  }
+  .BDR-QUEUE thead tr {
+    background-color: #ac0cbb;
   }
   
   .content-table th,

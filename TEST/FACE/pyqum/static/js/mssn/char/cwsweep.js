@@ -2,7 +2,7 @@
 $(document).ready(function(){
     $('div.char.cwsweep.confirm').hide();
     $("a.new#cwsweep-eta").text('ETA: ');
-    get_repeat_cwsweep();
+    // get_repeat_cwsweep();
     window.cwsweepcomment = "";
 });
 
@@ -34,27 +34,27 @@ function transpose(a) {
     }
     return t;
   };
-function set_repeat_cwsweep() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/setrepeat', {
-        repeat: $('input.char#cwsweep[name="repeat"]').is(':checked')?1:0
-    }, function(data) {
-        $( "i.cwsweep-repeat" ).remove(); //clear previous
-        if (data.repeat == true) {
-            $('button.char#cwsweep').prepend("<i class='cwsweep-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        };
-    });
-};
-function get_repeat_cwsweep() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/getrepeat', {
-    }, function (data) {
-        console.log("Repeat: " + data.repeat);
-        $('input.char#cwsweep[name="repeat"]').prop("checked", data.repeat);
-        $( "i.cwsweep-repeat" ).remove(); //clear previous
-        if (data.repeat == true) {
-            $('button.char#cwsweep').prepend("<i class='cwsweep-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        };
-    });
-};
+// function set_repeat_cwsweep() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/setrepeat', {
+//         repeat: $('input.char#cwsweep[name="repeat"]').is(':checked')?1:0
+//     }, function(data) {
+//         $( "i.cwsweep-repeat" ).remove(); //clear previous
+//         if (data.repeat == true) {
+//             $('button.char#cwsweep').prepend("<i class='cwsweep-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+//         };
+//     });
+// };
+// function get_repeat_cwsweep() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/getrepeat', {
+//     }, function (data) {
+//         console.log("Repeat: " + data.repeat);
+//         $('input.char#cwsweep[name="repeat"]').prop("checked", data.repeat);
+//         $( "i.cwsweep-repeat" ).remove(); //clear previous
+//         if (data.repeat == true) {
+//             $('button.char#cwsweep').prepend("<i class='cwsweep-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+//         };
+//     });
+// };
 function listimes_cwsweep() {
     $('input.char.data').removeClass("plotted");
     // make global wday
@@ -373,11 +373,23 @@ $(function() {
         $('button.char#cwsweep').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/init', {
         }, function (data) {
-            console.log("run status: " + data.run_status);
-            if (data.run_status == true) {
-                $( "i.cwsweep-run" ).remove(); //clear previous
-                $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-            } else {};
+            // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
+            window.run_permission = data.run_permission;
+            console.log("run permission: " + run_permission);
+            if (run_permission == false) {
+                $('input.char#cwsweep-run').hide();
+                $('button.char.cwsweep.run').hide();
+                console.log("RUN BUTTON DISABLED");
+            } else {
+                $('input.char#cwsweep-run').show(); // RUN
+                $('button.char.cwsweep.run').show(); // RESUME
+                console.log("RUN BUTTON ENABLED");
+            };
+            // console.log("run status: " + data.run_status);
+            // if (data.run_status == true) {
+            //     $( "i.cwsweep-run" ).remove(); //clear previous
+            //     $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            // } else {};
             $('select.char#cwsweep[name="wday"]').empty();
             $('select.char#cwsweep[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
@@ -387,12 +399,8 @@ $(function() {
                 }));
             });
             $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
-            if (data.run_permission == false) {
-                $('input.char#cwsweep-run').hide();
-                console.log("RUN BUTTON DISABLED");
-            } else {
-                $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
-            };
+            $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
+            $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--Temp--', value: -3 }));
         });
         return false;
     });
@@ -408,8 +416,9 @@ $(function () {
 
 // click to run:
 $('input.char#cwsweep-run').bind('click', function() {
+    $('button.tablinks#all-tab').trigger('click');
     $( "i.cwsweep-run" ).remove(); //clear previous
-    $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    // $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
     var fluxbias = $('input.char#cwsweep[name="fluxbias"]').val();
     var xyfreq = $('input.char#cwsweep[name="xyfreq"]').val();
@@ -429,22 +438,24 @@ $('input.char#cwsweep-run').bind('click', function() {
         sparam: sparam, ifb: ifb, freq: freq, powa: powa, 
         comment: comment, simulate: simulate
     }, function (data) { 
-        console.log("test each loop: " + data.testeach);      
+        console.log("test each loop: " + data.testeach);
+        $('button.tablinks#all-tab').trigger('click');      
         $( "i.cwsweep-run" ).remove(); //clear previous
+        $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
     });
     return false;
 });
 // click to estimate ETA
-$("a.new#cwsweep-eta").bind('click', function() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/eta100', {
-    }, function (data) {
-        $("a.new#cwsweep-eta").text('ETA in\n' + String(data.eta_time_100));
-    });
-});
+// $("a.new#cwsweep-eta").bind('click', function() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/eta100', {
+//     }, function (data) {
+//         $("a.new#cwsweep-eta").text('ETA in\n' + String(data.eta_time_100));
+//     });
+// });
 // click to set repeat or once
-$('input.char#cwsweep[name="repeat"]').bind('click', function() {
-    set_repeat_cwsweep();
-});
+// $('input.char#cwsweep[name="repeat"]').bind('click', function() {
+//     set_repeat_cwsweep();
+// });
 
 // click to search: (pending)
 $('input.char#cwsweep[name="search"]').change( function() {
@@ -464,21 +475,22 @@ $('input.char#cwsweep[name="search"]').change( function() {
 });
 
 // click to pause measurement
-$(function () {
-    $('button.char#cwsweep-pause').on('click', function () {
-        $( "i.cwsweep" ).remove(); //clear previous
-        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/pause', {
-            // direct pause
-        }, function(data) {
-            console.log("paused: " + data.pause);
-        });
-        return false;
-    });
-});
+// $(function () {
+//     $('button.char#cwsweep-pause').on('click', function () {
+//         $( "i.cwsweep" ).remove(); //clear previous
+//         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/pause', {
+//             // direct pause
+//         }, function(data) {
+//             console.log("paused: " + data.pause);
+//         });
+//         return false;
+//     });
+// });
 
 // Click to resume measurement
 $(function () {
     $('button.char#cwsweep-resume').on('click', function () {
+        $('button.tablinks#all-tab').trigger('click');
         $( "i.cwsweep" ).remove(); //clear previous
         $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // waveform commands
@@ -497,7 +509,9 @@ $(function () {
             if (data.resumepoint == data.datasize) {
                 console.log("The data was already complete!")
             } else { console.log("The data has just been updated")};
+            $('button.tablinks#all-tab').trigger('click');
             $( "i.cwsweep" ).remove(); //clear previous
+            $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
         });
         return false;
     });

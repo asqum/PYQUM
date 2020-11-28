@@ -166,6 +166,15 @@ input[type=submit].people {
     color: rgb(68, 45, 3);
     font-weight: 53;
 }
+input[type=submit].notification {
+    background-color: rgb(6, 15, 8);
+    color: rgb(227, 212, 241);
+    font-weight: 53;
+    text-align: left;
+}
+input[type=submit].notification:hover {
+    background-color: #181f8a;
+}
 input[type=submit]:hover {
     background-color: #45a049;
 }

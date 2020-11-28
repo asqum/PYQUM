@@ -23,6 +23,14 @@
 
     <div class="container">
 
+        <div class="row">
+            <div class="col-25" id='left'>
+                <!-- Notification -->
+                <div><input class='fresp notification' type='submit' value=""></input></div>
+            </div>
+        </div>
+        
+        
         <div class="row"> <!-- New Role for File-status -->
             <div class="col-15" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
             <div class="col-10" id='left'><select class='char' id="fresp" name="wmoment" type="number"></select></div>
@@ -36,11 +44,9 @@
             </div>
 
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="fresp-eta"></a></div></div>
-            <!-- RUN RELATED BUTTONS -->
+            <div class="col-10" id='right'><button class="char fresp analysis push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
             <div class="col-10" id='right'><button class="char fresp run push_button w-95 blue" id="fresp-resume">RESUME</button></div>
-            <div class="col-10" id='right'><button class="char fresp run push_button w-95 red" id="fresp-pause">PAUSE</button></div>
-            <div class="col-10" id='right'><button class="char fresp run push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
-            
+            <!-- <div class="col-10" id='right'><button class="char fresp run push_button w-95 red" id="fresp-pause">PAUSE</button></div> -->
             
         </div>
 
@@ -143,11 +149,11 @@
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUN MODE -->
-                            <div class="col-15" id='left'>
+                            <!-- <div class="col-15" id='left'>
                                 <label class="switch"><input class='char' id=fresp name='repeat' type="checkbox">
                                     <div class="slider smooth"><span class="on">REPEAT</span><span class="off">ONCE</span></div>
                                 </label>
-                            </div>
+                            </div> -->
                             <div class="col-15" id='left'>
                                 <label class="switch"><input class='char' id=fresp name='simulate' type="checkbox">
                                     <div class="slider smooth"><span class="on">TEST ETA</span><span class="off">LOGGED</span></div>

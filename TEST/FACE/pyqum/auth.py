@@ -7,6 +7,7 @@ from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 import functools
+from keyboard import press
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, jsonify
@@ -67,6 +68,8 @@ def load_logged_in_user():
         ).fetchall()
         g.cosamples = [dict(x) for x in g.cosamples]
 
+        # press('enter') # simulate press-enter-key in cmd to clear the possible clog!
+
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
@@ -78,6 +81,9 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        fullname = request.form['fullname']
+        affiliation = request.form['affiliation']
+        email = request.form['email']
         userstatus = 'pending'
         db = get_db()
         error = None
@@ -94,8 +100,8 @@ def register():
         if error is None:
             # the name is available, store it in the database and go to the login page
             db.execute(
-                'INSERT INTO user (username, password, status) VALUES (?, ?, ?)',
-                (username, generate_password_hash(password), userstatus)
+                'INSERT INTO user (username, password, status, fullname, affiliation, email) VALUES (?, ?, ?, ?, ?, ?)',
+                (username, generate_password_hash(password), userstatus, fullname, affiliation, email,)
             )
             db.commit()
             return redirect(url_for('auth.login'))
@@ -278,7 +284,8 @@ def usersamples_meal():
     # SESSION (Cookies):
     session['user_current_sample'] = sname
     # JSON:
-    set_status("MSSN", {session['user_name']: dict(sample=sname)})
+    try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'])})
+    except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='')})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
 

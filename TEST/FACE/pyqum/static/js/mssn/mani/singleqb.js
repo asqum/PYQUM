@@ -415,11 +415,11 @@ $(function() {
         $('button.char#singleqb').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/init', {
         }, function (data) {
-            console.log("run status: " + data.run_status);
-            if (data.run_status == true) {
-                $( "i.singleqb-run" ).remove(); //clear previous
-                $('button.char#singleqb').prepend("<i class='singleqb-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-            } else {};
+            // console.log("run status: " + data.run_status);
+            // if (data.run_status == true) {
+            //     $( "i.singleqb-run" ).remove(); //clear previous
+            //     $('button.char#singleqb').prepend("<i class='singleqb-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            // } else {};
             $('select.char.singleqb#wday').empty();
             $('select.char.singleqb#wday').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
