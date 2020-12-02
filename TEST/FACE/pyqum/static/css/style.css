@@ -354,6 +354,9 @@ select:focus option:checked {
 .col-25 {
     padding: inherit; width: 25%;
 }
+.col-28 {
+    padding: inherit; width: 28%;
+}
 .col-30 {
     padding: inherit; width: 30%;
 }

@@ -4,10 +4,10 @@
 	list-style: none;
 	font: 12px "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
 	width: 250px;
-	margin: 7px 0px 0px 5px;
+	margin: 0px 0px 0px 5px;
 	position: relative;
 	line-height: 2em;
-	padding: 5px 5px;
+	padding: 0px 5px;
 }
 
 .data-status li { 

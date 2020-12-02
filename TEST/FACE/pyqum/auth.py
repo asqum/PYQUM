@@ -233,20 +233,11 @@ def usersamples_access():
         ).fetchone()
         sample_cv = dict(sample_cv) # convert sqlite3.row into dictionary for this select format
 
-        sample_owner = db.execute(
-            'SELECT u.id, username'
-            ' FROM sample s JOIN user u ON s.author_id = u.id'
-            ' WHERE s.samplename = ?',
-            (sname,)
-        ).fetchone()
-        sample_owner = dict(sample_owner) # convert sqlite3.row into dictionary for this select format
+        sample_owner = db.execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
+        saved = bool(sname in lisample(sample_owner)) # saved?
 
-        session['people'] = sample_owner['username']
-        saved = bool(sname in lisample(session['people'])) # saved?
-
-        message = "Accessing Sample %s owned by %s" %(sname,session['people'])
+        message = "Accessing Sample %s owned by %s" %(sname,sample_owner)
     except:
-        session['people'] = []
         sample_cv = []
         message = "Consult ABC"
     # print('sample cv: %s' %sample_cv)
@@ -263,7 +254,8 @@ def usersamples_update():
     ownerpassword = request.args.get('ownerpassword')
     db = get_db()
     try:
-        people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+        sample_owner = db.execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
+        people = db.execute('SELECT password FROM user WHERE username = ?', (sample_owner,)).fetchone()
         if check_password_hash(people['password'], ownerpassword):
             db.execute(
                 'UPDATE sample SET location = ?, fabricated = ?, description = ?, co_authors = ?, previously = ?, history = ? WHERE samplename = ?',
@@ -281,9 +273,12 @@ def usersamples_update():
 def usersamples_meal():
     '''Double Log which USER is using which SAMPLE:'''
     sname = request.args.get('sname')
-    # SESSION (Cookies):
+    # SESSION (Current Sample):
     session['user_current_sample'] = sname
-    # JSON:
+    # SESSION (Sample's OWNER):
+    try: session['people'] = get_db().execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
+    except: session['people'] = None
+    # LOGGED INTO JSON:
     try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'])})
     except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='')})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])

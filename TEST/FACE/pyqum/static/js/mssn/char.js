@@ -6,7 +6,7 @@ $(document).ready(function(){
 });
 
 // RETURN to Sample selection page:
-$('input.char.loaded#samples').on('click', function() {
+$('input.char.loaded#sample-name').on('click', function() {
     window.location.href='/auth/user';
     return false;
 });

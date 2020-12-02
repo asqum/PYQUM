@@ -4,6 +4,7 @@ $(document).ready(function(){
     $("a.new#cwsweep-eta").text('ETA: ');
     // get_repeat_cwsweep();
     window.cwsweepcomment = "";
+    $('div input.notification').hide();
 });
 
 // Global variables:
@@ -57,8 +58,7 @@ function transpose(a) {
 // };
 function listimes_cwsweep() {
     $('input.char.data').removeClass("plotted");
-    // make global wday
-    window.wday = $('select.char#cwsweep[name="wday"]').val();
+    
     if (Number(wday) < 0) {
         // brings up parameter-input panel for new measurement:
         $('.modal.new').toggleClass('is-visible');
@@ -375,6 +375,7 @@ $(function() {
         }, function (data) {
             // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
             window.run_permission = data.run_permission;
+            window.DAYLIST = data.daylist;
             console.log("run permission: " + run_permission);
             if (run_permission == false) {
                 $('input.char#cwsweep-run').hide();
@@ -409,6 +410,8 @@ $(function() {
 // list times based on day picked
 $(function () {
     $('select.char#cwsweep[name="wday"]').on('change', function () {
+        // make global wday
+        window.wday = $('select.char#cwsweep[name="wday"]').val();
         listimes_cwsweep();
     });
     return false;
@@ -713,4 +716,21 @@ $('button.char.cwsweep.reset-no').on('click', function () {
     return false;
 });
 
+// Notification on click:
+$('input.cwsweep.notification').click( function(){
+    var Day = $('input.cwsweep.notification').val().split(' > ')[1];
+    var Moment = $('input.cwsweep.notification').val().split(' > ')[2];
+    console.log('Day: ' + Day + ', Moment: ' + Moment);
 
+    // Setting global Day & Moment index:
+    wday = DAYLIST.length - 1 - DAYLIST.indexOf(Day);
+    wmoment = Moment;
+    // Digesting Day & Moment on the back:
+    listimes_fresp();
+    accessdata_fresp();
+    // Setting Day & Moment on the front:
+    $('select.char#cwsweep[name="wday"]').val(wday);
+    setTimeout(() => { $('select.char#cwsweep[name="wmoment"]').val(wmoment); }, 60); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
+
+    return false;
+});

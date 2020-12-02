@@ -291,7 +291,7 @@ $(function () {
 
 // click to run:
 $('input.char#fresp-run').bind('click', function() {
-    // $('button.tablinks#ALL-tab').trigger('click');
+    $('button.tablinks#ALL-tab').trigger('click');
     $( "i.fresp" ).remove(); //clear previous
     // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
@@ -356,7 +356,7 @@ $('button.char.fresp[name="search"]').click( function() {
 // Click to resume measurement
 $(function () {
     $('button.char#fresp-resume').on('click', function () {
-        // $('button.tablinks#ALL-tab').trigger('click');
+        $('button.tablinks#ALL-tab').trigger('click');
         $( "i.fresp" ).remove(); //clear previous
         // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // waveform commands

@@ -5,7 +5,7 @@ from os.path import basename as bs
 from os.path import getmtime
 myname = bs(__file__).split('.')[0] # This py-script's name
 
-import requests, json
+import requests, json, ast
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
@@ -67,6 +67,7 @@ bp = Blueprint(myname, __name__, url_prefix=encryp+'/mssn')
 def show():
     # Filter out Stranger:
     with suppress(KeyError):
+        # PENDING: Build Database for visitors
         print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] from %s "%(session['user_name'], session['user_id'], request.remote_addr) + Fore.LIGHTBLUE_EX + "is trying to access MISSION" )
         # Check User's Clearances:
         # if not g.user['instrument'] or not g.user['measurement'] or not g.user['analysis']:
@@ -104,10 +105,10 @@ def all_job():
     try: missioname = get_db().execute( "SELECT mission FROM queue WHERE system = ?", (queue,) ).fetchone()['mission']
     except: missioname = None
     # print("mission: %s" %missioname)
-    owner, username, samplename = session['people'], session['user_name'], get_status("MSSN")[session['user_name']]['sample']
+    owner, samplename = session['people'], get_status("MSSN")[session['user_name']]['sample']
     
     maxlist = 88
-    joblist = lisjob(username, samplename, queue, maxlist) # job is listed based on login-user and sample
+    joblist = lisjob(samplename, queue, maxlist) # job is listed based on sample & queue only
 
     # LOG Calculated Progress interactively into SQL-Database for fast retrieval
     for j in joblist:
@@ -148,7 +149,7 @@ def all_queue_out():
     '''THIS IS ALSO PURPOSED TO STOP THE MEASUREMENT, EFFECTIVELY REPLACING THE PAUSE BUTTON & PAUSE-LOG FOR CERTAIN TASK!'''
     queue = request.args.get('queue')
     JID = request.args.get('JID')
-    message = qout(queue,JID)
+    message = qout(queue,JID,g.user['username'])
     # Prevent unsolicited visit:
     if queue is None: abort(404)
     return jsonify(message=message)
@@ -156,7 +157,25 @@ def all_queue_out():
 def all_access_job():
     jobid = request.args.get('jobid')
     tdmpack = jobsearch(jobid, mode='tdm')
+    # Prevent unsolicited visit:
+    if jobid is None: abort(404)
     return jsonify(tdmpack=dict(tdmpack))
+@bp.route('/all/requeue/job', methods=['GET'])
+def all_requeue_job():
+    if session['run_clearance']:
+        jobid = request.args.get('jobid')
+        requeue = jobsearch(jobid, mode='requeue')
+        if requeue['task'] == "F_Response":
+            print(Fore.YELLOW + "Requeue F_Response for JOB#%s" %jobid)
+            F_Response(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
+        elif requeue['task'] == "CW_Sweep":
+            print(Fore.YELLOW + "Requeue CW_Sweep for JOB#%s" %jobid)
+            CW_Sweep(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
+
+        else: print(Fore.RED + "UNKNOWN TASK: %s" %requeue['task'])
+        clearance = True
+    else: clearance = False
+    return jsonify(clearance)
 # endregion
 
 # region: CHAR:

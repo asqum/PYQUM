@@ -11,7 +11,7 @@ from functools import wraps #facilitate wrapper's comments
 from ctypes import c_int, c_bool, c_char_p, byref, cdll, c_char, c_long, c_double, c_float
 from ctypes.util import find_library
 from pyqum.instrument.logger import address, get_status, set_status, status_code
-from pyqum.instrument.toolbox import squarewave
+# from pyqum.instrument.toolbox import squarewave
 from time import sleep
 
 # dloc = "C:\\Program Files\\IVI Foundation\\IVI\Bin\\AgM933x_64.dll" #64-bit

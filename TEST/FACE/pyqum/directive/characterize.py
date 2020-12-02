@@ -37,11 +37,10 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     '''Characterizing Frequency Response:
     C-Order: Flux-Bias, S-Parameter, IF-Bandwidth, Power, Frequency
     '''
-    queue = 'CHAR0' # bypass queue UI-selection
-    
     instr['DC'], instr['NA'] = 'YOKO_1', 'ENA_1' # bypass instruments UI-selection
     
     sample = get_status("MSSN")[session['user_name']]['sample']
+    queue = get_status("MSSN")[session['user_name']]['queue']
     # pushing pre-measurement parameters to settings:
     yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
     # set_status("F_Response", dict(active=instr))
@@ -149,11 +148,10 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     '''Continuous Wave Sweeping:
     C-Order: Flux-Bias, XY-Frequency, XY-Power, S-Parameter, IF-Bandwidth, Frequency, Power
     '''
-    queue = 'CHAR0' # bypass queue UI-selection
-    
     instr['DC'], instr['SG'], instr['NA'] = 'YOKO_1', 'PSGA_1', 'ENA_1' # bypass instruments UI-selection
 
     sample = get_status("MSSN")[session['user_name']]['sample']
+    queue = get_status("MSSN")[session['user_name']]['queue']
     # pushing pre-measurement parameters to settings:
     yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
     # set_status("CW_Sweep", dict(active=instr))

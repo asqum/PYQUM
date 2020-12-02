@@ -374,7 +374,7 @@ class measurement:
         
         else: print(Fore.RED + "INVALID INDEX (%s) FOR DAY SELECT..." %index)
 
-    # only for scripting
+    # ONLY for scripting
     def whichmoment(self):
         '''This can be replaced by HTML Forms Input'''
         while True:
@@ -589,9 +589,13 @@ def settings(datadensity=1):
                 # 1. Register or Retrieve JOB(ID):
                 if dayindex == -1: # NEW FILE
                     # REQUEUE from previous dropped out JOB => (0 file, 1 job)
-                    if 'jobid' in perimeter.keys(): JOBID = perimeter['jobid']
+                    if 'jobid' in perimeter.keys(): 
+                        JOBID = perimeter['jobid']
+                        print(Fore.GREEN + "Jobid found in perimeter")
                     # NEW JOB => (0 file, 0 job)
-                    else: JOBID = jobin(task, corder, perimeter, instr, comment, tag)
+                    else: 
+                        JOBID = jobin(task, corder, perimeter, instr, comment, tag)
+                        print(Fore.GREEN + "NEW JOB REGISTERED")
                     print(Fore.BLUE + "NEW DAY DETECTED")
                 elif dayindex == -3: # TEMP FILE
                     pass
@@ -601,7 +605,7 @@ def settings(datadensity=1):
                     JOBID = jobsearch(criteria)
                     print(Fore.BLUE + "OLD DAY DETECTED")
                 else: print(Fore.RED + "INVALID DAYINDEX: %s" %dayindex)
-                perimeter['jobid'] = JOBID
+                perimeter["jobid"] = JOBID # BEWARE: will be reflushed back to the generator, don't know why?
 
                 # 2. Queue-IN and Wait for your turn:
                 M.status = qin(queue, JOBID)
@@ -620,6 +624,7 @@ def settings(datadensity=1):
 
                 # 3. Start RUNNING / WORKING / MEASUREMENT:
                 M.selectday(dayindex, corder, perimeter, instr, datadensity, comment, tag, JOBID)
+                perimeter.pop('jobid', None)
                 # print(Back.GREEN + "Day selected: %s"%self.day)
                 M.selectmoment(taskentry)
                 # print(Back.BLUE + "moment(file) selected: %s"%M.filename)
@@ -641,20 +646,23 @@ def lisample(usr):
     '''list samples for sample-profile under AUTH'''
     samples = [d for d in listdir(USR_PATH / usr) if isdir(USR_PATH / usr / d)]
     return samples
-def lisjob(usr, sample, queue, maxlist=12):
-    '''list jobs for queue-page under MSSN'''
+def lisjob(sample, queue, maxlist=12):
+    '''
+    list jobs for queue-page under MSSN\n
+    job-list should be visible among users to avoid overlapping of measurements!
+    '''
     # Provide user's clearances for each Queue (CHAR0, QPC0):
     if g.user['measurement']:
         # Extracting list from SQL-Database:
         Joblist = get_db().execute(
             '''
-            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress
+            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress, u.username
             FROM user u
             INNER JOIN job j ON j.user_id = u.id
             INNER JOIN sample s ON s.id = j.sample_id
-            WHERE j.queue = ? AND u.username = ? AND s.samplename = ?
+            WHERE j.queue = ? AND s.samplename = ?
             ORDER BY j.id DESC
-            ''', (queue, usr, sample)
+            ''', (queue, sample)
         ).fetchall()
         Joblist = [dict(x) for x in Joblist][:min(maxlist, len(Joblist))] # limit the number of job listing
         # print("Job list: %s" %Joblist)
@@ -700,18 +708,19 @@ def qin(queue,jobid):
             status = "Error Queueing in with JOBID #%s" %jobid
     else: status = "Measurement clearance was not found"
     return status
-def qout(queue,jobid):
+def qout(queue,jobid,username):
     '''Queue out without a Job'''
-    if g.user['measurement']:
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
+    if g.user['measurement'] and (username==jobrunner):
         try:
             db = get_db()
             db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))
             db.commit()
             status = "JOBID #%s Queued-out successfully" %jobid
         except:
-            raise
+            # raise
             status = "Error Queueing out with JOBID #%s" %jobid
-    else: status = "Measurement clearance was not found"
+    else: status = "%s is not allowed to stop %s's job #%s" %(username,jobrunner,jobid)
     return status
 def qid(queue,jobid):
     '''Get queue number'''
@@ -733,12 +742,12 @@ def jobin(task,corder,perimeter,instr,comment,tag):
             cursor = db.execute('INSERT INTO job (user_id, sample_id, task, parameter, perimeter, instrument, comment, tag, queue) VALUES (?,?,?,?,?,?,?,?,?)', 
                                         (g.user['id'],sample_id,task,str(corder),str(perimeter),str(instr),comment,tag,queue))
             JOBID = cursor.lastrowid
-            db.commit()
+            db.commit() # to avoid database-lock in the event of pending write-changes
             perimeter['jobid'] = JOBID
-            sleep(1)
+            # sleep(0.317)
             db.execute('UPDATE job SET perimeter = ? WHERE id = ?', (str(perimeter),JOBID))
             db.commit()
-            print(Fore.GREEN + Back.WHITE + "Successfully register the data into SQL Database with JOBID: %s" %JOBID)
+            print(Fore.GREEN + "Successfully register the data into SQL Database with JOBID: %s" %JOBID)
         except:
             # raise
             JOBID = None 
@@ -752,7 +761,7 @@ def jobstart(day,task_index,JOBID):
             db = get_db()
             db.execute('UPDATE job SET dateday = ?, wmoment = ? WHERE id = ?', (day,task_index,JOBID))
             db.commit()
-            print(Fore.GREEN + Back.WHITE + "Successfully update JOB#%s with (Day: %s, TASK#: %s" %(JOBID,day,task_index))
+            print(Fore.GREEN + "Successfully update JOB#%s with (Day: %s, TASK#: %s" %(JOBID,day,task_index))
         except:
             print(Fore.RED + Back.WHITE + "INVALID JOBID")
             raise
@@ -764,8 +773,9 @@ def jobnote():
     return
 def jobsearch(criteria, mode='jobid'):
     '''Search for JOB(s) based on criteria (keywords)
-        mode <jobid>: get job-id based on criteria
-        mode <tdmq>: get task, dateday, wmoment & queue based on job-id given as criteria
+        \nmode <jobid>: get job-id based on criteria
+        \nmode <tdmq>: get task, dateday, wmoment & queue based on job-id given as criteria
+        \nmode <requeue>: get task, parameter, perimeter, comment & tag based on job-id given as criteria for REQUEUE
     '''
     db = get_db()
     if mode=='jobid':
@@ -781,8 +791,10 @@ def jobsearch(criteria, mode='jobid'):
     elif mode=='tdm':
         # as dictionary
         result = db.execute('SELECT task, dateday, wmoment, queue FROM job WHERE id = ?', (criteria,)).fetchone()
-    else: # PENDING: for other kind of search
-        result = None 
+    elif mode=='requeue':
+        result = db.execute('SELECT task, parameter, perimeter, comment, tag FROM job WHERE id = ?', (criteria,)).fetchone()
+    
+    else: result = None 
     return result
 
 
@@ -795,7 +807,7 @@ def test():
     print(ad.lookup("YOKO"))
     print(ad.lookup("TEST", 2))
     print(lisample('abc'))
-    print(lisjob('abc','Sam','characterize'))
+    print(lisjob('Sam','characterize'))
 
     return
     
