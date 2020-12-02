@@ -578,6 +578,160 @@ def settings(datadensity=1):
 def lisample(usr):
     samples = [d for d in listdir(USR_PATH / usr) if isdir(USR_PATH / usr / d)]
     return samples
+<<<<<<< Updated upstream
+=======
+def lisjob(sample, queue, maxlist=12):
+    '''
+    list jobs for queue-page under MSSN\n
+    job-list should be visible among users to avoid overlapping of measurements!
+    '''
+    # Provide user's clearances for each Queue (CHAR0, QPC0):
+    if g.user['measurement']:
+        # Extracting list from SQL-Database:
+        Joblist = get_db().execute(
+            '''
+            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress, u.username
+            FROM user u
+            INNER JOIN job j ON j.user_id = u.id
+            INNER JOIN sample s ON s.id = j.sample_id
+            WHERE j.queue = ? AND s.samplename = ?
+            ORDER BY j.id DESC
+            ''', (queue, sample)
+        ).fetchall()
+        Joblist = [dict(x) for x in Joblist][:min(maxlist, len(Joblist))] # limit the number of job listing
+        # print("Job list: %s" %Joblist)
+        # print("Running %s" %inspect.stack()[0][3]) # current function name
+    return Joblist
+def lisqueue(queue):
+    '''
+    list queues for queue-page under MSSN
+    Update clearance for running the experiment
+    '''
+    if g.user['measurement']:
+        try:
+            g.Queue, g.jobidlist = {}, {}
+
+            # Extracting list from SQL-Database:
+            g.Queue[queue] = get_db().execute(
+                '''
+                SELECT j.id, j.task, j.startime, s.samplename, s.location, u.username, j.instrument
+                FROM user u
+                INNER JOIN %s c ON c.job_id = j.id
+                INNER JOIN job j ON j.user_id = u.id
+                INNER JOIN sample s ON s.id = j.sample_id
+                ORDER BY c.id ASC
+                ''' %(queue)
+                ).fetchall()
+            g.Queue[queue] = [dict(x) for x in g.Queue[queue]]
+            g.jobidlist[queue] = [x['id'] for x in g.Queue[queue]] # use to scheduling tasks in queue
+        
+        except: pass
+        # print(Fore.BLACK + Back.WHITE + "Clearance for queue %s: %s"%(queue, session['run_clearance']))
+    return
+
+# QUEUE
+def qin(queue,jobid):
+    '''Queue in with a Job'''
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            db.execute('INSERT INTO %s (job_id) VALUES (%s)' %(queue,jobid))
+            db.commit()
+            status = "Queued-in successfully"
+        except:
+            status = "Error Queueing in with JOBID #%s" %jobid
+    else: status = "Measurement clearance was not found"
+    return status
+def qout(queue,jobid,username=g.user['username']):
+    '''Queue out without a Job'''
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
+    if g.user['measurement'] and (username==jobrunner):
+        try:
+            db = get_db()
+            db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))
+            db.commit()
+            status = "JOBID #%s Queued-out successfully" %jobid
+        except:
+            # raise
+            status = "Error Queueing out with JOBID #%s" %jobid
+    else: status = "%s is not allowed to stop %s's job #%s" %(username,jobrunner,jobid)
+    return status
+def qid(queue,jobid):
+    '''Get queue number'''
+    try:
+        db = get_db()
+        id = db.execute('SELECT id FROM %s WHERE job_id = %s' %(queue,jobid)).fetchone()['id']
+    except: id = None
+    return id
+
+# JOB
+def jobin(task,corder,perimeter,instr,comment,tag):
+    '''Register a JOB and get the ID for queue-in later while leaving day and task# blank first'''
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            samplename = get_status("MSSN")[session['user_name']]['sample']
+            queue = get_status("MSSN")[session['user_name']]['queue']
+            sample_id = db.execute('SELECT s.id FROM sample s WHERE s.samplename = ?', (samplename,)).fetchone()[0]
+            cursor = db.execute('INSERT INTO job (user_id, sample_id, task, parameter, perimeter, instrument, comment, tag, queue) VALUES (?,?,?,?,?,?,?,?,?)', 
+                                        (g.user['id'],sample_id,task,str(corder),str(perimeter),str(instr),comment,tag,queue))
+            JOBID = cursor.lastrowid
+            db.commit() # to avoid database-lock in the event of pending write-changes
+            perimeter['jobid'] = JOBID
+            # sleep(0.317)
+            db.execute('UPDATE job SET perimeter = ? WHERE id = ?', (str(perimeter),JOBID))
+            db.commit()
+            print(Fore.GREEN + "Successfully register the data into SQL Database with JOBID: %s" %JOBID)
+        except:
+            # raise
+            JOBID = None 
+            print(Fore.RED + Back.WHITE + "Check all database input parameters")
+    else: JOBID = None
+    return JOBID
+def jobstart(day,task_index,JOBID):
+    '''Start a JOB by logging day and task#'''
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            db.execute('UPDATE job SET dateday = ?, wmoment = ? WHERE id = ?', (day,task_index,JOBID))
+            db.commit()
+            print(Fore.GREEN + "Successfully update JOB#%s with (Day: %s, TASK#: %s" %(JOBID,day,task_index))
+        except:
+            print(Fore.RED + Back.WHITE + "INVALID JOBID")
+            raise
+    else: pass
+    return
+def jobnote():
+    '''Add NOTE to a JOB after analyzing the data'''
+
+    return
+def jobsearch(criteria, mode='jobid'):
+    '''Search for JOB(s) based on criteria (keywords)
+        \nmode <jobid>: get job-id based on criteria
+        \nmode <tdmq>: get task, dateday, wmoment & queue based on job-id given as criteria
+        \nmode <requeue>: get task, parameter, perimeter, comment & tag based on job-id given as criteria for REQUEUE
+    '''
+    db = get_db()
+    if mode=='jobid':
+        # as single-value
+        result = db.execute(
+                    '''
+                    SELECT j.id 
+                    FROM job j 
+                    JOIN sample s ON s.id = j.sample_id
+                    WHERE s.samplename = ? AND j.task = ? AND j.dateday = ? AND j.wmoment = ?
+                    ''', (criteria['samplename'], criteria['task'], criteria['dateday'], criteria['wmoment'])
+                ).fetchone()[0]
+    elif mode=='tdm':
+        # as dictionary
+        result = db.execute('SELECT task, dateday, wmoment, queue FROM job WHERE id = ?', (criteria,)).fetchone()
+    elif mode=='requeue':
+        result = db.execute('SELECT task, parameter, perimeter, comment, tag FROM job WHERE id = ?', (criteria,)).fetchone()
+    
+    else: result = None 
+    return result
+
+>>>>>>> Stashed changes
 
 def lismission(usr, sample, mission):
     log = {}
