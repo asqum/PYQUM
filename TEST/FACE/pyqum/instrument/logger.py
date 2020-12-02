@@ -578,8 +578,6 @@ def settings(datadensity=1):
 def lisample(usr):
     samples = [d for d in listdir(USR_PATH / usr) if isdir(USR_PATH / usr / d)]
     return samples
-<<<<<<< Updated upstream
-=======
 def lisjob(sample, queue, maxlist=12):
     '''
     list jobs for queue-page under MSSN\n
@@ -731,7 +729,6 @@ def jobsearch(criteria, mode='jobid'):
     else: result = None 
     return result
 
->>>>>>> Stashed changes
 
 def lismission(usr, sample, mission):
     log = {}
