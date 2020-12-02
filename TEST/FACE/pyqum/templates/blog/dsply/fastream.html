@@ -1,0 +1,13 @@
+{% extends 'blog/dsply/display.html' %}
+{% block content %}
+
+<div class="tabcontent" id="all">
+    <div class="container">
+        <script type="text/javascript" src="{{ url_for('static', filename='js/dsply/fastream.js') }}"></script>
+
+        <div id="fps"></div>
+        <div id="plot" style="width: 700px; height: 300px;"></div>
+    </div>
+</div>
+
+{% endblock %}

@@ -20,36 +20,48 @@
     $('.navbar button.machine').addClass('active');
     $(function(){
       $("div#all").load("{{ url_for('machine.all') }}");
-      $("div#dc").load("{{ url_for('machine.dc') }}");
       $("div#bdr").load("{{ url_for('machine.bdr') }}");
+      $("div#dc").load("{{ url_for('machine.dc') }}");
       $("div#na").load("{{ url_for('machine.na') }}");
       $("div#sg").load("{{ url_for('machine.sg') }}"); 
-      $("div#awg").load("{{ url_for('machine.awg') }}");
-      $("div#vsa").load("{{ url_for('machine.vsa') }}");
+      $("div#tkawg").load("{{ url_for('machine.tkawg') }}");
+      $("div#alzdg").load("{{ url_for('machine.alzdg') }}");
     });
 </script> 
 
 {% if g.user %}
 <div class="tab">
   <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button>
-  <button class="tablinks" id="dc-tab" onclick="openTab(event, 'dc')">DC</button>
-  <button class="tablinks" id="bdr-tab" onclick="openTab(event, 'bdr')">BDR</button>
-  <!-- Network Analyzer -->
-  <button class="tablinks" id="na-tab"  onclick="openTab(event, 'na')"> NA </button>
-  <!-- Signal Generators -->
-  <button class="tablinks" id="sg-tab"  onclick="openTab(event, 'sg')"> SG </button>
-  <!-- PXI Temporal Dynamic Instruments -->
-  <button class="tablinks" id="awg-tab" onclick="openTab(event, 'awg')">AWG</button>
-  <button class="tablinks" id="vsa-tab" onclick="openTab(event, 'vsa')">VSA</button>
+
+  <!-- Support: Dilution Refrigerator -->
+  <button class="tablinks support" id="bdr-tab" onclick="openTab(event, 'bdr')">BDR</button>
+  <!-- Support: DC Source-->
+  <button class="tablinks support" id="dc-tab" onclick="openTab(event, 'dc')">DC</button>
+
+  <!-- Continuous: Network Analyzer -->
+  <button class="tablinks continuous-rf" id="na-tab"  onclick="openTab(event, 'na')"> NA </button>
+  <!-- Continuous: Signal Generators -->
+  <button class="tablinks continuous-rf" id="sg-tab"  onclick="openTab(event, 'sg')"> SG </button>
+
+  <!-- Pulse: Tektronix AWG -->
+  <button class="tablinks pulse-rf" id="tkawg-tab" onclick="openTab(event, 'tkawg')">TKAWG</button>
+  <!-- Pulse: AlazarTech DIG -->
+  <button class="tablinks pulse-rf" id="alzdg-tab" onclick="openTab(event, 'alzdg')">ALZDG</button>
+  
+  
+  <!-- Diagnostic: Spectrum Analyzer -->
+  <button class="tablinks diagnostic" id="sa-tab" onclick="openTab(event, 'sa')">SA</button>
 </div>
 
 <div id="all" class="tabcontent"></div>
-<div id="dc" class="tabcontent"></div>
 <div id="bdr" class="tabcontent"></div>
+<div id="dc" class="tabcontent"></div>
 <div id="na" class="tabcontent"></div>
 <div id="sg" class="tabcontent"></div>
-<div id="awg" class="tabcontent"></div>
-<div id="vsa" class="tabcontent"></div>
+<div id="tkawg" class="tabcontent"></div>
+<!-- <div id="awg" class="tabcontent"></div>
+<div id="vsa" class="tabcontent"></div> -->
+<div id="alzdg" class="tabcontent"></div>
 {% endif %}
 
 </body>

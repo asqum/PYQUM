@@ -19,20 +19,21 @@
     $('.navbar button').removeClass('active');
     $('.navbar button.mission').addClass('active');
     $(function(){
-      $("div#all").load("{{ url_for('mission.all') }}");
-      $("div#char").load("{{ url_for('mission.char') }}");
+      $("div#ALL").load("{{ url_for('mission.all') }}");
+      $("div#CHAR0").load("{{ url_for('mission.char') }}");
       
     });
 </script> 
 
 <div class="tab">
-  <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button>
-  <button class="tablinks" id="char-tab" onclick="openTab(event, 'char')">CHAR</button>
+  <button class="tablinks" id="ALL-tab" onclick="openTab(event, 'ALL')">ALL</button>
+  <button class="tablinks" id="CHAR0-tab" onclick="openTab(event, 'CHAR0')">CHAR-0</button>
   
 </div>
 
-<div id="all" class="tabcontent"></div>
-<div id="char" class="tabcontent"></div>
+<div id="ALL" class="tabcontent"></div>
+<div id="CHAR0" class="tabcontent"></div>
+<!-- PENDING: REMOVE/UNIFY THE MSSN-TABS AND SHARING DIRECTIVES ACROSS QUEUE-SYSTEMS -->
 
 
 </body>

@@ -9,10 +9,23 @@ $(document).ready(function(){
         $('.tab button.fig#static').addClass('active');
     };
 
+    if (window.location.pathname == "/dsply/fastream"){
+        console.log(window.location.pathname);
+        $('.tab button.fig').removeClass('active');
+        $('.tab button.fig#fastream').addClass('active');
+    };
+
     if (window.location.pathname == "/dsply/dynamic"){
         console.log(window.location.pathname);
         $('.tab button.fig').removeClass('active');
         $('.tab button.fig#dynamic').addClass('active'); 
+    };
+
+
+    if (window.location.pathname == "/dsply/game01"){
+        console.log(window.location.pathname);
+        $('.tab button.fig').removeClass('active');
+        $('.tab button.fig#game-01').addClass('active'); 
     };
 
 
@@ -54,8 +67,23 @@ $(function () {
 });
 
 $(function () {
+    $(".tab button.fig#fastream").bind('click', function(){
+        window.open("/dsply/fastream", '_self');  
+        return false;
+    });
+});
+
+$(function () {
     $(".tab button.fig#dynamic").bind('click', function(){
         window.open("/dsply/dynamic", '_self');   
+        return false;
+    });
+});
+
+
+$(function () {
+    $(".tab button.fig#game-01").bind('click', function(){
+        window.open("/dsply/game01", '_self');   
         return false;
     });
 });

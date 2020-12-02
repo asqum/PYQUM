@@ -39,6 +39,7 @@ def Initiate(reset=False, current=False, which=1):
         bench.timeout = 15000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+        ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         # raise
         set_status(mdlname, dict(state='DISCONNECTED'))
@@ -89,7 +90,7 @@ def sweep(bench, wave, pulsewidth=0.035, sweeprate=1.2):
             print("Error setting V")
     return Vdata, SweepTime
 
-def close(bench, reset=False):
+def close(bench, reset=False, which=1):
     if reset:
         previous(bench, True) # log last-applied voltage
         sweep(bench, "0to0*0") # return to zero
@@ -99,6 +100,8 @@ def close(bench, reset=False):
     try:
         bench.close() #None means Success?
         status = "Success"
+        ad = address()
+        ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
     set_status(mdlname, dict(state='disconnected'))
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))

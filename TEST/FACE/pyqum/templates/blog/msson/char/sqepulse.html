@@ -12,7 +12,7 @@
 
         <div class="row"> <!-- New Role for File-status -->
             <div class="col-15" id='left'><select class='char sqepulse' id="wday" type="text"></select></div>
-            <div class="col-7" id='left'><select class='char sqepulse' id="wmoment" type="text"></select></div>
+            <div class="col-7" id='left'><select class='char sqepulse' id="wmoment" type="number"></select></div>
             <div class="col-20" id='left'>
                 <ul class="data-status" id="sqepulse">
                     <li>
@@ -21,14 +21,14 @@
                     </li>
                 </ul>
             </div>
-            <div class="col-10" id='right'>
+            <!-- <div class="col-10" id='right'>
                 <label class="sqepulse switch">
                     <input class="sqepulse" id='live-update' type="checkbox">
                     <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
                 </label>
-            </div>
+            </div> -->
             <div class="col-1" id='right'></div>
-            <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="sqepulse-eta"></a></div></div>
+            <!-- <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="sqepulse-eta"></a></div></div> -->
             <div class="col-20" id='right'><div class="buttons"><a class="char new btn green" id="sqepulse-msg"></a></div></div>
             
         </div>
@@ -235,7 +235,7 @@
                         </div>
 
                         <!-- Repeat & Simulate -->
-                        <div class="row">
+                        <!-- <div class="row">
                             <div class="col-15" id='left'>
                                 <label class="switch"><input class='char sqepulse repeat' type="checkbox">
                                     <div class="slider smooth"><span class="on">REPEAT</span><span class="off">ONCE</span></div>
@@ -246,15 +246,15 @@
                                     <div class="slider smooth"><span class="on">TEST ETA</span><span class="off">LOGGED</span></div>
                                 </label>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- RUN -->
-                        <div class="row"> 
+                        <!-- <div class="row"> 
                             {% if session['run_clearance'] %}
                                 <div class="col-15" id='left'><input class="char modal-toggle new sqepulse" id="sqepulse-run"  type="submit" value="RUN"/></div>
                             {% endif %}
                             <div class="col-15" id='left'><input class="char modal-toggle new sqepulse" id="sqepulse-cancel" type="submit" value="CANCEL"/></div>
-                        </div>
+                        </div> -->
 
                     </div>
                 </div>

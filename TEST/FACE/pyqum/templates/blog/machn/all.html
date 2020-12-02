@@ -4,36 +4,35 @@
     <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script type="text/javascript" src="{{ url_for('static', filename='js/mach/all.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/Clock.js') }}"></script>
+    
 </head>
 
 <body>
 
 <div class="allcontent">
-    
-    <div class="all clock"></div>
-    <canvas id="canvas" width="150" height="150" style="background-color:#333"></canvas>
-    <script>myClock("canvas")</script>
+    <div class="container">
+        <form method='GET'>
+            <div class="row">
+                <div class="col-12" id='left'><button class='mach all push_button w-95 blue machine-update'>UPDATE</button></div>
+            </div>
 
-    <div class='row'>
-        <div class="col-10" id='left'><button class="all mach push_button w-95 blue" id="all-status-update">Update</button></div>
+            <div class="row">
+                <table class="mach content-table">
+                    <thead>
+                    <tr>
+                        <th>Instrument</th>
+                        <th>Busy</th>
+                        <th>User</th> 
+                        <th>action</th>   
+                    </tr>
+                    </thead>
+                    <tbody class="all machine-update"></tbody>
+                </table>
+            </div>
+
+
+        </form>
     </div>
-    <div class='row'>
-        <div class="col-10" id='left'> 
-            <input class="all mach" id='psgv-status' type="text" readonly/>  
-        </div>
-    </div>
-    <div class='row'>
-        <div class="col-10" id='left'>
-            <input class="all mach" id='awg-status' type="text" readonly/>
-        </div>
-    </div>
-        
-
-    
-
-    
-
     
 </div>
 

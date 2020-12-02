@@ -1,3 +1,5 @@
+'''For Arrangements of Authorizations & Clearances'''
+
 # Loading Basics
 from colorama import init, Back, Fore
 init(autoreset=True) #to convert termcolor to wins color
@@ -5,6 +7,7 @@ from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 import functools
+from keyboard import press
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, jsonify
@@ -34,7 +37,7 @@ def load_logged_in_user():
     """
     If a user id is stored in the session, load the user object from
     the database into ``g.user``.
-    This will be executed everytime a route (app-instance) is called upon!
+    This will be executed EVERYTIME a ROUTE (app-instance) is called upon!
     """
     user_id = session.get('user_id')
     if user_id is None:
@@ -65,30 +68,7 @@ def load_logged_in_user():
         ).fetchall()
         g.cosamples = [dict(x) for x in g.cosamples]
 
-        # ALL approved users' clearances:
-        g.userlist = get_db().execute(
-            'SELECT u.id, username, measurement, instrument, analysis'
-            ' FROM user u WHERE u.status = ?'
-            ' ORDER BY id DESC',
-            ('approved',)
-        ).fetchall()
-        g.userlist = [dict(x) for x in g.userlist]
-        # print("USER CREDENTIALS: %s" %g.userlist)
-
-        # Certain clearances required for queue-list access:
-        if g.user['instrument'] and g.user['measurement']:
-            # Queue list:
-            g.qumlist = get_db().execute(
-                'SELECT u.username FROM qum q JOIN user u ON q.people_id = u.id ORDER BY q.id ASC'
-            ).fetchall()
-            g.qumlist = [dict(x) for x in g.qumlist]
-            g.qumlist = [x['username'] for x in g.qumlist]
-            # Only first in line is allowed to run the measurement:
-            try:
-                session['run_clearance'] = bool(g.qumlist[0] == g.user['username'])
-            except(IndexError):
-                session['run_clearance'] = False
-            # print(g.qumlist)
+        # press('enter') # simulate press-enter-key in cmd to clear the possible clog!
 
 
 @bp.route('/register', methods=('GET', 'POST'))
@@ -101,6 +81,9 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        fullname = request.form['fullname']
+        affiliation = request.form['affiliation']
+        email = request.form['email']
         userstatus = 'pending'
         db = get_db()
         error = None
@@ -117,8 +100,8 @@ def register():
         if error is None:
             # the name is available, store it in the database and go to the login page
             db.execute(
-                'INSERT INTO user (username, password, status) VALUES (?, ?, ?)',
-                (username, generate_password_hash(password), userstatus)
+                'INSERT INTO user (username, password, status, fullname, affiliation, email) VALUES (?, ?, ?, ?, ?, ?)',
+                (username, generate_password_hash(password), userstatus, fullname, affiliation, email,)
             )
             db.commit()
             return redirect(url_for('auth.login'))
@@ -147,6 +130,7 @@ def login():
         elif user['status'].upper() != 'APPROVED':
             error = 'Awaiting Approval...'
 
+        # Entering the system after being vetted:
         if error is None:
             # store the user's credentials in a new SESSION (Cookies) and return to the index
             session.clear()
@@ -164,6 +148,18 @@ def login():
             session['people'] = None
             print("%s has logged-in Successfully!" %session['user_name'] )
             return redirect(url_for('index'))
+
+            g.userlist = None
+            if user['management'] == "oversee":
+                # ALL approved users' credentials:
+                g.userlist = get_db().execute(
+                    'SELECT u.id, username, measurement, instrument, analysis'
+                    ' FROM user u WHERE u.status = ?'
+                    ' ORDER BY id DESC',
+                    ('approved',)
+                ).fetchall()
+                g.userlist = [dict(x) for x in g.userlist]
+            print(Fore.RED + Back.WHITE + "USER CREDENTIALS: %s" %g.userlist)
 
         print(error)
         flash(error)
@@ -235,7 +231,7 @@ def usersamples_access():
             ' WHERE s.samplename = ?',
             (sname,)
         ).fetchone()
-        sample_cv = dict(sample_cv) # convert sqlite3.row into dictionary
+        sample_cv = dict(sample_cv) # convert sqlite3.row into dictionary for this select format
 
         sample_owner = db.execute(
             'SELECT u.id, username'
@@ -243,7 +239,7 @@ def usersamples_access():
             ' WHERE s.samplename = ?',
             (sname,)
         ).fetchone()
-        sample_owner = dict(sample_owner) # convert sqlite3.row into dictionary
+        sample_owner = dict(sample_owner) # convert sqlite3.row into dictionary for this select format
 
         session['people'] = sample_owner['username']
         saved = bool(sname in lisample(session['people'])) # saved?
@@ -283,8 +279,13 @@ def usersamples_update():
     return jsonify(message=message)
 @bp.route('/user/samples/meal', methods=['GET'])
 def usersamples_meal():
+    '''Double Log which USER is using which SAMPLE:'''
     sname = request.args.get('sname')
-    set_status("MSSN", {session['user_name']: dict(sample=sname)})
+    # SESSION (Cookies):
+    session['user_current_sample'] = sname
+    # JSON:
+    try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'])})
+    except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='')})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
 

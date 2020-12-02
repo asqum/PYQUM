@@ -4,7 +4,7 @@ $(document).ready(function(){
     $('button.char#sqepulse-savecsv').hide();
     $("a.new#sqepulse-eta").text('ETA: ');
     $("a.new#sqepulse-msg").text('Measurement Status');
-    get_repeat_sqepulse();
+    // get_repeat_sqepulse();
     window.sqepulsecomment = "";
 });
 
@@ -44,27 +44,27 @@ function transpose(a) {
     }
     return t;
   };
-function set_repeat_sqepulse() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/setrepeat', {
-        repeat: $('input.char.sqepulse.repeat').is(':checked')?1:0
-    }, function(data) {
-        $( "i.sqepulse-repeat" ).remove(); //clear previous
-        if (data.repeat == true) {
-            $('button.char#sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        };
-    });
-};
-function get_repeat_sqepulse() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/getrepeat', {
-    }, function (data) {
-        console.log("Repeat: " + data.repeat);
-        $('input.char.sqepulse.repeat').prop("checked", data.repeat);
-        $( "i.sqepulse-repeat" ).remove(); //clear previous
-        if (data.repeat == true) {
-            $('button.char#sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        };
-    });
-};
+// function set_repeat_sqepulse() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/setrepeat', {
+//         repeat: $('input.char.sqepulse.repeat').is(':checked')?1:0
+//     }, function(data) {
+//         $( "i.sqepulse-repeat" ).remove(); //clear previous
+//         if (data.repeat == true) {
+//             $('button.char#sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+//         };
+//     });
+// };
+// function get_repeat_sqepulse() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/getrepeat', {
+//     }, function (data) {
+//         console.log("Repeat: " + data.repeat);
+//         $('input.char.sqepulse.repeat').prop("checked", data.repeat);
+//         $( "i.sqepulse-repeat" ).remove(); //clear previous
+//         if (data.repeat == true) {
+//             $('button.char#sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+//         };
+//     });
+// };
 function listimes_sqepulse() {
     $('input.char.data').removeClass("plotted");
     // make global wday
@@ -73,8 +73,8 @@ function listimes_sqepulse() {
         // brings up parameter-input panel for new measurement:
         $('.modal.new').toggleClass('is-visible');
         // Update Live Informations:
-        $.getJSON('/mach/all/status', {}, function (data) {
-            $("textarea.char.sqepulse#ecomment").val(sqepulsecomment + "\nUpdate: T6=" + data.latestbdr['T6']*1000 + "mK");
+        $.getJSON('/mach/all/mxc', {}, function (data) {
+            $("textarea.char.sqepulse#ecomment").val(sqepulsecomment + "\nUpdate: T6=" + data.mxcmk + "mK");
         });
 
     } else if (wday == 'm') {
@@ -415,11 +415,11 @@ $(function() {
         $('button.char#sqepulse').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/init', {
         }, function (data) {
-            console.log("run status: " + data.run_status);
-            if (data.run_status == true) {
-                $( "i.sqepulse-run" ).remove(); //clear previous
-                $('button.char#sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-            } else {};
+            // console.log("run status: " + data.run_status);
+            // if (data.run_status == true) {
+            //     $( "i.sqepulse-run" ).remove(); //clear previous
+            //     $('button.char#sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            // } else {};
             $('select.char.sqepulse#wday').empty();
             $('select.char.sqepulse#wday').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
@@ -490,16 +490,16 @@ $("a.new#sqepulse-msg").bind('click', function() {
     });
 });
 // click to estimate ETA
-$("a.new#sqepulse-eta").bind('click', function() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/eta100', {
-    }, function (data) {
-        $("a.new#sqepulse-eta").text('ETA in\n' + String(data.eta_time_100));
-    });
-});
+// $("a.new#sqepulse-eta").bind('click', function() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/eta100', {
+//     }, function (data) {
+//         $("a.new#sqepulse-eta").text('ETA in\n' + String(data.eta_time_100));
+//     });
+// });
 // click to set repeat or once
-$('input.char.sqepulse.repeat').bind('click', function() {
-    set_repeat_sqepulse();
-});
+// $('input.char.sqepulse.repeat').bind('click', function() {
+//     set_repeat_sqepulse();
+// });
 
 // click to search: (pending)
 $('input.char.sqepulse#search').change( function() {
@@ -519,17 +519,17 @@ $('input.char.sqepulse#search').change( function() {
 });
 
 // click to pause measurement
-$(function () {
-    $('button.char#sqepulse-pause').on('click', function () {
-        $( "i.sqepulse" ).remove(); //clear previous
-        $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/pause', {
-            // direct pause
-        }, function(data) {
-            console.log("paused: " + data.pause);
-        });
-        return false;
-    });
-});
+// $(function () {
+//     $('button.char#sqepulse-pause').on('click', function () {
+//         $( "i.sqepulse" ).remove(); //clear previous
+//         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/pause', {
+//             // direct pause
+//         }, function(data) {
+//             console.log("paused: " + data.pause);
+//         });
+//         return false;
+//     });
+// });
 
 // Click to resume measurement (PENDING: Error(s) to be fixed)
 $(function () {

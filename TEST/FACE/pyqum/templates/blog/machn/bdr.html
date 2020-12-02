@@ -11,8 +11,8 @@
 
     <div class="tab2">
         <button class='bdr' id='history'>HISTORY</button>
-        <button class='bdr' id='warmup'>WIRING</button> 
         <button class='bdr' id='samples'>SAMPLES</button>
+        <button class='bdr' id='warmup'>WIRING</button> 
     </div>
     
     <!-- page content based on button clicked -->
@@ -149,11 +149,22 @@
     <div class="bdrcontent" id="samples">
         <div class="container">
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <h2 class="bdr" id="samples">Currently in BlueFors Dilution Refrigerator:</h2>
+                <h2 class="bdr" id="samples">Output assignment for DR-1</h2>
             </div>
-            <div class="row"> <!-- New Row for Parameter-label -->
-                <div class="col" id='left' style='width:30%'><label>Switch 1</label></div>
-                <div class="col" id='left' style='width:30%'><label>Switch 2</label></div>
+            
+            <div class="row">
+                <table class="BDR-QUEUE content-table">
+                    <thead class="samples bdr-queue-update">
+                        <tr>
+                            
+                        </tr>
+                    </thead>
+                    <tbody class="samples bdr-queue-update">
+                        <tr>
+
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             
         </div>

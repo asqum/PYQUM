@@ -11,25 +11,26 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 from numpy import array
 import array as arr
 
-from pyqum.instrument.toolbox import squarewave
+from pyqum.instrument.composer import pulser
 from time import sleep
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate():
+def Initiate(which):
     ad = address()
-    rs = ad.lookup(mdlname) # Instrument's Address
+    rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-        stat = bench.write('*ESR?') #basic query
+        stat = bench.write('*ESR?') # serve to check connection availibility
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 150000 #set timeout in ms
-        set_status(mdlname, dict(state='connected'))
-        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+        set_status(mdlname, dict(state='connected'), which)
+        print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat[1])[-7:]))
+        ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
-        set_status(mdlname, dict(state='DISCONNECTED'))
-        print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
+        set_status(mdlname, dict(state='DISCONNECTED'), which)
+        print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
         bench = "disconnected"
     return bench
 
@@ -219,18 +220,19 @@ def stop(bench):
     except: set_status(mdlname, dict(play='error'))
     return status
 
-def close(bench, reset=True):
+def close(bench, which, reset=True):
     if reset:
-        bench.write('*RST') # reset to factory setting
-        set_status(mdlname, dict(config='reset'))
-    else: set_status(mdlname, dict(config='previous'))
+        bench.write('*RST') # reset to factory setting (including switch-off)
+        set_status(mdlname, dict(config='reset'), which)
+    else: set_status(mdlname, dict(config='previous'), which)
     try:
-        # acquire(bench, action=['Set','OFF','']) # STOP ACQUISITION
         bench.close() #None means Success?
         status = "Success"
+        ad = address()
+        ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
-    set_status(mdlname, dict(state='disconnected'))
-    print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
+    set_status(mdlname, dict(state='disconnected with %s' %status), which)
+    print(Back.WHITE + Fore.BLACK + "%s's connection Closed with %s" %(mdlname,status))
     return status
 
 # Composite functions for directives:
@@ -254,8 +256,8 @@ def compose_DAC(bench, channel, pulsedata, marker=0, markersize=0):
     return bench
 
 # Test Zone
-def test(detail=True):
-    s = Initiate()
+def test(bench, detail=True):
+    s = bench #Initiate(1)
     if s is "disconnected":
         pass
     else:
@@ -264,51 +266,62 @@ def test(detail=True):
             model(s)
             clock(s)
             waveformlist(s)
-            waveformpick(s, action=['Get','0'])
+            # waveformpick(s, action=['Get','0'])
 
             # To be put in directives:
-            level = [0.3, 0.2]
             ch = [1,2,3,4]
-            clock(s, action=['Set', 'EFIXed',2.5e9])
+            # clock(s, action=['Set', 'EFIXed', 2.5e9])
             clear_waveform(s,'all')
             alloff(s, action=['Set',1])
 
+            dt = 0.4
+            wavelength = 20000 # points
             # Prepare all channels:
             for i in range(4):
-                prepare_DAC(s, ch[i], 20000)
-            # Compose each waveforms into respective channels:
-            compose_DAC(s, ch[0], array(squarewave(8000, 100, 0, level[0], dt=0.4, clock_multiples=1)), 1, 200)
-            compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level[0], dt=0.4, clock_multiples=1)))
-            compose_DAC(s, ch[2], array(squarewave(8000, 100, 0, level[1], dt=0.4, clock_multiples=1)), 1, 200)
-            compose_DAC(s, ch[3], array(squarewave(8000, 0, 0, level[1], dt=0.4, clock_multiples=1)))
+                prepare_DAC(s, ch[i], wavelength)
+
+            # Compose songs for each channel:
+            song1 = pulser(dt, 1, score='ns=%s;GAUSS UP/,250,0.3;GAUSS DN/,250,0.3;'%(wavelength*dt))
+            song1.song()
+            song2 = pulser(dt, 1, score='ns=%s;Flat,0,0'%(wavelength*dt))
+            song2.song()
+            song3 = pulser(dt, 1, score='ns=%s;Flat,800,0.5'%(wavelength*dt))
+            song3.song()
+            song4 = pulser(dt, 1, score='ns=%s;Flat,0,0'%(wavelength*dt))
+            song4.song()
+
+            # Inject each song into respective channels:
+            compose_DAC(s, ch[0], song1.music, 1, 200)
+            compose_DAC(s, ch[1], song2.music)
+            compose_DAC(s, ch[2], song3.music, 1, 200)
+            compose_DAC(s, ch[3], song4.music)
             
             alloff(s, action=['Set',0])
             ready(s)
             print("Play: %s" %str(play(s)))
 
             # Changing waveform on the fly:
-            # sleep(7)
-            # compose_DAC(s, ch[0], array(squarewave(8000, 2000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
-            # sleep(7)
-            # compose_DAC(s, ch[0], array(squarewave(8000, 3000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
-            # sleep(7)
-            # compose_DAC(s, ch[0], array(squarewave(8000, 5000, 0, level, dt=0.4, clock_multiples=1)), 1, 200)
-            # compose_DAC(s, ch[1], array(squarewave(8000, 0, 0, level, dt=0.4, clock_multiples=1)))
+            sleep(3)
+            song1 = pulser(dt, 1, score='ns=%s;GAUSS UP/,350,0.3;GAUSS DN/,350,0.3;'%(wavelength*dt))
+            song1.song()
+            compose_DAC(s, ch[0], song1.music, 1, 200)
+            sleep(3)
+            song1 = pulser(dt, 1, score='ns=%s;GAUSS UP/,200,0.3;Flat,300,0.3;GAUSS DN/,200,0.3;'%(wavelength*dt))
+            song1.song()
+            compose_DAC(s, ch[0], song1.music, 1, 200)
 
-            ch = 3
-            runmode(s, ch)
-            output(s, ch)
-            sourcelevel(s, ch)
-            sourceresolution(s, ch)
-            runstate(s)
+            # ch = 3
+            # runmode(s, ch)
+            # output(s, ch)
+            # sourcelevel(s, ch)
+            # sourceresolution(s, ch)
+            # runstate(s)
 
         else: print(Fore.RED + "Basic IO Test")
-    if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):
-        state = True
-    else: state = False
-    close(s, reset=state)
-    return
+    # if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):
+    #     state = True
+    # else: state = False
+    # close(s, reset=reset)
+    return "Success"
 
 # test()

@@ -63,3 +63,10 @@ CREATE TABLE "experiment" (
 	FOREIGN KEY("user_id") REFERENCES "user"("id")
 );
 
+CREATE TABLE "qum" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"people_id"	INTEGER NOT NULL UNIQUE,
+	PRIMARY KEY("id"),
+	FOREIGN KEY("people_id") REFERENCES "user"("id")
+);
+

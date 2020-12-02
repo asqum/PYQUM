@@ -3,8 +3,9 @@ $(document).ready(function(){
     $("a.new#fresp-eta").text('ETA: ');
     $("a.new#fresp-rcount").text('R#: ');
     // console.log('encryptonian length: ' + mssnencrpytonian().length);
-    get_repeat_fresp();
+    // get_repeat_fresp();
     window.frespcomment = "";
+    $('div input.notification').hide();
 });
 
 // Global variables:
@@ -12,28 +13,27 @@ window.selecteday = ''
 window.frespcryption = 'hfhajfjkafh'
 
 // *functions are shared across all missions!
-function set_repeat_fresp() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/setrepeat', {
-        repeat: $('input.char#fresp[name="repeat"]').is(':checked')?1:0
-    });
-};
-function get_repeat_fresp() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/getrepeat', {
-    }, function (data) {
-        console.log("Repeat: " + data.repeat);
-        $('input.char#fresp[name="repeat"]').prop("checked", data.repeat);
-    });
-};
+// function set_repeat_fresp() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/setrepeat', {
+//         repeat: $('input.char#fresp[name="repeat"]').is(':checked')?1:0
+//     });
+// };
+// function get_repeat_fresp() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/getrepeat', {
+//     }, function (data) {
+//         console.log("Repeat: " + data.repeat);
+//         $('input.char#fresp[name="repeat"]').prop("checked", data.repeat);
+//     });
+// };
 function listimes_fresp() {
     $('input.char.data').removeClass("plotted");
-    // make global wday
-    window.wday = $('select.char#fresp[name="wday"]').val();
+    
     if (Number(wday) < 0) {
         // brings up parameter-input panel for new measurement:
         $('.modal.new').toggleClass('is-visible');
         // Update Live Informations:
-        $.getJSON('/mach/all/status', {}, function (data) {
-            $("textarea.char#fresp[name='ecomment']").val(frespcomment + "\nUpdate: T6=" + data.latestbdr['T6']*1000 + "mK");
+        $.getJSON('/mach/all/mxc', {}, function (data) {
+            $("textarea.char#fresp[name='ecomment']").val(frespcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
         });
 
     } else if (wday == 's') {
@@ -51,6 +51,7 @@ function listimes_fresp() {
             $.each(data.taskentries, function(i,v){ $('select.char#fresp[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
         }); 
     };
+    return;
 };
 function accessdata_fresp() {
     $('.data-progress#fresp').css({"width": 0}).text('accessing...');
@@ -113,6 +114,7 @@ function accessdata_fresp() {
         $('.data-eta#fresp').text("data: " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
     });
+    return;
 };
 
 function plot2D_fresp(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
@@ -234,18 +236,33 @@ $('.modal-toggle.new.fresp').on('click', function(e) {
 // show F-Response's daylist
 $(function() {
     $('button.char#fresp').bind('click', function() {
+        $('div.fresp.queue-system').empty().append($('<h4 style="color: blue;"></h4>').text(qsystem));
         $('div.charcontent').hide();
         $('div.charcontent#fresp').show();
         $('button.char').removeClass('selected');
         $('button.char#fresp').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/init', {
         }, function (data) {
-            console.log("run status: " + data.run_status);
-            console.log("run permission: " + data.run_permission);
-            if (data.run_status == true) {
-                $( "i.fresp" ).remove(); //clear previous
-                $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-            } else {};
+            // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
+            window.run_permission = data.run_permission;
+            window.DAYLIST = data.daylist;
+            console.log("run permission: " + run_permission);
+            if (run_permission == false) {
+                $('input.char#fresp-run').hide();
+                $('button.char.fresp.run').hide();
+                console.log("RUN BUTTON DISABLED");
+            } else {
+                $('input.char#fresp-run').show(); // RUN
+                $('button.char.fresp.run').show(); // RESUME
+                console.log("RUN BUTTON ENABLED");
+            };
+            // Check Run Status:
+            // console.log("run status: " + data.run_status);
+            // if (data.run_status == true) {
+            //     $( "i.fresp" ).remove(); //clear previous
+            //     $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            // } else {};
+            // List Days:
             $('select.char#fresp[name="wday"]').empty();
             $('select.char#fresp[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
@@ -255,12 +272,8 @@ $(function() {
                 }));
             });
             $('select.char#fresp[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
-            if (data.run_permission == false) {
-                $('input.char#fresp-run').hide();
-                console.log("RUN BUTTON DISABLED");
-            } else {
-                $('select.char#fresp[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
-            };
+            $('select.char#fresp[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
+            $('select.char#fresp[name="wday"]').append($('<option>', { text: '--Temp--', value: -3 }));
         });
         return false;
     });
@@ -269,6 +282,8 @@ $(function() {
 // list times based on day picked
 $(function () {
     $('select.char#fresp[name="wday"]').on('change', function () {
+        // make global wday
+        window.wday = $('select.char#fresp[name="wday"]').val();
         listimes_fresp();
     });
     return false;
@@ -276,8 +291,9 @@ $(function () {
 
 // click to run:
 $('input.char#fresp-run').bind('click', function() {
+    // $('button.tablinks#ALL-tab').trigger('click');
     $( "i.fresp" ).remove(); //clear previous
-    $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
     var fluxbias = $('input.char#fresp[name="fluxbias"]').val();
     var sparam = $('input.char#fresp[name="sparam"]').val();
@@ -292,22 +308,24 @@ $('input.char#fresp-run').bind('click', function() {
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/new', {
         wday: wday, fluxbias: fluxbias, sparam: sparam, ifb: ifb, powa: powa, freq: freq, comment: comment, simulate: simulate
     }, function (data) { 
-        console.log("test each loop: " + data.testeach);      
+        console.log("test each loop: " + data.testeach); 
+        // $('button.tablinks#ALL-tab').trigger('click');  
         $( "i.fresp" ).remove(); //clear previous
+        $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
     });
     return false;
 });
 // click to estimate ETA
-$("a.new#fresp-eta").bind('click', function() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/eta100', {
-    }, function (data) {
-        $("a.new#fresp-eta").text('ETA in\n' + String(data.eta_time_100));
-    });
-});
-// click to set repeat or once
-$('input.char#fresp[name="repeat"]').bind('click', function() {
-    set_repeat_fresp();
-});
+// $("a.new#fresp-eta").bind('click', function() {
+//     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/eta100', {
+//     }, function (data) {
+//         $("a.new#fresp-eta").text('ETA in\n' + String(data.eta_time_100));
+//     });
+// });
+// // click to set repeat or once
+// $('input.char#fresp[name="repeat"]').bind('click', function() {
+//     set_repeat_fresp();
+// });
 
 // click to search:
 $('button.char.fresp[name="search"]').click( function() {
@@ -323,23 +341,24 @@ $('button.char.fresp[name="search"]').click( function() {
 });
 
 // click to pause measurement
-$(function () {
-    $('button.char#fresp-pause').on('click', function () {
-        $( "i.fresp" ).remove(); //clear previous
-        $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/pause', {
-            // direct pause
-        }, function(data) {
-            console.log("paused: " + data.pause);
-        });
-        return false;
-    });
-});
+// $(function () {
+//     $('button.char#fresp-pause').on('click', function () {
+//         $( "i.fresp" ).remove(); //clear previous
+//         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/pause', {
+//             // direct pause
+//         }, function(data) {
+//             console.log("paused: " + data.pause);
+//         });
+//         return false;
+//     });
+// });
 
 // Click to resume measurement
 $(function () {
     $('button.char#fresp-resume').on('click', function () {
+        // $('button.tablinks#ALL-tab').trigger('click');
         $( "i.fresp" ).remove(); //clear previous
-        $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // waveform commands
         var fluxbias = $('input.char#fresp[name="fluxbias"]').val();
         var sparam = $('input.char#fresp[name="sparam"]').val();
@@ -352,7 +371,9 @@ $(function () {
             if (data.resumepoint == data.datasize) {
                 console.log("The data was already complete!")
             } else { console.log("The data has just been completed")};
+            // $('button.tablinks#ALL-tab').trigger('click');
             $( "i.fresp" ).remove(); //clear previous
+            $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
         });
         return false;
     });
@@ -544,4 +565,23 @@ $('a.fresp.closebtn').on('click', function () {
     $('div.fresp#fresp-search').width("0");
     // revert back to previous option upon leaving dialogue box
     $('select.char#fresp[name="wday"]').val(selecteday);
+});
+
+// Notification on click:
+$('input.fresp.notification').click( function(){
+    var Day = $('input.fresp.notification').val().split(' > ')[1];
+    var Moment = $('input.fresp.notification').val().split(' > ')[2];
+    console.log('Day: ' + Day + ', Moment: ' + Moment);
+
+    // Setting global Day & Moment index:
+    wday = DAYLIST.length - 1 - DAYLIST.indexOf(Day);
+    wmoment = Moment;
+    // Digesting Day & Moment on the back:
+    listimes_fresp();
+    accessdata_fresp();
+    // Setting Day & Moment on the front:
+    $('select.char#fresp[name="wday"]').val(wday);
+    setTimeout(() => { $('select.char#fresp[name="wmoment"]').val(wmoment); }, 60); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
+
+    return false;
 });

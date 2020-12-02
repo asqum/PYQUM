@@ -1,6 +1,6 @@
 //when page is loading:
 $(document).ready(function(){
-    $('button#all-tab').toggleClass('active');
+    $('button#ALL-tab').toggleClass('active');
 });
 
 function mssnencrpytonian() {

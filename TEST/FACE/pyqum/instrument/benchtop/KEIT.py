@@ -23,9 +23,9 @@ def debug(state=False):
 debug() # declare the debugger mode here
 
 # INITIALIZATION
-def Initiate(reset=False):
+def Initiate(reset=False, which=1):
     ad = address()
-    rs = ad.lookup(mdlname) # Instrument's Address
+    rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -37,6 +37,7 @@ def Initiate(reset=False):
         bench.timeout = 15000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+        ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         # raise
         set_status(mdlname, dict(state='DISCONNECTED'))
@@ -71,7 +72,7 @@ def single_pulse(bench, width, height):
     return return_width, VI_List
 
 
-def close(bench, reset=False):
+def close(bench, reset=False, which=1):
     bench.write(":OUTPUT OFF")
     if reset:
         bench.write(':SYSTem:PRESet')
@@ -80,6 +81,8 @@ def close(bench, reset=False):
     try:
         bench.close() #None means Success?
         status = "Success"
+        ad = address()
+        ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
     set_status(mdlname, dict(state='disconnected'))
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))

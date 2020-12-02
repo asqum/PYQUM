@@ -74,7 +74,7 @@ class waveform:
             self.command = self.command.replace("to ","to")
         
         command = self.command.split(" ") + [""]
-        # 1. building function generator:
+        # 1. building function generator: (Still PENDING, Refer 'composer')
         if command[0].lower() == "fx":
             pass
         # 2. building string list:
@@ -107,26 +107,6 @@ class waveform:
                         print("Invalid command")
                         pass
                 else: self.data.append(float(cmd))     
-
-def squarewave(totaltime, ontime, delay, scale=1, offset=0, dt=0.8, clock_multiples=8, Ramsey_delay=0, Hahn_echo='off', ringup=0):
-    '''time-unit: ns
-        totaltime: total duration (minimum: 1000*0.8ns ~ 1us)
-        ontime: +1V duration
-        delay: duration before ontime
-        scale: -1 to 1 output level in V
-        offset: to eliminate LO leakage
-        dt: time-resolution of AWG in ns
-    '''
-    delaypoints = round(delay / dt)
-    onpoints = round(ontime / dt)
-    offpoints = round((totaltime - ontime - delay) / dt)
-    padding = 0 # no padding by default!
-    # keep total-points to be the multiples of clock_multiples of specific instruments
-    if (delaypoints + onpoints + offpoints)%clock_multiples: padding = clock_multiples - (delaypoints + onpoints + offpoints)%clock_multiples
-    if (ontime == totaltime): offset = scale # always ON or OFF
-    wave = [offset] * delaypoints + [scale] * onpoints + [offset] * (offpoints + padding)
-
-    return wave
 
 
 def match(List, Value):

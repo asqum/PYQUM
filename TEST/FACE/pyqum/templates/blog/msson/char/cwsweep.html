@@ -12,7 +12,7 @@
 
         <div class="row"> <!-- New Role for File-status -->
             <div class="col-15" id='left'><select class='char' id="cwsweep" name="wday" type="text"></select></div>
-            <div class="col-7" id='left'><select class='char' id="cwsweep" name="wmoment" type="text"></select></div>
+            <div class="col-7" id='left'><select class='char' id="cwsweep" name="wmoment" type="number"></select></div>
             <div class="col-20" id='left'>
                 <ul class="data-status" id="cwsweep">
                     <li>
@@ -22,11 +22,10 @@
                 </ul>
             </div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="cwsweep-eta"></a></div></div>
-            {% if session['run_clearance'] %}
-                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
-                <div class="col-10" id='right'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div>
-                <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
-            {% endif %}
+            <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
+            <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
+            <!-- <div class="col-10" id='right'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div> -->
+                
         </div>
 
         <div class="row">
@@ -48,10 +47,10 @@
             <div class="col-15" id='left'><label>XY-Power (dBm)</label></div>
         </div>
         <div class="row">
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-repeat" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-fluxbias" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-xyfreq" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-xypowa" type="text"></select></div> 
+            <div class="col-15" id='left'><select class='char cwsweep parameter' id="c-repeat" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep parameter' id="c-fluxbias" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep parameter' id="c-xyfreq" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep parameter' id="c-xypowa" type="text"></select></div> 
         </div>
 
         <!-- basic parameters line #2 -->
@@ -62,10 +61,10 @@
             <div class="col-15" id='left'><label>Power (dBm)</label></div>
         </div>
         <div class="row">
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-sparam" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-ifb" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-freq" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="c-powa" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep parameter' id="c-sparam" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep parameter' id="c-ifb" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep parameter' id="c-freq" type="text"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep parameter' id="c-powa" type="text"></select></div>
         </div>
 
         <!-- Check, Plot & Download Data -->
@@ -138,11 +137,11 @@
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUN MODE -->
-                            <div class="col-15" id='left'>
+                            <!-- <div class="col-15" id='left'>
                                 <label class="switch"><input class='char' id=cwsweep name='repeat' type="checkbox">
                                     <div class="slider smooth"><span class="on">REPEAT</span><span class="off">ONCE</span></div>
                                 </label>
-                            </div>
+                            </div> -->
                             <div class="col-15" id='left'>
                                 <label class="switch"><input class='char' id=cwsweep name='simulate' type="checkbox">
                                     <div class="slider smooth"><span class="on">TEST ETA</span><span class="off">LOGGED</span></div>

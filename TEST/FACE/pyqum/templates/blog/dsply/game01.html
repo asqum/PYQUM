@@ -1,5 +1,6 @@
-<!DOCTYPE html>
-<html>
+{% extends 'blog/dsply/display.html' %}
+{% block content %}
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <script src="{{ url_for('static', filename='js/dsply/game01.js') }}"></script>
@@ -11,19 +12,21 @@
 </style>
 </head>
 
-<body> <!--</body> onload="startGame()">-->
+<div class="tabcontent" id="all">
+    <div class="container">
 
-<div style="text-align:center;width:480px;">
+        <div style="text-align:center;width:480px;">
 
-    <div style="width:75%;">
-        <canvas id="ccanvas" style="display: block; width: 1000px; height: 500px;" width="1000" height="500" class="chartjs-render-monitor"></canvas>
+            <div style="width:75%;">
+                <canvas id="ccanvas" style="display: block; width: 1000px; height: 500px;" width="1000" height="500" class="chartjs-render-monitor"></canvas>
+            </div>
+            <button onmousedown="moveup()" onmouseup="clearmove()" ontouchstart="moveup()">UP</button><br><br>
+            <button onmousedown="moveleft()" onmouseup="clearmove()" ontouchstart="moveleft()">LEFT</button>
+            <button onmousedown="moveright()" onmouseup="clearmove()" ontouchstart="moveright()">RIGHT</button><br><br>
+            <button onmousedown="movedown()" onmouseup="clearmove()" ontouchstart="movedown()">DOWN</button>
+        </div>
+
     </div>
-    <button onmousedown="moveup()" onmouseup="clearmove()" ontouchstart="moveup()">UP</button><br><br>
-    <button onmousedown="moveleft()" onmouseup="clearmove()" ontouchstart="moveleft()">LEFT</button>
-    <button onmousedown="moveright()" onmouseup="clearmove()" ontouchstart="moveright()">RIGHT</button><br><br>
-    <button onmousedown="movedown()" onmouseup="clearmove()" ontouchstart="movedown()">DOWN</button>
 </div>
 
-</body>
-
-</html>
+{% endblock %}

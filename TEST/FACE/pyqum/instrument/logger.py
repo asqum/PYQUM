@@ -15,6 +15,8 @@ import netifaces as nif
 from pandas import DataFrame
 from tables import open_file, Filters, Float32Atom, Float64Atom, StringCol, IsDescription
 
+from flask import session, g
+from pyqum import get_db
 from pyqum.instrument.toolbox import waveform
 
 __author__ = "Teik-Hui Lee"
@@ -102,31 +104,31 @@ def output_code(output):
         return "OFF"
 
 # log, get & set status for both machines & missions (instr = real OR virtual instruments like tasks)
-def loginstr(instr_name):
-    '''[Existence, Assigned Path] = loginstr(Instrument's name)
+def loginstr(instr_name, label=1):
+    '''[Existence, Assigned Path] = loginstr(Instrument's name, Instrument's index/queue)
     '''
-    pyqumfile = instr_name + "status.pyqum"
+    pyqumfile = instr_name + "_" + str(label) + "_status.pyqum"
     pqfile = Path(INSTR_PATH) / pyqumfile
     existence = exists(pqfile) and stat(pqfile).st_size > 0
     return existence, pqfile
-def get_status(instr_name):
+def get_status(instr_name, label=1):
     '''Get Instrument Status from LOG
     '''
-    instr_log = loginstr(instr_name)
+    instr_log = loginstr(instr_name, label)
     if instr_log[0] == False:
         instrument = None # No such Instrument
     else:
         with open(instr_log[1]) as jfile:
             instrument = json.load(jfile) # in json format
     return instrument
-def set_status(instr_name, info):
+def set_status(instr_name, info, label=1):
     '''Set Instrument Status for LOG
     * <info> must be a DICT'''
     instrument = get_status(instr_name)
     if instrument is None:
         instrument = {}
     instrument.update(info)
-    with open(loginstr(instr_name)[1], 'w') as jfile:
+    with open(loginstr(instr_name, label)[1], 'w') as jfile:
         json.dump(instrument, jfile)
 
 # save data in csv for export and be used by clients:
@@ -140,26 +142,39 @@ class address:
     Set <reset=False> to directly load from LOG if it contains "address" 
     '''
     def __init__(self):
-        with open(ADDRESS_PATH / "address.json") as ad:
-            self.book = json.load(ad)
-    def lookup(self, instr_name, level=0):
-        '''level: alternative address's index (1,2,3...)'''
+        # with open(ADDRESS_PATH / "address.json") as ad:
+        #     self.book = json.load(ad)
+        self.db = get_db()
+        
+    def lookup(self, instr_name, label=1):
+        '''Lookup from the database instead from the book'''
+        
         self.instr_name = instr_name
-        self.level = level
-        try:
-            if self.level: #False if 0
-                self.rs = self.book[self.instr_name]["alternative"][self.level-1]
-            else: self.rs = self.book[self.instr_name]["resource"]
-        except(KeyError): self.rs = None # checking if instrument in database
-        return self.rs
-    def visible(self):
-        self.vis = []
-        for k,v in self.book.items():
-            if v["visible"]:
-                self.vis.append(k)
-        return self.vis
-    def update_status(self):
-        set_status(self.instr_name,dict(address=self.rs))
+        self.rs = self.db.execute(
+            'SELECT m.address\n' +
+            'FROM machine m\n' +
+            'WHERE m.codename = ?',
+            ('%s_%s'%(instr_name,label),)
+        ).fetchone()
+
+        print('resource: %s' %self.rs[0])
+        return self.rs[0]
+    
+    def update_machine(self,connected,codename):
+        ''' 
+        Update SQL Database:
+        connected: 0 or 1, codename = <instr>-<label/index> 
+        '''
+        
+        self.db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
+        self.db.commit()
+        return
+    def macantouch(self,instr_list):
+        '''return total connection(s) based on instrument-list given'''
+        connection = 0
+        for mach in instr_list:
+            connection += int(self.db.execute('''SELECT connected FROM machine WHERE codename = ?''', (mach,) ).fetchone()['connected'])
+        return connection
 
 class specification:
     '''lookup specifications for each instruments
@@ -260,20 +275,19 @@ class measurement:
         2. Checking Database if any (daylist)
         3. Used for sending status to the front-end via JS
     '''
-    def __init__(self, mission, task, usr_name='USR', sample='Sample', loopcount=[], loop_dur=[]):
+    def __init__(self, mission, task, owner='USR', sample='Sample'):
         # Primary parameters (mission & task is auto-detected by OS)
         self.mission, self.task = mission, task
-        self.usr_name, self.sample = usr_name, sample
-        self.mssnpath = Path(USR_PATH) / usr_name / sample / mission
-        self.loopcount, self.loop_dur = loopcount, loop_dur
+        self.owner, self.sample = owner, sample
+        self.mssnpath = Path(USR_PATH) / owner / sample / mission
         #current location
         self.place = ", ".join(location()) 
-        
+        self.status = "M INTIATED"
         # FOR Resume / Access operation:
         try:
             daylist = [d for d in listdir(self.mssnpath) if isdir(self.mssnpath / d)]
-            print("There are %s days" %len(daylist))
-            # filter out non task-specific
+            # print("There are %s days" %len(daylist))
+            # filter out non-task-related
             relatedays = []
             for d in daylist:
                 task_relevant_time = [t for t in listdir(self.mssnpath / d) if t.split('.')[0] == self.task]
@@ -302,16 +316,17 @@ class measurement:
         return k-1 #index
 
     # Secondary parameters
-    def selectday(self, index, corder={}, instr=[], datadensity=1, comment='', tag=''):
+    def selectday(self, index, corder={}, perimeter={}, instr=[], datadensity=1, comment='', tag='', JOBID=None):
         '''corder: {parameters: <waveform>}\n'''
 
         # New operation if "new" is selected:
-        if index < 0:
+        if index == -1:
             now = datetime.now() #current day & time
             self.day = now.strftime("%Y-%m-%d(%a)")
             self.moment = now.strftime("%H:%M:%f")
             # estimating data size from parameters:
             self.corder = corder
+            self.perimeter = perimeter
             self.instr = instr
             self.datadensity = datadensity
             self.comment = comment
@@ -323,7 +338,7 @@ class measurement:
                 self.pqfile = self.mssnpath / self.day / self.filename
 
                 # assembly the file-header(time, place, c-parameters):
-                usr_bag = bytes('{"%s": {"place": "%s", "data-density": %s, "c-order": %s, "instrument": %s, "comment": "%s", "tag": "%s"}}' %(self.moment, self.place, self.datadensity, self.corder, self.instr, self.comment, self.tag), 'utf-8')
+                usr_bag = bytes('{"%s": {"place": "%s", "data-density": %s, "c-order": %s, "perimeter": %s, "instrument": %s, "comment": "%s", "tag": "%s"}}' %(self.moment, self.place, self.datadensity, self.corder, self.perimeter, self.instr, self.comment, self.tag), 'utf-8')
                 usr_bag += b'\x02' + bytes("ACTS", 'utf-8') + b'\x03\x04' # ACTS
                 
                 # check if the file exists and not blank:
@@ -333,12 +348,22 @@ class measurement:
                     with open(self.pqfile, 'wb') as datapie:
                         # Initialize blank file w/ user bag
                         datapie.write(usr_bag)
+
+                    # Insert into Queue-list on SQL-Database: (from # 3. in settings)
+                    jobstart(self.day, task_index, JOBID)
+                    self.status = "JOBID #%s STOPPED" %JOBID # By the time this is output, M has exitted
                     break
                 else:
                     task_index += 1
+
+        # LOG-TEMP if "temp" is selected:
+        elif index == -3:
+            '''PENDING'''
+            pass
+            
         
         # from database:
-        else:
+        elif index >= 0:
             try:
                 self.day = self.daylist[index]
                 self.taskentries = [int(t.split('(')[1][:-1]) for t in listdir(self.mssnpath / self.day) if t.split('.')[0] == self.task]
@@ -346,6 +371,8 @@ class measurement:
             except(ValueError): 
                 print("index might be out of range")
                 pass
+        
+        else: print(Fore.RED + "INVALID INDEX (%s) FOR DAY SELECT..." %index)
 
     # only for scripting
     def whichmoment(self):
@@ -538,7 +565,7 @@ class measurement:
         return
 
 
-# Setting up Measurement (Law-maker)
+# Setting up Measurement for MISSION (characterize, manipulate):
 def settings(datadensity=1):
     '''
     Before dayindex: freely customized by user
@@ -549,18 +576,50 @@ def settings(datadensity=1):
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
-        usr_name, sample, tag, instr, corder, comment, dayindex, taskentry, testeach = next(Generator)
+        owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
         task = Name.__name__
         # print("task: %s" %task)
-        M = measurement(mission, task, usr_name, sample) #M-Initialization
-        if type(dayindex) is str:
-            pass # Only M-Initialization (everytime when click a task)
-        elif type(dayindex) is int:
-            if testeach:
-                M.loopcount, M.loop_dur = next(Generator)
-            else:
-                M.selectday(dayindex, corder, instr, datadensity, comment, tag)
+        M = measurement(mission, task, owner, sample) #M-Initialization
+        if type(dayindex) is str: # for later access
+            pass # ONLY M-INITIALIZATION (everytime when click a task) for the LATTER data access
+        elif type(dayindex) is int: # for temp (-3), new (-1), resume (>=0)
+            
+            if g.user['measurement']:
+                # 1. Register or Retrieve JOB(ID):
+                if dayindex == -1: # NEW FILE
+                    # REQUEUE from previous dropped out JOB => (0 file, 1 job)
+                    if 'jobid' in perimeter.keys(): JOBID = perimeter['jobid']
+                    # NEW JOB => (0 file, 0 job)
+                    else: JOBID = jobin(task, corder, perimeter, instr, comment, tag)
+                    print(Fore.BLUE + "NEW DAY DETECTED")
+                elif dayindex == -3: # TEMP FILE
+                    pass
+                elif dayindex >= 0: # RESUME from previous stopped File => (1 file, 1 job)
+                    day = M.daylist[dayindex]
+                    criteria = dict(samplename=sample, task=task, dateday=day, wmoment=taskentry)
+                    JOBID = jobsearch(criteria)
+                    print(Fore.BLUE + "OLD DAY DETECTED")
+                else: print(Fore.RED + "INVALID DAYINDEX: %s" %dayindex)
+                perimeter['jobid'] = JOBID
+
+                # 2. Queue-IN and Wait for your turn:
+                M.status = qin(queue, JOBID)
+                while True:
+                    lisqueue(queue)
+                    sleep(7)
+                    if JOBID not in g.jobidlist[queue]: # get out in the middle of waiting
+                        return M
+                    elif g.jobidlist[queue].index(JOBID)==0 and not address().macantouch(list(instr.values())):
+                        '''All of the following should be fulfilled before taking turn to run:
+                            1. ONLY FIRST-IN-LINE get to break the waiting loop
+                            2. ALL instruments required are disconnected
+                        '''
+                        break
+                    print(Fore.YELLOW + "JOBID #%s is waiting every 7 seconds" %JOBID)
+
+                # 3. Start RUNNING / WORKING / MEASUREMENT:
+                M.selectday(dayindex, corder, perimeter, instr, datadensity, comment, tag, JOBID)
                 # print(Back.GREEN + "Day selected: %s"%self.day)
                 M.selectmoment(taskentry)
                 # print(Back.BLUE + "moment(file) selected: %s"%M.filename)
@@ -571,18 +630,162 @@ def settings(datadensity=1):
                         # sleep(3) #for debugging purposes
                 except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
 
+            else: M.status = "M JOB REJECTED: PLS CHECK M-CLEARANCE!"
+
         # Measurement Object/Session:
         return M
     return wrapper
 
+# LISTING
 def lisample(usr):
+    '''list samples for sample-profile under AUTH'''
     samples = [d for d in listdir(USR_PATH / usr) if isdir(USR_PATH / usr / d)]
     return samples
+def lisjob(usr, sample, queue, maxlist=12):
+    '''list jobs for queue-page under MSSN'''
+    # Provide user's clearances for each Queue (CHAR0, QPC0):
+    if g.user['measurement']:
+        # Extracting list from SQL-Database:
+        Joblist = get_db().execute(
+            '''
+            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress
+            FROM user u
+            INNER JOIN job j ON j.user_id = u.id
+            INNER JOIN sample s ON s.id = j.sample_id
+            WHERE j.queue = ? AND u.username = ? AND s.samplename = ?
+            ORDER BY j.id DESC
+            ''', (queue, usr, sample)
+        ).fetchall()
+        Joblist = [dict(x) for x in Joblist][:min(maxlist, len(Joblist))] # limit the number of job listing
+        # print("Job list: %s" %Joblist)
+        # print("Running %s" %inspect.stack()[0][3]) # current function name
+    return Joblist
+def lisqueue(queue):
+    '''
+    list queues for queue-page under MSSN
+    Update clearance for running the experiment
+    '''
+    if g.user['measurement']:
+        try:
+            g.Queue, g.jobidlist = {}, {}
 
-def lismission(usr, sample, mission):
-    log = {}
-    daylist = [d for d in listdir(USR_PATH / usr / sample / mission) if isdir(USR_PATH / usr / sample / mission /d)]
-    return daylist
+            # Extracting list from SQL-Database:
+            g.Queue[queue] = get_db().execute(
+                '''
+                SELECT j.id, j.task, j.startime, s.samplename, s.location, u.username, j.instrument
+                FROM user u
+                INNER JOIN %s c ON c.job_id = j.id
+                INNER JOIN job j ON j.user_id = u.id
+                INNER JOIN sample s ON s.id = j.sample_id
+                ORDER BY c.id ASC
+                ''' %(queue)
+                ).fetchall()
+            g.Queue[queue] = [dict(x) for x in g.Queue[queue]]
+            g.jobidlist[queue] = [x['id'] for x in g.Queue[queue]] # use to scheduling tasks in queue
+        
+        except: pass
+        # print(Fore.BLACK + Back.WHITE + "Clearance for queue %s: %s"%(queue, session['run_clearance']))
+    return
+
+# QUEUE
+def qin(queue,jobid):
+    '''Queue in with a Job'''
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            db.execute('INSERT INTO %s (job_id) VALUES (%s)' %(queue,jobid))
+            db.commit()
+            status = "Queued-in successfully"
+        except:
+            status = "Error Queueing in with JOBID #%s" %jobid
+    else: status = "Measurement clearance was not found"
+    return status
+def qout(queue,jobid):
+    '''Queue out without a Job'''
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))
+            db.commit()
+            status = "JOBID #%s Queued-out successfully" %jobid
+        except:
+            raise
+            status = "Error Queueing out with JOBID #%s" %jobid
+    else: status = "Measurement clearance was not found"
+    return status
+def qid(queue,jobid):
+    '''Get queue number'''
+    try:
+        db = get_db()
+        id = db.execute('SELECT id FROM %s WHERE job_id = %s' %(queue,jobid)).fetchone()['id']
+    except: id = None
+    return id
+
+# JOB
+def jobin(task,corder,perimeter,instr,comment,tag):
+    '''Register a JOB and get the ID for queue-in later while leaving day and task# blank first'''
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            samplename = get_status("MSSN")[session['user_name']]['sample']
+            queue = get_status("MSSN")[session['user_name']]['queue']
+            sample_id = db.execute('SELECT s.id FROM sample s WHERE s.samplename = ?', (samplename,)).fetchone()[0]
+            cursor = db.execute('INSERT INTO job (user_id, sample_id, task, parameter, perimeter, instrument, comment, tag, queue) VALUES (?,?,?,?,?,?,?,?,?)', 
+                                        (g.user['id'],sample_id,task,str(corder),str(perimeter),str(instr),comment,tag,queue))
+            JOBID = cursor.lastrowid
+            db.commit()
+            perimeter['jobid'] = JOBID
+            sleep(1)
+            db.execute('UPDATE job SET perimeter = ? WHERE id = ?', (str(perimeter),JOBID))
+            db.commit()
+            print(Fore.GREEN + Back.WHITE + "Successfully register the data into SQL Database with JOBID: %s" %JOBID)
+        except:
+            # raise
+            JOBID = None 
+            print(Fore.RED + Back.WHITE + "Check all database input parameters")
+    else: JOBID = None
+    return JOBID
+def jobstart(day,task_index,JOBID):
+    '''Start a JOB by logging day and task#'''
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            db.execute('UPDATE job SET dateday = ?, wmoment = ? WHERE id = ?', (day,task_index,JOBID))
+            db.commit()
+            print(Fore.GREEN + Back.WHITE + "Successfully update JOB#%s with (Day: %s, TASK#: %s" %(JOBID,day,task_index))
+        except:
+            print(Fore.RED + Back.WHITE + "INVALID JOBID")
+            raise
+    else: pass
+    return
+def jobnote():
+    '''Add NOTE to a JOB after analyzing the data'''
+
+    return
+def jobsearch(criteria, mode='jobid'):
+    '''Search for JOB(s) based on criteria (keywords)
+        mode <jobid>: get job-id based on criteria
+        mode <tdmq>: get task, dateday, wmoment & queue based on job-id given as criteria
+    '''
+    db = get_db()
+    if mode=='jobid':
+        # as single-value
+        result = db.execute(
+                    '''
+                    SELECT j.id 
+                    FROM job j 
+                    JOIN sample s ON s.id = j.sample_id
+                    WHERE s.samplename = ? AND j.task = ? AND j.dateday = ? AND j.wmoment = ?
+                    ''', (criteria['samplename'], criteria['task'], criteria['dateday'], criteria['wmoment'])
+                ).fetchone()[0]
+    elif mode=='tdm':
+        # as dictionary
+        result = db.execute('SELECT task, dateday, wmoment, queue FROM job WHERE id = ?', (criteria,)).fetchone()
+    else: # PENDING: for other kind of search
+        result = None 
+    return result
+
+
 
 # TEST
 def test():
@@ -591,9 +794,8 @@ def test():
     ad = address()
     print(ad.lookup("YOKO"))
     print(ad.lookup("TEST", 2))
-    print(ad.visible())
     print(lisample('abc'))
-    print(lismission('abc','Sam','characterize'))
+    print(lisjob('abc','Sam','characterize'))
 
     return
     

@@ -79,7 +79,7 @@
     background-color: gold;
 }
 
-/* missions */
+/* missions 3rd-level */
 div.charcontent, div.datacontent {
     position: fixed;
     display: block;
@@ -95,8 +95,8 @@ div.charcontent, div.datacontent {
     -webkit-overflow-scrolling: touch; /*momentum scroll*/
 }
 
-/* Only allow ALL-page to show-up when loading machine.html */
-.tabcontent#all {
+/* Only allow ALL-page to show-up when loading mission.html */
+.tabcontent#ALL {
     display: block;
 }
 
@@ -119,12 +119,12 @@ div.charcontent, div.datacontent {
     background-color: rgb(255, 145, 0);
 }
 
-/* special adjustment to jobcontent due to the absence of instrlog */
+/* special adjustment to job-queue-content due to the absence of secondary tabs */
 div.allcontent {
     position: fixed;
     display: block;
     width: 94%;
-    height: 93vh;
+    height: 88vh;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch; /*momentum scroll*/
 }
