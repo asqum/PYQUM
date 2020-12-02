@@ -708,7 +708,7 @@ def qin(queue,jobid):
             status = "Error Queueing in with JOBID #%s" %jobid
     else: status = "Measurement clearance was not found"
     return status
-def qout(queue,jobid,username):
+def qout(queue,jobid,username=g.user['username']):
     '''Queue out without a Job'''
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     if g.user['measurement'] and (username==jobrunner):
