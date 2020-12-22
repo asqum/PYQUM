@@ -8,6 +8,10 @@ colorama
 si-prefix
 typed-ast
 peakutils
+netifaces
+flask-ext
+Flask-NoExtRef
+keyboard
 
 [test]
 pytest

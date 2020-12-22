@@ -1,8 +1,17 @@
 '''For building, extracting, searching....... '''
 
-import logging
+import logging, collections
 from time import sleep
 from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul, transpose, ones
+
+def flatten(x):
+    result = []
+    for el in x:
+        if isinstance(x, collections.Iterable) and not isinstance(el, str):
+            result.extend(flatten(el))
+        else:
+            result.append(el)
+    return result
 
 def cdatasearch(Order, Structure):
     ''' Give the address of the data essentially!
@@ -87,7 +96,7 @@ class waveform:
             self.count = len(command)
         # 3. building linear numbers
         else:
-            command = [x for x in command if x is not ""]
+            command = [x for x in command if x != ""]
             self.data, self.count = [], 0
             for cmd in command:
                 self.count += 1

@@ -27,7 +27,11 @@ setup(
         'colorama',
         'si-prefix',
         'typed-ast',
-        'peakutils'
+        'peakutils',
+        'netifaces',
+        'flask-ext',
+        'Flask-NoExtRef',
+        'keyboard'
     ],
     extras_require={
         'test': [

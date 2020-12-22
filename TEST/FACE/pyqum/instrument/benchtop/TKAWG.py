@@ -5,10 +5,10 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
-import visa
+import pyvisa as visa
 from pyqum.instrument.logger import address, set_status, status_code, debug
 from pyqum.instrument.logger import translate_scpi as Attribute
-from numpy import array
+from numpy import array, zeros, ceil, where
 import array as arr
 
 from pyqum.instrument.composer import pulser
@@ -26,7 +26,7 @@ def Initiate(which):
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 150000 #set timeout in ms
         set_status(mdlname, dict(state='connected'), which)
-        print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat[1])[-7:]))
+        print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat)))
         ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'), which)
@@ -243,11 +243,15 @@ def prepare_DAC(bench, channel, datasize, maxlevel=0.75):
     sourcelevel(bench, channel, action=['Set',maxlevel,0])
     outputpath(bench, channel, action=['Set','DCHB'])
     return bench
-def compose_DAC(bench, channel, pulsedata, marker=0, markersize=0):
+def compose_DAC(bench, channel, pulsedata, marker=0):
     # MUST Create waveform before markers:
     create_waveform(bench, "Waveform-%s"%channel, pulsedata)
     if marker-1 in range(4): # only 1-4 is valid
-        create_markers(bench, "Waveform-%s"%channel, channel, marker, array([1]*markersize+[0]*(len(pulsedata)-markersize)))
+        mkr_array = zeros(len(pulsedata))
+        try: first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata))==1)[0][0], where(ceil(abs(pulsedata))==1)[0][-1]
+        except: first_rising_edge, last_falling_edge = 0, 300
+        mkr_array[first_rising_edge : last_falling_edge] = 1
+        create_markers(bench, "Waveform-%s"%channel, channel, marker, mkr_array)
     else:
         sourceresolution(bench, channel, action=['Set',16])
     assign_waveform(bench, "Waveform-%s"%channel, channel)
@@ -258,7 +262,7 @@ def compose_DAC(bench, channel, pulsedata, marker=0, markersize=0):
 # Test Zone
 def test(bench, detail=True):
     s = bench #Initiate(1)
-    if s is "disconnected":
+    if s == "disconnected":
         pass
     else:
         if debug(mdlname, detail):

@@ -1,8 +1,11 @@
 var qsystem = $('select.all.mssn.queue').val();
-var TASK = {'F_Response': 'fresp', 'CW_Sweep': "cwsweep"}; //Translation of names between Python and JS
+var TASK = {'F_Response': 'fresp', 'CW_Sweep': "cwsweep", 'Single_Qubit': "singleqb"}; //Translation of names between Python and JS
 
 //when page is loading:
 $(document).ready(function(){
+    $('body.mssn div.tab button.tablinks').hide()
+    $('body.mssn div.tab button.tablinks#ALL-tab').show()
+    $('body.mssn div.tab button.tablinks#' + qsystem + '-tab').show()
     $('div.all.clock').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
     qumqueue();
     qumjob();
@@ -28,7 +31,7 @@ function qumqueue() {
                 var jobidlink = '<div class="buttons"><a class="all-mssn-access btn green" id="jid_' + val.id + '">' + val.id + ' <i class="fa fa-cog fa-spin fa-3x fa-fw" style="font-size:15px;color:green;"></i></a></div>';
                 var link = '</td><td><div class="col-100" id="left"><button class="all-queue-out push_button w-95 red" id="jid_' + val.id + '_' + qsystem + '">' + 'STOP</button></div></td>';
             } else {
-                var jobidlink = val.id;
+                var jobidlink = '<div class="buttons"><a class="all-mssn-inspect btn yellow" id="jid_' + val.id + '">' + val.id + ' </a></div>';
                 var link = '</td><td><div class="col-100" id="left"><button class="all-queue-out push_button w-95 blue" id="jid_' + val.id + '_' + qsystem + '">' + 'QOUT</button></div></td>';
             };
             $('table.mssn-QUEUE tbody.all.mssn-queue-update').append('<tr><td>' + jobidlink + '</td><td>' + val.task + '</td><td>' + val.startime + '</td><td>' + val.samplename +
@@ -61,6 +64,8 @@ function qumjob() {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn green" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 } else if (parseInt(val.progress)===0) {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn red" id="jid_' + val.id + '">' + val.progress + '</a></div>';
+                // } else if (parseInt(val.progress)===-1) {
+                //     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn blue" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 } else {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn orange" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 };
@@ -92,6 +97,9 @@ $('button.tablinks#ALL-tab').click( function () {
 // When Certain Queue is selected:
 $('select.all.mssn.queue').on('change', function() {
     qsystem = $(this).val();
+    $('body.mssn div.tab button.tablinks').hide()
+    $('body.mssn div.tab button.tablinks#ALL-tab').show()
+    $('body.mssn div.tab button.tablinks#' + qsystem + '-tab').show()
     setTimeout(() => {qumqueue();}, 137);
     qumjob();
     return false;
@@ -124,7 +132,7 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-access', funct
         $('.mssn div.tabcontent').hide();
         $('.mssn div.tabcontent#' + data.tdmpack.queue).show();
         // Click on TASK-TAB:
-        $('button.char#' + TASK[data.tdmpack.task]).click();
+        $('button.access#' + TASK[data.tdmpack.task]).click();
         // Posting Notification:
         $('input.' + TASK[data.tdmpack.task] + '.notification').show().val('JOB #' + jobid + ' > ' + data.tdmpack.dateday + ' > ' + data.tdmpack.wmoment);
         // // Clicking on it:
@@ -142,6 +150,24 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-requeue', func
     }, function(data){
         $('h3.all-mssn-warning').text("Clearance: " + data.clearance);
     });
+    return false;
+});
+// TO INSPECT PARAMETER & PERIMETER OF JOB IN QUEUE:
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-inspect.yellow', function() {
+    var jobid = $(this).attr('id').split('_')[1];
+    console.log('jobid: ' + jobid);
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/inspect/job', {
+
+    }, function(data) {
+
+
+    });
+    return false;
+});
+// IF UNFINISHED JOB PROGRESS IS CLICK:
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-progress.orange', function() {
+    // Providing Options to dismiss it (close the case):
+
     return false;
 });
 

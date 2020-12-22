@@ -52,15 +52,19 @@ def all():
 def allmachine():
 	g.machlist = get_db().execute(
 		'''
-		SELECT m.codename, connected, u.username
+		SELECT m.codename, connected, category, sequence, system, u.username
 		FROM machine m
 		INNER JOIN user u ON m.user_id = u.id
 		ORDER BY m.id DESC
 		'''
 	).fetchall()
 	g.machlist = [dict(x) for x in g.machlist]
-	# print("machine list:\n%s"%g.machlist)
+	print("machine list:\n%s"%g.machlist)
 	return jsonify(machlist=g.machlist)
+@bp.route('/all/set/machine', methods=['GET'])
+def allsetmachine():
+
+	return jsonify()
 @bp.route('/all/mxc', methods=['GET'])
 def allmxc():
 	dr = bluefors()
@@ -259,8 +263,7 @@ def tkawgsetchannels():
 	pulseq = pulser(dt=dt, clock_multiples=1, score=score)
 	pulseq.song()
 	TKAWG.prepare_DAC(tkawgbench[tkawgtag], Channel, pulseq.totalpoints, maxlevel)
-	TKAWG.compose_DAC(tkawgbench[tkawgtag], Channel, pulseq.music, 1, 200)
-	# TKAWG.compose_DAC(tkawgbench[tkawgtag], 1, pulser(8000, 0, dt=0.4, clock_multiples=1, score='GAUSS UP/,600,0.37;GAUSS DN/,600,0.37;'), 1, 200)
+	TKAWG.compose_DAC(tkawgbench[tkawgtag], Channel, pulseq.music, 1) # PENDING: MARKER OPTIONS UI
 	return jsonify(music=list(pulseq.music), timeline=list(pulseq.timeline))
 @bp.route('/tkawg/output/channels', methods=['GET'])
 def tkawgoutputchannels():
@@ -381,8 +384,7 @@ def alzdgplaydata():
 def alzdgcloset():
 	alzdglabel = request.args.get('alzdglabel')
 	alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
-	status = ALZDG.close(alzdglabel.split('-')[1])
-	del alzdgboard[alzdgtag]
+	status = ALZDG.close(alzdgboard[alzdgtag], alzdglabel.split('-')[1])
 	return jsonify(message=status)
 @bp.route('/alzdg/testing', methods=['GET'])
 def alzdgtesting():
@@ -428,6 +430,7 @@ def naconnect():
 			message = "%s is successfully initiated by %s" %(naname,nauser)
 			status = "connected"
 		except:
+			raise
 			message = "Please check if %s's connection configuration is OK or is it being used!" %(naname)
 			status = 'error'
 	else:

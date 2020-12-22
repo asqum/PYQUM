@@ -16,7 +16,7 @@ function updatemachlist() {
             $('table.mach tbody.all.machine-update').append('<tr></tr>')
                                                     .append('<td>' + val.codename + '</td><td style="background-color: ' + 
                                                     statecolor[parseInt(val.connected)] + ';"> </td><td>' + val.username + 
-                                                    '</td><td><button class="push_button w-95 blue"></button></td>');
+                                                    '</td><td>' + val.category + '</td><td>' + val.sequence + '</td><td>' + val.system + '</td>');
         });
     });
 };

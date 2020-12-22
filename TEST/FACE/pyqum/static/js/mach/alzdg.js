@@ -97,11 +97,11 @@ function digplotIQA(x1,y1,y2,y3,xtitle,ytitle) {
     
     let trace1 = {x: [], y: [], mode: 'lines', type: 'scattergl', 
         name: 'I',
-        line: {color: 'blue', width: 2.5},
+        line: {color: 'red', width: 2.5},
         yaxis: 'y' };
     let trace2 = {x: [], y: [], mode: 'lines', type: 'scattergl', 
         name: 'Q',
-        line: {color: 'red', width: 2.5},
+        line: {color: 'blue', width: 2.5},
         yaxis: 'y' };
     let trace3 = {x: [], y: [], mode: 'lines', type: 'scattergl', 
         name: 'A',

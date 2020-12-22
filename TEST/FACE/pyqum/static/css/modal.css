@@ -36,6 +36,7 @@
   transition-delay: 0s;
 }
 
+/* BODY */
 .modal-wrapper {
   position: absolute;
   z-index: 1000;
@@ -45,6 +46,8 @@
   /* margin: 5%; */
   background-color: #fff;
   box-shadow: 0 0 1.5em hsla(0, 0%, 0%, 0.35);
+  padding-bottom: 120px;
+  overflow-y: scroll;
 }
 
 .modal-transition {

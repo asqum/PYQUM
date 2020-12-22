@@ -1,0 +1,37 @@
+<!doctype html> <!--extended from parent: mission.html, which in turn inherited base.html-->
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/mani.js') }}"></script>
+</head>
+
+<body class="mssn">
+
+    <div>
+
+        <div class="tab2">
+            <input class='mani loaded' id='sample-name' type='submit' value={{ samplename }}></input>
+            <input class='mani people' id='sample-owner' type='submit' value={{ people }}></input>
+            <button class='mani access' id='singleqb'>Single-Q</button>
+            
+            
+        </div>
+
+        <script>
+            $(function(){
+                $("div#singleqb").load("{{ url_for('mission.mani_singleqb') }}");
+                
+            });
+        </script>
+        
+        <!-- page content based on button clicked -->
+        <div class="manicontent" id="singleqb"></div>
+        
+        
+    
+    </div>
+
+</body>
+
+</html>

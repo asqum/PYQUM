@@ -5,7 +5,9 @@ $(document).ready(function(){
     // console.log('encryptonian length: ' + mssnencrpytonian().length);
     // get_repeat_fresp();
     window.frespcomment = "";
-    $('div input.notification').hide();
+    $('button.char#fresp-savecsv').hide();
+    $('button.char#fresp-savemat').hide();
+    $('div input.fresp.notification').hide();
 });
 
 // Global variables:
@@ -26,11 +28,11 @@ window.frespcryption = 'hfhajfjkafh'
 //     });
 // };
 function listimes_fresp() {
-    $('input.char.data').removeClass("plotted");
+    // $('input.char.data').removeClass("plotted");
     
     if (Number(wday) < 0) {
         // brings up parameter-input panel for new measurement:
-        $('.modal.new').toggleClass('is-visible');
+        $('.modal.new.fresp').toggleClass('is-visible');
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
             $("textarea.char#fresp[name='ecomment']").val(frespcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
@@ -59,7 +61,7 @@ function accessdata_fresp() {
         // input/select value here:
         wmoment: wmoment
     }, function (data) {
-        console.log(data.corder);
+        console.log("CORDER: " + JSON.stringify(data.corder) + "\nPERIMETER: " + JSON.stringify(data.perimeter));
         // load each command:
         console.log("Flux-Bias undefined: " + (typeof data.corder['Flux-Bias'] == "undefined")); //detecting undefined
         if (typeof data.corder['Flux-Bias'] == "undefined") { $('input.char#fresp[name="fluxbias"]').val("OPT,");
@@ -311,7 +313,7 @@ $('input.char#fresp-run').bind('click', function() {
         console.log("test each loop: " + data.testeach); 
         // $('button.tablinks#ALL-tab').trigger('click');  
         $( "i.fresp" ).remove(); //clear previous
-        $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
+        $('h3.all-mssn-warning').text("JOB STATUS: " + data.status);
     });
     return false;
 });
@@ -391,22 +393,22 @@ $(function () {
 });
 
 // LIVE UPDATE on PROGRESS:
-$(function () {
-    $('input.fresp#live-update').click(function () { 
-        //indicate it is still running:
-        $( "i.fresplive" ).remove(); //clear previous
-        $('button.char#fresp').prepend("<i class='fresplive fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var livestat = $('input.fresp#live-update').is(':checked'); //use css to respond to click / touch
-        if (livestat == true) {
-            var fresploop = setInterval(accessdata_fresp, 6000);
-            $('input.fresp#live-update').click(function () {
-                clearInterval(fresploop);
-                $( "i.fresplive" ).remove(); //clear previous
-            });
-        };
-        // 'else' didn't do much to stop it!
-    });
-});
+// $(function () {
+//     $('input.fresp#live-update').click(function () { 
+//         //indicate it is still running:
+//         $( "i.fresplive" ).remove(); //clear previous
+//         $('button.char#fresp').prepend("<i class='fresplive fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+//         var livestat = $('input.fresp#live-update').is(':checked'); //use css to respond to click / touch
+//         if (livestat == true) {
+//             var fresploop = setInterval(accessdata_fresp, 6000);
+//             $('input.fresp#live-update').click(function () {
+//                 clearInterval(fresploop);
+//                 $( "i.fresplive" ).remove(); //clear previous
+//             });
+//         };
+//         // 'else' didn't do much to stop it!
+//     });
+// });
 
 // plot 1D-data based on c-parameters picked
 $(function () {
@@ -486,6 +488,7 @@ $(function () {
             var Trace = [traceL, traceR]
             Plotly.newPlot('char-fresp-chart', Trace, layout, {showSendToCloud: true});
             $( "i.frespplot" ).remove(); //clear previous
+            $('button.char#fresp-savecsv').show();
         });
     });
     return false;
@@ -519,6 +522,7 @@ $(function () {
             .append($('<option>', { text: 'normalXdip', value: 'normalXdip' })).append($('<option>', { text: 'normalXpeak', value: 'normalXpeak' }));
             plot2D_fresp(x, y, ZZA, xtitle, ytitle, $('select.char.data#fresp[name="2d-type"]').val(),'fresp');
             $( "i.fresp2d" ).remove(); //clear previous
+            $('button.char#fresp-savemat').show();
         });
     });
     return false;
@@ -533,26 +537,65 @@ $('select.char.data#fresp').on('change', function() {
 
 // saving exported csv-data to client's PC:
 $('button.char#fresp-savecsv').on('click', function () {
-    console.log("SAVING FILE");
+    console.log("SAVING CSV FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', { wmoment: wmoment }, function (data) {});
+
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/export/1dcsv', {
         ifreq: $('select.char#fresp[name="c-freq"]').val()
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/1Dfresp.csv',
+            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/1Dfresp[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
             },
             success: function (data) {
+                console.log("USER HAS DOWNLOADED 1Dfresp DATA from " + String(window.URL));
                 var a = document.createElement('a');
                 var url = window.URL.createObjectURL(data);
                 a.href = url;
-                a.download = '1dfrespdata.csv';
+                a.download = '1Dfresp.csv';
                 document.body.append(a);
                 a.click();
                 a.remove();
                 window.URL.revokeObjectURL(url);
+                $('button.char#fresp-savecsv').hide();
+            }
+        });
+    });
+    return false;
+});
+// saving exported mat-data to client's PC:
+$('button.char#fresp-savemat').on('click', function () {
+    console.log("SAVING MAT FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', { wmoment: wmoment }, function (data) {});
+
+    $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/export/2dmat', {
+        ifreq: $('select.char#fresp[name="c-freq"]').val()
+    }, function (data) {
+        console.log("STATUS: " + data.status);
+        $.ajax({
+            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dfresp[' + data.user_name + '].mat',
+            method: 'GET',
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function (data) {
+                console.log("USER HAS DOWNLOADED 2Dfresp DATA from " + String(window.URL));
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                a.download = '2Dfresp.mat';
+                document.body.append(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                $('button.char#fresp-savemat').hide();
             }
         });
     });
@@ -581,7 +624,9 @@ $('input.fresp.notification').click( function(){
     accessdata_fresp();
     // Setting Day & Moment on the front:
     $('select.char#fresp[name="wday"]').val(wday);
-    setTimeout(() => { $('select.char#fresp[name="wmoment"]').val(wmoment); }, 60); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
+    setTimeout(() => {
+        $('select.char#fresp[name="wmoment"]').val(wmoment);
+    }, 160); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
 
     return false;
 });

@@ -80,7 +80,7 @@
 }
 
 /* missions 3rd-level */
-div.charcontent, div.datacontent {
+div.charcontent, div.manicontent {
     position: fixed;
     display: block;
     float: left;

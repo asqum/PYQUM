@@ -6,7 +6,7 @@ from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # model's name e.g. ESG, PSG, MXG, AWG, VSA, ADC, PNA
 debugger = 'debug' + mdlname
 
-import visa
+import pyvisa as visa
 from functools import wraps
 from pyqum.instrument.logger import address, set_status, status_code
 
@@ -33,7 +33,7 @@ def Initiate():
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 80000000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
-        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat)))
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
@@ -236,7 +236,7 @@ def test(detail=True):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     bench = Initiate()
-    if bench is "disconnected":
+    if bench == "disconnected":
         pass
     else:
         model(bench)

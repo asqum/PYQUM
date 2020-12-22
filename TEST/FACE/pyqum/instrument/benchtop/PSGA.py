@@ -5,7 +5,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
-import visa
+import pyvisa as visa
 from pyqum.instrument.logger import address, set_status, status_code, debug
 from pyqum.instrument.logger import translate_scpi as Attribute
 
@@ -22,7 +22,7 @@ def Initiate(which):
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 150000 #set timeout in ms
         set_status(mdlname, dict(state='connected'), which)
-        print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat[1])[-7:]))
+        print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat)))
         ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'), which)

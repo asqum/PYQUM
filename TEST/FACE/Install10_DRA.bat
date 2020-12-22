@@ -1,4 +1,4 @@
-:: Installing PYQUM 101 on WIN10
+:: Installing PYQUM 101 on WIN10 for DR-A
 
 @echo off
 
@@ -8,6 +8,11 @@ set root=C:\ProgramData\Anaconda3
 call %root%\Scripts\activate.bat %root%
 
 ECHO Installing PYQUM 101
+pip install -e .
+
+:: ATS-9371 SDK
+ECHO Installing ATS-API
+cd C:\AlazarTech\ATS-SDK\7.4.0\Samples_Python\Library
 pip install -e .
 
 PAUSE

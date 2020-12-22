@@ -1,10 +1,11 @@
 '''For analyzing data'''
 
-from numpy import ones, convolve, log10, sqrt, arctan2, diff, array, unwrap, gradient
+from numpy import ones, convolve, log10, sqrt, arctan2, diff, array, unwrap, gradient, mean
 from scipy.fftpack import rfft, rfftfreq, irfft
 from sklearn.preprocessing import minmax_scale
 
 import matplotlib.pyplot as plt
+from pyqum.instrument.toolbox import gotocdata
 
 # curve display
 def curve(x, y, title, xlabel, ylabel, xscal='linear', yscal='linear', basx=10, basy=2, style="-k"):
@@ -89,6 +90,102 @@ def cleantrace(V):
         return order
     else: return order
 
+# Pulse Response Sampler:
+def pulseresp_sampler(srange, selected_caddress, selectedata, c_structure, datadensity, mode='A'):
+    '''
+    \nsrange: Active(Start), Active(End), [Relax(Start), Relax(End)]
+    \nmode as follows: (The level of integration/average in emerging order: B(average first) -> A -> D -> C(average last))
+    \nA. DRSMr: sqrt(square(mean(I_A)) + square(mean(Q_A))) - sqrt(square(mean(I_R)) + square(mean(Q_R)))
+    \nB. RSDMr: 
+    \nC. MON (pulswipe):
+    \nD. RMS (poweroot):
+    '''
+    # 1. Cropping Active Region:
+    if [int(srange[1]) , int(srange[0])] > [c_structure[-1]//datadensity] * 2:
+        print(Back.WHITE + Fore.RED + "Out of range")
+    else:
+        step = (int(srange[1]) - int(srange[0])) // abs(int(srange[1]) - int(srange[0]))
+        active_len = abs(int(srange[1]) - int(srange[0]) + step)
+        # 1. ACTIVE Region of the Pulse Response:
+        # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
+        # Assemble stacks of selected c-address for this sample range:
+        selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
+        selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
+        # sort-out interleaved IQ:
+        selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+step,step))
+        selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+step,step)) + ones(active_len)
+        # Compressing I- & Q-pulse of this sample range into just one point:
+        selectedata = array(selectedata)
+        I_Pulse_active = selectedata[gotocdata(selected_caddress_I, c_structure)]
+        Idata_active = mean(I_Pulse_active)
+        Q_Pulse_active = selectedata[gotocdata(selected_caddress_Q, c_structure)]
+        Qdata_active = mean(Q_Pulse_active)
+        if mode == 'C':
+            A_Pulse_active = sqrt( I_Pulse_active**2 + Q_Pulse_active**2 )
+            A_Pulse_active = A_Pulse_active/A_Pulse_active[0]
+            Adata_active = mean(A_Pulse_active - A_Pulse_active[-1])
+            P_Pulse_active = arctan2( Q_Pulse_active, I_Pulse_active )
+            P_Pulse_active = P_Pulse_active/P_Pulse_active[0]
+            Pdata_active = mean(P_Pulse_active - P_Pulse_active[-1])
+        if mode == 'D':
+            A_Pulse_active = I_Pulse_active**2 + Q_Pulse_active**2 # Power
+            Adata_active = mean(A_Pulse_active)
+            P_Pulse_active = arctan2( Q_Pulse_active, I_Pulse_active )
+            Pdata_active = mean(P_Pulse_active)
+
+        # 2. Cropping Relax Region (Optional):
+        try:
+            step = (int(srange[3]) - int(srange[2])) // abs(int(srange[3]) - int(srange[2]))
+            relax_len = abs(int(srange[3]) - int(srange[2]) + step)
+            # 2. RELAXED Region of the Pulse Response:
+            # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
+            # Assemble stacks of selected c-address for this sample range:
+            selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * relax_len)
+            selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * relax_len)
+            # sort-out interleaved IQ:
+            selected_caddress_I[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+step,step))
+            selected_caddress_Q[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+step,step)) + ones(relax_len)
+            # Compressing I & Q of this sample range:
+            selectedata = array(selectedata)
+            I_Pulse_relax = selectedata[gotocdata(selected_caddress_I, c_structure)]
+            Idata_relax = mean(I_Pulse_relax)
+            Q_Pulse_relax = selectedata[gotocdata(selected_caddress_Q, c_structure)]
+            Qdata_relax = mean(Q_Pulse_relax)
+            if mode == 'C':
+                A_Pulse_relax = sqrt( I_Pulse_relax**2 + Q_Pulse_relax**2 )
+                A_Pulse_relax = A_Pulse_relax/A_Pulse_relax[0]
+                Adata_relax = mean(A_Pulse_relax - A_Pulse_relax[-1])
+                P_Pulse_relax = arctan2( Q_Pulse_relax, I_Pulse_relax )
+                P_Pulse_relax = P_Pulse_relax/P_Pulse_relax[0]
+                Pdata_relax = mean(P_Pulse_relax - P_Pulse_relax[-1])
+            if mode == 'D':
+                A_Pulse_relax = I_Pulse_relax**2 + Q_Pulse_relax**2 # Power
+                Adata_relax = mean(A_Pulse_relax)
+                P_Pulse_relax = arctan2( Q_Pulse_relax, I_Pulse_relax )
+                Pdata_relax = mean(P_Pulse_relax)
+        except(IndexError): Idata_relax, Qdata_relax, Adata_relax, Pdata_relax = 0, 0, 0, 0
+
+        # Independent IQ (Deviation)
+        dIdata = Idata_active - Idata_relax
+        dQdata = Qdata_active - Qdata_relax
+
+        # Post-IQAP:
+        # PENDING: VECTORIZE THIS:
+        # A and B converge for only 2-range (differ for 4-range)
+        if mode == 'A': # deviation of root square mean(range) (same as mean root square!)
+            Adata = sqrt(Idata_active**2+Qdata_active**2) - sqrt(Idata_relax**2+Qdata_relax**2)
+            Pdata = arctan2(Qdata_active, Idata_active) - arctan2(Qdata_relax, Idata_relax) # -pi < phase < pi
+        elif mode == 'B': # root square deviation mean(range)
+            Adata = sqrt(dIdata**2 + dQdata**2)
+            Pdata = arctan2(dQdata, dIdata) # -pi < phase < pi
+        elif mode == 'C': # mean offset normalize
+            Adata = Adata_active - Adata_relax
+            Pdata = Pdata_active - Pdata_relax
+        elif mode == 'D': # RMS (Power-like)
+            Adata = sqrt(Adata_active) - sqrt(Adata_relax)
+            Pdata = Pdata_active - Pdata_relax
+        
+    return dIdata, dQdata, Adata, Pdata
 
 # Fitting
 

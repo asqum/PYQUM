@@ -1,23 +1,26 @@
-// CW Sweep: 
+// Single-QB: 
 $(document).ready(function(){
-    $('div.char.singleqb.confirm').hide();
-    $('button.char#singleqb-savecsv').hide();
-    $("a.new#singleqb-eta").text('ETA: ');
+    $('div.mani.singleqb.confirm').hide();
+    $('button.mani#singleqb-savecsv').hide();
+    $('button.mani#singleqb-savemat').hide();
+    // $("a.new#singleqb-eta").text('ETA: ');
     $("a.new#singleqb-msg").text('Measurement Status');
-    get_repeat_singleqb();
     window.singleqbcomment = "";
+    // $('input.singleqb.notification').hide();
+    $('input.singleqb.setchannels.pulse-width').parent().hide();
+    $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-width').val() + '.pulse-width').parent().show();
+    $('input.singleqb.setchannels.pulse-height').parent().hide();
+    $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-height').val() + '.pulse-height').parent().show();
 });
 
 // Global variables:
 window.selecteday = ''
-window.VdBm_selector = 'select.char.data.singleqb#1d-VdBm'
-window.VdBm_selector2 = 'select.char.data.singleqb#2d-VdBm'
+window.VdBm_selector = 'select.mani.data.singleqb#singleqb-1d-VdBm'
+window.VdBm_selector2 = 'select.mani.data.singleqb#singleqb-2d-VdBm'
 
-// PENDING: Flexible C-Structure:
-var singleqb_Parameters = ['repeat', 'Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
-'Pulse-Period', 'RO-ifLevel', 'RO-Pulse-Delay', 'RO-Pulse-Width', 'XY-ifLevel', 'XY-Pulse-Delay', 'XY-Pulse-Width', 
-'LO-Frequency', 'LO-Power', 'ADC-delay', 'Average', 'Sampling-Time'];
-var singleqb_Peripherals = ['data-option','lock-period'];
+// Parameter & Perimeter LIST for INITIATING NEW RUN:
+var singleqb_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
+var singleqb_Perimeters = ['BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
 
 // *functions are shared across all missions!
 function transpose(a) {
@@ -44,37 +47,18 @@ function transpose(a) {
     }
     return t;
   };
-function set_repeat_singleqb() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/setrepeat', {
-        repeat: $('input.char.singleqb.repeat').is(':checked')?1:0
-    }, function(data) {
-        $( "i.singleqb-repeat" ).remove(); //clear previous
-        if (data.repeat == true) {
-            $('button.char#singleqb').prepend("<i class='singleqb-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        };
-    });
-};
-function get_repeat_singleqb() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/getrepeat', {
-    }, function (data) {
-        console.log("Repeat: " + data.repeat);
-        $('input.char.singleqb.repeat').prop("checked", data.repeat);
-        $( "i.singleqb-repeat" ).remove(); //clear previous
-        if (data.repeat == true) {
-            $('button.char#singleqb').prepend("<i class='singleqb-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        };
-    });
-};
+
 function listimes_singleqb() {
-    $('input.char.data').removeClass("plotted");
-    // make global wday
-    window.wday = $('select.char.singleqb#wday').val();
+    $('input.mani.data').removeClass("plotted");
+    
     if (Number(wday) < 0) {
         // brings up parameter-input panel for new measurement:
-        $('.modal.new').toggleClass('is-visible');
-        // Update Live Informations:
+        $('.modal.new.singleqb').toggleClass('is-visible');
+        // disable RUN BUTTON before validation via CHECK:
+        $('input.mani#singleqb-run').hide(); // RUN
+        // Update T6 Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
-            $("textarea.char.singleqb#ecomment").val(singleqbcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
+            $("textarea.mani.singleqb#singleqb-ecomment").val(singleqbcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
         });
 
     } else if (wday == 'm') {
@@ -82,71 +66,93 @@ function listimes_singleqb() {
         $('.modal.manage.singleqb').toggleClass('is-visible');
     } else {
         selecteday = wday
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/time', {
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/time', {
             wday: wday
         }, function (data) {
-            $('select.char.singleqb#wmoment').empty().append($('<option>', { text: 'pick', value: '' }));
-            $.each(data.taskentries, function(i,v){ $('select.char.singleqb#wmoment').append($('<option>', { id: i, text: v, value: v })); });
+            $('select.mani.singleqb.wmoment').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.taskentries, function(i,v){ $('select.mani.singleqb.wmoment').append($('<option>', { id: i, text: v, value: v })); });
         }); 
     };
 };
 function accessdata_singleqb() {
-    // Make global variable:
-    window.wmoment = $('select.char.singleqb#wmoment').val();
-    $('.data-progress#singleqb').css({"width": 0}).text('accessing...');
-    $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/access', {
-        // input/select value here:
+    $('.bar.data-progress.singleqb').css({"width": 0}).text('accessing...');
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/access', {
         wmoment: wmoment
     }, function (data) {
-        console.log(data.corder);
+        // 0. Collecting data from route:
+        var R_COUNT = parseInt(Object.keys(JSON.parse(data.perimeter['R-JSON'])).length);
+        console.log("R-JSON-length: " + R_COUNT);
+        window.SQ_CParameters = data.SQ_CParameters;
 
-        // SCROLL: scroll out repeated data (the exact reverse of averaging)
-        $.each(singleqb_Parameters, function(i,cparam){
+        // 1. Creating parameter-range selectors:
+        $('table.mani-singleqb-extra').remove();
+        $.each(SQ_CParameters, function(i,cparam){
+            var colperow = 8; // row density
+            var row = parseInt(i/colperow);
+            if (i%colperow==0 || i==0) {
+                $('div.row.parameter').append('<table class="content-table mani-singleqb-extra E' + row + '"></table>');
+                $('table.mani-singleqb-extra.E' + row).append($('<thead></thead>').append($('<tr></tr>')));
+                $('table.mani-singleqb-extra.E' + row).append($('<tbody class="mani-singleqb parameter"></tbody>').append($('<tr></tr>')));
+            };
             // console.log('cparam: ' + cparam + '\ndata: ' + data.pdata[cparam]);
-
-            // Loading data into parameter-range selectors:
-            // Loading Sweeping Options:
-            $('select.char.singleqb#' + cparam).empty();
-            if ( data.pdata[cparam].length > 1) {
-                $('select.char.singleqb#' + cparam).append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-                    .append($('<option>', { text: 'SAMPLE', value: 's' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
-            };
-            // Loading Constant Values:
-            if (data.pdata[cparam].length > 301) {
-                // to speed up loading process, it is limited to 301 entries per request.
-                $.each(data.pdata[cparam].slice(0,301), function(i,v){ $('select.char.singleqb#' + cparam).append($('<option>', { text: v, value: i })); });
-                $('select.char.singleqb#' + cparam).append($('<option>', { text: 'more...', value: 'm' }));
-                // Pending:  Use "more" to select/enter value manually!
-            } else {
-                $.each(data.pdata[cparam], function(i,v){ $('select.char.singleqb#' + cparam).append($('<option>', { text: v, value: i })); });
-            };
-
-            // Loading parameter-range into inputs for new run:
-            $('input.char.singleqb#' + cparam).val(data.corder[cparam]);
-
+            $('table.mani-singleqb-extra.E' + row + ' thead tr').append('<th class="mani singleqb ' + String(cparam) + '">' + cparam + '</th>');
+            $('table.mani-singleqb-extra.E' + row + ' tbody tr').append('<th><select class="mani singleqb" id="' + cparam + '" type="text"></select></th>');
         });
 
-        console.log("C-Config: " + data.corder['C-Config']);
-        console.log("C-Config undefined: " + (typeof data.corder['C-Config'] == "undefined")); //detecting undefined
-        if (typeof data.corder['C-Config'] != "undefined") { // for backward compatible
-            $.each(singleqb_Peripherals, function(i,peripheral){ 
-                // Loading peripheral-options into selects for new run:
-                if (typeof data.corder['C-Config'][peripheral] == "undefined") {
-                    $('select.char.singleqb#' + peripheral).val('default'); } // defaults
-                else { $('select.char.singleqb#' + peripheral).val(data.corder['C-Config'][peripheral]); };
-            });
-        };
+        // 2. Loading data into parameter-range selectors:
+        $.each(SQ_CParameters, function(i,cparam){
+            // console.log('cparam: ' + cparam + '\ndata: ' + data.pdata[cparam]);
+            // 2.1 Loading Sweeping Options:
+            $('select.mani.singleqb#' + cparam).empty();
+            if ( data.pdata[cparam].length > 1) {
+                $('select.mani.singleqb#' + cparam).append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                    .append($('<option>', { text: 'SAMPLE', value: 's' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+            };
+            // 2.2 Loading Constant Values:
+            var max_selection = 1001; // to speed up loading process, entries per request is limited.
+            if (data.pdata[cparam].length > max_selection) {
+                $.each(data.pdata[cparam].slice(0,max_selection), function(i,v){ $('select.mani.singleqb#' + cparam).append($('<option>', { text: v, value: i })); });
+                $('select.mani.singleqb#' + cparam).append($('<option>', { text: 'more...', value: 'm' }));
+                // Pending:  Use "more" to select/enter value manually!
+            } else {
+                $.each(data.pdata[cparam], function(i,v){ $('select.mani.singleqb#' + cparam).append($('<option>', { text: v, value: i })); });
+            };
 
-        // load edittable comment:
+            // 2.3 Loading parameter-range into inputs for new run:
+            $('input.mani.singleqb#' + cparam).val(data.corder[cparam]);
+        });
+
+        // 3. load edittable comment:
         singleqbcomment = data.comment;
-        // load narrated comment:
-        $('textarea.char.singleqb#comment').text(data.comment);
+        // 4. load narrated comment:
+        $('textarea.mani.singleqb.comment').text(data.comment);
         
-        // Loading data progress:
+        // 5. Loading data progress:
         var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
-        $('.data-progress#singleqb').css({"width": data_progress}).text(data_progress);
-        $('.data-eta#singleqb').text("data: " + data.measureacheta + " until completion");
+        $('.bar.data-progress.singleqb').css({"width": data_progress}).text(data_progress);
+        $('.data-eta.singleqb').text("data: " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
+
+        // 6. Loading Perimeters:
+        $.each(singleqb_Perimeters, function(i,perimeter) { $('.mani.config.singleqb#' + perimeter).val(data.perimeter[perimeter]); });
+        $.each(Array(4), function(i,v){ $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val(data.perimeter['SCORE-JSON']["CH" + String(i+1)]); });
+
+        // 7. PERIMETER Statement:
+        var sheet = '';
+        $.each(Object.values(data.perimeter['SCORE-JSON']), function(i,val){
+            sheet += "Channel-" + String(i+1) + ":\n" + val.replaceAll("\n"," ") + "\n\n";
+        });
+        $.each(Object.keys(data.perimeter), function(i,key){
+            if (key!='SCORE-JSON' && key!='R-JSON'){
+                sheet += key + ": " + Object.values(data.perimeter)[i] + "\n\n";
+            }; 
+        });
+        $('textarea.mani.singleqb.PSTATEMENT').val(sheet).show();
+
+        // 8. Adjustment(s) based on perimeter:
+        if (data.perimeter['BIASMODE']==1) { $('table th.mani.singleqb.Flux-Bias').text('Flux-Bias (A)') }
+        else { $('table th.mani.singleqb.Flux-Bias').text('Flux-Bias (V)') };
+
     });
     return false;
 };
@@ -225,7 +231,7 @@ function plot1D_singleqb(x,y1,y2,y3,y5,VdBm_selector,xtitle,mode='lines') {
     $.each(y5, function(i, val) {tracePha.y.push(val);});
 
     var Trace = [traceI, traceQ, traceA, tracePha]
-    Plotly.newPlot('char-singleqb-chart', Trace, layout, {showSendToCloud: true});
+    Plotly.newPlot('mani-singleqb-chart', Trace, layout, {showSendToCloud: true});
     $( "i.singleqb1d" ).remove(); //clear previous
 };
 function compare1D_singleqb(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_selector) {
@@ -279,7 +285,7 @@ function compare1D_singleqb(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_sel
     $.each(y2, function(i, val) { traceS.y.push(y1[i]-y2[i]); });
     
     var Trace = [traceA, traceB, traceS]
-    Plotly.newPlot('char-singleqb-chart', Trace, layout, {showSendToCloud: true});
+    Plotly.newPlot('mani-singleqb-chart', Trace, layout, {showSendToCloud: true});
     $( "i.singleqb1d" ).remove(); //clear previous
 };
 function plot2D_singleqb(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,VdBm_selector) {
@@ -385,7 +391,7 @@ function plot2D_singleqb(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,VdBm_sel
 
     // Plotting the Chart using assembled TRACE:
     var Trace = [trace]
-    Plotly.newPlot('char-' + mission + '-chart', Trace, layout, {showSendToCloud: true});
+    Plotly.newPlot('mani-' + mission + '-chart', Trace, layout, {showSendToCloud: true});
 };
 
 // hiding parameter settings when click outside the modal box:
@@ -393,48 +399,139 @@ $('.modal-toggle.new.singleqb').on('click', function(e) {
     e.preventDefault();
     $('.modal.new.singleqb').toggleClass('is-visible');
     // revert back to previous option upon leaving dialogue box
-    $('select.char.singleqb#wday').val(selecteday);
+    $('select.mani.singleqb.wday').val(selecteday);
 });
 $('.modal-toggle.manage.singleqb').on('click', function(e) {
     e.preventDefault();
     $('.modal.manage.singleqb').toggleClass('is-visible');
     // revert back to previous option upon leaving dialogue box
-    $('select.char.singleqb#wday').val(selecteday);
+    $('select.mani.singleqb.wday').val(selecteday);
 });
 $('.modal-toggle.data-reset.singleqb').on('click', function(e) {
     e.preventDefault();
     $('.modal.data-reset.singleqb').toggleClass('is-visible');
 });
 
-// show CW-Sweep's daylist
+// Perimeter setup:
+// Switch between finite and variable
+$('select.singleqb.setchannels.finite-variable').on('change', function() {
+    $('input.singleqb.setchannels.pulse-width').parent().hide();
+    $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-width').val() + '.pulse-width').parent().show();
+    $('input.singleqb.setchannels.pulse-height').parent().hide();
+    $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-height').val() + '.pulse-height').parent().show();
+});
+// Initiate ALL Scores with Pulse-period:
+$("input.singleqb.set-period").bind('click', function () {
+    var pperiod = $('input.singleqb.setchannels.pulse-period').val();
+    $.each(Array(4), function(i,v){ $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val("NS=" + pperiod + ";\n"); });
+    $('textarea.mani.singleqb#R-JSON').val(JSON.stringify({}));
+    $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text("ALL SCORES INITIATED WITH LENGTH " + pperiod + "ns"));
+    return false;
+});
+// Inserting shapes into respective score sheet:
+$('input.singleqb.setchannels.insert').bind('click', function () {
+    var channel = $('select.singleqb.setchannels.score-channel').val();
+    var lascore = $('textarea.mani.singleqb.SCORE-JSON.channel-' + channel).val();
+    var shape = $('select.singleqb.setchannels.pulse-shape').val();
+    var RJSON = JSON.parse($('textarea.mani.singleqb#R-JSON').val());
+
+    // Pulse Width:
+    if ($('select.singleqb.setchannels.finite-variable.pulse-width').val()=='finite') {
+        var pwidth = $('input.singleqb.setchannels.finite.pulse-width').val();
+    } else {
+        var porder = $('input.singleqb.setchannels.variable.pulse-width').val().replaceAll(' ','').split('=');
+        var pwidth = "{" + porder[0] + "}";
+        RJSON[porder[0]] = porder[1];
+        $('textarea.mani.singleqb#R-JSON').val(JSON.stringify(RJSON));
+    };
+    // Pulse Height:
+    if ($('select.singleqb.setchannels.finite-variable.pulse-height').val()=='finite') {
+        var pheight = $('input.singleqb.setchannels.finite.pulse-height').val();
+    } else {
+        var porder = $('input.singleqb.setchannels.variable.pulse-height').val().replaceAll(' ','').split('=');
+        var pheight = "{" + porder[0] + "}";
+        RJSON[porder[0]] = porder[1];
+        $('textarea.mani.singleqb#R-JSON').val(JSON.stringify(RJSON));
+    };
+
+    $('textarea.mani.singleqb.SCORE-JSON.channel-' + channel).val(lascore + shape + '/,' + pwidth + ',' + pheight + ';\n');
+    $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text("EXTENDING SCORE-" + channel + " WITH " + shape + " (" + pwidth + ", " + pheight + ")"));
+    return false;
+});
+// Take a step back in Score:
+$('input.singleqb.setchannels.back').bind('click', function() {
+    var channel = $('select.singleqb.setchannels.score-channel').val();
+    var lascore = $('textarea.mani.singleqb.SCORE-JSON.channel-' + channel).val();
+    if (lascore.split(';').length > 2) {
+        $('textarea.mani.singleqb.SCORE-JSON.channel-' + channel).val(lascore.split(';').slice(0,-2).join(";") + ';\n');
+    };
+    return false;
+});
+// Check before RUN:
+$('input.singleqb.setchannels.check').bind('click', function() {
+    var RJSON = JSON.parse($('textarea.mani.singleqb#R-JSON').val());
+    var allscores = '';
+    var allfilled = 1;
+
+    // accumulate all the scores
+    $.each(Array(4), function(i,v){
+        allscores += $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val();
+        allfilled *= $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val().replaceAll(" ","").replaceAll("\n","").length;
+    });
+    allscores = allscores.replaceAll(" ","");
+    console.log("allscores's length: " + allscores.length);
+
+    // take out all {R-JSON's keys}
+    $.each(Object.keys(RJSON), function(i,v) {
+        allscores = allscores.replaceAll("{"+v+"}","");
+    });
+
+    // validate RUN based on total absence of unsolicited {stranger}
+    if (allscores.includes("{") || allscores.includes("}") || allfilled==0) {
+        $('input.mani#singleqb-run').hide(); // RUN
+    } else {
+        $('input.mani#singleqb-run').show(); // RUN
+    };
+
+    return false;
+});
+
+
+// show Single-QB's daylist
 $(function() {
-    $('button.char#singleqb').bind('click', function() {
-        $('div.charcontent').hide();
-        $('div.charcontent#singleqb').show();
-        $('button.char').removeClass('selected');
-        $('button.char#singleqb').addClass('selected');
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/init', {
+    $('button.mani#singleqb').bind('click', function() {
+        $('div.manicontent').hide();
+        $('div.manicontent#singleqb').show();
+        $('button.mani').removeClass('selected');
+        $('button.mani#singleqb').addClass('selected');
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/init', {
         }, function (data) {
-            // console.log("run status: " + data.run_status);
-            // if (data.run_status == true) {
-            //     $( "i.singleqb-run" ).remove(); //clear previous
-            //     $('button.char#singleqb').prepend("<i class='singleqb-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-            // } else {};
-            $('select.char.singleqb#wday').empty();
-            $('select.char.singleqb#wday').append($('<option>', { text: 'The latest:', value: '' }));
+            // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
+            window.run_permission = data.run_permission;
+            window.DAYLIST = data.daylist;
+            console.log("run permission: " + run_permission);
+            if (run_permission == false) {
+                $('button.mani.singleqb.run').hide();
+                console.log("RESUME BUTTON DISABLED");
+            } else {
+                $('button.mani.singleqb.run').show(); // RESUME
+                console.log("RESUME BUTTON ENABLED");
+            };
+            
+            $('select.mani.singleqb.wday').empty();
+            $('select.mani.singleqb.wday').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
-                $('select.char.singleqb#wday').append($('<option>', {
+                $('select.mani.singleqb.wday').append($('<option>', {
                     text: v,
                     value: data.daylist.length - 1 - i
                 }));
             });
-            $('select.char.singleqb#wday').append($('<option>', { text: '--Manage--', value: 'm' }));
-            if (data.run_permission == false) {
-                $('input.char#singleqb-run').hide();
-                console.log("RUN BUTTON DISABLED");
-            } else {
-                $('select.char.singleqb#wday').append($('<option>', { text: '--New--', value: -1 }));
+            $('select.mani.singleqb.wday').append($('<option>', { text: '--Manage--', value: 'm' }));
+
+            if (run_permission == true) {
+                $('select.mani.singleqb.wday').append($('<option>', { text: '--New--', value: -1 }));
             };
+            
         });
         return false;
     });
@@ -442,118 +539,57 @@ $(function() {
 
 // list times based on day picked
 $(function () {
-    $('select.char.singleqb#wday').on('change', function () {
+    $('select.mani.singleqb.wday').on('change', function () {
+        // make global wday
+        window.wday = $('select.mani.singleqb.wday').val();
         listimes_singleqb();
     });
     return false;
 });
 
 // click to run:
-$('input.char#singleqb-run').bind('click', function() {
-    $( "i.singleqb-run" ).remove(); //clear previous
-    $('button.char#singleqb').prepend("<i class='singleqb-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-    
-    // Assemble CORDER from parameter-inputs:
+$('input.mani#singleqb-run').bind('click', function() {
+    setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+    // Assemble PERIMETER:
+    var PERIMETER = {};
+    $.each(singleqb_Perimeters, function(i,perimeter) {
+        PERIMETER[perimeter] = $('.mani.config.singleqb#' + perimeter).val();
+        console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
+    });
+    // Assemble SCORE-JSON for PERIMETER:
+    PERIMETER['SCORE-JSON'] = {}
+    $.each(Array(4), function(i,v){ PERIMETER['SCORE-JSON']["CH" + String(i+1)] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val(); });
+    console.log("PERIMETER: " + PERIMETER)
+
+    // Assemble CORDER:
     var CORDER = {};
-    CORDER['C-Config'] = {};
-    $.each(singleqb_Peripherals, function(i,peripheral){ CORDER['C-Config'][peripheral] = $('select.char.singleqb#' + peripheral).val(); });
     CORDER['C-Structure'] = singleqb_Parameters;
-    $.each(singleqb_Parameters, function(i,cparam){ CORDER[cparam] = $('input.char.singleqb#' + cparam).val(); });
-    CORDER['repeat'] = '0'; // factor out repeat for file-size calculation
-    console.log('CORDER["repeat"]: ' + CORDER['repeat']);
-    console.log('CORDER["Average"]: ' + CORDER['C-Config']);
-    
-    var comment = JSON.stringify($('textarea.char.singleqb#ecomment').val());
-    var simulate = $('input.char.singleqb#simulate').is(':checked')?1:0; //use css to respond to click / touch
+    $.each(singleqb_Parameters, function(i,cparam){ CORDER[cparam] = $('input.mani.singleqb#' + cparam).val(); });
+    console.log("C-Structure: " + CORDER['C-Structure']);
+
+    var comment = JSON.stringify($('textarea.mani.singleqb#singleqb-ecomment').val());
+    var simulate = $('input.mani.singleqb#simulate').is(':checked')?1:0; //use css to respond to click / touch
     console.log("simulate: " + simulate);
     
-    $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/new', {
-        wday: wday, CORDER: JSON.stringify(CORDER), comment: comment, simulate: simulate
-    }, function (data) { 
-        console.log("test each loop: " + data.testeach);      
-        $( "i.singleqb-run" ).remove(); //clear previous
+    // START RUNNING
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/new', {
+        wday: wday, PERIMETER: JSON.stringify(PERIMETER), CORDER: JSON.stringify(CORDER), comment: comment, simulate: simulate
+    }, function (data) {       
+        console.log("Status: " + data.status);
     });
     return false;
-});
-// click to get MSG about measurement status:
-$("a.new#singleqb-msg").bind('click', function() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/getmessage', {
-    }, function (data) {
-        if (data.msg.indexOf('measurement started')==0) {
-            $( "i.singleqb-run" ).remove(); //clear previous
-            $("a.new#singleqb-msg").text("Running").css("background-color", "mintcream");
-            $('button.char#singleqb').prepend("<i class='singleqb-run fa fa-spinner fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        } else if (data.msg.indexOf('measurement concluded')==0) {
-            $( "i.singleqb-run" ).remove(); //clear previous
-            $("a.new#singleqb-msg").text("Stopped").css("background-color", "cornsilk").css("color", "red");
-        } else { $("a.new#singleqb-msg").text(String(data.msg)).css("background-color", "coral").css("color", "red"); }
-    });
-});
-// click to estimate ETA
-$("a.new#singleqb-eta").bind('click', function() {
-    $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/eta100', {
-    }, function (data) {
-        $("a.new#singleqb-eta").text('ETA in\n' + String(data.eta_time_100));
-    });
-});
-// click to set repeat or once
-$('input.char.singleqb.repeat').bind('click', function() {
-    set_repeat_singleqb();
-});
-
-// click to search: (pending)
-$('input.char.singleqb#search').change( function() {
-    $( "i.singleqb" ).remove(); //clear previous
-    $('button.char#singleqb').prepend("<i class='singleqb fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-    // waveform commands
-    
-    // var comment = $('textarea.char#singleqb[name="comment"]').val();
-    $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/search', {
-        
-    }, function (data) {
-        
-        console.log("complete: " + data.filelist);
-        $( "i.singleqb" ).remove(); //clear previous
-    });
-    return false;
-});
-
-// click to pause measurement
-$(function () {
-    $('button.char#singleqb-pause').on('click', function () {
-        $( "i.singleqb" ).remove(); //clear previous
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/pause', {
-            // direct pause
-        }, function(data) {
-            console.log("paused: " + data.pause);
-        });
-        return false;
-    });
 });
 
 // Click to resume measurement (PENDING: Error(s) to be fixed)
 $(function () {
-    $('button.char#singleqb-resume').on('click', function () {
-        $( "i.singleqb-run" ).remove(); //clear previous
-        $('button.char#singleqb').prepend("<i class='singleqb-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        
-        // Assemble CORDER from parameter-inputs:
-        var CORDER = {};
-        CORDER['C-Config'] = {};
-        $.each(singleqb_Peripherals, function(i,peripheral){ CORDER['C-Config'][peripheral] = $('select.char.singleqb#' + peripheral).val(); });
-        CORDER['C-Structure'] = singleqb_Parameters;
-        $.each(singleqb_Parameters, function(i,cparam){ CORDER[cparam] = $('input.char.singleqb#' + cparam).val(); });
-        CORDER['repeat'] = '0'; // factor out repeat for file-size calculation
-        console.log('CORDER["repeat"]: ' + CORDER['repeat']);
-        console.log('CORDER["Average"]: ' + CORDER['Average']);
-
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/resume', {
-            wday: selecteday, wmoment: wmoment, CORDER: JSON.stringify(CORDER)
+    $('button.mani#singleqb-resume').on('click', function () {
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/resume', {
+            wday: selecteday, wmoment: wmoment
         }, function (data) {
             if (data.resumepoint == data.datasize) {
-                console.log("The data was already complete!")
+                console.log("The data was already complete!");
             } else { console.log("The data has just been updated")};
-            $( "i.singleqb" ).remove(); //clear previous
         });
         return false;
     });
@@ -561,40 +597,24 @@ $(function () {
 
 // access data based on time picked
 $(function () {
-    $('select.char.singleqb#wmoment').on('change', function () {
+    $('select.mani.singleqb.wmoment').on('change', function () {
+        // Make global variable:
+        window.wmoment = $('select.mani.singleqb.wmoment').val();
         accessdata_singleqb();
     });
     return false;
 });
 
-// LIVE UPDATE on PROGRESS:
-$(function () {
-    $('input.singleqb#live-update').click(function () { 
-        //indicate it is still running:
-        $( "i.singleqblive" ).remove(); //clear previous
-        $('button.char#singleqb').prepend("<i class='singleqblive fa fa-wifi fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var livestat = $('input.singleqb#live-update').is(':checked'); //use css to respond to click / touch
-        if (livestat == true) {
-            var singleqbloop = setInterval(accessdata_singleqb, 6000);
-            $('input.singleqb#live-update').click(function () {
-                clearInterval(singleqbloop);
-                $( "i.singleqblive" ).remove(); //clear previous
-            });
-        };
-        // 'else' didn't do much to stop it!
-    });
-});
-
 // tracking data position based on certain parameter
 $(function () {
-    $('select.char.singleqb').on('change', function () {
+    $(document).on('change', 'table tbody tr th select.mani.singleqb', function () {
         var fixed = this.getAttribute('id');
-        var fixedvalue = $('select.char.singleqb#' + fixed).val();
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/trackdata', {
+        var fixedvalue = $('table tbody tr th select.mani.singleqb#' + fixed).val();
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/trackdata', {
             fixed: fixed, fixedvalue: fixedvalue,
         }, function (data) {
             console.log('data position for branch ' + fixed + ' is ' + data.data_location);
-            $('div#char-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(fixed + ' is fixed at ' + data.data_location))
+            $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(fixed + ' is fixed at ' + data.data_location))
             .append($('<h4 style="color: blue;"></h4>').text('a location after ' + data.data_location + ' data-point(s)'));
         })
     });
@@ -603,17 +623,18 @@ $(function () {
 
 // assemble 1D-data based on c-parameters picked
 $(function () {
-    $('input.char.singleqb#1d-data').on('click', function () {
-        $('div#char-singleqb-announcement').empty();
+    $('input.mani.data.singleqb#singleqb-1d-data').on('click', function () {
+        console.log("HIIIIII");
+        $('div#mani-singleqb-announcement').empty();
         $( "i.singleqb1d" ).remove(); //clear previous
-        $('button.char#singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        // var irepeat = $('select.char.singleqb#repeat').val();
+        $('button.mani#singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
-        $.each(singleqb_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.singleqb#' + cparam).val(); });
+        $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
-        var srange = $('input.char.data.singleqb#sample-range').val();
-        var smode = $('select.char.data.singleqb#sample-mode').val();
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/1ddata', {
+        var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
+        var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/1ddata', {
             cselect: JSON.stringify(cselect), srange: srange, smode: smode,
         }, function (data) {
             window.x = data.x;
@@ -623,15 +644,16 @@ $(function () {
             window.yUFNP = data.yUFNP;
             window.xtitle = data.xtitle;
             // Phase option
-            // $('select.char.data.singleqb#1d-phase').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
+            // $('select.mani.data.singleqb#1d-phase').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
             plot1D_singleqb(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle);
+            // console.log("yA: " + yA);
         })
             .done(function(data) {
-                $('button.char#singleqb-savecsv').show(); // to avoid downloading the wrong file
-                $('div#char-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Successfully Plot 1D:"));
+                $('button.mani#singleqb-savecsv').show(); // to avoid downloading the wrong file
+                $('div#mani-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Successfully Plot 1D:"));
             })
             .fail(function(jqxhr, textStatus, error){
-                $('div#char-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
+                $('div#mani-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
                 $( "i.singleqb1d" ).remove(); //clear the status
             });
     });
@@ -639,17 +661,17 @@ $(function () {
 });
 // INSERT 1D-data for comparison
 $(function () {
-    $('button.char#singleqb-insert-1D').on('click', function () {
-        $('div#char-singleqb-announcement').empty();
+    $('button.mani#singleqb-insert-1D').on('click', function () {
+        $('div#mani-singleqb-announcement').empty();
         $( "i.singleqb1d" ).remove(); //clear previous
-        $('button.char#singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        // var irepeat = $('select.char.singleqb#repeat').val();
+        $('button.mani#singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
-        $.each(singleqb_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.singleqb#' + cparam).val(); });
+        $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
-        var srange = $('input.char.data.singleqb#sample-range').val();
-        var smode = $('select.char.data.singleqb#sample-mode').val();
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/1ddata', {
+        var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
+        var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/1ddata', {
             cselect: JSON.stringify(cselect), srange: srange, smode: smode,
         }, function (data) {
             window.x2 = data.x;
@@ -660,48 +682,48 @@ $(function () {
             window.xtitle2 = data.xtitle;
 
             // Normalization Options:
-            $('select.char.data.singleqb#compare-nml').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+            $('select.mani.data.singleqb#singleqb-compare-nml').empty().append($('<option>', { text: 'direct', value: 'direct' }))
                                                                 .append($('<option>', { text: 'normaldip', value: 'normaldip' }))
                                                                 .append($('<option>', { text: 'normalpeak', value: 'normalpeak' }));
 
-            console.log('selected: ' + $('select.char.data.singleqb#compare-nml').val());
-            normalize = Boolean($('select.char.data.singleqb#compare-nml').val()!='direct');
-            direction = $('select.char.data.singleqb#compare-nml').val().split('normal')[1];
+            console.log('selected: ' + $('select.mani.data.singleqb#singleqb-compare-nml').val());
+            normalize = Boolean($('select.mani.data.singleqb#singleqb-compare-nml').val()!='direct');
+            direction = $('select.mani.data.singleqb#singleqb-compare-nml').val().split('normal')[1];
             // console.log("yA: " + yA); console.log("yA2: " + yA2);
             compare1D_singleqb(x,yA,x2,yA2,normalize,direction,VdBm_selector);
         })
             .fail(function(jqxhr, textStatus, error){
-                $('div#char-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
+                $('div#mani-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
                 $( "i.singleqb1d" ).remove(); //clear the status
             });
     });
     return false;
 });
-$('select.char.data.singleqb#compare-nml').on('change', function() {
-    normalize = Boolean($('select.char.data.singleqb#compare-nml').val()!='direct');
-    direction = $('select.char.data.singleqb#compare-nml').val().split('normal')[1];
+$('select.mani.data.singleqb#singleqb-compare-nml').on('change', function() {
+    normalize = Boolean($('select.mani.data.singleqb#singleqb-compare-nml').val()!='direct');
+    direction = $('select.mani.data.singleqb#singleqb-compare-nml').val().split('normal')[1];
     compare1D_singleqb(x,yA,x2,yA2,normalize,direction,VdBm_selector);
     return false;
 });
 $(VdBm_selector).on('change', function() {
     plot1D_singleqb(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle);
 });
-$('select.char.data.singleqb#1d-mode').on('change', function() {
-    plot1D_singleqb(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle,mode=$('select.char.data.singleqb#1d-mode').val());
+$('select.mani.data.singleqb#singleqb-1d-mode').on('change', function() {
+    plot1D_singleqb(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle,mode=$('select.mani.data.singleqb#singleqb-1d-mode').val());
 });
 
 // assemble 2D-data based on c-parameters picked
 $(function () {
-    $('input.char.singleqb#2d-data').on('click', function () {
-        $('div#char-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Plotting 2D might takes some time. Please wait... "));
+    $('input.mani.singleqb#singleqb-2d-data').on('click', function () {
+        $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Plotting 2D might takes some time. Please wait... "));
         $( "i.singleqb2d" ).remove(); //clear previous
-        $('button.char#singleqb').prepend("<i class='singleqb2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        // var irepeat = $('select.char.singleqb#repeat').val();
+        $('button.mani#singleqb').prepend("<i class='singleqb2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
-        $.each(singleqb_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.singleqb#' + cparam).val(); });
+        $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
-        var srange = $('input.char.data.singleqb#sample-range').val();
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/2ddata', {
+        var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/2ddata', {
             cselect: JSON.stringify(cselect), srange: srange
         }, function (data) {
             window.x = data.x;
@@ -714,14 +736,14 @@ $(function () {
             window.xtitle = data.xtitle;
             window.ytitle = data.ytitle;
             // Amplitude (default) or Phase
-            $('select.char.data.singleqb#2d-iqamphase').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }))
+            $('select.mani.data.singleqb#singleqb-2d-iqamphase').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }))
                                                                 .append($('<option>', { text: 'I', value: 'I' })).append($('<option>', { text: 'Q', value: 'Q' }));
             // Data grooming
-            $('select.char.data.singleqb#2d-type').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+            $('select.mani.data.singleqb#singleqb-2d-type').empty().append($('<option>', { text: 'direct', value: 'direct' }))
                 .append($('<option>', { text: 'normalYdip', value: 'normalYdip' })).append($('<option>', { text: 'normalYpeak', value: 'normalYpeak' }))
                 .append($('<option>', { text: 'normalXdip', value: 'normalXdip' })).append($('<option>', { text: 'normalXpeak', value: 'normalXpeak' }));
             // Data color-scaling
-            $('select.char.data.singleqb#2d-colorscale').empty().append($('<option>', { text: 'YlOrRd', value: 'YlOrRd' }))
+            $('select.mani.data.singleqb#singleqb-2d-colorscale').empty().append($('<option>', { text: 'YlOrRd', value: 'YlOrRd' }))
                 .append($('<option>', { text: 'YlGnBu', value: 'YlGnBu' })).append($('<option>', { text: 'RdBu', value: 'RdBu' }))
                 .append($('<option>', { text: 'Portland', value: 'Portland' })).append($('<option>', { text: 'Picnic', value: 'Picnic' }))
                 .append($('<option>', { text: 'Jet', value: 'Jet' })).append($('<option>', { text: 'Hot', value: 'Hot' }))
@@ -730,51 +752,56 @@ $(function () {
                 .append($('<option>', { text: 'Bluered', value: 'Bluered' })).append($('<option>', { text: 'Blackbody', value: 'Blackbody' }))
                 .append($('<option>', { text: 'Blues', value: 'Blues' })).append($('<option>', { text: 'Viridis', value: 'Viridis' }));
             // Transpose or not
-            $('select.char.data.singleqb#2d-direction').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
+            $('select.mani.data.singleqb#singleqb-2d-direction').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
             plot2D_singleqb(x, y, ZZA, xtitle, ytitle, 
-                $('select.char.data.singleqb#2d-type').val(),'singleqb',
-                $('select.char.data.singleqb#2d-colorscale').val(),
+                $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
+                $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
                 VdBm_selector2);
             $( "i.singleqb2d" ).remove(); //clear previous
         })
             .fail(function(jqxhr, textStatus, error){
-                $('div#char-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error + "(" + textStatus + ")"));
+                $('div#mani-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error + "(" + textStatus + ")"));
                 $( "i.singleqb2d" ).remove(); //clear the status
             })
             .always(function(){
-                $('div#char-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("2D Plot Completed"));
+                $('button.mani#singleqb-savemat').show();
+                $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("2D Plot Completed"));
                 $( "i.singleqb2d" ).remove(); //clear the status
             });
     });
     return false;
 });
-$('div.2D select.char.data.singleqb').on('change', function() {
+$('div.2D select.mani.data.singleqb').on('change', function() {
 
-    if ($('select.char.data.singleqb#2d-iqamphase').val() == "Amp") {var ZZ = ZZA; }
-    else if ($('select.char.data.singleqb#2d-iqamphase').val() == "Pha") {var ZZ = ZZUP; }
-    else if ($('select.char.data.singleqb#2d-iqamphase').val() == "I") {var ZZ = ZZI; }
-    else if ($('select.char.data.singleqb#2d-iqamphase').val() == "Q") {var ZZ = ZZQ; };
+    if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Amp") {var ZZ = ZZA; }
+    else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Pha") {var ZZ = ZZUP; }
+    else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "I") {var ZZ = ZZI; }
+    else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Q") {var ZZ = ZZQ; };
     
-    if ($('select.char.data.singleqb#2d-direction').val() == "rotate") {
+    if ($('select.mani.data.singleqb#singleqb-2d-direction').val() == "rotate") {
         plot2D_singleqb(y, x, transpose(ZZ), ytitle, xtitle, 
-            $('select.char.data.singleqb#2d-type').val(),'singleqb',
-            $('select.char.data.singleqb#2d-colorscale').val(),
+            $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
+            $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
             VdBm_selector2);
     } else {
         plot2D_singleqb(x, y, ZZ, xtitle, ytitle, 
-            $('select.char.data.singleqb#2d-type').val(),'singleqb',
-            $('select.char.data.singleqb#2d-colorscale').val(),
+            $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
+            $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
             VdBm_selector2);
     };
     return false;
 });
 
 // saving exported csv-data to client's PC:
-$('button.char#singleqb-savecsv').on('click', function() {
-    console.log("SAVING FILE");
-    $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/export/1dcsv', {
+$('button.mani#singleqb-savecsv').on('click', function() {
+    console.log("SAVING CSV FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/access', { wmoment: wmoment }, function (data) {});
+
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/export/1dcsv', {
         // merely for security screening purposes
-        ifreq: $('select.char.singleqb#RO-Frequency').val()
+        ifreq: $('select.mani.singleqb#RO-LO-Frequency').val()
     }, function (data) {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 1D-Data');
@@ -793,7 +820,41 @@ $('button.char#singleqb-savecsv').on('click', function() {
                 a.click();
                 a.remove();
                 window.URL.revokeObjectURL(url);
-                $('button.char#singleqb-savecsv').hide();
+                $('button.mani#singleqb-savecsv').hide();
+            }
+        });
+    });
+    return false;
+});
+// saving exported mat-data to client's PC:
+$('button.mani#singleqb-savemat').on('click', function() {
+    console.log("SAVING MAT FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/access', { wmoment: wmoment }, function (data) {});
+
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/export/2dmat', {
+        // merely for security screening purposes
+        interaction: $('select.mani.singleqb#RO-LO-Frequency').val()
+    }, function (data) {
+        console.log("STATUS: " + data.status);
+        console.log('User ' + data.user_name + ' is downloading 2D-Data');
+        $.ajax({
+            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dsingleqb[' + data.user_name + '].mat',
+            method: 'GET',
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function (data) {
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                a.download = '2Dsingleqb.mat';
+                document.body.append(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                $('button.mani#singleqb-savemat').hide();
             }
         });
     });
@@ -801,26 +862,67 @@ $('button.char#singleqb-savecsv').on('click', function() {
 });
 
 // Brings up RESET Modal Box:
-$('button.char#singleqb-datareset').on('click', function () {
+$('button.mani#singleqb-datareset').on('click', function () {
     $('.modal.data-reset.singleqb').toggleClass('is-visible');
 });
-$('input.char.singleqb.data-reset#singleqb-reset').on('click', function () {
-    $('div.char.singleqb.confirm').show();
-    $('button.char.singleqb.reset-yes').on('click', function () {
-        $.getJSON(mssnencrpytonian() + '/mssn/char/singleqb/resetdata', {
-            ownerpassword: $('input.char.singleqb#ownerpassword').val(),
-            truncateafter: $('input.char.singleqb#truncateafter').val(),
+$('input.mani.singleqb.data-reset#singleqb-reset').on('click', function () {
+    $('div.mani.singleqb.confirm').show();
+    $('button.mani.singleqb.reset-yes').on('click', function () {
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/resetdata', {
+            ownerpassword: $('input.mani.singleqb#ownerpassword').val(),
+            truncateafter: $('input.mani.singleqb#truncateafter').val(),
         }, function (data) {
-            $('div#char-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking SQE-PULSE.'));
+            $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking SQE-PULSE.'));
         });
-        $('div.char.singleqb.confirm').hide();
+        $('div.mani.singleqb.confirm').hide();
         return false;
     });
     return false;
 });
-$('button.char.singleqb.reset-no').on('click', function () {
-    $('div.char.singleqb.confirm').hide();
+$('button.mani.singleqb.reset-no').on('click', function () {
+    $('div.mani.singleqb.confirm').hide();
     return false;
 });
 
+// Notification on click:
+$('input.singleqb.notification').click( function(){
+    var Day = $('input.singleqb.notification').val().split(' > ')[1];
+    var Moment = $('input.singleqb.notification').val().split(' > ')[2];
+    console.log('Day: ' + Day + ', Moment: ' + Moment);
 
+    // Setting global Day & Moment index:
+    wday = DAYLIST.length - 1 - DAYLIST.indexOf(Day);
+    wmoment = Moment;
+    console.log('wday: ' + wday + ', wmoment: ' + wmoment);
+
+    if (Day != null) {
+        // Digesting Day & Moment on the back:
+        listimes_singleqb();
+        accessdata_singleqb();
+    };
+    
+    // Setting Day & Moment on the front:
+    $('select.mani.singleqb.wday').val(wday);
+    setTimeout(() => {
+        $('select.mani.singleqb.wmoment').val(wmoment);
+    }, 160); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
+
+    return false;
+});
+
+// click to search: (pending)
+$('input.mani.singleqb#search').change( function() {
+    $( "i.singleqb" ).remove(); //clear previous
+    $('button.mani#singleqb').prepend("<i class='singleqb fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    // waveform commands
+    
+    // var comment = $('textarea.mani#singleqb[name="comment"]').val();
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/search', {
+        
+    }, function (data) {
+        
+        console.log("complete: " + data.filelist);
+        $( "i.singleqb" ).remove(); //clear previous
+    });
+    return false;
+});

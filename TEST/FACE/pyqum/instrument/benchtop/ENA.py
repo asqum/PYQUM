@@ -9,7 +9,7 @@ mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, Y
 import matplotlib.pyplot as plt
 from numpy import arange, floor, ceil, array
 
-import visa
+import pyvisa as visa
 from pyqum.instrument.logger import address, set_status, status_code, debug
 from pyqum.instrument.logger import translate_scpi as Attribute
 
@@ -37,9 +37,10 @@ def Initiate(reset=False, which=1, MaxChannel=2):
 		bench.read_termination = '\n' #omit termination tag from output 
 		bench.timeout = 80000000 #set timeout in ms
 		set_status(mdlname, dict(state='connected'))
-		print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+		print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat)))
 		ad.update_machine(1, "%s_%s"%(mdlname,which))
 	except: 
+		# raise
 		set_status(mdlname, dict(state='DISCONNECTED'))
 		print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
 		bench = "disconnected"
@@ -227,7 +228,7 @@ def test(detail=True):
 	from pyqum.instrument.toolbox import waveform
 
 	bench = Initiate(False)
-	if bench is "disconnected":
+	if bench == "disconnected":
 		pass
 	else:
 		model(bench)

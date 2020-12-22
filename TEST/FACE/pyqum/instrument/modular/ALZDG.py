@@ -176,7 +176,7 @@ def AcquireData_NPT(board, recordtime, recordsum, OPT_DMA_Buffer_Size=32, dt=1/1
     # DATA:
     # Allocate DMA buffers
     bytesPerBuffer = bytesPerRecord * recordsPerBuffer * channelCount
-    print("Buffer size: %sMB" %(bytesPerBuffer/1024/1024))
+    # print("Buffer size: %sMB" %(bytesPerBuffer/1024/1024))
 
     if bytesPerSample > 1: sample_type = ctypes.c_uint16
     else: sample_type = ctypes.c_uint8
@@ -255,12 +255,13 @@ def AcquireData_NPT(board, recordtime, recordsum, OPT_DMA_Buffer_Size=32, dt=1/1
 
     return data_V, transferTime_sec, recordsPerBuffer, buffersPerAcquisition
 
-def close(which): # PENDING: Clear Memory thoroughly
+def close(board, which): # PENDING: Clear Memory thoroughly
     '''
     ATS-SDK maintains a list of board handles in order to support master-slave board systems. 
     The SDK creates board handles when it is loaded into memory, and destroys these handles when it is unloaded from memory. 
     An application should not need to close a board handle.
     '''
+    del board
     set_status(mdlname, dict(state='disconnected'), which)
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
     ad = address()

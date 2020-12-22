@@ -1,7 +1,8 @@
-// CW Sweep: 
+// SQE-PULSE: 
 $(document).ready(function(){
     $('div.char.sqepulse.confirm').hide();
     $('button.char#sqepulse-savecsv').hide();
+    $('button.char#sqepulse-savemat').hide();
     $("a.new#sqepulse-eta").text('ETA: ');
     $("a.new#sqepulse-msg").text('Measurement Status');
     // get_repeat_sqepulse();
@@ -71,7 +72,7 @@ function listimes_sqepulse() {
     window.wday = $('select.char.sqepulse#wday').val();
     if (Number(wday) < 0) {
         // brings up parameter-input panel for new measurement:
-        $('.modal.new').toggleClass('is-visible');
+        $('.modal.new.sqepulse').toggleClass('is-visible');
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
             $("textarea.char.sqepulse#ecomment").val(sqepulsecomment + "\nUpdate: T6=" + data.mxcmk + "mK");
@@ -736,6 +737,7 @@ $(function () {
                 $('select.char.data.sqepulse#2d-colorscale').val(),
                 VdBm_selector2);
             $( "i.sqepulse2d" ).remove(); //clear previous
+            $('button.char#sqepulse-savemat').show();
         })
             .fail(function(jqxhr, textStatus, error){
                 $('div#char-sqepulse-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error + "(" + textStatus + ")"));
@@ -771,7 +773,11 @@ $('div.2D select.char.data.sqepulse').on('change', function() {
 
 // saving exported csv-data to client's PC:
 $('button.char#sqepulse-savecsv').on('click', function() {
-    console.log("SAVING FILE");
+    console.log("SAVING CSV FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/access', { wmoment: wmoment }, function (data) {});
+
     $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/export/1dcsv', {
         // merely for security screening purposes
         ifreq: $('select.char.sqepulse#RO-Frequency').val()
@@ -794,6 +800,40 @@ $('button.char#sqepulse-savecsv').on('click', function() {
                 a.remove();
                 window.URL.revokeObjectURL(url);
                 $('button.char#sqepulse-savecsv').hide();
+            }
+        });
+    });
+    return false;
+});
+// saving exported mat-data to client's PC:
+$('button.char#sqepulse-savemat').on('click', function() {
+    console.log("SAVING MAT FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/access', { wmoment: wmoment }, function (data) {});
+
+    $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/export/2dmat', {
+        // merely for security screening purposes
+        ifreq: $('select.char.sqepulse#RO-Frequency').val()
+    }, function (data) {
+        console.log("STATUS: " + data.status);
+        console.log('User ' + data.user_name + ' is downloading 2D-Data');
+        $.ajax({
+            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dsqepulse[' + data.user_name + '].mat',
+            method: 'GET',
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function (data) {
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                a.download = '2Dsqepulse.mat';
+                document.body.append(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                $('button.char#sqepulse-savemat').hide();
             }
         });
     });

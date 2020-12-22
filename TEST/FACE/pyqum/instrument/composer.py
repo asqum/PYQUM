@@ -1,5 +1,8 @@
 # Aim to compose a lyric for Qubit
 
+from colorama import init, Fore, Back
+init(autoreset=True) #to convert termcolor to wins color
+
 from math import trunc
 from numpy import linspace, power, exp, array, zeros
 
@@ -24,7 +27,10 @@ class pulser:
 
     def song(self):
         '''
-        compose the song based on the score given
+        compose the song based on the score given:
+            ns=<period/length of the song>;
+            <pulse-shape>/[<unique factor(s): default (to pulse-library) database) if blank], <pulse-period>, <pulse-height: between -1 & +1>;
+            stack a variety of pulse-instruction(s) according to the format illustrated above.
         '''
         for beat in self.score.split(";")[1:]:
             if beat == '': break # for the last semicolon
@@ -50,7 +56,7 @@ class pulser:
                 sigma = pulsewidth / sfactor
                 self.music[duration] = pulseheight * exp(-power((linspace(pulsewidth, 0, round(pulsewidth/self.dt)) - pulsewidth), 2) / 2 / (sigma**2))
 
-            else: pass
+            else: print(Fore.RED + "UNRECOGNIZED PULSE. PLEASE CONSULT HELP.")
 
         return
 

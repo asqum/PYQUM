@@ -1,11 +1,11 @@
-# Communicating with Benchtop DDSLO(QES2) M9347 (Latest:2019/02)
+# Communicating with Modular DDS-LO (QES2) M9347A (Latest:2020/12)
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
-import visa
+import pyvisa as visa
 from pyqum.instrument.logger import address, set_status, status_code, debug
 from pyqum.instrument.logger import translate_scpi as Attribute
 
@@ -13,145 +13,113 @@ debugger = debug(mdlname)
 
 # INITIALIZATION
 def Initiate(which):
+    ad = address("TEST")
     # ad = address()
-    # rs = ad.lookup(mdlname, which) # Instrument's Address
-    rs = "PXI0::187-0.0::INSTR" # slot-13 (1)
+    rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
-        bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-        stat = [1,1] # bench.write('*CLS') #Clear buffer memory; Load preset
-        bench.read_termination = '\n' #omit termination tag from output 
-        bench.timeout = 150000 #set timeout in ms
+        card = rm.open_resource(rs) #establishing connection using GPIB# with the machine
+        stat = [1,1] # card.write('*CLS') #Clear buffer memory; Load preset
+        card.read_termination = '\n' #omit termination tag from output 
+        card.timeout = 150000 #set timeout in ms
         set_status(mdlname, dict(state='connected'), which)
-        print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat[1])[-7:]))
-        # ad.update_machine(1, "%s_%s"%(mdlname,which))
+        print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat)))
+        ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
-        raise
+        # raise
         set_status(mdlname, dict(state='DISCONNECTED'), which)
         print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
-        bench = "disconnected"
-    return bench
+        card = "disconnected"
+    return card
 
 @Attribute
-def model(bench, action=['Get', '']):
+def model(card, action=['Get', '']):
     SCPIcore = '*IDN'  #inquiring machine identity: "who r u?"
-    return mdlname, bench, SCPIcore, action
+    return mdlname, card, SCPIcore, action
 
-"""
-@Attribute
-def commentstate(bench, action=['Get', "00,1"]): # query with parameters
-    '''This command lets you to add a descriptive comment to the saved instrument in the state register, 
-        <reg_num>,<seq_num>. Comments can be up to 55 characters long.\n
-        action=['Set', '<reg 0-99>,<seq 0-9>,comment']
-    or  action=['Get', '<reg 0-99>,<seq 0-9>']
-    '''
-    if 'Set' in action:
-        stateloc = ','.join(action[1].split(',')[:-1])
-        print(Fore.LIGHTGREEN_EX + "Creating {%s}" %stateloc)
-        bench.write('*SAV %s' %stateloc) #Create a state
-    SCPIcore = ':MEMory:STATe:COMMENT'  #Save the state
-    return mdlname, bench, SCPIcore, action
-"""
-
-"""
-@Attribute
-def memory(bench, action=['Get']):
-    '''This command outputs a list of all files in the memory subsystem, 
-    but does not include files stored in the Option 601 or 602 baseband generator memory. The return data is in the following form:\n 
-    <mem_used>,<mem_free>{,"<file_listing>"} 
-    The signal generator returns the two memory usage parameters and as many file listings as there are files in the memory subsystem.\n 
-    Each file listing parameter is in the following form: 
-    "<file_name,file_type,file_size>" '''
-    SCPIcore = 'MEMory:CATALOG;FREE'  #inquiring machine memory
-    action += 10 * ['']
-    return mdlname, bench, SCPIcore, action
-"""
 
 @Attribute
-def frequency(bench, chanum, action=['Get', '']):
+def frequency(card, chanum, action=['Get', '']):
     '''This command sets the RF output frequency of the synthesizer.
         [:DDS[1]|2]:FREQuency <val>[<unit>] ex. :DDS1:FREQ 6GHZ
         action=['Set','6GHz']'''
-    SCPIcore = 'DDS%s:FREQuency' %chanum
-    return mdlname, bench, SCPIcore, action
+    SCPIcore = ':DDS%s:FREQuency' %chanum
+    return mdlname, card, SCPIcore, action
 
 
 @Attribute
-def power(bench, chanum, action=['Get', '']):
+def power(card, chanum, action=['Get', '']):
     '''This command sets the RF output power of the synthesizer.
-        [:DDS[1]|2]:POWer <val>[<unit>] ex. :DDS1:POW -5DBM
-        action=['Set','6GHz']'''
-    SCPIcore = 'DDS%s:POWer' %chanum
-    return mdlname, bench, SCPIcore, action
-
+        The query returns the maximum or minimum allowable power level if the optional MAXimum or MINimum are used.
+        [:DDS[1]|2]:POWer <val> (unit will cause illusional error!!!)
+        [:DDS[1]|2]:POWer? [MAXimum|MINimum] => EX: ['Get','MAX']
+    '''
+    SCPIcore = ':DDS%s:POWER' %chanum
+    return mdlname, card, SCPIcore, action
 
 @Attribute
-def phase(bench, chanum, action=['Get', '']):
+def phase(card, chanum, action=['Get', '']):
     '''This command applies a phase rotation, in degrees, to the data generated by the
         synthesizer.
         [:DDS[1]|2]:PHASe <val>
         ex. :DDS2:PHAS -45 The preceding example applies a -45° phase rotation to synthesizer channel #2
         action=['Set','-45']'''
-    SCPIcore = 'DDS%s:PHASe' %chanum
-    return mdlname, bench, SCPIcore, action
+    SCPIcore = ':DDS%s:PHASe' %chanum
+    return mdlname, card, SCPIcore, action
 
 @Attribute
-def output(bench, chanum, action=['Get', '']):
+def output(card, chanum, action=['Get', '']):
     '''This command enables or disables the RF output of the synthesizer.
         [:DDS[1]|2]:OUTPut[:STATe] ON|OFF|1|0 
         ex. :DDS2:OUTP OFF The preceding example disables the RF output of synthesizer channel #2.
-
         action=['Set','OFF']'''
-    SCPIcore = 'DDS%s:OUTPut' %chanum
-    return mdlname, bench, SCPIcore, action
+    SCPIcore = ':DDS%s:OUTPut' %chanum
+    return mdlname, card, SCPIcore, action
 
 
 @Attribute
-def clock_align(bench, action=['Get', '']):
-    '''This command invokes an internal alignment to lock the DDS chips to the system
-clock. This alignment must be performed whenever the system clock source is
-changed.
-        :CALibration:SCLK ex. :CAL:SCLK
-        action=['Set','OFF']'''
+def clock_align(card, action=['Set', ' ']):
+    '''SET ONLY!
+    This command invokes an internal alignment to lock the DDS chips to the system clock. 
+    This alignment must be performed whenever the system clock source is changed.
+    '''
     SCPIcore = ':CAL:SCLK' 
-    return mdlname, bench, SCPIcore, action
+    return mdlname, card, SCPIcore, action
 
 @Attribute
-def clock_source_frequency(bench, action=['Get', '']):
-    '''This command sets the master system clock frequency. The system clock is
-adjustable only when the clock source is set to Direct In.
-        :CLK:SOURce CLKIN| CLKIN4800MHZ| REFIN100MHZ 
-        ex. :CLK:SOUR CLKIN4800MHZ The preceding example sets the system clock source to a direct clock at 4.8 GHz.
-        action=['Set','20GHz']'''
-    SCPIcore = ':CAL:SCLK' 
-    return mdlname, bench, SCPIcore, action
+def clock_source(card, action=['Get', '']):
+    '''This command sets the source of the system clock.  
+    The M9347A supports three different methods for providing a system clock:  A direct clock from 17-20.0 GHz, a direct clock at 4.8 GHz, or a 100 MHz reference clock.  
+    The direct clock must be provided at the Clock In port of the front panel, and the 100 MHz must be provided at the Ref In port of the front panel.
+    OPTION:  CLKIN| CLKIN4800MHZ| REFIN100MHZ
+    '''
+    SCPIcore = ':CLK:SOURce' 
+    return mdlname, card, SCPIcore, action
 
 @Attribute
-def clock_frequency_out(bench, action=['Get', '']):
-    '''This command sets the frequency at the Ref Out port of the front panel. The available
-        choices are dependent upon the clock source. The following table describes the
-        possible options:
+def clock_frequency_out(card, action=['Get', '']):
+    '''This command sets the frequency at the Ref Out port of the front panel. 
+        The available choices are dependent upon the clock source. 
+        The following table describes the possible OPTIONs:
         Clock SOURce            Reference Out Frequency
         Direct In (17-20 GHz)   REFOUT19200MHZ, OFF
         Clock In 4.8 GHz        REFOUT19200MHZ, REFOUT4800MHZ, OFF
         Ref In 100 Mhz          REFOUT19200MHZ, REFOUT4800MHZ, REFOUT100MHZ, OFF
-        :CLK[:REFerence]:OUT[:FREQuency] REFOUT19200MHZ | REFOUT4800MHZ |
-        REFOUT100MHZ | OFF 
-        ex. :CLK:OUT REFOUT4800MHZ The preceding example sets the reference output frequency to 4.8 GHz.
-        action=['Set','20GHz']'''
-    SCPIcore = ':CAL:SCLK' 
-    return mdlname, bench, SCPIcore, action
+        '''
+    SCPIcore = ':CLK:REFerence:OUT:FREQuency'
+    return mdlname, card, SCPIcore, action
 
 
-def close(bench, which, reset=True):
+def close(card, which, reset=True):
     if reset:
-        bench.write('*RST') # reset to factory setting (including switch-off)
+        card.write('*RST') # reset to factory setting (including switch-off)
         set_status(mdlname, dict(config='reset'), which)
     else: set_status(mdlname, dict(config='previous'), which)
     try:
-        bench.close() #None means Success?
+        card.close() #None means Success?
         status = "Success"
-        ad = address()
+        ad = address("TEST")
+        # ad = address()
         ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
     set_status(mdlname, dict(state='disconnected with %s' %status), which)
@@ -159,33 +127,17 @@ def close(bench, which, reset=True):
     return status
         
 
-# Test Zone
-def test(bench, detail=True):
+# Test Zone by PYQUMAPP:
+def test(card, detail=True):
     S={}
-    S['x'] = bench
+    S['x'] = card
     s = S['x']
     if s is "disconnected":
         pass
     else:
         if debug(mdlname, detail):
             print(Fore.RED + "Detailed Test:")
-            # print('SCPI TEST:')
-            # s.write("*SAV 00,1")
-            model(s)
-            #memory(s)
-            frequency(s)
-            p = float(power(s)[1]['AMPLITUDE'])
-            print("Power: %s" %p)
-            output(s, action=['Set', 'ON'])
-            output(s)
-            #commentstate(s, action=['Set', "37,1,'OMG I am AWESOME!'"])
-            #commentstate(s, action=['Get', "37,1"])
-            power(s, action=['Set', '-7.3dbm'])
-            power(s)
-            phase(s, action=['Set', '-45'])
-            phase(s)
-            frequency(s, action=['Set', '1GHz'])
-            frequency(s)
+            
 
         else: print(Fore.RED + "Basic IO Test")
     # if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):
@@ -194,11 +146,34 @@ def test(bench, detail=True):
     # close(s, reset=state)
     return 'Success'
 
+# ON-SITE TESTING:
 def onsitest():
     debug(mdlname, True)
-    s = Initiate(1)
-    frequency(s,1)
+    c = Initiate(1)
+    model(c)
+    clock_source(c)
+    clock_source(c, action=['Set', 'REFIN100MHZ'])
+    clock_source(c)
+    clock_align(c)
 
+    frequency(c,2)
+    frequency(c,2,action=['Set','7GHZ'])
+    # frequency(c,2,action=['Set','6e9'])
+    frequency(c,2)
+
+    print("MAX POWER: %s" %power(c,2,['Get','MAX'])[1]['POWER'])
+    power(c,2)
+    power(c,2,action=['Set','7'])
+    power(c,2)
+
+    output(c,2)
+    output(c,2,action=['Set',1])
+    output(c,2)
+
+    from time import sleep
+    sleep(37)
+
+    close(c,1)    
     return
 
 onsitest()

@@ -7,7 +7,7 @@ from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # model's name e.g. ESG, PSG, AWG, VSA, ADC
 debugger = 'debug' + mdlname
 
-import visa
+import pyvisa as visa
 from functools import wraps
 from time import sleep, time
 from contextlib import suppress
@@ -38,7 +38,7 @@ def Initiate(reset=False, current=False, which=1):
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 15000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
-        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat)))
         ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         # raise
@@ -62,7 +62,7 @@ def output(bench, state=0):
         status = 'Error'
     return status
 
-def sweep(bench, wave, pulsewidth=0.035, sweeprate=1.2):
+def sweep(bench, wave, pulsewidth=0.035, sweeprate=0.0007):
     '''
     sweeprate in V/s or A/s
     pulsewidth: waiting/staying/settling/stabilization time in sec

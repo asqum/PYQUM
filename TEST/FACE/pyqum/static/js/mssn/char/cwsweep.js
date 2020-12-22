@@ -1,10 +1,12 @@
 // CW Sweep: 
 $(document).ready(function(){
     $('div.char.cwsweep.confirm').hide();
-    $("a.new#cwsweep-eta").text('ETA: ');
+    // $("a.new#cwsweep-eta").text('ETA: ');
     // get_repeat_cwsweep();
     window.cwsweepcomment = "";
-    $('div input.notification').hide();
+    $('button.char#cwsweep-savecsv').hide();
+    $('button.char#cwsweep-savemat').hide();
+    $('div input.cwsweep.notification').hide();
 });
 
 // Global variables:
@@ -57,11 +59,11 @@ function transpose(a) {
 //     });
 // };
 function listimes_cwsweep() {
-    $('input.char.data').removeClass("plotted");
+    // $('input.char.data').removeClass("plotted");
     
     if (Number(wday) < 0) {
         // brings up parameter-input panel for new measurement:
-        $('.modal.new').toggleClass('is-visible');
+        $('.modal.new.cwsweep').toggleClass('is-visible');
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
             $("textarea.char#cwsweep[name='ecomment']").val(cwsweepcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
@@ -81,8 +83,6 @@ function listimes_cwsweep() {
     };
 };
 function accessdata_cwsweep() {
-    // Make global variable:
-    window.wmoment = $('select.char#cwsweep[name="wmoment"]').val();
     $('.data-progress#cwsweep').css({"width": 0}).text('accessing...');
     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/access', {
         // input/select value here:
@@ -444,7 +444,7 @@ $('input.char#cwsweep-run').bind('click', function() {
         console.log("test each loop: " + data.testeach);
         $('button.tablinks#all-tab').trigger('click');      
         $( "i.cwsweep-run" ).remove(); //clear previous
-        $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
+        $('h3.all-mssn-warning').text("JOB STATUS: " + data.status);
     });
     return false;
 });
@@ -523,6 +523,8 @@ $(function () {
 // access data based on time picked
 $(function () {
     $('select.char#cwsweep[name="wmoment"]').on('change', function () {
+        // Make global variable:
+        window.wmoment = $('select.char#cwsweep[name="wmoment"]').val();
         accessdata_cwsweep();
     });
     return false;
@@ -586,6 +588,7 @@ $(function () {
             // Phase option
             $('select.char.data#cwsweep[name="1d-phase"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
             plot1D_cwsweep(x1,y1,yp,x1title,'<b>Raw-Pha(rad)</b>');
+            $('button.char#cwsweep-savecsv').show();
         });
     });
     return false;
@@ -645,6 +648,7 @@ $(function () {
                 $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
                 $('select.char.data#cwsweep[name="2d-colorscale"]').val());
             $( "i.cwsweep2d" ).remove(); //clear previous
+            $('button.char#cwsweep-savemat').show();
         });
     });
     return false;
@@ -666,14 +670,18 @@ $('select.char.data#cwsweep').on('change', function() {
 
 // saving exported csv-data to client's PC:
 $('button.char#cwsweep-savecsv').on('click', function() {
-    console.log("SAVING FILE");
+    console.log("SAVING CSV FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/access', { wmoment: wmoment }, function (data) {});
+
     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/export/1dcsv', {
         // merely for security screening purposes
-        ifreq: $('select.char#cwsweep[name="c-freq"]').val()
+        ifreq: $('select.char.cwsweep.parameter#c-freq').val()
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/1Dcwsweep.csv',
+            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/1Dcwsweep[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -682,11 +690,45 @@ $('button.char#cwsweep-savecsv').on('click', function() {
                 var a = document.createElement('a');
                 var url = window.URL.createObjectURL(data);
                 a.href = url;
-                a.download = '1dcwsweepdata.csv';
+                a.download = '1Dcwsweep.csv';
                 document.body.append(a);
                 a.click();
                 a.remove();
                 window.URL.revokeObjectURL(url);
+                $('button.char#cwsweep-savecsv').hide();
+            }
+        });
+    });
+    return false;
+});
+// saving exported mat-data to client's PC:
+$('button.char#cwsweep-savemat').on('click', function() {
+    console.log("SAVING MAT FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/access', { wmoment: wmoment }, function (data) {});
+
+    $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/export/2dmat', {
+        // merely for security screening purposes
+        ifreq: $('select.char.cwsweep.parameter#c-freq').val()
+    }, function (data) {
+        console.log("STATUS: " + data.status);
+        $.ajax({
+            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dcwsweep[' + data.user_name + '].mat',
+            method: 'GET',
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function (data) {
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                a.download = '2Dcwsweep.mat';
+                document.body.append(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                $('button.char#cwsweep-savemat').hide();
             }
         });
     });
@@ -726,11 +768,14 @@ $('input.cwsweep.notification').click( function(){
     wday = DAYLIST.length - 1 - DAYLIST.indexOf(Day);
     wmoment = Moment;
     // Digesting Day & Moment on the back:
-    listimes_fresp();
-    accessdata_fresp();
+    listimes_cwsweep();
+    accessdata_cwsweep();
     // Setting Day & Moment on the front:
     $('select.char#cwsweep[name="wday"]').val(wday);
-    setTimeout(() => { $('select.char#cwsweep[name="wmoment"]').val(wmoment); }, 60); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
+    setTimeout(() => {
+        console.log('wmoment: ' + wmoment);
+        $('select.char#cwsweep[name="wmoment"]').val(wmoment); 
+    }, 160); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
 
     return false;
 });

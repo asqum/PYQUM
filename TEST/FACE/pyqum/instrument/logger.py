@@ -14,10 +14,14 @@ import inspect, json, wrapt, struct, geocoder, ast, socket
 import netifaces as nif
 from pandas import DataFrame
 from tables import open_file, Filters, Float32Atom, Float64Atom, StringCol, IsDescription
+from json import loads
+
+# MAT SAVE & LOAD
+from scipy.io import savemat, loadmat
 
 from flask import session, g
 from pyqum import get_db
-from pyqum.instrument.toolbox import waveform
+from pyqum.instrument.toolbox import waveform, flatten
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
@@ -114,12 +118,16 @@ def loginstr(instr_name, label=1):
 def get_status(instr_name, label=1):
     '''Get Instrument Status from LOG
     '''
-    instr_log = loginstr(instr_name, label)
-    if instr_log[0] == False:
-        instrument = None # No such Instrument
-    else:
-        with open(instr_log[1]) as jfile:
-            instrument = json.load(jfile) # in json format
+    try:
+        instr_log = loginstr(instr_name, label)
+        if instr_log[0] == False:
+            instrument = None # No such Instrument
+        else:
+            with open(instr_log[1]) as jfile:
+                instrument = json.load(jfile) # in json format
+    except: 
+        instrument = {}
+        print(Fore.RED + "get_status faced some issues")
     return instrument
 def set_status(instr_name, info, label=1):
     '''Set Instrument Status for LOG
@@ -137,42 +145,50 @@ def set_csv(data_dict, filename):
     export_csv = df.to_csv(Path(PORTAL_PATH) / filename, index = None, header=True)
     return export_csv
 
+# save data in mat for export and be used by clients:
+def set_mat(data_dict, filename):
+    savemat(Path(PORTAL_PATH) / filename, data_dict)
+    return None
+
 class address:
-    '''Use Built-in Params as Default
-    Set <reset=False> to directly load from LOG if it contains "address" 
+    '''Use DATABASE by DEFAULT, TEST by CHOICE
     '''
-    def __init__(self):
-        # with open(ADDRESS_PATH / "address.json") as ad:
-        #     self.book = json.load(ad)
-        self.db = get_db()
+    def __init__(self, mode='DATABASE'):
+        self.mode = mode
+        if self.mode=='DATABASE':
+            self.db = get_db()
+        elif self.mode=='TEST':
+            with open(ADDRESS_PATH / "address.json") as ad:
+                self.book = json.load(ad)
         
     def lookup(self, instr_name, label=1):
-        '''Lookup from the database instead from the book'''
-        
-        self.instr_name = instr_name
-        self.rs = self.db.execute(
-            'SELECT m.address\n' +
-            'FROM machine m\n' +
-            'WHERE m.codename = ?',
-            ('%s_%s'%(instr_name,label),)
-        ).fetchone()
+        '''Lookup from the database or the book'''
+        if self.mode=='DATABASE':
+            self.rs = self.db.execute('SELECT m.address FROM machine m WHERE m.codename = ?',('%s_%s'%(instr_name,label),)).fetchone()[0]
+        elif self.mode=='TEST':
+            try:
+                if label>1: self.rs = self.book[instr_name]["alternative"][label-2]
+                else: self.rs = self.book[instr_name]["resource"]
+            except(KeyError): self.rs = None # checking if instrument in the book
 
-        print('resource: %s' %self.rs[0])
-        return self.rs[0]
+        print('resource: %s' %self.rs)
+        return self.rs
     
     def update_machine(self,connected,codename):
         ''' 
         Update SQL Database:
         connected: 0 or 1, codename = <instr>-<label/index> 
         '''
-        
-        self.db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
-        self.db.commit()
+        if self.mode=='DATABASE':
+            self.db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
+            self.db.commit()
+        elif self.mode=='TEST':
+            print(Fore.RED + "MAKE SURE TO CLOSE CONNECTION UPON EXIT AND AVOID CONFLICT WITH ONLINE INSTRUMENTS")
         return
     def macantouch(self,instr_list):
         '''return total connection(s) based on instrument-list given'''
         connection = 0
-        for mach in instr_list:
+        for mach in flatten(instr_list):
             connection += int(self.db.execute('''SELECT connected FROM machine WHERE codename = ?''', (mach,) ).fetchone()['connected'])
         return connection
 
@@ -248,7 +264,7 @@ def translate_scpi(Name, instance, a, b):
                 command.append(parakeys[i] + " " + paravalues[i])
 
         command = ':'.join(headers[:-1] + [";".join(command)])
-        status = str(bench.write(command)[1])[-7:]
+        status = str(bench.write(command)) #PENDING: status code translation
         
     # formatting return answer
     ans = dict(zip([a.replace('*','') for a in parakeys], paravalues))
@@ -431,12 +447,21 @@ class measurement:
             self.corder = [x for x in self.datacontainer.values()][0]['c-order']
             self.datadensity = [x for x in self.datacontainer.values()][0]['data-density']
             self.comment = [x for x in self.datacontainer.values()][0]['comment']
+            # Access newly added keys after queue-system development:
+            try: self.perimeter = [x for x in self.datacontainer.values()][0]['perimeter']
+            except(KeyError): self.perimeter = {}
 
             # Estimate data size based on version of your data:
             if 'C-Structure'in self.corder:
                 self.datasize = int(prod([waveform(self.corder[param]).count * waveform(self.corder[param]).inner_repeat  for param in self.corder['C-Structure']], dtype='uint64')) * 2 #data density of 2 due to IQ
             else:
                 self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
+
+            # For newer version where seperation between structure & buffer is adopted:
+            if 'RECORD_TIME_NS' in self.perimeter.keys():
+                RJSON = loads(self.perimeter['R-JSON'].replace("'",'"'))
+                for k in RJSON.keys(): self.datasize = self.datasize * waveform(RJSON[k]).count
+                self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS'])
 
             self.data_progress = float(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
@@ -613,6 +638,7 @@ def settings(datadensity=1):
                     lisqueue(queue)
                     sleep(7)
                     if JOBID not in g.jobidlist[queue]: # get out in the middle of waiting
+                        M.status = "M-JOB CANCELLED OR NOT QUEUED IN PROPERLY"
                         return M
                     elif g.jobidlist[queue].index(JOBID)==0 and not address().macantouch(list(instr.values())):
                         '''All of the following should be fulfilled before taking turn to run:
@@ -630,12 +656,13 @@ def settings(datadensity=1):
                 # print(Back.BLUE + "moment(file) selected: %s"%M.filename)
                 try:
                     for i,x in enumerate(Generator): #yielding data from measurement-module
-                        print('\n' + Fore.GREEN + 'Writing Data loop-%s' %i)
+                        print('\n' + Fore.GREEN + 'Writing %s Data for Loop-%s' %(task,i))
                         M.insertdata(x)
                         # sleep(3) #for debugging purposes
                 except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
+                M.status = "M-JOB COMPLETED SUCCESSFULLY"
 
-            else: M.status = "M JOB REJECTED: PLS CHECK M-CLEARANCE!"
+            else: M.status = "M-JOB REJECTED: PLS CHECK M-CLEARANCE!"
 
         # Measurement Object/Session:
         return M
@@ -680,7 +707,7 @@ def lisqueue(queue):
             # Extracting list from SQL-Database:
             g.Queue[queue] = get_db().execute(
                 '''
-                SELECT j.id, j.task, j.startime, s.samplename, s.location, u.username, j.instrument
+                SELECT j.id, j.task, j.startime, s.samplename, s.location, u.username, j.instrument, j.parameter, j.perimeter
                 FROM user u
                 INNER JOIN %s c ON c.job_id = j.id
                 INNER JOIN job j ON j.user_id = u.id
@@ -703,12 +730,12 @@ def qin(queue,jobid):
             db = get_db()
             db.execute('INSERT INTO %s (job_id) VALUES (%s)' %(queue,jobid))
             db.commit()
-            status = "Queued-in successfully"
+            status = "Queued-in successfully with JOBID #%s" %jobid
         except:
             status = "Error Queueing in with JOBID #%s" %jobid
     else: status = "Measurement clearance was not found"
     return status
-def qout(queue,jobid,username=g.user['username']):
+def qout(queue,jobid,username):
     '''Queue out without a Job'''
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     if g.user['measurement'] and (username==jobrunner):

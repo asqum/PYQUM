@@ -6,15 +6,10 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
-from time import time, sleep
-from numpy import linspace, sin, pi, prod, array, mean, sqrt, zeros, float64, ceil, power, arctan2, floor
-from flask import request, session, current_app, g, Flask
+# from time import time, sleep
+from numpy import prod
+from flask import session, g
 
-# from pyqum.instrument.modular import VSA
-# from pyqum.instrument.benchtop import TKAWG as AWG
-# from pyqum.instrument.benchtop import PSGV
-# from pyqum.instrument.benchtop import PSGA
-# from pyqum.instrument.benchtop import ENA, YOKO
 from importlib import import_module as im
 from pyqum.instrument.logger import settings, clocker, get_status, set_status, status_code, qout, lisqueue
 from pyqum.instrument.analyzer import curve, IQAP, UnwraPhase, IQAParray
@@ -122,21 +117,17 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
             print(Fore.YELLOW + "Progress: %.3f%%" %((i+1)/datasize*buffersize_1*100))
 
             lisqueue(queue)
-            if g.jobidlist[queue]:
-                if JOBID != g.jobidlist[queue][0]:
-                    break
-                else:
-                    print(Fore.YELLOW + "Pushing Data into file...")
-                    yield data
+            if JOBID in g.jobidlist[queue]:
+                # print(Fore.YELLOW + "Pushing Data into file...")
+                yield data
             else: break
 
         # Closing all instruments and Queueing out:
         NA.close(nabench)
         if "opt" not in fluxbias.data: # check if it is in optional-state
-            DC.close(dcbench, False)
-        if g.jobidlist[queue]:
-            if JOBID == g.jobidlist[queue][0]:
-                qout(queue, g.jobidlist[queue][0])
+            DC.close(dcbench, True, DC_label)
+        if JOBID in g.jobidlist[queue]:
+            qout(queue, g.jobidlist[queue][0],g.user['username'])
         break
 
     return
@@ -196,7 +187,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
         dcbench = DC.Initiate(current=True, which=DC_label) # pending option
         DC.output(dcbench, 1)
 
-    # PSG:
+    # SG:
     [SG_type, SG_label] = instr['SG'].split('_')
     SG = im("pyqum.instrument.benchtop.%s" %SG_type)
     if "opt" not in xyfreq.data: # check if it is in optional-state / serious-state
@@ -272,12 +263,9 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
             
             lisqueue(queue)
-            if g.jobidlist[queue]:
-                if JOBID != g.jobidlist[queue][0]:
-                    break
-                else:
-                    print(Fore.YELLOW + "Pushing Data into file...")
-                    yield data
+            if JOBID in g.jobidlist[queue]:
+                # print(Fore.YELLOW + "Pushing Data into file...")
+                yield data
             else: break
 
         # Closing all instruments and Queueing out:
@@ -287,10 +275,9 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             SG.close(sgbench, False)
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.output(dcbench, 0)
-            DC.close(dcbench, False)
-        if g.jobidlist[queue]:
-            if JOBID == g.jobidlist[queue][0]:
-                qout(queue, g.jobidlist[queue][0])
+            DC.close(dcbench, True, DC_label)
+        if JOBID in g.jobidlist[queue]:
+            qout(queue, g.jobidlist[queue][0],g.user['username'])
         break
 
     return
@@ -300,7 +287,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 @settings(2) # data-density
 def SQE_Pulse(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}):
     '''!DEPRECATED!
-    Square-Pulse Measurement with VSA (retired).
+    Square-Pulse Measurement with VSA (retired: IQ-Bandwidth (250MHz or its HALFlings) & Acquisition-Time (dt must be multiples of 2ns) ).
     '''
     sample = get_status("MSSN")[session['user_name']]['sample']
     yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, ''

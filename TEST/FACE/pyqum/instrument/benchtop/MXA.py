@@ -10,7 +10,7 @@ mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
 from time import sleep
 
-import visa
+import pyvisa as visa
 from pyqum.instrument.logger import address, set_status, status_code, debug
 from pyqum.instrument.logger import translate_scpi as Attribute
 
@@ -30,7 +30,7 @@ def Initiate():
         bench.write(":INIT:CONT ON") #continuous mode
         sleep(3)
         set_status(mdlname, dict(state='connected'))
-        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat[1])[-7:]))
+        print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat)))
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
