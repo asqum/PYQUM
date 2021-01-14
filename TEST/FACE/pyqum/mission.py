@@ -22,6 +22,10 @@ from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
 from pyqum.directive.manipulate import Single_Qubit
 
+# Memory handling
+import concurrent.futures
+executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
+
 # Error handling
 from contextlib import suppress
 
@@ -47,20 +51,20 @@ encryp = '/' + 'ghhgjad'
 bp = Blueprint(myname, __name__, url_prefix=encryp+'/mssn')
 
 # region: PENDING: Some Tools for Fast Parallel Calculations:
-# def scanner(a, b):
-# 	for i in a:
-# 		for j in b:
-# 			yield i, j
-# def worker(y_count,x_count,char_name="sqepulse"):		
-# 	pool = Pool()
-# 	IQ = pool.map(eval("assembler_%s" %(char_name)), scanner(range(y_count),range(x_count)), max(x_count,y_count))
-# 	pool.close(); pool.join()
-# 	rI, rQ, rA, rP = [], [], [], []
-# 	for i,j,k,l in IQ:
-# 		rI.append(i); rQ.append(j); rA.append(k); rP.append(l)
-# 	rI, rQ, rA, rP = array(rI).reshape(y_count,x_count).tolist(), array(rQ).reshape(y_count,x_count).tolist(),\
-# 					 array(rA).reshape(y_count,x_count).tolist(), array(rP).reshape(y_count,x_count).tolist()
-# 	return {'rI': rI, 'rQ': rQ, 'rA': rA, 'rP': rP}
+def scanner(a, b):
+	for i in a:
+		for j in b:
+			yield i, j
+def worker(y_count,x_count,char_name="sqepulse"):		
+	pool = Pool()
+	IQ = pool.map(eval("assembler_%s" %(char_name)), scanner(range(y_count),range(x_count)), max(x_count,y_count))
+	pool.close(); pool.join()
+	rI, rQ, rA, rP = [], [], [], []
+	for i,j,k,l in IQ:
+		rI.append(i); rQ.append(j); rA.append(k); rP.append(l)
+	rI, rQ, rA, rP = array(rI).reshape(y_count,x_count).tolist(), array(rQ).reshape(y_count,x_count).tolist(),\
+					 array(rA).reshape(y_count,x_count).tolist(), array(rP).reshape(y_count,x_count).tolist()
+	return {'rI': rI, 'rQ': rQ, 'rA': rA, 'rP': rP}
 # endregion
     
 # region: Main
@@ -1312,13 +1316,6 @@ def mani_singleqb_new():
         return jsonify(testeach=simulate, status=Run_singleqb[TOKEN].status)
     else: return show()
 
-# search through logs of data specific to task (PENDING: relegate to ALL-PAGE)
-# @bp.route('/mani/singleqb/search', methods=['GET'])
-# def mani_singleqb_search():
-#     wday = int(request.args.get('wday'))
-#     filelist = M_singleqb[session['user_name']].searchcomment()
-#     return jsonify(filelist=str(filelist))
-
 # DATA DOWNLOAD
 # export to mat
 @bp.route('/mani/singleqb/export/2dmat', methods=['GET'])
@@ -1499,9 +1496,6 @@ def mani_singleqb_1ddata():
                     Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], c_singleqb_structure[session['user_name']])]
                     Adata[i] = sqrt(Idata[i]**2 + Qdata[i]**2)
                     Pdata[i] = arctan2(Qdata[i], Idata[i]) # -pi < phase < pi    
-    
-    # Improvisation before pending vectorization on the sampler:
-
 
     print("Structure: %s" %c_singleqb_structure[session['user_name']])
     # x-data:
@@ -1558,48 +1552,18 @@ def mani_singleqb_2ddata():
 
     Idata = zeros([len(ysweep), len(xsweep)])
     Qdata = zeros([len(ysweep), len(xsweep)])
+    Adata = zeros([len(ysweep), len(xsweep)])
+    Pdata = zeros([len(ysweep), len(xsweep)])
     for j in ysweep:
+        if not (j+1)%10: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
         selected_caddress[SQ_CParameters[session['user_name']].index(selected_y)] = j # register y-th position
         for i in xsweep:
             selected_caddress[SQ_CParameters[session['user_name']].index(selected_x)] = i # register x-th position
             if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
                 srange = request.args.get('srange').split(",") # sample range
-
-                if [int(srange[1]) , int(srange[0])] > [c_singleqb_structure[session['user_name']][-1]//M_singleqb[session['user_name']].datadensity] * 2:
-                    print(Back.WHITE + Fore.RED + "Out of range")
-                else:
-                    # ACTIVE Region of the Pulse Response:
-                    # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
-                    active_len = int(srange[1]) - int(srange[0]) + 1
-                    # Assemble stacks of selected c-address for this sample range:
-                    selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
-                    selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
-                    # sort-out interleaved IQ:
-                    selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1))
-                    selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+1)) + ones(active_len)
-                    # Compressing I & Q of this sample range:
-                    selectedata = array(selectedata)
-                    Idata_active = mean(selectedata[gotocdata(selected_caddress_I, c_singleqb_structure[session['user_name']])])
-                    Qdata_active = mean(selectedata[gotocdata(selected_caddress_Q, c_singleqb_structure[session['user_name']])]) 
-
-                    try:
-                        # RELAXED Region of the Pulse Response:
-                        # FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
-                        relax_len = int(srange[3]) - int(srange[2]) + 1
-                        # Assemble stacks of selected c-address for this sample range:
-                        selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * relax_len)
-                        selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * relax_len)
-                        # sort-out interleaved IQ:
-                        selected_caddress_I[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+1))
-                        selected_caddress_Q[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+1)) + ones(relax_len)
-                        # Compressing I & Q of this sample range:
-                        selectedata = array(selectedata)
-                        Idata_relax = mean(selectedata[gotocdata(selected_caddress_I, c_singleqb_structure[session['user_name']])])
-                        Qdata_relax = mean(selectedata[gotocdata(selected_caddress_Q, c_singleqb_structure[session['user_name']])]) 
-                    except(IndexError): Idata_relax, Qdata_relax = 0, 0
-
-                    Idata[j,i] = Idata_active - Idata_relax
-                    Qdata[j,i] = Qdata_active - Qdata_relax
+                smode = request.args.get('smode') # sampling mode
+                Idata[j,i], Qdata[j,i], Adata[j,i], Pdata[j,i] = \
+                    pulseresp_sampler(srange, selected_caddress, selectedata, c_singleqb_structure[session['user_name']], M_singleqb[session['user_name']].datadensity, mode=smode)
 
             else:
                 # Ground level Pulse shape response:
@@ -1620,14 +1584,14 @@ def mani_singleqb_2ddata():
     y = waveform(selected_ysweep).data[0:len(ysweep)]
     
     # IQ-data:
-    # print("I: %s" %Idata[0])
-    # print("Q: %s" %Qdata[0])
     Adata = sqrt(Idata**2 + Qdata**2)
     UPdata = unwrap(arctan2(Qdata, Idata)) # -pi < phase < pi -> Unwrapped
-    
-    ZZI, ZZQ, ZZA, ZZUP = Idata.tolist(), Qdata.tolist(), Adata.tolist(), UPdata.tolist()
 
+    # Packing data into dictionary:
+    ZZI, ZZQ, ZZA, ZZUP = Idata.tolist(), Qdata.tolist(), Adata.tolist(), UPdata.tolist()
     singleqb_2Ddata[session['user_name']] = dict(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
+
+    # executor.submit(fn, args).add_done_callback(handler)
 
     return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 # endregion

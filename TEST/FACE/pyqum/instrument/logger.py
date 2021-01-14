@@ -9,7 +9,7 @@ from os.path import exists, getsize, getmtime, join, isdir, getctime
 from datetime import datetime
 from time import time, sleep
 from contextlib import suppress
-from numpy import prod, mean, rad2deg, array
+from numpy import prod, mean, rad2deg, array, ndarray, float64
 import inspect, json, wrapt, struct, geocoder, ast, socket
 import netifaces as nif
 from pandas import DataFrame
@@ -483,14 +483,19 @@ class measurement:
         '''Loading the Data
             Pre-requisite: accesstructure
         '''
+        tStart = time()
+        
         try:
             with open(self.pqfile, 'rb') as datapie:
                 datapie.seek(self.datalocation+7)
                 pie = datapie.read(self.writtensize)
-                self.selectedata = array(struct.unpack('>' + 'd'*((self.writtensize)//8), pie))
+                # self.selectedata = array(struct.unpack('>' + 'd'*((self.writtensize)//8), pie))
+                self.selectedata = ndarray(shape=(self.writtensize//8,), dtype=">d", buffer=pie) # speed up with numpy ndarray
         except:
             # raise
             print("\ndata not found")
+        
+        print(Back.GREEN + Fore.WHITE + "DATA loaded in %ss" %(time()-tStart))
 
     def insertdata(self, data):
         '''Logging DATA from instruments on the fly:

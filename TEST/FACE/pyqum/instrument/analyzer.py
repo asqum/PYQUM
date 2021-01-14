@@ -1,11 +1,13 @@
 '''For analyzing data'''
 
+from time import time
 from numpy import ones, convolve, log10, sqrt, arctan2, diff, array, unwrap, gradient, mean
 from scipy.fftpack import rfft, rfftfreq, irfft
 from sklearn.preprocessing import minmax_scale
 
 import matplotlib.pyplot as plt
 from pyqum.instrument.toolbox import gotocdata
+# from pyqum.instrument.booster import cuda_streamean
 
 # curve display
 def curve(x, y, title, xlabel, ylabel, xscal='linear', yscal='linear', basx=10, basy=2, style="-k"):
@@ -100,6 +102,8 @@ def pulseresp_sampler(srange, selected_caddress, selectedata, c_structure, datad
     \nC. MON (pulswipe):
     \nD. RMS (poweroot):
     '''
+    # tStart = time()
+
     # 1. Cropping Active Region:
     if [int(srange[1]) , int(srange[0])] > [c_structure[-1]//datadensity] * 2:
         print(Back.WHITE + Fore.RED + "Out of range")
@@ -115,11 +119,12 @@ def pulseresp_sampler(srange, selected_caddress, selectedata, c_structure, datad
         selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+step,step))
         selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+step,step)) + ones(active_len)
         # Compressing I- & Q-pulse of this sample range into just one point:
-        selectedata = array(selectedata)
+        # selectedata = array(selectedata)
         I_Pulse_active = selectedata[gotocdata(selected_caddress_I, c_structure)]
         Idata_active = mean(I_Pulse_active)
         Q_Pulse_active = selectedata[gotocdata(selected_caddress_Q, c_structure)]
         Qdata_active = mean(Q_Pulse_active)
+        # print("Go to IQ-Pulsection in %ss" %(time()-tStart))
         if mode == 'C':
             A_Pulse_active = sqrt( I_Pulse_active**2 + Q_Pulse_active**2 )
             A_Pulse_active = A_Pulse_active/A_Pulse_active[0]
@@ -146,7 +151,7 @@ def pulseresp_sampler(srange, selected_caddress, selectedata, c_structure, datad
             selected_caddress_I[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+step,step))
             selected_caddress_Q[:,-1] = 2 * array(range(int(srange[2]),int(srange[3])+step,step)) + ones(relax_len)
             # Compressing I & Q of this sample range:
-            selectedata = array(selectedata)
+            # selectedata = array(selectedata)
             I_Pulse_relax = selectedata[gotocdata(selected_caddress_I, c_structure)]
             Idata_relax = mean(I_Pulse_relax)
             Q_Pulse_relax = selectedata[gotocdata(selected_caddress_Q, c_structure)]
@@ -185,6 +190,7 @@ def pulseresp_sampler(srange, selected_caddress, selectedata, c_structure, datad
             Adata = sqrt(Adata_active) - sqrt(Adata_relax)
             Pdata = Pdata_active - Pdata_relax
         
+    # print("Pulse sampled in %ss" %(time()-tStart))
     return dIdata, dQdata, Adata, Pdata
 
 # Fitting

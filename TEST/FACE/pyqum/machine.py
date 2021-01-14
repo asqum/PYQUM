@@ -26,6 +26,10 @@ from pyqum.instrument.toolbox import match, waveform, pauselog
 from pyqum.instrument.analyzer import IQAParray
 from pyqum.instrument.composer import pulser
 
+# homemade signal processing
+import qspp.digital_homodyne as sa_dh
+import qspp.core as sa_core
+
 encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
 
@@ -366,7 +370,8 @@ def alzdgplaydata():
 	alzdglabel = request.args.get('alzdglabel')
 	alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
 	average = int(request.args.get('average'))
-	integrate = int(request.args.get('integrate'))
+	signal_processing = request.args.get('signal_processing')
+	print(Fore.GREEN + "Signal Processing: %s" %signal_processing)
 	tracenum = int(request.args.get('tracenum'))
 	# data post-processing:
 	if average: # PENDING: verify fast CUDA average?
@@ -375,6 +380,22 @@ def alzdgplaydata():
 	else:
 		trace_I = I_data[alzdgtag][tracenum,:]
 		trace_Q = Q_data[alzdgtag][tracenum,:]
+
+	# signal processing
+	mixer_down = sa_core.IQMixer(1,0,(0,0))
+	if signal_processing == "dual_digital_homodyne":
+		processing_data = sa_dh.DualChannel(0,1,array([trace_I, trace_Q]))
+		
+		print(Fore.GREEN + "Dual DH: ")
+	elif signal_processing == "i_digital_homodyne":
+		processing_data = sa_dh.SingleChannel(0,1,array([trace_I]))
+	elif signal_processing == "q_digital_homodyne":
+		processing_data = sa_dh.SingleChannel(0,1,array([trace_Q]))
+	if signal_processing != "original": # All of the above
+		processing_data.process_DownConversion(0.03)
+		trace_I = processing_data.signal[0]
+		trace_Q = processing_data.signal[1]
+
 	trace_A = sqrt(power(trace_I, 2) + power(trace_Q, 2))
 	t = t_data[alzdgtag]
 	# print(Fore.CYAN + "plotting trace #%s"%tracenum)

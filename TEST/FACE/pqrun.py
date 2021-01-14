@@ -8,10 +8,9 @@ app = create_app()
 # Pending: Hiding certain URLs with noext below?
 noext = NoExtRef(app, safe_domains=['http://qum.phys.sinica.edu.tw:5300/'])
 
-Port = 5300
 # Port, DeBuG, RLD = 5300, False, False
 
-def server(mode):
+def server(mode, Port=5301):
 	# g.servermode = mode # Working outside of application context.
 	app.secret_key = "bcsjfhksP_*$3#bcjahfqaOgvGFGhnNg"
 	if mode == "local":

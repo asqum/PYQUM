@@ -62,10 +62,13 @@ REM PAUSE
 :pyqum
     ::ECHO INITIATE AWG
     ::python -c "from pyqum.instrument.modular import AWG; print(AWG.InitWithOptions())"
-    set /p answer=WEB Production (P), Development (D) or LOCAL (L)?
-    if /i "%answer:~,1%" EQU "P" (
-        echo Running WEB Production
-        goto production)
+    set /p answer=WEB Production (P1/P2), Development (D) or LOCAL (L)?
+    if /i "%answer:~,2%" EQU "P1" (
+        echo Running WEB Production #1
+        goto production_1)
+    if /i "%answer:~,2%" EQU "P2" (
+        echo Running WEB Production #2
+        goto production_2)
     if /i "%answer:~,1%" EQU "D" (
         echo Running WEB Development
         goto development)
@@ -77,19 +80,24 @@ REM PAUSE
 
 :local
     ECHO STARTING APP as Local Web
-    python pqrun.py local
+    python pqrun.py local 5301
     goto tq
 
 :development
     ECHO STARTING APP as Development Web
-    python pqrun.py development
+    python pqrun.py development 5301
     ::start server using batch command:
     ::flask run --host=127.0.0.1 --port=5200 
     goto tq
 
-:production
-    ECHO STARTING APP as Production Web 
-    python pqrun.py production
+:production_1
+    ECHO STARTING APP as Production Web #1
+    python pqrun.py production 5301
+    goto tq
+
+:production_2
+    ECHO STARTING APP as Production Web #2
+    python pqrun.py production 5302
     goto tq
 
 :tq

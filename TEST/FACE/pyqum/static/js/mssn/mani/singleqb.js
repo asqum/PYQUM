@@ -638,14 +638,15 @@ $(function () {
             cselect: JSON.stringify(cselect), srange: srange, smode: smode,
         }, function (data) {
             window.x = data.x;
-            window.yI = data.yI;
-            window.yQ = data.yQ;
-            window.yA = data.yA;
-            window.yUFNP = data.yUFNP;
+            window.y = new Object();
+            window.y.I = data.yI;
+            window.y.Q = data.yQ;
+            window.y.A = data.yA;
+            window.y.P = data.yUFNP;
             window.xtitle = data.xtitle;
             // Phase option
             // $('select.mani.data.singleqb#1d-phase').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
-            plot1D_singleqb(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle);
+            plot1D_singleqb(x,y.I,y.Q,y.A,y.P,VdBm_selector,xtitle);
             // console.log("yA: " + yA);
         })
             .done(function(data) {
@@ -674,23 +675,29 @@ $(function () {
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/1ddata', {
             cselect: JSON.stringify(cselect), srange: srange, smode: smode,
         }, function (data) {
-            window.x2 = data.x;
-            window.yI2 = data.yI;
-            window.yQ2 = data.yQ;
-            window.yA2 = data.yA;
-            window.yUFNP2 = data.yUFNP;
+            window.xC = data.x;
+            window.yC = new Object();
+            window.yC.I = data.yI;
+            window.yC.Q = data.yQ;
+            window.yC.A = data.yA;
+            window.yC.P = data.yUFNP;
             window.xtitle2 = data.xtitle;
 
             // Normalization Options:
             $('select.mani.data.singleqb#singleqb-compare-nml').empty().append($('<option>', { text: 'direct', value: 'direct' }))
                                                                 .append($('<option>', { text: 'normaldip', value: 'normaldip' }))
                                                                 .append($('<option>', { text: 'normalpeak', value: 'normalpeak' }));
-
             console.log('selected: ' + $('select.mani.data.singleqb#singleqb-compare-nml').val());
             normalize = Boolean($('select.mani.data.singleqb#singleqb-compare-nml').val()!='direct');
             direction = $('select.mani.data.singleqb#singleqb-compare-nml').val().split('normal')[1];
-            // console.log("yA: " + yA); console.log("yA2: " + yA2);
-            compare1D_singleqb(x,yA,x2,yA2,normalize,direction,VdBm_selector);
+
+            // IQAP Options:
+            $('select.mani.data.singleqb#singleqb-compare-iqap').empty().append($('<option>', { text: 'Amplitude', value: 'A' }))
+                                                                .append($('<option>', { text: 'In-plane', value: 'I' }))
+                                                                .append($('<option>', { text: 'Quadrature', value: 'Q' }))
+                                                                .append($('<option>', { text: 'Phase', value: 'P' }));
+            
+            compare1D_singleqb(x,y[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],xC,yC[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],normalize,direction,VdBm_selector);
         })
             .fail(function(jqxhr, textStatus, error){
                 $('div#mani-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
@@ -699,17 +706,17 @@ $(function () {
     });
     return false;
 });
-$('select.mani.data.singleqb#singleqb-compare-nml').on('change', function() {
+$('select.mani.data.singleqb.compare').on('change', function() {
     normalize = Boolean($('select.mani.data.singleqb#singleqb-compare-nml').val()!='direct');
     direction = $('select.mani.data.singleqb#singleqb-compare-nml').val().split('normal')[1];
-    compare1D_singleqb(x,yA,x2,yA2,normalize,direction,VdBm_selector);
+    compare1D_singleqb(x,y[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],xC,yC[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],normalize,direction,VdBm_selector);
     return false;
 });
 $(VdBm_selector).on('change', function() {
-    plot1D_singleqb(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle);
+    plot1D_singleqb(x,y.I,y.Q,y.A,y.P,VdBm_selector,xtitle);
 });
 $('select.mani.data.singleqb#singleqb-1d-mode').on('change', function() {
-    plot1D_singleqb(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle,mode=$('select.mani.data.singleqb#singleqb-1d-mode').val());
+    plot1D_singleqb(x,y.I,y.Q,y.A,y.P,VdBm_selector,xtitle,mode=$('select.mani.data.singleqb#singleqb-1d-mode').val());
 });
 
 // assemble 2D-data based on c-parameters picked
@@ -723,8 +730,9 @@ $(function () {
         $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
+        var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/2ddata', {
-            cselect: JSON.stringify(cselect), srange: srange
+            cselect: JSON.stringify(cselect), srange: srange, smode: smode
         }, function (data) {
             window.x = data.x;
             window.y = data.y;

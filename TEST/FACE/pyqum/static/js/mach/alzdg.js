@@ -41,14 +41,14 @@ function acquire_play(callback) {
         $('input.alzdg.settings.records').removeClass('setvalue').addClass('getvalue');
     });
 };
-function playsamples(tracenum, type, average=0, integrate=0) {
+function playsamples(tracenum, type, average=0, signal_processing='original') {
     $( "i.alzdg" ).remove(); //clear previous
     $('button.alzdg.label#'+alzdglabel).prepend("<i class='alzdg fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     $.getJSON('/mach/alzdg/playdata', {
         alzdglabel: alzdglabel, 
         tracenum: tracenum,
         average: average, // mean along y-axis (records)
-        integrate: integrate // mean along x-axis (samples)
+        signal_processing: signal_processing // mean along x-axis (samples)
     }, function (data) {
         window.t = data.t;
         window.I = data.I;
@@ -82,12 +82,13 @@ function alzdgplay() {
     var type = $('select.alzdg.data.type').val();
     var handling = $('select.alzdg.data.handling').val();
     var selection = $('input.alzdg.data.handling').val();
+    var signal_processing = $('select.alzdg.data.signal_processing').val();
     if (handling=="all") {
         playrecords(recordsum, type);
     } else if (handling=="select") {
-        playsamples(selection-1, type);
+        playsamples(selection-1, type, 0, signal_processing);
     } else if (handling=="average") {
-        playsamples(selection-1, type, 1);
+        playsamples(selection-1, type, 1, signal_processing);
     };
 };
 

@@ -10,7 +10,7 @@ import inspect
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
 MAIN_PATH = Path(pyfilename).parents[5] / "HODOR" / "CONFIG" # ...parents[7]... for logger
 PORTAL_PATH = MAIN_PATH / "PORTAL"
-Datafile = Path(PORTAL_PATH) / '1Dfresp.csv'
+Datafile = Path(PORTAL_PATH) / '1Dfresp[abc].csv'
 
 title = "<b>frequency(GHz)</b>"
 dataf = read_csv(Datafile, dtype={'I': float64})
