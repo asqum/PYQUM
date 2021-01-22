@@ -50,7 +50,7 @@ function qumjob() {
         queue: qsystem,
     }, function (data) {
         $('div.row.all-job-by-sample').empty().append('<div class="col-15" id="left"><label class="parameter">ALL JOB WITH SAMPLE: </label></div>' + 
-                                                        '<div class="col-10" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
+                                                        '<div class="col-30" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
         console.log("user: " + data.loginuser);
         console.log("JOB: " + data.joblist);
 

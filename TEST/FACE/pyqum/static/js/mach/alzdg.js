@@ -3,6 +3,7 @@ $(document).ready(function(){
     $('div.alzdgcontent').hide();
     $('div.alzdgcontent#settings').show();
     $('div#alzdg-playdata-settings').hide();
+    $('div#alzdg-signal-postprocessing').hide();
 });
 
 function acquire_play(callback) {
@@ -19,6 +20,7 @@ function acquire_play(callback) {
         $('select.alzdg.data.handling').val("select");
         
         $('div#alzdg-playdata-settings').show();
+        $('div#alzdg-signal-postprocessing').show();
         $( "i.alzdg" ).remove(); //clear processing animation
 
         // Limiting Record Selection based on recordsum provided:
@@ -48,7 +50,9 @@ function playsamples(tracenum, type, average=0, signal_processing='original') {
         alzdglabel: alzdglabel, 
         tracenum: tracenum,
         average: average, // mean along y-axis (records)
-        signal_processing: signal_processing // mean along x-axis (samples)
+        signal_processing: signal_processing,
+        rotation_compensate: $('input.alzdg.data.rotation_compensate').val(),
+        ifreqcorrection: $('input.alzdg.data.ifreqcorrection').val()
     }, function (data) {
         window.t = data.t;
         window.I = data.I;
@@ -343,6 +347,12 @@ $('input.alzdg.data.handling').on('change', function () {
     };
     return false;
 })
+$('input.alzdg.data.signal').on('change', function () {
+    if ($('select.alzdg.data.handling').val()!="all") {
+        alzdgplay();
+    };
+    return false;
+})
 
 // live update
 $(function () {
@@ -361,4 +371,39 @@ $(function () {
             });
         };
     });
+});
+
+// PENDING: saving exported mat-data to client's PC:
+$('button.mani#singleqb-savemat').on('click', function() {
+    console.log("SAVING MAT FILE");
+
+    // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/access', { wmoment: wmoment }, function (data) {});
+
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/export/2dmat', {
+        // merely for security screening purposes
+        interaction: $('select.mani.singleqb#RO-LO-Frequency').val()
+    }, function (data) {
+        console.log("STATUS: " + data.status);
+        console.log('User ' + data.user_name + ' is downloading 2D-Data');
+        $.ajax({
+            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dsingleqb[' + data.user_name + '].mat',
+            method: 'GET',
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function (data) {
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                a.download = '2Dsingleqb.mat';
+                document.body.append(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                $('button.mani#singleqb-savemat').hide();
+            }
+        });
+    });
+    return false;
 });

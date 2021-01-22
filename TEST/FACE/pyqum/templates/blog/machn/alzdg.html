@@ -86,20 +86,30 @@
                             <option value='phase'>Phase</option>
                         </select>
                     </div>
-                    <div class="col-15" id='left'>
-                        <select class='alzdg data signal_processing'>
-                            <option value='original' selected>Original</option>
-                            <option value='dual_digital_homodyne'>Dual Digital Homodyne</option>
-                            <option value='i_digital_homodyne'>I Digital Homodyne</option>
-                            <option value='q_digital_homodyne'>Q Digital Homodyne</option>
-                        </select>
-                    </div>
                     
                     <div class="col-15" id='right'>
                         <label class="switch"><input class='alzdg settings live' name='stream' type="checkbox">
                             <div class="slider smooth"><span class="on">LIVE</span><span class="off">STREAM</span></div>
                         </label>
                     </div>
+                </div>
+
+                <div class="row" id='alzdg-signal-postprocessing'>
+                    <div class="col-12" id='left'></div>
+                    <div class="col-22" id='left'>
+                        <select class='alzdg data signal_processing'>
+                            <option value='original' selected>Original</option>
+                            <option value='dual_digital_homodyne'>Dual Digital Homodyne (roll-back)</option>
+                            <option value='i_digital_homodyne'>I Digital Homodyne (integrate)</option>
+                            <option value='q_digital_homodyne'>Q Digital Homodyne (integrate)</option>
+                        </select>
+                    </div>
+                    <div class="col-5" id='left'><label class='parameter left'>IF(MHz)</label></div>
+                    <div class="col-12" id='left'><input class='alzdg data signal rotation_compensate' type="number" value="-100" /></div>
+                    <div class="col-5" id='left'><label class='parameter left'>+(kHz)</label></div>
+                    <div class="col-12" id='left'><input class='alzdg data signal ifreqcorrection' type="number" value="8" /></div>
+                    
+
                 </div>
 
                 

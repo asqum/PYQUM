@@ -311,11 +311,13 @@ def tkawgstop():
 # region: ALZDG (user-specific)
 @bp.route('/alzdg', methods=['GET'])
 def alzdg(): 
-	global alzdgboard
+	global alzdgboard, alzdg_1Ddata
+	# List users
 	try: print(Fore.GREEN + "Connected ALZDG: %s" %alzdgboard.keys())
-	except: 
-		print(Fore.BLUE + "ALZDG status log not yet initialized")
-		alzdgboard = {}
+	except: alzdgboard = {}
+	# Initialize 1D Data-Holder:
+	try: print(Fore.CYAN + "Connected M-USER(s) holding ALZDG's 1D-DATA: %s" %alzdg_1Ddata.keys())
+	except: alzdg_1Ddata = {}
 	return render_template("blog/machn/alzdg.html")
 @bp.route('/alzdg/log', methods=['GET'])
 def alzdglog():
@@ -371,6 +373,8 @@ def alzdgplaydata():
 	alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
 	average = int(request.args.get('average'))
 	signal_processing = request.args.get('signal_processing')
+	rotation_compensate_MHz = float(request.args.get('rotation_compensate'))
+	ifreqcorrection_kHz = float(request.args.get('ifreqcorrection'))
 	print(Fore.GREEN + "Signal Processing: %s" %signal_processing)
 	tracenum = int(request.args.get('tracenum'))
 	# data post-processing:
@@ -382,7 +386,7 @@ def alzdgplaydata():
 		trace_Q = Q_data[alzdgtag][tracenum,:]
 
 	# signal processing
-	mixer_down = sa_core.IQMixer(1,0,(0,0))
+	mixer_down = sa_core.IQMixer(1,0,(0,0)) # amplitude balance, quadrature skew, offsets (already taken care of by process_DownConversion)
 	if signal_processing == "dual_digital_homodyne":
 		processing_data = sa_dh.DualChannel(0,1,array([trace_I, trace_Q]))
 		
@@ -392,7 +396,9 @@ def alzdgplaydata():
 	elif signal_processing == "q_digital_homodyne":
 		processing_data = sa_dh.SingleChannel(0,1,array([trace_Q]))
 	if signal_processing != "original": # All of the above
-		processing_data.process_DownConversion(0.03)
+		print(Fore.CYAN + "IF correction: %s"%(processing_data.get_MaxFreq( [0,processing_data.time[-1]] )))
+		processing_data.process_DownConversion(rotation_compensate_MHz/1e3 + ifreqcorrection_kHz/1e6) # in GHz (ns timescale)
+		# processing_data.process_LowPass(4,0.05)
 		trace_I = processing_data.signal[0]
 		trace_Q = processing_data.signal[1]
 
@@ -400,7 +406,20 @@ def alzdgplaydata():
 	t = t_data[alzdgtag]
 	# print(Fore.CYAN + "plotting trace #%s"%tracenum)
 	log = pauselog() #disable logging (NOT applicable on Apache)
+
+	alzdg_1Ddata[alzdgtag] = dict(t=t, I=list(trace_I.astype(float64)), Q=list(trace_Q.astype(float64)))
+
 	return jsonify(log=str(log), I=list(trace_I.astype(float64)), Q=list(trace_Q.astype(float64)), A=list(trace_A.astype(float64)), t=t) # JSON only supports float64 conversion (to str-list eventually)
+# export to mat
+@bp.route('/alzdg/export/1dmat', methods=['GET'])
+def alzdg_export_1dmat():
+	alzdglabel = request.args.get('alzdglabel')
+	alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
+	set_mat(alzdg_1Ddata[alzdgtag], '1Dalzdg[%s].mat'%alzdgtag.replace(':','-')) # colon is not allowed in filename
+	status = "alzdg-mat written"
+	print(Fore.GREEN + "User %s has setup MAT-FILE in ALZDG-%s" %(alzdgtag.split(':')[1],alzdgtag.split(':')[0]))
+	return jsonify(status=status, alzdgtag=alzdgtag)
+
 @bp.route('/alzdg/closet', methods=['GET'])
 def alzdgcloset():
 	alzdglabel = request.args.get('alzdglabel')
