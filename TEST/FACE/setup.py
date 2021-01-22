@@ -31,7 +31,8 @@ setup(
         'netifaces',
         'flask-ext',
         'Flask-NoExtRef',
-        'keyboard'
+        'keyboard',
+        'matplotlib'
     ],
     extras_require={
         'test': [

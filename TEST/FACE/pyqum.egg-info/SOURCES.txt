@@ -1732,6 +1732,7 @@ pyqum/templates/blog/machn/bdr.html
 pyqum/templates/blog/machn/dc.html
 pyqum/templates/blog/machn/machine.html
 pyqum/templates/blog/machn/na.html
+pyqum/templates/blog/machn/sa.html
 pyqum/templates/blog/machn/sg.html
 pyqum/templates/blog/machn/tkawg.html
 pyqum/templates/blog/msson/all.html

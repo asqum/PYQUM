@@ -7,7 +7,7 @@ import keysightSD1
 PRODUCT = ""
 CHASSIS = 0
 # change slot number to your value
-SLOT = 8
+SLOT = 17
 
 CHANNEL = 1
 
