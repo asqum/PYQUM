@@ -17,8 +17,8 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate():
-    ad = address()
+def Initiate(mode='TEST'): # PENDING INCLUSION INTO THE DATABASE
+    ad = address(mode)
     rs = ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
     try:
@@ -40,6 +40,12 @@ def Initiate():
 @Attribute
 def model(bench, action=['Get', '']):
     SCPIcore = '*IDN'  #inquiring machine identity: "who r u?"
+    return mdlname, bench, SCPIcore, action
+@Attribute
+def sweepoint(bench, action=['Get', '']):
+    '''Specifies the number of measurement points for one sweep run.\n
+        action=['Set','101']'''
+    SCPIcore = ':SWEep:POINts'
     return mdlname, bench, SCPIcore, action
 @Attribute
 def frequency(bench, action=['Get', '']):
@@ -97,14 +103,14 @@ def attenuation_auto(bench, action=['Get', '']):
     SCPIcore = ':POW:ATT:AUTO'
     return mdlname, bench, SCPIcore, action
 
-def fpower(bench, freq):
-    # sleep(0.3)
+def fpower(bench, freq_GHz):
     bench.query('*OPC?')
+    sleep(0.17) # MXA's acquisition time? (Min: 0.1-0.2s)
     bench.write(":CALC:MARK1:MODE POS")
-    bench.write(":CALC:MARK1:X %s" %freq)
-    return bench.query(":CALCulate:MARKer1:Y?")
+    bench.write(":CALC:MARK1:X %sGHz" %freq_GHz)
+    return float(bench.query(":CALCulate:MARKer1:Y?").split('dBm')[0])
 
-def close(bench, reset=True):
+def close(bench, reset=True, mode='TEST'):
     if reset:
         bench.write('*RST') # reset to factory setting (including switch-off)
         set_status(mdlname, dict(config='reset'))
@@ -123,7 +129,7 @@ def test(detail=True):
     S={}
     S['x'] = Initiate()
     s = S['x']
-    if s is "disconnected":
+    if s == "disconnected":
         pass
     else:
         if debug(mdlname, detail):
@@ -131,6 +137,8 @@ def test(detail=True):
             # print('SCPI TEST:')
             # s.write("*SAV 00,1")
             model(s)
+            sweepoint(s)
+            sweepoint(s, action=['Set','371'])
             frequency(s)
             frequency(s, action=['Set','6GHz'])
             fspan(s)
@@ -153,3 +161,4 @@ def test(detail=True):
     close(s, reset=state)
     return
 
+# test()

@@ -18,17 +18,13 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 
 # Load instruments
 from pyqum import get_db
-from pyqum.instrument.modular import KMAWG, ALZDG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
+from pyqum.instrument.modular import ALZDG # KMAWG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
 from pyqum.instrument.benchtop import DSO, PNA, YOKO, KEIT, TKAWG
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
 from pyqum.instrument.toolbox import match, waveform, pauselog
-from pyqum.instrument.analyzer import IQAParray
+from pyqum.instrument.analyzer import IQAParray, pulse_baseband
 from pyqum.instrument.composer import pulser
-
-# homemade signal processing
-import qspp.digital_homodyne as sa_dh
-import qspp.core as sa_core
 
 encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
@@ -130,7 +126,7 @@ def sgconnect():
 @bp.route('/sg/closet', methods=['GET'])
 def sgcloset():
 	sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
-	try: status = SG[sgtype].close(sgbench[sgtag], sgtag.split('-')[1].split(':')[0])
+	try: status = SG[sgtype].close(sgbench[sgtag], sgtag.split('-')[1].split(':')[0], reset=False)
 	except: 
 		status = "Connection lost"
 		pass
@@ -164,8 +160,8 @@ def sgget():
 	sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
 	message = {}
 	try:
-		message['frequency'] = si_format(float(SG[sgtype].frequency(sgbench[sgtag])[1]['CW']),precision=3) + "Hz" # frequency
-		message['power'] = si_format(float(SG[sgtype].power(sgbench[sgtag])[1]['AMPLITUDE']),precision=1) + "dBm" # power
+		message['frequency'] = si_format(float(SG[sgtype].frequency(sgbench[sgtag])[1]['CW']),precision=12) + "Hz" # frequency
+		message['power'] = si_format(float(SG[sgtype].power(sgbench[sgtag])[1]['AMPLITUDE']),precision=2) + "dBm" # power
 		message['rfoutput'] = int(SG[sgtype].rfoutput(sgbench[sgtag])[1]['STATE']) # rf output
 	except:
 		message = dict(status='%s is not connected' %sgtype)
@@ -213,7 +209,7 @@ def tkawgconnect():
 def tkawgcloset():
 	tkawglabel = request.args.get('tkawglabel')
 	tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-	status = TKAWG.close(tkawgbench[tkawgtag], tkawglabel.split('-')[1])
+	status = TKAWG.close(tkawgbench[tkawgtag], tkawglabel.split('-')[1], reset=False)
 	del tkawgbench[tkawgtag]
 	return jsonify(message=status)
 @bp.route('/tkawg/testing', methods=['GET'])
@@ -359,14 +355,28 @@ def alzdgacquiredata():
 	alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
 	recordtime, recordtimeunit = request.args.get('recordtime'), request.args.get('recordtimeunit')[0]
 	recordsum = int(request.args.get('recordsum'))
-	[DATA, transferTime_sec, recordsPerBuff, buffersPerAcq] = ALZDG.AcquireData_NPT(alzdgboard[alzdgtag], recordtime=si_parse(recordtime + recordtimeunit), recordsum=recordsum)
+	recordbuff = int(request.args.get('recordbuff')) # default: 32MB
+	[DATA, transferTime_sec, recordsPerBuff, buffersPerAcq] = ALZDG.AcquireData_NPT(alzdgboard[alzdgtag], recordtime=si_parse(recordtime + recordtimeunit), recordsum=recordsum,
+																						OPT_DMA_Buffer_Size=recordbuff)
 	global I_data, Q_data, t_data
 	I_data, Q_data, t_data = {}, {}, {}
 	I_data[alzdgtag] = DATA[:,:,0]
 	Q_data[alzdgtag] = DATA[:,:,1]
 	t_data[alzdgtag] = list(1e-9*linspace(1, len(DATA[0,:,0]), len(DATA[0,:,0])))
 	# print(Fore.GREEN + "Data-type: %s" %DATA.dtype) # numpy default: float64 (But we adapted to float32 for Quadro-GPU sake!)
-	return jsonify(datalen=len(DATA[0,:,0]), transferTime_sec=transferTime_sec, recordsPerBuff=recordsPerBuff, buffersPerAcq=buffersPerAcq)
+
+	# store eligible timsum configuration:
+	datalen = len(DATA[0,:,0])
+	record_timsum_buff = "%s*%s*%s"%(datalen,recordsPerBuff*buffersPerAcq,recordbuff) # <record-time-ns>*<record-sum>
+	try: 
+		timsum = get_status(request.args.get('alzdglabel').split('-')[0], request.args.get('alzdglabel').split('-')[1])["timsum_list"]
+		if record_timsum_buff not in timsum:
+			timsum = ",".join([timsum, record_timsum_buff])
+			set_status(request.args.get('alzdglabel').split('-')[0], dict(timsum_list=timsum), request.args.get('alzdglabel').split('-')[1])
+	except: 
+		print(Fore.RED + "ALZDG TIMSUM NOT YET SETUP OR HAD BEEN RESET")
+		set_status(request.args.get('alzdglabel').split('-')[0], dict(timsum_list=''), request.args.get('alzdglabel').split('-')[1])
+	return jsonify(datalen=datalen, transferTime_sec=transferTime_sec, recordsPerBuff=recordsPerBuff, buffersPerAcq=buffersPerAcq)
 @bp.route('/alzdg/playdata', methods=['GET'])
 def alzdgplaydata():
 	alzdglabel = request.args.get('alzdglabel')
@@ -386,21 +396,7 @@ def alzdgplaydata():
 		trace_Q = Q_data[alzdgtag][tracenum,:]
 
 	# signal processing
-	mixer_down = sa_core.IQMixer(1,0,(0,0)) # amplitude balance, quadrature skew, offsets (already taken care of by process_DownConversion)
-	if signal_processing == "dual_digital_homodyne":
-		processing_data = sa_dh.DualChannel(0,1,array([trace_I, trace_Q]))
-		
-		print(Fore.GREEN + "Dual DH: ")
-	elif signal_processing == "i_digital_homodyne":
-		processing_data = sa_dh.SingleChannel(0,1,array([trace_I]))
-	elif signal_processing == "q_digital_homodyne":
-		processing_data = sa_dh.SingleChannel(0,1,array([trace_Q]))
-	if signal_processing != "original": # All of the above
-		print(Fore.CYAN + "IF correction: %s"%(processing_data.get_MaxFreq( [0,processing_data.time[-1]] )))
-		processing_data.process_DownConversion(rotation_compensate_MHz/1e3 + ifreqcorrection_kHz/1e6) # in GHz (ns timescale)
-		# processing_data.process_LowPass(4,0.05)
-		trace_I = processing_data.signal[0]
-		trace_Q = processing_data.signal[1]
+	if signal_processing != "original": trace_I, trace_Q = pulse_baseband(signal_processing, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorrection_kHz)
 
 	trace_A = sqrt(power(trace_I, 2) + power(trace_Q, 2))
 	t = t_data[alzdgtag]

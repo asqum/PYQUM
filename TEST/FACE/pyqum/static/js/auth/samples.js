@@ -62,8 +62,8 @@ $('button.user-samples#samples-meal').on('click', function(e) {
         sname: selectedsname,
     }, function (data){
         console.log("Loaded Sample: " + data.sname);
+        window.location.href=mssnencrpytonian()+'/mssn'; // placing here will prevent this route from being skipped!
     });
-    window.location.href=mssnencrpytonian()+'/mssn';
     return false;
 });
 

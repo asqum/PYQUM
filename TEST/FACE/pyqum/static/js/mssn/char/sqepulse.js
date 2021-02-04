@@ -785,7 +785,7 @@ $('button.char#sqepulse-savecsv').on('click', function() {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 1D-Data');
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/1Dsqepulse[' + data.user_name + '].csv',
+            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/1Dsqepulse[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -819,7 +819,7 @@ $('button.char#sqepulse-savemat').on('click', function() {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 2D-Data');
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dsqepulse[' + data.user_name + '].mat',
+            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/2Dsqepulse[' + data.user_name + '].mat',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'

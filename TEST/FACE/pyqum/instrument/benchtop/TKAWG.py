@@ -8,7 +8,7 @@ mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 import pyvisa as visa
 from pyqum.instrument.logger import address, set_status, status_code, debug
 from pyqum.instrument.logger import translate_scpi as Attribute
-from numpy import array, zeros, ceil, where
+from numpy import array, zeros, ceil, where, floor
 import array as arr
 
 from pyqum.instrument.composer import pulser
@@ -16,8 +16,8 @@ from time import sleep
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate(which):
-    ad = address()
+def Initiate(which, mode='DATABASE'):
+    ad = address(mode)
     rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
@@ -220,7 +220,7 @@ def stop(bench):
     except: set_status(mdlname, dict(play='error'))
     return status
 
-def close(bench, which, reset=True):
+def close(bench, which, reset=True, mode='DATABASE'):
     if reset:
         bench.write('*RST') # reset to factory setting (including switch-off)
         set_status(mdlname, dict(config='reset'), which)
@@ -228,7 +228,7 @@ def close(bench, which, reset=True):
     try:
         bench.close() #None means Success?
         status = "Success"
-        ad = address()
+        ad = address(mode)
         ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
     set_status(mdlname, dict(state='disconnected with %s' %status), which)
@@ -248,8 +248,12 @@ def compose_DAC(bench, channel, pulsedata, marker=0):
     create_waveform(bench, "Waveform-%s"%channel, pulsedata)
     if marker-1 in range(4): # only 1-4 is valid
         mkr_array = zeros(len(pulsedata))
-        try: first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata))==1)[0][0], where(ceil(abs(pulsedata))==1)[0][-1]
-        except: first_rising_edge, last_falling_edge = 0, 300
+        # automated marker array based solely on pulse-data (considered: global offset):
+        try: 
+            first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][0], where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][-1]
+            last_falling_edge = first_rising_edge + int(ceil((last_falling_edge - first_rising_edge)/3)) # making sure marker-width is finite & less than pulse-length
+        except: 
+            first_rising_edge, last_falling_edge = 0, 300
         mkr_array[first_rising_edge : last_falling_edge] = 1
         create_markers(bench, "Waveform-%s"%channel, channel, marker, mkr_array)
     else:

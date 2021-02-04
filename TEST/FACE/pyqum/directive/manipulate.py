@@ -14,9 +14,10 @@ from flask import session, g
 
 from importlib import import_module as im
 from pyqum.instrument.logger import settings, get_status, set_status, lisqueue, qout
-# from pyqum.instrument.analyzer import curve, IQAP, UnwraPhase, IQAParray
 from pyqum.instrument.toolbox import cdatasearch, waveform
 from pyqum.instrument.composer import pulser
+from pyqum.instrument.analyzer import pulse_baseband
+
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
@@ -41,8 +42,6 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
 
     # BYPASS:
     instr['DC'], instr['SG'], instr['DAC'], instr['ADC'] = 'YOKO_2', ['PSGA_1', 'PSGV_1'], 'TKAWG_1', 'ALZDG_1' # bypass instruments UI-selection
-    trigger_delay = 0
-
     sample = get_status("MSSN")[session['user_name']]['sample']
     queue = get_status("MSSN")[session['user_name']]['queue']
 
@@ -50,10 +49,15 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
 
     # ***USER_DEFINED*** Controlling-PARAMETER(s) ======================================================================================
-    # 1a. Basic perimeter(s): # previously: config = corder['C-Config']
+    # 1a. DSP perimeter(s)
+    digital_homodyne = perimeter['DIGIHOME']
+    rotation_compensate_MHz = float(perimeter['IF_MHZ'])
+    ifreqcorrection_kHz = float(perimeter['IF_ALIGN_KHZ'])
+    # 1b. Basic perimeter(s): # previously: config = corder['C-Config']
     biasmode = bool(int(perimeter['BIASMODE']))
     xypowa = perimeter['XY-LO-Power']
     ropowa = perimeter['RO-LO-Power']
+    trigger_delay_ns = int(perimeter['TRIGGER_DELAY_NS'])
     recordsum = int(perimeter['RECORD-SUM'])
     recordtime_ns = int(perimeter['RECORD_TIME_NS']) # min:1280ns, step:128ns
     readoutype = perimeter['READOUTYPE']
@@ -61,6 +65,8 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     RJSON = loads(perimeter['R-JSON'].replace("'",'"'))
     # 1b. Derived perimeter(s) from above:
     ifperiod = pulser(score=SCORE_TEMPLATE['CH1']).totaltime
+    RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH1']).iffreq # working with RO-MOD (up or down)
+    XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH3']).iffreq # working with XY-MOD (up or down)
 
     # 2a. Basic corder / parameter(s):
     structure = corder['C-Structure'] + [k for k in RJSON.keys()]
@@ -137,7 +143,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     ADC = im("pyqum.instrument.modular.%s" %ADC_type)
     adca = ADC.Initiate(which=ADC_label)
     '''Prepare ADC:'''
-    ADC.ConfigureBoard_NPT(adca, triggerDelay_sec=trigger_delay)
+    ADC.ConfigureBoard_NPT(adca, triggerDelay_sec=trigger_delay_ns*1e-9)
 
     # User-defined Measurement-FLOW ==============================================================================================
     
@@ -169,10 +175,10 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                     # SG
                     elif structure[j] == 'XY-LO-Frequency':
                         if "opt" not in xyfreq.data: # check if it is in optional-state
-                            SG0.frequency(sogo, action=['Set', str(xyfreq.data[caddress[j]]) + "GHz"])
+                            SG0.frequency(sogo, action=['Set', str(xyfreq.data[caddress[j]] + XY_Compensate_MHz/1e3) + "GHz"])
                     elif structure[j] == 'RO-LO-Frequency':
                         if "opt" not in rofreq.data: # check if it is in optional-state
-                            SG1.frequency(saga, action=['Set', str(rofreq.data[caddress[j]]) + "GHz"])
+                            SG1.frequency(saga, action=['Set', str(rofreq.data[caddress[j]] + RO_Compensate_MHz/1e3) + "GHz"])
 
                 # DAC's SCORE-UPDATE:
                 if j > 2:
@@ -194,12 +200,20 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
             # Basic Readout (Buffer Every-loop):
             # ADC 
             DATA = ADC.AcquireData_NPT(adca, recordtime_ns*1e-9, recordsum)[0]
+            # POST PROCESSING
             try:
+                # TIME EVOLUTION / FIDELITY TEST:
                 if readoutype == 'one-shot':
                     DATA = mean(DATA.reshape([recordsum,recordtime_ns*2]), axis=1)
                 else: # by default
                     DATA = mean(DATA.reshape([recordsum,recordtime_ns*2]), axis=0)
+                    if digital_homodyne != "original": 
+                        trace_I, trace_Q = DATA.reshape((recordtime_ns, 2)).transpose()[0], DATA.reshape((recordtime_ns, 2)).transpose()[1]
+                        trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorrection_kHz)
+                        DATA = array([trace_I, trace_Q]).transpose().reshape(recordtime_ns*2) # back to interleaved IQ-Data
+            
             except(ValueError):
+                # raise
                 print(Fore.RED + "Check ALZDG OPT_DMA_BUFFER!")
                 break # proceed to close all & queue out
             

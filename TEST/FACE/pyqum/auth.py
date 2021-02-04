@@ -273,11 +273,15 @@ def usersamples_update():
 def usersamples_meal():
     '''Double Log which USER is using which SAMPLE:'''
     sname = request.args.get('sname')
+    print(Fore.BLUE + "TAKING MEAL OF THE SAMPLE %s" %(sname))
     # SESSION (Current Sample):
     session['user_current_sample'] = sname
     # SESSION (Sample's OWNER):
-    try: session['people'] = get_db().execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
-    except: session['people'] = None
+    try: 
+        session['people'] = get_db().execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
+        print(Fore.YELLOW + "%s is managed by %s" %(sname, session['people']))
+    except: 
+        session['people'] = None
     # LOGGED INTO JSON:
     try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'])})
     except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='')})

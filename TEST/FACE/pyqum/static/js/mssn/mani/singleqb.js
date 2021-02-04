@@ -3,7 +3,6 @@ $(document).ready(function(){
     $('div.mani.singleqb.confirm').hide();
     $('button.mani#singleqb-savecsv').hide();
     $('button.mani#singleqb-savemat').hide();
-    // $("a.new#singleqb-eta").text('ETA: ');
     $("a.new#singleqb-msg").text('Measurement Status');
     window.singleqbcomment = "";
     // $('input.singleqb.notification').hide();
@@ -11,6 +10,7 @@ $(document).ready(function(){
     $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-width').val() + '.pulse-width').parent().show();
     $('input.singleqb.setchannels.pulse-height').parent().hide();
     $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-height').val() + '.pulse-height').parent().show();
+    $('input.singleqb.setchannels.check').hide();
 });
 
 // Global variables:
@@ -18,9 +18,10 @@ window.selecteday = ''
 window.VdBm_selector = 'select.mani.data.singleqb#singleqb-1d-VdBm'
 window.VdBm_selector2 = 'select.mani.data.singleqb#singleqb-2d-VdBm'
 
-// Parameter & Perimeter LIST for INITIATING NEW RUN:
+// Parameter, Perimeter & Channel LIST for INITIATING NEW RUN:
 var singleqb_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
-var singleqb_Perimeters = ['BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
+var singleqb_Perimeters = ['DIGIHOME', 'IF_MHZ', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
+var singleqb_Channels = ['RO-I', 'RO-Q', 'XY-I', 'XY-Q'];
 
 // *functions are shared across all missions!
 function transpose(a) {
@@ -130,7 +131,7 @@ function accessdata_singleqb() {
         // 5. Loading data progress:
         var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
         $('.bar.data-progress.singleqb').css({"width": data_progress}).text(data_progress);
-        $('.data-eta.singleqb').text("data: " + data.measureacheta + " until completion");
+        $('.data-eta.singleqb').text("Job-" + data.JOBID + ": " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
 
         // 6. Loading Perimeters:
@@ -140,7 +141,7 @@ function accessdata_singleqb() {
         // 7. PERIMETER Statement:
         var sheet = '';
         $.each(Object.values(data.perimeter['SCORE-JSON']), function(i,val){
-            sheet += "Channel-" + String(i+1) + ":\n" + val.replaceAll("\n"," ") + "\n\n";
+            sheet += "CH" + String(i+1) + " > " + singleqb_Channels[i] + ":\n" + val.replaceAll("\n"," ") + "\n\n";
         });
         $.each(Object.keys(data.perimeter), function(i,key){
             if (key!='SCORE-JSON' && key!='R-JSON'){
@@ -467,7 +468,33 @@ $('input.singleqb.setchannels.back').bind('click', function() {
     };
     return false;
 });
-// Check before RUN:
+// Check before RUN (PENDING: CHECK IFFREQ CONSISTENCY BETWEEN SCORE & rotation_compensate_MHz):
+// 0. Reset validity when values changed:
+$('.mani.config.singleqb').on('change', function() {
+    $('input.singleqb.setchannels.check').hide();
+    $('input.mani#singleqb-run').hide();
+    $('div.singleqb.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text("!!! VALUES CHANGED !!!"));
+});
+// 1. Check ALZDG TIMSUM:
+$('input.singleqb.alzdg-timsum.check').bind('click', function() {
+    $('div.singleqb.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text(">> VALIDATING TIMSUM >>"));
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/check/timsum', {
+        record_time_ns: $('.mani.config.singleqb#RECORD_TIME_NS').val(),
+        record_sum: $('.mani.config.singleqb#RECORD-SUM').val(),
+    }, function (data) {
+        $('.mani.config.singleqb#RECORD_TIME_NS').val(data.record_time_ns);
+        $('.mani.config.singleqb#RECORD-SUM').val(data.record_sum);
+    })
+    .done(function(data) {
+        $('input.singleqb.setchannels.check').show();
+        $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text("RECORD TIMSUM VALIDATED. PROCEED TO CHECK R-JSON"));
+    })
+    .fail(function(jqxhr, textStatus, error){
+        $('div.singleqb.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text("Please Check ALZDG Status"));
+    });
+    return false;
+});
+// 2. Check consistency between R-JSON & Score
 $('input.singleqb.setchannels.check').bind('click', function() {
     var RJSON = JSON.parse($('textarea.mani.singleqb#R-JSON').val());
     var allscores = '';
@@ -486,7 +513,7 @@ $('input.singleqb.setchannels.check').bind('click', function() {
         allscores = allscores.replaceAll("{"+v+"}","");
     });
 
-    // validate RUN based on total absence of unsolicited {stranger}
+    // VALIDATE RUN based on total absence of unsolicited {stranger}
     if (allscores.includes("{") || allscores.includes("}") || allfilled==0) {
         $('input.mani#singleqb-run').hide(); // RUN
     } else {
@@ -495,7 +522,6 @@ $('input.singleqb.setchannels.check').bind('click', function() {
 
     return false;
 });
-
 
 // show Single-QB's daylist
 $(function() {
@@ -814,7 +840,7 @@ $('button.mani#singleqb-savecsv').on('click', function() {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 1D-Data');
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/1Dsingleqb[' + data.user_name + '].csv',
+            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/1Dsingleqb[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -848,7 +874,7 @@ $('button.mani#singleqb-savemat').on('click', function() {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 2D-Data');
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dsingleqb[' + data.user_name + '].mat',
+            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/2Dsingleqb[' + data.user_name + '].mat',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -894,6 +920,7 @@ $('button.mani.singleqb.reset-no').on('click', function () {
 
 // Notification on click:
 $('input.singleqb.notification').click( function(){
+    if ($('input.singleqb.notification').val().includes("ALL")){ $('button.tablinks#ALL-tab').trigger('click'); };
     var Day = $('input.singleqb.notification').val().split(' > ')[1];
     var Moment = $('input.singleqb.notification').val().split(' > ')[2];
     console.log('Day: ' + Day + ', Moment: ' + Moment);
@@ -934,3 +961,5 @@ $('input.mani.singleqb#search').change( function() {
     });
     return false;
 });
+
+// (PENDING: DATA ANALYSIS FUNCTIONS)

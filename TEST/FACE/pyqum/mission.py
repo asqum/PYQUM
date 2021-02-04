@@ -69,7 +69,7 @@ def worker(y_count,x_count,char_name="sqepulse"):
     
 # region: Main
 @bp.route('/')
-def show():
+def show(status="Mission started"):
     # Filter out Stranger:
     with suppress(KeyError):
         # PENDING: Build Database for visitors
@@ -80,7 +80,7 @@ def show():
             print(Fore.RED + "Please check %s's Clearances for analysis!"%session['user_name'])
             abort(404)
         else: print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] "%(session['user_name'], session['user_id']) + Fore.LIGHTBLUE_EX + "has entered MISSION" )
-        return render_template("blog/msson/mission.html")
+        return render_template("blog/msson/mission.html", status=status)
     return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 # endregion
 
@@ -196,6 +196,7 @@ def all_requeue_job():
 def char(): 
     print(Fore.BLUE + 'User %s is allowed to run measurement: %s'%(g.user['username'],session['run_clearance']))
     samplename = get_status("MSSN")[session['user_name']]['sample']
+    print(Fore.YELLOW + "sample %s is managed by %s" %(samplename, session['people']))
     return render_template("blog/msson/char.html", samplename=samplename, people=session['people'])
 # endregion
 
@@ -285,6 +286,8 @@ def char_fresp_export_1dcsv():
 @bp.route('/char/' + frespcryption + '/access', methods=['GET'])
 def char_fresp_access():
     wmoment = int(request.args.get('wmoment'))
+    try: JOBID = jobsearch(dict(samplename=get_status("MSSN")[session['user_name']]['sample'], task="F_Response", dateday=M_fresp[session['user_name']].day, wmoment=wmoment))
+    except: JOBID = 0 # Old version of data before job-queue implementation
     M_fresp[session['user_name']].selectmoment(wmoment)
     M_fresp[session['user_name']].accesstructure()
     data_progress = M_fresp[session['user_name']].data_progress
@@ -312,7 +315,8 @@ def char_fresp_access():
     cpowa_data = cpowa.data[0:session['c_fresp_address'][3]+1]
     cfreq_data = cfreq.data # within buffer
 
-    return jsonify(data_progress=data_progress, measureacheta=measureacheta, corder=M_fresp[session['user_name']].corder, comment=M_fresp[session['user_name']].comment,
+    return jsonify(JOBID=JOBID,
+        data_progress=data_progress, measureacheta=measureacheta, corder=M_fresp[session['user_name']].corder, comment=M_fresp[session['user_name']].comment,
         perimeter=M_fresp[session['user_name']].perimeter, 
         cfluxbias_data=cfluxbias_data,csparam_data=csparam_data, cifb_data=cifb_data, cpowa_data=cpowa_data, cfreq_data=cfreq_data)
 # Resume the unfinished measurement
@@ -552,6 +556,8 @@ def char_cwsweep_export_1dcsv():
 @bp.route('/char/cwsweep/access', methods=['GET'])
 def char_cwsweep_access():
     wmoment = int(request.args.get('wmoment'))
+    try: JOBID = jobsearch(dict(samplename=get_status("MSSN")[session['user_name']]['sample'], task="CW_Sweep", dateday=M_cwsweep[session['user_name']].day, wmoment=wmoment))
+    except: JOBID = 0 # Old version of data before job-queue implementation
     M_cwsweep[session['user_name']].selectmoment(wmoment)
     M_cwsweep[session['user_name']].accesstructure()
     data_progress = M_cwsweep[session['user_name']].data_progress
@@ -589,7 +595,8 @@ def char_cwsweep_access():
     cpowa_data = cpowa.data[0:(session['c_cwsweep_address'][7]+1)//cpowa_repeat//2]  # (to be adjusted ***)
     # print("cpowa_data: %s" %cpowa_data)
     
-    return jsonify(data_progress=data_progress, measureacheta=measureacheta, corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
+    return jsonify(JOBID=JOBID,
+        data_progress=data_progress, measureacheta=measureacheta, corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
         data_repeat=data_repeat, cfluxbias_data=cfluxbias_data, cxyfreq_data=cxyfreq_data, cxypowa_data=cxypowa_data,
         csparam_data=csparam_data, cifb_data=cifb_data, cfreq_data=cfreq_data, cpowa_data=cpowa_data)
 # Resume the unfinished measurement
@@ -1297,12 +1304,19 @@ def mani_singleqb_time():
     wday = int(request.args.get('wday'))
     M_singleqb[session['user_name']].selectday(wday)
     return jsonify(taskentries=M_singleqb[session['user_name']].taskentries)
+# Check DIGITIZER TIME & SUM:
+@bp.route('/mani/singleqb/check/timsum', methods=['GET'])
+def mani_singleqb_check_timsum():
+    record_time_ns = int(request.args.get('record_time_ns'))
+    record_sum = int(request.args.get('record_sum'))
+    from pyqum.instrument.modular import ALZDG
+    record_time_ns, record_sum = ALZDG.check_timsum(record_time_ns,record_sum)
+    return jsonify(record_time_ns=record_time_ns, record_sum=record_sum)
 # run NEW measurement:
 @bp.route('/mani/singleqb/new', methods=['GET'])
 def mani_singleqb_new():
     # Check user's current queue status:
     if session['run_clearance']:
-        
         wday = int(request.args.get('wday'))
         if wday < 0: print("Running New Single-Qubit...")
 
@@ -1314,7 +1328,7 @@ def mani_singleqb_new():
         TOKEN = 'TOKEN%s' %random()
         Run_singleqb[TOKEN] = Single_Qubit(session['people'], perimeter=PERIMETER, corder=CORDER, comment=comment, tag='', dayindex=wday)
         return jsonify(testeach=simulate, status=Run_singleqb[TOKEN].status)
-    else: return show()
+    else: return show("PLEASE CHECK YOUR RUN-CLEARANCE WITH ABC")
 
 # DATA DOWNLOAD
 # export to mat
@@ -1345,6 +1359,8 @@ def mani_singleqb_export_1dcsv():
 @bp.route('/mani/singleqb/access', methods=['GET'])
 def mani_singleqb_access():
     wmoment = int(request.args.get('wmoment'))
+    try: JOBID = jobsearch(dict(samplename=get_status("MSSN")[session['user_name']]['sample'], task="Single_Qubit", dateday=M_singleqb[session['user_name']].day, wmoment=wmoment))
+    except: JOBID = 0 # Old version of data before job-queue implementation
     M_singleqb[session['user_name']].selectmoment(wmoment)
     M_singleqb[session['user_name']].accesstructure()
     corder = M_singleqb[session['user_name']].corder
@@ -1359,14 +1375,16 @@ def mani_singleqb_access():
 
     if data_progress==0: measureacheta=0
     else: measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress)))
-
-    # Personalize Control Parameters:
-    RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
-    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ['RECORD_TIME_NS'] # Fixed-Structure + R-Structure + Buffer
+      
     # Integrate R-Parameters back into C-Order:
+    RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
     for k in RJSON.keys(): corder[k] = RJSON[k]
-    # Recombine Structure & Buffer into C-Order:
-    corder['RECORD_TIME_NS'] = "1 to %s * %s" %(perimeter['RECORD_TIME_NS'], int(perimeter['RECORD_TIME_NS'])-1)
+    # Recombine Buffer back into C-Order:
+    if perimeter['READOUTYPE'] == 'one-shot': bufferkey = 'RECORD-SUM'
+    else: bufferkey = 'RECORD_TIME_NS'
+    corder[bufferkey] = "1 to %s * %s" %(perimeter[bufferkey], int(perimeter[bufferkey])-1)
+    # Extend C-Structure with R-Parameters & Buffer keys:
+    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
 
     # Structure & Addresses:
     c_singleqb_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \
@@ -1378,7 +1396,9 @@ def mani_singleqb_access():
         pdata[params] = waveform(corder[params]).data[0:c_singleqb_progress[session['user_name']][SQ_CParameters[session['user_name']].index(params)]+1]
     # print("RECORD_TIME_NS's parameter-data: %s" %pdata['RECORD_TIME_NS'])
 
-    return jsonify(data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, comment=comment, pdata=pdata, SQ_CParameters=SQ_CParameters[session['user_name']])
+    return jsonify(JOBID=JOBID,
+        data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, comment=comment, 
+        pdata=pdata, SQ_CParameters=SQ_CParameters[session['user_name']])
 
 # DATA MANAGEMENT
 # Resume the unfinished measurement

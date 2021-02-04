@@ -1,7 +1,7 @@
 // CW Sweep: 
 $(document).ready(function(){
     $('div.char.cwsweep.confirm').hide();
-    // $("a.new#cwsweep-eta").text('ETA: ');
+    $("a.new#cwsweep-job").text('JOBID: ');
     // get_repeat_cwsweep();
     window.cwsweepcomment = "";
     $('button.char#cwsweep-savecsv').hide();
@@ -88,6 +88,9 @@ function accessdata_cwsweep() {
         // input/select value here:
         wmoment: wmoment
     }, function (data) {
+        // Indicate JOBID:
+        $("a.new#cwsweep-job").text('JOBID: ' + String(data.JOBID));
+        // checking parameters:
         console.log(data.corder);
         // load each command:
         console.log("Flux-Bias undefined: " + (typeof data.corder['Flux-Bias'] == "undefined")); //detecting undefined
@@ -448,11 +451,11 @@ $('input.char#cwsweep-run').bind('click', function() {
     });
     return false;
 });
-// click to estimate ETA
-// $("a.new#cwsweep-eta").bind('click', function() {
+// click to estimate ETA (PENDING: DATA ANALYSIS FUNCTIONS)
+// $("a.new#cwsweep-job").bind('click', function() {
 //     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/eta100', {
 //     }, function (data) {
-//         $("a.new#cwsweep-eta").text('ETA in\n' + String(data.eta_time_100));
+//         
 //     });
 // });
 // click to set repeat or once
@@ -476,19 +479,6 @@ $('input.char#cwsweep[name="search"]').change( function() {
     });
     return false;
 });
-
-// click to pause measurement
-// $(function () {
-//     $('button.char#cwsweep-pause').on('click', function () {
-//         $( "i.cwsweep" ).remove(); //clear previous
-//         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/pause', {
-//             // direct pause
-//         }, function(data) {
-//             console.log("paused: " + data.pause);
-//         });
-//         return false;
-//     });
-// });
 
 // Click to resume measurement
 $(function () {
@@ -531,22 +521,22 @@ $(function () {
 });
 
 // LIVE UPDATE on PROGRESS:
-$(function () {
-    $('input.cwsweep#live-update').click(function () { 
-        //indicate it is still running:
-        $( "i.cwsweeplive" ).remove(); //clear previous
-        $('button.char#cwsweep').prepend("<i class='cwsweeplive fa fa-wifi fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var livestat = $('input.cwsweep#live-update').is(':checked'); //use css to respond to click / touch
-        if (livestat == true) {
-            var cwsweeploop = setInterval(accessdata_cwsweep, 6000);
-            $('input.cwsweep#live-update').click(function () {
-                clearInterval(cwsweeploop);
-                $( "i.cwsweeplive" ).remove(); //clear previous
-            });
-        };
-        // 'else' didn't do much to stop it!
-    });
-});
+// $(function () {
+//     $('input.cwsweep#live-update').click(function () { 
+//         //indicate it is still running:
+//         $( "i.cwsweeplive" ).remove(); //clear previous
+//         $('button.char#cwsweep').prepend("<i class='cwsweeplive fa fa-wifi fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+//         var livestat = $('input.cwsweep#live-update').is(':checked'); //use css to respond to click / touch
+//         if (livestat == true) {
+//             var cwsweeploop = setInterval(accessdata_cwsweep, 6000);
+//             $('input.cwsweep#live-update').click(function () {
+//                 clearInterval(cwsweeploop);
+//                 $( "i.cwsweeplive" ).remove(); //clear previous
+//             });
+//         };
+//         // 'else' didn't do much to stop it!
+//     });
+// });
 
 // tracking data position based on certain parameter (PENDING: Need to be tested after code modification been done)
 $(function () {
@@ -681,7 +671,7 @@ $('button.char#cwsweep-savecsv').on('click', function() {
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/1Dcwsweep[' + data.user_name + '].csv',
+            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/1Dcwsweep[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -714,7 +704,7 @@ $('button.char#cwsweep-savemat').on('click', function() {
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dcwsweep[' + data.user_name + '].mat',
+            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/2Dcwsweep[' + data.user_name + '].mat',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'

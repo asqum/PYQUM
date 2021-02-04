@@ -6,7 +6,7 @@ Created on Thu Dec 24 11:01:54 2020
 """
 
 import qspp.core as sa_core
-from numpy import array, mean, sin, cos, pi, empty, linspace, argmax
+from numpy import array, mean, sin, cos, pi, empty, linspace, argmax, cumsum, concatenate, zeros, ones
 import scipy.signal as sp_sig
 class DigitalHomodyne(sa_core.Signal_sampling):
 
@@ -60,16 +60,15 @@ class DualChannel(DigitalHomodyne):
     def iq_mixer( self ):
         return self._iq_mixer
 
-
     def get_RotationMatrix ( self, t ):
         omega = 2*pi*self.downconversion_freq # relative IF omega = freq(LO) - freq(RF)
         corr_amp = self.iq_mixer.hybridCoupler.quadrature_err_amp
         corr_phase = self.iq_mixer.hybridCoupler.quadrature_err_phase
         R = array([  
-                    [cos(omega*t+corr_phase)/corr_amp,sin(omega*t)],
-                    [-sin(omega*t+corr_phase)/corr_amp,cos(omega*t)]
+                    [cos(omega*t+corr_phase)/corr_amp, sin(omega*t)],
+                    [-sin(omega*t+corr_phase)/corr_amp, cos(omega*t)]
                     ])        
-        return R
+        return R.transpose(2,0,1)
 
     def process_DownConversion ( self, freq, iq_mixer=sa_core.IQMixer()  ):        
         self.downconversion_freq = freq
@@ -77,11 +76,33 @@ class DualChannel(DigitalHomodyne):
         bias = mean(self.signal,axis=1)
         print("native signal offset by average: %s" %bias)
         self.iq_mixer.mixer.bias = (bias[0],bias[1])
-        IQ_vect = self.signal.transpose()
-        for step in range(self.row_number):
-            IQ_vect[step] = self.get_RotationMatrix( self.time[step] )@(IQ_vect[step]-bias)
-        self._signal = IQ_vect.transpose()
+        IQ_vect = self.signal.transpose().reshape((len(self.time),2,1))
+        # ROTATION BY VECTORIZATION:
+        IQ_vect = self.get_RotationMatrix(self.time) @ ( IQ_vect - (bias.reshape((2,1))*ones(len(self.time))).transpose().reshape((len(self.time),2,1)) )
+        self._signal = IQ_vect.reshape(len(self.time),2).transpose()
+        # print("shape: %s,%s" %(self._signal.shape, self.time.shape))
 
+    # OLD SLOW FOR-LOOP METHOD:
+    # def get_RotationMatrix ( self, t ):
+    #     omega = 2*pi*self.downconversion_freq # relative IF omega = freq(LO) - freq(RF)
+    #     corr_amp = self.iq_mixer.hybridCoupler.quadrature_err_amp
+    #     corr_phase = self.iq_mixer.hybridCoupler.quadrature_err_phase
+    #     R = array([  
+    #                 [cos(omega*t+corr_phase)/corr_amp,sin(omega*t)],
+    #                 [-sin(omega*t+corr_phase)/corr_amp,cos(omega*t)]
+    #                 ])        
+    #     return R
+
+    # def process_DownConversion ( self, freq, iq_mixer=sa_core.IQMixer()  ):        
+    #     self.downconversion_freq = freq
+    #     self._iq_mixer = iq_mixer
+    #     bias = mean(self.signal,axis=1)
+    #     print("native signal offset by average: %s" %bias)
+    #     self.iq_mixer.mixer.bias = (bias[0],bias[1])
+    #     IQ_vect = self.signal.transpose()
+    #     for step in range(self.row_number):
+    #         IQ_vect[step] = self.get_RotationMatrix( self.time[step] )@(IQ_vect[step]-bias)
+    #     self._signal = IQ_vect.transpose()
 
     
     
@@ -99,18 +120,21 @@ class SingleChannel(DigitalHomodyne):
         conversion_vector = array([cos(self.time[0]*omega), sin(self.time[0]*omega)])
         integ_sig = empty((2,self.row_number))
         integ_sig[:,0] = origin_sig[:,0] *conversion_vector*self.dt
-        for step in range(self.row_number-1):
-            conversion_vector = array([cos(self.time[step+1]*omega), sin(self.time[step+1]*omega)])
-            integ_sig[:,step+1] = origin_sig[:,step+1]*conversion_vector*self.dt + integ_sig[:,step]
-            
+        # INTEGRATE BY VECTORIZE:
+        conversion_vector = array([cos(self.time*omega), sin(self.time*omega)])
+        integ_sig = cumsum(origin_sig*conversion_vector*self.dt, axis=1)
+        # Segmented differentiation per IF-period:
         period_datapoints = abs( int(1/freq/self.dt) )
+        integ_sig = concatenate((zeros((2,period_datapoints)), integ_sig), axis=1) # pre-compensation
         integ_sig_t1 = integ_sig[:,:-period_datapoints]
         integ_sig_t2 = integ_sig[:,period_datapoints:]
         self._signal = (integ_sig_t2-integ_sig_t1)*2*freq # differentiate then renormalization
         self._signal[1] = -self._signal[1]
-        self._t0 = self.t0 +self.dt*period_datapoints/2
-        self._row_number = self.row_number-period_datapoints
-        self._time = linspace(self.t0, self.t0+self.dt*self.row_number,self.row_number)
+        # print("Original: %s, Integrated: %s" %(origin_sig.shape, self._signal.shape))
+        
+        # self._t0 = self.t0 +self.dt*period_datapoints/2
+        # self._row_number = self.row_number-period_datapoints
+        # self._time = linspace(self.t0, self.t0+self.dt*self.row_number,self.row_number)
 
 
         

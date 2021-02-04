@@ -272,7 +272,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
         NA.close(nabench)
         if "opt" not in xyfreq.data: # check if it is in optional-state
             SG.rfoutput(sgbench, action=['Set', 0])
-            SG.close(sgbench, False)
+            SG.close(sgbench, SG_label, False)
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.output(dcbench, 0)
             DC.close(dcbench, True, DC_label)

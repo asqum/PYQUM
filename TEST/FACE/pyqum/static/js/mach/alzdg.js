@@ -12,7 +12,7 @@ function acquire_play(callback) {
     $.getJSON('/mach/alzdg/acquiredata', {
         alzdglabel: alzdglabel,
         recordtime: $('input.alzdg.settings[name="recordtime-scale"]').val(), recordtimeunit: $('input.alzdg.settings[name="recordtime-unit"]').val(),
-        recordsum: $('input.alzdg.settings[name="recordsum-scale"]').val()
+        recordsum: $('input.alzdg.settings[name="recordsum-scale"]').val(), recordbuff: $('input.alzdg.settings[name="recordbuff-scale"]').val(),
     }, function (data) {
         window.recordsum = data.recordsPerBuff*data.buffersPerAcq
         $('input.alzdg.settings[name="recordtime-scale"]').val(data.datalen);

@@ -4,7 +4,7 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from math import trunc
-from numpy import linspace, power, exp, array, zeros, sin, cos, pi
+from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil
 from pyqum.instrument.logger import get_status
 
 class pulser:
@@ -25,6 +25,7 @@ class pulser:
         self.totaltime = float(self.score.split(";")[0].split(",")[0].split('ns=')[1])
         try: self.mix_params = self.score.split(";")[0].split(",")[1].split('mhz=')[1]
         except(IndexError): self.mix_params = "q/0" # default: unity = cos(zeros)
+        self.iffreq = float(self.mix_params.split("/")[1]) # pre-loading IF-frequency in MHz
         self.totalpoints = int(clock_multiples*trunc(self.totaltime / dt / clock_multiples)) + int(bool((self.totaltime / dt)%clock_multiples))*clock_multiples
         self.beatime, self.music = 0, zeros([self.totalpoints])
         self.timeline = linspace(self.dt, self.totaltime, self.totalpoints)
@@ -63,16 +64,23 @@ class pulser:
 
             else: print(Fore.RED + "UNRECOGNIZED PULSE-SHAPE. PLEASE CONSULT HELP.")
 
+        # Offsetting phase to the rising of the pulse:
+        try: 
+            pulse_rising_time = self.dt * where(ceil(abs(self.music-self.music[-1]))==1)[0][0]
+            # print(Back.WHITE + Fore.BLUE + "Pulse rising from %s ns" %pulse_rising_time)
+        except(IndexError): 
+            pulse_rising_time = 0 # for PURE FLAT LINE!
+            # print(Back.WHITE + Fore.RED + "PURE FLAT LINE!")
+
         # IF Mixing:
         if self.mix_params.split("/")[0] == 'i': iffunction = "sin"
         elif self.mix_params.split("/")[0] == 'q': iffunction = "cos"
         else: print(Fore.RED + "UNRECOGNIZED CW-TYPE. PLEASE CONSULT HELP.")
-        iffreq = self.mix_params.split("/")[1]
         try: mixer_module = self.mix_params.split("/")[2]
         except(IndexError): mixer_module = "ideal"
         ifamp, ifphase, ifoffset = [float(x) for x in get_status("MIXER")[mixer_module].split("/")]
-        self.music = self.music * ifamp * eval(iffunction + '(self.timeline*%s/1000*2*pi + %s/180*pi)' %(iffreq,ifphase)) + ifoffset
-            
+        self.music = self.music * ifamp * eval(iffunction + '((self.timeline-pulse_rising_time)*%s/1000*2*pi + %s/180*pi)' %(self.iffreq,ifphase)) + ifoffset
+
         return
 
 

@@ -254,6 +254,7 @@ $('input.tkawg.shapes.setchannels').bind('click', function () {
 
 // Score (Injecting  waveform-data into AWG):
 $('button#tkawg-score').click( function () {
+    $('div.tkawg#tkawg-chstatus').empty().append($('<h4 style="color: red;"></h4>').text("SETTING CHANNEL " + Channel));
     var ccolor = ['blue','red','cyan','magenta'];
     $.getJSON('/mach/tkawg/set/channels', {
         tkawglabel: tkawglabel, Channel: Channel,

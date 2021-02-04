@@ -80,6 +80,9 @@ def model(board):
 # NPT: Multiple Records without Pre-Trigger Samples:
 # Configures a board for acquisition
 def ConfigureBoard_NPT(board, triggerDelay_sec = 0*1e-9, samplesPerSec=1000000000.0):
+    '''
+    Configure Board
+    '''
 
     # CLOCK:
     # Configure clock parameters as required to generate this sample rate
@@ -87,11 +90,13 @@ def ConfigureBoard_NPT(board, triggerDelay_sec = 0*1e-9, samplesPerSec=100000000
                         samplesPerSec, #ats.SAMPLE_RATE_1000MSPS,
                         ats.CLOCK_EDGE_RISING,
                         0)
+    
     # CHANNELS:
     # Configure channel A input parameters as required.
     board.inputControlEx(ats.CHANNEL_A, ats.DC_COUPLING, ats.INPUT_RANGE_PM_400_MV, ats.IMPEDANCE_50_OHM)
     # Configure channel B input parameters as required.
     board.inputControlEx(ats.CHANNEL_B, ats.DC_COUPLING, ats.INPUT_RANGE_PM_400_MV, ats.IMPEDANCE_50_OHM)
+    
     # TRIGGER:
     # Configure trigger inputs and levels as required.
     board.setTriggerOperation(ats.TRIG_ENGINE_OP_J,
@@ -194,6 +199,9 @@ def AcquireData_NPT(board, recordtime, recordsum, OPT_DMA_Buffer_Size=32, dt=1/1
                         ats.ADMA_EXTERNAL_STARTCAPTURE | ats.ADMA_NPT | ats.ADMA_FIFO_ONLY_STREAMING)
                         #   ats.ADMA_EXTERNAL_STARTCAPTURE | ats.ADMA_NPT)
 
+    # board.forceTriggerEnable()
+    # board.forceTrigger()
+    
     # Post DMA buffers to board
     print("Allocating %sMB for every buffer" %(buffers[0].size_bytes/1024/1024))
     for buffer in buffers:
@@ -206,7 +214,7 @@ def AcquireData_NPT(board, recordtime, recordsum, OPT_DMA_Buffer_Size=32, dt=1/1
         print("Capturing %d buffers. Press <enter> to abort" %buffersPerAcquisition)
         buffersCompleted = 0
         bytesTransferred = 0
-        
+
         # NOTE:
         # While you are processing this buffer, the board is already
         # filling the next available buffer(s).
@@ -269,9 +277,38 @@ def close(board, which): # PENDING: Clear Memory thoroughly
     return "Success"
 
 
+def check_timsum(record_time_ns, record_sum, OPT_DMA_Buffer_Size=32):
+    '''
+    validate record_time_ns & record_sum
+    '''
+    board = ats.Board(1,1) # bypass database
+
+    # CONSTANTS:
+    preTriggerSamples = 0 # No pre-trigger samples in NPT mode
+    boardmemory_samples, bitsPerSample = board.getChannelInfo() # Get board's spec of memory and sample size 
+    MEM_SIZE = int(128 * 1024*1024*1024) # RAM MEMORY SIZE (<160GB)
+    bytesPerBuffer_MAX = min(OPT_DMA_Buffer_Size *1024*1024, boardmemory_samples.value/2) # 16MB / channel # Note: DMA buffer is limited by ~20% of Total On-Board 8G memory, and yet the best performance lies between 16-32MB!
+
+    # SAMPLES:
+    # Configure the number of samples/bytes per record.
+    postTriggerSamples = max(9*128, int(ceil(record_time_ns/128.)*128)) # only accept multiples of 128 samples
+    bytesPerSample = (bitsPerSample.value + 7) // 8
+    samplesPerRecord = preTriggerSamples + postTriggerSamples
+    bytesPerRecord = bytesPerSample * samplesPerRecord
+    # Optimize records/buffer:
+    recordsPerBuffer_MAX = bytesPerBuffer_MAX // bytesPerRecord 
+    recordsPerBuffer = min(record_sum, recordsPerBuffer_MAX) # the number of records per DMA buffer. 
+    recordsPerBuffer = int(4096 * ceil(bytesPerRecord*recordsPerBuffer/4096.)) // bytesPerRecord # force buffer byte-size to be integer of 256 * 16 = 4096, due to 32-bit architecture?
+    # Optimize buffer/acquisition:
+    maxBufferCount = 2*(int(MEM_SIZE//(2*(bytesPerRecord*recordsPerBuffer)))) # force buffer count to be EVEN number, seems faster for allocating
+    buffersPerAcquisition = min(record_sum // recordsPerBuffer, maxBufferCount)
+    
+    del board
+    return (int(samplesPerRecord), int(recordsPerBuffer*buffersPerAcquisition))
+
 def test(board):
     ConfigureBoard_NPT(board, triggerDelay_sec=0)
-    dt = 1/1000000000.0
+    dt = 1/1000000000.0 
 
     N = 5
     for i in range(1):
@@ -296,4 +333,5 @@ def test(board):
 
     return "Success"
 
-    
+# ON-SITE TEST
+# print(check_timsum(200800, 7000, OPT_DMA_Buffer_Size=32))

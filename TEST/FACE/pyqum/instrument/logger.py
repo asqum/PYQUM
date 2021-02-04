@@ -88,12 +88,12 @@ def location():
 
     return place
 
-def clocker(stage, prev=0):
+def clocker(agenda, stage=0, prev=0):
     '''timing algorithm in seconds'''
     now = time()
     duration = now - prev
     if int(stage) > 0:
-        print(Fore.BLUE + Back.WHITE + "It took {:.5f}s to complete {:d}-th stage\n".format(duration, stage))
+        print(Fore.BLUE + Back.WHITE + "It took {:.5f}s to complete {:s} {:d}-th stage\n".format(duration, agenda, stage))
     stage += 1
     return stage, now
 
@@ -183,7 +183,7 @@ class address:
             self.db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
             self.db.commit()
         elif self.mode=='TEST':
-            print(Fore.RED + "MAKE SURE TO CLOSE CONNECTION UPON EXIT AND AVOID CONFLICT WITH ONLINE INSTRUMENTS")
+            print(Fore.RED + "REMINDER: MAKE SURE TO CLOSE CONNECTION UPON EXIT AND AVOID CONFLICT WITH ONLINE INSTRUMENTS")
         return
     def macantouch(self,instr_list):
         '''return total connection(s) based on instrument-list given'''
@@ -512,7 +512,7 @@ class measurement:
         return
 
     def buildata(self):
-        '''build data into datacontainer'''
+        '''build data into datacontainer (in RAM)'''
         self.datacontainer[next(iter(self.datacontainer))]['data'] = self.selectedata
         return
 

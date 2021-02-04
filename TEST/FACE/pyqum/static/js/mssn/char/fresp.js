@@ -1,6 +1,6 @@
 // Frequency Response 
 $(document).ready(function(){
-    $("a.new#fresp-eta").text('ETA: ');
+    $("a.new#fresp-job").text('JOBID: ');
     $("a.new#fresp-rcount").text('R#: ');
     // console.log('encryptonian length: ' + mssnencrpytonian().length);
     // get_repeat_fresp();
@@ -61,6 +61,9 @@ function accessdata_fresp() {
         // input/select value here:
         wmoment: wmoment
     }, function (data) {
+        // Indicate JOBID:
+        $("a.new#fresp-job").text('JOBID: ' + String(data.JOBID));
+        // checking parameters:
         console.log("CORDER: " + JSON.stringify(data.corder) + "\nPERIMETER: " + JSON.stringify(data.perimeter));
         // load each command:
         console.log("Flux-Bias undefined: " + (typeof data.corder['Flux-Bias'] == "undefined")); //detecting undefined
@@ -317,11 +320,11 @@ $('input.char#fresp-run').bind('click', function() {
     });
     return false;
 });
-// click to estimate ETA
-// $("a.new#fresp-eta").bind('click', function() {
+// click to estimate ETA (PENDING: DATA-ANALYSIS FUNCTIONS?)
+// $("a.new#fresp-job").bind('click', function() {
 //     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/eta100', {
 //     }, function (data) {
-//         $("a.new#fresp-eta").text('ETA in\n' + String(data.eta_time_100));
+//         
 //     });
 // });
 // // click to set repeat or once
@@ -547,7 +550,7 @@ $('button.char#fresp-savecsv').on('click', function () {
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/1Dfresp[' + data.user_name + '].csv',
+            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/1Dfresp[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -580,7 +583,7 @@ $('button.char#fresp-savemat').on('click', function () {
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5300/mach/uploads/2Dfresp[' + data.user_name + '].mat',
+            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/2Dfresp[' + data.user_name + '].mat',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
