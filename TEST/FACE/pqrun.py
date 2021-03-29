@@ -6,12 +6,13 @@ import sys
 
 app = create_app()
 # Pending: Hiding certain URLs with noext below?
-noext = NoExtRef(app, safe_domains=['http://qum.phys.sinica.edu.tw:5300/'])
+# noext = NoExtRef(app, safe_domains=['http://qum.phys.sinica.edu.tw:5300/'])
 
 # Port, DeBuG, RLD = 5300, False, False
 
-def server(mode, Port=5301):
+def server(mode, Port):
 	# g.servermode = mode # Working outside of application context.
+	set_status("WEB", dict(port=Port, mode=mode), 1)
 	app.secret_key = "bcsjfhksP_*$3#bcjahfqaOgvGFGhnNg"
 	if mode == "local":
 		# for local access
@@ -27,5 +28,5 @@ def server(mode, Port=5301):
 		app.run(host='0.0.0.0', port=Port, debug=True, use_reloader=False, threaded=True) #, ssl_context='adhoc') #http://<Public IP>:<port#>
 	
 if __name__ == "__main__":
-	server(sys.argv[1])
+	server(sys.argv[1], sys.argv[2])
 

@@ -122,7 +122,7 @@ def close(bench, reset=False):
 # Test Zone
 def test(detail=True):
     s = Initiate()
-    if s is "disconnected":
+    if s == "disconnected":
         pass
     else:
         if debug(mdlname, detail):

@@ -32,7 +32,9 @@ setup(
         'flask-ext',
         'Flask-NoExtRef',
         'keyboard',
-        'matplotlib'
+        'matplotlib',
+        'pandas',
+        'scipy'
     ],
     extras_require={
         'test': [

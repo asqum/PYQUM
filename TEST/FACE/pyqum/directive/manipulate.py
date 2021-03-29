@@ -9,7 +9,7 @@ mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, Y
 # from time import time, sleep
 from copy import copy, deepcopy
 from json import loads
-from numpy import prod, array, mean
+from numpy import prod, array, mean, ceil
 from flask import session, g
 
 from importlib import import_module as im
@@ -41,7 +41,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     '''
 
     # BYPASS:
-    instr['DC'], instr['SG'], instr['DAC'], instr['ADC'] = 'YOKO_2', ['PSGA_1', 'PSGV_1'], 'TKAWG_1', 'ALZDG_1' # bypass instruments UI-selection
+    instr['DC'], instr['SG'], instr['DAC'], instr['ADC'] = 'YOKO_2', ['RSSGS_1', 'PSGV_1'], 'TKAWG_1', 'ALZDG_1' # bypass instruments UI-selection
     sample = get_status("MSSN")[session['user_name']]['sample']
     queue = get_status("MSSN")[session['user_name']]['queue']
 
@@ -51,7 +51,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     # ***USER_DEFINED*** Controlling-PARAMETER(s) ======================================================================================
     # 1a. DSP perimeter(s)
     digital_homodyne = perimeter['DIGIHOME']
-    rotation_compensate_MHz = float(perimeter['IF_MHZ'])
+    # rotation_compensate_MHz = float(perimeter['IF_MHZ'])
     ifreqcorrection_kHz = float(perimeter['IF_ALIGN_KHZ'])
     # 1b. Basic perimeter(s): # previously: config = corder['C-Config']
     biasmode = bool(int(perimeter['BIASMODE']))
@@ -67,6 +67,12 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     ifperiod = pulser(score=SCORE_TEMPLATE['CH1']).totaltime
     RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH1']).iffreq # working with RO-MOD (up or down)
     XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH3']).iffreq # working with XY-MOD (up or down)
+    skipoints = 0
+    try: 
+        if (digital_homodyne=="i_digital_homodyne" or digital_homodyne=="q_digital_homodyne"): skipoints = int(ceil( 1 / abs(RO_Compensate_MHz) * 1000 ))
+    except: 
+        print(Fore.RED + "WARNING: INFINITE INTEGRATION IS NOT PRACTICAL!")
+    # print(Fore.CYAN + "Skipping first %s point(s)" %skipoints)
 
     # 2a. Basic corder / parameter(s):
     structure = corder['C-Structure'] + [k for k in RJSON.keys()]
@@ -80,10 +86,10 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
 
     # Buffer-size for lowest-bound data-collecting instrument:
     if readoutype == 'one-shot': # for fidelity measurement
-        buffersize = recordsum * 2 #data density of 2 due to IQ
+        buffersize = recordsum * 2 # data-density of 2 due to IQ
         print("Buffer-size: %s" %buffersize)
     else: # by default we usually take average
-        buffersize = recordtime_ns * 2 #data density of 2 due to IQ
+        buffersize = recordtime_ns * 2 # data-density of 2 due to IQ
         print("Buffer-size: %s" %buffersize)
 
     # Total data points to be saved into file:
@@ -194,7 +200,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                 channel = str(ch + 1)
                 pulseq = pulser(dt=dt, clock_multiples=1, score=SCORE_DEFINED['CH%s'%channel])
                 pulseq.song()
-                DAC.compose_DAC(daca, int(channel), pulseq.music, 1) # route marker from RO-channel-I to trigger digitizer
+                DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, 1) # route marker from RO-channel-EVEN to TRIGGER digitizer
             print('Waveform is Ready: %s' %str(DAC.ready(daca)))
                 
             # Basic Readout (Buffer Every-loop):
@@ -204,16 +210,24 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
             try:
                 # TIME EVOLUTION / FIDELITY TEST:
                 if readoutype == 'one-shot':
-                    DATA = mean(DATA.reshape([recordsum,recordtime_ns*2]), axis=1)
+                    DATA = DATA.reshape([recordsum,recordtime_ns*2])
+                    if digital_homodyne != "original": 
+                        for r in range(recordsum):
+                            trace_I, trace_Q = DATA[r,:].reshape((recordtime_ns, 2)).transpose()[0], DATA[r,:].reshape((recordtime_ns, 2)).transpose()[1]
+                            trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, RO_Compensate_MHz, ifreqcorrection_kHz)
+                            DATA[r,:] = array([trace_I, trace_Q]).reshape(2*recordtime_ns) # back to interleaved IQ-Data
+                            if not r%1000: print(Fore.YELLOW + "Shooting %s times" %(r+1))
+                    DATA = mean(DATA.reshape([recordsum*2,recordtime_ns])[:,skipoints:], axis=1)
+                    print(Fore.BLUE + "DATA of size %s is ready to be saved" %len(DATA))
                 else: # by default
                     DATA = mean(DATA.reshape([recordsum,recordtime_ns*2]), axis=0)
                     if digital_homodyne != "original": 
                         trace_I, trace_Q = DATA.reshape((recordtime_ns, 2)).transpose()[0], DATA.reshape((recordtime_ns, 2)).transpose()[1]
-                        trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorrection_kHz)
+                        trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, RO_Compensate_MHz, ifreqcorrection_kHz)
                         DATA = array([trace_I, trace_Q]).transpose().reshape(recordtime_ns*2) # back to interleaved IQ-Data
             
             except(ValueError):
-                # raise
+                # raise # PENDING: UPDATE TIMSUM MISMATCH LIST
                 print(Fore.RED + "Check ALZDG OPT_DMA_BUFFER!")
                 break # proceed to close all & queue out
             

@@ -3,6 +3,7 @@
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
+from copy import copy
 from math import trunc
 from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil
 from pyqum.instrument.logger import get_status
@@ -63,13 +64,16 @@ class pulser:
                 self.music[duration] = pulseheight * exp(-power((linspace(pulsewidth, self.dt, round(pulsewidth/self.dt)) - pulsewidth), 2) / 2 / (sigma**2))
 
             else: print(Fore.RED + "UNRECOGNIZED PULSE-SHAPE. PLEASE CONSULT HELP.")
+        
+        # Envelope before IF-Mixing:
+        self.envelope = copy(self.music)
 
-        # Offsetting phase to the rising of the pulse:
+        # Offsetting phase to the starting of the pulse (1. to lock readout-phase 2. ?):
         try: 
-            pulse_rising_time = self.dt * where(ceil(abs(self.music-self.music[-1]))==1)[0][0]
-            # print(Back.WHITE + Fore.BLUE + "Pulse rising from %s ns" %pulse_rising_time)
+            pulse_starting_time = self.dt * where(ceil(abs(self.music-self.music[-1]))==1)[0][0]
+            # print(Back.WHITE + Fore.BLUE + "Pulse starting from %s ns" %pulse_starting_time)
         except(IndexError): 
-            pulse_rising_time = 0 # for PURE FLAT LINE!
+            pulse_starting_time = 0 # for PURE FLAT LINE!
             # print(Back.WHITE + Fore.RED + "PURE FLAT LINE!")
 
         # IF Mixing:
@@ -79,7 +83,7 @@ class pulser:
         try: mixer_module = self.mix_params.split("/")[2]
         except(IndexError): mixer_module = "ideal"
         ifamp, ifphase, ifoffset = [float(x) for x in get_status("MIXER")[mixer_module].split("/")]
-        self.music = self.music * ifamp * eval(iffunction + '((self.timeline-pulse_rising_time)*%s/1000*2*pi + %s/180*pi)' %(self.iffreq,ifphase)) + ifoffset
+        self.music = self.music * ifamp * eval(iffunction + '((self.timeline-pulse_starting_time)*%s/1000*2*pi + %s/180*pi)' %(self.iffreq,ifphase)) + ifoffset
 
         return
 

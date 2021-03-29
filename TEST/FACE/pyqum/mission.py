@@ -81,7 +81,7 @@ def show(status="Mission started"):
             abort(404)
         else: print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] "%(session['user_name'], session['user_id']) + Fore.LIGHTBLUE_EX + "has entered MISSION" )
         return render_template("blog/msson/mission.html", status=status)
-    return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
+    return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 # endregion
 
 # region: ALL
@@ -100,7 +100,7 @@ def all():
             print(Fore.RED + "User %s has no Measurement Clearance" %g.user['username'])
             abort(404)
     else:
-        return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
+        return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
     return render_template("blog/msson/all.html", systemlist=systemlist, queue=queue)
 @bp.route('/all/job', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_job():
@@ -122,7 +122,8 @@ def all_job():
     # LOG Calculated Progress interactively into SQL-Database for fast retrieval
     for j in joblist:
         # print("Progress: %s" %j['progress'])
-        if (j['progress'] is None or j['progress'] < 100) and (j['id'] not in g.jobidlist[queue]): # not allowing queued-job to be accessed to avoid database locks
+        # print("j.tag: %s" %j['tag'])
+        if (j['tag'] == "") and (j['id'] not in g.jobidlist[queue]) and (j['progress'] is None or j['progress'] < 100): # not allowing queued-job to be accessed to avoid database locks
             try:
                 meas = measurement(mission=missioname, task=j['task'], owner=owner, sample=samplename) # but data is stored according to the owner of the sample
                 meas.selectday(meas.daylist.index(j['dateday']))
@@ -187,8 +188,10 @@ def all_requeue_job():
 
         else: print(Fore.RED + "UNKNOWN TASK: %s" %requeue['task'])
         clearance = True
-    else: clearance = False
-    return jsonify(clearance)
+    else: 
+        requeue = {}
+        clearance = False
+    return jsonify(requeue=requeue, clearance=clearance)
 # endregion
 
 # region: CHAR:
@@ -406,13 +409,13 @@ def char_fresp_2ddata():
         x, y = waveform(M_fresp[session['user_name']].corder['Flux-Bias']).data[0:session['c_fresp_address'][0]+1], waveform(M_fresp[session['user_name']].corder['Frequency']).data
         x_count, y_count = session['c_fresp_address'][0]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
 
-        stage, prev = clocker(0)
+        stage, prev = clocker(0, agenda="2D Fresp")
         CMD = ["python", "-c", "from pyqum.directive import MP_fresp as mp; print(mp.worker(%s,%s))"%(y_count,x_count)]
         with Popen(CMD, stdout=PIPE, shell=True) as proc:
             output = json.loads(proc.stdout.read().decode("utf-8").replace("\'", "\""))
             # try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
             # except: pass
-        stage, prev = clocker(stage, prev) # Marking time
+        stage, prev = clocker(stage, prev, agenda="2D Fresp") # Marking time
 
         # slow iteration method:
         # Amp, Pha = [], []

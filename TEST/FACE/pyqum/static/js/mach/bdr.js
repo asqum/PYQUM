@@ -17,6 +17,7 @@ function bdr_plot() {
     $("a.new#bdr-forecast-T").text('Forecast T' + T_Ch);
     $.getJSON('/mach/bdr/history', {
         // input value here:
+        designation: designation,
         wday: $('select.bdr[name="wday"]').val(),
         P_Ch: P_Ch, T_Ch: T_Ch, P_Ch2: P_Ch2, T_Ch2: T_Ch2, OptS: OptS, OptV: OptV
     }, function (data) {
@@ -195,12 +196,14 @@ function bdr_plot() {
 
 //show history's page and load Days
 $(function() {
-    $('button.bdr#history').bind('click', function() {
+    $('button.bdr.history').bind('click', function() {
+        window.designation = $(this).attr('id');
         $('div.bdrcontent').hide();
         $('div.bdrcontent#history').show();
         $('button.bdr').removeClass('selected');
-        $('button.bdr#history').addClass('selected');
+        $('button.bdr.history#' + designation).addClass('selected');
         $.getJSON('/mach/bdr/init', {
+            designation: designation
         }, function (data) {
             // Select Day:
             $('select.bdr#history[name="wday"]').empty();
@@ -238,7 +241,8 @@ $(function () {
             bdr_plot();
             //indicate it is still running:
             $( "i.bdr" ).remove(); //clear previous
-            $('button.bdr#history').prepend("<i class='bdr fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            console.log("LIVE ON " + designation);
+            $('button.bdr.history#' + designation).prepend("<i class='bdr fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
             var bdrloop = setInterval(bdr_plot, 15000);
             $('input.bdr#live-update').click(function () {
                 clearInterval(bdrloop); 
@@ -267,13 +271,13 @@ $("a.new#bdr-forecast-T").bind('click', function() {
     });
 });
 
-//show warmup's page
+//show wiring's page
 $(function() {
-    $('button.bdr#warmup').bind('click', function() {
+    $('button.bdr#wiring').bind('click', function() {
         $('div.bdrcontent').hide();
-        $('div.bdrcontent#warmup').show();
+        $('div.bdrcontent#wiring').show();
         $('button.bdr').removeClass('selected');
-        $('button.bdr#warmup').addClass('selected');
+        $('button.bdr#wiring').addClass('selected');
         return false;
     });
 });

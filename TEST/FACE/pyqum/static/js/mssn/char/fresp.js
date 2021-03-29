@@ -296,7 +296,7 @@ $(function () {
 
 // click to run:
 $('input.char#fresp-run').bind('click', function() {
-    $('button.tablinks#ALL-tab').trigger('click');
+    setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
     $( "i.fresp" ).remove(); //clear previous
     // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
@@ -361,7 +361,7 @@ $('button.char.fresp[name="search"]').click( function() {
 // Click to resume measurement
 $(function () {
     $('button.char#fresp-resume').on('click', function () {
-        $('button.tablinks#ALL-tab').trigger('click');
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
         $( "i.fresp" ).remove(); //clear previous
         // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // waveform commands
@@ -416,8 +416,8 @@ $(function () {
 // plot 1D-data based on c-parameters picked
 $(function () {
     $('input.char#fresp[name="1d-data"]').on('click', function () {
-        $( "i.frespplot" ).remove(); //clear previous
-        $('button.char#fresp').prepend("<i class='frespplot fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $( "i.fresp1d" ).remove(); //clear previous
+        $('button.char#fresp').prepend("<i class='fresp1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         var ifluxbias = $('select.char#fresp[name="c-fluxbias"]').val();
         var isparam = $('select.char#fresp[name="c-sparam"]').val();
         var iifb = $('select.char#fresp[name="c-ifb"]').val();
@@ -427,7 +427,12 @@ $(function () {
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/1ddata', {
             ifluxbias: ifluxbias, isparam: isparam, iifb: iifb, ipowa: ipowa, ifreq: ifreq
         }, function (data) {
-            console.log(data.title);
+            window.x1 = data.x1;
+            window.y1 = new Object();
+            window.y1.A = data.y1;
+            window.y1.UP = data.y2;
+            window.xtitle1 = data.title;
+            console.log(xtitle1);
             
             let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
                 name: 'Amplitude',
@@ -444,7 +449,7 @@ $(function () {
                 width: $(window).width()*0.7,
                 xaxis: {
                     zeroline: false,
-                    title: data.title,
+                    title: xtitle1,
                     titlefont: {size: 18},
                     tickfont: {size: 18},
                     tickwidth: 3,
@@ -483,17 +488,67 @@ $(function () {
                   }]
                 };
             
-            $.each(data.x1, function(i, val) {traceL.x.push(val);});
-            $.each(data.y1, function(i, val) {traceL.y.push(val);});
-            $.each(data.x1, function(i, val) {traceR.x.push(val);});
-            $.each(data.y2, function(i, val) {traceR.y.push(val);});
+            $.each(x1, function(i, val) {traceL.x.push(val);});
+            $.each(y1.A, function(i, val) {traceL.y.push(val);});
+            $.each(x1, function(i, val) {traceR.x.push(val);});
+            $.each(y1.UP, function(i, val) {traceR.y.push(val);});
 
             var Trace = [traceL, traceR]
             Plotly.newPlot('char-fresp-chart', Trace, layout, {showSendToCloud: true});
-            $( "i.frespplot" ).remove(); //clear previous
+            $( "i.fresp1d" ).remove(); //clear previous
             $('button.char#fresp-savecsv').show();
         });
     });
+    return false;
+});
+// INSERT 1D-data for comparison
+$(function () {
+    $('button.char#fresp-insert-1D').on('click', function () {
+        $('div#char-fresp-announcement').empty();
+        $( "i.fresp1d" ).remove(); //clear previous
+        $('button.char#fresp').prepend("<i class='fresp1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var ifluxbias = $('select.char#fresp[name="c-fluxbias"]').val();
+        var isparam = $('select.char#fresp[name="c-sparam"]').val();
+        var iifb = $('select.char#fresp[name="c-ifb"]').val();
+        var ipowa = $('select.char#fresp[name="c-powa"]').val();
+        var ifreq = $('select.char#fresp[name="c-freq"]').val();
+        console.log("Picked: " + isparam);
+        $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/1ddata', {
+            ifluxbias: ifluxbias, isparam: isparam, iifb: iifb, ipowa: ipowa, ifreq: ifreq
+        }, function (data) {
+            window.x1C = data.x1;
+            window.y1C = new Object();
+            window.y1C.A = data.y1;
+            window.y1C.UP = data.y2;
+            window.x1titleC = data.title;
+
+            // Normalization Options:
+            $('select.char.data.fresp#fresp-compare-nml').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+                                                                .append($('<option>', { text: 'normaldip', value: 'normaldip' }))
+                                                                .append($('<option>', { text: 'normalpeak', value: 'normalpeak' }));
+            console.log('selected: ' + $('select.char.data.fresp#fresp-compare-nml').val());
+            normalize = Boolean($('select.char.data.fresp#fresp-compare-nml').val()!='direct');
+            direction = $('select.char.data.fresp#fresp-compare-nml').val().split('normal')[1];
+
+            // AUP Options:
+            $('select.char.data.fresp#fresp-compare-aup').empty().append($('<option>', { text: 'Amplitude', value: 'A' }))
+                                                                .append($('<option>', { text: 'UPhase', value: 'UP' }));
+
+            var AUP = $('select.char.data.fresp#fresp-compare-aup').val();
+            compare1D(x1,y1[AUP],x1C,y1C[AUP],x1titleC,AUP,normalize,direction,'char-fresp');
+        })
+            .fail(function(jqxhr, textStatus, error){
+                $('div#char-fresp-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
+                $( "i.fresp1d" ).remove(); //clear the status
+            });
+    });
+    return false;
+});
+$('.char.data.fresp.compare').on('change', function() {
+    normalize = Boolean($('select.char.data.fresp#fresp-compare-nml').val()!='direct');
+    direction = $('select.char.data.fresp#fresp-compare-nml').val().split('normal')[1];
+    var AUP = $('select.char.data.fresp#fresp-compare-aup').val();
+    compare1D(x1,y1[AUP],x1C,y1C[AUP],x1titleC,AUP,normalize,direction,'char-fresp');
     return false;
 });
 

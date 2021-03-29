@@ -20,10 +20,16 @@ window.VdBm_selector2 = 'select.mani.data.singleqb#singleqb-2d-VdBm'
 
 // Parameter, Perimeter & Channel LIST for INITIATING NEW RUN:
 var singleqb_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
-var singleqb_Perimeters = ['DIGIHOME', 'IF_MHZ', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
+var singleqb_Perimeters = ['DIGIHOME', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
 var singleqb_Channels = ['RO-I', 'RO-Q', 'XY-I', 'XY-Q'];
 
 // *functions are shared across all missions!
+function eventHandler(event, selector) {
+    event.stopPropagation(); // Stop event bubbling.
+    event.preventDefault(); // Prevent default behaviour
+    if (event.type === 'touchend') selector.off('click'); // If event type was touch turn off clicks to prevent phantom clicks.
+};
+
 function transpose(a) {
     // Calculate the width and height of the Array
     var w = a.length || 0;
@@ -394,6 +400,78 @@ function plot2D_singleqb(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,VdBm_sel
     var Trace = [trace]
     Plotly.newPlot('mani-' + mission + '-chart', Trace, layout, {showSendToCloud: true});
 };
+function compareIQ_singleqb(x1,y1,x2,y2,mission="singleqb") {
+    // selecting points:
+    x1 = x1.slice(parseInt($('input.mani.data.singleqb#singleqb-shot-range').val().split(',')[0]), parseInt($('input.mani.data.singleqb#singleqb-shot-range').val().split(',')[1]));
+    y1 = y1.slice(parseInt($('input.mani.data.singleqb#singleqb-shot-range').val().split(',')[0]), parseInt($('input.mani.data.singleqb#singleqb-shot-range').val().split(',')[1]));
+    x2 = x2.slice(parseInt($('input.mani.data.singleqb#singleqb-shot-range').val().split(',')[0]), parseInt($('input.mani.data.singleqb#singleqb-shot-range').val().split(',')[1]));
+    y2 = y2.slice(parseInt($('input.mani.data.singleqb#singleqb-shot-range').val().split(',')[0]), parseInt($('input.mani.data.singleqb#singleqb-shot-range').val().split(',')[1]));
+    // MAX RANGE:
+    var maxscal = Math.max(Math.max(...x1.map(Math.abs)), Math.max(...y1.map(Math.abs)));
+    maxscal = maxscal * 1.2;
+    // console.log("Limit: " + maxscal);
+    
+    let traceIQ_1 = {x: [], y: [], mode: 'markers', type: 'scattergl',
+        name: 'IQ-1',
+        // line: {color: 'blue', width: 2.5},
+        marker: {symbol: 'circle', size: 1.37, color: 'blue'},
+        yaxis: 'y' };
+    let traceIQ_2 = {x: [], y: [], mode: 'markers', type: 'scattergl',
+        name: 'IQ-2',
+        // line: {color: 'blue', width: 2.5},
+        marker: {symbol: 'circle', size: 1.37, color: 'red'},
+        yaxis: 'y' };
+
+    let layout = {
+        legend: {x: 1.08},
+        height: $(window).height()*0.6,
+        width: $(window).width()*0.6,
+        xaxis: {
+            range: [-maxscal, maxscal],
+            zeroline: true,
+            title: "I",
+            titlefont: {size: 18},
+            tickfont: {size: 18},
+            tickwidth: 3,
+            zerolinewidth: 3.5,
+            gridcolor: 'rgb(159, 197, 232)',
+            zerolinecolor: 'grey',
+        },
+        yaxis: {
+            range: [-maxscal, maxscal],
+            zeroline: true,
+            title: "Q",
+            titlefont: {size: 18},
+            tickfont: {size: 18},
+            tickwidth: 3,
+            zerolinewidth: 3.5,
+            gridcolor: 'rgb(159, 197, 232)',
+            zerolinecolor: 'grey',
+        },
+        title: 'IQ-cluster between |0> and |1>',
+        annotations: [{
+            xref: 'paper',
+            yref: 'paper',
+            x: 0.03,
+            xanchor: 'right',
+            y: 1.05,
+            yanchor: 'bottom',
+            text: '',
+            font: {size: 18},
+            showarrow: false,
+            textangle: 0
+          }]
+        };
+    
+    $.each(x1, function(i, val) {traceIQ_1.x.push(val);});
+    $.each(y1, function(i, val) {traceIQ_1.y.push(val);});
+    $.each(x2, function(i, val) {traceIQ_2.x.push(val);});
+    $.each(y2, function(i, val) {traceIQ_2.y.push(val);});
+
+    var Trace = [traceIQ_1, traceIQ_2];
+    Plotly.react('mani-' + mission + '-chart', Trace, layout);
+
+};
 
 // hiding parameter settings when click outside the modal box:
 $('.modal-toggle.new.singleqb').on('click', function(e) {
@@ -574,7 +652,8 @@ $(function () {
 });
 
 // click to run:
-$('input.mani#singleqb-run').bind('click', function() {
+$('input.mani#singleqb-run').on('touchend click', function(event) {
+    eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
     // Assemble PERIMETER:
     var PERIMETER = {};
@@ -721,7 +800,8 @@ $(function () {
             $('select.mani.data.singleqb#singleqb-compare-iqap').empty().append($('<option>', { text: 'Amplitude', value: 'A' }))
                                                                 .append($('<option>', { text: 'In-plane', value: 'I' }))
                                                                 .append($('<option>', { text: 'Quadrature', value: 'Q' }))
-                                                                .append($('<option>', { text: 'Phase', value: 'P' }));
+                                                                .append($('<option>', { text: 'Phase', value: 'P' }))
+                                                                .append($('<option>', { text: 'IQ-Plot', value: 'IQ' }));
             
             compare1D_singleqb(x,y[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],xC,yC[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],normalize,direction,VdBm_selector);
         })
@@ -732,10 +812,14 @@ $(function () {
     });
     return false;
 });
-$('select.mani.data.singleqb.compare').on('change', function() {
+$('.mani.data.singleqb.compare').on('change', function() {
     normalize = Boolean($('select.mani.data.singleqb#singleqb-compare-nml').val()!='direct');
     direction = $('select.mani.data.singleqb#singleqb-compare-nml').val().split('normal')[1];
-    compare1D_singleqb(x,y[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],xC,yC[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],normalize,direction,VdBm_selector);
+    if ($('select.mani.data.singleqb#singleqb-compare-iqap').val()=="IQ") {
+        compareIQ_singleqb(y["I"],y["Q"],yC["I"],yC["Q"]);
+    } else {
+        compare1D_singleqb(x,y[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],xC,yC[$('select.mani.data.singleqb#singleqb-compare-iqap').val()],normalize,direction,VdBm_selector);
+    };
     return false;
 });
 $(VdBm_selector).on('change', function() {
@@ -760,9 +844,9 @@ $(function () {
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/2ddata', {
             cselect: JSON.stringify(cselect), srange: srange, smode: smode
         }, function (data) {
-            window.x = data.x;
-            window.y = data.y;
-            console.log("check y: " + y);
+            window.X = data.x;
+            window.Y = data.y;
+            console.log("check Y: " + Y);
             window.ZZA = data.ZZA;
             window.ZZUP = data.ZZUP;
             window.ZZI = data.ZZI;
@@ -787,7 +871,7 @@ $(function () {
                 .append($('<option>', { text: 'Blues', value: 'Blues' })).append($('<option>', { text: 'Viridis', value: 'Viridis' }));
             // Transpose or not
             $('select.mani.data.singleqb#singleqb-2d-direction').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
-            plot2D_singleqb(x, y, ZZA, xtitle, ytitle, 
+            plot2D_singleqb(X, Y, ZZA, xtitle, ytitle, 
                 $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
                 $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
                 VdBm_selector2);
@@ -813,12 +897,12 @@ $('div.2D select.mani.data.singleqb').on('change', function() {
     else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Q") {var ZZ = ZZQ; };
     
     if ($('select.mani.data.singleqb#singleqb-2d-direction').val() == "rotate") {
-        plot2D_singleqb(y, x, transpose(ZZ), ytitle, xtitle, 
+        plot2D_singleqb(Y, X, transpose(ZZ), ytitle, xtitle, 
             $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
             $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
             VdBm_selector2);
     } else {
-        plot2D_singleqb(x, y, ZZ, xtitle, ytitle, 
+        plot2D_singleqb(X, Y, ZZ, xtitle, ytitle, 
             $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
             $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
             VdBm_selector2);

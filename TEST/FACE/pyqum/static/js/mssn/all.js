@@ -34,8 +34,8 @@ function qumqueue() {
                 var jobidlink = '<div class="buttons"><a class="all-mssn-inspect btn yellow" id="jid_' + val.id + '">' + val.id + ' </a></div>';
                 var link = '</td><td><div class="col-100" id="left"><button class="all-queue-out push_button w-95 blue" id="jid_' + val.id + '_' + qsystem + '">' + 'QOUT</button></div></td>';
             };
-            $('table.mssn-QUEUE tbody.all.mssn-queue-update').append('<tr><td>' + jobidlink + '</td><td>' + val.task + '</td><td>' + val.startime + '</td><td>' + val.samplename +
-                                                    '</td><td>' + val.location + '</td><td>' + val.username + '</td><td>' + val.instrument + 
+            $('table.mssn-QUEUE tbody.all.mssn-queue-update').append('<tr><td>' + jobidlink + '</td><td>' + val.task + '</td><td>' + val.startime + 
+                                                    '</td><td>' + val.username + '</td><td>' + val.instrument + '</td><td>' + val.comment +  
                                                     link + '</tr>');
         });
     });
@@ -148,7 +148,7 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-requeue', func
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/requeue/job', {
         jobid: jobid
     }, function(data){
-        $('h3.all-mssn-warning').text("Clearance: " + data.clearance);
+        $('h3.all-mssn-warning').text("Clearance: " + data.clearance + "; Perimeter: " + data.requeue.perimeter);
     });
     return false;
 });

@@ -189,7 +189,7 @@ def test(detail=True):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     bench = Initiate()
-    if bench is "disconnected":
+    if bench == "disconnected":
         pass
     else:
         print("This model:")

@@ -243,18 +243,23 @@ def prepare_DAC(bench, channel, datasize, maxlevel=0.75):
     sourcelevel(bench, channel, action=['Set',maxlevel,0])
     outputpath(bench, channel, action=['Set','DCHB'])
     return bench
-def compose_DAC(bench, channel, pulsedata, marker=0):
+def compose_DAC(bench, channel, pulsedata, envelope=[], marker=0):
     # MUST Create waveform before markers:
     create_waveform(bench, "Waveform-%s"%channel, pulsedata)
     if marker-1 in range(4): # only 1-4 is valid
         mkr_array = zeros(len(pulsedata))
         # automated marker array based solely on pulse-data (considered: global offset):
-        try: 
-            first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][0], where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][-1]
-            last_falling_edge = first_rising_edge + int(ceil((last_falling_edge - first_rising_edge)/3)) # making sure marker-width is finite & less than pulse-length
-        except: 
-            first_rising_edge, last_falling_edge = 0, 300
-        mkr_array[first_rising_edge : last_falling_edge] = 1
+        if not channel%2: # EVEN-Channel: Making sure marker-width is finite & less than pulse-length since it is for TRIGGER PURPOSES ONLY:
+            try: # pulse case
+                shrinkage = 3
+                first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][0], where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][-1]
+                last_falling_edge = first_rising_edge + int(ceil((last_falling_edge - first_rising_edge)/shrinkage))
+            except: # CW case
+                first_rising_edge, last_falling_edge = 0, 300
+            mkr_array[first_rising_edge : last_falling_edge] = 1
+        else: # ODD-Channel: for DRIVING PIN-SWITCH:
+            if len(envelope): 
+                mkr_array = ceil(envelope)
         create_markers(bench, "Waveform-%s"%channel, channel, marker, mkr_array)
     else:
         sourceresolution(bench, channel, action=['Set',16])

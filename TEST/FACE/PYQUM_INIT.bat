@@ -13,7 +13,6 @@ set root=C:\ProgramData\Anaconda3
 call %root%\Scripts\activate.bat %root%
 ::call conda list flask
 SET FLASK_APP=pyqum
-SET FLASK_ENV=development
 
 ::Get Parent Directory
 for %%a in (%cd%) do set "p_dir=%%~dpa"
@@ -64,15 +63,19 @@ REM PAUSE
     ::python -c "from pyqum.instrument.modular import AWG; print(AWG.InitWithOptions())"
     set /p answer=WEB Production (P1/P2), Development (D) or LOCAL (L)?
     if /i "%answer:~,2%" EQU "P1" (
+        SET FLASK_ENV=production
         echo Running WEB Production #1
         goto production_1)
     if /i "%answer:~,2%" EQU "P2" (
+        SET FLASK_ENV=production
         echo Running WEB Production #2
         goto production_2)
     if /i "%answer:~,1%" EQU "D" (
+        SET FLASK_ENV=development
         echo Running WEB Development
         goto development)
     if /i "%answer:~,1%" EQU "L" (
+        SET FLASK_ENV=development
         echo Running WEB Local
         goto local)
     echo Please type P (Production), D (Development) or L (Local)

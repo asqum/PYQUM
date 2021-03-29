@@ -12,8 +12,8 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate(which):
-    ad = address()
+def Initiate(which, mode='DATABASE'):
+    ad = address(mode)
     rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
@@ -106,7 +106,7 @@ def Lfoutput(bench, action=['Get', '']):
     SCPIcore = 'SOURce:LFOutput:STATE'
     return mdlname, bench, SCPIcore, action
 
-def close(bench, which, reset=True):
+def close(bench, which, reset=True, mode='DATABASE'):
     if reset:
         bench.write('*RST') # reset to factory setting (including switch-off)
         set_status(mdlname, dict(config='reset'), which)
@@ -114,7 +114,7 @@ def close(bench, which, reset=True):
     try:
         bench.close() #None means Success?
         status = "Success"
-        ad = address()
+        ad = address(mode)
         ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
     set_status(mdlname, dict(state='disconnected with %s' %status), which)
@@ -125,7 +125,7 @@ def close(bench, which, reset=True):
 # Test Zone
 def test(bench, detail=True):
     s = bench
-    if s is "disconnected":
+    if s == "disconnected":
         pass
     else:
         if debug(mdlname, detail):

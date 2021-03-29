@@ -64,3 +64,56 @@ function VdBm_Conversion(Y, selector) {
     };
     return {'y': Y_Conv, 'yunit': yunit}; 
 }
+
+// Compare two 1D-Curves (shared by fresp, cwsweep):
+function compare1D(x1,y1,x2,y2,xtitle,ytitle,normalize=false,direction='dip',mission='char-cwsweep') {
+    // Left:
+    let traceA = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'Original',
+        line: {color: 'blue', width: 2.5},
+        yaxis: 'y' };
+    let traceB = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'Compared',
+        line: {color: 'red', width: 2.5},
+        yaxis: 'y' };
+    // Right:
+    let traceS = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'Subtracted',
+        line: {color: 'grey', width: 2.5},
+        yaxis: 'y2' };
+    
+    let layout = {
+        legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis: { zeroline: false, title: ytitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis2: { zeroline: false, title: '<b>Difference</b>', titlefont: {color: 'Grey', size: 18}, 
+            tickfont: {color: 'grey', size: 18}, tickwidth: 3, linewidth: 3, overlaying: 'y', side: 'right' },
+        title: ''
+        };
+    
+    if (normalize == true) {
+        if (direction == 'dip') {
+            y1 = Normalize_Dip(y1);
+            y2 = Normalize_Dip(y2);
+        } else if (direction == 'peak') {
+            y1 = Normalize_Peak(y1);
+            y2 = Normalize_Peak(y2);
+        };
+    };
+
+    // Original
+    $.each(x1, function(i, val) {traceA.x.push(val);});
+    $.each(y1, function(i, val) {traceA.y.push(val);});
+    // Compared
+    $.each(x2, function(i, val) {traceB.x.push(val);});
+    $.each(y2, function(i, val) {traceB.y.push(val);});
+    // Subtracted:
+    $.each(x2, function(i, val) { traceS.x.push(val); });
+    $.each(y2, function(i, val) { traceS.y.push(y1[i]-y2[i]); });
+    
+    var Trace = [traceA, traceB, traceS]
+    Plotly.newPlot(mission.split("-")[0] + '-' + mission.split("-")[1] + '-chart', Trace, layout, {showSendToCloud: true});
+    $( "i." + mission.split("-")[1] + "1d" ).remove(); //clear previous
+
+    console.log("Plotted 1D-Compare for " + mission.split("-")[0] + "-" + mission.split("-")[1]);
+};

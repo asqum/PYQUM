@@ -6,7 +6,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
-from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, clocker
+from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, clocker, set_mat
 
 # Error handling
 from contextlib import suppress
@@ -41,7 +41,7 @@ def show():
 			abort(404)
 		else: print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] "%(session['user_name'], session['user_id']) + Fore.LIGHTBLUE_EX + "has entered MACHINE" )
 		return render_template("blog/machn/machine.html")
-	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
+	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 
 # region: ALL (for Machine Overview)
 @bp.route('/all', methods=['POST', 'GET'])
@@ -164,6 +164,7 @@ def sgget():
 		message['power'] = si_format(float(SG[sgtype].power(sgbench[sgtag])[1]['AMPLITUDE']),precision=2) + "dBm" # power
 		message['rfoutput'] = int(SG[sgtype].rfoutput(sgbench[sgtag])[1]['STATE']) # rf output
 	except:
+		# raise
 		message = dict(status='%s is not connected' %sgtype)
 	return jsonify(message=message)
 # endregion
@@ -263,7 +264,7 @@ def tkawgsetchannels():
 	pulseq = pulser(dt=dt, clock_multiples=1, score=score)
 	pulseq.song()
 	TKAWG.prepare_DAC(tkawgbench[tkawgtag], Channel, pulseq.totalpoints, maxlevel)
-	TKAWG.compose_DAC(tkawgbench[tkawgtag], Channel, pulseq.music, 1) # PENDING: MARKER OPTIONS UI
+	TKAWG.compose_DAC(tkawgbench[tkawgtag], Channel, pulseq.music, pulseq.envelope, 1) # PENDING: MARKER OPTIONS UI
 	return jsonify(music=list(pulseq.music), timeline=list(pulseq.timeline))
 @bp.route('/tkawg/output/channels', methods=['GET'])
 def tkawgoutputchannels():
@@ -573,11 +574,13 @@ def bdr():
 	return render_template("blog/machn/bdr.html")
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():
+	designation = request.args.get('designation')
 	global b
-	b = bluefors()
+	b = bluefors(designation)
 	return jsonify(Days=b.Days)
 @bp.route('/bdr/history', methods=['GET'])
 def bdrhistory():
+	designation = request.args.get('designation')
 	global b, bdrlogs
 	wday = int(request.args.get('wday'))
 	P_Ch = int(request.args.get('P_Ch'))
@@ -587,7 +590,7 @@ def bdrhistory():
 	OptionS = request.args.get('OptS')
 	OptionV = request.args.get('OptV')
 
-	b = bluefors()
+	b = bluefors(designation)
 	b.selectday(wday)
 
 	tp, P, P_stat = b.pressurelog(P_Ch)

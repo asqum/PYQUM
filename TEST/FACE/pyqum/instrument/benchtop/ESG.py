@@ -154,7 +154,7 @@ def test(detail=True):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
     s = Initiate()
-    if s is "disconnected":
+    if s == "disconnected":
         pass
     else:
         if eval(debugger):

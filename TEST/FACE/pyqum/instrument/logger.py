@@ -88,7 +88,7 @@ def location():
 
     return place
 
-def clocker(agenda, stage=0, prev=0):
+def clocker(stage=0, prev=0, agenda="Unkwnown Event"):
     '''timing algorithm in seconds'''
     now = time()
     duration = now - prev
@@ -137,7 +137,7 @@ def set_status(instr_name, info, label=1):
         instrument = {}
     instrument.update(info)
     with open(loginstr(instr_name, label)[1], 'w') as jfile:
-        json.dump(instrument, jfile)
+        json.dump(instrument, jfile, indent=4)
 
 # save data in csv for export and be used by clients:
 def set_csv(data_dict, filename):
@@ -458,10 +458,12 @@ class measurement:
                 self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
 
             # For newer version where seperation between structure & buffer is adopted:
-            if 'RECORD_TIME_NS' in self.perimeter.keys():
+            if 'READOUTYPE' in self.perimeter.keys():
                 RJSON = loads(self.perimeter['R-JSON'].replace("'",'"'))
                 for k in RJSON.keys(): self.datasize = self.datasize * waveform(RJSON[k]).count
-                self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS'])
+                if self.perimeter['READOUTYPE'] == 'one-shot': bufferkey = 'RECORD-SUM'
+                else: bufferkey = 'RECORD_TIME_NS'
+                self.datasize = self.datasize * int(self.perimeter[bufferkey])
 
             self.data_progress = float(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
@@ -688,7 +690,7 @@ def lisjob(sample, queue, maxlist=12):
         # Extracting list from SQL-Database:
         Joblist = get_db().execute(
             '''
-            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress, u.username
+            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress, u.username, j.tag
             FROM user u
             INNER JOIN job j ON j.user_id = u.id
             INNER JOIN sample s ON s.id = j.sample_id
@@ -709,14 +711,13 @@ def lisqueue(queue):
         try:
             g.Queue, g.jobidlist = {}, {}
 
-            # Extracting list from SQL-Database:
+            # Extracting list from SQL-Database: (took-out: "INNER JOIN sample s ON s.id = j.sample_id" since queue-system has to align with sample in order to run experiments)
             g.Queue[queue] = get_db().execute(
                 '''
-                SELECT j.id, j.task, j.startime, s.samplename, s.location, u.username, j.instrument, j.parameter, j.perimeter
+                SELECT j.id, j.task, j.startime, u.username, j.instrument, j.comment
                 FROM user u
                 INNER JOIN %s c ON c.job_id = j.id
                 INNER JOIN job j ON j.user_id = u.id
-                INNER JOIN sample s ON s.id = j.sample_id
                 ORDER BY c.id ASC
                 ''' %(queue)
                 ).fetchall()

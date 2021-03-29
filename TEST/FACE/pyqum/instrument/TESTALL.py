@@ -4,7 +4,7 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from pyqum.instrument import logger, reader, network, toolbox, analyzer
-from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA, ENA, PSGV, PSGA, RDSO, YOKO, GW32, KEIT, DSA8, RSA5, MXA, TKAWG
+from pyqum.instrument.benchtop import MXG, DSO, ESG, PNA, ENA, PSGV, PSGA, RDSO, YOKO, GW32, KEIT, DSA8, RSA5, MXA, TKAWG, RSSGS
 from pyqum.instrument.modular import AWG, VSA, KMAWG, ALZDG
 from pyqum.instrument.serial import LAKE, DC
 from pyqum.directive import calibrate as CAL
@@ -17,7 +17,7 @@ def piqom():
     print(Fore.BLUE + "RUNNING %s" %inspect.stack()[0][3])
 piqom()
 
-MDL = ['AWG', 'VSA', 'KMAWG', 'ENA', 'PSGV', 'PSGA', 'RDS', 'MXG', 'DSO', 'YOKO', 'LAKE', 'DC', 'GW32', 'KEIT', 'DSA8', 'RSA5', 'MXA', 'TKAWG', 'ALZDG', #instruments
+MDL = ['AWG', 'VSA', 'KMAWG', 'ENA', 'PSGV', 'PSGA', 'RDS', 'MXG', 'DSO', 'YOKO', 'LAKE', 'DC', 'GW32', 'KEIT', 'DSA8', 'RSA5', 'MXA', 'TKAWG', 'ALZDG', 'RSSGS', #instruments
         'reader', 'logger', 'network', 'toolbox', 'analyzer', #tools
         'CAL' #calibrations
         ] 

@@ -37,27 +37,7 @@ function transpose(a) {
     }
     return t;
   };
-// function set_repeat_cwsweep() {
-//     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/setrepeat', {
-//         repeat: $('input.char#cwsweep[name="repeat"]').is(':checked')?1:0
-//     }, function(data) {
-//         $( "i.cwsweep-repeat" ).remove(); //clear previous
-//         if (data.repeat == true) {
-//             $('button.char#cwsweep').prepend("<i class='cwsweep-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-//         };
-//     });
-// };
-// function get_repeat_cwsweep() {
-//     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/getrepeat', {
-//     }, function (data) {
-//         console.log("Repeat: " + data.repeat);
-//         $('input.char#cwsweep[name="repeat"]').prop("checked", data.repeat);
-//         $( "i.cwsweep-repeat" ).remove(); //clear previous
-//         if (data.repeat == true) {
-//             $('button.char#cwsweep').prepend("<i class='cwsweep-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-//         };
-//     });
-// };
+
 function listimes_cwsweep() {
     // $('input.char.data').removeClass("plotted");
     
@@ -249,6 +229,7 @@ function plot1D_cwsweep(x1,y1,y2,xtitle,phasetype) {
     Plotly.newPlot('char-cwsweep-chart', Trace, layout, {showSendToCloud: true});
     $( "i.cwsweep1d" ).remove(); //clear previous
 };
+
 function plot2D_cwsweep(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
     console.log("Plotting 2D");
          
@@ -422,7 +403,7 @@ $(function () {
 
 // click to run:
 $('input.char#cwsweep-run').bind('click', function() {
-    $('button.tablinks#all-tab').trigger('click');
+    setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
     $( "i.cwsweep-run" ).remove(); //clear previous
     // $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
@@ -451,17 +432,6 @@ $('input.char#cwsweep-run').bind('click', function() {
     });
     return false;
 });
-// click to estimate ETA (PENDING: DATA ANALYSIS FUNCTIONS)
-// $("a.new#cwsweep-job").bind('click', function() {
-//     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/eta100', {
-//     }, function (data) {
-//         
-//     });
-// });
-// click to set repeat or once
-// $('input.char#cwsweep[name="repeat"]').bind('click', function() {
-//     set_repeat_cwsweep();
-// });
 
 // click to search: (pending)
 $('input.char#cwsweep[name="search"]').change( function() {
@@ -483,7 +453,7 @@ $('input.char#cwsweep[name="search"]').change( function() {
 // Click to resume measurement
 $(function () {
     $('button.char#cwsweep-resume').on('click', function () {
-        $('button.tablinks#all-tab').trigger('click');
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
         $( "i.cwsweep" ).remove(); //clear previous
         $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // waveform commands
@@ -520,24 +490,6 @@ $(function () {
     return false;
 });
 
-// LIVE UPDATE on PROGRESS:
-// $(function () {
-//     $('input.cwsweep#live-update').click(function () { 
-//         //indicate it is still running:
-//         $( "i.cwsweeplive" ).remove(); //clear previous
-//         $('button.char#cwsweep').prepend("<i class='cwsweeplive fa fa-wifi fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-//         var livestat = $('input.cwsweep#live-update').is(':checked'); //use css to respond to click / touch
-//         if (livestat == true) {
-//             var cwsweeploop = setInterval(accessdata_cwsweep, 6000);
-//             $('input.cwsweep#live-update').click(function () {
-//                 clearInterval(cwsweeploop);
-//                 $( "i.cwsweeplive" ).remove(); //clear previous
-//             });
-//         };
-//         // 'else' didn't do much to stop it!
-//     });
-// });
-
 // tracking data position based on certain parameter (PENDING: Need to be tested after code modification been done)
 $(function () {
     $('select.char.cwsweep.parameter').on('change', function () {
@@ -571,13 +523,14 @@ $(function () {
             irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
         }, function (data) {
             window.x1 = data.x1;
-            window.y1 = data.y1;
-            window.yp = data.yp;
-            window.yup = data.yup;
+            window.y1 = new Object();
+            window.y1.A = data.y1;
+            window.y1.P = data.yp;
+            window.y1.UP = data.yup;
             window.x1title = data.x1title;
             // Phase option
             $('select.char.data#cwsweep[name="1d-phase"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
-            plot1D_cwsweep(x1,y1,yp,x1title,'<b>Raw-Pha(rad)</b>');
+            plot1D_cwsweep(x1,y1.A,y1.P,x1title,'<b>Raw-Pha(rad)</b>');
             $('button.char#cwsweep-savecsv').show();
         });
     });
@@ -586,11 +539,66 @@ $(function () {
 $('select.char.data#cwsweep').on('change', function() {
     if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "Pha") {
         console.log("Pha mode");
-        plot1D_cwsweep(x1,y1,yp,x1title,'<b>Raw-Pha(rad)</b>');
+        plot1D_cwsweep(x1,y1.A,y1.P,x1title,'<b>Raw-Pha(rad)</b>');
     } else if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "UPha") {
         console.log("UPha mode");
-        plot1D_cwsweep(x1,y1,yup,x1title,'<b>UFN-Pha(rad)</b>');
+        plot1D_cwsweep(x1,y1.A,y1.UP,x1title,'<b>UFN-Pha(rad)</b>');
     };
+    return false;
+});
+// INSERT 1D-data for comparison
+$(function () {
+    $('button.char#cwsweep-insert-1D').on('click', function () {
+        $('div#char-cwsweep-announcement').empty();
+        $( "i.cwsweep1d" ).remove(); //clear previous
+        $('button.char#cwsweep').prepend("<i class='cwsweep1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var irepeat = $('select.char.cwsweep.parameter#c-repeat').val();
+        var ifluxbias = $('select.char.cwsweep.parameter#c-fluxbias').val();
+        var ixyfreq = $('select.char.cwsweep.parameter#c-xyfreq').val();
+        var ixypowa = $('select.char.cwsweep.parameter#c-xypowa').val();
+        var isparam = $('select.char.cwsweep.parameter#c-sparam').val();
+        var iifb = $('select.char.cwsweep.parameter#c-ifb').val();
+        var ifreq = $('select.char.cwsweep.parameter#c-freq').val();
+        var ipowa = $('select.char.cwsweep.parameter#c-powa').val();
+        console.log("Picked: " + isparam);
+        $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/1ddata', {
+            irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
+        }, function (data) {
+            window.x1C = data.x1;
+            window.y1C = new Object();
+            window.y1C.A = data.y1;
+            window.y1C.P = data.yp;
+            window.y1C.UP = data.yup;
+            window.x1titleC = data.x1title;
+
+            // Normalization Options:
+            $('select.char.data.cwsweep#cwsweep-compare-nml').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+                                                                .append($('<option>', { text: 'normaldip', value: 'normaldip' }))
+                                                                .append($('<option>', { text: 'normalpeak', value: 'normalpeak' }));
+            console.log('selected: ' + $('select.char.data.cwsweep#cwsweep-compare-nml').val());
+            normalize = Boolean($('select.char.data.cwsweep#cwsweep-compare-nml').val()!='direct');
+            direction = $('select.char.data.cwsweep#cwsweep-compare-nml').val().split('normal')[1];
+
+            // APUP Options:
+            $('select.char.data.cwsweep#cwsweep-compare-apup').empty().append($('<option>', { text: 'Amplitude', value: 'A' }))
+                                                                .append($('<option>', { text: 'Phase', value: 'P' }))
+                                                                .append($('<option>', { text: 'UPhase', value: 'UP' }));
+
+            var APUP = $('select.char.data.cwsweep#cwsweep-compare-apup').val();
+            compare1D(x1,y1[APUP],x1C,y1C[APUP],x1titleC,APUP,normalize,direction,'char-cwsweep');
+        })
+            .fail(function(jqxhr, textStatus, error){
+                $('div#char-cwsweep-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
+                $( "i.cwsweep1d" ).remove(); //clear the status
+            });
+    });
+    return false;
+});
+$('.char.data.cwsweep.compare').on('change', function() {
+    normalize = Boolean($('select.char.data.cwsweep#cwsweep-compare-nml').val()!='direct');
+    direction = $('select.char.data.cwsweep#cwsweep-compare-nml').val().split('normal')[1];
+    var APUP = $('select.char.data.cwsweep#cwsweep-compare-apup').val();
+    compare1D(x1,y1[APUP],x1C,y1C[APUP],x1titleC,APUP,normalize,direction,'char-cwsweep');
     return false;
 });
 

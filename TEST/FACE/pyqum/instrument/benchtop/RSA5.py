@@ -115,7 +115,7 @@ def test(detail=True):
     S={}
     S['x'] = Initiate()
     s = S['x']
-    if s is "disconnected":
+    if s == "disconnected":
         pass
     else:
         if debug(mdlname, detail):

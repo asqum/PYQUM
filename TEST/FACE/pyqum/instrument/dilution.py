@@ -11,9 +11,18 @@ from pyqum.instrument.analyzer import derivative, curve, cleantrace
 
 class bluefors:
 
-    def __init__(self):
-        self.LogPath = Path(r'\\BLUEFORSAS\BlueLogs')
-        self.Days = listdir(self.LogPath)
+    def __init__(self, designation="Alice"):
+        if designation=="Alice":
+            self.LogPath = Path(r'\\BLUEFORSAS\BlueLogs') # direct-access without password
+            self._TPath = Path(r'') # compensate for temperature path
+            self.T_name = 'T'
+        elif designation=="Bob":
+            self.LogPath = Path(r'\\BLUEFORSAS2\dr_bob') # direct-access without password
+            self._TPath = Path(r'\log-data\192.168.1.188') # compensate for temperature path
+            self.T_name = 'TEMPERATURE'
+        P_Days, T_Days = set(listdir(self.LogPath)), set(listdir(self.LogPath / self._TPath))
+        self.Days = list((P_Days | T_Days) - {'log-data'})
+        self.Days.sort()
 
     def whichday(self):
         total = len(self.Days)
@@ -39,7 +48,7 @@ class bluefors:
 
     def temperaturelog(self, Channel, Unit='K'):
         try:
-            LogFile = self.LogPath / self.Date / ("CH%s T "%Channel + self.Date + ".log")
+            LogFile = self.LogPath / self._TPath / self.Date / ("CH%s %s %s.log"%(Channel, self.T_name, self.Date))
             with open(LogFile, 'r') as L:
                 L = L.read()
             Tlog = list([x.split(',') for x in L.split('\n')[:-1]])
