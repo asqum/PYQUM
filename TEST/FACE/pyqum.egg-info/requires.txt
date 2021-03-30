@@ -12,6 +12,9 @@ netifaces
 flask-ext
 Flask-NoExtRef
 keyboard
+matplotlib
+pandas
+scipy
 
 [test]
 pytest
