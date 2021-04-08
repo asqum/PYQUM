@@ -1,3 +1,5 @@
+"""SETUP SX199 IP Address for DC205"""
+
 import pyvisa as visa
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,46 +38,10 @@ def setup():
     print("IP Address: %s.%s.%s.%s" %(inst.query('IPAD?0'),inst.query('IPAD?1'),inst.query('IPAD?2'),inst.query('IPAD?3')))
 
     # Save Parameters
-    # inst.write('SPAR 0')
-    inst.write('*RST')
+    inst.write('SPAR 0')
+    # inst.write('*RST')
 
     # Close connection
     inst.close()
 
-# setup()
-
-import socket
-
-s = socket.socket()
-s.connect(("192.168.1.44", 8888))
-s.settimeout(7)
-
-try:
-    s.send(b'ULOC?\n')
-    print(s.recv(1024).decode())
-    s.send(b'ULOC 1\n')
-    
-    s.send(b'LINK 1\n')
-    s.send(b'*IDN?\n')
-    print(s.recv(1024).decode())
-except:
-    pass
-
-# s.send(b'LINK?\n')
-# print(s.recv(1024).decode())
-# s.send(b'!\n')
-
-
-s.send(b'*IDN?\n')
-print(s.recv(1024).decode())
-
-
-
-s.send(b'VOLT 3.15e-6; VOLT?\n')
-print(float(s.recv(1024).decode()))
-
-
-# s.send(b'!\n')
-# s.send(b'LNKE 2\n')
-
-s.close()
+setup()
