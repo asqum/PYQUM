@@ -2,7 +2,7 @@
 
 <head>
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/na.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/sa.js') }}"></script>
 </head>
 
 <body class="mach">
@@ -10,51 +10,51 @@
 
     <div class="tab2">
     <form method='GET'>
-        <button class='na naname' id='ENA-1'>ENA-1</button>
-        <button class='na naname' id='PNA-1'>PNA-1</button>
+        <button class='sa saname' id='MXA-1'>MXA-1</button>
+        <button class='sa saname' id='MXA-2'>MXA-2</button>
 
-        <button class='na' id='log'>INSTR-LOG</button>
+        <button class='sa' id='log'>INSTR-LOG</button>
         
     </form>
     </div>
 
-    <div class="nacontent" id="log"></div>
-    <div class="nacontent settings">
+    <div class="sacontent" id="log"></div>
+    <div class="sacontent settings">
         <div class="container">
             <form method='GET'>
                 <!-- User activities -->
                 <div class="row">
                     <div class="col-10" id='left'><label class='parameter'>Attention</label></div>
                     <div class="col-30" id='left'>
-                        <div class='na' id="na-current-user"></div>
+                        <div class='sa' id="sa-current-user"></div>
                     </div>
                 </div>
 
                 <!-- Frequency Range -->
                 <div class="row">
                     <div class="col-10" id='left'><label class='parameter'>Frequency</label></div>
-                    <div class="col-49" id='left'><input class='na scale settings' name='freqrange' type="text" value="4 to 8 * 3000"/></div>
-                    <div class="col-10" id='left'><input class="na unit settings" name='freqrange' value="GHz"></div>
+                    <div class="col-49" id='left'><input class='sa scale settings' name='freqrange' type="text" value="4 to 8 * 3000"/></div>
+                    <div class="col-10" id='left'><input class="sa unit settings" name='freqrange' value="GHz"></div>
                     
                     <!-- Close / Reset -->
                     <div class="col-15" id='right'>
-                        <button class='na push_button w-95 red closet'>LEAVE</button>
+                        <button class='sa push_button w-95 red closet'>LEAVE</button>
                     </div>
                 </div>
 
                  <!-- IF-Bandwidth & Power -->
                 <div class="row">
                     <div class="col-10" id='left'><label class='parameter'>IFB</label></div>
-                    <div class="col-12" id='left'><input class='na scale settings' name='ifb' type="text" value="1000"/></div>
-                    <div class="col-10" id='left'><input class="na unit settings" name='ifb' value="Hz"></div>
+                    <div class="col-12" id='left'><input class='sa scale settings' name='ifb' type="text" value="1000"/></div>
+                    <div class="col-10" id='left'><input class="sa unit settings" name='ifb' value="Hz"></div>
                     <div class="col-3" id='left'></div>
                     <div class="col-10" id='left'><label class='parameter'>Power</label></div>
-                    <div class="col-12" id='left'><input class='na scale settings' name='powa' type="text" value="-5"/></div>
-                    <div class="col-10" id='left'><input class="na unit settings" name='powa' value="dBm"></div>
+                    <div class="col-12" id='left'><input class='sa scale settings' name='powa' type="text" value="-5"/></div>
+                    <div class="col-10" id='left'><input class="sa unit settings" name='powa' value="dBm"></div>
 
                     <!-- SWEEP -->
                     <div class="col-15" id='right'>
-                        <button class='na push_button w-95 blue' id='sweep'>SWEEP</button>
+                        <button class='sa push_button w-95 blue' id='sweep'>SWEEP</button>
                     </div>
                 </div>
 
@@ -62,12 +62,12 @@
                 <div class="row">
                     <div class="col-10" id='left'><label class='parameter'></label></div>
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='na sparam settings' name='S21' type="checkbox">
+                        <label class="switch"><input class='sa sparam settings' name='S21' type="checkbox">
                             <div class="slider smooth"></div><span class="on">S21</span><span class="off">S21</span>
                         </label>
                     </div>
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='na sparam settings' name='S11' type="checkbox">
+                        <label class="switch"><input class='sa sparam settings' name='S11' type="checkbox">
                             <div class="slider smooth"><span class="on">S11</span><span class="off">S11</span></div>
                         </label>
                     </div>
@@ -75,31 +75,31 @@
                     <div class="col" id='left' style="width: 2%"></div>
 
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='na sparam settings' name='S12' type="checkbox">
+                        <label class="switch"><input class='sa sparam settings' name='S12' type="checkbox">
                             <div class="slider smooth"><span class="on">S12</span><span class="off">S12</span></div>
                         </label>
                     </div>
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='na sparam settings' name='S22' type="checkbox">
+                        <label class="switch"><input class='sa sparam settings' name='S22' type="checkbox">
                             <div class="slider smooth"><span class="on">S22</span><span class="off">S22</span></div>
                         </label>
                     </div>
 
                     <!-- AUTOSCALE -->
                     <div class="col-15" id='right'>
-                        <button class='na push_button w-95 blue' id='autoscale'>AUTOSCALE</button>
+                        <button class='sa push_button w-95 blue' id='autoscale'>AUTOSCALE</button>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-10" id='left'><label class='parameter'></label></div>
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='na sparam settings' name='S43' type="checkbox">
+                        <label class="switch"><input class='sa sparam settings' name='S43' type="checkbox">
                             <div class="slider smooth"></div><span class="on">S43</span><span class="off">S43</span>
                         </label>
                     </div>
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='na sparam settings' name='S33' type="checkbox">
+                        <label class="switch"><input class='sa sparam settings' name='S33' type="checkbox">
                             <div class="slider smooth"><span class="on">S33</span><span class="off">S33</span></div>
                         </label>
                     </div>
@@ -107,12 +107,12 @@
                     <div class="col" id='left' style="width: 2%"></div>
 
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='na sparam settings' name='S34' type="checkbox">
+                        <label class="switch"><input class='sa sparam settings' name='S34' type="checkbox">
                             <div class="slider smooth"><span class="on">S34</span><span class="off">S34</span></div>
                         </label>
                     </div>
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='na sparam settings' name='S44' type="checkbox">
+                        <label class="switch"><input class='sa sparam settings' name='S44' type="checkbox">
                             <div class="slider smooth"><span class="on">S44</span><span class="off">S44</span></div>
                         </label>
                     </div>
@@ -120,7 +120,7 @@
                     <!-- SWEEP -->
                     <div class="row">
                         <div class="col-15" id='right'>
-                            <label class="switch"><input class='na settings' name='scanning' type="checkbox">
+                            <label class="switch"><input class='sa settings' name='scanning' type="checkbox">
                                 <div class="slider smooth"><span class="on">Continuous</span><span class="off">Hold</span></div>
                             </label>
                         </div>
@@ -130,7 +130,7 @@
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                     <div class="col-10" id='left'><label class='parameter'>Status</label></div>
                     <div class="col-49" id='left'>
-                        <div class='na' id="na-status-announcement"></div>
+                        <div class='sa' id="sa-status-announcement"></div>
                     </div>
                 </div>
 

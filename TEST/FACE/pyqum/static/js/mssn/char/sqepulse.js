@@ -11,8 +11,8 @@ $(document).ready(function(){
 
 // Global variables:
 window.selecteday = ''
-window.VdBm_selector = 'select.char.data.sqepulse#1d-VdBm'
-window.VdBm_selector2 = 'select.char.data.sqepulse#2d-VdBm'
+window.sqepulse_VdBm_selector = 'select.char.data.sqepulse#1d-VdBm'
+window.sqepulse_VdBm_selector2 = 'select.char.data.sqepulse#2d-VdBm'
 
 // PENDING: Flexible C-Structure:
 var SQEPulse_Parameters = ['repeat', 'Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
@@ -151,9 +151,9 @@ function accessdata_sqepulse() {
     });
     return false;
 };
-function plot1D_sqepulse(x,y1,y2,y3,y5,VdBm_selector,xtitle,mode='lines') {
+function plot1D_sqepulse(x,y1,y2,y3,y5,sqepulse_VdBm_selector,xtitle,mode='lines') {
     // V or dBm
-    YConv = VdBm_Conversion(y3, VdBm_selector); 
+    YConv = VdBm_Conversion(y3, sqepulse_VdBm_selector); 
     y3 = YConv['y'];
     yunit = YConv['yunit'];
     console.log('Converted: ' + YConv);
@@ -229,10 +229,10 @@ function plot1D_sqepulse(x,y1,y2,y3,y5,VdBm_selector,xtitle,mode='lines') {
     Plotly.newPlot('char-sqepulse-chart', Trace, layout, {showSendToCloud: true});
     $( "i.sqepulse1d" ).remove(); //clear previous
 };
-function compare1D_sqepulse(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_selector) {
+function compare1D_sqepulse(x1,y1,x2,y2,normalize=false,direction='dip',sqepulse_VdBm_selector) {
     // V or dBm
-    y1 = VdBm_Conversion(y1, VdBm_selector)['y']; 
-    y2 = VdBm_Conversion(y2, VdBm_selector)['y']; 
+    y1 = VdBm_Conversion(y1, sqepulse_VdBm_selector)['y']; 
+    y2 = VdBm_Conversion(y2, sqepulse_VdBm_selector)['y']; 
     // yunit = YConv['yunit'];
 
     // Left:
@@ -283,9 +283,9 @@ function compare1D_sqepulse(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_sel
     Plotly.newPlot('char-sqepulse-chart', Trace, layout, {showSendToCloud: true});
     $( "i.sqepulse1d" ).remove(); //clear previous
 };
-function plot2D_sqepulse(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,VdBm_selector) {
+function plot2D_sqepulse(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,sqepulse_VdBm_selector) {
     // V or dBm
-    YConv = VdBm_Conversion(y, VdBm_selector); 
+    YConv = VdBm_Conversion(y, sqepulse_VdBm_selector); 
     y = YConv['y'];
     yunit = YConv['yunit'];
 
@@ -625,7 +625,7 @@ $(function () {
             window.xtitle = data.xtitle;
             // Phase option
             // $('select.char.data.sqepulse#1d-phase').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
-            plot1D_sqepulse(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle);
+            plot1D_sqepulse(x,yI,yQ,yA,yUFNP,sqepulse_VdBm_selector,xtitle);
         })
             .done(function(data) {
                 $('button.char#sqepulse-savecsv').show(); // to avoid downloading the wrong file
@@ -669,7 +669,7 @@ $(function () {
             normalize = Boolean($('select.char.data.sqepulse#compare-nml').val()!='direct');
             direction = $('select.char.data.sqepulse#compare-nml').val().split('normal')[1];
             // console.log("yA: " + yA); console.log("yA2: " + yA2);
-            compare1D_sqepulse(x,yA,x2,yA2,normalize,direction,VdBm_selector);
+            compare1D_sqepulse(x,yA,x2,yA2,normalize,direction,sqepulse_VdBm_selector);
         })
             .fail(function(jqxhr, textStatus, error){
                 $('div#char-sqepulse-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
@@ -681,14 +681,14 @@ $(function () {
 $('select.char.data.sqepulse#compare-nml').on('change', function() {
     normalize = Boolean($('select.char.data.sqepulse#compare-nml').val()!='direct');
     direction = $('select.char.data.sqepulse#compare-nml').val().split('normal')[1];
-    compare1D_sqepulse(x,yA,x2,yA2,normalize,direction,VdBm_selector);
+    compare1D_sqepulse(x,yA,x2,yA2,normalize,direction,sqepulse_VdBm_selector);
     return false;
 });
-$(VdBm_selector).on('change', function() {
-    plot1D_sqepulse(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle);
+$(sqepulse_VdBm_selector).on('change', function() {
+    plot1D_sqepulse(x,yI,yQ,yA,yUFNP,sqepulse_VdBm_selector,xtitle);
 });
 $('select.char.data.sqepulse#1d-mode').on('change', function() {
-    plot1D_sqepulse(x,yI,yQ,yA,yUFNP,VdBm_selector,xtitle,mode=$('select.char.data.sqepulse#1d-mode').val());
+    plot1D_sqepulse(x,yI,yQ,yA,yUFNP,sqepulse_VdBm_selector,xtitle,mode=$('select.char.data.sqepulse#1d-mode').val());
 });
 
 // assemble 2D-data based on c-parameters picked
@@ -735,7 +735,7 @@ $(function () {
             plot2D_sqepulse(x, y, ZZA, xtitle, ytitle, 
                 $('select.char.data.sqepulse#2d-type').val(),'sqepulse',
                 $('select.char.data.sqepulse#2d-colorscale').val(),
-                VdBm_selector2);
+                sqepulse_VdBm_selector2);
             $( "i.sqepulse2d" ).remove(); //clear previous
             $('button.char#sqepulse-savemat').show();
         })
@@ -761,12 +761,12 @@ $('div.2D select.char.data.sqepulse').on('change', function() {
         plot2D_sqepulse(y, x, transpose(ZZ), ytitle, xtitle, 
             $('select.char.data.sqepulse#2d-type').val(),'sqepulse',
             $('select.char.data.sqepulse#2d-colorscale').val(),
-            VdBm_selector2);
+            sqepulse_VdBm_selector2);
     } else {
         plot2D_sqepulse(x, y, ZZ, xtitle, ytitle, 
             $('select.char.data.sqepulse#2d-type').val(),'sqepulse',
             $('select.char.data.sqepulse#2d-colorscale').val(),
-            VdBm_selector2);
+            sqepulse_VdBm_selector2);
     };
     return false;
 });

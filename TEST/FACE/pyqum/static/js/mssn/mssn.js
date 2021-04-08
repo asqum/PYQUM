@@ -54,6 +54,7 @@ function Normalize_Peak(Z) {
 function VdBm_Conversion(Y, selector) {
     Y_Conv = [];
     yunit = $(selector).val();
+    console.log("Converted to: " + yunit);
     if ($(selector).val() == 'V') {
         $.each(Y, function(i, val) {Y_Conv.push(val);});
     } else if ($(selector).val() == 'dBm') {

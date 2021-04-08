@@ -41,7 +41,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     '''
 
     # BYPASS:
-    instr['DC'], instr['SG'], instr['DAC'], instr['ADC'] = 'YOKO_2', ['RSSGS_1', 'PSGV_1'], 'TKAWG_1', 'ALZDG_1' # bypass instruments UI-selection
+    instr['DC'], instr['SG'], instr['DAC'], instr['ADC'] = 'YOKO_2', ['PSGA_1', 'PSGV_1'], 'TKAWG_1', 'ALZDG_1' # bypass instruments UI-selection
     sample = get_status("MSSN")[session['user_name']]['sample']
     queue = get_status("MSSN")[session['user_name']]['queue']
 
@@ -81,7 +81,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     rofreq = waveform(corder['RO-LO-Frequency'])
     for k in RJSON.keys(): corder[k] = RJSON[k] # update corder with R-parameters
     # 2b. Prepare R-waveform object for pulse-instructions
-    R_waveform, R_count = {}, len(RJSON.keys())
+    R_waveform = {}
     for k in RJSON.keys(): R_waveform[k] = waveform(RJSON[k])
 
     # Buffer-size for lowest-bound data-collecting instrument:
@@ -118,9 +118,10 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     # SG for RO:
     [SG_type, SG_label[1]] = instr['SG'][1].split('_')
     SG1 = im("pyqum.instrument.benchtop.%s" %SG_type)
-    saga = SG1.Initiate(which=SG_label[1])
-    SG1.power(saga, action=['Set', str(ropowa) + "dBm"])
-    SG1.rfoutput(saga, action=['Set', 1])
+    if "opt" not in rofreq.data: # check if it is in optional-state / serious-state
+        saga = SG1.Initiate(which=SG_label[1])
+        SG1.power(saga, action=['Set', str(ropowa) + "dBm"])
+        SG1.rfoutput(saga, action=['Set', 1])
 
     # DAC:
     [DAC_type, DAC_label] = instr['DAC'].split('_')

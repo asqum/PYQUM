@@ -244,8 +244,9 @@ function plot1D_singleqb(x,y1,y2,y3,y5,VdBm_selector,xtitle,mode='lines') {
 function compare1D_singleqb(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_selector) {
     // V or dBm
     y1 = VdBm_Conversion(y1, VdBm_selector)['y']; 
-    y2 = VdBm_Conversion(y2, VdBm_selector)['y']; 
-    // yunit = YConv['yunit'];
+    y2 = VdBm_Conversion(y2, VdBm_selector); 
+    yunit = y2['yunit'];
+    y2 = y2['y'];
 
     // Left:
     let traceA = {x: [], y: [], mode: 'lines', type: 'scatter', 
@@ -265,7 +266,7 @@ function compare1D_singleqb(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_sel
     let layout = {
         legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
         xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
-        yaxis: { zeroline: false, title: '<b>Signal(V)</b>', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis: { zeroline: false, title: '<b>Signal(' + yunit + ')</b>', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
         yaxis2: { zeroline: false, title: '<b>Difference(V)</b>', titlefont: {color: 'Grey', size: 18}, 
             tickfont: {color: 'grey', size: 18}, tickwidth: 3, linewidth: 3, overlaying: 'y', side: 'right' },
         title: ''
@@ -823,6 +824,7 @@ $('.mani.data.singleqb.compare').on('change', function() {
     return false;
 });
 $(VdBm_selector).on('change', function() {
+    console.log("Selector: " + VdBm_selector)
     plot1D_singleqb(x,y.I,y.Q,y.A,y.P,VdBm_selector,xtitle);
 });
 $('select.mani.data.singleqb#singleqb-1d-mode').on('change', function() {

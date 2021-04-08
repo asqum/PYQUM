@@ -9,7 +9,7 @@ init(autoreset=True) #to convert termcolor to wins color
 
 import copy
 from pyqum.instrument.benchtop import MXA
-from pyqum.instrument.benchtop import PSGV as PSG # RO: V, XY: A
+from pyqum.instrument.benchtop import PSGA as PSG # RO: V, XY: A
 from pyqum.instrument.benchtop import TKAWG as DAC
 from pyqum.instrument.logger import status_code, get_status, set_status, clocker
 from pyqum.instrument.analyzer import curve
@@ -366,7 +366,7 @@ class IQ_Cal:
 def test():
     s, t = clocker(agenda="IQ-CAL")
     # ===============================================================
-    C = IQ_Cal(6.4248, 18, 1, 100000, 0.37, 'ro1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    C = IQ_Cal(5.12, 18, 70, 100000, 0.25, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
     C.run()
     # ===============================================================
     clocker(s, t, agenda="IQ-CAL")

@@ -566,6 +566,84 @@ def naget():
 	return jsonify(message=message)
 # endregion
 
+# region: SA (user-specific)
+@bp.route('/sa', methods=['GET'])
+def sa(): 
+	global sabench, SA
+	try: print(Fore.GREEN + "Connected SA: %s" %sabench.keys())
+	except: sabench, SA = {}, {}
+	return render_template("blog/machn/sa.html")
+@bp.route('/sa/log', methods=['GET'])
+def salog():
+	log = get_status(request.args.get('satype'))
+	return jsonify(log=log)
+@bp.route('/sa/connect', methods=['GET'])
+def saconnect():
+	saname = request.args.get('saname')
+	satag = '%s:%s' %(saname,session['user_name'])
+	satype, salabel, sauser = satag.split('-')[0], satag.split('-')[1].split(':')[0], satag.split('-')[1].split(':')[1]
+	linkedsa = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in sabench.keys()]
+	if saname not in linkedsa:
+		'''get in if not currently initiated'''
+		try:
+			SA[satype] = im("pyqum.instrument.benchtop.%s" %satype)
+			sabench[satag] = SA[satype].Initiate(which=salabel)
+			message = "%s is successfully initiated by %s" %(saname,sauser)
+			status = "connected"
+		except:
+			raise
+			message = "Please check if %s's connection configuration is OK or is it being used!" %(saname)
+			status = 'error'
+	else:
+		# Check who is currently using the instrument:
+		db = get_db()
+		instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(satype,salabel),)).fetchone()[0]
+		message = "%s is being connected to %s" %(saname,instr_user)
+		# Connecting or Waiting?
+		if instr_user == session['user_name']: status = 'connected'
+		else: status = 'waiting'
+	return jsonify(message=message,status=status)
+@bp.route('/sa/closet', methods=['GET'])
+def sacloset():
+	satag, satype = '%s:%s' %(request.args.get('saname'),session['user_name']), request.args.get('satype')
+	try: status = SA[satype].close(sabench[satag], satag.split('-')[1].split(':')[0])
+	except: 
+		status = "Connection lost"
+		pass
+	del sabench[satag]
+	return jsonify(message=status)
+
+@bp.route('/sa/set/powa', methods=['GET'])
+def sasetpowa():
+	satag, satype = '%s:%s' %(request.args.get('saname'),session['user_name']), request.args.get('satype')
+	powa = request.args.get('powa')
+	stat = SA[satype].power(sabench[satag], action=['Set', powa])
+	message = 'power: %s <%s>' %(stat[1], stat[0])
+	return jsonify(message=message)
+
+@bp.route('/sa/get', methods=['GET'])
+def saget():
+	satag, satype = '%s:%s' %(request.args.get('saname'),session['user_name']), request.args.get('satype')
+	message = {}
+	try:
+		start_val, start_unit = si_format(float(SA[satype].linfreq(sabench[satag])[1]['START']),precision=1).split(" ")
+		stop_val, stop_unit = si_format(float(SA[satype].linfreq(sabench[satag])[1]['STOP']),precision=1).split(" ")
+		stop_conversion = si_parse("1%s"%stop_unit) / si_parse("1%s"%start_unit) # equalizing both unit-range:
+		message['start-frequency'] = "%s %sHz" %(start_val,start_unit) # start-frequency
+		message['stop-frequency'] = "%s %sHz" %(float(stop_val)*stop_conversion,start_unit) # stop-frequency
+		message['step-points'] = int(SA[satype].sweep(sabench[satag])[1]['POINTS']) - 1 # step-points in waveform
+		message['power'] = "%.1f dBm" %float(SA[satype].power(sabench[satag])[1]['LEVEL']) # power (fixed unit)
+		message['ifb'] = si_format(float(SA[satype].ifbw(sabench[satag])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb (adjusted by si_prefix)
+		message['s21'], message['s11'] = int('S21' in SA[satype].getrace(sabench[satag])), int('S11' in SA[satype].getrace(sabench[satag]))
+		message['s12'], message['s22'] = int('S12' in SA[satype].getrace(sabench[satag])), int('S22' in SA[satype].getrace(sabench[satag]))
+		message['s43'], message['s33'] = int('S43' in SA[satype].getrace(sabench[satag])), int('S33' in SA[satype].getrace(sabench[satag]))
+		message['s34'], message['s44'] = int('S34' in SA[satype].getrace(sabench[satag])), int('S44' in SA[satype].getrace(sabench[satag]))
+	except:
+		# raise
+		message = dict(status='%s is not connected' %satype)
+	return jsonify(message=message)
+# endregion
+
 # region: BDR
 @bp.route('/bdr')
 def bdr():
