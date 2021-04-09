@@ -41,7 +41,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     '''
 
     # BYPASS:
-    instr['DC'], instr['SG'], instr['DAC'], instr['ADC'] = 'YOKO_2', ['PSGA_1', 'PSGV_1'], 'TKAWG_1', 'ALZDG_1' # bypass instruments UI-selection
+    instr['DC'], instr['SG'], instr['DAC'], instr['ADC'] = 'YOKO_2', ['PSGA_2', 'PSGV_1'], 'TKAWG_1', 'ALZDG_1' # bypass instruments UI-selection
     sample = get_status("MSSN")[session['user_name']]['sample']
     queue = get_status("MSSN")[session['user_name']]['queue']
 

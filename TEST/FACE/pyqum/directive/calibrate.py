@@ -87,7 +87,7 @@ class IQ_Cal:
         self.LO_freq, self.LO_powa, self.IF_freq, self.IF_period, self.IF_scale, self.mixer_module = Conv_freq - IF_freq/1000, LO_powa, IF_freq, IF_period, IF_scale, mixer_module
 
         # PSG
-        self.saga = PSG.Initiate(1, mode="TEST")
+        self.saga = PSG.Initiate(2, mode="TEST")
         PSG.rfoutput(self.saga, action=['Set', 1])
         PSG.frequency(self.saga, action=['Set', "%sGHz" %self.LO_freq])
         PSG.power(self.saga, action=['Set', "%sdBm" %LO_powa])
@@ -366,7 +366,7 @@ class IQ_Cal:
 def test():
     s, t = clocker(agenda="IQ-CAL")
     # ===============================================================
-    C = IQ_Cal(5.12, 18, 70, 100000, 0.25, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    C = IQ_Cal(6.16, 18, 70, 100000, 0.2, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
     C.run()
     # ===============================================================
     clocker(s, t, agenda="IQ-CAL")
