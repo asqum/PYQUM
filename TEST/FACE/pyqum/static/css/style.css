@@ -1,6 +1,9 @@
 /* Google Fonts */
 @import url(https://fonts.googleapis.com/css?family=Open+Sans);
 
+/* Table new line */
+/* td { white-space:pre } */
+
 /* float fix on mobile layout */
 .clearfix:after {
     content: " "; /* Older browser do not support empty content */

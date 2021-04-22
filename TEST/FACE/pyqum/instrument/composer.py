@@ -30,6 +30,12 @@ class pulser:
         self.totalpoints = int(clock_multiples*trunc(self.totaltime / dt / clock_multiples)) + int(bool((self.totaltime / dt)%clock_multiples))*clock_multiples
         self.beatime, self.music = 0, zeros([self.totalpoints])
         self.timeline = linspace(self.dt, self.totaltime, self.totalpoints)
+        # mixing module:
+        try: self.mixer_module = self.mix_params.split("/")[2]
+        except(IndexError): self.mixer_module = "pure"
+        if "i" in self.mixer_module.lower(): self.IF_MHz_rotation = float(self.mixer_module.split('i')[1]) # in MHz
+        elif "q" in self.mixer_module.lower(): self.IF_MHz_rotation = float(self.mixer_module.split('q')[1])
+        else: self.IF_MHz_rotation = 0 # normally baseband without the ability to be calibrated
 
     def song(self):
         '''
@@ -80,9 +86,8 @@ class pulser:
         if self.mix_params.split("/")[0] == 'i': iffunction = "sin"
         elif self.mix_params.split("/")[0] == 'q': iffunction = "cos"
         else: print(Fore.RED + "UNRECOGNIZED CW-TYPE. PLEASE CONSULT HELP.")
-        try: mixer_module = self.mix_params.split("/")[2]
-        except(IndexError): mixer_module = "ideal"
-        ifamp, ifphase, ifoffset = [float(x) for x in get_status("MIXER")[mixer_module].split("/")]
+        
+        ifamp, ifphase, ifoffset = [float(x) for x in get_status("MIXER")[self.mixer_module].split("/")]
         self.music = self.music * ifamp * eval(iffunction + '((self.timeline-pulse_starting_time)*%s/1000*2*pi + %s/180*pi)' %(self.iffreq,ifphase)) + ifoffset
 
         return

@@ -19,16 +19,12 @@ from time import sleep
 
 # Instrument acting on feedback:
 # 1. DAC taking feedback from Optimization loop:
-def Update_DAC(daca, ifreq, IQparams, IF_period, IF_scale, mixer_module):
+def Update_DAC(daca, ifreq, IQparams, IF_period, IF_scale, mixer_module, channels_group):
     '''
     Update DAC on the fly.
     ifreq: IF frequency in MHz
     mixer_module: name given to each modules in a mixer box.
     '''
-
-    if "xy" in mixer_module: channels_group = 3
-    elif "ro" in mixer_module: channels_group = 1
-
     Ioffset, Qoffset, ampratio, Iphase, Qphase = IQparams
 
     if (ampratio > -1.0) and (ampratio < 1.0): 
@@ -47,8 +43,8 @@ def Update_DAC(daca, ifreq, IQparams, IF_period, IF_scale, mixer_module):
     mix_dict["%sq%s" %(mixer_module, ifreq)] = "%s/%s/%s" %(Qamp,Qphase,Qoffset)
     set_status("MIXER", mix_dict)
     # Translate into SCORE:
-    SCORE_DEFINED['CH%s' %(channels_group)] = "ns=%s,mhz=I/%s/%si%s;FLAT/,%s,%s;" %(IF_period,ifreq,mixer_module,ifreq,IF_period,IF_scale)
-    SCORE_DEFINED['CH%s' %(channels_group+1)] = "ns=%s,mhz=Q/%s/%sq%s;FLAT/,%s,%s;" %(IF_period,ifreq,mixer_module,ifreq,IF_period,IF_scale)
+    SCORE_DEFINED['CH%s' %(channels_group)] = "ns=%s,mhz=I/%s/%si%s;FLAT/,%s,%s;" %(IF_period,abs(ifreq),mixer_module,ifreq,IF_period,IF_scale) # IF carrier should always be +ve
+    SCORE_DEFINED['CH%s' %(channels_group+1)] = "ns=%s,mhz=Q/%s/%sq%s;FLAT/,%s,%s;" %(IF_period,abs(ifreq),mixer_module,ifreq,IF_period,IF_scale)
     
     # Update DAC
     for ch in range(2):
@@ -56,9 +52,11 @@ def Update_DAC(daca, ifreq, IQparams, IF_period, IF_scale, mixer_module):
         dt = round(1/float(DAC.clock(daca)[1]['SRATe'])/1e-9, 2)
         pulseq = pulser(dt=dt, clock_multiples=1, score=SCORE_DEFINED['CH%s'%channel])
         pulseq.song()
-        DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, 1) # route marker from RO-channel-I to trigger digitizer
+        DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, 2) # ODD for PIN-SWITCH, EVEN for TRIGGER; RO-TRIGGER: 1: ALZDG, 2: MXA; XY-TRIGGER: 1: MXA, 2: SCOPE
     DAC.ready(daca)
     sleep(0.73) # wait for trigger to complete MXA measurement
+
+    return (SCORE_DEFINED['CH%s' %(channels_group)], SCORE_DEFINED['CH%s' %(channels_group+1)])
 
 # 2. Prepare MXA accordingly:
 def SA_Setup(mxa, center_freq_GHz, fspan_MHz=1e-3, BW_Hz=1000, points=7):
@@ -68,8 +66,23 @@ def SA_Setup(mxa, center_freq_GHz, fspan_MHz=1e-3, BW_Hz=1000, points=7):
     MXA.rbw(mxa, action=['Set','%sHz'%BW_Hz])
     MXA.vbw(mxa, action=['Set','%sHz'%(BW_Hz/10)])
     power = MXA.fpower(mxa, center_freq_GHz)
-    # print("Power at %sGHz is %sdBm" %(center_freq_GHz, power))
+    print("Power at %sGHz is %sdBm" %(center_freq_GHz, power))
     return power
+
+# 3. Obtain the cost function for each cases:
+def Cost(index, mxa, leakage_freq, Conv_freq):
+    '''
+    Calculate COST in terms of suppression or isolation
+    '''
+    if index == 0:
+        isolation = MXA.fpower(mxa, leakage_freq[index]) - MXA.fpower(mxa, Conv_freq)
+    else:
+        isolation = 0
+        for i in range(len(leakage_freq[index])):
+            isolation += MXA.fpower(mxa, leakage_freq[index][i]) - MXA.fpower(mxa, Conv_freq)
+        isolation = isolation / len(leakage_freq[index])
+
+    return isolation
 
 
 class IQ_Cal:
@@ -84,14 +97,26 @@ class IQ_Cal:
         IF_period: IF pulse period in ns
         '''
 
-        self.LO_freq, self.LO_powa, self.IF_freq, self.IF_period, self.IF_scale, self.mixer_module = Conv_freq - IF_freq/1000, LO_powa, IF_freq, IF_period, IF_scale, mixer_module
+        # Carrier LO:
+        self.LO_freq = Conv_freq - IF_freq/1000
+        # Mirror Images: 1st, 2nd, 3rd, 4th
+        self.MR_freq = [Conv_freq - 2 * IF_freq/1000, Conv_freq + IF_freq/1000, Conv_freq - 3 * IF_freq/1000, Conv_freq + 2 * IF_freq/1000]
+        self.Conv_freq, self.leakage_freq = Conv_freq, [self.LO_freq, self.MR_freq]
+        
 
-        # PSG
+        
+        self.LO_powa, self.IF_freq, self.IF_period, self.IF_scale, self.mixer_module = LO_powa, IF_freq, IF_period, IF_scale, mixer_module
+
+        if "xy" in mixer_module: self.channels_group = 3
+        elif "ro" in mixer_module: self.channels_group = 1
+
+        # 1. PSG
         self.saga = PSG.Initiate(2, mode="TEST")
         PSG.rfoutput(self.saga, action=['Set', 1])
         PSG.frequency(self.saga, action=['Set', "%sGHz" %self.LO_freq])
         PSG.power(self.saga, action=['Set', "%sdBm" %LO_powa])
-        # DAC:
+        
+        # 2. DAC:
         self.daca = DAC.Initiate(which=1, mode="TEST")
         DAC.clock(self.daca, action=['Set', 'EFIXed',2.5e9])
         DAC.clear_waveform(self.daca,'all')
@@ -110,9 +135,10 @@ class IQ_Cal:
         DAC.alloff(self.daca, action=['Set',0])
         DAC.ready(self.daca)
         DAC.play(self.daca)
-        # SA
+        
+        # 3. SA
         self.mxa = MXA.Initiate()
-        fspan_MHz = self.IF_freq*3
+        fspan_MHz = abs(self.IF_freq)*7 # SPAN MUST INCLUDE ALL PEAKS
         BW_Hz = fspan_MHz*1e6 / 100
         points = 1000
         SA_Setup(self.mxa, self.LO_freq, fspan_MHz=fspan_MHz, BW_Hz=BW_Hz, points=points)
@@ -141,8 +167,12 @@ class IQ_Cal:
             self.var = copy.copy(self.IQparams[2:])
             self.step = self.STEP[2:]/(2**(logratio+1))
             print(Fore.CYAN + "Every Step for MR leakage minimization: %s" %self.step)
+        
+        # Pre-play Pre-Calibrated Modulation:
+        pulsettings = Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
+        if logratio==1: print(Fore.BLUE + str(pulsettings))
 
-    def nelder_mead(self, no_improve_thr=1e-5, no_improv_break=7, max_iter=0,
+    def nelder_mead(self, no_improve_thr=1e-4, no_improv_break=3, max_iter=0,
                     alpha=1., gamma=2., rho=-0.5, sigma=0.5, time=0):
         '''
         Pure Python/Numpy implementation of the Nelder-Mead algorithm.
@@ -162,14 +192,13 @@ class IQ_Cal:
             return: tuple (best parameter array, best score)
         '''
 
-        index = time%2
+        index = time%2 # only 0 & 1
         dim = len(self.var)
-        Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
-        MXA.preamp(self.mxa, action=['Set','ON'])
-        MXA.attenuation(self.mxa, action=['Set','24dB'])
-        MXA.attenuation_auto(self.mxa, action=['Set','ON'])
-        power = MXA.fpower(self.mxa, self.LO_freq-self.IF_freq/1000*index) - index*MXA.fpower(self.mxa, self.LO_freq+self.IF_freq/1000*index)
-        # print("power: %s" %power)
+        # PENDING: OPTION to PreAmp
+        # MXA.preamp(self.mxa, action=['Set','ON'])
+        # MXA.attenuation(self.mxa, action=['Set','24dB'])
+        # MXA.attenuation_auto(self.mxa, action=['Set','ON'])
+        power = MXA.fpower(self.mxa, self.leakage_freq[index]) - MXA.fpower(self.mxa, self.Conv_freq)
         prev_best = power
         no_improv = 0
         res = [[self.var, prev_best]]
@@ -179,9 +208,8 @@ class IQ_Cal:
             x[i] = x[i] + self.step[i]
             if self.suppression == 'LO': self.IQparams[:2] = x # adjusting IQ offsets
             elif self.suppression == 'MR': self.IQparams[2:] = x # adjusting IQ amplitudes' & phases' balances
-            Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
-            power = MXA.fpower(self.mxa, self.LO_freq-self.IF_freq/1000*index) - index*MXA.fpower(self.mxa, self.LO_freq+self.IF_freq/1000*index)
-            score = power
+            Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
+            score = Cost(index, self.mxa, self.leakage_freq, self.Conv_freq)
             res.append([x, score])
 
         # simplex iter
@@ -206,7 +234,7 @@ class IQ_Cal:
                 no_improv += 1
 
             if no_improv >= no_improv_break:
-                Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
+                Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
                 print("Rest at Optimized IQ Settings: %s" %self.IQparams)
                 return array([self.IQparams, best]) # Optimized parameters
 
@@ -220,10 +248,8 @@ class IQ_Cal:
             xr = x0 + alpha*(x0 - res[-1][0])
             if self.suppression == 'LO': self.IQparams[:2] = xr
             elif self.suppression == 'MR': self.IQparams[2:] = xr
-            Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
-            power = MXA.fpower(self.mxa, self.LO_freq-self.IF_freq/1000*index) - index*MXA.fpower(self.mxa, self.LO_freq+self.IF_freq/1000*index)
-            # print("reflection cost: %s" %power)
-            rscore = power
+            Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
+            rscore = Cost(index, self.mxa, self.leakage_freq, self.Conv_freq)
             if res[0][1] <= rscore < res[-2][1]:
                 del res[-1]
                 res.append([xr, rscore])
@@ -234,10 +260,8 @@ class IQ_Cal:
                 xe = x0 + gamma*(x0 - res[-1][0])
                 if self.suppression == 'LO': self.IQparams[:2] = xe
                 elif self.suppression == 'MR': self.IQparams[2:] = xe
-                Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
-                power = MXA.fpower(self.mxa, self.LO_freq-self.IF_freq/1000*index) - index*MXA.fpower(self.mxa, self.LO_freq+self.IF_freq/1000*index)
-                # print("expansion cost: %s" %power)
-                escore = power
+                Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
+                escore = Cost(index, self.mxa, self.leakage_freq, self.Conv_freq)
                 if escore < rscore:
                     del res[-1]
                     res.append([xe, escore])
@@ -251,10 +275,8 @@ class IQ_Cal:
             xc = x0 + rho*(x0 - res[-1][0])
             if self.suppression == 'LO': self.IQparams[:2] = xc
             elif self.suppression == 'MR': self.IQparams[2:] = xc
-            Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
-            power = MXA.fpower(self.mxa, self.LO_freq-self.IF_freq/1000*index) - index*MXA.fpower(self.mxa, self.LO_freq+self.IF_freq/1000*index)
-            # print("contraction cost: %s" %power)
-            cscore = power
+            Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
+            cscore = Cost(index, self.mxa, self.leakage_freq, self.Conv_freq)
             if cscore < res[-1][1]:
                 del res[-1]
                 res.append([xc, cscore])
@@ -267,21 +289,23 @@ class IQ_Cal:
                 redx = x1 + sigma*(tup[0] - x1)
                 if self.suppression == 'LO': self.IQparams[:2] = redx
                 elif self.suppression == 'MR': self.IQparams[2:] = redx
-                Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
-                power = MXA.fpower(self.mxa, self.LO_freq-self.IF_freq/1000*index) - index*MXA.fpower(self.mxa, self.LO_freq+self.IF_freq/1000*index)
-                print("reduction costs: %s" %power)
-                score = power
+                Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
+                score = Cost(index, self.mxa, self.leakage_freq, self.Conv_freq)
+                print("reduction costs: %s" %score)
                 nres.append([redx, score])
             res = nres
 
     # start optimization:
-    def run(self):
-        self.LO_Initial = MXA.fpower(self.mxa, self.LO_freq)
-        self.Mirror_Initial = MXA.fpower(self.mxa, self.LO_freq-self.IF_freq/1000)
+    def run(self, no_improve_thr=1e-3, no_improv_break=2):
+        print(Back.WHITE + Fore.RED + "Background LO-leakage: %s\nBackground MR-leakage: %s\n" %(MXA.fpower(self.mxa, self.LO_freq), MXA.fpower(self.mxa, self.MR_freq)))
+        input("PROCEED? (y/n) ")
 
         print(Fore.YELLOW + "Initial LO")
-        self.settings()
-        result = self.nelder_mead()
+        self.settings('LO')
+        self.LO_Initial, self.MR_Initial = MXA.fpower(self.mxa, self.LO_freq), MXA.fpower(self.mxa, self.MR_freq[0])
+        print(Back.WHITE + Fore.RED + "Initial LO-leakage: %s\nInitial 1st-MR-leakage: %s\n" %(self.LO_Initial, self.MR_Initial))
+        if input("PROCEED? (y/n) ").lower()=='n': return
+        result = self.nelder_mead(no_improve_thr=no_improve_thr, no_improv_break=no_improv_break)
 
         prev = result[0]
         print(Fore.YELLOW + "PREVIOUS STEPS: %s" %prev)
@@ -300,14 +324,14 @@ class IQ_Cal:
             else: 
                 print(Fore.YELLOW + "Minimizing CARRIER FEEDTHROUGH #%s" %time)
                 self.settings('LO',result[0], logratio = time)
-            result = self.nelder_mead(time = time)
+            result = self.nelder_mead(no_improve_thr=no_improve_thr, no_improv_break=no_improv_break, time=time)
             
             LO.append(MXA.fpower(self.mxa, self.LO_freq)-self.LO_Initial)
             print(Back.BLUE + Fore.WHITE + "LO has been suppressed for %sdB from %sdBm" %(LO[-1],self.LO_Initial))
-            Mirror.append(MXA.fpower(self.mxa, self.LO_freq-self.IF_freq/1000) - self.Mirror_Initial)
-            print(Back.BLUE + Fore.WHITE + "Mirror has been suppressed for %sdB from %sdBm" %(Mirror[-1],self.Mirror_Initial))
+            Mirror.append(MXA.fpower(self.mxa, self.MR_freq) - self.MR_Initial)
+            print(Back.BLUE + Fore.WHITE + "Mirror has been suppressed for %sdB from %sdBm" %(Mirror[-1],self.MR_Initial))
             # Display different stages' optimization results:
-            Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
+            Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
             sleep(7)
             
             T.append(time)
@@ -322,7 +346,7 @@ class IQ_Cal:
                 print("Calibration completed!")
 
                 # display on instruments and save the final optimized parameters:
-                Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module)
+                Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group)
                 
                 print(type(self.IQparams))
                 print("Optimized IQ parameters:\n %s" %result)
@@ -366,11 +390,11 @@ class IQ_Cal:
 def test():
     s, t = clocker(agenda="IQ-CAL")
     # ===============================================================
-    C = IQ_Cal(6.16, 18, 70, 100000, 0.2, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    C = IQ_Cal(5.6, 19, -75, 120000, 0.6, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
     C.run()
     # ===============================================================
     clocker(s, t, agenda="IQ-CAL")
-    ans = input("Press any keys to close AWG, PSG and RSA-5 ")
+    input("Press any keys to close AWG, PSG and RSA-5 ")
     C.close()
 
 # test()

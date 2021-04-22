@@ -281,31 +281,37 @@ def check_timsum(record_time_ns, record_sum, OPT_DMA_Buffer_Size=32):
     '''
     validate record_time_ns & record_sum
     '''
-    bad_times = [8064, 3840] # a list of bad record_time_ns
-    if record_time_ns in bad_times: record_time_ns += 128 # to avoid timsum mismatch
-    board = ats.Board(1,1) # bypass database
+    bad_times = [8064, 3840] # a blacklist of bad record_time_ns
 
-    # CONSTANTS:
-    preTriggerSamples = 0 # No pre-trigger samples in NPT mode
-    boardmemory_samples, bitsPerSample = board.getChannelInfo() # Get board's spec of memory and sample size 
-    MEM_SIZE = int(128 * 1024*1024*1024) # RAM MEMORY SIZE (<160GB)
-    bytesPerBuffer_MAX = min(OPT_DMA_Buffer_Size *1024*1024, boardmemory_samples.value/2) # 16MB / channel # Note: DMA buffer is limited by ~20% of Total On-Board 8G memory, and yet the best performance lies between 16-32MB!
+    while True:
+        board = ats.Board(1,1) # bypass database
+        # CONSTANTS:
+        preTriggerSamples = 0 # No pre-trigger samples in NPT mode
+        boardmemory_samples, bitsPerSample = board.getChannelInfo() # Get board's spec of memory and sample size 
+        MEM_SIZE = int(128 * 1024*1024*1024) # RAM MEMORY SIZE (<160GB)
+        bytesPerBuffer_MAX = min(OPT_DMA_Buffer_Size *1024*1024, boardmemory_samples.value/2) # 16MB / channel # Note: DMA buffer is limited by ~20% of Total On-Board 8G memory, and yet the best performance lies between 16-32MB!
 
-    # SAMPLES:
-    # Configure the number of samples/bytes per record.
-    postTriggerSamples = max(9*128, int(ceil(record_time_ns/128.)*128)) # only accept multiples of 128 samples
-    bytesPerSample = (bitsPerSample.value + 7) // 8
-    samplesPerRecord = preTriggerSamples + postTriggerSamples
-    bytesPerRecord = bytesPerSample * samplesPerRecord
-    # Optimize records/buffer:
-    recordsPerBuffer_MAX = bytesPerBuffer_MAX // bytesPerRecord 
-    recordsPerBuffer = min(record_sum, recordsPerBuffer_MAX) # the number of records per DMA buffer. 
-    recordsPerBuffer = int(4096 * ceil(bytesPerRecord*recordsPerBuffer/4096.)) // bytesPerRecord # force buffer byte-size to be integer of 256 * 16 = 4096, due to 32-bit architecture?
-    # Optimize buffer/acquisition:
-    maxBufferCount = 2*(int(MEM_SIZE//(2*(bytesPerRecord*recordsPerBuffer)))) # force buffer count to be EVEN number, seems faster for allocating
-    buffersPerAcquisition = min(record_sum // recordsPerBuffer, maxBufferCount)
-    
-    del board
+        # SAMPLES:
+        # Configure the number of samples/bytes per record.
+        postTriggerSamples = max(9*128, int(ceil(record_time_ns/128.)*128)) # only accept multiples of 128 samples
+        bytesPerSample = (bitsPerSample.value + 7) // 8
+        samplesPerRecord = preTriggerSamples + postTriggerSamples
+        bytesPerRecord = bytesPerSample * samplesPerRecord
+        # Optimize records/buffer:
+        recordsPerBuffer_MAX = bytesPerBuffer_MAX // bytesPerRecord 
+        recordsPerBuffer = min(record_sum, recordsPerBuffer_MAX) # the number of records per DMA buffer. 
+        recordsPerBuffer = int(4096 * ceil(bytesPerRecord*recordsPerBuffer/4096.)) // bytesPerRecord # force buffer byte-size to be integer of 256 * 16 = 4096, due to 32-bit architecture?
+        # Optimize buffer/acquisition:
+        maxBufferCount = 2*(int(MEM_SIZE//(2*(bytesPerRecord*recordsPerBuffer)))) # force buffer count to be EVEN number, seems faster for allocating
+        buffersPerAcquisition = min(record_sum // recordsPerBuffer, maxBufferCount)
+        del board
+
+        if int(samplesPerRecord) in bad_times: 
+            print(Fore.RED + "avoiding %sns of badly processed record-time!" %int(samplesPerRecord))
+            record_time_ns = int(samplesPerRecord) + 128 # to avoid timsum mismatch
+        else: 
+            break
+
     return (int(samplesPerRecord), int(recordsPerBuffer*buffersPerAcquisition))
 
 def test(board):

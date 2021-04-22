@@ -65,8 +65,8 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     RJSON = loads(perimeter['R-JSON'].replace("'",'"'))
     # 1b. Derived perimeter(s) from above:
     ifperiod = pulser(score=SCORE_TEMPLATE['CH1']).totaltime
-    RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH1']).iffreq # working with RO-MOD (up or down)
-    XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH3']).iffreq # working with XY-MOD (up or down)
+    RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH1']).IF_MHz_rotation # working with RO-MOD (up or down)
+    XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH3']).IF_MHz_rotation # working with XY-MOD (up or down)
     skipoints = 0
     try: 
         if (digital_homodyne=="i_digital_homodyne" or digital_homodyne=="q_digital_homodyne"): skipoints = int(ceil( 1 / abs(RO_Compensate_MHz) * 1000 ))
@@ -201,8 +201,9 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                 channel = str(ch + 1)
                 pulseq = pulser(dt=dt, clock_multiples=1, score=SCORE_DEFINED['CH%s'%channel])
                 pulseq.song()
-                DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, 1) # route marker from RO-channel-EVEN to TRIGGER digitizer
-            print('Waveform is Ready: %s' %str(DAC.ready(daca)))
+                DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, 2) # ODD for PIN-SWITCH, EVEN for TRIGGER; RO-TRIGGER: 1: ALZDG, 2: MXA; XY-TRIGGER: 1: MXA, 2: SCOPE
+            DAC.ready(daca)
+            print('Waveform is Ready!')
                 
             # Basic Readout (Buffer Every-loop):
             # ADC 

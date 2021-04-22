@@ -102,6 +102,19 @@
             <div class="col-10" id='left'><select class='mani data singleqb' id="singleqb-2d-type" type="text"></select></div>
             <div class="col-10" id='left'><select class='mani data singleqb' id="singleqb-2d-colorscale" type="text"></select></div>
             <div class="col-10" id='left'><select class='mani data singleqb' id="singleqb-2d-direction" type="text"></select></div>
+            <!-- SAVE PERIMETER SETTINGS (PULSE SCHEMES) -->
+            <div class="col-20" id='left'><select class='mani scheme singleqb' id="SCHEME_LIST" type="text">
+                <option value='TRANSFER' selected>TRANSFER</option>
+                <option value='FRESP'>FREQ. RESPONSE</option>
+                <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
+                <option value='RABI'>RABI DRIVING</option>
+                <option value='T1'>T1 DELAY</option>
+                <option value='T2'>T2 DELAY</option>
+                <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
+                <option value='QJUMPS'>QUANTUM JUMPS</option>
+            </select></div>
+            <div class="col-10" id='left'><input class="singleqb perimeter-settings save" type="submit" value="SAVE"/></div>
+            
         </div>
 
         <div id="mani-singleqb-announcement"></div>
@@ -216,10 +229,10 @@
                     </div>
                     <div class="row perimeter">
                         <div class="col-48" id='left'>
-                            <textarea class='mani singleqb SCORE-JSON channel-1' type="text" rows="3" cols="13" style="color:blue;"></textarea>
+                            <textarea class='mani singleqb SCORE-JSON channel-1' type="text" rows="3" cols="13" style="color:red;"></textarea>
                         </div>
                         <div class="col-48" id='left'>
-                            <textarea class='mani singleqb SCORE-JSON channel-2' type="text" rows="3" cols="13" style="color:blue;"></textarea>
+                            <textarea class='mani singleqb SCORE-JSON channel-2' type="text" rows="3" cols="13" style="color:red;"></textarea>
                         </div>
                     </div>
                     <div class="row perimeter">
@@ -228,10 +241,10 @@
                     </div>
                     <div class="row perimeter">
                         <div class="col-48" id='left'>
-                            <textarea class='mani singleqb SCORE-JSON channel-3' type="text" rows="3" cols="13" style="color:blue;"></textarea>
+                            <textarea class='mani singleqb SCORE-JSON channel-3' type="text" rows="3" cols="13" style="color:red;"></textarea>
                         </div>
                         <div class="col-48" id='left'>
-                            <textarea class='mani singleqb SCORE-JSON channel-4' type="text" rows="3" cols="13" style="color:blue;"></textarea>
+                            <textarea class='mani singleqb SCORE-JSON channel-4' type="text" rows="3" cols="13" style="color:red;"></textarea>
                         </div>
                     </div>
                     <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
@@ -239,6 +252,21 @@
                         <div class="col-97" id='left'>
                             <textarea class='mani config singleqb' id='R-JSON' type="text" rows="3" cols="13" style="color:blue;">{}</textarea>
                         </div>
+                    </div>
+
+                    <!-- LOAD PERIMETER SETTINGS (PULSE SCHEMES) -->
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><select class='mani config singleqb' id="SCHEME_LIST" type="text">
+                            <option value='TRANSFER' selected>TRANSFER</option>
+                            <option value='FRESP'>FREQ. RESPONSE</option>
+                            <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
+                            <option value='RABI'>RABI DRIVING</option>
+                            <option value='T1'>T1 DELAY</option>
+                            <option value='T2'>T2 DELAY</option>
+                            <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
+                            <option value='QJUMPS'>QUANTUM JUMPS</option>
+                        </select></div>
+                        <div class="col-10" id='left'><input class="singleqb perimeter-settings load" type="submit" value="LOAD"/></div>
                     </div>
 
                 </div>
@@ -265,17 +293,7 @@
                             <div class="col-75" id='left'>
                                 <textarea class='mani singleqb' id="singleqb-ecomment" type="text" rows="3" cols="73">--comment--</textarea>
                             </div>
-                        </div>
-
-                        
-                        <!-- Repeat & Simulate -->
-                        <div class="row">
-                            <div class="col-15" id='left'>
-                                <label class="switch"><input class='mani singleqb' id=simulate type="checkbox">
-                                    <div class="slider smooth"><span class="on">TEST ETA</span><span class="off">LOGGED</span></div>
-                                </label>
-                            </div>
-                        </div>
+                        </div>                      
 
                         <!-- RUN -->
                         <div class="row">

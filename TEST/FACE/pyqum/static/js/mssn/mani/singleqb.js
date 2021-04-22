@@ -11,6 +11,8 @@ $(document).ready(function(){
     $('input.singleqb.setchannels.pulse-height').parent().hide();
     $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-height').val() + '.pulse-height').parent().show();
     $('input.singleqb.setchannels.check').hide();
+    $('select.mani.scheme.singleqb#SCHEME_LIST').hide();
+    $('input.singleqb.perimeter-settings.save').hide();
 });
 
 // Global variables:
@@ -65,7 +67,8 @@ function listimes_singleqb() {
         $('input.mani#singleqb-run').hide(); // RUN
         // Update T6 Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
-            $("textarea.mani.singleqb#singleqb-ecomment").val(singleqbcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
+            window.mxcmk = data.mxcmk;
+            $("textarea.mani.singleqb#singleqb-ecomment").val(singleqbcomment + "\nUpdate: T6=" + mxcmk + "mK");
         });
 
     } else if (wday == 'm') {
@@ -125,11 +128,11 @@ function accessdata_singleqb() {
                 $.each(data.pdata[cparam], function(i,v){ $('select.mani.singleqb#' + cparam).append($('<option>', { text: v, value: i })); });
             };
 
-            // 2.3 Loading parameter-range into inputs for new run:
+            // 2.3 Loading parameter-range into inputs for NEW RUN:
             $('input.mani.singleqb#' + cparam).val(data.corder[cparam]);
         });
 
-        // 3. load edittable comment:
+        // 3. load edittable comment for NEW RUN:
         singleqbcomment = data.comment;
         // 4. load narrated comment:
         $('textarea.mani.singleqb.comment').text(data.comment);
@@ -140,9 +143,11 @@ function accessdata_singleqb() {
         $('.data-eta.singleqb').text("Job-" + data.JOBID + ": " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
 
-        // 6. Loading Perimeters:
+        // 6. Loading Perimeters for NEW RUN:
         $.each(singleqb_Perimeters, function(i,perimeter) { $('.mani.config.singleqb#' + perimeter).val(data.perimeter[perimeter]); });
         $.each(Array(4), function(i,v){ $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val(data.perimeter['SCORE-JSON']["CH" + String(i+1)]); });
+        $('select.mani.scheme.singleqb#SCHEME_LIST').show();
+        $('input.singleqb.perimeter-settings.save').show();
 
         // 7. PERIMETER Statement:
         var sheet = '';
@@ -601,6 +606,36 @@ $('input.singleqb.setchannels.check').bind('click', function() {
 
     return false;
 });
+// 3a. Save the past perimeter settings:
+$('input.singleqb.perimeter-settings.save').on('touchend click', function(event) {
+    eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/perisettings/save', {
+        scheme_name: $('select.mani.scheme.singleqb#SCHEME_LIST').val(),
+    }, function (data) {
+        console.log(data.scheme_name + " has been saved.");
+        $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Perimeter history has been saved in " + data.scheme_name));
+    });
+    return false;
+});
+// 3b. Load the past perimeter settings:
+$('input.singleqb.perimeter-settings.load').on('touchend click', function(event) {
+    eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
+    var scheme_name = $('select.mani.config.singleqb#SCHEME_LIST').val();
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/perisettings/load', {
+        scheme_name: scheme_name,
+    }, function (data) {
+        $('div.singleqb.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text(scheme_name + " " + data.status));
+        console.log(scheme_name + " " + data.status);
+        // """6. Loading Perimeters for NEW RUN:"""
+        $.each(singleqb_Perimeters, function(i,perimeter) { $('.mani.config.singleqb#' + perimeter).val(data.perimeter[perimeter]); });
+        $.each(Array(4), function(i,v){ $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val(data.perimeter['SCORE-JSON']["CH" + String(i+1)]); });
+        // Pre-scribe comment / reference accordingly:
+        $("textarea.mani.singleqb#singleqb-ecomment").val("Cavity/Qubit-?: CHECK/SCOUT/FIND/GET WHAT?" + "\n[RO -??dB EXT, IQ-CAL: XY(0) + RO(0), SPAN: ??, RES: ??, ...]"  + "\n" + scheme_name + " from " + data.perimeter["jobid"] + "\nT6=" + mxcmk + "mK");
+        $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text(scheme_name + " " + data.status + data.perimeter["jobid"]));
+    });
+    return false;
+});
+    
 
 // show Single-QB's daylist
 $(function() {
@@ -652,7 +687,7 @@ $(function () {
     return false;
 });
 
-// click to run:
+// click to RUN:
 $('input.mani#singleqb-run').on('touchend click', function(event) {
     eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
@@ -674,12 +709,10 @@ $('input.mani#singleqb-run').on('touchend click', function(event) {
     console.log("C-Structure: " + CORDER['C-Structure']);
 
     var comment = JSON.stringify($('textarea.mani.singleqb#singleqb-ecomment').val());
-    var simulate = $('input.mani.singleqb#simulate').is(':checked')?1:0; //use css to respond to click / touch
-    console.log("simulate: " + simulate);
     
     // START RUNNING
     $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/new', {
-        wday: wday, PERIMETER: JSON.stringify(PERIMETER), CORDER: JSON.stringify(CORDER), comment: comment, simulate: simulate
+        wday: wday, PERIMETER: JSON.stringify(PERIMETER), CORDER: JSON.stringify(CORDER), comment: comment
     }, function (data) {       
         console.log("Status: " + data.status);
     });

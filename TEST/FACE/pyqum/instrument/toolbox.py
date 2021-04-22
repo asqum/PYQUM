@@ -61,7 +61,7 @@ class waveform:
         # defaulting to lower case
         self.command = command.lower()
 
-        # special treatment to inner-repeat command:
+        # special treatment to inner-repeat command: (to extract 'inner_repeat' for cwsweep averaging)
         self.inner_repeat = 1
         if ' r ' in self.command:
             # inner_repeat: the repeat-counts indicated after the ' r ', determining how every .data's element will be repeated

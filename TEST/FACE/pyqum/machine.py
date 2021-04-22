@@ -264,7 +264,7 @@ def tkawgsetchannels():
 	pulseq = pulser(dt=dt, clock_multiples=1, score=score)
 	pulseq.song()
 	TKAWG.prepare_DAC(tkawgbench[tkawgtag], Channel, pulseq.totalpoints, maxlevel)
-	TKAWG.compose_DAC(tkawgbench[tkawgtag], Channel, pulseq.music, pulseq.envelope, 1) # PENDING: MARKER OPTIONS UI
+	TKAWG.compose_DAC(tkawgbench[tkawgtag], Channel, pulseq.music, pulseq.envelope, 2) # PENDING: MARKER OPTIONS UI
 	return jsonify(music=list(pulseq.music), timeline=list(pulseq.timeline))
 @bp.route('/tkawg/output/channels', methods=['GET'])
 def tkawgoutputchannels():
@@ -463,7 +463,7 @@ def naconnect():
 		'''get in if not currently initiated'''
 		try:
 			NA[natype] = im("pyqum.instrument.benchtop.%s" %natype)
-			nabench[natag] = NA[natype].Initiate(which=nalabel)
+			nabench[natag] = NA[natype].Initiate(reset=False, which=nalabel)
 			message = "%s is successfully initiated by %s" %(naname,nauser)
 			status = "connected"
 		except:

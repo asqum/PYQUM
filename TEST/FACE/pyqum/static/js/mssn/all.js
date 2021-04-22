@@ -34,8 +34,13 @@ function qumqueue() {
                 var jobidlink = '<div class="buttons"><a class="all-mssn-inspect btn yellow" id="jid_' + val.id + '">' + val.id + ' </a></div>';
                 var link = '</td><td><div class="col-100" id="left"><button class="all-queue-out push_button w-95 blue" id="jid_' + val.id + '_' + qsystem + '">' + 'QOUT</button></div></td>';
             };
-            $('table.mssn-QUEUE tbody.all.mssn-queue-update').append('<tr><td>' + jobidlink + '</td><td>' + val.task + '</td><td>' + val.startime + 
-                                                    '</td><td>' + val.username + '</td><td>' + val.instrument + '</td><td>' + val.comment +  
+
+            var date = new Date(val.startime);
+            Startime = date.toLocaleString("en-GB"); // British English uses day-month-year order and 24-hour time without AM/PM
+            var comments = new String(val.comment);
+            Comments = comments.replaceAll("\\n","; ");
+            $('table.mssn-QUEUE tbody.all.mssn-queue-update').append('<tr><td>' + jobidlink + '</td><td>' + val.task + '</td><td>' + Startime + 
+                                                    '</td><td>' + val.username + '</td><td>' + val.instrument + '</td><td>' + Comments +  
                                                     link + '</tr>');
         });
     });
@@ -78,9 +83,17 @@ function qumjob() {
                     var datastatus = '<div class="buttons"><a class="all-mssn-access btn blue" id="jid_' + val.id + '" value="abc">' + 'ACCESS' + '</a></div>';
                 };
 
-                $('table.mssn-JOB tbody.all.mssn-job-update').append('<tr><td>' + val.id + '</td><td>' + datastatus + '</td><td>' + val.task + '</td><td>' + val.startime +
-                '</td><td>' + val.username + '</td><td>' + val.instrument + actionbutton + '</td><td>' + String(val.comment.replace('\\n',', ')) + '</td>' + '</tr>');
-                console.log("Comment: " + val.comment.replace("\\n",", "));
+                // Convert timestamp to local time:
+                var date = new Date(val.startime);
+                Startime = date.toLocaleString("en-GB"); // British English uses day-month-year order and 24-hour time without AM/PM
+                // Startime = date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+                var comments = new String(val.comment);
+                Comments = comments.replaceAll("\\n", "; ");
+
+                // Filling the rows:
+                $('table.mssn-JOB tbody.all.mssn-job-update').append('<tr><td>' + val.id + '</td><td>' + datastatus + '</td><td>' + val.task + '</td><td>' + Startime +
+                '</td><td>' + val.username + '</td><td>' + val.instrument + actionbutton + '</td><td>' + Comments + '</td>' + '</tr>');
+                // console.log("Comment: " + val.comment.replace(/(\r\n|\n|\r)/gm,", "));
             };
         });
         $( "i.all-mssn-queue.fa-cog" ).remove(); //clear previous

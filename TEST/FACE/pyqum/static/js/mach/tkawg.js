@@ -332,9 +332,7 @@ $('button.tkawg#tkawg-alloff').bind('click', function () {
         tkawglabel: tkawglabel
     }, function (data) {
         console.log("All-Off: " + data.message);
-        if (data.message[0] == "success"){
-            $( "i.tkawg.fa-cog" ).remove();
-        } else {$('button.tkawg').addClass('error');}         
+        $( "i.tkawg.fa-cog" ).remove();
     })
     .done(function(data) {
         $('button.tkawg.channels[name="channel-' + Channel + '"]').trigger('click');

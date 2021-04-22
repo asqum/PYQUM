@@ -173,16 +173,21 @@ def create_markers(bench,name,channel,marker,data,startindex=0):
         Bit 7 for marker 1 and bit 6 for marker 2, bit 5 for marker 3, and bit 4 for marker 4.
         You will have to use bit masks to obtain the actual value. 
         When used on a waveform with n data points, you get only n bytes, each byte having values for both markers. 
+        data: concatenated array of all activated markers.
     '''
     try: 
         # Adjust DAC resolution to accomadate more markers:
         sourceresolution(bench, channel, action=['Set',16-int(marker)])
-        # Masking marker: (PENDING: multiple markers)
-        data = array(data) * 2**(8-int(marker)) # Bit 7 for marker 1, bit 6 for marker 2, bit 5 for marker 3, bit 4 for marker 4.
+        # Masking marker: (for multiple markers)
+        DATA = zeros(int(len(data)/marker)) # masked marker array
+        data = array(data).reshape(marker,int(len(data)/marker))
+        for mkr in range(marker):
+            # print(Fore.GREEN + "Byte-Shift data of %s into DATA of %s." %(str(data[mkr].shape), str(DATA.shape)))
+            DATA += array(data[mkr]) * 2**(8-int(mkr+1)) # Bit 7 for marker 1, bit 6 for marker 2, bit 5 for marker 3, bit 4 for marker 4.
         # Prepare the data block from data array:
-        markerbytes = arr.array('B', data.astype('uint8')).tobytes()  # use 8-bit or 1-Byte integer numbers
+        markerbytes = arr.array('B', DATA.astype('uint8')).tobytes()  # use 8-bit or 1-Byte integer numbers
         # Assemble SCPI command:
-        bytesize = len(markerbytes)
+        bytesize = len(markerbytes) # must be the same length with waveform
         command = ('WLIST:WAVEFORM:MARKER:DATA "{}",{},{},'.format(name,startindex,bytesize)).encode('UTF-8')
         header = ('#' + str(len(str(bytesize))) + str(bytesize)).encode('UTF-8')
         # Send to machine:
@@ -260,7 +265,7 @@ def compose_DAC(bench, channel, pulsedata, envelope=[], marker=0):
         else: # ODD-Channel: for DRIVING PIN-SWITCH:
             if len(envelope): 
                 mkr_array = ceil(envelope)
-        create_markers(bench, "Waveform-%s"%channel, channel, marker, mkr_array)
+        create_markers(bench, "Waveform-%s"%channel, channel, marker, array(list(mkr_array)*marker))
     else:
         sourceresolution(bench, channel, action=['Set',16])
     assign_waveform(bench, "Waveform-%s"%channel, channel)

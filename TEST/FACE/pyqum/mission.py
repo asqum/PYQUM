@@ -695,7 +695,7 @@ def char_cwsweep_1ddata():
         else: xsweep = range(session['c_cwsweep_address'][1]+1) # can only access until progress resume-point
 
         selected_Ir, selected_Qr = [], []
-        for i_prepeat in range(ipowa_repeat):
+        for i_prepeat in range(ipowa_repeat): # PENDING: VECTORIZE the for-loop!
             r_powa = int(ipowa) * ipowa_repeat + i_prepeat # from the beginning position of repeating power
             selected_Ir += [selectedata[gotocdata([int(irepeat), x, int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa], session['c_cwsweep_structure'])] for x in xsweep]
             selected_Qr += [selectedata[gotocdata([int(irepeat), x, int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*r_powa+1], session['c_cwsweep_structure'])] for x in xsweep]
@@ -1326,11 +1326,10 @@ def mani_singleqb_new():
         PERIMETER = json.loads(request.args.get('PERIMETER'))
         CORDER = json.loads(request.args.get('CORDER'))
         comment = request.args.get('comment').replace("\"","")
-        simulate = bool(int(request.args.get('simulate')))
         
         TOKEN = 'TOKEN%s' %random()
         Run_singleqb[TOKEN] = Single_Qubit(session['people'], perimeter=PERIMETER, corder=CORDER, comment=comment, tag='', dayindex=wday)
-        return jsonify(testeach=simulate, status=Run_singleqb[TOKEN].status)
+        return jsonify(status=Run_singleqb[TOKEN].status)
     else: return show("PLEASE CHECK YOUR RUN-CLEARANCE WITH ABC")
 
 # DATA DOWNLOAD
@@ -1402,6 +1401,23 @@ def mani_singleqb_access():
     return jsonify(JOBID=JOBID,
         data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, comment=comment, 
         pdata=pdata, SQ_CParameters=SQ_CParameters[session['user_name']])
+# save perimeter settings for different measurements (Fresp, Cwsweep, Rabi, T1, T2, Wigner, Fidelity, QST etc)
+@bp.route('/mani/singleqb/perisettings/save', methods=['GET'])
+def mani_singleqb_perisettings_save():
+    scheme_name = request.args.get('scheme_name')
+    presetting = { '%s'%scheme_name : M_singleqb[session['user_name']].perimeter }
+    try:
+        if scheme_name=="TRANSFER" or int(g.user['measurement'])>2: set_status('SCHEME', presetting)
+        else: scheme_name = "Nothing"
+    except(ValueError): scheme_name = "NULL" # for Those with No measurement clearance
+    return jsonify(scheme_name=scheme_name)
+# load perimeter settings for different measurements (Fresp, Cwsweep, Rabi, T1, T2, Wigner, Fidelity, QST etc)
+@bp.route('/mani/singleqb/perisettings/load', methods=['GET'])
+def mani_singleqb_perisettings_load():
+    scheme_name = request.args.get('scheme_name')
+    try: perimeter, status = get_status('SCHEME')[scheme_name], 'Loaded from '
+    except: perimeter, status = {}, 'Not Found.'
+    return jsonify(perimeter=perimeter, status=status)
 
 # DATA MANAGEMENT
 # Resume the unfinished measurement
