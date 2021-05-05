@@ -169,6 +169,20 @@
                         <div class="col-10" id='left'><input class="singleqb setchannels insert" type="submit" value="INSERT"/></div>
                         <div class="col-10" id='left'><input class="singleqb setchannels back" type="submit" value="BACK"/></div>
                     </div>
+                    <!-- LOAD PERIMETER SETTINGS (PULSE SCHEMES) -->
+                    <div class="row perimeter">
+                        <div class="col-10" id='left'><input class="loaded singleqb perimeter-settings load" type="submit" value="LOAD"/></div>
+                        <div class="col-20" id='left'><select class='mani config singleqb' id="SCHEME_LIST" type="text">
+                            <option value='TRANSFER' selected>TRANSFER</option>
+                            <option value='FRESP'>FREQ. RESPONSE</option>
+                            <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
+                            <option value='RABI'>RABI DRIVING</option>
+                            <option value='T1'>T1 DELAY</option>
+                            <option value='T2'>T2 DELAY</option>
+                            <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
+                            <option value='QJUMPS'>QUANTUM JUMPS</option>
+                        </select></div>
+                    </div>
                 </div>
 
                 <div class="modal-header">
@@ -254,21 +268,6 @@
                         </div>
                     </div>
 
-                    <!-- LOAD PERIMETER SETTINGS (PULSE SCHEMES) -->
-                    <div class="row perimeter">
-                        <div class="col-16" id='left'><select class='mani config singleqb' id="SCHEME_LIST" type="text">
-                            <option value='TRANSFER' selected>TRANSFER</option>
-                            <option value='FRESP'>FREQ. RESPONSE</option>
-                            <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
-                            <option value='RABI'>RABI DRIVING</option>
-                            <option value='T1'>T1 DELAY</option>
-                            <option value='T2'>T2 DELAY</option>
-                            <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
-                            <option value='QJUMPS'>QUANTUM JUMPS</option>
-                        </select></div>
-                        <div class="col-10" id='left'><input class="singleqb perimeter-settings load" type="submit" value="LOAD"/></div>
-                    </div>
-
                 </div>
                     
                 <div class="modal-body">
@@ -300,6 +299,10 @@
                             <div class="col-15" id='left'><input class="singleqb setchannels check" type="submit" value="CHECK-RJSON"/></div> 
                             <div class="col-15" id='left'><input class="mani modal-toggle new singleqb" id="singleqb-run"  type="submit" value="RUN"/></div>
                             <div class="col-15" id='left'><input class="mani modal-toggle new singleqb" id="singleqb-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" id='left'><label class='parameter'>Queue system: </label></div>
+                            <div class="col-49" id='left'><div class='singleqb queue-system'></div></div>
                         </div>
 
                     </div>

@@ -90,10 +90,10 @@ def sweep(bench, wave, pulsewidth=0.035, sweeprate=0.0007):
             print("Error setting V")
     return Vdata, SweepTime
 
-def close(bench, reset=False, which=1):
+def close(bench, reset=False, which=1, sweeprate=0.0007):
     if reset:
         previous(bench, True) # log last-applied voltage
-        sweep(bench, "0to0*0") # return to zero
+        sweep(bench, "0to0*0", sweeprate=sweeprate) # return to zero
         output(bench, 0) # off output
         set_status(mdlname, dict(config='return to zero-off'))
     else: set_status(mdlname, dict(config='previous'))

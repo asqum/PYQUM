@@ -7,8 +7,12 @@ $(document).ready(function(){
     $('body.mssn div.tab button.tablinks#ALL-tab').show()
     $('body.mssn div.tab button.tablinks#' + qsystem + '-tab').show()
     $('div.all.clock').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
-    qumqueue();
+    window.active_samples = [];
+    $.getJSON('/mach/bdr/samples/queues', { }, function (data) { $.each(data.bdrqlist, function (i,val) { active_samples.push(val.samplename); }); });
+    
     qumjob();
+    setTimeout(() => {qumqueue();}, 371);
+    qumjob(); // this is to avoid overlapping with qum-queue
     
 });
 
@@ -27,7 +31,7 @@ function qumqueue() {
         $.each(data.QUEUE, function(i,val){
             queuejobid.push(val.id)
             // QUEUE_userlist.push(val.username);
-            if (i==0) { // only the first in line has the data under construction:
+            if (i==0 && access_active_job==true) { // only the first in line has the data under construction:
                 var jobidlink = '<div class="buttons"><a class="all-mssn-access btn green" id="jid_' + val.id + '">' + val.id + ' <i class="fa fa-cog fa-spin fa-3x fa-fw" style="font-size:15px;color:green;"></i></a></div>';
                 var link = '</td><td><div class="col-100" id="left"><button class="all-queue-out push_button w-95 red" id="jid_' + val.id + '_' + qsystem + '">' + 'STOP</button></div></td>';
             } else {
@@ -54,6 +58,9 @@ function qumjob() {
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/job', {
         queue: qsystem,
     }, function (data) {
+        window.access_active_job = active_samples.includes(data.samplename); // PENDING: ALSO CHECK IF THERE'S ANY ACTIVE CALIBRATION(S)
+        console.log("User may access active job: " + access_active_job);
+
         $('div.row.all-job-by-sample').empty().append('<div class="col-15" id="left"><label class="parameter">ALL JOB WITH SAMPLE: </label></div>' + 
                                                         '<div class="col-30" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
         console.log("user: " + data.loginuser);
@@ -131,7 +138,7 @@ $(document).on('click', 'table tbody tr td button.all-queue-out', function() { /
     })
     return false;
 });
-// IF ACCESS button is pressed inside JOB-TABLE:
+// IF ACCESS button is pressed inside JOB-TABLE (or currently active JOB inside QUEUE-TABLE):
 $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-access', function() {
     var jobid = $(this).attr('id').split('_')[1];
     console.log('jobid: ' + jobid);
@@ -165,13 +172,15 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-requeue', func
     });
     return false;
 });
-// TO INSPECT PARAMETER & PERIMETER OF JOB IN QUEUE:
+// TO SIMPLE-INSPECT PARAMETER & PERIMETER OF JOB IN QUEUE: (PENDING)
 $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-inspect.yellow', function() {
+    $('h3.all-mssn-warning').text("CHECK IF YOUR CURRENTLY ACCESSED SAMPLE IS ACTIVE OR THERE IS SOME ACTIVE CALIBRATION(S) GOING ON");
     var jobid = $(this).attr('id').split('_')[1];
     console.log('jobid: ' + jobid);
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/inspect/job', {
 
     }, function(data) {
+        // ONLY DISPLAY DIRECTLY FROM JOB-TABLE W/O ACCESSING INTO STORED DATA
 
 
     });

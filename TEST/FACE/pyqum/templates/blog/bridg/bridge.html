@@ -1,0 +1,43 @@
+{% extends 'base.html' %} 
+{% block title %}Bridge the AI{% endblock %}
+
+{% block head %}
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/brdg.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/progress.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='js/brdg/bridge.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+<body class="brdg" style="overflow-y:hidden">
+
+<script>
+    //compensating what base.js cannot do
+    $('.navbar button').removeClass('active');
+    $('.navbar button.bridge').addClass('active');
+    $(function(){
+      $("div#iqcal").load("{{ url_for('bridge.iqcal') }}");
+      
+    });
+</script> 
+
+{% if g.user %}
+<div class="tab">
+  <!-- <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button> -->
+
+  <!-- IQ Calibration -->
+  <button class="tablinks" id="iqcal-tab" onclick="openTab(event, 'iqcal')">IQCAL</button>
+  
+</div>
+
+<!-- <div id="all" class="tabcontent"></div> -->
+<div id="iqcal" class="tabcontent"></div>
+
+{% endif %}
+
+</body>
+
+{% endblock %}

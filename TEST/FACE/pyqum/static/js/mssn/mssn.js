@@ -1,7 +1,7 @@
 //when page is loading:
 $(document).ready(function(){
     // $('.mssn div#STATE').show();
-    $('button#ALL-tab').toggleClass('active');
+    $('button#ALL-tab').toggleClass('active'); // default show-up of 'ALL' content is set by mssn.css
 });
 
 function mssnencrpytonian() {

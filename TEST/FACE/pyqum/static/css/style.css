@@ -171,21 +171,30 @@ input[type=submit] {
     width: 95%;
     margin: 2.5px 0;
 }
+/* Sample */
 input[type=submit].loaded {
     background-color: rgb(0, 255, 42);
     color: rgb(37, 3, 68);
     font-weight: 53;
 }
+/* Owner */
 input[type=submit].people {
     background-color: rgb(0, 162, 255);
     color: rgb(68, 45, 3);
     font-weight: 53;
 }
+/* JOBID */
 input[type=submit].notification {
     background-color: rgb(6, 15, 8);
     color: rgb(227, 212, 241);
     font-weight: 53;
     text-align: left;
+}
+input[type=submit].loaded:hover {
+    background-color: #dfeb3d;
+}
+input[type=submit].people:hover {
+    background-color: #27bdc2;
 }
 input[type=submit].notification:hover {
     background-color: #181f8a;

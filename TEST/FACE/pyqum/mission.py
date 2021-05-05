@@ -72,12 +72,10 @@ def worker(y_count,x_count,char_name="sqepulse"):
 def show(status="Mission started"):
     # Filter out Stranger:
     with suppress(KeyError):
-        # PENDING: Build Database for visitors
         print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] from %s "%(session['user_name'], session['user_id'], request.remote_addr) + Fore.LIGHTBLUE_EX + "is trying to access MISSION" )
-        # Check User's Clearances:
-        # if not g.user['instrument'] or not g.user['measurement'] or not g.user['analysis']:
-        if not g.user['analysis']: # Last Entrance
-            print(Fore.RED + "Please check %s's Clearances for analysis!"%session['user_name'])
+        # Check User's Clearances: (Analysis is merged into measurement level-1)
+        if not g.user['measurement']: # TOTAL NULL
+            print(Fore.RED + "Please check %s's Clearances for measurement!"%session['user_name'])
             abort(404)
         else: print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] "%(session['user_name'], session['user_id']) + Fore.LIGHTBLUE_EX + "has entered MISSION" )
         return render_template("blog/msson/mission.html", status=status)
@@ -90,14 +88,14 @@ def all():
     global systemlist
     systemlist = [x['system'] for x in get_db().execute('SELECT system FROM queue').fetchall()]
     if g.user:
-        if g.user['measurement']:
+        if int(g.user['measurement']): # 0: Preview, 1: Analysis, 2: Running, 3: SOP
             try: 
                 queue = get_status("MSSN")[session['user_name']]['queue']
             except: 
                 queue = '' # For first-time user to pick a queue to begin with
             print(Fore.GREEN + "Queue '%s' was selected previously" %queue)
         else:
-            print(Fore.RED + "User %s has no Measurement Clearance" %g.user['username'])
+            print(Fore.RED + "User %s has ZERO Measurement Clearance" %g.user['username'])
             abort(404)
     else:
         return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
@@ -149,7 +147,7 @@ def all_queue():
     # TO QUEUE-IN, the assigned sample for that queue-system (by admin) MUST be aligned with the sample chosen (MEAL):
     try: asample = get_db().execute( '''SELECT samplename FROM queue WHERE system = ?''', (queue,) ).fetchone()['samplename'] # assigned sample by admin
     except(TypeError): asample = ''
-    session['run_clearance'] = bool( asample==get_status("MSSN")[session['user_name']]['sample'] )
+    session['run_clearance'] = bool( asample==get_status("MSSN")[session['user_name']]['sample'] and int(g.user['measurement'])>1 )
 
     # Security:
     try: print(Fore.YELLOW + "CHECKING OUT QUEUE for %s: %s" %(queue,g.Queue[queue]))

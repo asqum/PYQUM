@@ -410,6 +410,7 @@ $('.modal-toggle.data-reset.sqepulse').on('click', function(e) {
 // show CW-Sweep's daylist
 $(function() {
     $('button.char#sqepulse').bind('click', function() {
+        // for Preview only
         $('div.charcontent').hide();
         $('div.charcontent#sqepulse').show();
         $('button.char').removeClass('selected');

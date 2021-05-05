@@ -1,6 +1,6 @@
 //when page is loading:
 $(document).ready(function(){
-    $('button#all-tab').toggleClass('active'); // default show-up of 'all' content is set by mach.css
+    $('button#iqcal-tab').toggleClass('active'); // default show-up of 'iqcal' content is set by brdg.css
 });
 
 function openTab(evt, Name) {

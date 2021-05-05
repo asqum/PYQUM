@@ -177,7 +177,9 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                     # DC
                     if structure[j] == 'Flux-Bias':
                         if "opt" not in fluxbias.data: # check if it is in optional-state
-                            DC.sweep(dcbench, str(fluxbias.data[caddress[j]]), pulsewidth=77*1e-3, sweeprate=0.0007) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
+                            if biasmode: sweeprate = 0.000713  # A-mode A/s
+                            else:  sweeprate = 1.37  # V-mode V/s (~10kOhm resistance)
+                            DC.sweep(dcbench, str(fluxbias.data[caddress[j]]), pulsewidth=77*1e-3, sweeprate=sweeprate)
 
                     # SG
                     elif structure[j] == 'XY-LO-Frequency':
@@ -254,7 +256,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
             SG0.close(sogo, SG_label[0], False)
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.output(dcbench, 0)
-            DC.close(dcbench, True, DC_label)
+            DC.close(dcbench, True, DC_label, sweeprate=sweeprate)
         if JOBID in g.jobidlist[queue]:
             qout(queue, g.jobidlist[queue][0],g.user['username'])
         break

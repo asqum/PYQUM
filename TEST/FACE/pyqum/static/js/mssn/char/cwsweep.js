@@ -351,6 +351,7 @@ $('.modal-toggle.data-reset.cwsweep').on('click', function(e) {
 // show CW-Sweep's daylist
 $(function() {
     $('button.char#cwsweep').bind('click', function() {
+        $('div.cwsweep.queue-system').empty().append($('<h4 style="color: blue;"></h4>').text(qsystem));
         $('div.charcontent').hide();
         $('div.charcontent#cwsweep').show();
         $('button.char').removeClass('selected');

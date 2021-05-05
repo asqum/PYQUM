@@ -24,10 +24,11 @@ $(document).ready(function(){
         // Thus we embedded the script in mission.html
     };
 
-    if (window.location.pathname == "/script"){
-        console.log(window.location.pathname);
-        $('.navbar button').removeClass('active');
-        $('.navbar button.bridge').addClass('active'); 
+    if (window.location.pathname == "/bridge"){
+        // can't find path for this case
+        console.log("Path:");
+        console.log(window.location.pathname); 
+        // Thus we embedded the script in bridge.html
     };
 
     if (window.location.pathname == "/gd/guide"){
@@ -83,7 +84,7 @@ $(function () {
 
 $(function () {
     $("button.bridge").bind('click', function(){
-        window.open("/script", '_self');   
+        window.open("/bridge", '_self');   
         return false;
     });
 });

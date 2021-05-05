@@ -640,6 +640,7 @@ $('input.singleqb.perimeter-settings.load').on('touchend click', function(event)
 // show Single-QB's daylist
 $(function() {
     $('button.mani#singleqb').bind('click', function() {
+        $('div.singleqb.queue-system').empty().append($('<h4 style="color: blue;"></h4>').text(qsystem));
         $('div.manicontent').hide();
         $('div.manicontent#singleqb').show();
         $('button.mani').removeClass('selected');
