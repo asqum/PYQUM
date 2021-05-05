@@ -65,7 +65,8 @@ def set_voltage(inst, voltage, channel=1):
     inst.recv(1024).decode()
 
     # 1. select range:
-    range_order = int((ceil(log10(voltage)) + abs(ceil(log10(voltage)))) / 2)
+    try: range_order = int((ceil(log10(voltage)) + abs(ceil(log10(voltage)))) / 2)
+    except(ValueError): range_order = 0 # to accommodate zero-voltage
     if range_order > 2: 
         print(Fore.RED + "voltage setting out of range")
         inst.send(b'!\n')
@@ -101,11 +102,10 @@ def close(inst):
 
 # =============================================================================================================================================================
 # TEST ZONE:
-s = Initiate(1, 'TEST')
-v_array = [1e-6, 3e-5, 6e-4, 7e-3, 8e-2, 2e-1, 1, 6, 10, 18, 37, 58, 77, 100, 101, 150]
+v_array = [1e-6, 3e-5, 6e-4, 7e-3, 8e-2, 2e-1, 1, 6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
 for v in v_array:
+    s = Initiate(1, 'TEST')
     print(set_voltage(s, v, 1))
     print(get_voltage(s, 1))
-    sleep(3)
-
-s.close()
+    # sleep(3)
+    s.close()
