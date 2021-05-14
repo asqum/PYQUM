@@ -5,7 +5,7 @@ init(autoreset=True) #to convert termcolor to wins color
 
 from copy import copy
 from math import trunc
-from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil
+from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip
 from pyqum.instrument.logger import get_status
 
 class pulser:
@@ -89,6 +89,9 @@ class pulser:
         
         ifamp, ifphase, ifoffset = [float(x) for x in get_status("MIXER")[self.mixer_module].split("/")]
         self.music = self.music * ifamp * eval(iffunction + '((self.timeline-pulse_starting_time)*%s/1000*2*pi + %s/180*pi)' %(self.iffreq,ifphase)) + ifoffset
+
+        # Confine music between -1 and 1:
+        self.music = clip(self.music, -1.0, 1.0, out=self.music)
 
         return
 

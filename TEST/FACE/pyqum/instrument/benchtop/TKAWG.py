@@ -31,7 +31,7 @@ def Initiate(which, mode='DATABASE'):
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'), which)
         print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
-        bench = "disconnected"
+        # bench = "disconnected"
     return bench
 
 @Attribute
@@ -273,7 +273,7 @@ def compose_DAC(bench, channel, pulsedata, envelope=[], marker=0):
     output(bench, channel, action=['Set','ON'])
     return bench
 
-# Test Zone
+# Test Zone: (Embedded in UI, thus excluded from TESTALL)
 def test(bench, detail=True):
     s = bench #Initiate(1)
     if s == "disconnected":

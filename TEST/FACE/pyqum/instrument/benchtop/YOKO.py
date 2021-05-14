@@ -44,7 +44,7 @@ def Initiate(reset=False, current=False, which=1):
         # raise
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
-        bench = "disconnected"
+        # bench = "disconnected"
     return bench
 
 def previous(bench, log=False):

@@ -23,8 +23,9 @@ def debug(state=False):
 debug() # declare the debugger mode here
 
 # INITIALIZATION
-def Initiate():
-    rs = address(mdlname, reset=eval(debugger)) # Instrument's Address
+def Initiate(which, mode='DATABASE'):
+    ad = address(mode)
+    rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -38,7 +39,7 @@ def Initiate():
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
-        bench = "disconnected"
+        # bench = "disconnected"
     return bench
 
 def Attribute(Name):
@@ -188,7 +189,7 @@ def close(bench, reset=True):
 def test(detail=True):
     debug(detail)
     print(Back.WHITE + Fore.MAGENTA + "Debugger mode: %s" %eval(debugger))
-    bench = Initiate()
+    bench = Initiate(1)
     if bench == "disconnected":
         pass
     else:

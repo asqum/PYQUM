@@ -17,9 +17,9 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate():
-    ad = address()
-    rs = ad.lookup(mdlname) # Instrument's Address
+def Initiate(which, mode='DATABASE'):
+    ad = address(mode)
+    rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -33,7 +33,7 @@ def Initiate():
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
-        bench = "disconnected"
+        # bench = "disconnected"
     return bench
 
 @Attribute
@@ -113,7 +113,7 @@ def close(bench, reset=True):
 # Test Zone
 def test(detail=True):
     S={}
-    S['x'] = Initiate()
+    S['x'] = Initiate(1)
     s = S['x']
     if s == "disconnected":
         pass

@@ -21,14 +21,14 @@ def Initiate(which, mode='DATABASE'):
         # bench = rm.open_resource('TCPIP0::192.168.1.35::INSTR') #debugging connection
         stat = bench.write('*CLS') #Clear buffer memory; Load preset
         bench.read_termination = '\n' #omit termination tag from output 
-        bench.timeout = 150000 #set timeout in ms
+        bench.timeout = 888 #set timeout in ms
         set_status(mdlname, dict(state='connected'), which)
         print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat)))
         ad.update_machine(1, "%s_%s"%(mdlname,which))
     except:
         set_status(mdlname, dict(state='DISCONNECTED'), which)
         print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
-        bench = "disconnected"
+        # bench = "disconnected"
     return bench
 
 @Attribute

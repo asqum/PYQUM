@@ -43,7 +43,7 @@ def Initiate(reset=False, which=1, MaxChannel=2):
 		# raise
 		set_status(mdlname, dict(state='DISCONNECTED'))
 		print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
-		bench = "disconnected"
+		# bench = "disconnected"
 	return bench
 
 @Attribute

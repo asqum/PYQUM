@@ -19,7 +19,7 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 # Load instruments
 from pyqum import get_db
 from pyqum.instrument.modular import ALZDG # KMAWG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
-from pyqum.instrument.benchtop import DSO, PNA, YOKO, KEIT, TKAWG
+from pyqum.instrument.benchtop import DSO, YOKO, KEIT, TKAWG
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
 from pyqum.instrument.toolbox import match, waveform, pauselog
@@ -467,7 +467,6 @@ def naconnect():
 			message = "%s is successfully initiated by %s" %(naname,nauser)
 			status = "connected"
 		except:
-			raise
 			message = "Please check if %s's connection configuration is OK or is it being used!" %(naname)
 			status = 'error'
 	else:

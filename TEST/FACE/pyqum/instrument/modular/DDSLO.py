@@ -29,7 +29,7 @@ def Initiate(which):
         # raise
         set_status(mdlname, dict(state='DISCONNECTED'), which)
         print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
-        card = "disconnected"
+        # card = "disconnected"
     return card
 
 @Attribute

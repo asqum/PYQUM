@@ -69,7 +69,7 @@ def Initiate(which):
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
-        board = "disconnected"
+        # board = "disconnected"
     return board
 
 def model(board):
