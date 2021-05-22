@@ -78,7 +78,7 @@ def offset(module, channel, value):
     '''value in volts (–1.5 V to 1.5 V)
     '''
     return module.channelOffset(channel, value)
-def configureExternalTrigger(module, channel, extSource, trigBehavior=3, sync=1):
+def configureExternalTrigger(module, channel, extSource, trigBehavior=4, sync=1):
     """Configure external trig for given channel
     extSource:    0 EXT, 4000-4007 PXI-PXI7?
     trigBehavior: 1 HIGH, 2 LOW, 3 RISE, 4 FALL
@@ -120,7 +120,7 @@ def queueWaveform(module, channel, waveform_id, trigMode=0, delay=0, cycles=0, p
     if stat < 0: print('Queue error:', keysightSD1.SD_Error.getErrorMessage(stat))
     return stat
     
-def configureMarker(module, channel, active_pxi_trgline=[7], markerMode=3, trgIOmask=3, markerValue=1, syncMode=1, length=80, delay=0):
+def configureMarker(module, channel, active_pxi_trgline=[2], trgIOmask=1, markerMode=3, markerValue=0, syncMode=1, length=731, delay=0):
     """Configure marker for given channel, must be done after queueing
     markerMode          0: ‘Disabled’, 1: ‘On Start Event (when Start trigger is received)’, 2: ‘On First Sample of Waveform (after WF startDelay)’, 3: ‘On Every Cycle’.
     active_pxi_trgline  Array of active PXI trigger lines, ex: [0,1,2]
@@ -188,45 +188,45 @@ def test():
     waveshape(m2, 1, keysightSD1.SD_Waveshapes.AOU_AWG)
     amplitude(m2, 1, 1)
     m2.AWGqueueConfig(1, 1)
-    configureExternalTrigger(m2, 1, extSource=0)
+    configureExternalTrigger(m2, 1, extSource=4002, trigBehavior=4)
     # ch-3
     waveshape(m2, 3, keysightSD1.SD_Waveshapes.AOU_AWG)
     amplitude(m2, 3, 1)
     m2.AWGqueueConfig(3, 1)
-    configureExternalTrigger(m2, 3, extSource=0)
+    configureExternalTrigger(m2, 3, extSource=4002, trigBehavior=4)
     
     # COMPOSITION:
     input("Any key to RUN 1st WAVE from AWG-1: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=100000;FLAT/,1000,0.95;")
+    pulseq = pulser(dt=2, clock_multiples=1, score="ns=10000;FLAT/,370,0;FLAT/,1000,0.95;")
     pulseq.song()
     # pulseq.
     clearOldWaveforms(m1)
     sendWaveform(m1, 3, 0, pulseq.music)
     queueWaveform(m1, 3, 0)
-    configureMarker(m1, 3)
+    configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
     run(m1, [3])
     
     input("Any key to RUN 2nd WAVE from AWG-1: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=100000;FLAT/,3000,0.95;")
+    pulseq = pulser(dt=2, clock_multiples=1, score="ns=10000;FLAT/,370,0;FLAT/,3000,0.95;")
     pulseq.song()
     clearOldWaveforms(m1)
     sendWaveform(m1, 3, 0, pulseq.music)
     queueWaveform(m1, 3, 0)
-    configureMarker(m1, 3)
+    configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
     run(m1, [3])
 
     input("Any key to RUN 3rd WAVE from AWG-1: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=100000;FLAT/,5000,0.95;")
+    pulseq = pulser(dt=2, clock_multiples=1, score="ns=10000;FLAT/,370,0;FLAT/,5000,0.95;")
     pulseq.song()
     clearOldWaveforms(m1)
     sendWaveform(m1, 3, 0, pulseq.music)
     queueWaveform(m1, 3, 0)
-    configureMarker(m1, 3)
+    configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
     run(m1, [3])
 
-    m2.triggerIOread()
+    # m2.triggerIOread()
     input("Any key to RUN 1st WAVE from AWG-2: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=100000;FLAT/,1000,0.95;")
+    pulseq = pulser(dt=2, clock_multiples=1, score="ns=10000;FLAT/,1000,0.95;")
     pulseq.song()
     clearOldWaveforms(m2)
     # ch-1
@@ -235,11 +235,11 @@ def test():
     # ch-3
     sendWaveform(m2, 3, 0, pulseq.music)
     queueWaveform(m2, 3, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
-    configureMarker(m2, 3, markerMode=0, trgIOmask=0)
+    configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
     run(m2, [1,3])
 
     input("Any key to RUN 2nd WAVE from AWG-2: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=100000;FLAT/,3000,0.95;")
+    pulseq = pulser(dt=2, clock_multiples=1, score="ns=10000;FLAT/,3000,0.95;")
     pulseq.song()
     clearOldWaveforms(m2)
     # ch-1
@@ -248,11 +248,11 @@ def test():
     # ch-3
     sendWaveform(m2, 3, 0, pulseq.music)
     queueWaveform(m2, 3, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
-    configureMarker(m2, 3, markerMode=0, trgIOmask=0)
+    configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
     run(m2, [1,3])
 
     input("Any key to RUN 3rd WAVE from AWG-2: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=100000;FLAT/,5000,0.95;")
+    pulseq = pulser(dt=2, clock_multiples=1, score="ns=10000;FLAT/,5000,0.95;")
     pulseq.song()
     clearOldWaveforms(m2)
     # ch-1
@@ -261,7 +261,7 @@ def test():
     # ch-3
     sendWaveform(m2, 3, 0, pulseq.music)
     queueWaveform(m2, 3, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
-    configureMarker(m2, 3, markerMode=0, trgIOmask=0)
+    configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
     run(m2, [1,3])
     
     # CLOSING:
@@ -272,4 +272,4 @@ def test():
 
     return
 
-# test()
+test()
