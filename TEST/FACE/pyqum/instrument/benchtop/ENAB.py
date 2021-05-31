@@ -1,4 +1,8 @@
-'''Communicating with Benchtop ENA E5071C'''
+'''Communicating with Benchtop ENA E5080B, modified from E5071C version
+NOTE: 
+1. Simultaneous measurement is not possible, since Trigger is under Channel hierarchically. Period.
+2. Byte-order is the opposite of that of E5071C.
+'''
 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
@@ -29,10 +33,7 @@ def Initiate(reset=False, which=1, MaxChannel=2, mode='DATABASE'):
 			stat = bench.write('*CLS') #Clear buffer memory;
 			bench.write('OUTPut:STATE ON') #open the port (E5071C only has one Source)
 		# Allocating Channels:
-		if MaxChannel == 1:
-			bench.write(':DISPlay:SPLit D1')
-		elif MaxChannel == 2:
-			bench.write(':DISPlay:SPLit D1_2')
+		# bench.write(':DISPlay:SPLit %s' %MaxChannel)
 		bench.write("SENS:CORR:EXT:AUTO:RESet") #clear port-extension auto-correction
 		bench.read_termination = '\n' #omit termination tag from output 
 		bench.timeout = 80000000 #set timeout in ms
@@ -114,9 +115,7 @@ def averag(bench, action=['Get'] + 10 * ['']):
 	return mdlname, bench, SCPIcore, action
 @Attribute
 def dataform(bench, action=['Get'] + 10 * ['']):
-	'''action=['Get/Set', <format: REAL/REAL32/ASCii>]
-	Sets the data format for data transfers.
-	Usually only the last two are preferred.
+	'''action=['Get/Set', <format: REAL,32/REAL,64/ASCii,0>]
 	'''
 	SCPIcore = 'FORMat:DATA'
 	return mdlname, bench, SCPIcore, action
@@ -133,18 +132,13 @@ def selectrace(bench, action=['Set'] + ['par 1']):
 	return mdlname, bench, SCPIcore, action
 
 # Setting Trace
-def setrace(bench, channel=1, Mparam=['S11','S21','S12','S22'], window='D1'):
-	'''window = {D<Tr#...>: {#repeat: linewidth, _:next-line}}
-	'''
-	bench.write("CALC:PAR:COUN %d" %len(Mparam))
-	Mreturn = []
+def setrace(bench, Mparam=['S11','S21','S12','S22']):
+	bench.write(":CALCulate:MEASure:DELete:ALL") # Clear ALL measurement(s)
 	for iTrace, S in enumerate(Mparam):
-		bench.write("CALC:PAR%d:DEF %s" %(iTrace + 1, S)) #setting trace name
-		Mreturn.append(bench.query("CALC:PAR%d:DEF?" %(iTrace + 1)))
-		bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(iTrace + 1)) #pre-auto-scale
-	bench.write("DISPlay:WINDow%s:ACT" %channel)
-	bench.write("DISPlay:WINDow:SPLit %s" %window)
-	return Mreturn #same as <Mparam>
+		bench.write(':CALCulate:MEASure%s:DEFine "%s"' %(iTrace+1, S)) # create measurement per trace
+		bench.write(':DISPlay:WINDow:TRACe%s:FEED "CH1_%s_%s"' %(iTrace+1, S, iTrace+1)) # feed trace per measurement
+		selectrace(bench, action=['Set', 'CH1_%s_%s'%(S, iTrace+1)]) # select the last trace by default for data retrieval
+	return bench.query(":CALCulate:PARameter:CATalog:EXTended?") # can be separated by comma(s)
 
 # Getting Trace
 def getrace(bench):
@@ -164,18 +158,8 @@ def autoscal(bench):
 	return lastatus
 
 def measure(bench):
-	bench.write(':ABOR;:INIT:CONT ON;:TRIG:SOUR BUS;:TRIG:SING;')
-	# when opc return, the sweep is done
-	# ready = bench.query("*OPC?") # method from labber was inefficient at best, misleading us on purpose perhaps!
-	# using SRE
-	bench.write(':STAT:OPER:PTR 0')
-	bench.write(':STAT:OPER:NTR 16')
-	bench.write(':STAT:OPER:ENAB 16')
-	bench.write('*SRE 128')
-	bench.write('*CLS')
-	while True:
-		ready = int(bench.query('*STB?'))
-		if ready: break
+	bench.write(':ABOR;:INIT:IMM;:TRIG:SOUR MAN;') # manually triggered with bus
+	ready = bench.query("*OPC?") # when opc return, the sweep is done
 	return ready
 
 def scanning(bench, scan=1):
@@ -189,17 +173,14 @@ def sdata(bench):
 	'''Collect data from ENA
 	This command sets/gets the corrected data array, for the active trace of selected channel (Ch).
 	'''
-	sdatacore = ":CALC:SEL:DATA:SDAT?"
-	stat = dataform(bench)
-	if stat[1]['DATA'] == 'REAL32': #PENDING: testing REAL (32-bit)
-		#convert the transferred ieee-encoded binaries into list (faster)
-		datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True)
-	elif stat[1]['DATA'] == 'REAL': #PENDING: testing REAL (64-bit)
-		#convert the transferred ieee-encoded binaries into list (faster)
-		datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=True)
-	elif stat[1]['DATA'] == 'ASCii':
-		#convert the transferred ascii-encoded binaries into list (slower)
-		datas = bench.query_ascii_values(sdatacore)
+	sdatacore = ":CALCulate:MEASure:DATA:SDATa?"
+	datatype = dataform(bench)
+	if datatype[1]['DATA'] == 'REAL,32':
+		datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=False) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
+	elif datatype[1]['DATA'] == 'REAL,64':
+		datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=False) # convert the transferred ieee-encoded binaries into list (faster, 64-bit)
+	elif datatype[1]['DATA'] == 'ASC,0':
+		datas = bench.query_ascii_values(sdatacore) # convert the transferred ascii-encoded binaries into list (slower)
 	# print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
 	return datas
 
@@ -222,7 +203,7 @@ def close(bench, reset=True, which=1, mode='DATABASE'):
 	print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
 	return status
 
-# Test Zone (STILL TESTALL)
+# Test Zone
 def test(detail=True):
 	from pyqum.instrument.analyzer import curve, IQAParray, UnwraPhase
 	from pyqum.instrument.toolbox import waveform
@@ -233,8 +214,7 @@ def test(detail=True):
 	else:
 		model(bench)
 		if debug(mdlname, detail):
-			# print(setrace(bench, window='D12_34'))
-			print(setrace(bench, Mparam=['S21','S43'], window='D1_2'))
+			print(setrace(bench, ['S21']))
 			power(bench, action=['Set', -35])
 			power(bench)
 			N = 3000
@@ -255,17 +235,11 @@ def test(detail=True):
 			# averag(bench, action=['Set', 1]) #optional
 			# averag(bench)
 
-			# start sweeping
-			# stat = sweep(bench)
-			# print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
-			# print("Ready: %s" %measure(bench)[1])
-			# autoscal(bench)
-
-			cwfreq(bench, action=['Set', 5.25e9])
-			cwfreq(bench)
+			# cwfreq(bench, action=['Set', 5.25e9])
+			# cwfreq(bench)
 			# power(bench, action=['Set', '', -75.3, -40.3]) #power sweep
-			power(bench, action=['Set', '', -10, -10])
-			power(bench)
+			# power(bench, action=['Set', '', -10, -10])
+			# power(bench)
 
 			# start sweeping
 			stat = sweep(bench)
@@ -274,7 +248,8 @@ def test(detail=True):
 			autoscal(bench)
 
 			dataform(bench, action=['Set', 'REAL'])
-			selectrace(bench, action=['Set', 'para 1 calc 1'])
+			# dataform(bench, action=['Set', 'ASCii,0'])
+			selectrace(bench, action=['Set', 'CH1_S21_1'])
 			data = sdata(bench)
 			print("Data [Type: %s, Length: %s]" %(type(data), len(data)))
 
@@ -283,7 +258,9 @@ def test(detail=True):
 
 			# Plotting trace:
 			yI, yQ, Amp, Pha = IQAParray(array(data))
-			curve(range(len(data)//2), Amp, 'CW-Amp time-series', 'arb time', 'Amp(dB)')
+			curve([range(len(data)//2),range(len(data)//2)], [yI,yQ], 'In-Plane', 'Count', 'I(dB)', style=['-b','r'])
+			# curve(range(len(data)//2), yQ, 'In-Plane', 'Count', 'I(dB)')
+			curve(range(len(data)//2), Amp, 'Amplitude', 'Count', 'A(dB)')
 
 			# TEST SCPI ZONE:
 			# bench.write(':SYSTem:PRESet')
@@ -293,4 +270,4 @@ def test(detail=True):
 	return
 
 
-# test()
+test()
