@@ -16,7 +16,7 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate(reset=False, which=1, MaxChannel=2, mode='DATABASE'):
+def Initiate(reset=False, which=1, MaxChannel=1, mode='DATABASE'):
 	ad = address(mode)
 	rs = ad.lookup(mdlname, which) # Instrument's Address
 	rm = visa.ResourceManager()
@@ -29,10 +29,8 @@ def Initiate(reset=False, which=1, MaxChannel=2, mode='DATABASE'):
 			stat = bench.write('*CLS') #Clear buffer memory;
 			bench.write('OUTPut:STATE ON') #open the port (E5071C only has one Source)
 		# Allocating Channels:
-		if MaxChannel == 1:
-			bench.write(':DISPlay:SPLit D1')
-		elif MaxChannel == 2:
-			bench.write(':DISPlay:SPLit D1_2')
+		if MaxChannel == 1: bench.write(':DISPlay:SPLit D1')
+		elif MaxChannel == 2: bench.write(':DISPlay:SPLit D1_2')
 		bench.write("SENS:CORR:EXT:AUTO:RESet") #clear port-extension auto-correction
 		bench.read_termination = '\n' #omit termination tag from output 
 		bench.timeout = 80000000 #set timeout in ms
@@ -114,7 +112,7 @@ def averag(bench, action=['Get'] + 10 * ['']):
 	return mdlname, bench, SCPIcore, action
 @Attribute
 def dataform(bench, action=['Get'] + 10 * ['']):
-	'''action=['Get/Set', <format: REAL/REAL32/ASCii>]
+	'''action=['Get/Set', <format: REAL32/REAL/ASCii>]
 	Sets the data format for data transfers.
 	Usually only the last two are preferred.
 	'''
@@ -122,7 +120,7 @@ def dataform(bench, action=['Get'] + 10 * ['']):
 	return mdlname, bench, SCPIcore, action
 
 @Attribute
-def selectrace(bench, action=['Set'] + ['par 1']):
+def selectrace(bench, action=['Set'] + ['par 1 calc 1']):
 	'''
 	This command sets/gets the selected trace (Tr) of selected channel (Ch) to the active trace.
 	You can set only a trace displayed to the active trace. 
@@ -142,6 +140,7 @@ def setrace(bench, channel=1, Mparam=['S11','S21','S12','S22'], window='D1'):
 		bench.write("CALC:PAR%d:DEF %s" %(iTrace + 1, S)) #setting trace name
 		Mreturn.append(bench.query("CALC:PAR%d:DEF?" %(iTrace + 1)))
 		bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(iTrace + 1)) #pre-auto-scale
+		selectrace(bench, action=['Set', 'para %s calc 1'%(iTrace + 1)]) # selected last trace
 	bench.write("DISPlay:WINDow%s:ACT" %channel)
 	bench.write("DISPlay:WINDow:SPLit %s" %window)
 	return Mreturn #same as <Mparam>
@@ -186,7 +185,7 @@ def scanning(bench, scan=1):
 	return stat
 
 def sdata(bench):
-	'''Collect data from ENA
+	'''Collect complex-data from ENA
 	This command sets/gets the corrected data array, for the active trace of selected channel (Ch).
 	'''
 	sdatacore = ":CALC:SEL:DATA:SDAT?"
@@ -197,7 +196,7 @@ def sdata(bench):
 	elif stat[1]['DATA'] == 'REAL': #PENDING: testing REAL (64-bit)
 		#convert the transferred ieee-encoded binaries into list (faster)
 		datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=True)
-	elif stat[1]['DATA'] == 'ASCii':
+	elif stat[1]['DATA'] == 'ASC':
 		#convert the transferred ascii-encoded binaries into list (slower)
 		datas = bench.query_ascii_values(sdatacore)
 	# print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
@@ -233,8 +232,7 @@ def test(detail=True):
 	else:
 		model(bench)
 		if debug(mdlname, detail):
-			# print(setrace(bench, window='D12_34'))
-			print(setrace(bench, Mparam=['S21','S43'], window='D1_2'))
+			print(setrace(bench, Mparam=['S21','S43']))
 			power(bench, action=['Set', -35])
 			power(bench)
 			N = 3000
@@ -255,17 +253,11 @@ def test(detail=True):
 			# averag(bench, action=['Set', 1]) #optional
 			# averag(bench)
 
-			# start sweeping
-			# stat = sweep(bench)
-			# print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
-			# print("Ready: %s" %measure(bench)[1])
-			# autoscal(bench)
-
-			cwfreq(bench, action=['Set', 5.25e9])
-			cwfreq(bench)
+			# cwfreq(bench, action=['Set', 5.25e9])
+			# cwfreq(bench)
 			# power(bench, action=['Set', '', -75.3, -40.3]) #power sweep
-			power(bench, action=['Set', '', -10, -10])
-			power(bench)
+			# power(bench, action=['Set', '', -10, -10])
+			# power(bench)
 
 			# start sweeping
 			stat = sweep(bench)
@@ -274,7 +266,6 @@ def test(detail=True):
 			autoscal(bench)
 
 			dataform(bench, action=['Set', 'REAL'])
-			selectrace(bench, action=['Set', 'para 1 calc 1'])
 			data = sdata(bench)
 			print("Data [Type: %s, Length: %s]" %(type(data), len(data)))
 

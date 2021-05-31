@@ -121,7 +121,7 @@ def dataform(bench, action=['Get'] + 10 * ['']):
 	return mdlname, bench, SCPIcore, action
 
 @Attribute
-def selectrace(bench, action=['Set'] + ['par 1']):
+def selectrace(bench, action=['Set'] + ['CH1_S21_1']):
 	'''
 	This command sets/gets the selected trace (Tr) of selected channel (Ch) to the active trace.
 	You can set only a trace displayed to the active trace. 
@@ -249,7 +249,6 @@ def test(detail=True):
 
 			dataform(bench, action=['Set', 'REAL'])
 			# dataform(bench, action=['Set', 'ASCii,0'])
-			selectrace(bench, action=['Set', 'CH1_S21_1'])
 			data = sdata(bench)
 			print("Data [Type: %s, Length: %s]" %(type(data), len(data)))
 

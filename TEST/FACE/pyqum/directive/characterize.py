@@ -110,7 +110,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
             print(Fore.GREEN + "Operation Complete: %s" %bool(NA.measure(nabench)))
             # adjusting display on NA:
             NA.autoscal(nabench)
-            NA.selectrace(nabench, action=['Set', 'para 1 calc 1'])
+            # NA.selectrace(nabench, action=['Set', 'para 1 calc 1'])
             data = NA.sdata(nabench)
             # print(Fore.YELLOW + "\rProgress: %.3f%% [%s]" %((i+1)/datasize*100, data), end='\r', flush=True)
             # print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
@@ -258,7 +258,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             print("Operation Complete: %s" %bool(NA.measure(nabench)))
             # adjusting display on NA:
             NA.autoscal(nabench)
-            NA.selectrace(nabench, action=['Set', 'para 1 calc 1'])
+            # NA.selectrace(nabench, action=['Set', 'para 1 calc 1'])
             data = NA.sdata(nabench)
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
             
