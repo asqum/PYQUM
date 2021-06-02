@@ -1,0 +1,41 @@
+{% extends 'base.html' %} 
+{% block title %}Benchmark the Qubit{% endblock %}
+
+{% block head %}
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/benchmark.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/progress.css') }}"> -->
+  <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+<body class="benchmark" style="overflow-y:hidden">
+
+<script>
+    $(function(){
+      $("div#measurement_info").load("{{ url_for('benchmark.measurement_info') }}");
+      $("div#qestimate").load("{{ url_for('benchmark.qestimate') }}");
+    });
+</script> 
+
+{% if g.user %}
+<div class="tab">
+  <!-- <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button> -->
+  <button class="tablinks" id="measurement_info-tab" onclick="openTab(event, 'measurement_info')">Home</button>
+
+  <!-- Q factor -->
+  <button class="tablinks" id="qestimate-tab" onclick="openTab(event, 'qestimate')">Q-FACTOR</button>
+  
+</div>
+<!-- <div id="all" class="tabcontent"></div> -->
+<div id="measurement_info" class="tabcontent"></div>
+<div id="qestimate" class="tabcontent"></div>
+
+{% endif %}
+
+</body>
+
+{% endblock %}

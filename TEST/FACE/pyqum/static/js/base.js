@@ -31,6 +31,13 @@ $(document).ready(function(){
         // Thus we embedded the script in bridge.html
     };
 
+    if (window.location.pathname == "/benchmark"){
+        // can't find path for this case
+        console.log("Path:");
+        console.log(window.location.pathname); 
+        // Thus we embedded the script in benchmark.html
+    };
+
     if (window.location.pathname == "/gd/guide"){
         console.log(window.location.pathname);
         $('.navbar button').removeClass('active');
@@ -85,6 +92,13 @@ $(function () {
 $(function () {
     $("button.bridge").bind('click', function(){
         window.open("/bridge", '_self');   
+        return false;
+    });
+});
+
+$(function () {
+    $("button.benchmark").bind('click', function(){
+        window.open("/benchmark", '_self');   
         return false;
     });
 });

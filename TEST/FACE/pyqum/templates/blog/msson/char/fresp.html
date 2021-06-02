@@ -62,39 +62,55 @@
         </div>
 
         <!-- parameters line -->
-        <div class="row">
-            <div class="col-15" id='left'><label>Flux-Bias (V/A)</label></div>
-            <div class="col-15" id='left'><label>S-Parameter</label></div>
-            <div class="col-15" id='left'><label>IF-Bandwidth (Hz)</label></div>
-            <div class="col-15" id='left'><label>Power (dBm)</label></div>
-            <div class="col-15" id='left'><label>Frequency (GHz)</label></div>
-        </div>
-        <div class="row">
-            <div class="col-15" id='left'><select class='char' id="fresp" name="c-fluxbias" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="fresp" name="c-sparam" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="fresp" name="c-ifb" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="fresp" name="c-powa" type="text"></select></div>
-            <div class="col-15" id='left'><select class='char' id="fresp" name="c-freq" type="text"></select></div>
+        <div class="row" style="border-width:1px;border-style:solid;">
+            <div class="row">
+                <label>Parameters</label>
+            </div>
+            <div class="row">
+                <div class="col-15" id='left'><label>Flux-Bias (V/A)</label></div>
+                <div class="col-15" id='left'><label>S-Parameter</label></div>
+                <div class="col-15" id='left'><label>IF-Bandwidth (Hz)</label></div>
+                <div class="col-15" id='left'><label>Power (dBm)</label></div>
+                <div class="col-15" id='left'><label>Frequency (GHz)</label></div>
+            </div>
+            <div class="row">
+                <div class="col-15" id='left'><select class='char' id="fresp" name="c-fluxbias" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char' id="fresp" name="c-sparam" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char' id="fresp" name="c-ifb" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char' id="fresp" name="c-powa" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char' id="fresp" name="c-freq" type="text"></select></div>
+            </div>
         </div>
 
-        <div class="row">
+        <!-- plot data -->
+        <div class="row" >
             <!-- <div class="col-10" id='left'>
                 <label class="fresp switch">
                     <input class="fresp" id='live-update' type="checkbox">
                     <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
                 </label>
             </div> -->
-            <div class="col-15" id='left'><input class='char data' id='fresp' name='1d-data' type="submit" value="1D-Data"/></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 green" id="fresp-insert-1D">COMPARE-1D</button></div>
-            <div class="col-10" id='left'><select class='char data fresp compare' id="fresp-compare-nml" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data fresp compare' id="fresp-compare-aup" type="text"></select></div>
-            <div class="col-15" id='left'><input class='char data' id='fresp' name='2d-data' type="submit" value="2D-Data"/></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="fresp-savecsv">CSV-1D</button></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="fresp-savemat">MAT-2D</button></div>
+            <div class="row">
+                <label>Plot</label>
+            </div>
+            <div class="row">
+                <div class="col-15" id='left'><input class='char data' id='fresp' name='1d-data' type="submit" value="1D-Data"/></div>
+                <div class="col-10" id='left'><button class="char push_button w-95 green" id="fresp-insert-1D">COMPARE-1D</button></div>
+                <div class="col-10" id='left'><select class='char data fresp compare' id="fresp-compare-nml" type="text"></select></div>
+                <div class="col-10" id='left'><select class='char data fresp compare' id="fresp-compare-aup" type="text"></select></div>
+                <div class="col-15" id='left'><input class='char data' id='fresp' name='2d-data' type="submit" value="2D-Data"/></div>
+                <div class="col-10" id='left'><button class="char push_button w-95 blue" id="fresp-savecsv">CSV-1D</button></div>
+                <div class="col-10" id='left'><button class="char push_button w-95 blue" id="fresp-savemat">MAT-2D</button></div>
+            </div>
         </div>
         <div class="row">
             <div class="col-10" id='left'><select class='char data' id="fresp" name="2d-amphase" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data' id="fresp" name="2d-type" type="text"></select></div>
+        </div>
+
+        <!-- Go to benchmark -->
+        <div class="row">
+            <div class="col-15" id='left'><input class='char benchmark' id='fresp' name='fresp-benchmark' type="submit" value="Benchmark"/></div>
         </div>
 
         <div id="char-fresp-announcement"></div>

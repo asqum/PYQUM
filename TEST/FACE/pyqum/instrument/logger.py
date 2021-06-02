@@ -39,6 +39,9 @@ PORTAL_PATH = MAIN_PATH / "PORTAL"
 ADDRESS_PATH = MAIN_PATH / "Address"
 SPECS_PATH = MAIN_PATH / "SPECS"
 
+ANALYSIS_PATH = PORTAL_PATH / "ANALYSIS"
+
+
 # Pending: extract MAC from IP?
 def mac_for_ip(ip):
     'Returns a list of MACs for interfaces that have given IP, returns None if not found'
@@ -149,6 +152,24 @@ def set_csv(data_dict, filename):
 def set_mat(data_dict, filename):
     savemat(Path(PORTAL_PATH) / filename, data_dict)
     return None
+
+# save JSON(Jacky)
+def set_json_measurementinfo(data_dict, filename):
+    jsonFilename = filename+".JSON"
+    totalPath = ANALYSIS_PATH/jsonFilename
+    print( "save file in:", totalPath)
+    with open(totalPath, 'w') as outfile:
+        json.dump(data_dict, outfile, indent=4)
+    return None
+
+def get_json_measurementinfo(filename):
+    jsonFilename = filename+".JSON"
+    totalPath = ANALYSIS_PATH/jsonFilename
+    print( "load file in:", totalPath)
+    with open(totalPath, 'r') as f:
+        data = json.load(f)
+    return data
+
 
 class address:
     '''Use DATABASE by DEFAULT, TEST by CHOICE

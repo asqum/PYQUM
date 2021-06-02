@@ -403,7 +403,8 @@ $(function () {
 });
 
 // click to run:
-$('input.char#cwsweep-run').bind('click', function() {
+$('input.char#cwsweep-run').on('touchend click', function(event) {
+    eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
     $( "i.cwsweep-run" ).remove(); //clear previous
     // $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");

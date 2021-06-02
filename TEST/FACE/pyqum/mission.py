@@ -16,7 +16,7 @@ from random import random
 
 from pyqum import get_db
 from pyqum.instrument.dilution import bluefors
-from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch
+from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, set_json_measurementinfo
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
@@ -395,12 +395,13 @@ def char_fresp_2ddata():
     iifb = request.args.get('iifb')
     ipowa = request.args.get('ipowa')
     ifreq = request.args.get('ifreq')
-    x, y, ZZ = [], [], []
+    x, y, ZZA, ZZP = [], [], [], []
     dict_for_MPW = {
             "pqfile": str(M_fresp[session['user_name']].pqfile), "datalocation": M_fresp[session['user_name']].datalocation, "writtensize": M_fresp[session['user_name']].writtensize,
             "c_fresp_structure": session['c_fresp_structure'], "ifluxbias": ifluxbias, "isparam": isparam, "iifb": iifb, "ipowa": ipowa, "ifreq": ifreq,
         }
     set_status("MPW", dict_for_MPW)
+
     if ifluxbias == "x" and ifreq == "y":
         print("X: Flux-Bias, Y: Frequency")
         xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>Frequency(GHz)</b>"
@@ -460,7 +461,8 @@ def char_fresp_2ddata():
         pass
 
     fresp_2Ddata[session['user_name']] = dict(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
-    
+    print( "IIIIII",array(output['rI']),"QQQQQQQ",array(output['rQ']) )
+
     # x = list(range(len(x))) # for repetitive data
     return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 # endregion
@@ -1631,11 +1633,62 @@ def mani_singleqb_2ddata():
     # executor.submit(fn, args).add_done_callback(handler)
 
     return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
+
+
+
 # endregion
 
+# region: benchmark
 
+@bp.route( '/send_datainfo', methods=['POST', 'GET'])
+def send_datainfo():
+    # Build the JSON file that benchmark can get the information of measurement
+
+    measurementType = request.args.get('measurementType')
+    current_usr = session['user_name']
+
+    structurelable = ["Flux-Bias","S-Parameter", "IF-Bandwidth", "Power", "Frequency"]
+    htmlId = ["FluxBias","SParameter", "IFBandwidth", "Power", "Frequency"]
+
+
+    parameterInfo = []
+    parameterValues = []
+    c_structure = []
+    c_address = []
+    maxInd = 0
+    for i, v in enumerate(structurelable):
+        try: parameterInfo.append( waveform(M_fresp[current_usr].corder[v]) )
+        except(KeyError): parameterInfo.append( waveform('opt,') )
+        #parameterInfo.append( waveform(M_fresp[current_usr].corder[v]) )
+        maxInd = i
+        c_structure.append( parameterInfo[i].count )
+        print(parameterInfo[i].count)
+
+    #print(M_fresp[current_usr].datadensity)
+    c_structure[maxInd] *= M_fresp[current_usr].datadensity
+    #session['c_fresp_address'] = cdatasearch(M_fresp[current_usr].resumepoint-1, session['c_fresp_structure'])
+    c_address.append( cdatasearch(M_fresp[current_usr].resumepoint-1, c_structure) )
+    c_address = c_address[0]
+
+    # list each parameter range based on data-progress:
+    for i in range(maxInd):
+        parameterValues.append( parameterInfo[i].data[0:c_address[i]+1] )
+    parameterValues.append( parameterInfo[maxInd].data)
+
+    parameterList = [{"lable":lable, "htmlId":hid, "length":len(values), "values":values} for lable,hid,values in zip(structurelable,htmlId,parameterValues)]
+    measurement = { "type":measurementType,  "parameters": parameterList, }
+    MP_BencmarkDict = {
+            "pqfile": str(M_fresp[current_usr].pqfile), "datalocation": M_fresp[current_usr].datalocation, "writtensize": M_fresp[current_usr].writtensize,
+            "measurement": measurement, "c_structure": c_structure, 
+        }
+    set_status("MP_benchmark", MP_BencmarkDict)
+    print("file path: " + MP_BencmarkDict["pqfile"])
+    jsonFileName = "measurement_info["+current_usr+"]"
+    set_json_measurementinfo(MP_BencmarkDict,jsonFileName)
+    return jsonify(MP_BencmarkDict)
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
+# endregion
 
 
 # OK

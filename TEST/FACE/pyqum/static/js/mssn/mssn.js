@@ -118,3 +118,10 @@ function compare1D(x1,y1,x2,y2,xtitle,ytitle,normalize=false,direction='dip',mis
 
     console.log("Plotted 1D-Compare for " + mission.split("-")[0] + "-" + mission.split("-")[1]);
 };
+
+// *functions are shared across all missions!
+function eventHandler(event, selector) {
+    event.stopPropagation(); // Stop event bubbling.
+    event.preventDefault(); // Prevent default behaviour
+    if (event.type === 'touchend') selector.off('click'); // If event type was touch turn off clicks to prevent phantom clicks.
+};

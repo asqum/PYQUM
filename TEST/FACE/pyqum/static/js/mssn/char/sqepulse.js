@@ -451,7 +451,8 @@ $(function () {
 });
 
 // click to run:
-$('input.char#sqepulse-run').bind('click', function() {
+$('input.char#sqepulse-run').on('touchend click', function(event) {
+    eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     $( "i.sqepulse-run" ).remove(); //clear previous
     $('button.char#sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     

@@ -18,7 +18,7 @@ function AccesSample(sname) {
     }
     $.getJSON('/auth/user/samples/access', {
         // access sample based on main or shared selected:
-        sname: sname,
+        sname: sname, 
     }, function(data){
         console.log(data.message);
         $('input.user-samples#update[name="dob"]').val(data.sample_cv['fabricated']);
@@ -30,7 +30,7 @@ function AccesSample(sname) {
         $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("Since " + data.sample_cv['registered'].replace('\n',' ')));
     });
 };
-
+ 
 // Pending: Loading function from other JS script/module?
 function mssnencrpytonian() {
     return '/' + 'ghhgjad';
@@ -94,7 +94,7 @@ $('select.samples').on('change', function(){
     console.log("Selected: " + $('select.samples').val());
     console.log('User-type: ' + this.name);
     selectedsname = $('select.samples[name="' + this.name + '"]').val();
-    AccesSample(selectedsname);
+    AccesSample(selectedsname); 
     return false;
 })
 

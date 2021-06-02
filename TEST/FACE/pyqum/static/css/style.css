@@ -325,6 +325,7 @@ select:focus option:checked {
     text-align: center;
 }
 .row {
+    
     padding: 1px; display: block; margin-top: 1.5px;
 }
 .row.label {

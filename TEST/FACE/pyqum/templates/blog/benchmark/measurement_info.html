@@ -1,0 +1,35 @@
+<!doctype html> <!--extended from parent: bridge.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/measurement_info.js') }}"></script>
+</head>
+
+
+<body class="benchmark">
+    <div class="measurement_infocontent">
+
+        <!-- <h3>Welcome to Benchmark</h3> -->
+        <h3>The Measurement Method is {{info["measurement"]["type"] }}</h3>
+
+        <!-- <div class="row">
+            <div class="col-28" id='left'>
+                <div><select class='benchmark measurement_info' type='submit' value=""></select></div>
+            </div>
+        </div> -->
+        <!-- <ul>
+            {% for paras in info["measurement"]["parameters"] %}
+                <li>{{ paras["name"] }}<select class='parameter'  type="text">
+                    {% for v in paras["values"] %}
+                    <option>{{v}}</option>
+                    {% endfor %}
+                </select></li>
+            {% endfor %}
+        </ul> -->
+        {% block content %}{% endblock %}
+
+        
+    </div>
+</body>
+
+</html>

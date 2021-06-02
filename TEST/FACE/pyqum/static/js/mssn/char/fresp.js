@@ -295,7 +295,8 @@ $(function () {
 });
 
 // click to run:
-$('input.char#fresp-run').bind('click', function() {
+$('input.char#fresp-run').on('touchend click', function(event) {
+    eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
     $( "i.fresp" ).remove(); //clear previous
     // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
@@ -688,3 +689,29 @@ $('input.fresp.notification').click( function(){
 
     return false;
 });
+
+// Event: Benchmark on click (Jacky)
+$('input.char.benchmark').click( 
+    function(){
+
+        listimes_fresp();
+        accessdata_fresp();
+        $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', 
+            { wmoment: wmoment },
+            //input/select value here:  
+            function (data) {
+                //console.log("JOBID: " + JSON.stringify(data.JOBID) );
+                console.log( data );  
+                        
+           }
+        );
+        $.getJSON( mssnencrpytonian() + '/mssn/send_datainfo', 
+        { measurementType: "fresp" }, 
+            function ( data ) {
+                console.log( data );            
+            }
+        ); 
+        //window.location.href='/benchmark'
+        return false;
+    }
+);

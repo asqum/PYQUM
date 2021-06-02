@@ -25,13 +25,6 @@ var singleqb_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
 var singleqb_Perimeters = ['DIGIHOME', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
 var singleqb_Channels = ['RO-I', 'RO-Q', 'XY-I', 'XY-Q'];
 
-// *functions are shared across all missions!
-function eventHandler(event, selector) {
-    event.stopPropagation(); // Stop event bubbling.
-    event.preventDefault(); // Prevent default behaviour
-    if (event.type === 'touchend') selector.off('click'); // If event type was touch turn off clicks to prevent phantom clicks.
-};
-
 function transpose(a) {
     // Calculate the width and height of the Array
     var w = a.length || 0;
