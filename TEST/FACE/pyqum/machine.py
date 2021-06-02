@@ -533,8 +533,7 @@ def nasetsweep():
 	s43, s33 = int(request.args.get('s43')), int(request.args.get('s33'))
 	s44, s34 = int(request.args.get('s44')), int(request.args.get('s34'))
 	mparam = ['S11']*s11 + ['S22']*s22 + ['S21']*s21 + ['S12']*s12 + ['S33']*s33 + ['S44']*s44 + ['S43']*s43 + ['S34']*s34
-	mwindow = 'D1_2_3_4'[:len(mparam)*2]
-	mreturn = NA[natype].setrace(nabench[natag], Mparam=mparam, window=mwindow)
+	mreturn = NA[natype].setrace(nabench[natag], Mparam=mparam)
 	print("sweeping %s"%mreturn)
 	NA[natype].rfports(nabench[natag], action=['Set', 'ON'])
 	stat = NA[natype].measure(nabench[natag])

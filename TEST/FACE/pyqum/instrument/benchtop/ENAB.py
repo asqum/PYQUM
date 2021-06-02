@@ -29,9 +29,9 @@ def Initiate(reset=False, which=1, MaxChannel=2, mode='DATABASE'):
 		if reset:
 			stat = bench.write('*RST;*CLS') #Clear buffer memory;
 		else:
-			bench.write(':ABORt;:INIT:CONT OFF;') #hold the trigger
-			stat = bench.write('*CLS') #Clear buffer memory;
-			bench.write('OUTPut:STATE ON') #open the port (E5071C only has one Source)
+			bench.write(':ABORt;:INIT:CONT OFF;') # hold the trigger
+			stat = bench.write('*CLS') # Clear buffer memory;
+			bench.write('OUTPut:STATE ON') # Power ON
 		# Allocating Channels:
 		# bench.write(':DISPlay:SPLit %s' %MaxChannel)
 		bench.write("SENS:CORR:EXT:AUTO:RESet") #clear port-extension auto-correction
@@ -140,10 +140,11 @@ def tracenum(bench, action=['Get'] + 10 * ['']):
 def setrace(bench, Mparam=['S11','S21','S12','S22']):
 	bench.write(":CALCulate:MEASure:DELete:ALL") # Clear ALL measurement(s)
 	for iTrace, S in enumerate(Mparam):
-		bench.write(':CALCulate:MEASure%s:DEFine "%s"' %(iTrace+1, S)) # create measurement per trace
-		bench.write(':DISPlay:WINDow:TRACe%s:FEED "CH1_%s_%s"' %(iTrace+1, S, iTrace+1)) # feed trace per measurement
-		selectrace(bench, action=['Set', 'CH1_%s_%s'%(S, iTrace+1)]) # select the last trace by default for data retrieval
-	return bench.query(":CALCulate:PARameter:CATalog:EXTended?") # can be separated by comma(s)
+		# bench.write('CALCulate:MEASure%s:DEFine "%s"' %(iTrace+1, S)) # Creates a measurement but does NOT display it, on an existing or new channel: CH<n>_<param>_<trace#>
+		bench.write('CALCulate:PARameter:DEFine:EXTended %s,%s' %(S,S)) # Creates a measurement but does NOT display it.
+		bench.write('DISPlay:WINDow:TRACe%s:FEED "%s"' %(iTrace+1, S)) # Feed trace for the measurement
+		selectrace(bench, action=['Set', '%s,fast'%S]) # improve measurement speed (fast)
+	return Mparam
 
 # Getting Trace
 def getrace(bench):
@@ -172,8 +173,8 @@ def scanning(bench, scan=1):
 	return stat
 
 def sdata(bench):
-	'''Collect data from ENA
-	This command sets/gets the corrected data array, for the active trace of selected channel (Ch).
+	'''Collect data from ENAB
+	This returns the data from the FIRST TRACE.
 	'''
 	sdatacore = ":CALCulate:MEASure:DATA:SDATa?"
 	datatype = dataform(bench)
@@ -215,13 +216,13 @@ def test(detail=True):
 	else:
 		if debug(mdlname, detail):
 			model(bench)
-			print(setrace(bench, ['S21']))
+			print(setrace(bench, ['S11','S44','S21']))
 			sweep(bench, action=['Set', 'ON', 1001])
-			ifbw(bench, action=['Set', 100])
+			ifbw(bench, action=['Set', 1000])
 			ifbw(bench)
 
-			for i in range(2):
-				if i:
+			for i in range(1):
+				if not i:
 					input("Press any key to sweep frequency: ")
 					f_start, f_stop = 3e9, 9e9
 					linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
