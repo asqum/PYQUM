@@ -545,6 +545,7 @@ def nasetsweep():
 @bp.route('/na/get', methods=['GET'])
 def naget():
 	natag, natype = '%s:%s' %(request.args.get('naname'),session['user_name']), request.args.get('natype')
+	print(Fore.YELLOW + "Getting %s attributes"%(natag))
 	message = {}
 	try:
 		start_val, start_unit = si_format(float(NA[natype].linfreq(nabench[natag])[1]['START']),precision=1).split(" ")
@@ -555,12 +556,14 @@ def naget():
 		message['step-points'] = int(NA[natype].sweep(nabench[natag])[1]['POINTS']) - 1 # step-points in waveform
 		message['power'] = "%.1f dBm" %float(NA[natype].power(nabench[natag])[1]['LEVEL']) # power (fixed unit)
 		message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natag])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb (adjusted by si_prefix)
+		print(Fore.RED + "Debug: %s" %(message['ifb']))
+		
 		message['s21'], message['s11'] = int('S21' in NA[natype].getrace(nabench[natag])), int('S11' in NA[natype].getrace(nabench[natag]))
 		message['s12'], message['s22'] = int('S12' in NA[natype].getrace(nabench[natag])), int('S22' in NA[natype].getrace(nabench[natag]))
 		message['s43'], message['s33'] = int('S43' in NA[natype].getrace(nabench[natag])), int('S33' in NA[natype].getrace(nabench[natag]))
 		message['s34'], message['s44'] = int('S34' in NA[natype].getrace(nabench[natag])), int('S44' in NA[natype].getrace(nabench[natag]))
 	except:
-		# raise
+		raise
 		message = dict(status='%s is not connected' %natype)
 	return jsonify(message=message)
 # endregion

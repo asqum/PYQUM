@@ -79,7 +79,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
         # Only those involved in virtual for-loop need to be pre-set here:
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=0.0007) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
-        NA.setrace(nabench, Mparam=[Sparam.data[caddress[1]]], window='D1')
+        NA.setrace(nabench, Mparam=[Sparam.data[caddress[1]]])
         NA.ifbw(nabench, action=['Set', ifb.data[caddress[2]]])
 
     # 3. Start measuring:
@@ -97,7 +97,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
                     DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), pulsewidth=77*1e-3, sweeprate=0.0007) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
                     
             if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
-                NA.setrace(nabench, Mparam=[Sparam.data[caddress[1]]], window='D1')
+                NA.setrace(nabench, Mparam=[Sparam.data[caddress[1]]])
 
             if not i%prod(cstructure[3::]): # virtual for-loop using exact-multiples condition
                 NA.ifbw(nabench, action=['Set', ifb.data[caddress[2]]])
@@ -211,7 +211,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             SG.frequency(sgbench, action=['Set', str(xyfreq.data[caddress[1]]) + "GHz"])
             SG.power(sgbench, action=['Set', str(xypowa.data[caddress[2]]) + "dBm"])
         # Basics:
-        NA.setrace(nabench, Mparam=[Sparam.data[caddress[3]]], window='D1')
+        NA.setrace(nabench, Mparam=[Sparam.data[caddress[3]]])
         NA.ifbw(nabench, action=['Set', ifb.data[caddress[4]]])
         NA.cwfreq(nabench, action=['Set', freq.data[caddress[5]]*1e9])
 
@@ -241,7 +241,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 
             # Basics:
             if not i%prod(cstructure[4::]): # virtual for-loop using exact-multiples condition
-                NA.setrace(nabench, Mparam=[Sparam.data[caddress[3]]], window='D1')
+                NA.setrace(nabench, Mparam=[Sparam.data[caddress[3]]])
 
             if not i%prod(cstructure[5::]): # virtual for-loop using exact-multiples condition
                 NA.ifbw(nabench, action=['Set', ifb.data[caddress[4]]])

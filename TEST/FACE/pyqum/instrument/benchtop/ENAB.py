@@ -119,7 +119,6 @@ def dataform(bench, action=['Get'] + 10 * ['']):
 	'''
 	SCPIcore = 'FORMat:DATA'
 	return mdlname, bench, SCPIcore, action
-
 @Attribute
 def selectrace(bench, action=['Set'] + ['CH1_S21_1']):
 	'''
@@ -129,6 +128,12 @@ def selectrace(bench, action=['Set'] + ['CH1_S21_1']):
 	'''
 	SCPIcore = 'CALCulate:PARameter:SELECT'
 	action += 10 * ['']
+	return mdlname, bench, SCPIcore, action
+@Attribute
+def tracenum(bench, action=['Get'] + 10 * ['']):
+	'''Sets or gets the number of traces of selected channel.
+	'''
+	SCPIcore = 'CALC:PAR:COUN'
 	return mdlname, bench, SCPIcore, action
 
 # Setting Trace
@@ -142,13 +147,10 @@ def setrace(bench, Mparam=['S11','S21','S12','S22']):
 
 # Getting Trace
 def getrace(bench):
-	'''getting traces on the screen
+	'''getting traces displayed on the screen
 	'''
-	tracenum = int(bench.query("CALC:PAR:COUN?"))
-	Mreturn = []
-	for i in range(tracenum):
-		Mreturn.append(bench.query("CALC:PAR%d:DEF?" %(i+1)))
-		bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(i+1)) #pre-auto-scale
+	catalog = bench.query("CALCulate:PARameter:CATalog:EXTended?").replace('"','')
+	Mreturn = catalog.split(',')[1::2]
 	return Mreturn
 
 def autoscal(bench):
@@ -164,7 +166,7 @@ def measure(bench):
 
 def scanning(bench, scan=1):
 	if scan:
-		stat = bench.write(':ABOR;:INIT:CONT ON;:TRIG:SOUR INT;')
+		stat = bench.write(':ABOR;:INIT:CONT ON;:TRIG:SOUR IMMediate;')
 	else:
 		stat = bench.write(':ABOR;:INIT:CONT OFF;')
 	return stat
@@ -176,9 +178,9 @@ def sdata(bench):
 	sdatacore = ":CALCulate:MEASure:DATA:SDATa?"
 	datatype = dataform(bench)
 	if datatype[1]['DATA'] == 'REAL,32':
-		datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=False) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
+		datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
 	elif datatype[1]['DATA'] == 'REAL,64':
-		datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=False) # convert the transferred ieee-encoded binaries into list (faster, 64-bit)
+		datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 64-bit)
 	elif datatype[1]['DATA'] == 'ASC,0':
 		datas = bench.query_ascii_values(sdatacore) # convert the transferred ascii-encoded binaries into list (slower)
 	# print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
@@ -209,64 +211,66 @@ def test(detail=True):
 	from pyqum.instrument.toolbox import waveform
 
 	bench = Initiate(False, mode="TEST")
-	if bench == "disconnected":
-		pass
+	if bench == "disconnected": pass
 	else:
-		model(bench)
 		if debug(mdlname, detail):
+			model(bench)
 			print(setrace(bench, ['S21']))
-			power(bench, action=['Set', -35])
-			power(bench)
-			N = 3000
-			# sweep(bench, action=['Set', 'OFF 10', N])
-			sweep(bench, action=['Set', 'ON', N])
-			f_start, f_stop = 0.7e9, 18e9
-			linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
-			stat = linfreq(bench)
-			fstart, fstop = stat[1]['START'], stat[1]['STOP']
-
-			# Building X-axis
-			# fstart, fstop = float(fstart), float(fstop)
-			
-			# noisefilfac = 20000
-			IFB = 600 #abs(float(fstart) - float(fstop))/N/noisefilfac
-			ifbw(bench, action=['Set', IFB])
+			sweep(bench, action=['Set', 'ON', 1001])
+			ifbw(bench, action=['Set', 100])
 			ifbw(bench)
-			# averag(bench, action=['Set', 1]) #optional
-			# averag(bench)
 
-			# cwfreq(bench, action=['Set', 5.25e9])
-			# cwfreq(bench)
-			# power(bench, action=['Set', '', -75.3, -40.3]) #power sweep
-			# power(bench, action=['Set', '', -10, -10])
-			# power(bench)
+			for i in range(2):
+				if i:
+					input("Press any key to sweep frequency: ")
+					f_start, f_stop = 3e9, 9e9
+					linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
+					stat = linfreq(bench)
+					fstart, fstop = stat[1]['START'], stat[1]['STOP']
+					# Building X-axis
+					# fstart, fstop = float(fstart), float(fstop)
+					power(bench, action=['Set', -31.7])
+					power(bench)
+					
+				else:
+					input('Press any key to sweep power: ')
+					cwfreq(bench, action=['Set', 5.257e9])
+					cwfreq(bench)
+					power(bench, action=['Set', '', -73, -35]) #power sweep
+					power(bench)
 
-			# start sweeping
-			stat = sweep(bench)
-			print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
-			print("Ready: %s" %bool(measure(bench)))
-			autoscal(bench)
+				# start sweeping
+				stat = sweep(bench)
+				print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
+				print("Ready: %s" %bool(measure(bench)))
+				autoscal(bench)
 
-			dataform(bench, action=['Set', 'REAL'])
-			# dataform(bench, action=['Set', 'ASCii,0'])
-			data = sdata(bench)
-			print("Data [Type: %s, Length: %s]" %(type(data), len(data)))
+				dataform(bench, action=['Set', 'REAL'])
+				data = sdata(bench)
+				print("Data [Type: %s, Length: %s]" %(type(data), len(data)))
 
-			rfports(bench, action=['Set', 'OFF'])
-			rfports(bench)
-
-			# Plotting trace:
-			yI, yQ, Amp, Pha = IQAParray(array(data))
-			curve([range(len(data)//2),range(len(data)//2)], [yI,yQ], 'In-Plane', 'Count', 'I(dB)', style=['-b','r'])
-			# curve(range(len(data)//2), yQ, 'In-Plane', 'Count', 'I(dB)')
-			curve(range(len(data)//2), Amp, 'Amplitude', 'Count', 'A(dB)')
+				# Plotting trace:
+				yI, yQ, Amp, Pha = IQAParray(array(data))
+				curve([range(len(data)//2),range(len(data)//2)], [yI,yQ], 'In-Plane', 'Count', 'I(dB)', style=['-b','r'])
+				curve(range(len(data)//2), Amp, 'Amplitude', 'Count', 'Amp(dB)')
+				curve(range(len(data)//2), UnwraPhase(range(len(data)//2), Pha), 'UPhase', 'Count', 'UPha(dB)')
 
 			# TEST SCPI ZONE:
+			print("There is/are %s trace(s)" %str(tracenum(bench)))
+			print("%s trace(s): %s"%(len(getrace(bench)), getrace(bench)))
+			# averag(bench, action=['Set', 1]) #optional
+			# averag(bench)
+			# rfports(bench, action=['Set', 'OFF'])
+			# rfports(bench)
 			# bench.write(':SYSTem:PRESet')
+			print("Endian (Byte-order): %s" %str(bench.query("FORMat:BORDer?")))
 			# scanning(bench) #continuous scan
+
 		else: print(Fore.RED + "Basic IO Test")
+	
+	input("Press any key to close: ")
 	close(bench, mode="TEST")
 	return
 
 
-test()
+# test()
