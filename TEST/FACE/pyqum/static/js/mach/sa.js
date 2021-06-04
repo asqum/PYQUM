@@ -20,6 +20,7 @@ $(function () {
             saname: saname
         }, function (data) {
             console.log(data.message);
+            console.log(data.status);
             $('div.sa#sa-current-user').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
             $( "i.sa."+saname+".fa-refresh" ).remove(); //clear previous icon
             if (data.status=='connected'){
@@ -55,6 +56,8 @@ $(function () {
                 $('button.sa.saname#'+saname).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             } else if (data.status=='error') {
                 $('button.sa.saname#'+saname).removeClass('wait').removeClass('close').removeClass('connect').addClass('error');
+            } else if (data.status=='forbidden') {
+                $('button.sa.saname#'+saname).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             };
         })
         .done(function(data) {

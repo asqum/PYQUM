@@ -113,6 +113,8 @@ $(function () {
                 $('button.tkawg.label#'+tkawglabel).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             } else if (data.status=='error') {
                 $('button.tkawg.label#'+tkawglabel).removeClass('wait').removeClass('close').removeClass('connect').addClass('error');
+            } else if (data.status=='forbidden') {
+                $('button.tkawg.label#'+tkawglabel).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             };
         })
         .done(function(data) {

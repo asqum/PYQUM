@@ -76,6 +76,17 @@ def sweep(bench, action=['Get'] + 10 * ['']):
 	else: print(Fore.RED + "Parameter NOT VALID!")
 	return mdlname, bench, SCPIcore, action
 @Attribute
+def sweepmode(bench, action=['Get'] + 10 * ['']):
+	'''action=['Get/Set', <mode>]
+	HOLD - channel will not trigger
+	CONTinuous - channel triggers indefinitely
+	SINGle - channel accepts ONE trigger, then goes to HOLD.
+	GROups - channel accepts the number of triggers specified with the last SENS:SWE:GRO:COUN <num>. This is one of the VNA overlapped commands. Learn more.
+	NOTE: To perform simple, single-triggering, use SINGle which requires that TRIG:SOURce remain in the default (internal) setting.
+	'''
+	SCPIcore = 'SENSe:SWEep:MODE'
+	return mdlname, bench, SCPIcore, action
+@Attribute
 def linfreq(bench, action=['Get'] + 10 * ['']):
 	'''action=['Get/Set', <start(Hz)>, <stop(Hz)>]'''
 	bench.write("SENS:SWE:TYPE LINEAR") #by default: Freq Sweep
@@ -136,13 +147,18 @@ def tracenum(bench, action=['Get'] + 10 * ['']):
 	SCPIcore = 'CALC:PAR:COUN'
 	return mdlname, bench, SCPIcore, action
 
+# Clear ALL measurement(s)
+def clearallmeas(bench): return bench.write(":CALCulate:MEASure:DELete:ALL")
+
 # Setting Trace
 def setrace(bench, Mparam=['S11','S21','S12','S22']):
-	bench.write(":CALCulate:MEASure:DELete:ALL") # Clear ALL measurement(s)
+	clearallmeas(bench)
 	for iTrace, S in enumerate(Mparam):
+		S = S.upper() # ENAB only recognize capitalized parameter-names
 		# bench.write('CALCulate:MEASure%s:DEFine "%s"' %(iTrace+1, S)) # Creates a measurement but does NOT display it, on an existing or new channel: CH<n>_<param>_<trace#>
 		bench.write('CALCulate:PARameter:DEFine:EXTended %s,%s' %(S,S)) # Creates a measurement but does NOT display it.
 		bench.write('DISPlay:WINDow:TRACe%s:FEED "%s"' %(iTrace+1, S)) # Feed trace for the measurement
+		bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(iTrace+1)) #pre-auto-scale
 		selectrace(bench, action=['Set', '%s,fast'%S]) # improve measurement speed (fast)
 	return Mparam
 
@@ -161,15 +177,17 @@ def autoscal(bench):
 	return lastatus
 
 def measure(bench):
-	bench.write(':ABOR;:INIT:IMM;:TRIG:SOUR MAN;') # manually triggered with bus
+	bench.write(':ABOR;:TRIG:SOUR MAN;:INIT:IMM;') # manually trigger with bus (likened to pressing "Manual Trigger" on the panel)
 	ready = bench.query("*OPC?") # when opc return, the sweep is done
 	return ready
 
 def scanning(bench, scan=1):
 	if scan:
-		stat = bench.write(':ABOR;:INIT:CONT ON;:TRIG:SOUR IMMediate;')
+		stat = bench.write(':ABOR;:TRIG:SOUR IMM;:INIT:CONT ON;')
+		sweepmode(bench, action=['Set', 'CONT']) # likened to pressing "Continuous" on the panel
 	else:
-		stat = bench.write(':ABOR;:INIT:CONT OFF;')
+		stat = bench.write(':ABOR;:TRIG:SOUR MAN;:INIT:CONT OFF;')
+		sweepmode(bench, action=['Set', 'HOLD']) # likened to pressing "Hold" on the panel
 	return stat
 
 def sdata(bench):
@@ -201,7 +219,9 @@ def close(bench, reset=True, which=1, mode='DATABASE'):
 		status = "Success"
 		ad = address(mode)
 		ad.update_machine(0, "%s_%s"%(mdlname,which))
-	except: status = "Error"
+	except: 
+		# raise
+		status = "Error"
 	set_status(mdlname, dict(state='disconnected'))
 	print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
 	return status
@@ -216,7 +236,7 @@ def test(detail=True):
 	else:
 		if debug(mdlname, detail):
 			model(bench)
-			print(setrace(bench, ['S11','S44','S21']))
+			print(setrace(bench, ['s11','s44','s21']))
 			sweep(bench, action=['Set', 'ON', 1001])
 			ifbw(bench, action=['Set', 1000])
 			ifbw(bench)

@@ -68,6 +68,19 @@ def load_logged_in_user():
         ).fetchall()
         g.cosamples = [dict(x) for x in g.cosamples]
 
+        # Instrument list & details for each DR (PyQUM) platform:
+        g.machlist = get_db().execute(
+            '''
+            SELECT m.codename, connected, category, sequence, system, u.username
+            FROM machine m
+            INNER JOIN user u ON m.user_id = u.id
+            ORDER BY m.id DESC
+            '''
+        ).fetchall()
+        g.machlist = [dict(x) for x in g.machlist]
+        g.instlist = [x['codename'].replace('_','-') for x in g.machlist]
+
+
         # press('enter') # simulate press-enter-key in cmd to clear the possible clog!
 
 
@@ -238,6 +251,7 @@ def usersamples_access():
 
         message = "Accessing Sample %s owned by %s" %(sname,sample_owner)
     except:
+        # raise # NOTE: please run first measurement test to create USRLOG directory!
         sample_cv = []
         message = "Consult ABC"
     # print('sample cv: %s' %sample_cv)

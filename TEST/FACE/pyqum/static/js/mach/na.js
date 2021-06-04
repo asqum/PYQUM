@@ -55,6 +55,8 @@ $(function () {
                 $('button.na.naname#'+naname).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             } else if (data.status=='error') {
                 $('button.na.naname#'+naname).removeClass('wait').removeClass('close').removeClass('connect').addClass('error');
+            } else if (data.status=='forbidden') {
+                $('button.na.naname#'+naname).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             };
         })
         .done(function(data) {

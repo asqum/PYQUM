@@ -10,10 +10,10 @@
 
     <div class="tab2">
     <form method='GET'>
-        <button class='sg sgname' name='PSGV-1'>PSGV-1</button>
-        <button class='sg sgname' name='PSGA-1'>PSGA-1</button>
-        <button class='sg sgname' name='PSGA-2'>PSGA-2</button>
-        <button class='sg sgname' name='RSSGS-1'>RSSGS-1</button>
+        {% if 'PSGV-1' in g.instlist %}<button class='sg sgname' name='PSGV-1'>PSGV-1</button>{% endif %}
+        {% if 'PSGA-1' in g.instlist %}<button class='sg sgname' name='PSGA-1'>PSGA-1</button>{% endif %}
+        {% if 'PSGA-2' in g.instlist %}<button class='sg sgname' name='PSGA-2'>PSGA-2</button>{% endif %}
+        {% if 'RSSGS-1' in g.instlist %}<button class='sg sgname' name='RSSGS-1'>RSSGS-1</button>{% endif %}
 
         <button class='sg log'>INSTR-LOG</button>
         

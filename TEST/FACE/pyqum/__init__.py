@@ -71,8 +71,9 @@ def create_app(test_config=None):
     app.config.from_mapping(
         # a default secret that should be overridden by instance config
         SECRET_KEY='good',
-        # store the database in the instance folder
+        # store the main database & settings in the instance folder
         DATABASE=os.path.join(app.instance_path, 'pyqum.sqlite'),
+        SETTINGS=os.path.join(app.instance_path, 'settings.sqlite'),
     )
     
     if test_config is None:

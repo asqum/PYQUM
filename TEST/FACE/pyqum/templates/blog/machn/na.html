@@ -10,9 +10,9 @@
 
     <div class="tab2">
     <form method='GET'>
-        <button class='na naname' id='ENA-1'>ENA-1</button>
-        <button class='na naname' id='ENA-2'>ENA-2</button>
-        <button class='na naname' id='ENAB-1'>ENAB-1</button>
+        {% if 'ENA-1' in g.instlist %}<button class='na naname' id='ENA-1'>ENA-1</button>{% endif %}
+        {% if 'ENA-2' in g.instlist %}<button class='na naname' id='ENA-2'>ENA-2</button>{% endif %}
+        {% if 'ENAB-1' in g.instlist %}<button class='na naname' id='ENAB-1'>ENAB-1</button>{% endif %}
 
         <button class='na' id='log'>INSTR-LOG</button>
         

@@ -50,20 +50,11 @@ def all():
 	return render_template("blog/machn/all.html", current_usr=current_usr)
 @bp.route('/all/machine', methods=['GET'])
 def allmachine():
-	g.machlist = get_db().execute(
-		'''
-		SELECT m.codename, connected, category, sequence, system, u.username
-		FROM machine m
-		INNER JOIN user u ON m.user_id = u.id
-		ORDER BY m.id DESC
-		'''
-	).fetchall()
-	g.machlist = [dict(x) for x in g.machlist]
-	print("machine list:\n%s"%g.machlist)
+	print("Instrument list:\n%s"%g.instlist)
 	return jsonify(machlist=g.machlist)
 @bp.route('/all/set/machine', methods=['GET'])
 def allsetmachine():
-
+	# PENDING
 	return jsonify()
 @bp.route('/all/mxc', methods=['GET'])
 def allmxc():
@@ -104,7 +95,7 @@ def sgconnect():
 	sgtag = '%s:%s' %(sgname,session['user_name'])
 	sgtype, sglabel, sguser = sgtag.split('-')[0], sgtag.split('-')[1].split(':')[0], sgtag.split('-')[1].split(':')[1]
 	linkedsg = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in sgbench.keys()]
-	if sgname not in linkedsg:
+	if sgname not in linkedsg and int(g.user['instrument'])>=3:
 		'''get in if not currently initiated'''
 		try:
 			SG[sgtype] = im("pyqum.instrument.benchtop.%s" %sgtype)
@@ -117,11 +108,17 @@ def sgconnect():
 	else:
 		# Check who is currently using the instrument:
 		db = get_db()
-		instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(sgtype,sglabel),)).fetchone()[0]
-		message = "%s is being connected to %s" %(sgname,instr_user)
-		# Connecting or Waiting?
+		try: 
+			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(sgtype,sglabel),)).fetchone()[0]
+			message = "%s is being connected to %s" %(sgname,instr_user)
+		except(TypeError):
+			instr_user = None
+			message = "INSTRUMENT IS COMING SOON" # in the process of procurement
+		
+		# Connecting or Waiting or Forbidden?
 		if instr_user == session['user_name']: status = 'connected'
-		else: status = 'waiting'
+		elif int(g.user['instrument'])>=3: status = 'waiting'
+		else: message, status = 'NOT ENOUGH CLEARANCE', 'forbidden'
 	return jsonify(message=message,status=status)
 @bp.route('/sg/closet', methods=['GET'])
 def sgcloset():
@@ -189,7 +186,7 @@ def tkawgconnect():
 	tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
 	tkawgnum, tkawguser = tkawglabel.split('-')[1], tkawgtag.split(':')[1]
 	linkedtkawg = [x.split(':')[0] for x in tkawgbench.keys()]
-	if tkawglabel not in linkedtkawg:
+	if tkawglabel not in linkedtkawg and int(g.user['instrument'])>=3:
 		try:
 			tkawgbench[tkawgtag] = TKAWG.Initiate(tkawgnum)
 			message = "%s is successfully initiated by %s" %(tkawglabel,tkawguser)
@@ -200,11 +197,17 @@ def tkawgconnect():
 	else:
 		# Check who is currently using the board:
 		db = get_db()
-		instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', (tkawglabel.replace('-','_'),)).fetchone()[0]
-		message = "%s is being connected to %s" %(tkawglabel,instr_user)
-		# Connecting or Waiting?
+		try:
+			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', (tkawglabel.replace('-','_'),)).fetchone()[0]
+			message = "%s is being connected to %s" %(tkawglabel,instr_user)
+		except(TypeError):
+			instr_user = None
+			message = "INSTRUMENT IS COMING SOON" # in the process of procurement
+
+		# Connecting or Waiting or Forbidden?
 		if instr_user == session['user_name']: status = 'connected'
-		else: status = 'waiting'
+		elif int(g.user['instrument'])>=3: status = 'waiting'
+		else: message, status = 'NOT ENOUGH CLEARANCE', 'forbidden'
 	return jsonify(message=message,status=status)
 @bp.route('/tkawg/closet', methods=['GET'])
 def tkawgcloset():
@@ -326,7 +329,7 @@ def alzdgconnect():
 	alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
 	alzdgnum, alzdguser = alzdglabel.split('-')[1], alzdgtag.split(':')[1]
 	linkedalzdg = [x.split(':')[0] for x in alzdgboard.keys()]
-	if alzdglabel not in linkedalzdg:
+	if alzdglabel not in linkedalzdg and int(g.user['instrument'])>=3:
 		try:
 			alzdgboard[alzdgtag] = ALZDG.Initiate(alzdgnum)
 			message = "%s is successfully initiated by %s" %(alzdglabel,alzdguser)
@@ -337,11 +340,17 @@ def alzdgconnect():
 	else: 
 		# Check who is currently using the board:
 		db = get_db()
-		instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', (alzdglabel.replace('-','_'),)).fetchone()[0]
-		message = "%s is being connected to %s" %(alzdglabel,instr_user)
-		# Connecting or Waiting?
+		try:
+			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', (alzdglabel.replace('-','_'),)).fetchone()[0]
+			message = "%s is being connected to %s" %(alzdglabel,instr_user)
+		except(TypeError):
+			instr_user = None
+			message = "INSTRUMENT IS COMING SOON" # in the process of procurement
+
+		# Connecting or Waiting or Forbidden?
 		if instr_user == session['user_name']: status = 'connected'
-		else: status = 'waiting'
+		elif int(g.user['instrument'])>=3: status = 'waiting'
+		else: message, status = 'NOT ENOUGH CLEARANCE', 'forbidden'
 	return jsonify(message=message,status=status)
 @bp.route('/alzdg/configureboard', methods=['GET'])
 def alzdgconfigureboard():
@@ -459,7 +468,7 @@ def naconnect():
 	natag = '%s:%s' %(naname,session['user_name'])
 	natype, nalabel, nauser = natag.split('-')[0], natag.split('-')[1].split(':')[0], natag.split('-')[1].split(':')[1]
 	linkedna = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in nabench.keys()]
-	if naname not in linkedna:
+	if naname not in linkedna and int(g.user['instrument'])>=2:
 		'''get in if not currently initiated'''
 		try:
 			NA[natype] = im("pyqum.instrument.benchtop.%s" %natype)
@@ -472,11 +481,17 @@ def naconnect():
 	else:
 		# Check who is currently using the instrument:
 		db = get_db()
-		instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(natype,nalabel),)).fetchone()[0]
-		message = "%s is being connected to %s" %(naname,instr_user)
-		# Connecting or Waiting?
+		try:
+			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(natype,nalabel),)).fetchone()[0]
+			message = "%s is being connected to %s" %(naname,instr_user)
+		except(TypeError):
+			instr_user = None
+			message = "INSTRUMENT IS COMING SOON" # in the process of procurement
+
+		# Connecting or Waiting or Forbidden?
 		if instr_user == session['user_name']: status = 'connected'
-		else: status = 'waiting'
+		elif int(g.user['instrument'])>=2: status = 'waiting'
+		else: message, status = 'NOT ENOUGH CLEARANCE', 'forbidden'
 	return jsonify(message=message,status=status)
 @bp.route('/na/closet', methods=['GET'])
 def nacloset():
@@ -555,14 +570,12 @@ def naget():
 		message['step-points'] = int(NA[natype].sweep(nabench[natag])[1]['POINTS']) - 1 # step-points in waveform
 		message['power'] = "%.1f dBm" %float(NA[natype].power(nabench[natag])[1]['LEVEL']) # power (fixed unit)
 		message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natag])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb (adjusted by si_prefix)
-		print(Fore.RED + "Debug: %s" %(message['ifb']))
-		
 		message['s21'], message['s11'] = int('S21' in NA[natype].getrace(nabench[natag])), int('S11' in NA[natype].getrace(nabench[natag]))
 		message['s12'], message['s22'] = int('S12' in NA[natype].getrace(nabench[natag])), int('S22' in NA[natype].getrace(nabench[natag]))
 		message['s43'], message['s33'] = int('S43' in NA[natype].getrace(nabench[natag])), int('S33' in NA[natype].getrace(nabench[natag]))
 		message['s34'], message['s44'] = int('S34' in NA[natype].getrace(nabench[natag])), int('S44' in NA[natype].getrace(nabench[natag]))
 	except:
-		raise
+		# raise
 		message = dict(status='%s is not connected' %natype)
 	return jsonify(message=message)
 # endregion
@@ -584,7 +597,7 @@ def saconnect():
 	satag = '%s:%s' %(saname,session['user_name'])
 	satype, salabel, sauser = satag.split('-')[0], satag.split('-')[1].split(':')[0], satag.split('-')[1].split(':')[1]
 	linkedsa = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in sabench.keys()]
-	if saname not in linkedsa:
+	if saname not in linkedsa and int(g.user['instrument'])>=3:
 		'''get in if not currently initiated'''
 		try:
 			SA[satype] = im("pyqum.instrument.benchtop.%s" %satype)
@@ -592,17 +605,23 @@ def saconnect():
 			message = "%s is successfully initiated by %s" %(saname,sauser)
 			status = "connected"
 		except:
-			raise
+			# raise
 			message = "Please check if %s's connection configuration is OK or is it being used!" %(saname)
 			status = 'error'
 	else:
 		# Check who is currently using the instrument:
 		db = get_db()
-		instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(satype,salabel),)).fetchone()[0]
-		message = "%s is being connected to %s" %(saname,instr_user)
-		# Connecting or Waiting?
+		try:
+			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(satype,salabel),)).fetchone()[0]
+			message = "%s is being connected to %s" %(saname,instr_user)
+		except(TypeError):
+			instr_user = None
+			message = "INSTRUMENT IS COMING SOON" # in the process of procurement
+
+		# Connecting or Waiting or Forbidden?
 		if instr_user == session['user_name']: status = 'connected'
-		else: status = 'waiting'
+		elif int(g.user['instrument'])>=3: status = 'waiting'
+		else: message, status = 'NOT ENOUGH CLEARANCE', 'forbidden'
 	return jsonify(message=message,status=status)
 @bp.route('/sa/closet', methods=['GET'])
 def sacloset():
@@ -648,9 +667,11 @@ def saget():
 # region: BDR
 @bp.route('/bdr')
 def bdr():
-	# monitoring traffic:
-	print(Fore.GREEN + "User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
-	return render_template("blog/machn/bdr.html")
+	if int(g.user['instrument'])>=1:
+		# monitoring traffic:
+		print(Fore.GREEN + "User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
+		return render_template("blog/machn/bdr.html")
+	else: abort(404)
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():
 	designation = request.args.get('designation')
@@ -713,8 +734,10 @@ def bdrsamplesqueues():
 # region: DC
 @bp.route('/dc', methods=['GET'])
 def dc():
-	print("loading dc.html")
-	return render_template("blog/machn/dc.html")
+	if int(g.user['instrument'])>=2:
+		print("loading dc.html")
+		return render_template("blog/machn/dc.html")
+	else: abort(404)
 # YOKOGAWA 7651
 @bp.route('/dc/yokogawa', methods=['GET'])
 def dcyokogawa():

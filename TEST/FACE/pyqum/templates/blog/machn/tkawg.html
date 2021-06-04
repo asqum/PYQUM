@@ -10,8 +10,8 @@
 
     <div class="tab2">
     <form method='GET'>
-        <button class='tkawg label' id='TKAWG-1'>TKAWG-1</button>
-        <button class='tkawg label' id='TKAWG-2'>TKAWG-2</button>
+        {% if 'TKAWG-1' in g.instlist %}<button class='tkawg label' id='TKAWG-1'>TKAWG-1</button>{% endif %}
+        {% if 'TKAWG-2' in g.instlist %}<button class='tkawg label' id='TKAWG-2'>TKAWG-2</button>{% endif %}
 
         <button class='tkawg log'>INSTR-LOG</button>
         <button class='tkawg channels' name='channel-1'>CHANNEL-1</button>

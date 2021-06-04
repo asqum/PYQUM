@@ -42,6 +42,8 @@ $(function () {
                 $('button.sg.sgname[name='+sgname+']').removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             } else if (data.status=='error') {
                 $('button.sg.sgname[name='+sgname+']').removeClass('wait').removeClass('close').removeClass('connect').addClass('error');
+            } else if (data.status=='forbidden') {
+                $('button.sg.sgname[name='+sgname+']').removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             };
         })
         .done(function(data) {

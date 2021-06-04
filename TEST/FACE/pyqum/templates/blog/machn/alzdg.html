@@ -10,8 +10,8 @@
 
     <div class="tab2">
     <form method='GET'>
-        <button class='alzdg label' id='ALZDG-1'>ALZDG-1</button>
-        <button class='alzdg label' id='ALZDG-2'>ALZDG-2</button>
+        {% if 'ALZDG-1' in g.instlist %}<button class='alzdg label' id='ALZDG-1'>ALZDG-1</button>{% endif %}
+        {% if 'ALZDG-2' in g.instlist %}<button class='alzdg label' id='ALZDG-2'>ALZDG-2</button>{% endif %}
         
         <button class='alzdg log'>INSTR-LOG</button>
         

@@ -261,6 +261,8 @@ $(function () {
                 $('button.alzdg.label#'+alzdglabel).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             } else if (data.status=='error') {
                 $('button.alzdg.label#'+alzdglabel).removeClass('wait').removeClass('close').removeClass('connect').addClass('error');
+            } else if (data.status=='forbidden') {
+                $('button.alzdg.label#'+alzdglabel).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             };
         })
         .done(function(data) {
