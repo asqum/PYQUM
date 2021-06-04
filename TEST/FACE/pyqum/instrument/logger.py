@@ -170,6 +170,12 @@ def get_json_measurementinfo(filename):
         data = json.load(f)
     return data
 
+# save mat(Jacky)
+def set_mat_analysis(data_dict, filename):
+    matFilename = filename+".mat"
+    totalPath = ANALYSIS_PATH/matFilename
+    savemat(Path(totalPath), data_dict)
+    return None
 
 class address:
     '''Use DATABASE by DEFAULT, TEST by CHOICE

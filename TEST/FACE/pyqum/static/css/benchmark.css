@@ -192,8 +192,11 @@ input[type="checkbox"]{
 label {
     display: inline;
 }
-
-#qFactor-plot{
+.item {
+    display: block;
+    width: 50px;
+}
+#qFactor-plot-Overview2D{
 
     width: 70%;
 }

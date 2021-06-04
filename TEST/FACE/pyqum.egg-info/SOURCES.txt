@@ -6,6 +6,7 @@ pyqum/__init__.py
 pyqum/apache.py
 pyqum/auth.py
 pyqum/authschema.sql
+pyqum/benchmark.py
 pyqum/blog.py
 pyqum/bridge.py
 pyqum/correction.py
@@ -20,6 +21,8 @@ pyqum.egg-info/not-zip-safe
 pyqum.egg-info/requires.txt
 pyqum.egg-info/top_level.txt
 pyqum/static/css/anime.css
+pyqum/static/css/benchmark.css
+pyqum/static/css/brdg.css
 pyqum/static/css/button.css
 pyqum/static/css/dsply.css
 pyqum/static/css/form.css
@@ -1670,12 +1673,16 @@ pyqum/static/js/jquery-3.5.1.min.js
 pyqum/static/js/jquery.min.js
 pyqum/static/js/jquerysession.js
 pyqum/static/js/plotly-latest.min.js
-pyqum/static/js/script.js
 pyqum/static/js/auth/measurement.js
 pyqum/static/js/auth/posts.js
 pyqum/static/js/auth/profile.js
 pyqum/static/js/auth/samples.js
 pyqum/static/js/auth/user.js
+pyqum/static/js/benchmark/benchmark.js
+pyqum/static/js/benchmark/measurement_info.js
+pyqum/static/js/benchmark/qestimate.js
+pyqum/static/js/brdg/bridge.js
+pyqum/static/js/brdg/iqcal.js
 pyqum/static/js/dsply/concurrent.js
 pyqum/static/js/dsply/dsply.js
 pyqum/static/js/dsply/dynamic.js
@@ -1689,6 +1696,7 @@ pyqum/static/js/mach/bdr.js
 pyqum/static/js/mach/dc.js
 pyqum/static/js/mach/mach.js
 pyqum/static/js/mach/na.js
+pyqum/static/js/mach/sa.js
 pyqum/static/js/mach/sg.js
 pyqum/static/js/mach/tkawg.js
 pyqum/static/js/mssn/all.js
@@ -1717,7 +1725,11 @@ pyqum/templates/auth/user.html
 pyqum/templates/blog/create.html
 pyqum/templates/blog/index.html
 pyqum/templates/blog/update.html
-pyqum/templates/blog/bridg/script.html
+pyqum/templates/blog/benchmark/benchmark.html
+pyqum/templates/blog/benchmark/measurement_info.html
+pyqum/templates/blog/benchmark/qestimate.html
+pyqum/templates/blog/bridg/bridge.html
+pyqum/templates/blog/bridg/iqcal.html
 pyqum/templates/blog/dsply/display.html
 pyqum/templates/blog/dsply/fastream.html
 pyqum/templates/blog/dsply/figconcurrent.html

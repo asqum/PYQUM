@@ -15,4 +15,17 @@ ECHO Installing ATS-API
 cd C:\AlazarTech\ATS-SDK\7.4.0\Samples_Python\Library
 pip install -e .
 
+:: Resonator tool
+ECHO Installing Resonator tool
+cd C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\BETAsite\resonator_tools
+pip install -e .
+
+:: qspp
+ECHO Installing QuData Post-Processing
+cd C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\BETAsite\Signal_Processing
+pip install -e .
+
+
+
+
 PAUSE

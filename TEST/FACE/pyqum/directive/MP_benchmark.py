@@ -55,8 +55,8 @@ def assembler( dataPosition, dimensionIndice, info, userName ):
 
 	if len(axisLength) == 3:
 		xv, yv = meshgrid(axis[0], axis[1], indexing='xy')
-		print(xv,yv)
-		print("shape: ",xv.shape, yv.shape)
+		#print(xv,yv)
+		#print("shape: ",xv.shape, yv.shape)
 		for indXY in zip(xv.flatten(), yv.flatten()):
 			for indAxis,indDim in enumerate(dimensionIndice):
 				dataPosition[indDim] = indXY[indAxis]
@@ -71,9 +71,11 @@ def assembler( dataPosition, dimensionIndice, info, userName ):
 	print("Data position: ",dataPosition) 
 
 
-	data = {}
-	data["I"] = array(npdata[0]) #.tolist()
-	data["Q"] = array(npdata[1]) #.tolist()
+	data = {
+		"I": array(npdata[0]), #.tolist()
+		"Q": array(npdata[1])		
+	}
+ #.tolist()
 	
 	return data
 

@@ -6,11 +6,10 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
-from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo
+from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs
 
-from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo
 
 import json
 
@@ -28,8 +27,11 @@ from pyqum.directive import calibrate
 from pyqum.directive.MP_benchmark import assembler
 
 # Fitting
-from pyqum.directive.resonator_tools import circuit
+from resonator_tools import circuit
 from collections import defaultdict
+
+# Save file
+from scipy.io import savemat
 
 
 encryp = 'ghhgjadz'
@@ -48,6 +50,8 @@ def find_nearestIndex( fArray, fValues ):
 		idx.append( abs(fArray - fv).argmin() )
 	return idx
 
+
+	
 
 @bp.route('/')
 def show():
@@ -72,6 +76,10 @@ def qestimate():
 	print("qestimate")
 	return render_template("blog/benchmark/qestimate.html", info=info)
 
+@bp.route('/get_user', methods=['POST', 'GET'])
+def get_user():
+	return jsonify(session['user_name'])
+
 @bp.route('/measurement_info', methods=['POST', 'GET'])
 def measurement_info(): 
 
@@ -80,7 +88,7 @@ def measurement_info():
 
 	return render_template("blog/benchmark/measurement_info.html", info=info)
 
-def get_iqData2D (valueIndex, axisIndex):
+def get_iqData (valueIndex, axisIndex):
 
 	info = get_json_measurementinfo(get_fileName())
 
@@ -94,40 +102,54 @@ def get_iqData2D (valueIndex, axisIndex):
 
 @bp.route('/qestimate/plot',methods=['POST','GET'])
 def qestimate_plot():
-	print(Fore.GREEN + "User %s is plotting 2D-Data" %session['user_name'])
-	global iqData, valueIndex, axisIndex 
+	global gIqData2D, gIqData1D, gValueIndex, gAxisIndex 
+	
+	indexData = json.loads(request.args.get('indexData'))
 
-	valueIndex = [int(vi) for vi in json.loads(request.args.get('valueIndex'))]
-	axisIndex = [int(ai) for ai in json.loads(request.args.get('axisIndex'))]
+	valueIndex = [int(vi) for vi in indexData["valueIndex"]["data"]]
+	axisIndex = [int(ai) for ai in indexData["axisIndex"]["data"]]
 	plotDimension = len(axisIndex)
 
+	print(Fore.GREEN + "User %s is plotting %dD Data" %(session['user_name'],plotDimension) )
+
 	print("valueIndex",valueIndex,",axisIndex",axisIndex)
-	iqData = get_iqData2D(valueIndex, axisIndex)
+		
+	iqData = get_iqData(valueIndex, axisIndex)
+
 	info = get_json_measurementinfo(get_fileName())
 	paraInfo = info["measurement"]["parameters"]
 
-	xtitle = paraInfo[axisIndex[0]]["lable"]
-	ytitle = paraInfo[axisIndex[1]]["lable"]
-
 	iAmp = iqData['I']
 	qAmp = iqData['Q']
-	TransAmp = sqrt(iAmp**2+qAmp**2)
+	transAmp = sqrt(iAmp**2+qAmp**2)
 
-	# if( plotDimension == 2):
-	x = paraInfo[axisIndex[0]]["values"]
-	y = paraInfo[axisIndex[1]]["values"]
-	print("x is of length %s and of type %s" %(len(x),type(x)))
-	print("y is of length %s and of type %s" %(len(y),type(y)))
+	if( plotDimension == 2):
+		plotData = {
+				paraInfo[axisIndex[0]]["htmlId"]: paraInfo[axisIndex[0]]["values"],
+				paraInfo[axisIndex[1]]["htmlId"]: paraInfo[axisIndex[1]]["values"],
+				"I": iAmp.transpose().tolist(),
+				"Q": qAmp.transpose().tolist(),
+				"amplitude": transAmp.transpose().tolist(),
+		}
+		gIqData2D = iqData
+		gAxisIndex = axisIndex
+		#matFileData = { paraInfo[axisIndex[0]]["htmlId"] : paraInfo[axisIndex[0]]["values"]}
 
-	z = TransAmp
-	return jsonify(x=x, y=y, zAmp=z.transpose().tolist(), zI=iAmp.transpose().tolist(), zQ=qAmp.transpose().tolist())
-	# elif( plotDimension == 1 ):
-	# 	x = paraInfo[axisIndex[0]]["values"]
-	# 	print("x is of length %s and of type %s" %(len(x),type(x)))
-	# 	y = TransAmp
-	# 	return jsonify(x=x, y=y.tolist(), z=[], xtitle=xtitle, ytitle="ytitle")
-	# else:
-	# 	return 0
+		set_mat_analysis(plotData, "IQ_2Ddata[%s]"%session['user_name'])
+	else:
+		plotData = {
+			paraInfo[axisIndex[0]]["htmlId"]: paraInfo[axisIndex[0]]["values"],
+			"I": iAmp.tolist(),
+			"Q": qAmp.tolist(),			
+			"amplitude": transAmp.tolist()
+		}
+		gIqData1D = iqData
+	
+
+	# print("x is of length %s and of type %s" %(len(plotData[0]["data"]),type(plotData[0]["data"])))
+	# print("y is of length %s and of type %s" %(len(plotData[1]["data"]),type(plotData[1]["data"])))
+	return jsonify(plotData)
+
 
 @bp.route('/qestimate/fitting',methods=['POST','GET'])
 def qestimate_fitting():
@@ -136,12 +158,12 @@ def qestimate_fitting():
 	fittingRangeFrom = request.args.get('fittingRangeFrom')
 	fittingRangeTo = request.args.get('fittingRangeTo')
 	info = get_json_measurementinfo(get_fileName())
-	print("I shape:", iqData["I"].shape, "Q shape:", iqData["Q"].shape )
+	print("I shape:", gIqData2D["I"].shape, "Q shape:", gIqData2D["Q"].shape )
 	print("Fitting range:", fittingRangeFrom, fittingRangeTo)
 	info = get_json_measurementinfo(get_fileName())
 
 
-	fitIQ = iqData["I"].transpose()+1j*iqData["Q"].transpose()
+	fitIQ = gIqData2D["I"].transpose()+1j*gIqData2D["Q"].transpose()
 	fitFrequency= array(info["measurement"]["parameters"][4]["values"])
 	fittingRange = [float(fittingRangeFrom),float(fittingRangeTo)]
 
@@ -149,8 +171,8 @@ def qestimate_fitting():
 	fittingIndex.sort()
 
 	port = circuit.notch_port()
-	fittingResult = {}
-	for ifitIQ, i in zip(fitIQ, range(iqData["I"].shape[1]) ):
+	fitResult = {}
+	for ifitIQ, i in zip(fitIQ, range(gIqData2D["I"].shape[1]) ):
 		port.add_data( fitFrequency[fittingIndex[0]:fittingIndex[1]] ,ifitIQ[fittingIndex[0]:fittingIndex[1]] )
 		port.autofit()
 
@@ -159,14 +181,24 @@ def qestimate_fitting():
 			if isnan(fittingValue):
 				fittingValue = 0
 			if(i==0):
-					fittingResult[key] = [fittingValue]
+					fitResult[key] = [fittingValue]
 			else:
-					fittingResult[key].append(fittingValue)
+					fitResult[key].append(fittingValue)
 
-	fittingResult[info["measurement"]["parameters"][axisIndex[1]]["lable"]]= info["measurement"]["parameters"][axisIndex[1]]["values"]
+	fitResult[info["measurement"]["parameters"][gAxisIndex[1]]["lable"]]= info["measurement"]["parameters"][gAxisIndex[1]]["values"]
 
-	#print(dates_dict)
-	return jsonify(fittingResult)
+	fitResultData = [
+		{"lable": info["measurement"]["parameters"][gAxisIndex[1]]["lable"],
+		"data": info["measurement"]["parameters"][gAxisIndex[1]]["values"]}
+	]
+
+	for key in fitResult.keys():
+		fitResultData.append(
+			{"lable": key,
+			"data": fitResult[key]})
+		
+	set_mat_analysis(fitResult, "resonator_fit[%s]"%session['user_name'])
+	return jsonify(fitResult)
 
 
 @bp.route('/test',methods=['POST','GET'])
