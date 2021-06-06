@@ -23,7 +23,7 @@ from pyqum.instrument.benchtop import DSO, YOKO, KEIT, TKAWG
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.serial import DC
 from pyqum.instrument.toolbox import match, waveform, pauselog
-from pyqum.instrument.analyzer import IQAParray, pulse_baseband
+from pyqum.instrument.analyzer import IQAParray, pulse_baseband, UnwraPhase
 from pyqum.instrument.composer import pulser
 
 encryp = 'ghhgjadz'
@@ -454,9 +454,9 @@ def alzdgget():
 # region: NA (user-specific)
 @bp.route('/na', methods=['GET'])
 def na(): 
-	global nabench, NA
+	global NA, nabench, freqrange
 	try: print(Fore.GREEN + "Connected NA: %s" %nabench.keys())
-	except: nabench, NA = {}, {}
+	except: NA, nabench, freqrange = {}, {}, {}
 	return render_template("blog/machn/na.html")
 @bp.route('/na/log', methods=['GET'])
 def nalog():
@@ -500,16 +500,16 @@ def nacloset():
 	except: 
 		status = "Connection lost"
 		pass
-	del nabench[natag]
+	del nabench[natag], freqrange[natag]
 	return jsonify(message=status)
 @bp.route('/na/set/freqrange', methods=['GET'])
 def nasetfreqrange():
 	natag, natype = '%s:%s' %(request.args.get('naname'),session['user_name']), request.args.get('natype')
-	freqrange = waveform(request.args.get('freqrange'))
+	freqrange[natag] = waveform(request.args.get('freqrange'))
 	frequnit = request.args.get('frequnit').replace("Hz","")
-	NA[natype].sweep(nabench[natag], action=['Set', 'ON', freqrange.count])
-	fstart, fstop = si_parse(str(freqrange.data[0])+frequnit), si_parse(str(freqrange.data[-1])+frequnit)
-	NA[natype].sweep(nabench[natag], action=['Set', 'ON', freqrange.count])
+	NA[natype].sweep(nabench[natag], action=['Set', 'ON', freqrange[natag].count])
+	fstart, fstop = si_parse(str(freqrange[natag].data[0])+frequnit), si_parse(str(freqrange[natag].data[-1])+frequnit)
+	NA[natype].sweep(nabench[natag], action=['Set', 'ON', freqrange[natag].count])
 	NA[natype].linfreq(nabench[natag], action=['Set', fstart, fstop])
 	message = 'frequency: %s to %s' %(fstart, fstop)
 	return jsonify(message=message)
@@ -551,11 +551,17 @@ def nasetsweep():
 	mreturn = NA[natype].setrace(nabench[natag], Mparam=mparam)
 	print("sweeping %s"%mreturn)
 	NA[natype].rfports(nabench[natag], action=['Set', 'ON'])
-	stat = NA[natype].measure(nabench[natag])
 	swptime = NA[natype].sweep(nabench[natag])[1]['TIME']
+	stat = NA[natype].measure(nabench[natag])
 	NA[natype].autoscal(nabench[natag])
+	# Collecting Data:
+	NA[natype].dataform(nabench[natag], action=['Set', 'REAL'])
+	yI, yQ, yAmp, yPha = IQAParray(array(NA[natype].sdata(nabench[natag])))
 	NA[natype].rfports(nabench[natag], action=['Set', 'OFF'])
-	return jsonify(sweep_complete=bool(stat), swptime=swptime)
+	print(Fore.CYAN + "Collected %s Data" %len(yAmp))
+	xdata = list(freqrange[natag].data)
+	yUPha = list(UnwraPhase(xdata, yPha))
+	return jsonify(sweep_complete=bool(stat), swptime=swptime, xdata=xdata, yAmp=list(yAmp), yUPha=yUPha)
 @bp.route('/na/get', methods=['GET'])
 def naget():
 	natag, natype = '%s:%s' %(request.args.get('naname'),session['user_name']), request.args.get('natype')
@@ -565,9 +571,11 @@ def naget():
 		start_val, start_unit = si_format(float(NA[natype].linfreq(nabench[natag])[1]['START']),precision=1).split(" ")
 		stop_val, stop_unit = si_format(float(NA[natype].linfreq(nabench[natag])[1]['STOP']),precision=1).split(" ")
 		stop_conversion = si_parse("1%s"%stop_unit) / si_parse("1%s"%start_unit) # equalizing both unit-range:
-		message['start-frequency'] = "%s %sHz" %(start_val,start_unit) # start-frequency
-		message['stop-frequency'] = "%s %sHz" %(float(stop_val)*stop_conversion,start_unit) # stop-frequency
-		message['step-points'] = int(NA[natype].sweep(nabench[natag])[1]['POINTS']) - 1 # step-points in waveform
+		step_points = int(NA[natype].sweep(nabench[natag])[1]['POINTS']) - 1 # step-points in waveform
+		message['freq_waveform'] = "%s to %s * %s" %(start_val, float(stop_val)*stop_conversion, step_points)
+		message['freq_unit'] = start_unit
+		freqrange[natag] = waveform(message['freq_waveform']) # for NA-PLOT
+
 		message['power'] = "%.1f dBm" %float(NA[natype].power(nabench[natag])[1]['LEVEL']) # power (fixed unit)
 		message['ifb'] = si_format(float(NA[natype].ifbw(nabench[natag])[1]['BANDWIDTH']),precision=0) + "Hz" # ifb (adjusted by si_prefix)
 		message['s21'], message['s11'] = int('S21' in NA[natype].getrace(nabench[natag])), int('S11' in NA[natype].getrace(nabench[natag]))
@@ -670,7 +678,10 @@ def bdr():
 	if int(g.user['instrument'])>=1:
 		# monitoring traffic:
 		print(Fore.GREEN + "User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
-		return render_template("blog/machn/bdr.html")
+		# PENDING: DR-specific Loaded number of samples
+		loaded = 6
+		recent_samples = [s['samplename'] for s in g.samples][0:loaded] + ['Sam', 'Same01', 'IDLE'] # owned main samples (abc == BDR herself)
+		return render_template("blog/machn/bdr.html", recent_samples=recent_samples, CHAR0_sample=g.CHAR0_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample)
 	else: abort(404)
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():
@@ -729,6 +740,23 @@ def bdrsamplesqueues():
 	bdrqlist = db.execute("SELECT system, samplename FROM queue ORDER BY id ASC").fetchall()
 	bdrqlist = [dict(x) for x in bdrqlist]
 	return jsonify(bdrqlist=bdrqlist)
+@bp.route('/bdr/samples/allocate', methods=['GET'])
+def bdrsamplesallocate():
+	allocate_CHAR0 = request.args.get('allocate_CHAR0')
+	allocate_QPC0 = request.args.get('allocate_QPC0')
+	allocate_QPC1 = request.args.get('allocate_QPC1')
+	print(Fore.YELLOW + "allocate_CHAR0: %s" %allocate_CHAR0)
+
+	db = get_db()
+	db.execute("UPDATE queue SET samplename = ? WHERE system = 'CHAR0'", (allocate_CHAR0,))
+	db.commit()
+	db.execute("UPDATE queue SET samplename = ? WHERE system = 'QPC0'", (allocate_QPC0,))
+	db.commit()
+	db.execute("UPDATE queue SET samplename = ? WHERE system = 'QPC1'", (allocate_QPC1,))
+	db.commit()
+
+	return jsonify()
+
 # endregion
 
 # region: DC

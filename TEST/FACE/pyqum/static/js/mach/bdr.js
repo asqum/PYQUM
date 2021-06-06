@@ -271,18 +271,7 @@ $("a.new#bdr-forecast-T").bind('click', function() {
     });
 });
 
-//show wiring's page
-$(function() {
-    $('button.bdr#wiring').bind('click', function() {
-        $('div.bdrcontent').hide();
-        $('div.bdrcontent#wiring').show();
-        $('button.bdr').removeClass('selected');
-        $('button.bdr#wiring').addClass('selected');
-        return false;
-    });
-});
-
-//show samples' page
+// Samples-Allocation by Management:
 $(function() {
     $('button.bdr#samples').bind('click', function() {
         $('div.bdrcontent').hide();
@@ -300,6 +289,31 @@ $(function() {
             
         });
         
+        return false;
+    });
+});
+$(function() {
+    $('select.bdr.samples-allocation').on('change', function() {
+        $.getJSON('/mach/bdr/samples/allocate', {
+            allocate_CHAR0: $('select.bdr.samples-allocation.CHAR0').val(),
+            allocate_QPC0: $('select.bdr.samples-allocation.QPC0').val(),
+            allocate_QPC1: $('select.bdr.samples-allocation.QPC1').val(),
+         }, function (data) {
+            setTimeout(() => { $('button.bdr#samples').trigger('click'); }, 100);
+
+        });
+
+        return false;
+    });
+});
+
+//show wiring's page
+$(function() {
+    $('button.bdr#wiring').bind('click', function() {
+        $('div.bdrcontent').hide();
+        $('div.bdrcontent#wiring').show();
+        $('button.bdr').removeClass('selected');
+        $('button.bdr#wiring').addClass('selected');
         return false;
     });
 });

@@ -196,6 +196,8 @@ def sdata(bench):
 	'''
 	sdatacore = ":CALCulate:MEASure:DATA:SDATa?"
 	datatype = dataform(bench)
+	databorder = str(bench.query("FORMat:BORDer?"))
+	print(Fore.CYAN + "Endian (Byte-order): %s" %databorder)
 	if datatype[1]['DATA'] == 'REAL,32':
 		datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
 	elif datatype[1]['DATA'] == 'REAL,64':
@@ -236,7 +238,7 @@ def test(detail=True):
 	else:
 		if debug(mdlname, detail):
 			model(bench)
-			print(setrace(bench, ['s11','s44','s21']))
+			print(setrace(bench, ['s43','s21']))
 			sweep(bench, action=['Set', 'ON', 1001])
 			ifbw(bench, action=['Set', 1000])
 			ifbw(bench)
@@ -244,7 +246,7 @@ def test(detail=True):
 			for i in range(1):
 				if not i:
 					input("Press any key to sweep frequency: ")
-					f_start, f_stop = 3e9, 9e9
+					f_start, f_stop = 5e9, 7e9
 					linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
 					stat = linfreq(bench)
 					fstart, fstop = stat[1]['START'], stat[1]['STOP']
@@ -284,7 +286,7 @@ def test(detail=True):
 			# rfports(bench, action=['Set', 'OFF'])
 			# rfports(bench)
 			# bench.write(':SYSTem:PRESet')
-			print("Endian (Byte-order): %s" %str(bench.query("FORMat:BORDer?")))
+			# print("Endian (Byte-order): %s" %str(bench.query("FORMat:BORDer?")))
 			# scanning(bench) #continuous scan
 
 		else: print(Fore.RED + "Basic IO Test")

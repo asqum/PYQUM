@@ -4,6 +4,30 @@ $(document).ready(function(){
     $('div.nacontent.settings').show();
 });
 
+// Function(s)
+function plot1D_nasweep(x1,y1,y2) {
+    let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', name: 'Amplitude', line: {color: 'rgb(23, 151, 6)', width: 2.5}, yaxis: 'y' };
+    let traceR = {x: [], y: [], mode: 'lines', type: 'scatter', name: 'Phase', line: {color: 'blue', width: 2.5}, yaxis: 'y2' };
+
+    let layout = {
+        legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
+        xaxis: { zeroline: false, title: "<i>Refer: Frequency</i>", titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis: { zeroline: false, title: '', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis2: { zeroline: false, title: "<b>UFN-Phase</b>", titlefont: {color: 'rgb(148, 103, 189)', size: 18}, tickfont: {color: 'rgb(148, 103, 189)', size: 18},
+            tickwidth: 3, linewidth: 3, overlaying: 'y', side: 'right' },
+        title: '',
+        annotations: [{ xref: 'paper', yref: 'paper', x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom',
+            text: '<b>Amp(dB)</b>', font: {size: 18}, showarrow: false, textangle: 0 }]
+        };
+    
+    $.each(x1, function(i, val) {traceL.x.push(val);}); $.each(y1, function(i, val) {traceL.y.push(val);});
+    $.each(x1, function(i, val) {traceR.x.push(val);}); $.each(y2, function(i, val) {traceR.y.push(val);});
+
+    var Trace = [traceL, traceR]
+    Plotly.newPlot('na-AmPha-chart', Trace, layout, {showSendToCloud: true});
+};
+
+
 //Select model to proceed:
 $(function () {
     $('button.na.naname').click( function() { /* collecting # of click inside this query-loop! */
@@ -33,10 +57,8 @@ $(function () {
                     console.log('Getting:\n' + JSON.stringify(data.message));
                     $('input.na.settings').addClass('getvalue');
                     // output freq range:
-                    var freqrange = data.message['start-frequency'].split(' ')[0] + " to " + data.message['stop-frequency'].split(' ')[0] + " * "
-                                        + data.message['step-points'];
-                    $('input.na.scale.settings[name="freqrange"]').val(freqrange);
-                    $('input.na.unit.settings[name="freqrange"]').val(data.message['start-frequency'].split(' ')[1]);
+                    $('input.na.scale.settings[name="freqrange"]').val(data.message['freq_waveform']);
+                    $('input.na.unit.settings[name="freqrange"]').val(data.message['freq_unit']);
                     // output power (w/ unit), IF-bandwidth (w/ unit) & S-Parameter:
                     $('input.na.scale.settings[name="powa"]').val(data.message['power'].split(" ")[0]);
                     $('input.na.unit.settings[name="powa"]').val(data.message['power'].split(' ')[1]);
@@ -182,10 +204,12 @@ $(function(){
         var s44 = $('input.na.sparam.settings[name="S44"]').is(':checked')?1:0;
             
         $.getJSON('/mach/na/set/sweep', {
-            naname: naname, natype: natype, s21: s21, s11: s11, s12: s12, s22: s22, s43: s43, s33: s33, s34: s34, s44: s44
-        }, function (data) {  
+            naname: naname, natype: natype, s21: s21, s11: s11, s12: s12, s22: s22, s43: s43, s33: s33, s34: s34, s44: s44,
+        }, function (data) {
+            // console.log('Data: ' + data.yAmp);
             console.log("sweep complete: " + data.sweep_complete);  
-            console.log("ETA in " + data.swptime + 's');
+            $('div.na#na-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("Completed in " + data.swptime + 's'));
+            plot1D_nasweep(data.xdata, data.yAmp, data.yUPha)
             $( "i.na" ).remove(); //clear processing animation
         })
         .done(function(data) {

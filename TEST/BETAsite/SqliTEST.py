@@ -17,8 +17,8 @@ db.row_factory = sqlite3.Row
 inst_pack = db.execute(
     'SELECT i.id, designation, category '
     'FROM instrument i '
-    'WHERE i.DR = ? AND i.queue = ?'
-    ' ORDER BY id DESC',
+    'WHERE i.DR = ? AND i.queue = ? '
+    'ORDER BY id DESC',
     (DR_platform,'CHAR0',)
 ).fetchall()
 inst_pack = [dict(x) for x in inst_pack]

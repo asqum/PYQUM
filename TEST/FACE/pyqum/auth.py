@@ -80,6 +80,12 @@ def load_logged_in_user():
         g.machlist = [dict(x) for x in g.machlist]
         g.instlist = [x['codename'].replace('_','-') for x in g.machlist]
 
+        # Appointed sample in each measurement system:
+        g.CHAR0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='CHAR0'").fetchone()[0]
+        g.QPC0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC0'").fetchone()[0]
+        g.QPC1_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC1'").fetchone()[0]
+        # print(Fore.GREEN + "CHAR0_sample: %s" %g.CHAR0_sample)
+
 
         # press('enter') # simulate press-enter-key in cmd to clear the possible clog!
 

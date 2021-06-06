@@ -147,18 +147,13 @@
         </div>
     </div>
 
-    <div class="bdrcontent" id="wiring">
-        <div class="container">
-            
-        </div>
-    </div>
-
+    <!-- Samples-Allocation for respective Measurement-Systems -->
     <div class="bdrcontent" id="samples">
         <div class="container">
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                 <h2 class="bdr" id="samples">Output assignment for DR-1</h2>
             </div>
-            
+            <!-- Allocation table: -->
             <div class="row">
                 <table class="BDR-QUEUE content-table">
                     <thead class="samples bdr-queue-update">
@@ -173,6 +168,45 @@
                     </tbody>
                 </table>
             </div>
+            {% if g.user['management'] %}
+                <div class="row">
+                    <div class="col-11" id='left'><h3 class="bdr samples-allocation">Loaded:</h3></div>
+                    <!-- PENDING: DR-specific Loaded number of samples -->
+                    <div class="col-11" id='left'><input class='bdr samples-allocation loaded' type="text" value='6'/></div>
+                </div>
+                <div class="row">
+                    <div class="col-11" id='left'><select class='bdr samples-allocation CHAR0' type="text">
+                        <option value=0> -main- </option>
+                        {% for s in recent_samples %}
+                        {% if s==CHAR0_sample %}
+                            <option value={{s}} selected>{{s}}</option>
+                        {% else %}
+                            <option value={{s}}>{{s}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select></div>
+                    <div class="col-11" id='left'><select class='bdr samples-allocation QPC0' type="text">
+                        <option value=0> -main- </option>
+                        {% for s in recent_samples %}
+                        {% if s==QPC0_sample %}
+                            <option value={{s}} selected>{{s}}</option>
+                        {% else %}
+                            <option value={{s}}>{{s}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select></div>
+                    <div class="col-11" id='left'><select class='bdr samples-allocation QPC1' type="text">
+                        <option value=0> -main- </option>
+                        {% for s in recent_samples %}
+                        {% if s==QPC1_sample %}
+                            <option value={{s}} selected>{{s}}</option>
+                        {% else %}
+                            <option value={{s}}>{{s}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select></div>
+                </div>
+            {% endif %}
             
         </div>
     </div>
