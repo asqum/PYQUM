@@ -58,7 +58,7 @@ $(function () {
                     $('input.na.settings').addClass('getvalue');
                     // output freq range:
                     $('input.na.scale.settings[name="freqrange"]').val(data.message['freq_waveform']);
-                    $('input.na.unit.settings[name="freqrange"]').val(data.message['freq_unit']);
+                    $('input.na.unit.settings[name="freqrange"]').val(data.message['freq_unit'] + 'Hz');
                     // output power (w/ unit), IF-bandwidth (w/ unit) & S-Parameter:
                     $('input.na.scale.settings[name="powa"]').val(data.message['power'].split(" ")[0]);
                     $('input.na.unit.settings[name="powa"]').val(data.message['power'].split(' ')[1]);
@@ -72,6 +72,7 @@ $(function () {
                     $('input.na.sparam[name="S34"]').prop( "checked", Boolean(data.message['s34']) );
                     $('input.na.sparam[name="S33"]').prop( "checked", Boolean(data.message['s33']) );
                     $('input.na.sparam[name="S44"]').prop( "checked", Boolean(data.message['s44']) );
+                    window.swptime = data.message['swptime'];
                 });
             } else if (data.status=='waiting') {
                 $('button.na.naname#'+naname).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
@@ -203,12 +204,12 @@ $(function(){
         var s34 = $('input.na.sparam.settings[name="S34"]').is(':checked')?1:0;
         var s44 = $('input.na.sparam.settings[name="S44"]').is(':checked')?1:0;
             
+        $('div.na#na-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("Completing in " + swptime + 's'));
         $.getJSON('/mach/na/set/sweep', {
             naname: naname, natype: natype, s21: s21, s11: s11, s12: s12, s22: s22, s43: s43, s33: s33, s34: s34, s44: s44,
         }, function (data) {
             // console.log('Data: ' + data.yAmp);
             console.log("sweep complete: " + data.sweep_complete);  
-            $('div.na#na-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("Completed in " + data.swptime + 's'));
             plot1D_nasweep(data.xdata, data.yAmp, data.yUPha)
             $( "i.na" ).remove(); //clear processing animation
         })

@@ -294,10 +294,10 @@ $(function() {
 });
 $(function() {
     $('select.bdr.samples-allocation').on('change', function() {
+        var set_system = $(this).attr('id').split('-')[1];
         $.getJSON('/mach/bdr/samples/allocate', {
-            allocate_CHAR0: $('select.bdr.samples-allocation.CHAR0').val(),
-            allocate_QPC0: $('select.bdr.samples-allocation.QPC0').val(),
-            allocate_QPC1: $('select.bdr.samples-allocation.QPC1').val(),
+            set_system: set_system,
+            set_sample: $('select.bdr.samples-allocation.' + set_system).val(),
          }, function (data) {
             setTimeout(() => { $('button.bdr#samples').trigger('click'); }, 100);
 

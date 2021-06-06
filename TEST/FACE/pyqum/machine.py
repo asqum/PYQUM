@@ -58,7 +58,10 @@ def allsetmachine():
 	return jsonify()
 @bp.route('/all/mxc', methods=['GET'])
 def allmxc():
-	dr = bluefors()
+	# DR-specific T6:
+	DR_platform = int(get_status("WEB")['port']) - 5300
+	DR_list = ["Alice", "Bob"]
+	dr = bluefors(designation=DR_list[DR_platform-1])
 	dr.selectday(-1)
 
 	# PENDING: use other route to display all BDR status, maybe in BDR pages itself
@@ -551,7 +554,6 @@ def nasetsweep():
 	mreturn = NA[natype].setrace(nabench[natag], Mparam=mparam)
 	print("sweeping %s"%mreturn)
 	NA[natype].rfports(nabench[natag], action=['Set', 'ON'])
-	swptime = NA[natype].sweep(nabench[natag])[1]['TIME']
 	stat = NA[natype].measure(nabench[natag])
 	NA[natype].autoscal(nabench[natag])
 	# Collecting Data:
@@ -561,15 +563,15 @@ def nasetsweep():
 	print(Fore.CYAN + "Collected %s Data" %len(yAmp))
 	xdata = list(freqrange[natag].data)
 	yUPha = list(UnwraPhase(xdata, yPha))
-	return jsonify(sweep_complete=bool(stat), swptime=swptime, xdata=xdata, yAmp=list(yAmp), yUPha=yUPha)
+	return jsonify(sweep_complete=bool(stat), xdata=xdata, yAmp=list(yAmp), yUPha=yUPha)
 @bp.route('/na/get', methods=['GET'])
 def naget():
 	natag, natype = '%s:%s' %(request.args.get('naname'),session['user_name']), request.args.get('natype')
 	print(Fore.YELLOW + "Getting %s attributes"%(natag))
 	message = {}
 	try:
-		start_val, start_unit = si_format(float(NA[natype].linfreq(nabench[natag])[1]['START']),precision=1).split(" ")
-		stop_val, stop_unit = si_format(float(NA[natype].linfreq(nabench[natag])[1]['STOP']),precision=1).split(" ")
+		start_val, start_unit = si_format(float(NA[natype].linfreq(nabench[natag])[1]['START']),precision=7).split(" ")
+		stop_val, stop_unit = si_format(float(NA[natype].linfreq(nabench[natag])[1]['STOP']),precision=7).split(" ")
 		stop_conversion = si_parse("1%s"%stop_unit) / si_parse("1%s"%start_unit) # equalizing both unit-range:
 		step_points = int(NA[natype].sweep(nabench[natag])[1]['POINTS']) - 1 # step-points in waveform
 		message['freq_waveform'] = "%s to %s * %s" %(start_val, float(stop_val)*stop_conversion, step_points)
@@ -582,8 +584,9 @@ def naget():
 		message['s12'], message['s22'] = int('S12' in NA[natype].getrace(nabench[natag])), int('S22' in NA[natype].getrace(nabench[natag]))
 		message['s43'], message['s33'] = int('S43' in NA[natype].getrace(nabench[natag])), int('S33' in NA[natype].getrace(nabench[natag]))
 		message['s34'], message['s44'] = int('S34' in NA[natype].getrace(nabench[natag])), int('S44' in NA[natype].getrace(nabench[natag]))
+		message['swptime'] = NA[natype].sweep(nabench[natag])[1]['TIME']
 	except:
-		# raise
+		raise
 		message = dict(status='%s is not connected' %natype)
 	return jsonify(message=message)
 # endregion
@@ -742,19 +745,12 @@ def bdrsamplesqueues():
 	return jsonify(bdrqlist=bdrqlist)
 @bp.route('/bdr/samples/allocate', methods=['GET'])
 def bdrsamplesallocate():
-	allocate_CHAR0 = request.args.get('allocate_CHAR0')
-	allocate_QPC0 = request.args.get('allocate_QPC0')
-	allocate_QPC1 = request.args.get('allocate_QPC1')
-	print(Fore.YELLOW + "allocate_CHAR0: %s" %allocate_CHAR0)
-
+	set_system = request.args.get('set_system')
+	set_sample = request.args.get('set_sample')
 	db = get_db()
-	db.execute("UPDATE queue SET samplename = ? WHERE system = 'CHAR0'", (allocate_CHAR0,))
+	db.execute("UPDATE queue SET samplename = ? WHERE system = ?", (set_sample,set_system,))
 	db.commit()
-	db.execute("UPDATE queue SET samplename = ? WHERE system = 'QPC0'", (allocate_QPC0,))
-	db.commit()
-	db.execute("UPDATE queue SET samplename = ? WHERE system = 'QPC1'", (allocate_QPC1,))
-	db.commit()
-
+	
 	return jsonify()
 
 # endregion

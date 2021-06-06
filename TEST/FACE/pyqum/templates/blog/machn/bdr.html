@@ -175,7 +175,7 @@
                     <div class="col-11" id='left'><input class='bdr samples-allocation loaded' type="text" value='6'/></div>
                 </div>
                 <div class="row">
-                    <div class="col-11" id='left'><select class='bdr samples-allocation CHAR0' type="text">
+                    <div class="col-11" id='left'><select class='bdr samples-allocation CHAR0' id='system-CHAR0' type="text">
                         <option value=0> -main- </option>
                         {% for s in recent_samples %}
                         {% if s==CHAR0_sample %}
@@ -185,7 +185,7 @@
                         {% endif %}
                         {% endfor %}
                     </select></div>
-                    <div class="col-11" id='left'><select class='bdr samples-allocation QPC0' type="text">
+                    <div class="col-11" id='left'><select class='bdr samples-allocation QPC0' id='system-QPC0' type="text">
                         <option value=0> -main- </option>
                         {% for s in recent_samples %}
                         {% if s==QPC0_sample %}
@@ -195,7 +195,7 @@
                         {% endif %}
                         {% endfor %}
                     </select></div>
-                    <div class="col-11" id='left'><select class='bdr samples-allocation QPC1' type="text">
+                    <div class="col-11" id='left'><select class='bdr samples-allocation QPC1' id='system-QPC1' type="text">
                         <option value=0> -main- </option>
                         {% for s in recent_samples %}
                         {% if s==QPC1_sample %}
