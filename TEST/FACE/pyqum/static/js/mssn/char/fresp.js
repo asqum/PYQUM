@@ -1,5 +1,6 @@
 // Frequency Response 
 $(document).ready(function(){
+    $('div.char.fresp.confirm').hide();
     $("a.new#fresp-job").text('JOBID: ');
     $("a.new#fresp-rcount").text('R#: ');
     // console.log('encryptonian length: ' + mssnencrpytonian().length);
@@ -17,14 +18,14 @@ window.frespcryption = 'hfhajfjkafh'
 // *functions are shared across all missions!
 // function set_repeat_fresp() {
 //     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/setrepeat', {
-//         repeat: $('input.char#fresp[name="repeat"]').is(':checked')?1:0
+//         repeat: $('input.char.fresp[name="repeat"]').is(':checked')?1:0
 //     });
 // };
 // function get_repeat_fresp() {
 //     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/getrepeat', {
 //     }, function (data) {
 //         console.log("Repeat: " + data.repeat);
-//         $('input.char#fresp[name="repeat"]').prop("checked", data.repeat);
+//         $('input.char.fresp[name="repeat"]').prop("checked", data.repeat);
 //     });
 // };
 function listimes_fresp() {
@@ -35,7 +36,7 @@ function listimes_fresp() {
         $('.modal.new.fresp').toggleClass('is-visible');
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
-            $("textarea.char#fresp[name='ecomment']").val(frespcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
+            $("textarea.char.fresp[name='ecomment']").val(frespcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
         });
 
     } else if (wday == 's') {
@@ -49,14 +50,14 @@ function listimes_fresp() {
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/time', {
             wday: wday
         }, function (data) {
-            $('select.char#fresp[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
-            $.each(data.taskentries, function(i,v){ $('select.char#fresp[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
+            $('select.char.fresp[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.taskentries, function(i,v){ $('select.char.fresp[name="wmoment"]').append($('<option>', { text: v, value: i+1 })); });
         }); 
     };
     return;
 };
 function accessdata_fresp() {
-    $('.data-progress#fresp').css({"width": 0}).text('accessing...');
+    $('.data-progress.fresp').css({"width": 0}).text('accessing...');
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', {
         // input/select value here:
         wmoment: wmoment
@@ -67,56 +68,56 @@ function accessdata_fresp() {
         console.log("CORDER: " + JSON.stringify(data.corder) + "\nPERIMETER: " + JSON.stringify(data.perimeter));
         // load each command:
         console.log("Flux-Bias undefined: " + (typeof data.corder['Flux-Bias'] == "undefined")); //detecting undefined
-        if (typeof data.corder['Flux-Bias'] == "undefined") { $('input.char#fresp[name="fluxbias"]').val("OPT,");
-        } else { $('input.char#fresp[name="fluxbias"]').val(data.corder['Flux-Bias']); };
-        $('input.char#fresp[name="sparam"]').val(data.corder['S-Parameter']);
-        $('input.char#fresp[name="ifb"]').val(data.corder['IF-Bandwidth']);
-        $('input.char#fresp[name="powa"]').val(data.corder['Power']);
-        $('input.char#fresp[name="freq"]').val(data.corder['Frequency']);
+        if (typeof data.corder['Flux-Bias'] == "undefined") { $('input.char.fresp[name="fluxbias"]').val("OPT,");
+        } else { $('input.char.fresp[name="fluxbias"]').val(data.corder['Flux-Bias']); };
+        $('input.char.fresp[name="sparam"]').val(data.corder['S-Parameter']);
+        $('input.char.fresp[name="ifb"]').val(data.corder['IF-Bandwidth']);
+        $('input.char.fresp[name="powa"]').val(data.corder['Power']);
+        $('input.char.fresp[name="freq"]').val(data.corder['Frequency']);
         // load edittable comment:
         frespcomment = data.comment;
         // load narrated comment:
-        $('textarea.char#fresp[name="comment"]').text(data.comment);
+        $('textarea.char.fresp[name="comment"]').text(data.comment);
         
         // load c-range for each command:
-        $('select.char#fresp[name="c-fluxbias"]').empty();
+        $('select.char.fresp.parameter[name="c-fluxbias"]').empty();
         if (data.cfluxbias_data.length > 1) {
-            $('select.char#fresp[name="c-fluxbias"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+            $('select.char.fresp.parameter[name="c-fluxbias"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cfluxbias_data, function(i,v){ $('select.char#fresp[name="c-fluxbias"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cfluxbias_data, function(i,v){ $('select.char.fresp.parameter[name="c-fluxbias"]').append($('<option>', { text: v, value: i })); });
         
-        $('select.char#fresp[name="c-sparam"]').empty();
+        $('select.char.fresp.parameter[name="c-sparam"]').empty();
         if (data.csparam_data.length > 1) {
-            $('select.char#fresp[name="c-sparam"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+            $('select.char.fresp.parameter[name="c-sparam"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.csparam_data, function(i,v){ $('select.char#fresp[name="c-sparam"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.csparam_data, function(i,v){ $('select.char.fresp.parameter[name="c-sparam"]').append($('<option>', { text: v, value: i })); });
 
-        $('select.char#fresp[name="c-ifb"]').empty();
+        $('select.char.fresp.parameter[name="c-ifb"]').empty();
         if (data.cifb_data.length > 1) {
-            $('select.char#fresp[name="c-ifb"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+            $('select.char.fresp.parameter[name="c-ifb"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cifb_data, function(i,v){ $('select.char#fresp[name="c-ifb"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cifb_data, function(i,v){ $('select.char.fresp.parameter[name="c-ifb"]').append($('<option>', { text: v, value: i })); });
         
-        $('select.char#fresp[name="c-powa"]').empty();
+        $('select.char.fresp.parameter[name="c-powa"]').empty();
         if (data.cpowa_data.length > 1) {
-            $('select.char#fresp[name="c-powa"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+            $('select.char.fresp.parameter[name="c-powa"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cpowa_data, function(i,v){ $('select.char#fresp[name="c-powa"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cpowa_data, function(i,v){ $('select.char.fresp.parameter[name="c-powa"]').append($('<option>', { text: v, value: i })); });
 
-        $('select.char#fresp[name="c-freq"]').empty();
+        $('select.char.fresp.parameter[name="c-freq"]').empty();
         if (data.cfreq_data.length > 1) {
-            $('select.char#fresp[name="c-freq"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+            $('select.char.fresp.parameter[name="c-freq"]').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
         };
-        $.each(data.cfreq_data.slice(0,101), function(i,v){ $('select.char#fresp[name="c-freq"]').append($('<option>', { text: v, value: i })); });
+        $.each(data.cfreq_data.slice(0,101), function(i,v){ $('select.char.fresp.parameter[name="c-freq"]').append($('<option>', { text: v, value: i })); });
         if (data.cfreq_data.length > 101) {
-            $('select.char#fresp[name="c-freq"]').append($('<option>', { text: 'more...', value: 'm' }));
+            $('select.char.fresp.parameter[name="c-freq"]').append($('<option>', { text: 'more...', value: 'm' }));
             // Pending: to speed up loading process, it is limited to 101 entries per request. Use "more" to select/enter value manually!
         };
         
         // load data progress:
         var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
-        $('.data-progress#fresp').css({"width": data_progress}).text(data_progress);
-        $('.data-eta#fresp').text("data: " + data.measureacheta + " until completion");
+        $('.data-progress.fresp').css({"width": data_progress}).text(data_progress);
+        $('.data-eta.fresp').text("data: " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
     });
     return;
@@ -229,23 +230,21 @@ $('.modal-toggle.new.fresp').on('click', function(e) {
     e.preventDefault();
     $('.modal.new.fresp').toggleClass('is-visible');
     // revert back to previous option upon leaving dialogue box
-    $('select.char#fresp[name="wday"]').val(selecteday);
+    $('select.char.fresp[name="wday"]').val(selecteday);
 });
-// $('.modal-toggle.search.fresp').on('click', function(e) {
-//     e.preventDefault();
-//     $('.modal.search.fresp').toggleClass('is-visible');
-//     // revert back to previous option upon leaving dialogue box
-//     $('select.char#fresp[name="wday"]').val(selecteday);
-// });
+$('.modal-toggle.data-reset.fresp').on('click', function(e) {
+    e.preventDefault();
+    $('.modal.data-reset.fresp').toggleClass('is-visible');
+});
 
-// show F-Response's daylist
+// show F-Response's daylist (also switch content-page to F-Response)
 $(function() {
-    $('button.char#fresp').bind('click', function() {
+    $('button.char.access.fresp').bind('click', function() {
         $('div.fresp.queue-system').empty().append($('<h4 style="color: blue;"></h4>').text(qsystem));
         $('div.charcontent').hide();
-        $('div.charcontent#fresp').show();
-        $('button.char').removeClass('selected');
-        $('button.char#fresp').addClass('selected');
+        $('div.charcontent.fresp').show();
+        $('button.char.access').removeClass('selected');
+        $('button.char.access.fresp').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/init', {
         }, function (data) {
             // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
@@ -254,31 +253,31 @@ $(function() {
             console.log("run permission: " + run_permission);
             if (run_permission == false) {
                 $('input.char#fresp-run').hide();
-                $('button.char.fresp.run').hide();
-                console.log("RUN BUTTON DISABLED");
+                $('button.char.fresp.run').hide(); // including fresp-resume
+                $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON DISABLED"));
             } else {
                 $('input.char#fresp-run').show(); // RUN
                 $('button.char.fresp.run').show(); // RESUME
-                console.log("RUN BUTTON ENABLED");
+                $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON ENABLED"));
             };
             // Check Run Status:
             // console.log("run status: " + data.run_status);
             // if (data.run_status == true) {
             //     $( "i.fresp" ).remove(); //clear previous
-            //     $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            //     $('button.char.access.fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
             // } else {};
             // List Days:
-            $('select.char#fresp[name="wday"]').empty();
-            $('select.char#fresp[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
+            $('select.char.fresp[name="wday"]').empty();
+            $('select.char.fresp[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
-                $('select.char#fresp[name="wday"]').append($('<option>', {
+                $('select.char.fresp[name="wday"]').append($('<option>', {
                     text: v,
                     value: data.daylist.length - 1 - i
                 }));
             });
-            $('select.char#fresp[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
-            $('select.char#fresp[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
-            $('select.char#fresp[name="wday"]').append($('<option>', { text: '--Temp--', value: -3 }));
+            $('select.char.fresp[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
+            $('select.char.fresp[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
+            $('select.char.fresp[name="wday"]').append($('<option>', { text: '--Temp--', value: -3 }));
         });
         return false;
     });
@@ -286,9 +285,9 @@ $(function() {
 
 // list times based on day picked
 $(function () {
-    $('select.char#fresp[name="wday"]').on('change', function () {
+    $('select.char.fresp[name="wday"]').on('change', function () {
         // make global wday
-        window.wday = $('select.char#fresp[name="wday"]').val();
+        window.wday = $('select.char.fresp[name="wday"]').val();
         listimes_fresp();
     });
     return false;
@@ -298,25 +297,24 @@ $(function () {
 $('input.char#fresp-run').on('touchend click', function(event) {
     eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
-    $( "i.fresp" ).remove(); //clear previous
-    // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    $('h3.all-mssn-warning').text(">> JOB STARTED >>");
     // waveform commands
-    var fluxbias = $('input.char#fresp[name="fluxbias"]').val();
-    var sparam = $('input.char#fresp[name="sparam"]').val();
-    var ifb = $('input.char#fresp[name="ifb"]').val();
-    var powa = $('input.char#fresp[name="powa"]').val();
-    var freq = $('input.char#fresp[name="freq"]').val();
-    var comment = JSON.stringify($('textarea.char#fresp[name="ecomment"]').val());
+    var fluxbias = $('input.char.fresp[name="fluxbias"]').val();
+    var sparam = $('input.char.fresp[name="sparam"]').val();
+    var ifb = $('input.char.fresp[name="ifb"]').val();
+    var powa = $('input.char.fresp[name="powa"]').val();
+    var freq = $('input.char.fresp[name="freq"]').val();
+    var comment = JSON.stringify($('textarea.char.fresp[name="ecomment"]').val());
     // Simulate or Real run?
-    var simulate = $('input.char#fresp[name="simulate"]').is(':checked')?1:0; //use css to respond to click / touch
+    var simulate = $('input.char.fresp[name="simulate"]').is(':checked')?1:0; //use css to respond to click / touch
     console.log("simulate: " + simulate);
-    // var comment = $('textarea.char#fresp[name="comment"]').val();
+    // var comment = $('textarea.char.fresp[name="comment"]').val();
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/new', {
         wday: wday, fluxbias: fluxbias, sparam: sparam, ifb: ifb, powa: powa, freq: freq, comment: comment, simulate: simulate
     }, function (data) { 
         console.log("test each loop: " + data.testeach); 
-        // $('button.tablinks#ALL-tab').trigger('click');  
-        $( "i.fresp" ).remove(); //clear previous
+        $('button.tablinks#ALL-tab').trigger('click');
+        $('button.tablinks#ALL-tab').trigger('click'); 
         $('h3.all-mssn-warning').text("JOB STATUS: " + data.status);
     });
     return false;
@@ -327,10 +325,6 @@ $('input.char#fresp-run').on('touchend click', function(event) {
 //     }, function (data) {
 //         
 //     });
-// });
-// // click to set repeat or once
-// $('input.char#fresp[name="repeat"]').bind('click', function() {
-//     set_repeat_fresp();
 // });
 
 // click to search:
@@ -346,39 +340,26 @@ $('button.char.fresp[name="search"]').click( function() {
     return false;
 });
 
-// click to pause measurement
-// $(function () {
-//     $('button.char#fresp-pause').on('click', function () {
-//         $( "i.fresp" ).remove(); //clear previous
-//         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/pause', {
-//             // direct pause
-//         }, function(data) {
-//             console.log("paused: " + data.pause);
-//         });
-//         return false;
-//     });
-// });
-
 // Click to resume measurement
 $(function () {
-    $('button.char#fresp-resume').on('click', function () {
+    $('button.char#fresp-resume').on('touchend click', function(event) {
+        eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
         setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
-        $( "i.fresp" ).remove(); //clear previous
-        // $('button.char#fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('h3.all-mssn-warning').text(">> JOB STARTED >>");
         // waveform commands
-        var fluxbias = $('input.char#fresp[name="fluxbias"]').val();
-        var sparam = $('input.char#fresp[name="sparam"]').val();
-        var ifb = $('input.char#fresp[name="ifb"]').val();
-        var powa = $('input.char#fresp[name="powa"]').val();
-        var freq = $('input.char#fresp[name="freq"]').val();
+        var fluxbias = $('input.char.fresp[name="fluxbias"]').val();
+        var sparam = $('input.char.fresp[name="sparam"]').val();
+        var ifb = $('input.char.fresp[name="ifb"]').val();
+        var powa = $('input.char.fresp[name="powa"]').val();
+        var freq = $('input.char.fresp[name="freq"]').val();
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/resume', {
             wday: wday, wmoment: wmoment, fluxbias: fluxbias, sparam: sparam, ifb: ifb, powa: powa, freq: freq
         }, function (data) {
             if (data.resumepoint == data.datasize) {
                 console.log("The data was already complete!")
             } else { console.log("The data has just been completed")};
-            // $('button.tablinks#ALL-tab').trigger('click');
-            $( "i.fresp" ).remove(); //clear previous
+            $('button.tablinks#ALL-tab').trigger('click');
+            $('button.tablinks#ALL-tab').trigger('click');
             $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
         });
         return false;
@@ -387,43 +368,40 @@ $(function () {
 
 // access data based on time picked
 $(function () {
-    $('select.char#fresp[name="wmoment"]').on('change', function () {
+    $('select.char.fresp[name="wmoment"]').on('change', function () {
         // Make global variable:
-        window.wmoment = $('select.char#fresp[name="wmoment"]').val();
+        window.wmoment = $('select.char.fresp[name="wmoment"]').val();
         console.log(wmoment);
         accessdata_fresp();
     });
     return false;
 });
 
-// LIVE UPDATE on PROGRESS:
-// $(function () {
-//     $('input.fresp#live-update').click(function () { 
-//         //indicate it is still running:
-//         $( "i.fresplive" ).remove(); //clear previous
-//         $('button.char#fresp').prepend("<i class='fresplive fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-//         var livestat = $('input.fresp#live-update').is(':checked'); //use css to respond to click / touch
-//         if (livestat == true) {
-//             var fresploop = setInterval(accessdata_fresp, 6000);
-//             $('input.fresp#live-update').click(function () {
-//                 clearInterval(fresploop);
-//                 $( "i.fresplive" ).remove(); //clear previous
-//             });
-//         };
-//         // 'else' didn't do much to stop it!
-//     });
-// });
+// tracking data position based on certain parameter (PENDING: Need to be tested after code modification been done)
+$(function () {
+    $('select.char.fresp.parameter').on('change', function () {
+        var fixed = this.getAttribute('name').split('c-')[1];
+        var fixedvalue = $('select.char.fresp.parameter[name="c-' + fixed + '"]').val();
+        $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/trackdata', {
+            fixed: fixed, fixedvalue: fixedvalue,
+        }, function (data) {
+            console.log('data position for branch ' + fixed + ' is ' + data.data_location);
+            $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text(fixed + ' is fixed at ' + data.data_location));
+        })
+    });
+    return false;
+});
 
 // plot 1D-data based on c-parameters picked
 $(function () {
-    $('input.char#fresp[name="1d-data"]').on('click', function () {
+    $('input.char.fresp[name="1d-data"]').on('click', function () {
         $( "i.fresp1d" ).remove(); //clear previous
-        $('button.char#fresp').prepend("<i class='fresp1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var ifluxbias = $('select.char#fresp[name="c-fluxbias"]').val();
-        var isparam = $('select.char#fresp[name="c-sparam"]').val();
-        var iifb = $('select.char#fresp[name="c-ifb"]').val();
-        var ipowa = $('select.char#fresp[name="c-powa"]').val();
-        var ifreq = $('select.char#fresp[name="c-freq"]').val();
+        $('button.char.access.fresp').prepend("<i class='fresp1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var ifluxbias = $('select.char.fresp.parameter[name="c-fluxbias"]').val();
+        var isparam = $('select.char.fresp.parameter[name="c-sparam"]').val();
+        var iifb = $('select.char.fresp.parameter[name="c-ifb"]').val();
+        var ipowa = $('select.char.fresp.parameter[name="c-powa"]').val();
+        var ifreq = $('select.char.fresp.parameter[name="c-freq"]').val();
         console.log("Picked: " + isparam);
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/1ddata', {
             ifluxbias: ifluxbias, isparam: isparam, iifb: iifb, ipowa: ipowa, ifreq: ifreq
@@ -507,12 +485,12 @@ $(function () {
     $('button.char#fresp-insert-1D').on('click', function () {
         $('div#char-fresp-announcement').empty();
         $( "i.fresp1d" ).remove(); //clear previous
-        $('button.char#fresp').prepend("<i class='fresp1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var ifluxbias = $('select.char#fresp[name="c-fluxbias"]').val();
-        var isparam = $('select.char#fresp[name="c-sparam"]').val();
-        var iifb = $('select.char#fresp[name="c-ifb"]').val();
-        var ipowa = $('select.char#fresp[name="c-powa"]').val();
-        var ifreq = $('select.char#fresp[name="c-freq"]').val();
+        $('button.char.access.fresp').prepend("<i class='fresp1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var ifluxbias = $('select.char.fresp.parameter[name="c-fluxbias"]').val();
+        var isparam = $('select.char.fresp.parameter[name="c-sparam"]').val();
+        var iifb = $('select.char.fresp.parameter[name="c-ifb"]').val();
+        var ipowa = $('select.char.fresp.parameter[name="c-powa"]').val();
+        var ifreq = $('select.char.fresp.parameter[name="c-freq"]').val();
         console.log("Picked: " + isparam);
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/1ddata', {
             ifluxbias: ifluxbias, isparam: isparam, iifb: iifb, ipowa: ipowa, ifreq: ifreq
@@ -555,14 +533,15 @@ $('.char.data.fresp.compare').on('change', function() {
 
 // assemble 2D-data based on c-parameters picked
 $(function () {
-    $('input.char#fresp[name="2d-data"]').on('click', function () {
+    $('input.char.fresp[name="2d-data"]').on('click', function () {
+        $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Plotting 2D might takes some time. Please wait... "));
         $( "i.fresp2d" ).remove(); //clear previous
-        $('button.char#fresp').prepend("<i class='fresp2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-        var ifluxbias = $('select.char#fresp[name="c-fluxbias"]').val();
-        var isparam = $('select.char#fresp[name="c-sparam"]').val();
-        var iifb = $('select.char#fresp[name="c-ifb"]').val();
-        var ipowa = $('select.char#fresp[name="c-powa"]').val();
-        var ifreq = $('select.char#fresp[name="c-freq"]').val();
+        $('button.char.access.fresp').prepend("<i class='fresp2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        var ifluxbias = $('select.char.fresp.parameter[name="c-fluxbias"]').val();
+        var isparam = $('select.char.fresp.parameter[name="c-sparam"]').val();
+        var iifb = $('select.char.fresp.parameter[name="c-ifb"]').val();
+        var ipowa = $('select.char.fresp.parameter[name="c-powa"]').val();
+        var ifreq = $('select.char.fresp.parameter[name="c-freq"]').val();
         console.log("Picked: " + isparam);
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/2ddata', {
             ifluxbias: ifluxbias, isparam: isparam, iifb: iifb, ipowa: ipowa, ifreq: ifreq
@@ -574,23 +553,31 @@ $(function () {
             window.xtitle = data.xtitle;
             window.ytitle = data.ytitle;
             // Amplitude (default) or Phase
-            $('select.char.data#fresp[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }));
+            $('select.char.data.fresp[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }));
             // Data grooming
-            $('select.char.data#fresp[name="2d-type"]').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+            $('select.char.data.fresp[name="2d-type"]').empty().append($('<option>', { text: 'direct', value: 'direct' }))
             .append($('<option>', { text: 'normalYdip', value: 'normalYdip' })).append($('<option>', { text: 'normalYpeak', value: 'normalYpeak' }))
             .append($('<option>', { text: 'normalXdip', value: 'normalXdip' })).append($('<option>', { text: 'normalXpeak', value: 'normalXpeak' }));
-            plot2D_fresp(x, y, ZZA, xtitle, ytitle, $('select.char.data#fresp[name="2d-type"]').val(),'fresp');
+            plot2D_fresp(x, y, ZZA, xtitle, ytitle, $('select.char.data.fresp[name="2d-type"]').val(),'fresp');
             $( "i.fresp2d" ).remove(); //clear previous
+        })
+        .done(function(){
             $('button.char#fresp-savemat').show();
+            $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text("2D Plot Completed"));
+            $( "i.fresp2d" ).remove(); //clear the status
+        })
+        .fail(function(jqxhr, textStatus, error){
+            $('div#char-fresp-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error + "(" + textStatus + ")"));
+            $( "i.fresp2d" ).remove(); //clear the status
         });
     });
     return false;
 });
 
-$('select.char.data#fresp').on('change', function() {
-    if ($('select.char.data#fresp[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
-    else if ($('select.char.data#fresp[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
-    plot2D_fresp(x, y, ZZ, xtitle, ytitle, $('select.char.data#fresp[name="2d-type"]').val(),'fresp');
+$('select.char.data.fresp').on('change', function() {
+    if ($('select.char.data.fresp[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
+    else if ($('select.char.data.fresp[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
+    plot2D_fresp(x, y, ZZ, xtitle, ytitle, $('select.char.data.fresp[name="2d-type"]').val(),'fresp');
     return false;
 });
 
@@ -602,11 +589,11 @@ $('button.char#fresp-savecsv').on('click', function () {
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', { wmoment: wmoment }, function (data) {});
 
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/export/1dcsv', {
-        ifreq: $('select.char#fresp[name="c-freq"]').val()
+        ifreq: $('select.char.fresp.parameter[name="c-freq"]').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
+        console.log("STATUS: " + data.status + ", PORT: " + data.qumport);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/1Dfresp[' + data.user_name + '].csv',
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dfresp[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -635,11 +622,11 @@ $('button.char#fresp-savemat').on('click', function () {
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', { wmoment: wmoment }, function (data) {});
 
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/export/2dmat', {
-        ifreq: $('select.char#fresp[name="c-freq"]').val()
+        ifreq: $('select.char.fresp.parameter[name="c-freq"]').val()
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/2Dfresp[' + data.user_name + '].mat',
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dfresp[' + data.user_name + '].mat',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -666,7 +653,30 @@ $('a.fresp.closebtn').on('click', function () {
     console.log("closing search box");
     $('div.fresp#fresp-search').width("0");
     // revert back to previous option upon leaving dialogue box
-    $('select.char#fresp[name="wday"]').val(selecteday);
+    $('select.char.fresp[name="wday"]').val(selecteday);
+});
+
+// Brings up RESET Modal Box:
+$('button.char#fresp-datareset').on('click', function () {
+    $('.modal.data-reset.fresp').toggleClass('is-visible');
+});
+$('input.char.fresp.data-reset#fresp-reset').on('click', function () {
+    $('div.char.fresp.confirm').show();
+    $('button.char.fresp.reset-yes').on('click', function () {
+        $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/resetdata', {
+            ownerpassword: $('input.char.fresp[name="ownerpassword"]').val(),
+            truncateafter: $('input.char.fresp[name="truncateafter"]').val(),
+        }, function (data) {
+            $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking FRESP.'));
+        });
+        $('div.char.fresp.confirm').hide();
+        return false;
+    });
+    return false;
+});
+$('button.char.fresp.reset-no').on('click', function () {
+    $('div.char.fresp.confirm').hide();
+    return false;
 });
 
 // Notification on click:
@@ -682,36 +692,34 @@ $('input.fresp.notification').click( function(){
     listimes_fresp();
     accessdata_fresp();
     // Setting Day & Moment on the front:
-    $('select.char#fresp[name="wday"]').val(wday);
+    $('select.char.fresp[name="wday"]').val(wday);
     setTimeout(() => {
-        $('select.char#fresp[name="wmoment"]').val(wmoment);
+        $('select.char.fresp[name="wmoment"]').val(wmoment);
     }, 160); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
 
     return false;
 });
 
 // Event: Benchmark on click (Jacky)
-$('input.char.benchmark').click( 
-    function(){
+$('input.char.benchmark').click( function(){
+    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 160);
 
-        listimes_fresp();
-        accessdata_fresp();
-        $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', 
-            { wmoment: wmoment },
-            //input/select value here:  
-            function (data) {
-                //console.log("JOBID: " + JSON.stringify(data.JOBID) );
-                console.log( data );  
-                        
-           }
-        );
-        $.getJSON( mssnencrpytonian() + '/mssn/send_datainfo', 
-        { measurementType: "fresp" }, 
-            function ( data ) {
-                console.log( data );            
-            }
-        ); 
-        //window.location.href='/benchmark'
-        return false;
+    listimes_fresp();
+    accessdata_fresp();
+    $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', 
+        { wmoment: wmoment },
+        //input/select value here:  
+        function (data) {
+            //console.log("JOBID: " + JSON.stringify(data.JOBID) );
+            console.log( data );  
+                    
+    });
+    $.getJSON( mssnencrpytonian() + '/mssn/send_datainfo', 
+    { measurementType: "fresp" }, 
+        function ( data ) {
+            console.log( data );            
+    }); 
+    
+    return false;
     }
 );

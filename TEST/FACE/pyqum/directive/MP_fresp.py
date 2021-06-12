@@ -50,7 +50,7 @@ def scanner(a, b):
 			yield i, j
 def worker(y_count,x_count,y="freq",x="fluxbias"):		
 	pool = Pool()
-	IQ = pool.map(eval("assembler_%s_%s" %(y,x)), scanner(range(y_count),range(x_count)), max(x_count,y_count))
+	IQ = pool.map(eval("assembler_%s_%s" %(y,x)), scanner(range(y_count),range(x_count)), chunksize=max(x_count,y_count))
 	pool.close(); pool.join()
 	rI, rQ, rA, rP = [], [], [], []
 	for i,j,k,l in IQ:

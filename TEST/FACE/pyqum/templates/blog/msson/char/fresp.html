@@ -32,13 +32,13 @@
         
         
         <div class="row"> <!-- New Role for File-status -->
-            <div class="col-15" id='left'><select class='char' id="fresp" name="wday" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char' id="fresp" name="wmoment" type="number"></select></div>
+            <div class="col-15" id='left'><select class='char fresp' name="wday" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char fresp' name="wmoment" type="number"></select></div>
             <div class="col-20" id='left'>
-                <ul class="data-status" id="fresp">
+                <ul class="data-status fresp">
                     <li>
-                        <span class="bar data-progress" id="fresp"></span>
-                        <h4 class="data-eta" id="fresp"></h4>
+                        <span class="bar data-progress fresp"></span>
+                        <h4 class="data-eta fresp"></h4>
                     </li>
                 </ul>
             </div>
@@ -53,11 +53,11 @@
         <div class="row">
             <!-- Read-only Comment -->
             <div class="col" id='left' style="width:49%">
-                <textarea class='char' id="fresp" name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
+                <textarea class='char fresp' name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
             </div>
             <!-- Editable Note -->
             <div class="col" id='left' style="width:49%">
-                <textarea class='char' id="fresp" name="note" type="text" rows="15" cols="73">--note--</textarea>
+                <textarea class='char fresp' name="note" type="text" rows="15" cols="73">--note--</textarea>
             </div>
         </div>
 
@@ -74,11 +74,11 @@
                 <div class="col-15" id='left'><label>Frequency (GHz)</label></div>
             </div>
             <div class="row">
-                <div class="col-15" id='left'><select class='char' id="fresp" name="c-fluxbias" type="text"></select></div>
-                <div class="col-15" id='left'><select class='char' id="fresp" name="c-sparam" type="text"></select></div>
-                <div class="col-15" id='left'><select class='char' id="fresp" name="c-ifb" type="text"></select></div>
-                <div class="col-15" id='left'><select class='char' id="fresp" name="c-powa" type="text"></select></div>
-                <div class="col-15" id='left'><select class='char' id="fresp" name="c-freq" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char fresp parameter' name="c-fluxbias" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char fresp parameter' name="c-sparam" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char fresp parameter' name="c-ifb" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char fresp parameter' name="c-powa" type="text"></select></div>
+                <div class="col-15" id='left'><select class='char fresp parameter' name="c-freq" type="text"></select></div>
             </div>
         </div>
 
@@ -94,23 +94,24 @@
                 <label>Plot</label>
             </div>
             <div class="row">
-                <div class="col-15" id='left'><input class='char data' id='fresp' name='1d-data' type="submit" value="1D-Data"/></div>
+                <div class="col-15" id='left'><input class='char data fresp' name='1d-data' type="submit" value="1D-Data"/></div>
                 <div class="col-10" id='left'><button class="char push_button w-95 green" id="fresp-insert-1D">COMPARE-1D</button></div>
                 <div class="col-10" id='left'><select class='char data fresp compare' id="fresp-compare-nml" type="text"></select></div>
                 <div class="col-10" id='left'><select class='char data fresp compare' id="fresp-compare-aup" type="text"></select></div>
-                <div class="col-15" id='left'><input class='char data' id='fresp' name='2d-data' type="submit" value="2D-Data"/></div>
                 <div class="col-10" id='left'><button class="char push_button w-95 blue" id="fresp-savecsv">CSV-1D</button></div>
-                <div class="col-10" id='left'><button class="char push_button w-95 blue" id="fresp-savemat">MAT-2D</button></div>
+                <div class="col-10" id='left'><button class="char push_button w-95 red" id="fresp-datareset">CLIP</button></div>
             </div>
         </div>
         <div class="row">
-            <div class="col-10" id='left'><select class='char data' id="fresp" name="2d-amphase" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="fresp" name="2d-type" type="text"></select></div>
+            <div class="col-15" id='left'><input class='char data fresp' name='2d-data' type="submit" value="2D-Data"/></div>
+            <div class="col-10" id='left'><select class='char data fresp' name="2d-amphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data fresp' name="2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="fresp-savemat">MAT-2D</button></div>
         </div>
 
         <!-- Go to benchmark -->
         <div class="row">
-            <div class="col-15" id='left'><input class='char benchmark' id='fresp' name='fresp-benchmark' type="submit" value="Benchmark"/></div>
+            <div class="col-15" id='left'><input class='char benchmark fresp' name='fresp-benchmark' type="submit" value="Benchmark"/></div>
         </div>
 
         <div id="char-fresp-announcement"></div>
@@ -137,7 +138,7 @@
                             <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="fluxbias" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char fresp' name="fluxbias" type="text" value="OPT,"/></div>
                         </div>
                         <!-- Basic Parameters -->
                         <div class="row">
@@ -147,15 +148,15 @@
                             <div class="col-20" id='left'><label>Frequency (GHz)</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="sparam" type="text" value="S21,"/></div>
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="ifb" type="text" value="1000"/></div>
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="powa" type="text" value="-37 to 1 * 137"/></div> 
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="freq" type="text" value="5 to 9 * 3000"/></div>
+                            <div class="col-20" id='left'><input class='char fresp' name="sparam" type="text" value="S21,"/></div>
+                            <div class="col-20" id='left'><input class='char fresp' name="ifb" type="text" value="1000"/></div>
+                            <div class="col-20" id='left'><input class='char fresp' name="powa" type="text" value="-37 to 1 * 137"/></div> 
+                            <div class="col-20" id='left'><input class='char fresp' name="freq" type="text" value="5 to 9 * 3000"/></div>
                         </div>
                         <!-- Comment -->
                         <div class="row">
                             <div class="col-75" id='left'>
-                                <textarea class='char' id="fresp" name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
+                                <textarea class='char fresp' name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUN MODE -->
@@ -185,26 +186,45 @@
             </div>
         </div>
 
-        <!-- Brings up dialogue box for parameter settings -->
-        <!-- <div class="modal search fresp">
-            <div class="modal-overlay modal-toggle search fresp"></div>
+        <!-- Brings up dialogue box for data-reset -->
+        <div class="modal data-reset fresp">
+            <div class="modal-overlay modal-toggle data-reset fresp"></div>
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
-                    <h2 class="modal-heading">Searching Measurement:</h2>
+                    <h2 class="modal-heading" style="color:red">DATA RESET: PLEASE CONSIDER IT CAREFULLY. THIS ACTION CANNOT BE UNDONE.</h2>
                 </div>
                     
                 <div class="modal-body">
                     <div class="modal-content">
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="fresp" name="search" type="text" value="search here"/></div>
+                            <div class="col-20" id='left'><label>File Owner Password:</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-15" id='left'><input class="char modal-toggle search fresp" id="fresp-cancel" type="submit" value="CANCEL"/></div>
+                            <div class="col-20" id='left'><input class='char fresp' name="ownerpassword" type="password"/></div>   
+                        </div>
+
+                        <div class="row">
+                            <div class="col-20" id='left'><label>Truncate After:</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-20" id='left'><input class='char fresp' name="truncateafter" type="text"/></div>   
+                        </div>
+
+                        <div class="row">
+                            <div class="col-10" id='left'><input class="char modal-toggle data-reset fresp" id="fresp-reset" type="submit" value="RESET"/></div>
+                            <div class="col-10" id='left'><input class="char modal-toggle data-reset fresp" id="fresp-cancel" type="submit" value="CANCEL"/></div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
+
+        <div class="char fresp confirm">
+            <h1>Confirm your action</h1>
+            <p>Are you really <em>really</em> <strong>really</strong> sure that you want to make changes to the FILE?</p>
+            <button class="char fresp reset-no" autofocus>NO</button>
+            <button class="char fresp reset-yes">YES</button>
+        </div>
 
     </div>
 

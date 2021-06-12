@@ -51,7 +51,7 @@ function transpose(a) {
 //     }, function(data) {
 //         $( "i.sqepulse-repeat" ).remove(); //clear previous
 //         if (data.repeat == true) {
-//             $('button.char#sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+//             $('button.char.sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
 //         };
 //     });
 // };
@@ -62,7 +62,7 @@ function transpose(a) {
 //         $('input.char.sqepulse.repeat').prop("checked", data.repeat);
 //         $( "i.sqepulse-repeat" ).remove(); //clear previous
 //         if (data.repeat == true) {
-//             $('button.char#sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+//             $('button.char.sqepulse').prepend("<i class='sqepulse-repeat fa fa-repeat fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
 //         };
 //     });
 // };
@@ -94,7 +94,7 @@ function listimes_sqepulse() {
 function accessdata_sqepulse() {
     // Make global variable:
     window.wmoment = $('select.char.sqepulse#wmoment').val();
-    $('.data-progress#sqepulse').css({"width": 0}).text('accessing...');
+    $('.data-progress.sqepulse').css({"width": 0}).text('accessing...');
     $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/access', {
         // input/select value here:
         wmoment: wmoment
@@ -145,8 +145,8 @@ function accessdata_sqepulse() {
         
         // Loading data progress:
         var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
-        $('.data-progress#sqepulse').css({"width": data_progress}).text(data_progress);
-        $('.data-eta#sqepulse').text("data: " + data.measureacheta + " until completion");
+        $('.data-progress.sqepulse').css({"width": data_progress}).text(data_progress);
+        $('.data-eta.sqepulse').text("data: " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
     });
     return false;
@@ -407,20 +407,20 @@ $('.modal-toggle.data-reset.sqepulse').on('click', function(e) {
     $('.modal.data-reset.sqepulse').toggleClass('is-visible');
 });
 
-// show CW-Sweep's daylist
+// show SQE-Pulse's daylist (also switch content-page to SQE-Pulse)
 $(function() {
-    $('button.char#sqepulse').bind('click', function() {
+    $('button.char.access.sqepulse').bind('click', function() {
         // for Preview only
         $('div.charcontent').hide();
-        $('div.charcontent#sqepulse').show();
-        $('button.char').removeClass('selected');
-        $('button.char#sqepulse').addClass('selected');
+        $('div.charcontent.sqepulse').show();
+        $('button.char.access').removeClass('selected');
+        $('button.char.access.sqepulse').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/init', {
         }, function (data) {
             // console.log("run status: " + data.run_status);
             // if (data.run_status == true) {
             //     $( "i.sqepulse-run" ).remove(); //clear previous
-            //     $('button.char#sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            //     $('button.char.access.sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
             // } else {};
             $('select.char.sqepulse#wday').empty();
             $('select.char.sqepulse#wday').append($('<option>', { text: 'The latest:', value: '' }));
@@ -454,7 +454,7 @@ $(function () {
 $('input.char#sqepulse-run').on('touchend click', function(event) {
     eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     $( "i.sqepulse-run" ).remove(); //clear previous
-    $('button.char#sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    $('button.char.access.sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     
     // Assemble CORDER from parameter-inputs:
     var CORDER = {};
@@ -485,7 +485,7 @@ $("a.new#sqepulse-msg").bind('click', function() {
         if (data.msg.indexOf('measurement started')==0) {
             $( "i.sqepulse-run" ).remove(); //clear previous
             $("a.new#sqepulse-msg").text("Running").css("background-color", "mintcream");
-            $('button.char#sqepulse').prepend("<i class='sqepulse-run fa fa-spinner fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            $('button.char.access.sqepulse').prepend("<i class='sqepulse-run fa fa-spinner fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         } else if (data.msg.indexOf('measurement concluded')==0) {
             $( "i.sqepulse-run" ).remove(); //clear previous
             $("a.new#sqepulse-msg").text("Stopped").css("background-color", "cornsilk").css("color", "red");
@@ -507,10 +507,10 @@ $("a.new#sqepulse-msg").bind('click', function() {
 // click to search: (pending)
 $('input.char.sqepulse#search').change( function() {
     $( "i.sqepulse" ).remove(); //clear previous
-    $('button.char#sqepulse').prepend("<i class='sqepulse fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    $('button.char.access.sqepulse').prepend("<i class='sqepulse fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
     
-    // var comment = $('textarea.char#sqepulse[name="comment"]').val();
+    // var comment = $('textarea.char.sqepulse[name="comment"]').val();
     $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/search', {
         
     }, function (data) {
@@ -538,7 +538,7 @@ $('input.char.sqepulse#search').change( function() {
 $(function () {
     $('button.char#sqepulse-resume').on('click', function () {
         $( "i.sqepulse-run" ).remove(); //clear previous
-        $('button.char#sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.access.sqepulse').prepend("<i class='sqepulse-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         
         // Assemble CORDER from parameter-inputs:
         var CORDER = {};
@@ -575,7 +575,7 @@ $(function () {
     $('input.sqepulse#live-update').click(function () { 
         //indicate it is still running:
         $( "i.sqepulselive" ).remove(); //clear previous
-        $('button.char#sqepulse').prepend("<i class='sqepulselive fa fa-wifi fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.access.sqepulse').prepend("<i class='sqepulselive fa fa-wifi fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         var livestat = $('input.sqepulse#live-update').is(':checked'); //use css to respond to click / touch
         if (livestat == true) {
             var sqepulseloop = setInterval(accessdata_sqepulse, 6000);
@@ -609,7 +609,7 @@ $(function () {
     $('input.char.sqepulse#1d-data').on('click', function () {
         $('div#char-sqepulse-announcement').empty();
         $( "i.sqepulse1d" ).remove(); //clear previous
-        $('button.char#sqepulse').prepend("<i class='sqepulse1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.access.sqepulse').prepend("<i class='sqepulse1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.char.sqepulse#repeat').val();
         var cselect = {};
         $.each(SQEPulse_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.sqepulse#' + cparam).val(); });
@@ -645,7 +645,7 @@ $(function () {
     $('button.char#sqepulse-insert-1D').on('click', function () {
         $('div#char-sqepulse-announcement').empty();
         $( "i.sqepulse1d" ).remove(); //clear previous
-        $('button.char#sqepulse').prepend("<i class='sqepulse1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.access.sqepulse').prepend("<i class='sqepulse1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.char.sqepulse#repeat').val();
         var cselect = {};
         $.each(SQEPulse_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.sqepulse#' + cparam).val(); });
@@ -698,7 +698,7 @@ $(function () {
     $('input.char.sqepulse#2d-data').on('click', function () {
         $('div#char-sqepulse-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Plotting 2D might takes some time. Please wait... "));
         $( "i.sqepulse2d" ).remove(); //clear previous
-        $('button.char#sqepulse').prepend("<i class='sqepulse2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.access.sqepulse').prepend("<i class='sqepulse2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.char.sqepulse#repeat').val();
         var cselect = {};
         $.each(SQEPulse_Parameters, function(i,cparam){ cselect[cparam] = $('select.char.sqepulse#' + cparam).val(); });
@@ -787,7 +787,7 @@ $('button.char#sqepulse-savecsv').on('click', function() {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 1D-Data');
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/1Dsqepulse[' + data.user_name + '].csv',
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dsqepulse[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -821,7 +821,7 @@ $('button.char#sqepulse-savemat').on('click', function() {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 2D-Data');
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/2Dsqepulse[' + data.user_name + '].mat',
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dsqepulse[' + data.user_name + '].mat',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -850,8 +850,8 @@ $('input.char.sqepulse.data-reset#sqepulse-reset').on('click', function () {
     $('div.char.sqepulse.confirm').show();
     $('button.char.sqepulse.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/resetdata', {
-            ownerpassword: $('input.char.sqepulse#ownerpassword').val(),
-            truncateafter: $('input.char.sqepulse#truncateafter').val(),
+            ownerpassword: $('input.char.sqepulse#sqepulse-ownerpassword').val(),
+            truncateafter: $('input.char.sqepulse#sqepulse-truncateafter').val(),
         }, function (data) {
             $('div#char-sqepulse-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking SQE-PULSE.'));
         });

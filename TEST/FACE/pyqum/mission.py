@@ -9,16 +9,17 @@ import requests, json, ast
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, concatenate, transpose, arange, ndindex
 from time import sleep, strptime, mktime 
 from datetime import timedelta, datetime
 from random import random
+import numba as nb
 
 from pyqum import get_db
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, set_json_measurementinfo
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler
+from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
 from pyqum.directive.manipulate import Single_Qubit
 
@@ -52,19 +53,19 @@ bp = Blueprint(myname, __name__, url_prefix=encryp+'/mssn')
 
 # region: PENDING: Some Tools for Fast Parallel Calculations:
 def scanner(a, b):
-	for i in a:
-		for j in b:
-			yield i, j
+    for i in a:
+        for j in b:
+            yield i, j
 def worker(y_count,x_count,char_name="sqepulse"):		
-	pool = Pool()
-	IQ = pool.map(eval("assembler_%s" %(char_name)), scanner(range(y_count),range(x_count)), max(x_count,y_count))
-	pool.close(); pool.join()
-	rI, rQ, rA, rP = [], [], [], []
-	for i,j,k,l in IQ:
-		rI.append(i); rQ.append(j); rA.append(k); rP.append(l)
-	rI, rQ, rA, rP = array(rI).reshape(y_count,x_count).tolist(), array(rQ).reshape(y_count,x_count).tolist(),\
-					 array(rA).reshape(y_count,x_count).tolist(), array(rP).reshape(y_count,x_count).tolist()
-	return {'rI': rI, 'rQ': rQ, 'rA': rA, 'rP': rP}
+    pool = Pool()
+    IQ = pool.map(eval("assembler_%s" %(char_name)), scanner(range(y_count),range(x_count)), max(x_count,y_count))
+    pool.close(); pool.join()
+    rI, rQ, rA, rP = [], [], [], []
+    for i,j,k,l in IQ:
+        rI.append(i); rQ.append(j); rA.append(k); rP.append(l)
+    rI, rQ, rA, rP = array(rI).reshape(y_count,x_count).tolist(), array(rQ).reshape(y_count,x_count).tolist(),\
+                     array(rA).reshape(y_count,x_count).tolist(), array(rP).reshape(y_count,x_count).tolist()
+    return {'rI': rI, 'rQ': rQ, 'rA': rA, 'rP': rP}
 # endregion
     
 # region: Main
@@ -271,7 +272,7 @@ def char_fresp_export_2dmat():
         set_mat(fresp_2Ddata[session['user_name']], '2Dfresp[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 # export to csv
 @bp.route('/char/' + frespcryption + '/export/1dcsv', methods=['GET'])
 def char_fresp_export_1dcsv():
@@ -282,7 +283,7 @@ def char_fresp_export_1dcsv():
         set_csv(fresp_1Ddata[session['user_name']], '1Dfresp[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 # list set-parameters based on selected task-entry
 @bp.route('/char/' + frespcryption + '/access', methods=['GET'])
 def char_fresp_access():
@@ -338,6 +339,40 @@ def char_fresp_resume():
         Run_fresp[TOKEN] = F_Response(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_fresp[session['user_name']].resumepoint)
         return jsonify(resumepoint=str(M_fresp[session['user_name']].resumepoint), datasize=str(M_fresp[session['user_name']].datasize), status=Run_fresp[TOKEN].status)
     else: return show()
+
+@bp.route('/char/' + frespcryption + '/trackdata', methods=['GET'])
+def char_fresp_trackdata():
+    fixed = request.args.get('fixed')
+    fixedvalue = request.args.get('fixedvalue')
+    cparam = ['fluxbias','sparam','ifb','powa','freq']
+    # list data position in file:
+    try:
+        try:
+            fixed_caddress = array(session['c_fresp_structure'],dtype=int64)-1
+            fixed_caddress[cparam.index(fixed)] = int(fixedvalue)
+            fixed_caddress[cparam.index(fixed)+1:] = 0
+        except(IndexError): raise
+        data_location = int(gotocdata(fixed_caddress, session['c_fresp_structure']))
+    
+    # except: raise
+    except(ValueError):
+        data_location = None
+        print(Back.RED + Fore.WHITE + "All parameters before branch must be FIXED!")
+        pass
+
+    # print("Data location: %s" %data_location)
+    return jsonify(data_location=data_location)
+@bp.route('/char/' + frespcryption + '/resetdata', methods=['GET'])
+def char_fresp_resetdata():
+    ownerpassword = request.args.get('ownerpassword')
+    truncateafter = int(request.args.get('truncateafter'))
+    db = get_db()
+    people = db.execute( 'SELECT password FROM user WHERE username = ?', (session['people'],) ).fetchone()
+    if check_password_hash(people['password'], ownerpassword): message = M_fresp[session['user_name']].resetdata(truncateafter)
+    else: message = 'PASSWORD NOT VALID'
+
+    return jsonify(message=message)
+
 # Chart is supposedly shared by all measurements (under construction for nulti-purpose)
 @bp.route('/char/' + frespcryption + '/1ddata', methods=['GET'])
 def char_fresp_1ddata():
@@ -384,11 +419,12 @@ def char_fresp_1ddata():
     fresp_1Ddata[session['user_name']] = {title: x1, 'Amplitude': y1, 'UPhase': y2, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
     
     return jsonify(x1=x1, y1=y1, y2=y2, title=title)
+@nb.jit(nopython=True)
 @bp.route('/char/' + frespcryption + '/2ddata', methods=['GET'])
 def char_fresp_2ddata():
     print(Fore.GREEN + "User %s is plotting 2D-Data" %session['user_name'])
-    # M_fresp[session['user_name']].loadata()
-    # selectedata = M_fresp[session['user_name']].selectedata
+    M_fresp[session['user_name']].loadata()
+    selectedata = M_fresp[session['user_name']].selectedata
     ifluxbias = request.args.get('ifluxbias')
     # if ifluxbias == "o": ifluxbias = '0' # for backward compatibility
     isparam = request.args.get('isparam')
@@ -409,29 +445,22 @@ def char_fresp_2ddata():
         x_count, y_count = session['c_fresp_address'][0]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
 
         stage, prev = clocker(0, agenda="2D Fresp")
-        CMD = ["python", "-c", "from pyqum.directive import MP_fresp as mp; print(mp.worker(%s,%s))"%(y_count,x_count)]
-        with Popen(CMD, stdout=PIPE, shell=True) as proc:
-            output = json.loads(proc.stdout.read().decode("utf-8").replace("\'", "\""))
-            # try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
-            # except: pass
-        stage, prev = clocker(stage, prev, agenda="2D Fresp") # Marking time
+        
+        # PENDING: FAST VECTORIZED 2D-PLOT like the next one
+        Amp, Pha = [], []
+        for j in range(y_count):
+            I = selectedata[gotocdata([array(range(x_count)), int(session['isparam']), int(session['iifb']), int(session['ipowa']), 2*j], session['c_fresp_structure'])]
+            Q = selectedata[gotocdata([array(range(x_count)), int(session['isparam']), int(session['iifb']), int(session['ipowa']), 2*j+1], session['c_fresp_structure'])]
+            amp, pha = [], []
+            for i,q in zip(I,Q):
+                a,p = IQAP(i,q)
+                amp.append(a); pha.append(p)
+            Amp += [amp]; Pha += [pha]
 
-        # slow iteration method:
-        # Amp, Pha = [], []
-        # for j in range(y_count):
-        # 	I = [selectedata[gotocdata([x, int(session['isparam']), int(session['iifb']), int(session['ipowa']), 2*j], session['c_fresp_structure'])] for x in range(x_count)]
-        # 	Q = [selectedata[gotocdata([x, int(session['isparam']), int(session['iifb']), int(session['ipowa']), 2*j+1], session['c_fresp_structure'])] for x in range(x_count)]
-        # 	amp, pha = [], []
-        # 	for i,q in zip(I,Q):
-        # 		a,p = IQAP(i,q)
-        # 		amp.append(a); pha.append(p)
-        # 	Amp += [amp]; Pha += [pha]
+        stage, prev = clocker(stage, prev, agenda="2D Fresp") # Marking time
 
         print("x is of length %s and of type %s" %(len(x),type(x)))
         print("y is of length %s and of type %s" %(len(y),type(y)))
-        
-        Amp = output['rA']
-        Pha = output['rP']
         print("Amp of shape %s" %str(array(Amp).shape))
         ZZA, ZZP = Amp, Pha
         
@@ -442,26 +471,23 @@ def char_fresp_2ddata():
         x_count, y_count = session['c_fresp_address'][3]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
 
         stage, prev = clocker(0)
-        CMD = ["python", "-c", "from pyqum.directive import MP_fresp as mp; print(mp.worker(%s,%s,%s,%s))"%(y_count,x_count,'"freq"','"powa"')]
-        with Popen(CMD, stdout=PIPE, shell=True) as proc:
-            output = json.loads(proc.stdout.read().decode("utf-8").replace("\'", "\""))
-            # try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
-            # except: pass
-        stage, prev = clocker(stage, prev) # Marking time
+        fresp_addresses_0 = concatenate((ones([x_count,1])*array([int(ifluxbias),int(isparam),int(iifb)]), (ones([1,1])*arange(x_count)).T), axis=1) # 2D stack of addresses
+        IQstack, Amp, Pha = zeros([x_count,2]), zeros([y_count,x_count]), zeros([y_count,x_count])
+        for j in range(y_count):
+            IQstack[:,0] = selectedata[gotocdata(concatenate((fresp_addresses_0, 2*j*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
+            IQstack[:,1] = selectedata[gotocdata(concatenate((fresp_addresses_0, (2*j+1)*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
+            I1, Q1, Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
+        stage, prev = clocker(stage, prev, agenda="2D-Plot") # Marking time
 
         print("x is of length %s and of type %s" %(len(x),type(x)))
         print("y is of length %s and of type %s" %(len(y),type(y)))
-        
-        Amp = output['rA']
-        Pha = output['rP']
         print("Amp of shape %s" %str(array(Amp).shape))
-        ZZA, ZZP = Amp, Pha
+        ZZA, ZZP = Amp.tolist(), Pha.tolist()
 
     elif iifb == "x":
         pass
 
     fresp_2Ddata[session['user_name']] = dict(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
-    print( "IIIIII",array(output['rI']),"QQQQQQQ",array(output['rQ']) )
 
     # x = list(range(len(x))) # for repetitive data
     return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
@@ -543,7 +569,7 @@ def char_cwsweep_export_2dmat():
         set_mat(cwsweep_2Ddata[session['user_name']], '2Dcwsweep[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 # export to csv
 @bp.route('/char/cwsweep/export/1dcsv', methods=['GET'])
 def char_cwsweep_export_1dcsv():
@@ -554,7 +580,7 @@ def char_cwsweep_export_1dcsv():
         set_csv(cwsweep_1Ddata[session['user_name']], '1Dcwsweep[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 # list set-parameters based on selected task-entry
 @bp.route('/char/cwsweep/access', methods=['GET'])
 def char_cwsweep_access():
@@ -965,7 +991,7 @@ def char_sqepulse_export_2dmat():
         set_mat(sqepulse_2Ddata[session['user_name']], '2Dsqepulse[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 # export to csv
 @bp.route('/char/sqepulse/export/1dcsv', methods=['GET'])
 def char_sqepulse_export_1dcsv():
@@ -976,7 +1002,7 @@ def char_sqepulse_export_1dcsv():
         set_csv(sqepulse_1Ddata[session['user_name']], '1Dsqepulse[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 # list set-parameters based on selected task-entry
 @bp.route('/char/sqepulse/access', methods=['GET'])
 def char_sqepulse_access():
@@ -1343,7 +1369,7 @@ def char_singleqb_export_2dmat():
         set_mat(singleqb_2Ddata[session['user_name']], '2Dsingleqb[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 # export to csv
 @bp.route('/mani/singleqb/export/1dcsv', methods=['GET'])
 def mani_singleqb_export_1dcsv():
@@ -1354,7 +1380,7 @@ def mani_singleqb_export_1dcsv():
         set_csv(singleqb_1Ddata[session['user_name']], '1Dsingleqb[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 
 # DATA ACCESS
 # list set-parameters based on selected task-entry

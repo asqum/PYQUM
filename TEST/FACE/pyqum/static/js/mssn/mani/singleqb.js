@@ -630,14 +630,14 @@ $('input.singleqb.perimeter-settings.load').on('touchend click', function(event)
 });
     
 
-// show Single-QB's daylist
+// show Single-QB's daylist (also switch content-page to Single-QB)
 $(function() {
-    $('button.mani#singleqb').bind('click', function() {
+    $('button.mani.access.singleqb').bind('click', function() {
         $('div.singleqb.queue-system').empty().append($('<h4 style="color: blue;"></h4>').text(qsystem));
         $('div.manicontent').hide();
-        $('div.manicontent#singleqb').show();
-        $('button.mani').removeClass('selected');
-        $('button.mani#singleqb').addClass('selected');
+        $('div.manicontent.singleqb').show();
+        $('button.mani.access').removeClass('selected');
+        $('button.mani.access.singleqb').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/init', {
         }, function (data) {
             // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
@@ -646,10 +646,10 @@ $(function() {
             console.log("run permission: " + run_permission);
             if (run_permission == false) {
                 $('button.mani.singleqb.run').hide();
-                console.log("RESUME BUTTON DISABLED");
+                $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON DISABLED"));
             } else {
                 $('button.mani.singleqb.run').show(); // RESUME
-                console.log("RESUME BUTTON ENABLED");
+                $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON ENABLED"));
             };
             
             $('select.mani.singleqb.wday').empty();
@@ -685,6 +685,7 @@ $(function () {
 $('input.mani#singleqb-run').on('touchend click', function(event) {
     eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+    $('h3.all-mssn-warning').text(">> JOB STARTED >>");
     // Assemble PERIMETER:
     var PERIMETER = {};
     $.each(singleqb_Perimeters, function(i,perimeter) {
@@ -709,20 +710,27 @@ $('input.mani#singleqb-run').on('touchend click', function(event) {
         wday: wday, PERIMETER: JSON.stringify(PERIMETER), CORDER: JSON.stringify(CORDER), comment: comment
     }, function (data) {       
         console.log("Status: " + data.status);
+        $('h3.all-mssn-warning').text("JOB STATUS: " + data.status);
     });
     return false;
 });
 
 // Click to resume measurement (PENDING: Error(s) to be fixed)
 $(function () {
-    $('button.mani#singleqb-resume').on('click', function () {
+    $('button.mani#singleqb-resume').on('touchend click', function(event) {
+        eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
         setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+        $('h3.all-mssn-warning').text(">> JOB STARTED >>");
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/resume', {
             wday: selecteday, wmoment: wmoment
         }, function (data) {
             if (data.resumepoint == data.datasize) {
                 console.log("The data was already complete!");
-            } else { console.log("The data has just been updated")};
+                $('h3.all-mssn-warning').text("DATA ALREADY COMPLETE: " + data.status);
+            } else {
+                console.log("The data has just been updated");
+                $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
+            };
         });
         return false;
     });
@@ -760,7 +768,7 @@ $(function () {
         console.log("HIIIIII");
         $('div#mani-singleqb-announcement').empty();
         $( "i.singleqb1d" ).remove(); //clear previous
-        $('button.mani#singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.mani.access.singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
         $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
@@ -798,7 +806,7 @@ $(function () {
     $('button.mani#singleqb-insert-1D').on('click', function () {
         $('div#mani-singleqb-announcement').empty();
         $( "i.singleqb1d" ).remove(); //clear previous
-        $('button.mani#singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.mani.access.singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
         $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
@@ -863,7 +871,7 @@ $(function () {
     $('input.mani.singleqb#singleqb-2d-data').on('click', function () {
         $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Plotting 2D might takes some time. Please wait... "));
         $( "i.singleqb2d" ).remove(); //clear previous
-        $('button.mani#singleqb').prepend("<i class='singleqb2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.mani.access.singleqb').prepend("<i class='singleqb2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
         $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
@@ -953,7 +961,7 @@ $('button.mani#singleqb-savecsv').on('click', function() {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 1D-Data');
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/1Dsingleqb[' + data.user_name + '].csv',
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dsingleqb[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -987,7 +995,7 @@ $('button.mani#singleqb-savemat').on('click', function() {
         console.log("STATUS: " + data.status);
         console.log('User ' + data.user_name + ' is downloading 2D-Data');
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/2Dsingleqb[' + data.user_name + '].mat',
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dsingleqb[' + data.user_name + '].mat',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -1016,8 +1024,8 @@ $('input.mani.singleqb.data-reset#singleqb-reset').on('click', function () {
     $('div.mani.singleqb.confirm').show();
     $('button.mani.singleqb.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/resetdata', {
-            ownerpassword: $('input.mani.singleqb#ownerpassword').val(),
-            truncateafter: $('input.mani.singleqb#truncateafter').val(),
+            ownerpassword: $('input.mani.singleqb#singleqb-ownerpassword').val(),
+            truncateafter: $('input.mani.singleqb#singleqb-truncateafter').val(),
         }, function (data) {
             $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking SQE-PULSE.'));
         });
@@ -1061,10 +1069,10 @@ $('input.singleqb.notification').click( function(){
 // click to search: (pending)
 $('input.mani.singleqb#search').change( function() {
     $( "i.singleqb" ).remove(); //clear previous
-    $('button.mani#singleqb').prepend("<i class='singleqb fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    $('button.mani.access.singleqb').prepend("<i class='singleqb fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
     
-    // var comment = $('textarea.mani#singleqb[name="comment"]').val();
+    // var comment = $('textarea.mani.singleqb[name="comment"]').val();
     $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/search', {
         
     }, function (data) {

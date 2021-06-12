@@ -7,6 +7,7 @@ $(document).ready(function(){
     $('body.mssn div.tab button.tablinks#ALL-tab').show()
     $('body.mssn div.tab button.tablinks#' + qsystem + '-tab').show()
     $('div.all.clock').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
+    window.queuejobid = [];
     window.active_samples = [];
     $.getJSON('/mach/bdr/samples/queues', { }, function (data) { $.each(data.bdrqlist, function (i,val) { active_samples.push(val.samplename); }); });
     
@@ -26,7 +27,7 @@ function qumqueue() {
         console.log("user: " + data.loginuser);
         console.log("QUEUE: " + data.QUEUE);
 
-        window.queuejobid = [];
+        queuejobid.splice(0, queuejobid.length);
         $('table.mssn-QUEUE tbody.all.mssn-queue-update').empty();
         $.each(data.QUEUE, function(i,val){
             queuejobid.push(val.id)
@@ -61,10 +62,9 @@ function qumjob() {
         window.access_active_job = active_samples.includes(data.samplename); // PENDING: ALSO CHECK IF THERE'S ANY ACTIVE CALIBRATION(S)
         console.log("User may access active job: " + access_active_job);
 
-        $('div.row.all-job-by-sample').empty().append('<div class="col-15" id="left"><label class="parameter">ALL JOB WITH SAMPLE: </label></div>' + 
-                                                        '<div class="col-30" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
+        $('div.row.all-job-by-sample').empty().append('<div class="col-20" id="left"><label class="parameter">' + data.joblist.length + '/88 JOB(s) WITH SAMPLE: </label></div>' + 
+                                                        '<div class="col-20" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
         console.log("user: " + data.loginuser);
-        console.log("JOB: " + data.joblist);
 
         $('table.mssn-JOB tbody.all.mssn-job-update').empty();
         $.each(data.joblist, function(i,val) {
@@ -152,7 +152,7 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-access', funct
         $('.mssn div.tabcontent').hide();
         $('.mssn div.tabcontent#' + data.tdmpack.queue).show();
         // Click on TASK-TAB:
-        $('button.access#' + TASK[data.tdmpack.task]).click();
+        $('button.access.' + TASK[data.tdmpack.task]).click();
         // Posting Notification:
         $('input.' + TASK[data.tdmpack.task] + '.notification').show().val('JOB #' + jobid + ' > ' + data.tdmpack.dateday + ' > ' + data.tdmpack.wmoment);
         // // Clicking on it:

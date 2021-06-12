@@ -46,7 +46,7 @@ function listimes_cwsweep() {
         $('.modal.new.cwsweep').toggleClass('is-visible');
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
-            $("textarea.char#cwsweep[name='ecomment']").val(cwsweepcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
+            $("textarea.char.cwsweep[name='ecomment']").val(cwsweepcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
         });
 
     } else if (wday == 's') {
@@ -57,13 +57,13 @@ function listimes_cwsweep() {
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/time', {
             wday: wday
         }, function (data) {
-            $('select.char#cwsweep[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
-            $.each(data.taskentries, function(i,v){ $('select.char#cwsweep[name="wmoment"]').append($('<option>', { id: i, text: v, value: v })); });
+            $('select.char.cwsweep[name="wmoment"]').empty().append($('<option>', { text: 'pick', value: '' }));
+            $.each(data.taskentries, function(i,v){ $('select.char.cwsweep[name="wmoment"]').append($('<option>', { id: i, text: v, value: v })); });
         }); 
     };
 };
 function accessdata_cwsweep() {
-    $('.data-progress#cwsweep').css({"width": 0}).text('accessing...');
+    $('.data-progress.cwsweep').css({"width": 0}).text('accessing...');
     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/access', {
         // input/select value here:
         wmoment: wmoment
@@ -76,22 +76,22 @@ function accessdata_cwsweep() {
         console.log("Flux-Bias undefined: " + (typeof data.corder['Flux-Bias'] == "undefined")); //detecting undefined
         
         // Scale up optional parameter inputs:
-        if (typeof data.corder['Flux-Bias'] == "undefined") { $('input.char#cwsweep[name="fluxbias"]').val("OPT,");
-        } else { $('input.char#cwsweep[name="fluxbias"]').val(data.corder['Flux-Bias']); };
-        if (typeof data.corder['XY-Frequency'] == "undefined") { $('input.char#cwsweep[name="xyfreq"]').val("OPT,");
-        } else { $('input.char#cwsweep[name="xyfreq"]').val(data.corder['XY-Frequency']); };
-        if (typeof data.corder['XY-Power'] == "undefined") { $('input.char#cwsweep[name="xypowa"]').val("OPT,");
-        } else { $('input.char#cwsweep[name="xypowa"]').val(data.corder['XY-Power']); };
+        if (typeof data.corder['Flux-Bias'] == "undefined") { $('input.char.cwsweep[name="fluxbias"]').val("OPT,");
+        } else { $('input.char.cwsweep[name="fluxbias"]').val(data.corder['Flux-Bias']); };
+        if (typeof data.corder['XY-Frequency'] == "undefined") { $('input.char.cwsweep[name="xyfreq"]').val("OPT,");
+        } else { $('input.char.cwsweep[name="xyfreq"]').val(data.corder['XY-Frequency']); };
+        if (typeof data.corder['XY-Power'] == "undefined") { $('input.char.cwsweep[name="xypowa"]').val("OPT,");
+        } else { $('input.char.cwsweep[name="xypowa"]').val(data.corder['XY-Power']); };
         
         // Basic parameter inputs:
-        $('input.char#cwsweep[name="sparam"]').val(data.corder['S-Parameter']);
-        $('input.char#cwsweep[name="ifb"]').val(data.corder['IF-Bandwidth']);
-        $('input.char#cwsweep[name="freq"]').val(data.corder['Frequency']);
-        $('input.char#cwsweep[name="powa"]').val(data.corder['Power']);
+        $('input.char.cwsweep[name="sparam"]').val(data.corder['S-Parameter']);
+        $('input.char.cwsweep[name="ifb"]').val(data.corder['IF-Bandwidth']);
+        $('input.char.cwsweep[name="freq"]').val(data.corder['Frequency']);
+        $('input.char.cwsweep[name="powa"]').val(data.corder['Power']);
         // load edittable comment:
         cwsweepcomment = data.comment;
         // load narrated comment:
-        $('textarea.char#cwsweep[name="comment"]').text(data.comment);
+        $('textarea.char.cwsweep[name="comment"]').text(data.comment);
 
         // load c-range for each command:
         // SCROLL: scroll out repeated data (the exact reverse of averaging)
@@ -157,8 +157,8 @@ function accessdata_cwsweep() {
         
         // load data progress:
         var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
-        $('.data-progress#cwsweep').css({"width": data_progress}).text(data_progress);
-        $('.data-eta#cwsweep').text("data: " + data.measureacheta + " until completion");
+        $('.data-progress.cwsweep').css({"width": data_progress}).text(data_progress);
+        $('.data-eta.cwsweep').text("data: " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
     });
     return false;
@@ -337,7 +337,7 @@ $('.modal-toggle.new.cwsweep').on('click', function(e) {
     e.preventDefault();
     $('.modal.new.cwsweep').toggleClass('is-visible');
     // revert back to previous option upon leaving dialogue box
-    $('select.char#cwsweep[name="wday"]').val(selecteday);
+    $('select.char.cwsweep[name="wday"]').val(selecteday);
 });
 $('.modal-toggle.search.cwsweep').on('click', function(e) {
     e.preventDefault();
@@ -348,14 +348,14 @@ $('.modal-toggle.data-reset.cwsweep').on('click', function(e) {
     $('.modal.data-reset.cwsweep').toggleClass('is-visible');
 });
 
-// show CW-Sweep's daylist
+// show CW-Sweep's daylist (also switch content-page to CW-Sweep)
 $(function() {
-    $('button.char#cwsweep').bind('click', function() {
+    $('button.char.access.cwsweep').bind('click', function() {
         $('div.cwsweep.queue-system').empty().append($('<h4 style="color: blue;"></h4>').text(qsystem));
         $('div.charcontent').hide();
-        $('div.charcontent#cwsweep').show();
-        $('button.char').removeClass('selected');
-        $('button.char#cwsweep').addClass('selected');
+        $('div.charcontent.cwsweep').show();
+        $('button.char.access').removeClass('selected');
+        $('button.char.access.cwsweep').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/init', {
         }, function (data) {
             // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
@@ -365,28 +365,28 @@ $(function() {
             if (run_permission == false) {
                 $('input.char#cwsweep-run').hide();
                 $('button.char.cwsweep.run').hide();
-                console.log("RUN BUTTON DISABLED");
+                $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON DISABLED"));
             } else {
                 $('input.char#cwsweep-run').show(); // RUN
                 $('button.char.cwsweep.run').show(); // RESUME
-                console.log("RUN BUTTON ENABLED");
+                $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON ENABLED"));
             };
             // console.log("run status: " + data.run_status);
             // if (data.run_status == true) {
             //     $( "i.cwsweep-run" ).remove(); //clear previous
-            //     $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+            //     $('button.char.cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
             // } else {};
-            $('select.char#cwsweep[name="wday"]').empty();
-            $('select.char#cwsweep[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
+            $('select.char.cwsweep[name="wday"]').empty();
+            $('select.char.cwsweep[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
-                $('select.char#cwsweep[name="wday"]').append($('<option>', {
+                $('select.char.cwsweep[name="wday"]').append($('<option>', {
                     text: v,
                     value: data.daylist.length - 1 - i
                 }));
             });
-            $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
-            $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
-            $('select.char#cwsweep[name="wday"]').append($('<option>', { text: '--Temp--', value: -3 }));
+            $('select.char.cwsweep[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
+            $('select.char.cwsweep[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
+            $('select.char.cwsweep[name="wday"]').append($('<option>', { text: '--Temp--', value: -3 }));
         });
         return false;
     });
@@ -394,9 +394,9 @@ $(function() {
 
 // list times based on day picked
 $(function () {
-    $('select.char#cwsweep[name="wday"]').on('change', function () {
+    $('select.char.cwsweep[name="wday"]').on('change', function () {
         // make global wday
-        window.wday = $('select.char#cwsweep[name="wday"]').val();
+        window.wday = $('select.char.cwsweep[name="wday"]').val();
         listimes_cwsweep();
     });
     return false;
@@ -406,21 +406,22 @@ $(function () {
 $('input.char#cwsweep-run').on('touchend click', function(event) {
     eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+    $('h3.all-mssn-warning').text(">> JOB STARTED >>");
     $( "i.cwsweep-run" ).remove(); //clear previous
-    // $('button.char#cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    // $('button.char.cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
-    var fluxbias = $('input.char#cwsweep[name="fluxbias"]').val();
-    var xyfreq = $('input.char#cwsweep[name="xyfreq"]').val();
-    var xypowa = $('input.char#cwsweep[name="xypowa"]').val();
-    var sparam = $('input.char#cwsweep[name="sparam"]').val();
-    var ifb = $('input.char#cwsweep[name="ifb"]').val();
-    var freq = $('input.char#cwsweep[name="freq"]').val();
-    var powa = $('input.char#cwsweep[name="powa"]').val();
-    var comment = JSON.stringify($('textarea.char#cwsweep[name="ecomment"]').val());
+    var fluxbias = $('input.char.cwsweep[name="fluxbias"]').val();
+    var xyfreq = $('input.char.cwsweep[name="xyfreq"]').val();
+    var xypowa = $('input.char.cwsweep[name="xypowa"]').val();
+    var sparam = $('input.char.cwsweep[name="sparam"]').val();
+    var ifb = $('input.char.cwsweep[name="ifb"]').val();
+    var freq = $('input.char.cwsweep[name="freq"]').val();
+    var powa = $('input.char.cwsweep[name="powa"]').val();
+    var comment = JSON.stringify($('textarea.char.cwsweep[name="ecomment"]').val());
     // Simulate or Real run?
-    var simulate = $('input.char#cwsweep[name="simulate"]').is(':checked')?1:0; //use css to respond to click / touch
+    var simulate = $('input.char.cwsweep[name="simulate"]').is(':checked')?1:0; //use css to respond to click / touch
     console.log("simulate: " + simulate);
-    // var comment = $('textarea.char#cwsweep[name="comment"]').val();
+    // var comment = $('textarea.char.cwsweep[name="comment"]').val();
     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/new', {
         wday: wday, 
         fluxbias: fluxbias, xyfreq: xyfreq, xypowa: xypowa, 
@@ -436,12 +437,12 @@ $('input.char#cwsweep-run').on('touchend click', function(event) {
 });
 
 // click to search: (pending)
-$('input.char#cwsweep[name="search"]').change( function() {
+$('input.char.cwsweep[name="search"]').change( function() {
     $( "i.cwsweep" ).remove(); //clear previous
-    $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+    $('button.char.cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     // waveform commands
     
-    // var comment = $('textarea.char#cwsweep[name="comment"]').val();
+    // var comment = $('textarea.char.cwsweep[name="comment"]').val();
     $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/search', {
         
     }, function (data) {
@@ -454,18 +455,20 @@ $('input.char#cwsweep[name="search"]').change( function() {
 
 // Click to resume measurement
 $(function () {
-    $('button.char#cwsweep-resume').on('click', function () {
+    $('button.char#cwsweep-resume').on('touchend click', function(event) {
+        eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
         setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+        $('h3.all-mssn-warning').text(">> JOB STARTED >>");
         $( "i.cwsweep" ).remove(); //clear previous
-        $('button.char#cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.cwsweep').prepend("<i class='cwsweep fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // waveform commands
-        var fluxbias = $('input.char#cwsweep[name="fluxbias"]').val();
-        var xyfreq = $('input.char#cwsweep[name="xyfreq"]').val();
-        var xypowa = $('input.char#cwsweep[name="xypowa"]').val();
-        var sparam = $('input.char#cwsweep[name="sparam"]').val();
-        var ifb = $('input.char#cwsweep[name="ifb"]').val();
-        var freq = $('input.char#cwsweep[name="freq"]').val();
-        var powa = $('input.char#cwsweep[name="powa"]').val();
+        var fluxbias = $('input.char.cwsweep[name="fluxbias"]').val();
+        var xyfreq = $('input.char.cwsweep[name="xyfreq"]').val();
+        var xypowa = $('input.char.cwsweep[name="xypowa"]').val();
+        var sparam = $('input.char.cwsweep[name="sparam"]').val();
+        var ifb = $('input.char.cwsweep[name="ifb"]').val();
+        var freq = $('input.char.cwsweep[name="freq"]').val();
+        var powa = $('input.char.cwsweep[name="powa"]').val();
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/resume', {
             wday: wday, wmoment: wmoment, 
             fluxbias: fluxbias, xyfreq: xyfreq, xypowa: xypowa, 
@@ -484,9 +487,9 @@ $(function () {
 
 // access data based on time picked
 $(function () {
-    $('select.char#cwsweep[name="wmoment"]').on('change', function () {
+    $('select.char.cwsweep[name="wmoment"]').on('change', function () {
         // Make global variable:
-        window.wmoment = $('select.char#cwsweep[name="wmoment"]').val();
+        window.wmoment = $('select.char.cwsweep[name="wmoment"]').val();
         accessdata_cwsweep();
     });
     return false;
@@ -509,9 +512,9 @@ $(function () {
 
 // assemble 1D-data based on c-parameters picked
 $(function () {
-    $('input.char#cwsweep[name="1d-data"]').on('click', function () {
+    $('input.char.cwsweep[name="1d-data"]').on('click', function () {
         $( "i.cwsweep1d" ).remove(); //clear previous
-        $('button.char#cwsweep').prepend("<i class='cwsweep1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.access.cwsweep').prepend("<i class='cwsweep1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         var irepeat = $('select.char.cwsweep.parameter#c-repeat').val();
         var ifluxbias = $('select.char.cwsweep.parameter#c-fluxbias').val();
         var ixyfreq = $('select.char.cwsweep.parameter#c-xyfreq').val();
@@ -531,18 +534,18 @@ $(function () {
             window.y1.UP = data.yup;
             window.x1title = data.x1title;
             // Phase option
-            $('select.char.data#cwsweep[name="1d-phase"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
+            $('select.char.data.cwsweep[name="1d-phase"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
             plot1D_cwsweep(x1,y1.A,y1.P,x1title,'<b>Raw-Pha(rad)</b>');
             $('button.char#cwsweep-savecsv').show();
         });
     });
     return false;
 });
-$('select.char.data#cwsweep').on('change', function() {
-    if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "Pha") {
+$('select.char.data.cwsweep').on('change', function() {
+    if ($('select.char.data.cwsweep[name="1d-phase"]').val() == "Pha") {
         console.log("Pha mode");
         plot1D_cwsweep(x1,y1.A,y1.P,x1title,'<b>Raw-Pha(rad)</b>');
-    } else if ($('select.char.data#cwsweep[name="1d-phase"]').val() == "UPha") {
+    } else if ($('select.char.data.cwsweep[name="1d-phase"]').val() == "UPha") {
         console.log("UPha mode");
         plot1D_cwsweep(x1,y1.A,y1.UP,x1title,'<b>UFN-Pha(rad)</b>');
     };
@@ -553,7 +556,7 @@ $(function () {
     $('button.char#cwsweep-insert-1D').on('click', function () {
         $('div#char-cwsweep-announcement').empty();
         $( "i.cwsweep1d" ).remove(); //clear previous
-        $('button.char#cwsweep').prepend("<i class='cwsweep1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.access.cwsweep').prepend("<i class='cwsweep1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         var irepeat = $('select.char.cwsweep.parameter#c-repeat').val();
         var ifluxbias = $('select.char.cwsweep.parameter#c-fluxbias').val();
         var ixyfreq = $('select.char.cwsweep.parameter#c-xyfreq').val();
@@ -606,9 +609,9 @@ $('.char.data.cwsweep.compare').on('change', function() {
 
 // assemble 2D-data based on c-parameters picked
 $(function () {
-    $('input.char#cwsweep[name="2d-data"]').on('click', function () {
+    $('input.char.cwsweep[name="2d-data"]').on('click', function () {
         $( "i.cwsweep2d" ).remove(); //clear previous
-        $('button.char#cwsweep').prepend("<i class='cwsweep2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        $('button.char.access.cwsweep').prepend("<i class='cwsweep2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         var irepeat = $('select.char.cwsweep.parameter#c-repeat').val();
         var ifluxbias = $('select.char.cwsweep.parameter#c-fluxbias').val();
         var ixyfreq = $('select.char.cwsweep.parameter#c-xyfreq').val();
@@ -628,13 +631,13 @@ $(function () {
             window.xtitle = data.xtitle;
             window.ytitle = data.ytitle;
             // Amplitude (default) or Phase
-            $('select.char.data#cwsweep[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha (Raw)', value: 'Pha' }));
+            $('select.char.data.cwsweep[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha (Raw)', value: 'Pha' }));
             // Data grooming
-            $('select.char.data#cwsweep[name="2d-type"]').empty().append($('<option>', { text: 'direct', value: 'direct' }))
+            $('select.char.data.cwsweep[name="2d-type"]').empty().append($('<option>', { text: 'direct', value: 'direct' }))
                 .append($('<option>', { text: 'normalYdip', value: 'normalYdip' })).append($('<option>', { text: 'normalYpeak', value: 'normalYpeak' }))
                 .append($('<option>', { text: 'normalXdip', value: 'normalXdip' })).append($('<option>', { text: 'normalXpeak', value: 'normalXpeak' }));
             // Data color-scaling
-            $('select.char.data#cwsweep[name="2d-colorscale"]').empty().append($('<option>', { text: 'YlOrRd', value: 'YlOrRd' }))
+            $('select.char.data.cwsweep[name="2d-colorscale"]').empty().append($('<option>', { text: 'YlOrRd', value: 'YlOrRd' }))
                 .append($('<option>', { text: 'YlGnBu', value: 'YlGnBu' })).append($('<option>', { text: 'RdBu', value: 'RdBu' }))
                 .append($('<option>', { text: 'Portland', value: 'Portland' })).append($('<option>', { text: 'Picnic', value: 'Picnic' }))
                 .append($('<option>', { text: 'Jet', value: 'Jet' })).append($('<option>', { text: 'Hot', value: 'Hot' }))
@@ -643,27 +646,27 @@ $(function () {
                 .append($('<option>', { text: 'Bluered', value: 'Bluered' })).append($('<option>', { text: 'Blackbody', value: 'Blackbody' }))
                 .append($('<option>', { text: 'Blues', value: 'Blues' })).append($('<option>', { text: 'Viridis', value: 'Viridis' }));
             // Transpose or not
-            $('select.char.data#cwsweep[name="2d-direction"]').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
+            $('select.char.data.cwsweep[name="2d-direction"]').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
             plot2D_cwsweep(x, y, ZZA, xtitle, ytitle, 
-                $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
-                $('select.char.data#cwsweep[name="2d-colorscale"]').val());
+                $('select.char.data.cwsweep[name="2d-type"]').val(),'cwsweep',
+                $('select.char.data.cwsweep[name="2d-colorscale"]').val());
             $( "i.cwsweep2d" ).remove(); //clear previous
             $('button.char#cwsweep-savemat').show();
         });
     });
     return false;
 });
-$('select.char.data#cwsweep').on('change', function() {
-    if ($('select.char.data#cwsweep[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
-    else if ($('select.char.data#cwsweep[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
-    if ($('select.char.data#cwsweep[name="2d-direction"]').val() == "rotate") {
+$('select.char.data.cwsweep').on('change', function() {
+    if ($('select.char.data.cwsweep[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
+    else if ($('select.char.data.cwsweep[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
+    if ($('select.char.data.cwsweep[name="2d-direction"]').val() == "rotate") {
         plot2D_cwsweep(y, x, transpose(ZZ), ytitle, xtitle, 
-            $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
-            $('select.char.data#cwsweep[name="2d-colorscale"]').val());
+            $('select.char.data.cwsweep[name="2d-type"]').val(),'cwsweep',
+            $('select.char.data.cwsweep[name="2d-colorscale"]').val());
     } else {
         plot2D_cwsweep(x, y, ZZ, xtitle, ytitle, 
-            $('select.char.data#cwsweep[name="2d-type"]').val(),'cwsweep',
-            $('select.char.data#cwsweep[name="2d-colorscale"]').val());
+            $('select.char.data.cwsweep[name="2d-type"]').val(),'cwsweep',
+            $('select.char.data.cwsweep[name="2d-colorscale"]').val());
     };
     return false;
 });
@@ -681,7 +684,7 @@ $('button.char#cwsweep-savecsv').on('click', function() {
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/1Dcwsweep[' + data.user_name + '].csv',
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dcwsweep[' + data.user_name + '].csv',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -714,7 +717,7 @@ $('button.char#cwsweep-savemat').on('click', function() {
     }, function (data) {
         console.log("STATUS: " + data.status);
         $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/2Dcwsweep[' + data.user_name + '].mat',
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dcwsweep[' + data.user_name + '].mat',
             method: 'GET',
             xhrFields: {
                 responseType: 'blob'
@@ -743,8 +746,8 @@ $('input.char.cwsweep.data-reset#cwsweep-reset').on('click', function () {
     $('div.char.cwsweep.confirm').show();
     $('button.char.cwsweep.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/resetdata', {
-            ownerpassword: $('input.char#cwsweep[name="ownerpassword"]').val(),
-            truncateafter: $('input.char#cwsweep[name="truncateafter"]').val(),
+            ownerpassword: $('input.char.cwsweep[name="ownerpassword"]').val(),
+            truncateafter: $('input.char.cwsweep[name="truncateafter"]').val(),
         }, function (data) {
             $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking CWSWEEP.'));
         });
@@ -771,10 +774,10 @@ $('input.cwsweep.notification').click( function(){
     listimes_cwsweep();
     accessdata_cwsweep();
     // Setting Day & Moment on the front:
-    $('select.char#cwsweep[name="wday"]').val(wday);
+    $('select.char.cwsweep[name="wday"]').val(wday);
     setTimeout(() => {
         console.log('wmoment: ' + wmoment);
-        $('select.char#cwsweep[name="wmoment"]').val(wmoment); 
+        $('select.char.cwsweep[name="wmoment"]').val(wmoment); 
     }, 160); //.trigger('change'); //listing time is a bit slower than selecting option => conflict
 
     return false;

@@ -747,11 +747,19 @@ def bdrsamplesqueues():
 def bdrsamplesallocate():
 	set_system = request.args.get('set_system')
 	set_sample = request.args.get('set_sample')
-	db = get_db()
-	db.execute("UPDATE queue SET samplename = ? WHERE system = ?", (set_sample,set_system,))
-	db.commit()
+	if int(g.user['management'])>=3:
+		try:
+			db = get_db()
+			db.execute("UPDATE queue SET samplename = ? WHERE system = ?", (set_sample,set_system,))
+			db.commit()
+			status = "User %s has set sample %s into system %s" %(g.user['username'],set_sample,set_system)
+		except: status = "COULD NOT COMMIT TO DATABASE"
+		print(Fore.YELLOW + status)
+	else: 
+		status = "User %s does not have enough Management Clearance" %g.user['username']
+		print(Fore.RED + status)
 	
-	return jsonify()
+	return jsonify(status=status)
 
 # endregion
 
@@ -826,8 +834,9 @@ def dc_keithley_vpulse():
 # Download File:
 @bp.route('/uploads/<path:filename>', methods=['GET', 'POST'])
 def download(filename):
-	uploads = "C:/Users/ASQUM/HODOR/CONFIG/PORTAL"
-	print(Fore.GREEN + "User %s is downloading %s" %(session['user_name'], filename))
+	Servers = ['ASQUM', 'ASQUM_2']
+	uploads = "C:/Users/%s/HODOR/CONFIG/PORTAL" %(Servers[int(get_status("WEB")['port']) - 5300 -1])
+	print(Fore.GREEN + "User %s is downloading %s from %s" %(session['user_name'], filename, uploads))
 	return send_from_directory(directory=uploads, filename=filename)
 
 

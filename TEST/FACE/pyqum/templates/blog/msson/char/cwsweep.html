@@ -18,13 +18,13 @@
         </div>
 
         <div class="row"> <!-- New Role for File-status -->
-            <div class="col-15" id='left'><select class='char' id="cwsweep" name="wday" type="text"></select></div>
-            <div class="col-7" id='left'><select class='char' id="cwsweep" name="wmoment" type="number"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep' name="wday" type="text"></select></div>
+            <div class="col-7" id='left'><select class='char cwsweep' name="wmoment" type="number"></select></div>
             <div class="col-20" id='left'>
-                <ul class="data-status" id="cwsweep">
+                <ul class="data-status cwsweep">
                     <li>
-                        <span class="bar data-progress" id="cwsweep"></span>
-                        <h4 class="data-eta" id="cwsweep"></h4>
+                        <span class="bar data-progress cwsweep"></span>
+                        <h4 class="data-eta cwsweep"></h4>
                     </li>
                 </ul>
             </div>
@@ -38,11 +38,11 @@
         <div class="row">
             <!-- Read-only Comment -->
             <div class="col" id='left' style="width:49%">
-                <textarea class='char' id="cwsweep" name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
+                <textarea class='char cwsweep' name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
             </div>
             <!-- Editable Note -->
             <div class="col" id='left' style="width:49%">
-                <textarea class='char' id="cwsweep" name="note" type="text" rows="15" cols="73">--note--</textarea>
+                <textarea class='char cwsweep' name="note" type="text" rows="15" cols="73">--note--</textarea>
             </div>
         </div>
 
@@ -82,23 +82,23 @@
                     <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
                 </label>
             </div> -->
-            <div class="col-10" id='left'><input class='char data' id="cwsweep" name='1d-data' type="submit" value="1D-Data"/></div>
+            <div class="col-10" id='left'><input class='char data cwsweep' name='1d-data' type="submit" value="1D-Data"/></div>
             <div class="col-10" id='left'><button class="char push_button w-95 green" id="cwsweep-insert-1D">COMPARE-1D</button></div>
             <div class="col-10" id='left'><select class='char data cwsweep compare' id="cwsweep-compare-nml" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data cwsweep compare' id="cwsweep-compare-apup" type="text"></select></div>
-            <div class="col-10" id='left'><input class='char data' id="cwsweep" name='2d-data' type="submit" value="2D-Data"/></div>
             <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-savecsv">CSV-1D</button></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-savemat">MAT-2D</button></div>
             <div class="col-10" id='left'><button class="char push_button w-95 red" id="cwsweep-datareset">CLIP</button></div>
         </div>
 
         <!-- Data Assembly and Grooming -->
         <div class="row">
-            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="1d-phase" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="2d-amphase" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="2d-type" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="2d-colorscale" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data' id="cwsweep" name="2d-direction" type="text"></select></div>
+            <div class="col-10" id='left'><input class='char data cwsweep' name='2d-data' type="submit" value="2D-Data"/></div>
+            <div class="col-10" id='left'><select class='char data cwsweep' name="1d-phase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data cwsweep' name="2d-amphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data cwsweep' name="2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data cwsweep' name="2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data cwsweep' name="2d-direction" type="text"></select></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-savemat">MAT-2D</button></div>
         </div>
 
         <div id="char-cwsweep-announcement"></div>
@@ -124,9 +124,9 @@
                         </div>
                         <div class="row">
                             <!-- <div class="col-20" id='left'></div> -->
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="fluxbias" type="text" value="OPT,"/></div>
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="xyfreq" type="text" value="OPT,"/></div>
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="xypowa" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep' name="fluxbias" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep' name="xyfreq" type="text" value="OPT,"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep' name="xypowa" type="text" value="OPT,"/></div>
                         </div>
                         <!-- Basic Parameters -->
                         <div class="row">
@@ -136,15 +136,15 @@
                             <div class="col-20" id='left'><label>Power (dBm)</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="sparam" type="text" value="S21,"/></div>
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="ifb" type="text" value="1000"/></div>
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="freq" type="text" value="5 to 9 * 3000"/></div>
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="powa" type="text" value="-37 to 1 * 137 r 700"/></div> 
+                            <div class="col-20" id='left'><input class='char cwsweep' name="sparam" type="text" value="S21,"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep' name="ifb" type="text" value="1000"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep' name="freq" type="text" value="5 to 9 * 3000"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep' name="powa" type="text" value="-37 to 1 * 137 r 700"/></div> 
                         </div>
                         <!-- Comment -->
                         <div class="row">
                             <div class="col-75" id='left'>
-                                <textarea class='char' id="cwsweep" name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
+                                <textarea class='char cwsweep' name="ecomment" type="text" rows="3" cols="73">--comment--</textarea>
                             </div>
                         </div>
                         <div class="row"> <!-- New Row for RUN MODE -->
@@ -185,7 +185,7 @@
                 <div class="modal-body">
                     <div class="modal-content">
                         <div class="row"> <!-- New Row for Parameter-input -->
-                            <div class="col-20" id='left'><input class='char' id='cwsweep' name="search" type="text" value="search here"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep' name="search" type="text" value="search here"/></div>
                         </div>
                         <div class="row"> <!-- New Row for EXECUTION -->
                             <div class="col-15" id='left'><input class="char modal-toggle search cwsweep" id="cwsweep-cancel" type="submit" value="CANCEL"/></div>
@@ -209,14 +209,14 @@
                             <div class="col-20" id='left'><label>File Owner Password:</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="ownerpassword" type="password"/></div>   
+                            <div class="col-20" id='left'><input class='char cwsweep' name="ownerpassword" type="password"/></div>   
                         </div>
 
                         <div class="row">
                             <div class="col-20" id='left'><label>Truncate After:</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char' id="cwsweep" name="truncateafter" type="text"/></div>   
+                            <div class="col-20" id='left'><input class='char cwsweep' name="truncateafter" type="text"/></div>   
                         </div>
 
                         <div class="row">

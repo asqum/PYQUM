@@ -13,25 +13,25 @@
         <div class="tab2">
             <input class='char loaded' id='sample-name' type='submit' value={{ samplename }}></input>
             <input class='char people' id='sample-owner' type='submit' value={{ people }}></input>
-            <button class='char access' id='fresp'>F-Response</button>
-            <button class='char access' id='cwsweep'>CW-Sweep</button>
-            <button class='char access' id='sqepulse'>SQE-Pulse</button>
+            <button class='char access fresp'>F-Response</button>
+            <button class='char access cwsweep'>CW-Sweep</button>
+            <button class='char access sqepulse'>SQE-Pulse</button>
             
         </div>
 
         <script>
             $(function(){
-                $("div#fresp").load("{{ url_for('mission.char_fresp') }}");
-                $("div#cwsweep").load("{{ url_for('mission.char_cwsweep') }}");
-                $("div#sqepulse").load("{{ url_for('mission.char_sqepulse') }}");
+                $("div.charcontent.fresp").load("{{ url_for('mission.char_fresp') }}");
+                $("div.charcontent.cwsweep").load("{{ url_for('mission.char_cwsweep') }}");
+                $("div.charcontent.sqepulse").load("{{ url_for('mission.char_sqepulse') }}");
                 
             });
         </script>
         
         <!-- page content based on button clicked -->
-        <div class="charcontent" id="fresp"></div>
-        <div class="charcontent" id="cwsweep"></div>
-        <div class="charcontent" id="sqepulse"></div>
+        <div class="charcontent fresp"></div>
+        <div class="charcontent cwsweep"></div>
+        <div class="charcontent sqepulse"></div>
         
     
     </div>

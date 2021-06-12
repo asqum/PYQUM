@@ -194,17 +194,20 @@ def sdata(bench):
 	'''Collect data from ENAB
 	This returns the data from the FIRST TRACE.
 	'''
-	sdatacore = ":CALCulate:MEASure:DATA:SDATa?"
-	datatype = dataform(bench)
-	databorder = str(bench.query("FORMat:BORDer?"))
-	print(Fore.CYAN + "Endian (Byte-order): %s" %databorder)
-	if datatype[1]['DATA'] == 'REAL,32':
-		datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
-	elif datatype[1]['DATA'] == 'REAL,64':
-		datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 64-bit)
-	elif datatype[1]['DATA'] == 'ASC,0':
-		datas = bench.query_ascii_values(sdatacore) # convert the transferred ascii-encoded binaries into list (slower)
-	# print(Back.GREEN + Fore.WHITE + "transferred from %s: ALL-SData: %s" %(mdlname, len(datas)))
+	try:
+		sdatacore = ":CALCulate:MEASure:DATA:SDATa?"
+		datatype = dataform(bench)
+		databorder = str(bench.query("FORMat:BORDer?"))
+		# print(Fore.CYAN + "Endian (Byte-order): %s" %databorder)
+		if datatype[1]['DATA'] == 'REAL,32':
+			datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
+		elif datatype[1]['DATA'] == 'REAL,64':
+			datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 64-bit)
+		elif datatype[1]['DATA'] == 'ASC,0':
+			datas = bench.query_ascii_values(sdatacore) # convert the transferred ascii-encoded binaries into list (slower)
+	except Exception as err:
+		datas = [0]
+		print(err)
 	return datas
 
 def preset(bench):

@@ -13,20 +13,20 @@
         <div class="tab2">
             <input class='mani loaded' id='sample-name' type='submit' value={{ samplename }}></input>
             <input class='mani people' id='sample-owner' type='submit' value={{ people }}></input>
-            <button class='mani access' id='singleqb'>Single-Q</button>
+            <button class='mani access singleqb'>Single-Q</button>
             
             
         </div>
 
         <script>
             $(function(){
-                $("div#singleqb").load("{{ url_for('mission.mani_singleqb') }}");
+                $("div.manicontent.singleqb").load("{{ url_for('mission.mani_singleqb') }}");
                 
             });
         </script>
         
         <!-- page content based on button clicked -->
-        <div class="manicontent" id="singleqb"></div>
+        <div class="manicontent singleqb"></div>
         
         
     

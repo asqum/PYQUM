@@ -45,11 +45,13 @@ def IQAP(I, Q):
 		Amp = 20*log10(sqrt(I**2 + Q**2)) # I, Q is a ratio in this formula
 		Pha = arctan2(Q, I) # -pi < phase < pi
 	return Amp, Pha
-def IQAParray(datas): # datas
+def IQAParray(datas, interlace=True):
 	'''
-	Slice datas-array into IQ-data, then list the Amp (dB/dBm) & Pha (rad) out of it
+	datas: interlaced IQ (default) OR horizontally stacked IQ
+	output: nd-array
 	'''
-	IQdata = datas.reshape(len(datas)//2, 2) # sort out interlaced IQ-pairs into I-list & Q-list
+	if interlace: IQdata = datas.reshape(len(datas)//2, 2) # sort out interlaced IQ-pairs into I-list & Q-list
+	else: IQdata = datas
 	Idata, Qdata = IQdata[:,0], IQdata[:,1]
 	# yI, yQ = [float(i) for i in Idata], [float(i) for i in Qdata]
 	Amp = 20*log10(sqrt(Idata**2 + Qdata**2)) # I, Q is a ratio in this formula
