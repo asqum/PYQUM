@@ -21,6 +21,9 @@ bp = Blueprint(myname, __name__) # to create endpoint for {{url_for(blog.XXX)}}
 def index():
     """render index.html"""
     return render_template('blog/index.html')
+@bp.route('/basecolor')
+def basecolor(): 
+    return jsonify(base_color=g.base_color)
 
 @bp.route('/reset')
 def reset():

@@ -312,9 +312,8 @@ $('input.char#fresp-run').on('touchend click', function(event) {
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/new', {
         wday: wday, fluxbias: fluxbias, sparam: sparam, ifb: ifb, powa: powa, freq: freq, comment: comment, simulate: simulate
     }, function (data) { 
-        console.log("test each loop: " + data.testeach); 
-        $('button.tablinks#ALL-tab').trigger('click');
-        $('button.tablinks#ALL-tab').trigger('click'); 
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 7);
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 77);
         $('h3.all-mssn-warning').text("JOB STATUS: " + data.status);
     });
     return false;
@@ -358,8 +357,8 @@ $(function () {
             if (data.resumepoint == data.datasize) {
                 console.log("The data was already complete!")
             } else { console.log("The data has just been completed")};
-            $('button.tablinks#ALL-tab').trigger('click');
-            $('button.tablinks#ALL-tab').trigger('click');
+            setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 7);
+            setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 77);
             $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
         });
         return false;

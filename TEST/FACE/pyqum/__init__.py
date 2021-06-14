@@ -20,7 +20,8 @@ def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(
             current_app.config['DATABASE'],
-            detect_types=sqlite3.PARSE_DECLTYPES
+            detect_types=sqlite3.PARSE_DECLTYPES,
+            timeout=300 # should be able to allow more concurrency?
         )
         g.db.row_factory = sqlite3.Row
     return g.db
@@ -114,6 +115,7 @@ def create_app(test_config=None):
 
     # make url_for('index') == url_for('blog.index')
     app.add_url_rule('/', endpoint='index')
+    
 
     print(Back.GREEN + Fore.LIGHTYELLOW_EX + "Starting PYQUM:")
     

@@ -61,7 +61,8 @@ border-top: 1px solid lightgray;
     float: right;
 }
 div.navbar {
-    background-color: #ffba26;
+    /* DR-specific color by jquery.css in base.js */
+    background-color: currentColor;
     position: fixed;
     top: 0;
     width: 100%;

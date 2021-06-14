@@ -86,6 +86,11 @@ def load_logged_in_user():
         g.QPC1_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC1'").fetchone()[0]
         # print(Fore.GREEN + "CHAR0_sample: %s" %g.CHAR0_sample)
 
+        # DR-specific parameters:
+        g.DR_platform = int(get_status("WEB")['port']) - 5300
+        navbar_colors = ['#ffba26', '#ff2626'] # hex-color-sequence for each DR
+        g.base_color = "rgb(%s, %s, %s)" %tuple([int(navbar_colors[g.DR_platform-1].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)]) # convert hex- to rgb-color
+
 
         # press('enter') # simulate press-enter-key in cmd to clear the possible clog!
 

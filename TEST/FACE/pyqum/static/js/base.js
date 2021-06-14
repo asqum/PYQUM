@@ -1,8 +1,17 @@
 $(document).ready(function(){
+    // DR-specific navigation-bar color:
+    $.getJSON('/basecolor', { }, function(data) {
+        console.log("Same color: " + Boolean($("div.navbar").css("background-color")==data.base_color));
+        console.log("Previous color: " + $("div.navbar").css("background-color"));
+        if ($("div.navbar").css("background-color")!=data.base_color) {
+            $("div.navbar").css("background-color", data.base_color);
+        };
+        console.log("Current color: " + $("div.navbar").css("background-color"));
+    });
+    
     // $('button.mission').hide();
     // console if only for debugging purposes:
     // console.log($(location).attr("href"));
-    // console.log(window.location.pathname);
 
     if (window.location.pathname == "/"){
         console.log(window.location.pathname);
@@ -48,7 +57,7 @@ $(document).ready(function(){
         // can't find path for this case
         console.log("Path:");
         console.log(window.location.pathname); 
-        // Thus we embedded the script in machine.html
+        // Thus we embedded the script in display.html
     };
 
     if (window.location.pathname == "/auth/register"){

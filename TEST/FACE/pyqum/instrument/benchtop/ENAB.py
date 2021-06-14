@@ -128,6 +128,7 @@ def averag(bench, action=['Get'] + 10 * ['']):
 def dataform(bench, action=['Get'] + 10 * ['']):
 	'''action=['Get/Set', <format: REAL,32/REAL,64/ASCii,0>]
 	'''
+	bench.write('FORMat:BORDer NORMal')
 	SCPIcore = 'FORMat:DATA'
 	return mdlname, bench, SCPIcore, action
 @Attribute
@@ -197,7 +198,7 @@ def sdata(bench):
 	try:
 		sdatacore = ":CALCulate:MEASure:DATA:SDATa?"
 		datatype = dataform(bench)
-		databorder = str(bench.query("FORMat:BORDer?"))
+		# databorder = str(bench.query("FORMat:BORDer?"))
 		# print(Fore.CYAN + "Endian (Byte-order): %s" %databorder)
 		if datatype[1]['DATA'] == 'REAL,32':
 			datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)

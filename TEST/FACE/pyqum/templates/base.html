@@ -20,6 +20,10 @@
           }
         });
     </script>
+
+    <style>
+        div.navbar { background-color: {{ g.base_color }}; }
+    </style>
         
     <title>{% block title %}{% endblock %} - PyQuM</title>
     
@@ -52,7 +56,7 @@
         <!-- To benchmark -->
         <button class="benchmark" id="left"><i class="fa fa-microchip"></i></button>
         {% if g.user['instrument'] %}
-            <button class="ups" id="left"><a href="https://qum.phys.sinica.edu.tw:8888/0">UPS</a></button>
+            <!-- <button class="ups" id="left"><a href="https://qum.phys.sinica.edu.tw:8888/0">UPS</a></button> -->
         {% endif %}
     {% endif %}  
 
