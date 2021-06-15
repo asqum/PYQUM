@@ -7,7 +7,8 @@ from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 import functools
-from keyboard import press
+# from datetime import timedelta
+# from keyboard import press
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, jsonify
@@ -38,29 +39,38 @@ def load_logged_in_user():
     If a user id is stored in the session, load the user object from
     the database into ``g.user``.
     This will be executed EVERYTIME a ROUTE (app-instance) is called upon!
+    NOTE: ONLY attributes subjected to highly dynamic change will be defined here in order to be efficient!
     """
+    # 0. DR-specific parameters:
+    g.DR_platform = int(get_status("WEB")['port']) - 5300
+    navbar_colors = ['#ffba26', '#ff2626'] # hex-color-sequence for each DR
+    g.base_color = "rgb(%s, %s, %s)" %tuple([int(navbar_colors[g.DR_platform-1].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)]) # convert hex- to rgb-color
+    
     user_id = session.get('user_id')
     if user_id is None:
         g.user = None
     else:
-        # logged-in user's profile:
+        # 1. logged-in user's profile:
         g.user = get_db().execute(
             'SELECT * FROM user WHERE id = ?', (user_id,)
         ).fetchone()
 
-        # logged-in user's samples' details:
+        # 2. Latest sample-loading date: (to prevent measuring old samples)
+        g.latest_date = get_db().execute('SELECT s.registered FROM sample s ORDER BY registered DESC').fetchone()[0].strftime("%Y-%m-%d")
+        
+        # 3. logged-in user's samples' details:
         g.samples = get_db().execute(
-            'SELECT s.id, author_id, samplename, fabricated, location, previously, description'
+            'SELECT s.id, author_id, samplename, fabricated, location, previously, description, registered'
             ' FROM sample s JOIN user u ON s.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
             ' WHERE u.id = ?'
             ' ORDER BY registered DESC',
-            (user_id,)
+            (g.user['id'],)
         ).fetchall()
         g.samples = [dict(s) for s in g.samples]
 
-        # logged-in user's co-authored samples' details:
+        # 4. logged-in user's co-authored samples' details:
         g.cosamples = get_db().execute(
-            'SELECT s.id, author_id, samplename, fabricated, location, previously, description'
+            'SELECT s.id, author_id, samplename, fabricated, location, previously, description, registered'
             ' FROM sample s JOIN user u ON s.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
             ' WHERE s.co_authors LIKE ?'
             ' ORDER BY registered DESC',
@@ -68,7 +78,7 @@ def load_logged_in_user():
         ).fetchall()
         g.cosamples = [dict(x) for x in g.cosamples]
 
-        # Instrument list & details for each DR (PyQUM) platform:
+        # 5. Instrument list & details for each DR (PyQUM) platform:
         g.machlist = get_db().execute(
             '''
             SELECT m.codename, connected, category, sequence, system, u.username
@@ -80,16 +90,11 @@ def load_logged_in_user():
         g.machlist = [dict(x) for x in g.machlist]
         g.instlist = [x['codename'].replace('_','-') for x in g.machlist]
 
-        # Appointed sample in each measurement system:
+        # 6. Appointed sample in each measurement system:
         g.CHAR0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='CHAR0'").fetchone()[0]
         g.QPC0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC0'").fetchone()[0]
         g.QPC1_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC1'").fetchone()[0]
         # print(Fore.GREEN + "CHAR0_sample: %s" %g.CHAR0_sample)
-
-        # DR-specific parameters:
-        g.DR_platform = int(get_status("WEB")['port']) - 5300
-        navbar_colors = ['#ffba26', '#ff2626'] # hex-color-sequence for each DR
-        g.base_color = "rgb(%s, %s, %s)" %tuple([int(navbar_colors[g.DR_platform-1].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)]) # convert hex- to rgb-color
 
 
         # press('enter') # simulate press-enter-key in cmd to clear the possible clog!

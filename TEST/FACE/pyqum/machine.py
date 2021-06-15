@@ -679,12 +679,18 @@ def saget():
 @bp.route('/bdr')
 def bdr():
 	if int(g.user['instrument'])>=1:
-		# monitoring traffic:
+		# 0. monitoring traffic:
 		print(Fore.GREEN + "User %s is visiting BDR using IP: %s\n" %(session['user_name'], request.remote_addr))
-		# PENDING: DR-specific Loaded number of samples
-		loaded = 6
-		recent_samples = [s['samplename'] for s in g.samples][0:loaded] + ['Sam', 'Same01', 'IDLE'] # owned main samples (abc == BDR herself)
-		return render_template("blog/machn/bdr.html", recent_samples=recent_samples, CHAR0_sample=g.CHAR0_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample)
+		
+		# 1. OWNED samples:
+		owned_new_samples = [s['samplename'] for s in g.samples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
+		
+		# 2. SHARED co-samples:
+		shared_new_samples = [s['samplename'] for s in g.cosamples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
+		
+		recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + ['Sam', 'Same01', 'IDLE']
+		loaded = len(recent_samples) - 3
+		return render_template("blog/machn/bdr.html", loaded=loaded, recent_samples=recent_samples, CHAR0_sample=g.CHAR0_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample)
 	else: abort(404)
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():

@@ -170,9 +170,7 @@
             </div>
             {% if g.user['management'] %}
                 <div class="row">
-                    <div class="col-11" id='left'><h3 class="bdr samples-allocation">Loaded:</h3></div>
-                    <!-- PENDING: DR-specific Loaded number of samples -->
-                    <div class="col-11" id='left'><input class='bdr samples-allocation loaded' type="text" value='6'/></div>
+                    <div class="col-20" id='left'><h3 class="bdr samples-allocation">Loaded {{loaded}} NEW sample(s)</h3></div>
                 </div>
                 <div class="row">
                     <div class="col-11" id='left'><select class='bdr samples-allocation CHAR0' id='system-CHAR0' type="text">

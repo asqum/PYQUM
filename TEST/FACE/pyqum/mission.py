@@ -472,22 +472,22 @@ def char_fresp_2ddata():
 
         stage, prev = clocker(0)
         fresp_addresses_0 = concatenate((ones([x_count,1])*array([int(ifluxbias),int(isparam),int(iifb)]), (ones([1,1])*arange(x_count)).T), axis=1) # 2D stack of addresses
-        IQstack, Amp, Pha = zeros([x_count,2]), zeros([y_count,x_count]), zeros([y_count,x_count])
+        IQstack, INPLANE, QUAD, Amp, Pha = zeros([x_count,2]), zeros([y_count,x_count]), zeros([y_count,x_count]), zeros([y_count,x_count]), zeros([y_count,x_count])
         for j in range(y_count):
             IQstack[:,0] = selectedata[gotocdata(concatenate((fresp_addresses_0, 2*j*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
             IQstack[:,1] = selectedata[gotocdata(concatenate((fresp_addresses_0, (2*j+1)*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
-            I1, Q1, Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
+            INPLANE[j,:], QUAD[j,:], Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
         stage, prev = clocker(stage, prev, agenda="2D-Plot") # Marking time
 
         print("x is of length %s and of type %s" %(len(x),type(x)))
         print("y is of length %s and of type %s" %(len(y),type(y)))
         print("Amp of shape %s" %str(array(Amp).shape))
-        ZZA, ZZP = Amp.tolist(), Pha.tolist()
+        ZZI, ZZQ, ZZA, ZZP = INPLANE.tolist(), QUAD.tolist(), Amp.tolist(), Pha.tolist()
 
     elif iifb == "x":
         pass
 
-    fresp_2Ddata[session['user_name']] = dict(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
+    fresp_2Ddata[session['user_name']] = dict(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 
     # x = list(range(len(x))) # for repetitive data
     return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
