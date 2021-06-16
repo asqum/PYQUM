@@ -185,28 +185,19 @@ def qestimate_fitting():
 			fittingValue = port.fitresults[key]
 			if isnan(fittingValue):
 				fittingValue = 0
-			if(i==0):
+			if i==0 :
 					fitResult[key] = empty(yAxisLen)
 			fitResult[key][i] = fittingValue
 		if i == 0:
-			fitResult["fitting_curveY"] = empty([yAxisLen,xAxisLen])
-		fitResult["fitting_curveY"][i] = port.z_data_sim
+			fitResult["fitted_amplitude"] = empty([yAxisLen,xAxisLen])
+		fitResult["fitted_amplitude"][i] = abs(port.z_data_sim)
 
-	fitResult["fitting_curveX"] = fitFrequency
+	fitResult["fitted_frequency"] = fitFrequency
 	#fitResult[info["measurement"]["parameters"][gAxisIndex[1]]["lable"]]= info["measurement"]["parameters"][gAxisIndex[1]]["values"]
-	
-	fitResultData = [
-		{"lable": yAxisInfo["lable"],
-		"data": yAxisInfo["values"]}
-	]
 
-	for key in fitResult.keys():
-		fitResultData.append(
-			{"lable": key,
-			"data": fitResult[key]})
 		
 	set_mat_analysis(fitResult, "resonator_fit[%s]"%session['user_name'])
-	return jsonify({fitResult})
+	return jsonify(fitResult)
 
 
 

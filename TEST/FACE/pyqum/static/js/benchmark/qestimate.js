@@ -168,7 +168,7 @@ $(function () {
                     }
                     console.log( axisKeys );
 
-                    plot2D(data, axisKeys, "qFactor-plot-Overview2D");
+                    plot2D(data, axisKeys, "qFactor-plot-rawOverview2D");
                 });
             }
             if ( indexData.valueIndex.isChange ){
@@ -222,12 +222,22 @@ $(function () {
         }, function (data) {
             console.log( Object.keys(data) );
             console.log( data );
-            let axisKeys = {
+            
+            let axisKeys_fit = {
+                x: htmlIDs[indexData.axisIndex.data[0]],
+                y: htmlIDs[indexData.axisIndex.data[1]],
+                z: "fitted_amplitude",
+            }
+            plot2D( data, axisKeys_fit, "qFactor-plot-fitOverview2D");
+            let axisKeys_fitResult = {
                 x: [htmlIDs[indexData.axisIndex.data[1]]],
                 y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr"],
             }
-            plot1D( data, axisKeys, "qFactor-plot-fittingParameters");
+            plot1D( data, axisKeys_fitResult, "qFactor-plot-fittingParameters");
+
         });
+
+
 
         $.ajaxSettings.async = true;
     });
@@ -279,8 +289,8 @@ $(function () {
         });
 
     });
+ 
     
-
 
 });
 
