@@ -191,8 +191,8 @@ def qestimate_fitting():
 		if i == 0:
 			fitResult["fitted_amplitude"] = empty([yAxisLen,xAxisLen])
 		fitResult["fitted_amplitude"][i] = abs(port.z_data_sim)
-
-	fitResult["fitted_frequency"] = fitFrequency
+	fitResult["fitted_amplitude"] = fitResult["fitted_amplitude"].tolist()
+	fitResult["fitted_frequency"] = fitFrequency.tolist()
 	#fitResult[info["measurement"]["parameters"][gAxisIndex[1]]["lable"]]= info["measurement"]["parameters"][gAxisIndex[1]]["values"]
 
 		
@@ -206,7 +206,7 @@ def testFunc():
 
 	measurementObj = get_measurementObject('frequency_response')
 
-	print(measurementObj.corder)
+	print(measurementObj.corder[0])
 	return jsonify(measurementObj.corder)
 
 
