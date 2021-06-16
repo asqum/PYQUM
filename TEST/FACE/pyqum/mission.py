@@ -431,12 +431,6 @@ def char_fresp_2ddata():
     iifb = request.args.get('iifb')
     ipowa = request.args.get('ipowa')
     ifreq = request.args.get('ifreq')
-    x, y, ZZA, ZZP = [], [], [], []
-    dict_for_MPW = {
-            "pqfile": str(M_fresp[session['user_name']].pqfile), "datalocation": M_fresp[session['user_name']].datalocation, "writtensize": M_fresp[session['user_name']].writtensize,
-            "c_fresp_structure": session['c_fresp_structure'], "ifluxbias": ifluxbias, "isparam": isparam, "iifb": iifb, "ipowa": ipowa, "ifreq": ifreq,
-        }
-    set_status("MPW", dict_for_MPW)
 
     if ifluxbias == "x" and ifreq == "y":
         print("X: Flux-Bias, Y: Frequency")
@@ -444,26 +438,15 @@ def char_fresp_2ddata():
         x, y = waveform(M_fresp[session['user_name']].corder['Flux-Bias']).data[0:session['c_fresp_address'][0]+1], waveform(M_fresp[session['user_name']].corder['Frequency']).data
         x_count, y_count = session['c_fresp_address'][0]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
 
-        stage, prev = clocker(0, agenda="2D Fresp")
-        
-        # PENDING: FAST VECTORIZED 2D-PLOT like the next one
-        Amp, Pha = [], []
+        stage, prev = clocker(0)
+        fresp_addresses_0 = concatenate(((ones([1,1])*arange(x_count)).T, ones([x_count,1])*array([int(isparam),int(iifb),int(ipowa)])), axis=1) # 2D stack of addresses
+        IQstack, INPLANE, QUAD, Amp, Pha = zeros([x_count,2]), zeros([y_count,x_count]), zeros([y_count,x_count]), zeros([y_count,x_count]), zeros([y_count,x_count])
         for j in range(y_count):
-            I = selectedata[gotocdata([array(range(x_count)), int(session['isparam']), int(session['iifb']), int(session['ipowa']), 2*j], session['c_fresp_structure'])]
-            Q = selectedata[gotocdata([array(range(x_count)), int(session['isparam']), int(session['iifb']), int(session['ipowa']), 2*j+1], session['c_fresp_structure'])]
-            amp, pha = [], []
-            for i,q in zip(I,Q):
-                a,p = IQAP(i,q)
-                amp.append(a); pha.append(p)
-            Amp += [amp]; Pha += [pha]
+            IQstack[:,0] = selectedata[gotocdata(concatenate((fresp_addresses_0, 2*j*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
+            IQstack[:,1] = selectedata[gotocdata(concatenate((fresp_addresses_0, (2*j+1)*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
+            INPLANE[j,:], QUAD[j,:], Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
+        stage, prev = clocker(stage, prev, agenda="2D-Plot for flux-frequency") # Marking time
 
-        stage, prev = clocker(stage, prev, agenda="2D Fresp") # Marking time
-
-        print("x is of length %s and of type %s" %(len(x),type(x)))
-        print("y is of length %s and of type %s" %(len(y),type(y)))
-        print("Amp of shape %s" %str(array(Amp).shape))
-        ZZA, ZZP = Amp, Pha
-        
     elif ipowa == "x" and ifreq == "y":
         print("X: Power, Y: Frequency")
         xtitle, ytitle = "<b>Power(dBm)</b>", "<b>Frequency(GHz)</b>"
@@ -477,19 +460,16 @@ def char_fresp_2ddata():
             IQstack[:,0] = selectedata[gotocdata(concatenate((fresp_addresses_0, 2*j*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
             IQstack[:,1] = selectedata[gotocdata(concatenate((fresp_addresses_0, (2*j+1)*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
             INPLANE[j,:], QUAD[j,:], Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
-        stage, prev = clocker(stage, prev, agenda="2D-Plot") # Marking time
-
-        print("x is of length %s and of type %s" %(len(x),type(x)))
-        print("y is of length %s and of type %s" %(len(y),type(y)))
-        print("Amp of shape %s" %str(array(Amp).shape))
-        ZZI, ZZQ, ZZA, ZZP = INPLANE.tolist(), QUAD.tolist(), Amp.tolist(), Pha.tolist()
+        stage, prev = clocker(stage, prev, agenda="2D-Plot for power-frequency") # Marking time
 
     elif iifb == "x":
         pass
 
+    print("(x,y) is of length (%s,%s) and of type (%s,%s)" %(len(x),len(y),type(x),type(y)))
+    print("Amp of shape %s" %str(array(Amp).shape))
+    ZZI, ZZQ, ZZA, ZZP = INPLANE.tolist(), QUAD.tolist(), Amp.tolist(), Pha.tolist()
     fresp_2Ddata[session['user_name']] = dict(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 
-    # x = list(range(len(x))) # for repetitive data
     return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 # endregion
 
