@@ -201,6 +201,8 @@ $(function () {
     return false;
 });
 $(function () {
+
+    // Start analysis data and plot
     $('#qFactor-fit-button').on('click', function () {
 
         $.ajaxSettings.async = false;
@@ -266,9 +268,18 @@ $(function () {
         return false;
     });
 
+    //Just for test
+    $('#qFactor-test-button').on('click', function () {
 
 
+        $.getJSON( '/benchmark/test',{  
+            
+        }, function (data) {
+            console.log( data )
+        });
 
+    });
+    
 
 
 });

@@ -1713,6 +1713,22 @@ def send_datainfo():
     set_json_measurementinfo(MP_BencmarkDict,jsonFileName)
     return jsonify(MP_BencmarkDict)
 
+def get_measurementObject( measurementType ):
+
+    return M_fresp[session['user_name']]
+
+def Aget_measurementObject( measurementType ):
+
+    def fResp ():
+        mObj = M_fresp[session['user_name']]
+        mObj.corder["C-Structure"] = ["Flux-Bias", "S-Parameter", "IF-Bandwidth", "Power", "Frequency"]
+        return mObj
+    measurementObject = {
+        'frequency_response': fResp
+    }
+
+    return measurementObject[measurementType]()
+
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
 # endregion
 

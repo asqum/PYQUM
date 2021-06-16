@@ -8,7 +8,7 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty
 
 
 import json
@@ -25,6 +25,7 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 from pyqum.instrument.benchtop import TKAWG, PSGA, MXA
 from pyqum.directive import calibrate 
 from pyqum.directive.MP_benchmark import assembler
+from pyqum.mission import get_measurementObject
 
 # Fitting
 from resonator_tools import circuit
@@ -160,36 +161,43 @@ def qestimate_fitting():
 	info = get_json_measurementinfo(get_fileName())
 	print("I shape:", gIqData2D["I"].shape, "Q shape:", gIqData2D["Q"].shape )
 	print("Fitting range:", fittingRangeFrom, fittingRangeTo)
-	info = get_json_measurementinfo(get_fileName())
 
+	info = get_json_measurementinfo(get_fileName())
+	yAxisInfo = info["measurement"]["parameters"][gAxisIndex[1]]
+	yAxisLen = len(yAxisInfo["values"])
 
 	fitIQ = gIqData2D["I"].transpose()+1j*gIqData2D["Q"].transpose()
 	fitFrequency= array(info["measurement"]["parameters"][4]["values"])
-	fittingRange = [float(fittingRangeFrom),float(fittingRangeTo)]
+	#fittingRange = [float(fittingRangeFrom),float(fittingRangeTo)]
+	fittingRange = (float(fittingRangeFrom),float(fittingRangeTo))
 
 	fittingIndex = find_nearestIndex( fitFrequency, fittingRange )
 	fittingIndex.sort()
+	xAxisLen = fitFrequency.shape[0]
 
 	port = circuit.notch_port()
 	fitResult = {}
-	for ifitIQ, i in zip(fitIQ, range(gIqData2D["I"].shape[1]) ):
-		port.add_data( fitFrequency[fittingIndex[0]:fittingIndex[1]] ,ifitIQ[fittingIndex[0]:fittingIndex[1]] )
-		port.autofit()
-
+	for ifitIQ, i in zip(fitIQ, range(yAxisLen) ):
+		port.add_data( fitFrequency ,ifitIQ )
+		#port.autofit( electric_delay=None,fcrop=fittingRange,Ql_guess=None, fr_guess=None )
+		port.autofit( )
 		for key in port.fitresults.keys():
 			fittingValue = port.fitresults[key]
 			if isnan(fittingValue):
 				fittingValue = 0
 			if(i==0):
-					fitResult[key] = [fittingValue]
-			else:
-					fitResult[key].append(fittingValue)
+					fitResult[key] = empty(yAxisLen)
+			fitResult[key][i] = fittingValue
+		if i == 0:
+			fitResult["fitting_curveY"] = empty([yAxisLen,xAxisLen])
+		fitResult["fitting_curveY"][i] = port.z_data_sim
 
-	fitResult[info["measurement"]["parameters"][gAxisIndex[1]]["lable"]]= info["measurement"]["parameters"][gAxisIndex[1]]["values"]
-
+	fitResult["fitting_curveX"] = fitFrequency
+	#fitResult[info["measurement"]["parameters"][gAxisIndex[1]]["lable"]]= info["measurement"]["parameters"][gAxisIndex[1]]["values"]
+	
 	fitResultData = [
-		{"lable": info["measurement"]["parameters"][gAxisIndex[1]]["lable"],
-		"data": info["measurement"]["parameters"][gAxisIndex[1]]["values"]}
+		{"lable": yAxisInfo["lable"],
+		"data": yAxisInfo["values"]}
 	]
 
 	for key in fitResult.keys():
@@ -198,19 +206,19 @@ def qestimate_fitting():
 			"data": fitResult[key]})
 		
 	set_mat_analysis(fitResult, "resonator_fit[%s]"%session['user_name'])
-	return jsonify(fitResult)
+	return jsonify({fitResult})
+
 
 
 @bp.route('/test',methods=['POST','GET'])
-def index():
-	if request.method =='POST':
-		if request.values['send']=='送出':
-			return render_template('blog/benchmark/measurement_info.html',name=request.values['user'])
-	return render_template('blog/benchmark/measurement_info.html',name="")
+def testFunc():
 
-def get_fresp_parametersName():
-	ParametersName = ["Flux-Bias","S-Parameter", "IF-Bandwidth", "Power", "Frequency"]
-	return ParametersName
+	measurementObj = get_measurementObject('frequency_response')
+
+	print(measurementObj.corder)
+	return jsonify(measurementObj.corder)
+
+
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
 
