@@ -52,10 +52,12 @@ def gotocdata(Address, Structure):
     return Order
 
 class waveform:
-    '''Guidelines for Command writing:
-        1. All characters will be converted to lower case
-        2. Use comma separated string to represent string list
-        3. Inner-Repeat is ONLY used for CW_SWEEP
+    '''Guidelines for Command writing:\n
+        1. All characters will be converted to lower case.\n
+        2. Use comma separated string to represent string list.\n
+        3. Inner-Repeat is ONLY used for CW_SWEEP: MUST use EXACTLY ' r ' (in order to differentiate from r inside word-string).\n
+        4. waveform.inner_repeat: the repeat-counts indicated after the ' r ' or '^', determining how every .data's element will be repeated.\n
+        NOTE: '^' is equivalent to ' r ' without any spacing restrictions.
     '''
     def __init__(self, command):
         # defaulting to lower case
@@ -64,13 +66,15 @@ class waveform:
         # special treatment to inner-repeat command: (to extract 'inner_repeat' for cwsweep averaging)
         self.inner_repeat = 1
         if ' r ' in self.command:
-            # inner_repeat: the repeat-counts indicated after the ' r ', determining how every .data's element will be repeated
-            # correcting back ("auto-purify") the command-string after having retrieved repeat-count:
             self.command, self.inner_repeat = self.command.split(' r ')
-            while " " in self.inner_repeat:
-                self.inner_repeat = self.inner_repeat.replace(" ","")
+            while " " in self.inner_repeat: self.inner_repeat = self.inner_repeat.replace(" ","")
+            self.inner_repeat = int(self.inner_repeat)
+        if '^' in self.command:
+            self.command, self.inner_repeat = self.command.split('^')
+            while " " in self.inner_repeat: self.inner_repeat = self.inner_repeat.replace(" ","")
             self.inner_repeat = int(self.inner_repeat)
 
+        # correcting back ("auto-purify") the command-string after having retrieved the repeat-count or not:
         # get rid of multiple spacings
         while " "*2 in self.command:
             self.command = self.command.replace(" "*2," ")
@@ -139,17 +143,17 @@ def test():
     #     sleep(2)
     
     # print("location: %s" %(gotocdata([0,8,88,778], [1,100,1000,10000])))
-    print("First check:")
-    print("address: %s" %(cdatasearch(gotocdata([0,79,333,8888,12356], [1,100,1000,10000,1000000]), [1,100,1000,10000,1000000])))
-    print("Second check (List of Addresses):")
-    for x in gotocdata([[0,79,333,5271,12356]]*6 + [[0,79,333,5271,12357]]*1, [1,100,1000,10000,1000000]):
-        print("address: %s" %(cdatasearch(x, [1,100,1000,10000,1000000])))
-    print("Third check (Array of Addresses):")
-    A = [0,79,333,5271,12356]
-    B = ones([8,1])*array(A)
-    B[:,-1] = range(12300,12308,1)
-    for x in gotocdata(B, [1,100,1000,10000,1000000]):
-        print("address: %s" %(cdatasearch(x, [1,100,1000,10000,1000000])))
+    # print("First check:")
+    # print("address: %s" %(cdatasearch(gotocdata([0,79,333,8888,12356], [1,100,1000,10000,1000000]), [1,100,1000,10000,1000000])))
+    # print("Second check (List of Addresses):")
+    # for x in gotocdata([[0,79,333,5271,12356]]*6 + [[0,79,333,5271,12357]]*1, [1,100,1000,10000,1000000]):
+    #     print("address: %s" %(cdatasearch(x, [1,100,1000,10000,1000000])))
+    # print("Third check (Array of Addresses):")
+    # A = [0,79,333,5271,12356]
+    # B = ones([8,1])*array(A)
+    # B[:,-1] = range(12300,12308,1)
+    # for x in gotocdata(B, [1,100,1000,10000,1000000]):
+    #     print("address: %s" %(cdatasearch(x, [1,100,1000,10000,1000000])))
     
     # converting between addresses with different base structure:
     # c_struct = [10, 5, 35, 15]
@@ -172,6 +176,10 @@ def test():
     # wave = waveform(command)
     # if wave.count == len(wave.data):
     #     print("Waveform of length %s is:\n %s" %(wave.count, wave.data))
+
+    command = "5to12*7   ^100"
+    wave = waveform(command)
+    print("data %s is repeating %s times" %(wave.data,wave.inner_repeat))
 
     # s = [0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,10,12,13,15]
     # idx = match(s, 7.3)
