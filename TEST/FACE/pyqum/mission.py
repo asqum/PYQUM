@@ -1714,8 +1714,11 @@ def send_datainfo():
     return jsonify(MP_BencmarkDict)
 
 def get_measurementObject( measurementType ):
+    mObj = M_fresp[session['user_name']]
+    mObj.corder["C-Structure"] = ["Flux-Bias", "S-Parameter", "IF-Bandwidth", "Power", "Frequency"]
+    print(mObj.corder["C-Structure"])
 
-    return M_fresp[session['user_name']]
+    return mObj
 
 def Aget_measurementObject( measurementType ):
 

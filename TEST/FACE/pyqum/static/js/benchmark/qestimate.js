@@ -23,8 +23,7 @@ function get_selectInfo(){
     let axisIndex=[]
     let valueIndex=[]
 
-    // let a = {x: 1, x: 2}
-    // console.log(a) // {x: 2}
+
     let indexData = {
         axisIndex:{
             isChange:isAxisChange,
@@ -129,7 +128,7 @@ function plot2D( data, axisKeys, plotId ) {
         width: 2.5
     };
     
-    console.log("1st z-trace: " + trace.z[0][0]);
+    //console.log("1st z-trace: " + trace.z[0][0]);
 
     // Plotting the Chart using assembled TRACE:
     var Trace = [trace]
@@ -324,8 +323,66 @@ $(function () {
         });
 
     });
- 
-    
+    // Test new plot
+    $('#qFactor-plottest-button').on('click', function () {
+
+        $.ajaxSettings.async = false;
+        let htmlIDs=[];
+        $.getJSON( '/benchmark/get_parametersID', 
+        {}, 
+            function (id) {
+                htmlIDs = [...id];
+        });
+
+        let indexData = get_selectInfo();
+
+        if (gAxisIndex.length<=2 )
+        {
+
+            if ( indexData.axisIndex.isChange ){
+                console.log( "2D plot" );
+                console.log( indexData );
+                $.getJSON( '/benchmark/qestimate/getJson_qestimate_plot',
+                {   indexData: JSON.stringify(indexData),}, 
+                    function (data) {
+                    console.log( data );
+                    let axisKeys = {
+                        x: "Frequency",
+                        y: htmlIDs[indexData.axisIndex.data[1]],
+                        z: "Data_point",
+                    }
+                    console.log( data );
+
+                    plot2D(data, axisKeys, "qFactor-plot-rawOverview2D");
+                });
+            }
+            let indexData1D = JSON.parse(JSON.stringify(indexData));
+            console.log(  "1D plot" );
+            console.log(  indexData1D );
+            indexData1D.axisIndex.data = [4];
+            $.getJSON( '/benchmark/qestimate/getJson_qestimate_plot',
+            {   indexData: JSON.stringify(indexData1D),}, 
+                function (data) {
+                console.log( data );
+                let axisKeys = {
+                    x: ["Frequency"],
+                    y: ["Data_point","Fitted_curve"],
+                }
+                console.log( data.Fitted_curve );
+
+                plot1D(data, axisKeys, "qFactor-plot-fittingResult");
+            });
+
+            
+        }else{
+            console.log( "Too many axis." );
+        }
+        
+
+        $.ajaxSettings.async = true;
+
+    });
+
 
 });
 

@@ -79,6 +79,28 @@ def assembler( dataPosition, dimensionIndice, info, userName ):
 	
 	return data
 
+def get_data( pqfile, datalocation, writtensize):
+
+	with open(pqfile, 'rb') as datapie:
+		datapie.seek(datalocation+7)
+		pie = datapie.read(writtensize)
+		selectedata = list(struct.unpack('>' + 'd'*((writtensize)//8), pie))
+	return array(selectedata)
+
+def assembler2( axisIndex, measurement ):
+
+
+	cShape = measurement.corder["C_Shape"]
+	axisIndex
+	reduceCShape = []
+	for s in cShape:
+		if s != 1:
+			reduceCShape.append(s)
+
+	data = get_data( measurement.pqfile, measurement.datalocation, measurement.writtensize )
+	data.reshape( tuple(reduceCShape) )
+	data.moveaxis( -1, 0 )
+	return data
 	
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))

@@ -3,6 +3,7 @@ from colorama import init, Back, Fore
 init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
+import sys, struct
 
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
@@ -94,7 +95,156 @@ def measurement_info():
 
 	return render_template("blog/benchmark/measurement_info.html", info=info)
 
-def get_iqData (valueIndex, axisIndex):
+class QEstimation():
+
+	def __init__( self, measurementObj, *args,**kwargs ):
+
+		self.measurementObj = measurementObj
+		self.independentVars = {}
+
+		self.iqData = empty([0])
+
+		self.freqKey = "Frequency"
+		self.yAxisKey = None
+		self.fitCurve = empty([0])
+		self.fitResult = {}
+
+		C_Shape = []
+		for k in measurementObj.corder["C-Structure"] :
+			# Get wavefrom object from c-order
+			try:
+				varWaveform = waveform( measurementObj.corder[k] )
+			except(KeyError):
+				varWaveform = waveform('opt,')
+			# Get array from Waveform object
+			self.independentVars[k]=varWaveform.data
+			# Get C-Shape from Waveform object
+			C_Shape.append( varWaveform.count )
+
+		# Append datadensity to C-Shape (list) and Measurement.corder["C-Structure"] (list)
+		measurementObj.corder["C-Structure"].append("datadensity")
+		C_Shape.append( measurementObj.datadensity )
+		# Add C-Shape (list) to Measurement.corder (Dict)
+		self.measurementObj.corder["C_Shape"] = C_Shape
+
+		# Optimize (developing)
+		self.optCShpae = C_Shape
+		self.optCStructure = measurementObj.corder["C-Structure"]
+		for s, k in zip(C_Shape,measurementObj.corder["C-Structure"]) :
+			if s == 1:
+				self.optCShpae.remove(s)
+				self.optCStructure.remove(k)
+		
+	def _get_data_from_Measurement( self ):
+		writtensize = self.measurementObj.writtensize
+		pqfile = self.measurementObj.pqfile
+		datalocation = self.measurementObj.datalocation
+
+		with open(pqfile, 'rb') as datapie:
+			datapie.seek(datalocation+7)
+			pie = datapie.read(writtensize)
+			selectedata = list(struct.unpack('>' + 'd'*((writtensize)//8), pie))
+			
+		return array(selectedata)
+
+	def _reshape_Data ( self ):
+		# Data dimension should <= 3
+
+		cShape = self.measurementObj.corder["C_Shape"]
+
+		data = self._get_data_from_Measurement()
+		data.reshape( tuple(cShape) )
+
+		yAxisInd = self.measurementObj.corder["C-Structure"].index(self.yAxisKey) 
+		densityInd = self.measurementObj.corder["C-Structure"].index("datadensity")
+		freqInd = self.measurementObj.corder["C-Structure"].index(self.freqKey)
+		data.moveaxis( [densityInd, freqInd], [-2, -1] )
+		data.squeeze()
+		self.iqData = data
+
+
+	def do_analysis( self, fittingRange=None ):
+		# Get 1D or 2D data to self.iqData
+		if self.yAxisKey == None:
+			self._reshape_Data()
+			yAxisLen = 1
+		else:
+			self._reshape_Data(self.yAxisKey)
+			yAxisLen = self.independentVars[self.yAxisKey]
+
+		rawIQ = self.iqData[0]+1j*self.iqData[1]
+		rawFrequency = self.independentVars[self.freqKey]
+
+		# get range for fitting
+		#fittingIndex = find_nearestIndex( rawFrequency, fittingRange )
+		#fittingIndex.sort()
+		#fittingRange = tuple( fittingRange )
+
+		xAxisLen = rawFrequency.shape[0]
+
+		self.fitCurve = {
+			"Frequency" : rawFrequency,
+			"amplitude" : empty([yAxisLen,xAxisLen]),
+		}
+		# Creat notch port list
+		resonator = circuit.notch_port() 
+		for i in range(yAxisLen):
+			# Add data
+			resonator.add_data(f_data=rawFrequency, z_data_raw=rawIQ[i])
+			# Fit
+			resonator.autofit( electric_delay=None,fcrop=fittingRange,Ql_guess=None, fr_guess=None )
+
+			for key in resonator.fitresults.keys():
+				fittingValue = resonator.fitresults[key]
+				if isnan(fittingValue):
+					fittingValue = 0
+				if i==0 :
+						self.fitResult[key] = empty(yAxisLen)
+				self.fitResult[key][i] = fittingValue
+			# Save fitted curve			
+			self.fitCurve["amplitude"][i] = abs(resonator.z_data_sim)
+
+	def get_plotData( self, varsInd, yAxisKey=None ):
+		
+		if self.yAxisKey != yAxisKey:
+			self._reshape_Data()
+		if self.iqData.dim == 2:
+			plotData = self.iqData
+		elif yAxisKey == None:
+			plotData = self.iqData[ varsInd ]
+		else:
+			plotData = self.iqData
+
+		self.yAxisKey = yAxisKey
+		return plotData
+
+# Test return plot data in new way
+qEstimationDict = {}
+@bp.route('/qestimate/getJson_plot_test',methods=['POST','GET'])
+def getJson_plot_test():
+
+	global qEstimationDict
+	myQEstimation = QEstimation( get_measurementObject('frequency_response') )
+	qEstimationDict[session['user_name']] = myQEstimation
+
+	indexData = json.loads(request.args.get('indexData'))
+	
+	try:
+		print("Try get_qestimate_plot_fitCurve(indexData)")
+		fitCurveData = get_qestimate_plot_fitCurve(indexData)
+	except:
+		fitCurveData = {"amplitude":[]}
+	rawData = myQEstimation.get_plotData(indexData["valueIndex"]["data"],yAxisKey=myQEstimation.measurementObj.corder["C-Structure"][ indexData["axisIndex"]["data"][1] ] )
+	plotData = {
+		"Frequency": rawData["Frequency"],
+		"Data_point": rawData["amplitude"],
+		"Fitted_curve": fitCurveData["amplitude"]
+	}
+	#print(plotData)
+	return json.dumps(plotData, cls=NumpyEncoder)
+
+
+def renew_iqData (valueIndex, axisIndex):
 
 	global iqData
 	info = get_json_measurementinfo(get_fileName())
@@ -114,17 +264,16 @@ def get_qestimate_plot_rawData(indexData):
 	plotDimension = len(axisIndex)
 
 	if indexData["axisIndex"]["isChange"]:
-		get_iqData(valueIndex, axisIndex)
+		renew_iqData(valueIndex, axisIndex)
 
 	info = get_json_measurementinfo(get_fileName())
 
 	paraInfo = info["measurement"]["parameters"]
 
-	iAmp = iqData['I']
-	qAmp = iqData['Q']
-	transAmp = sqrt(iAmp**2+qAmp**2)
-
 	if( plotDimension == 2):
+		iAmp = iqData['I']
+		qAmp = iqData['Q']
+		transAmp = sqrt(iAmp**2+qAmp**2)
 		plotData = {
 				paraInfo[axisIndex[0]]["htmlId"]: paraInfo[axisIndex[0]]["values"],
 				paraInfo[axisIndex[1]]["htmlId"]: paraInfo[axisIndex[1]]["values"],
@@ -137,13 +286,15 @@ def get_qestimate_plot_rawData(indexData):
 
 		set_mat_analysis(plotData, "IQ_2Ddata[%s]"%session['user_name'])
 	else:
+		iAmp = iqData['I']
+		qAmp = iqData['Q']
+		transAmp = sqrt(iAmp**2+qAmp**2)
 		plotData = {
 			paraInfo[axisIndex[0]]["htmlId"]: paraInfo[axisIndex[0]]["values"],
 			"I": iAmp,
 			"Q": qAmp,			
 			"amplitude": transAmp
 		}
-		gIqData1D = iqData
 
 	return plotData
 
@@ -160,7 +311,6 @@ def get_qestimate_plot_fitCurve(indexData):
 	print("valueIndex",valueIndex,",axisIndex",axisIndex)
 	print("valueIndex",valueIndex,",axisIndex",axisIndex)
 
-	info = get_json_measurementinfo(get_fileName())
 	if( plotDimension == 2):
 		plotData = {
 			"Frequency": fitResult["Frequency"],			
@@ -257,6 +407,11 @@ def testFunc():
 	return jsonify(measurementObj.corder)
 
 
+def send_Measurement_to_QEstimation():
+	measurementObj =  get_measurementObject('frequency_response') 
+	return measurementObj
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
 
+		#stage, prev = clocker(0, agenda="2D Fresp")
+		#stage, prev = clocker(stage, prev, agenda="2D Fresp") # Marking time
