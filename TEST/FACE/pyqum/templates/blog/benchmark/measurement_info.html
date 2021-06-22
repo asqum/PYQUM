@@ -11,21 +11,55 @@
 
         <!-- <h3>Welcome to Benchmark</h3> -->
         <h3>The Measurement Method is {{info["measurement"]["type"] }}</h3>
-
-        <!-- <div class="row">
-            <div class="col-28" id='left'>
-                <div><select class='benchmark measurement_info' type='submit' value=""></select></div>
-            </div>
-        </div> -->
-        <!-- <ul>
+        
+        <ul>
             {% for paras in info["measurement"]["parameters"] %}
-                <li>{{ paras["name"] }}<select class='parameter'  type="text">
-                    {% for v in paras["values"] %}
-                    <option>{{v}}</option>
-                    {% endfor %}
-                </select></li>
+                <li>
+                    {% if paras["lable"]!="Frequency"%} 
+                    <div class="row">
+                        <div class="col-15">
+                            <label>
+                                {{ paras["lable"] }}
+                            </label>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                    <form> 
+                   
+                        
+                        <div class="col-15">
+                            <label>
+                                <input class="col-15" type="checkbox" id='check-{{paras["htmlId"]}}' >
+                                <select class='parameter' id='select-{{paras["htmlId"]}}' type="text">
+                                {% for v in paras["values"] %}
+                                <option>{{v}}</option>
+                                {% endfor %}
+                            </select></label>
+                        </div>
+                    </form>
+
+                    {% else %}
+                    <div class=row>
+                        <label>{{ paras["lable"] }} scanniing Range :</label>
+                        <p> {{paras["values"][0]}} ~ {{ paras["values"][paras["length"]-1] }} </p>
+                    </div>
+                    {% endif %}
+                </li>
             {% endfor %}
-        </ul> -->
+            <form>
+                <label> Fitting Range : </label>
+                <div class="row">
+                    <div class="col-15"><label> From : </label><input type="text" id="qFactor-fittingRange-from" name="fitfrom"></div>
+                </div>
+                <div class="row">
+                    <div class="col-15"><label> To : </label><input type="text" id="qFactor-fittingRange-to" name="fitto"></div>
+                </div>
+            </form>
+
+        </ul>
         {% block content %}{% endblock %}
 
         
