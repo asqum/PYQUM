@@ -162,9 +162,10 @@ class QEstimation():
 		freqInd = self.measurementObj.corder["C-Structure"].index(self.freqKey)
 		varNumber = len(varsInd)
 
-  		varsInd.insert( varNumber, varsInd.pop(freqInd))
+		varsInd.insert( varNumber, varsInd.pop(freqInd) )
+		
 		if yAxisKey == None:
-  			varsInd.insert( varNumber-1, varsInd.pop(densityInd))
+			varsInd.insert( varNumber-1, varsInd.pop(densityInd))
 			data.moveaxis( [densityInd, freqInd], [-2, -1] )
 			varsInd = varsInd[:-2]
 		else:
