@@ -9,7 +9,7 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis
 
 
 # Json to Javascrpt
@@ -162,17 +162,18 @@ class QEstimation():
 		freqInd = self.measurementObj.corder["C-Structure"].index(self.freqKey)
 		varNumber = len(varsInd)
 
-		varsInd.insert( varNumber, varsInd.pop(freqInd) )
-		
+		varsInd.insert( varNumber, varsInd.pop(freqInd),yAxisKey )
+		print("Key and var",varsInd,"", )
 		if yAxisKey == None:
 			varsInd.insert( varNumber-1, varsInd.pop(densityInd))
-			data.moveaxis( [densityInd, freqInd], [-2, -1] )
+			data = moveaxis( data, [densityInd, freqInd], [-2, -1] )
 			varsInd = varsInd[:-2]
 		else:
 			varsInd.insert( varNumber-1, varsInd.pop(densityInd))
 			varsInd.insert( varNumber-2, varsInd.pop(yAxisInd))
 			varsInd = varsInd[:-3]
-			data.moveaxis( [densityInd, yAxisInd, freqInd], [-3, -2, -1] )
+			data = moveaxis( data, [densityInd, yAxisInd, freqInd], [-3, -2, -1] )
+		print(varsInd)
 		for vi in varsInd:
 			data = data[vi]
 		data.squeeze()
@@ -227,7 +228,7 @@ def getJson_2Dplot_test():
 	dimension = len(indexData["axisIndex"]["data"])
 	if dimension == 2:
 		axisInd = indexData["axisIndex"]["data"][1]
-		yAxisKey = myQEstimation.measurementObj["C-Structure"][axisInd] # Temporary for connect with old data type
+		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
 	else:
 		yAxisKey = None
 	valueInd = indexData["valueIndex"]["data"]
@@ -237,7 +238,7 @@ def getJson_2Dplot_test():
 	plotData = {
 			"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
 			yAxisKey: myQEstimation.independentVars[myQEstimation.yAxisKey],
-			"amplitude": 10(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2)
+			"amplitude": 10*(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2)
 		}
 
 	#print(plotData)
@@ -251,7 +252,7 @@ def getJson_1Dplot_test():
 	dimension = len(indexData["axisIndex"]["data"])
 	if dimension == 2:
 		axisInd = indexData["axisIndex"]["data"][1]
-		yAxisKey = myQEstimation.measurementObj["C-Structure"][axisInd] # Temporary for connect with old data type
+		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
 	else:
 		yAxisKey = None
 	valueInd = indexData["valueIndex"]["data"]
@@ -261,7 +262,7 @@ def getJson_1Dplot_test():
 	plotData = {
 		"Data_point": {
 			"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-			"amplitude": 10(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2),
+			"amplitude": 10*(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2),
 		},
 		"Fitted_curve": {
 			"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
@@ -283,7 +284,7 @@ def getJson_fitParaPlot_test():
 	dimension = len(indexData["axisIndex"]["data"])
 	if dimension == 2:
 		axisInd = indexData["axisIndex"]["data"][1]
-		yAxisKey = myQEstimation.measurementObj["C-Structure"][axisInd] # Temporary for connect with old data type
+		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
 	else:
 		yAxisKey = None
 

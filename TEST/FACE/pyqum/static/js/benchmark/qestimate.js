@@ -325,7 +325,7 @@ $(function () {
     });
     // Test new plot
     $('#qFactor-plottest-button').on('click', function () {
-
+        console.log( "2D plot" );
         $.ajaxSettings.async = false;
         let htmlIDs=[];
         $.getJSON( '/benchmark/get_parametersID', 
@@ -398,7 +398,6 @@ $(function () {
 
         let fittingRangeFrom = document.getElementById("qFactor-fittingRange-from").value
         let fittingRangeTo = document.getElementById("qFactor-fittingRange-to").value
-        let indexData = get_selectInfo();
         console.log( "fit from " + fittingRangeFrom + " to ",  fittingRangeTo);
         $.getJSON( '/benchmark/qestimate/getJson_qestimate_fitResult',{  
             fittingRangeFrom:fittingRangeFrom, fittingRangeTo:fittingRangeTo  
