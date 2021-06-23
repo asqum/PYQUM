@@ -128,6 +128,7 @@ def averag(bench, action=['Get'] + 10 * ['']):
 def dataform(bench, action=['Get'] + 10 * ['']):
 	'''action=['Get/Set', <format: REAL,32/REAL,64/ASCii,0>]
 	'''
+	if action[1] == 'REAL': action[1] = 'REAL,64' # Redefine ENAB's REAL (32-Bit) into 64-Bit to expect transfer stability?
 	bench.write('FORMat:BORDer NORMal')
 	SCPIcore = 'FORMat:DATA'
 	return mdlname, bench, SCPIcore, action
