@@ -799,14 +799,14 @@ def char_cwsweep_1ddata():
 # Pending renovation below:
 @bp.route('/char/cwsweep/2ddata', methods=['GET'])
 def char_cwsweep_2ddata():
-    irepeat = request.args.get('irepeat')
-    ifluxbias = request.args.get('ifluxbias')
-    ixyfreq = request.args.get('ixyfreq')
-    ixypowa = request.args.get('ixypowa')
-    isparam = request.args.get('isparam')
-    iifb = request.args.get('iifb')
-    ipowa = request.args.get('ipowa')
-    ifreq = request.args.get('ifreq')
+    irepeat = request.args.get('irepeat')     # 0
+    ifluxbias = request.args.get('ifluxbias') # 1
+    ixyfreq = request.args.get('ixyfreq')     # 2
+    ixypowa = request.args.get('ixypowa')     # 3
+    isparam = request.args.get('isparam')     # 4
+    iifb = request.args.get('iifb')           # 5
+    ifreq = request.args.get('ifreq')         # 6
+    ipowa = request.args.get('ipowa')         # 7
 
     # pre-transform ipowa:
     powa_order = M_cwsweep[session['user_name']].corder['Power']
@@ -866,6 +866,12 @@ def char_cwsweep_2ddata():
         xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probing-Power(dBm)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['Power']).data
         x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['Power']).count
+    elif ifreq == "x" and ipowa == "y":
+        x_name, y_name = "freq", "powa"
+        print("X: Frequency, Y: Power")
+        xtitle, ytitle = "<b>Probe-Frequency(GHz)</b>", "<b>Probing-Power(dBm)</b>"
+        x, y = waveform(M_cwsweep[session['user_name']].corder['Frequency']).data[0:session['c_cwsweep_address'][6]+offset], waveform(M_cwsweep[session['user_name']].corder['Power']).data
+        x_count, y_count = session['c_cwsweep_address'][6]+offset, waveform(M_cwsweep[session['user_name']].corder['Power']).count
 
     # fast iteration method (parallel computing):
     stage, prev = clocker(0)

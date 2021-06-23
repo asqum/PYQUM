@@ -821,7 +821,7 @@ def jobstart(day,task_index,JOBID):
             db = get_db()
             db.execute('UPDATE job SET dateday = ?, wmoment = ? WHERE id = ?', (day,task_index,JOBID))
             db.commit()
-            print(Fore.GREEN + "Successfully update JOB#%s with (Day: %s, TASK#: %s" %(JOBID,day,task_index))
+            print(Fore.GREEN + "Successfully update JOB#%s with (Day: %s, TASK#: %s)" %(JOBID,day,task_index))
         except:
             print(Fore.RED + Back.WHITE + "INVALID JOBID")
             raise
@@ -856,6 +856,27 @@ def jobsearch(criteria, mode='jobid'):
     
     else: result = None 
     return result
+def jobtag(JOBID, tag, mode=0):
+    '''
+    commit tag to a job.
+    mode-0: replace; mode-1: extend;
+    '''
+    db = get_db()
+    if g.user['measurement']:
+        try:
+            if int(mode): tag = db.execute('SELECT tag FROM job WHERE id = ?', (JOBID,)).fetchone()[0] + tag
+
+            db.execute('UPDATE job SET tag = ? WHERE id = ?', (tag,JOBID))
+            db.commit()
+
+            action = ['replace', 'extend']
+            print(Fore.GREEN + "User %s has successfully %s JOB#%s with tag: %s" %(g.user['username'],action[mode],JOBID,tag))
+        except:
+            print(Fore.RED + Back.WHITE + "INVALID JOBID")
+            raise
+    else: pass
+    return
+
 
 
 

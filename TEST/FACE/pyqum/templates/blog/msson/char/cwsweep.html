@@ -29,9 +29,9 @@
                 </ul>
             </div>
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="cwsweep-job"></a></div></div>
+            <div class="col-10" id='left'><button class="char push_button w-95 red" id="cwsweep-datareset">CLIP</button></div>
             <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
             <div class="col-10" id='right'><button class="char cwsweep run push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
-            <!-- <div class="col-10" id='right'><button class="char push_button w-95 red" id="cwsweep-pause">PAUSE</button></div> -->
                 
         </div>
 
@@ -76,28 +76,21 @@
 
         <!-- Check, Plot & Download Data -->
         <div class="row">
-            <!-- <div class="col-10" id='left'>
-                <label class="cwsweep switch">
-                    <input class="cwsweep" id='live-update' type="checkbox">
-                    <div class="slider"><span class="on">LIVE</span><span class="off">PEEK</span></div>
-                </label>
-            </div> -->
             <div class="col-10" id='left'><input class='char data cwsweep' name='1d-data' type="submit" value="1D-Data"/></div>
+            <div class="col-10" id='left'><select class='char data cwsweep' name="1d-phase-type" type="text"></select></div>
             <div class="col-10" id='left'><button class="char push_button w-95 green" id="cwsweep-insert-1D">COMPARE-1D</button></div>
             <div class="col-10" id='left'><select class='char data cwsweep compare' id="cwsweep-compare-nml" type="text"></select></div>
             <div class="col-10" id='left'><select class='char data cwsweep compare' id="cwsweep-compare-apup" type="text"></select></div>
             <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-savecsv">CSV-1D</button></div>
-            <div class="col-10" id='left'><button class="char push_button w-95 red" id="cwsweep-datareset">CLIP</button></div>
         </div>
 
         <!-- Data Assembly and Grooming -->
         <div class="row">
             <div class="col-10" id='left'><input class='char data cwsweep' name='2d-data' type="submit" value="2D-Data"/></div>
-            <div class="col-10" id='left'><select class='char data cwsweep' name="1d-phase" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data cwsweep' name="2d-amphase" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data cwsweep' name="2d-type" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data cwsweep' name="2d-colorscale" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char data cwsweep' name="2d-direction" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data cwsweep 2d' name="2d-amphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data cwsweep 2d' name="2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data cwsweep 2d' name="2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='char data cwsweep 2d' name="2d-direction" type="text"></select></div>
             <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-savemat">MAT-2D</button></div>
         </div>
 

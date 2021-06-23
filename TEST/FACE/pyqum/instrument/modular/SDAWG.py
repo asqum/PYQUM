@@ -15,7 +15,7 @@ sys.path.append(r'C:\\Program Files (x86)\\Keysight\SD1\\Libraries\\Python')
 from pyqum.API.KeySight import keysightSD1
 
 # INITIALIZATION
-def Initiate(which, mode='DATABASE'):
+def Initiate(which, mode='DATABASE', current=False):
     ad = address(mode)
     rs = ad.lookup(mdlname, label=int(which)) # Instrument's Address
     try:
@@ -24,6 +24,12 @@ def Initiate(which, mode='DATABASE'):
         moduleID = module.openWithSlot("", int(rs.split('::')[0]), int(rs.split('::')[1])) # PRODUCT, CHASSIS::SLOT
         if moduleID < 0: print(Fore.RED + "Module open error:", moduleID)
         else: print(Fore.GREEN + "%s-%s's connection Initialized >> ID: %s, Name: %s, Chassis: %s, Slot: %s" % (mdlname,which, moduleID, module.getProductName(), module.getChassis(), module.getSlot()))
+        
+        if current:
+            # PENDING: multi-channel DC
+            print(Fore.YELLOW + "DC mode for DAC (only channel-1 will be used)")
+            module.channelWaveShape(int(current), keysightSD1.SD_Waveshapes.AOU_HIZ)
+
         set_status(mdlname, dict(state='connected'), which)
         ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
@@ -172,6 +178,20 @@ def compose_DAC(module, channel, pulsedata, markerMode=0, trgIOmask=0, markerVal
     
     return module
 
+# Dedicated for DC-sweep:
+def output(module, state):
+    if state:
+        offset(module, 1, 0)
+        run(module, [1])
+    else: stop(module, [1])
+    return state
+def sweep(module, dcvalue):
+    '''DC amplitude in volts (–1.5 V to 1.5 V)
+    '''
+    module.channelWaveShape(1, keysightSD1.SD_Waveshapes.AOU_DC)
+    status = module.channelAmplitude(1, float(dcvalue))
+    return status
+
 
 def close(module, which, reset=True, mode='DATABASE'):
     if reset:
@@ -199,6 +219,7 @@ def test():
     # INITIATION:
     m1 = Initiate(1, 'TEST')
     m2 = Initiate(2, 'TEST')
+    # m3 = Initiate(current=True, which=3, mode='TEST') # DC
 
     # PREPARATION:
     prepare_DAC(m1, 3, maxlevel=1.5, trigbyPXI=2, mode=1, sync=1)
@@ -280,12 +301,21 @@ def test():
     configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
     run(m2, [1,3])
     
+    # DC test:
+    # output(m3, 1)
+    # dcvalues = [0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.15]
+    # for val in dcvalues:
+    #     input("Any key to output DC=%sV from AWG-3: " %val)
+    #     sweep(m3, str(val))
+
     # CLOSING:
     input("Any key to CLOSE AWG-1: ")
     close(m1, 1, True, 'TEST')
     input("Any key to CLOSE AWG-2: ")
     close(m2, 2, True, 'TEST')
+    # input("Any key to CLOSE AWG-3: ")
+    # close(m3, 3, True, 'TEST')
 
     return
 
-test()
+# test()

@@ -573,7 +573,7 @@ $(function () {
     return false;
 });
 
-$('select.char.data.fresp').on('change', function() {
+$('select.char.data.fresp.2d').on('change', function() {
     if ($('select.char.data.fresp[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
     else if ($('select.char.data.fresp[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
     plot2D_fresp(x, y, ZZ, xtitle, ytitle, $('select.char.data.fresp[name="2d-type"]').val(),'fresp');

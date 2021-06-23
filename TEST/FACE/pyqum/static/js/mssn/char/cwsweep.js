@@ -534,7 +534,7 @@ $(function () {
             window.y1.UP = data.yup;
             window.x1title = data.x1title;
             // Phase option
-            $('select.char.data.cwsweep[name="1d-phase"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
+            $('select.char.data.cwsweep[name="1d-phase-type"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
             plot1D_cwsweep(x1,y1.A,y1.P,x1title,'<b>Raw-Pha(rad)</b>');
             $('button.char#cwsweep-savecsv').show();
         });
@@ -542,10 +542,10 @@ $(function () {
     return false;
 });
 $('select.char.data.cwsweep').on('change', function() {
-    if ($('select.char.data.cwsweep[name="1d-phase"]').val() == "Pha") {
+    if ($('select.char.data.cwsweep[name="1d-phase-type"]').val() == "Pha") {
         console.log("Pha mode");
         plot1D_cwsweep(x1,y1.A,y1.P,x1title,'<b>Raw-Pha(rad)</b>');
-    } else if ($('select.char.data.cwsweep[name="1d-phase"]').val() == "UPha") {
+    } else if ($('select.char.data.cwsweep[name="1d-phase-type"]').val() == "UPha") {
         console.log("UPha mode");
         plot1D_cwsweep(x1,y1.A,y1.UP,x1title,'<b>UFN-Pha(rad)</b>');
     };
@@ -656,7 +656,7 @@ $(function () {
     });
     return false;
 });
-$('select.char.data.cwsweep').on('change', function() {
+$('select.char.data.cwsweep.2d').on('change', function() {
     if ($('select.char.data.cwsweep[name="2d-amphase"]').val() == "Amp") {var ZZ = ZZA; }
     else if ($('select.char.data.cwsweep[name="2d-amphase"]').val() == "Pha") {var ZZ = ZZP; };
     if ($('select.char.data.cwsweep[name="2d-direction"]').val() == "rotate") {

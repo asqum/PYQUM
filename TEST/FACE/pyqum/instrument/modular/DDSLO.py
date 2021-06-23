@@ -148,6 +148,7 @@ def test(card, detail=True):
 
 # ON-SITE TESTING:
 def onsitest():
+    ch = 1
     debug(mdlname, True)
     c = Initiate(1)
     model(c)
@@ -156,19 +157,19 @@ def onsitest():
     clock_source(c)
     clock_align(c)
 
-    frequency(c,2)
-    frequency(c,2,action=['Set','7GHZ'])
-    # frequency(c,2,action=['Set','6e9'])
-    frequency(c,2)
+    frequency(c,ch)
+    frequency(c,ch,action=['Set','7GHZ'])
+    # frequency(c,ch,action=['Set','6e9'])
+    frequency(c,ch)
 
-    print("MAX POWER: %s" %power(c,2,['Get','MAX'])[1]['POWER'])
-    power(c,2)
-    power(c,2,action=['Set','7'])
-    power(c,2)
+    print("MAX POWER: %s" %power(c,ch,['Get','MAX'])[1]['POWER'])
+    power(c,ch)
+    power(c,ch,action=['Set','7'])
+    power(c,ch)
 
-    output(c,2)
-    output(c,2,action=['Set',1])
-    output(c,2)
+    output(c,ch)
+    output(c,ch,action=['Set',1])
+    output(c,ch)
 
     from time import sleep
     sleep(37)
