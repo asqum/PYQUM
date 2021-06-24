@@ -11,9 +11,13 @@ $(document).ready(function(){
     window.active_samples = [];
     $.getJSON('/mach/bdr/samples/queues', { }, function (data) { $.each(data.bdrqlist, function (i,val) { active_samples.push(val.samplename); }); });
     
-    qumjob();
-    setTimeout(() => {qumqueue();}, 371);
-    qumjob(); // this is to avoid overlapping with qum-queue
+    // $.queue({},"", function() { qumjob(); });
+    // $.queue({},"", function() { qumqueue(); });
+    // $.queue({},"", function() { qumjob(); });
+
+    setTimeout(() => {qumjob();}, 101);
+    setTimeout(() => {qumqueue();}, 235);
+    setTimeout(() => {qumjob();}, 371);
     
 });
 
@@ -62,7 +66,7 @@ function qumjob() {
         window.access_active_job = active_samples.includes(data.samplename); // PENDING: ALSO CHECK IF THERE'S ANY ACTIVE CALIBRATION(S)
         console.log("User may access active job: " + access_active_job);
 
-        $('div.row.all-job-by-sample').empty().append('<div class="col-20" id="left"><label class="parameter">' + data.joblist.length + '/88 JOB(s) WITH SAMPLE: </label></div>' + 
+        $('div.row.all-job-by-sample').empty().append('<div class="col-20" id="left"><label class="parameter">' + data.joblist.length + '/888 JOB(s) WITH SAMPLE: </label></div>' + 
                                                         '<div class="col-20" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
         console.log("user: " + data.loginuser);
 

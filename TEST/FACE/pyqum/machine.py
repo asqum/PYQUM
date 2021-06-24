@@ -17,7 +17,7 @@ from si_prefix import si_format, si_parse
 from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean, power, linspace, float64
 
 # Load instruments
-from pyqum import get_db
+from pyqum import get_db, close_db
 from pyqum.instrument.modular import ALZDG # KMAWG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
 from pyqum.instrument.benchtop import DSO, YOKO, KEIT, TKAWG
 from pyqum.instrument.dilution import bluefors
@@ -110,9 +110,11 @@ def sgconnect():
 			status = 'error'
 	else:
 		# Check who is currently using the instrument:
-		db = get_db()
+		
 		try: 
+			db = get_db()
 			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(sgtype,sglabel),)).fetchone()[0]
+			close_db()
 			message = "%s is being connected to %s" %(sgname,instr_user)
 		except(TypeError):
 			instr_user = None
@@ -199,9 +201,10 @@ def tkawgconnect():
 			status = 'error'
 	else:
 		# Check who is currently using the board:
-		db = get_db()
 		try:
+			db = get_db()
 			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', (tkawglabel.replace('-','_'),)).fetchone()[0]
+			close_db()
 			message = "%s is being connected to %s" %(tkawglabel,instr_user)
 		except(TypeError):
 			instr_user = None
@@ -342,9 +345,10 @@ def alzdgconnect():
 			status = 'error'
 	else: 
 		# Check who is currently using the board:
-		db = get_db()
 		try:
+			db = get_db()
 			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', (alzdglabel.replace('-','_'),)).fetchone()[0]
+			close_db()
 			message = "%s is being connected to %s" %(alzdglabel,instr_user)
 		except(TypeError):
 			instr_user = None
@@ -483,9 +487,10 @@ def naconnect():
 			status = 'error'
 	else:
 		# Check who is currently using the instrument:
-		db = get_db()
 		try:
+			db = get_db()
 			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(natype,nalabel),)).fetchone()[0]
+			close_db()
 			message = "%s is being connected to %s" %(naname,instr_user)
 		except(TypeError):
 			instr_user = None
@@ -621,9 +626,10 @@ def saconnect():
 			status = 'error'
 	else:
 		# Check who is currently using the instrument:
-		db = get_db()
 		try:
+			db = get_db()
 			instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(satype,salabel),)).fetchone()[0]
+			close_db()
 			message = "%s is being connected to %s" %(saname,instr_user)
 		except(TypeError):
 			instr_user = None
@@ -747,6 +753,7 @@ def bdrhistoryforecast():
 def bdrsamplesqueues():
 	db = get_db()
 	bdrqlist = db.execute("SELECT system, samplename FROM queue ORDER BY id ASC").fetchall()
+	close_db()
 	bdrqlist = [dict(x) for x in bdrqlist]
 	return jsonify(bdrqlist=bdrqlist)
 @bp.route('/bdr/samples/allocate', methods=['GET'])
@@ -758,6 +765,7 @@ def bdrsamplesallocate():
 			db = get_db()
 			db.execute("UPDATE queue SET samplename = ? WHERE system = ?", (set_sample,set_system,))
 			db.commit()
+			close_db()
 			status = "User %s has set sample %s into system %s" %(g.user['username'],set_sample,set_system)
 		except: status = "COULD NOT COMMIT TO DATABASE"
 		print(Fore.YELLOW + status)

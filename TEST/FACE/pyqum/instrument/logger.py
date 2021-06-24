@@ -20,7 +20,7 @@ from json import loads
 from scipy.io import savemat, loadmat
 
 from flask import session, g
-from pyqum import get_db
+from pyqum import get_db, close_db
 from pyqum.instrument.toolbox import waveform, flatten
 
 __author__ = "Teik-Hui Lee"
@@ -182,22 +182,22 @@ class address:
     '''
     def __init__(self, mode='DATABASE'):
         self.mode = mode
-        if self.mode=='DATABASE':
-            self.db = get_db()
+        if self.mode=='DATABASE': pass
         elif self.mode=='TEST':
             with open(ADDRESS_PATH / "address.json") as ad:
                 self.book = json.load(ad)
         
     def lookup(self, instr_name, label=1):
         '''Lookup from the database or the book'''
+        db = get_db()
         if self.mode=='DATABASE':
-            self.rs = self.db.execute('SELECT m.address FROM machine m WHERE m.codename = ?',('%s_%s'%(instr_name,label),)).fetchone()[0]
+            self.rs = db.execute('SELECT m.address FROM machine m WHERE m.codename = ?',('%s_%s'%(instr_name,label),)).fetchone()[0]
         elif self.mode=='TEST':
             try:
                 if label>1: self.rs = self.book[instr_name]["alternative"][label-2]
                 else: self.rs = self.book[instr_name]["resource"]
             except(KeyError): self.rs = None # checking if instrument in the book
-
+        close_db()
         print('resource: %s' %self.rs)
         return self.rs
     
@@ -207,16 +207,20 @@ class address:
         connected: 0 or 1, codename = <instr>-<label/index> 
         '''
         if self.mode=='DATABASE':
-            self.db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
-            self.db.commit()
+            db = get_db()
+            db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
+            db.commit()
+            close_db()
         elif self.mode=='TEST':
             print(Fore.RED + "REMINDER: MAKE SURE TO CLOSE CONNECTION UPON EXIT AND AVOID CONFLICT WITH ONLINE INSTRUMENTS")
         return
     def macantouch(self,instr_list):
         '''return total connection(s) based on instrument-list given'''
+        db = get_db()
         connection = 0
         for mach in flatten(instr_list):
-            connection += int(self.db.execute('''SELECT connected FROM machine WHERE codename = ?''', (mach,) ).fetchone()['connected'])
+            connection += int(db.execute('''SELECT connected FROM machine WHERE codename = ?''', (mach,) ).fetchone()['connected'])
+        close_db()
         return connection
 
 class specification:
@@ -725,6 +729,7 @@ def lisjob(sample, queue, maxlist=12):
             ORDER BY j.id DESC
             ''', (queue, sample)
         ).fetchall()
+        close_db()
         Joblist = [dict(x) for x in Joblist][:min(maxlist, len(Joblist))] # limit the number of job listing
         # print("Job list: %s" %Joblist)
         # print("Running %s" %inspect.stack()[0][3]) # current function name
@@ -739,7 +744,8 @@ def lisqueue(queue):
             g.Queue, g.jobidlist = {}, {}
 
             # Extracting list from SQL-Database: (took-out: "INNER JOIN sample s ON s.id = j.sample_id" since queue-system has to align with sample in order to run experiments)
-            g.Queue[queue] = get_db().execute(
+            db = get_db()
+            g.Queue[queue] = db.execute(
                 '''
                 SELECT j.id, j.task, j.startime, u.username, j.instrument, j.comment
                 FROM user u
@@ -748,10 +754,11 @@ def lisqueue(queue):
                 ORDER BY c.id ASC
                 ''' %(queue)
                 ).fetchall()
+            close_db() # must stay open?
             g.Queue[queue] = [dict(x) for x in g.Queue[queue]]
             g.jobidlist[queue] = [x['id'] for x in g.Queue[queue]] # use to scheduling tasks in queue
         
-        except: pass
+        except: raise
         # print(Fore.BLACK + Back.WHITE + "Clearance for queue %s: %s"%(queue, session['run_clearance']))
     return
 
@@ -761,8 +768,9 @@ def qin(queue,jobid):
     if g.user['measurement']:
         try:
             db = get_db()
-            db.execute('INSERT INTO %s (job_id) VALUES (%s)' %(queue,jobid))
+            db.execute('INSERT INTO %s (job_id) VALUES (%s)' %(queue,jobid)).lastrowid
             db.commit()
+            close_db()
             status = "Queued-in successfully with JOBID #%s" %jobid
         except:
             status = "Error Queueing in with JOBID #%s" %jobid
@@ -771,11 +779,13 @@ def qin(queue,jobid):
 def qout(queue,jobid,username):
     '''Queue out without a Job'''
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
+    close_db()
     if g.user['measurement'] and (username==jobrunner):
         try:
             db = get_db()
             db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))
             db.commit()
+            close_db()
             status = "JOBID #%s Queued-out successfully" %jobid
         except:
             # raise
@@ -787,6 +797,7 @@ def qid(queue,jobid):
     try:
         db = get_db()
         id = db.execute('SELECT id FROM %s WHERE job_id = %s' %(queue,jobid)).fetchone()['id']
+        close_db()
     except: id = None
     return id
 
@@ -807,6 +818,7 @@ def jobin(task,corder,perimeter,instr,comment,tag):
             # sleep(0.317)
             db.execute('UPDATE job SET perimeter = ? WHERE id = ?', (str(perimeter),JOBID))
             db.commit()
+            close_db()
             print(Fore.GREEN + "Successfully register the data into SQL Database with JOBID: %s" %JOBID)
         except:
             # raise
@@ -821,6 +833,7 @@ def jobstart(day,task_index,JOBID):
             db = get_db()
             db.execute('UPDATE job SET dateday = ?, wmoment = ? WHERE id = ?', (day,task_index,JOBID))
             db.commit()
+            close_db()
             print(Fore.GREEN + "Successfully update JOB#%s with (Day: %s, TASK#: %s)" %(JOBID,day,task_index))
         except:
             print(Fore.RED + Back.WHITE + "INVALID JOBID")
@@ -853,22 +866,21 @@ def jobsearch(criteria, mode='jobid'):
         result = db.execute('SELECT task, dateday, wmoment, queue FROM job WHERE id = ?', (criteria,)).fetchone()
     elif mode=='requeue':
         result = db.execute('SELECT task, parameter, perimeter, comment, tag FROM job WHERE id = ?', (criteria,)).fetchone()
-    
     else: result = None 
+    close_db()
     return result
 def jobtag(JOBID, tag, mode=0):
     '''
     commit tag to a job.
     mode-0: replace; mode-1: extend;
     '''
-    db = get_db()
     if g.user['measurement']:
         try:
             if int(mode): tag = db.execute('SELECT tag FROM job WHERE id = ?', (JOBID,)).fetchone()[0] + tag
-
+            db = get_db()
             db.execute('UPDATE job SET tag = ? WHERE id = ?', (tag,JOBID))
             db.commit()
-
+            close_db()
             action = ['replace', 'extend']
             print(Fore.GREEN + "User %s has successfully %s JOB#%s with tag: %s" %(g.user['username'],action[mode],JOBID,tag))
         except:

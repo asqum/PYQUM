@@ -21,7 +21,7 @@ def get_db():
         g.db = sqlite3.connect(
             current_app.config['DATABASE'],
             detect_types=sqlite3.PARSE_DECLTYPES,
-            timeout=300 # should be able to allow more concurrency?
+            timeout=1000 # should be able to allow more concurrency?
         )
         g.db.row_factory = sqlite3.Row
     return g.db

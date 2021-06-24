@@ -15,7 +15,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from pyqum import get_db
+from pyqum import get_db, close_db
 from pyqum.instrument.logger import lisample, set_status, get_status
 
 bp = Blueprint(myname, __name__, url_prefix='/auth')
@@ -54,9 +54,11 @@ def load_logged_in_user():
         g.user = get_db().execute(
             'SELECT * FROM user WHERE id = ?', (user_id,)
         ).fetchone()
+        close_db()
 
         # 2. Latest sample-loading date: (to prevent measuring old samples)
         g.latest_date = get_db().execute('SELECT s.registered FROM sample s ORDER BY registered DESC').fetchone()[0].strftime("%Y-%m-%d")
+        close_db()
         
         # 3. logged-in user's samples' details:
         g.samples = get_db().execute(
@@ -66,6 +68,7 @@ def load_logged_in_user():
             ' ORDER BY registered DESC',
             (g.user['id'],)
         ).fetchall()
+        close_db()
         g.samples = [dict(s) for s in g.samples]
 
         # 4. logged-in user's co-authored samples' details:
@@ -76,6 +79,7 @@ def load_logged_in_user():
             ' ORDER BY registered DESC',
             ('%%%s%%' %g.user['username'],)
         ).fetchall()
+        close_db()
         g.cosamples = [dict(x) for x in g.cosamples]
 
         # 5. Instrument list & details for each DR (PyQUM) platform:
@@ -87,13 +91,17 @@ def load_logged_in_user():
             ORDER BY m.id DESC
             '''
         ).fetchall()
+        close_db()
         g.machlist = [dict(x) for x in g.machlist]
         g.instlist = [x['codename'].replace('_','-') for x in g.machlist]
 
         # 6. Appointed sample in each measurement system:
         g.CHAR0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='CHAR0'").fetchone()[0]
+        close_db()
         g.QPC0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC0'").fetchone()[0]
+        close_db()
         g.QPC1_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC1'").fetchone()[0]
+        close_db()
         # print(Fore.GREEN + "CHAR0_sample: %s" %g.CHAR0_sample)
 
 
@@ -135,6 +143,7 @@ def register():
             db.commit()
             return redirect(url_for('auth.login'))
 
+        close_db()
         flash(error)
 
     return render_template('auth/register.html')
@@ -181,7 +190,7 @@ def login():
             g.userlist = None
             if user['management'] == "oversee":
                 # ALL approved users' credentials:
-                g.userlist = get_db().execute(
+                g.userlist = db.execute(
                     'SELECT u.id, username, measurement, instrument, analysis'
                     ' FROM user u WHERE u.status = ?'
                     ' ORDER BY id DESC',
@@ -190,6 +199,7 @@ def login():
                 g.userlist = [dict(x) for x in g.userlist]
             print(Fore.RED + Back.WHITE + "USER CREDENTIALS: %s" %g.userlist)
 
+        close_db()
         print(error)
         flash(error)
 
@@ -246,6 +256,7 @@ def usersamples_register():
         message = "Sample %s added to the database!" %(sname)
     except:
         message = "Check sample registration"
+    close_db()
     return jsonify(message=message)
 @bp.route('/user/samples/access')
 def usersamples_access():
@@ -262,7 +273,9 @@ def usersamples_access():
         ).fetchone()
         sample_cv = dict(sample_cv) # convert sqlite3.row into dictionary for this select format
 
-        sample_owner = db.execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
+        sample_owner = db.execute(
+            'SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)
+        ).fetchone()['username']
         saved = bool(sname in lisample(sample_owner)) # saved?
 
         message = "Accessing Sample %s owned by %s" %(sname,sample_owner)
@@ -270,7 +283,7 @@ def usersamples_access():
         # raise # NOTE: please run first measurement test to create USRLOG directory!
         sample_cv = []
         message = "Consult ABC"
-    # print('sample cv: %s' %sample_cv)
+    close_db()
     return jsonify(sample_cv=sample_cv, message=message, saved=saved)
 @bp.route('/user/samples/update')
 def usersamples_update():
@@ -297,6 +310,7 @@ def usersamples_update():
             message = 'PASSWORD NOT VALID'
     except:
         message = "Check sample parameters"
+    close_db()
     print(message)
     return jsonify(message=message)
 @bp.route('/user/samples/meal', methods=['GET'])
@@ -309,6 +323,7 @@ def usersamples_meal():
     # SESSION (Sample's OWNER):
     try: 
         session['people'] = get_db().execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
+        close_db()
         print(Fore.YELLOW + "%s is managed by %s" %(sname, session['people']))
     except: 
         session['people'] = None

@@ -15,7 +15,7 @@ from datetime import timedelta, datetime
 from random import random
 import numba as nb
 
-from pyqum import get_db
+from pyqum import get_db, close_db
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, set_json_measurementinfo
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
@@ -88,6 +88,7 @@ def show(status="Mission started"):
 def all(): 
     global systemlist
     systemlist = [x['system'] for x in get_db().execute('SELECT system FROM queue').fetchall()]
+    close_db()
     if g.user:
         if int(g.user['measurement']): # 0: Preview, 1: Analysis, 2: Running, 3: SOP
             try: 
@@ -110,12 +111,15 @@ def all_job():
         return("<h3>SERVER HAS BEEN REFRESHED</h3><h3>Please press F5 to reload.</h3><h3 style='color:blue;'>Courtesy from HoDoR</h3>")
         
     queue = request.args.get('queue')
-    try: missioname = get_db().execute( "SELECT mission FROM queue WHERE system = ?", (queue,) ).fetchone()['mission']
-    except: missioname = None
+    try: 
+        missioname = get_db().execute( "SELECT mission FROM queue WHERE system = ?", (queue,) ).fetchone()['mission']
+        close_db()
+    except: 
+        missioname = None
     # print("mission: %s" %missioname)
     owner, samplename = session['people'], get_status("MSSN")[session['user_name']]['sample']
     
-    maxlist = 88
+    maxlist = 888
     joblist = lisjob(samplename, queue, maxlist) # job is listed based on sample & queue only
 
     # LOG Calculated Progress interactively into SQL-Database for fast retrieval
@@ -132,6 +136,7 @@ def all_job():
                 db = get_db()
                 db.execute('UPDATE job SET progress = ? WHERE id = ?', (j['progress'],j['id']))
                 db.commit()
+                close_db()
             except(ValueError): j['progress'] = 0 # for job w/o its bag yet
             except(TypeError): return("<h3>RE-LOGIN DETECTED</h3><h3>Please press <USERNAME> on TOP-RIGHT to proceed.</h3><h3 style='color:blue;'>Courtesy from HoDoR</h3>")
 
@@ -146,8 +151,12 @@ def all_queue():
     lisqueue(queue)
 
     # TO QUEUE-IN, the assigned sample for that queue-system (by admin) MUST be aligned with the sample chosen (MEAL):
-    try: asample = get_db().execute( '''SELECT samplename FROM queue WHERE system = ?''', (queue,) ).fetchone()['samplename'] # assigned sample by admin
-    except(TypeError): asample = ''
+    try: 
+        db = get_db()
+        asample = db.execute( '''SELECT samplename FROM queue WHERE system = ?''', (queue,) ).fetchone()['samplename'] # assigned sample by admin
+        close_db()
+    except(TypeError): 
+        asample = ''
     session['run_clearance'] = bool( asample==get_status("MSSN")[session['user_name']]['sample'] and int(g.user['measurement'])>1 )
 
     # Security:
@@ -212,7 +221,9 @@ def char_fresp():
 # Initialize and list days specific to task
 @bp.route('/char/' + frespcryption + '/init', methods=['GET'])
 def char_fresp_init(): 
-    global M_fresp, fresp_1Ddata, fresp_2Ddata
+    global M_fresp, fresp_1Ddata, fresp_2Ddata, Run_fresp
+
+    # Main Initialization:
     try: print(Fore.GREEN + "Connected F-Resp M-USER(s): %s" %M_fresp.keys())
     except: M_fresp = {}
     M_fresp[session['user_name']] = F_Response(session['people']) # Allowing Measurement and Access (Analysis) to be conducted independently
@@ -224,6 +235,9 @@ def char_fresp_init():
     # Initialize 2D Data-Holder:
     try: print(Fore.CYAN + "Connected M-USER(s) holding F-Response's 2D-DATA: %s" %fresp_2Ddata.keys())
     except: fresp_2Ddata = {}
+    # Initialize RUN-Holder:
+    try: print(Fore.CYAN + "Connected M-USER(s) holding F-Response's RUN: %s" %Run_fresp.keys())
+    except: Run_fresp = {}
 
     return jsonify(daylist=M_fresp[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
@@ -238,9 +252,6 @@ def char_fresp_time():
 def char_fresp_new():
     # Check user's current queue status:
     if session['run_clearance']:
-        # set_status("F_Response", dict(pause=False)) # PENDING: is this the right place???
-        global Run_fresp, TOKEN # need to be removed in the future for security sake
-        Run_fresp = {}
         wday = int(request.args.get('wday'))
         print("wday: %s" %wday)
         fluxbias = request.args.get('fluxbias')
@@ -251,7 +262,7 @@ def char_fresp_new():
         comment = request.args.get('comment').replace("\"","")
         simulate = bool(int(request.args.get('simulate')))
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
-        TOKEN = 'TOKEN%s' %random()
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
         Run_fresp[TOKEN] = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday)
         return jsonify(testeach=simulate, status=Run_fresp[TOKEN].status)
     else: return show()
@@ -335,7 +346,7 @@ def char_fresp_resume():
         freq = request.args.get('freq')
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
         M_fresp[session['user_name']].accesstructure()
-        TOKEN = 'TOKEN%s' %random()
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
         Run_fresp[TOKEN] = F_Response(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_fresp[session['user_name']].resumepoint)
         return jsonify(resumepoint=str(M_fresp[session['user_name']].resumepoint), datasize=str(M_fresp[session['user_name']].datasize), status=Run_fresp[TOKEN].status)
     else: return show()
@@ -368,6 +379,7 @@ def char_fresp_resetdata():
     truncateafter = int(request.args.get('truncateafter'))
     db = get_db()
     people = db.execute( 'SELECT password FROM user WHERE username = ?', (session['people'],) ).fetchone()
+    close_db()
     if check_password_hash(people['password'], ownerpassword): message = M_fresp[session['user_name']].resetdata(truncateafter)
     else: message = 'PASSWORD NOT VALID'
 
@@ -480,7 +492,7 @@ def char_cwsweep():
 # Initialize and list days specific to task
 @bp.route('/char/cwsweep/init', methods=['GET'])
 def char_cwsweep_init():
-    global M_cwsweep, cwsweep_1Ddata, cwsweep_2Ddata
+    global M_cwsweep, cwsweep_1Ddata, cwsweep_2Ddata, Run_cwsweep
 
     # check currently-connected users:
     try: print(Fore.GREEN + "Connected CW-Sweep M-USER(s): %s" %M_cwsweep.keys())
@@ -496,6 +508,9 @@ def char_cwsweep_init():
     # Initialize 2D Data-Holder:
     try: print(Fore.CYAN + "Connected M-USER(s) holding CW-Sweep's 2D-DATA: %s" %cwsweep_2Ddata.keys())
     except: cwsweep_2Ddata = {}
+    # Initialize RUN-Holder:
+    try: print(Fore.CYAN + "Connected M-USER(s) holding CW-Sweep's RUN: %s" %Run_cwsweep.keys())
+    except: Run_cwsweep = {}
 
     return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'])
 # list task entries based on day picked
@@ -510,9 +525,6 @@ def char_cwsweep_time():
 def char_cwsweep_new():
     # Check user's current queue status:
     if session['run_clearance']:
-        # set_status("CW_Sweep", dict(pause=False))
-        global Run_cwsweep, TOKEN # for ETA calculation as well
-        Run_cwsweep = {}
         wday = int(request.args.get('wday'))
         print("wday: %s" %wday)
         fluxbias = request.args.get('fluxbias')
@@ -527,7 +539,7 @@ def char_cwsweep_new():
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         
         # Start Running:
-        TOKEN = 'TOKEN%s' %random()
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
         Run_cwsweep[TOKEN] = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday)
         
         return jsonify(testeach=simulate, status=Run_cwsweep[TOKEN].status)
@@ -612,7 +624,6 @@ def char_cwsweep_access():
 @bp.route('/char/cwsweep/resume', methods=['GET'])
 def char_cwsweep_resume():
     if session['run_clearance']:
-        # set_status("CW_Sweep", dict(pause=False))
         wday = int(request.args.get('wday'))
         wmoment = int(request.args.get('wmoment'))
         fluxbias = request.args.get('fluxbias')
@@ -624,8 +635,7 @@ def char_cwsweep_resume():
         powa = request.args.get('powa')
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         M_cwsweep[session['user_name']].accesstructure()
-        
-        TOKEN = 'TOKEN%s' %random()
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
         Run_cwsweep[TOKEN] = CW_Sweep(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_cwsweep[session['user_name']].resumepoint)
         return jsonify(resumepoint=str(M_cwsweep[session['user_name']].resumepoint), datasize=str(M_cwsweep[session['user_name']].datasize), status=Run_cwsweep[TOKEN].status)
     else: return show()
@@ -658,14 +668,11 @@ def char_cwsweep_resetdata():
     truncateafter = int(request.args.get('truncateafter'))
 
     db = get_db()
-    people = db.execute(
-        'SELECT password FROM user WHERE username = ?', (session['people'],)
-    ).fetchone()
+    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    close_db()
 
-    if check_password_hash(people['password'], ownerpassword):
-        message = M_cwsweep[session['user_name']].resetdata(truncateafter)
-    else:
-        message = 'PASSWORD NOT VALID'
+    if check_password_hash(people['password'], ownerpassword): message = M_cwsweep[session['user_name']].resetdata(truncateafter)
+    else: message = 'PASSWORD NOT VALID'
 
     return jsonify(message=message)
 
@@ -944,23 +951,23 @@ def char_sqepulse_settings():
     return jsonify()
 
 # run NEW measurement:
-@bp.route('/char/sqepulse/new', methods=['GET'])
-def char_sqepulse_new():
-    # Check user's current queue status:
-    if session['run_clearance']:
-        set_status("SQE_Pulse", dict(pause=False))
-        global Run_sqepulse # for ETA calculation as well
-        Run_sqepulse = {}
-        wday = int(request.args.get('wday'))
-        if wday < 0: print("Running New SQE-Pulse...")
+# @bp.route('/char/sqepulse/new', methods=['GET'])
+# def char_sqepulse_new():
+#     # Check user's current queue status:
+#     if session['run_clearance']:
+#         set_status("SQE_Pulse", dict(pause=False))
+#         global Run_sqepulse # for ETA calculation as well
+#         Run_sqepulse = {}
+#         wday = int(request.args.get('wday'))
+#         if wday < 0: print("Running New SQE-Pulse...")
 
-        CORDER = json.loads(request.args.get('CORDER'))
-        comment = request.args.get('comment').replace("\"","")
-        simulate = bool(int(request.args.get('simulate')))
+#         CORDER = json.loads(request.args.get('CORDER'))
+#         comment = request.args.get('comment').replace("\"","")
+#         simulate = bool(int(request.args.get('simulate')))
         
-        Run_sqepulse['TOKEN'] = SQE_Pulse(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday)
-        return jsonify(testeach=simulate)
-    else: return show()
+#         Run_sqepulse['TOKEN'] = SQE_Pulse(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday)
+#         return jsonify(testeach=simulate)
+#     else: return show()
 # search through logs of data specific to task (pending)
 @bp.route('/char/sqepulse/search', methods=['GET'])
 def char_sqepulse_search():
@@ -1023,17 +1030,17 @@ def char_sqepulse_access():
 
     return jsonify(data_progress=data_progress, measureacheta=measureacheta, corder=corder, comment=M_sqepulse[session['user_name']].comment, pdata=pdata)
 # Resume the unfinished measurement
-@bp.route('/char/sqepulse/resume', methods=['GET'])
-def char_sqepulse_resume():
-    if session['run_clearance']:
-        set_status("SQE_Pulse", dict(pause=False))
-        wday = int(request.args.get('wday'))
-        wmoment = int(request.args.get('wmoment'))
-        CORDER = json.loads(request.args.get('CORDER'))
-        M_sqepulse[session['user_name']].accesstructure()
-        SQE_Pulse(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_sqepulse[session['user_name']].resumepoint)
-        return jsonify(resumepoint=str(M_sqepulse[session['user_name']].resumepoint), datasize=str(M_sqepulse[session['user_name']].datasize))
-    else: return show()
+# @bp.route('/char/sqepulse/resume', methods=['GET'])
+# def char_sqepulse_resume():
+#     if session['run_clearance']:
+#         set_status("SQE_Pulse", dict(pause=False))
+#         wday = int(request.args.get('wday'))
+#         wmoment = int(request.args.get('wmoment'))
+#         CORDER = json.loads(request.args.get('CORDER'))
+#         M_sqepulse[session['user_name']].accesstructure()
+#         SQE_Pulse(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_sqepulse[session['user_name']].resumepoint)
+#         return jsonify(resumepoint=str(M_sqepulse[session['user_name']].resumepoint), datasize=str(M_sqepulse[session['user_name']].datasize))
+#     else: return show()
 
 @bp.route('/char/sqepulse/trackdata', methods=['GET'])
 def char_sqepulse_trackdata():
@@ -1062,14 +1069,11 @@ def char_sqepulse_resetdata():
     truncateafter = int(request.args.get('truncateafter'))
 
     db = get_db()
-    people = db.execute(
-        'SELECT password FROM user WHERE username = ?', (session['people'],)
-    ).fetchone()
+    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    close_db()
 
-    if check_password_hash(people['password'], ownerpassword):
-        message = M_sqepulse[session['user_name']].resetdata(truncateafter)
-    else:
-        message = 'PASSWORD NOT VALID'
+    if check_password_hash(people['password'], ownerpassword): message = M_sqepulse[session['user_name']].resetdata(truncateafter)
+    else: message = 'PASSWORD NOT VALID'
 
     return jsonify(message=message)
 
@@ -1339,7 +1343,7 @@ def mani_singleqb_new():
         CORDER = json.loads(request.args.get('CORDER'))
         comment = request.args.get('comment').replace("\"","")
         
-        TOKEN = 'TOKEN%s' %random()
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
         Run_singleqb[TOKEN] = Single_Qubit(session['people'], perimeter=PERIMETER, corder=CORDER, comment=comment, tag='', dayindex=wday)
         return jsonify(status=Run_singleqb[TOKEN].status)
     else: return show("PLEASE CHECK YOUR RUN-CLEARANCE WITH ABC")
@@ -1445,7 +1449,7 @@ def mani_singleqb_resume():
         corder = M_singleqb[session['user_name']].corder
         resumepoint = M_singleqb[session['user_name']].resumepoint
 
-        TOKEN = 'TOKEN%s' %random()
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
         Run_singleqb[TOKEN] = Single_Qubit(session['people'], perimeter=perimeter, corder=corder, dayindex=wday, taskentry=wmoment, resumepoint=resumepoint)
         return jsonify(resumepoint=str(resumepoint), datasize=str(M_singleqb[session['user_name']].datasize), status=Run_singleqb[TOKEN].status)
     else: return show()
@@ -1481,14 +1485,11 @@ def mani_singleqb_resetdata():
     truncateafter = int(request.args.get('truncateafter'))
 
     db = get_db()
-    people = db.execute(
-        'SELECT password FROM user WHERE username = ?', (session['people'],)
-    ).fetchone()
+    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    close_db()
 
-    if check_password_hash(people['password'], ownerpassword):
-        message = M_singleqb[session['user_name']].resetdata(truncateafter)
-    else:
-        message = 'PASSWORD NOT VALID'
+    if check_password_hash(people['password'], ownerpassword): message = M_singleqb[session['user_name']].resetdata(truncateafter)
+    else: message = 'PASSWORD NOT VALID'
 
     return jsonify(message=message)
 

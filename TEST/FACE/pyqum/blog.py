@@ -13,7 +13,7 @@ from flask import (
 from werkzeug.exceptions import abort
 
 from pyqum.auth import login_required
-from pyqum import get_db
+from pyqum import get_db, close_db
 
 bp = Blueprint(myname, __name__) # to create endpoint for {{url_for(blog.XXX)}}
 
@@ -40,6 +40,7 @@ def posts():
         ' FROM post p JOIN user u ON p.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
         ' ORDER BY modified DESC' # ordered by modified
     ).fetchall()
+    close_db()
     # JSON-Serialization:
     posts = [dict(p) for p in posts] # if (g.user['id'] == p['author_id'])] # convert sqlite3.row into list of dictionaries
 
@@ -62,12 +63,14 @@ def get_post(id, check_author=True):
     :raise 404: if a post with the given id doesn't exist
     :raise 403: if the current user isn't the author
     """
-    post = get_db().execute(
+    db = get_db()
+    post = db.execute(
         'SELECT p.id, title, body, created, author_id, username'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' WHERE p.id = ?',
         (id,)
     ).fetchone()
+    close_db()
 
     if post is None:
         abort(404, "Post id {0} doesn't exist.".format(id))
@@ -100,6 +103,7 @@ def create():
                 (title, body, g.user['id'])
             )
             db.commit()
+            close_db()
             return redirect(url_for('blog.index'))
 
     return render_template('blog/create.html')
@@ -128,6 +132,7 @@ def update(id):
                 (title, body, time.strftime('%Y-%m-%d %H:%M:%S'), id)
             )
             db.commit()
+            close_db()
             return redirect(url_for('blog.index'))
 
     return render_template('blog/update.html', post=post)
@@ -145,6 +150,7 @@ def delete(id):
     db = get_db()
     db.execute('DELETE FROM post WHERE id = ?', (id,))
     db.commit()
+    close_db()
     return redirect(url_for('blog.index'))
 
 
