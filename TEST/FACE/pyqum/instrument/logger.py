@@ -730,10 +730,12 @@ def lisjob(sample, queue, maxlist=12):
             ''', (queue, sample)
         ).fetchall()
         close_db()
-        Joblist = [dict(x) for x in Joblist][:min(maxlist, len(Joblist))] # limit the number of job listing
+        Joblist = [dict(x) for x in Joblist]
+        Job_count = len(Joblist) # total job(s) done on certain sample
+        Joblist = Joblist[:min(maxlist, Job_count)] # limit the number of job listing
         # print("Job list: %s" %Joblist)
         # print("Running %s" %inspect.stack()[0][3]) # current function name
-    return Joblist
+    return Joblist, Job_count
 def lisqueue(queue):
     '''
     list queues for queue-page under MSSN

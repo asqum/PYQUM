@@ -373,6 +373,15 @@
   color: #fff;
   background-color: #e74c3c;
 }
+.buttons .btn.rred {
+  color: #fff;
+  background-color: #e74c3c;
+  border: 2px #e74c3c solid;
+}
+.buttons .btn.rred:hover {
+  color: #e74c3c;
+  background-color: #fff;
+}
 .buttons .btn.purple {
   color: #9b59b6;
   border: 2px #9b59b6 solid;

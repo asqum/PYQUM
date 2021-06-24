@@ -53,3 +53,8 @@
     color: #009879;
   }
   
+  /* Unfollow strikethrough */
+  a.job-unfollow {
+    text-decoration: line-through;
+  }
+  

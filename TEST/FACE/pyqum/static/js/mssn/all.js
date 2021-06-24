@@ -66,7 +66,7 @@ function qumjob() {
         window.access_active_job = active_samples.includes(data.samplename); // PENDING: ALSO CHECK IF THERE'S ANY ACTIVE CALIBRATION(S)
         console.log("User may access active job: " + access_active_job);
 
-        $('div.row.all-job-by-sample').empty().append('<div class="col-20" id="left"><label class="parameter">' + data.joblist.length + '/888 JOB(s) WITH SAMPLE: </label></div>' + 
+        $('div.row.all-job-by-sample').empty().append('<div class="col-20" id="left"><label class="parameter">' + data.update_count + '/' + data.Job_count + '/' + data.maxlist + ' JOB(s) WITH SAMPLE: </label></div>' + 
                                                         '<div class="col-20" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
         console.log("user: " + data.loginuser);
 
@@ -80,8 +80,8 @@ function qumjob() {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn green" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 } else if (parseInt(val.progress)===0) {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn red" id="jid_' + val.id + '">' + val.progress + '</a></div>';
-                // } else if (parseInt(val.progress)===-1) {
-                //     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn blue" id="jid_' + val.id + '">' + val.progress + '</a></div>';
+                } else if (val.tag!='') {
+                    var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn blue" id="jid_' + val.id + '">' + val.tag + '</a></div>';
                 } else {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn orange" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 };
@@ -190,10 +190,44 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-inspect.yellow
     });
     return false;
 });
-// IF UNFINISHED JOB PROGRESS IS CLICK:
+// IF UNFINISHED JOB PROGRESS IS CLICK: (Providing Options to dismiss it / close the case)
 $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-progress.orange', function() {
-    // Providing Options to dismiss it (close the case):
-
+    var progressing = parseFloat($(this).text());
+    var progress_box = '<div class="buttons"><a class="all-mssn-progress btn orange" id="' + $(this).attr('id') + '">' + progressing + '</a></div>';
+    var action = '<div class="buttons"><a class="all-mssn-close btn red" id="' + $(this).attr('id') + '">' + "CLOSE" + '</a></div>';
+    $(this).parent().parent().empty().append(progress_box + action);
+    return false;
+});
+// IF CLOSE BUTTON IS CLICK:
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-close.red', function() {
+    $(this).remove();
+    var jobid = $(this).attr('id').split('_')[1];
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/close/job', {
+        jobid: jobid, tag: "STOPPED"
+    }, function(data) {
+        console.log(data.message);
+        $('a.all-mssn-progress.orange#jid_'+jobid).removeClass('orange').addClass('rred').text('Press F5');
+    });
+    return false;
+});
+// IF TAGGED JOB PROGRESS IS CLICK: (Providing Options to recover it / reopen the case)
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-progress.blue', function() {
+    var tag = $(this).text();
+    var progress_box = '<div class="buttons"><a class="all-mssn-progress btn blue" id="' + $(this).attr('id') + '">' + tag + '</a></div>';
+    var action = '<div class="buttons"><a class="all-mssn-reopen btn green" id="' + $(this).attr('id') + '">' + "REOPEN" + '</a></div>';
+    $(this).parent().parent().empty().append(progress_box + action);
+    return false;
+});
+// IF REOPEN BUTTON IS CLICK:
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-reopen.green', function() {
+    $(this).remove();
+    var jobid = $(this).attr('id').split('_')[1];
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/reopen/job', {
+        jobid: jobid
+    }, function(data) {
+        console.log(data.message);
+        $('a.all-mssn-progress.blue#jid_'+jobid).removeClass('blue').addClass('rred').text('Press F5');
+    });
     return false;
 });
 

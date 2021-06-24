@@ -17,7 +17,7 @@ import numba as nb
 
 from pyqum import get_db, close_db
 from pyqum.instrument.dilution import bluefors
-from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, set_json_measurementinfo
+from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, set_json_measurementinfo, jobtag
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
@@ -120,9 +120,10 @@ def all_job():
     owner, samplename = session['people'], get_status("MSSN")[session['user_name']]['sample']
     
     maxlist = 888
-    joblist = lisjob(samplename, queue, maxlist) # job is listed based on sample & queue only
+    joblist, Job_count = lisjob(samplename, queue, maxlist) # job is listed based on sample & queue only
 
     # LOG Calculated Progress interactively into SQL-Database for fast retrieval
+    update_count = 0
     for j in joblist:
         # print("Progress: %s" %j['progress'])
         # print("j.tag: %s" %j['tag'])
@@ -137,13 +138,14 @@ def all_job():
                 db.execute('UPDATE job SET progress = ? WHERE id = ?', (j['progress'],j['id']))
                 db.commit()
                 close_db()
+                update_count += 1
             except(ValueError): j['progress'] = 0 # for job w/o its bag yet
             except(TypeError): return("<h3>RE-LOGIN DETECTED</h3><h3>Please press <USERNAME> on TOP-RIGHT to proceed.</h3><h3 style='color:blue;'>Courtesy from HoDoR</h3>")
 
     # Security:
     try: print(Fore.GREEN + "User %s is accessing the jobs" %g.user['username'])
     except: abort(404)
-    return jsonify(loginuser=session['user_name'], joblist=joblist, samplename=samplename)
+    return jsonify(loginuser=session['user_name'], joblist=joblist, samplename=samplename, update_count=update_count, maxlist=maxlist, Job_count=Job_count)
 @bp.route('/all/queue', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_queue():
     queue = request.args.get('queue')
@@ -200,6 +202,19 @@ def all_requeue_job():
         requeue = {}
         clearance = False
     return jsonify(requeue=requeue, clearance=clearance)
+@bp.route('/all/close/job', methods=['GET'])
+def all_close_job():
+    jobid = request.args.get('jobid')
+    tag = request.args.get('tag')
+    jobtag(jobid, tag)
+    message = "JOB CLOSED"
+    return jsonify(message=message)
+@bp.route('/all/reopen/job', methods=['GET'])
+def all_reopen_job():
+    jobid = request.args.get('jobid')
+    jobtag(jobid, "")
+    message = "JOB REOPEN"
+    return jsonify(message=message)
 # endregion
 
 # region: CHAR:
