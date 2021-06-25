@@ -9,7 +9,7 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape
 
 
 # Json to Javascrpt
@@ -81,7 +81,7 @@ def qestimate():
 	info = get_json_measurementinfo(get_fileName())
 	global qEstimationDict
 	qEstimationDict[session['user_name']] = QEstimation( get_measurementObject('frequency_response') )
-	print(qEstimationDict[session['user_name']].measurementObj.corder)
+	print("-------------------------------------------",qEstimationDict[session['user_name']].measurementObj.corder)
 	return render_template("blog/benchmark/qestimate.html", info=info)
 
 @bp.route('/get_user', methods=['POST', 'GET'])
@@ -92,7 +92,7 @@ def get_user():
 def measurement_info(): 
 
 	info = get_json_measurementinfo(get_fileName())
-	print( "measurement_info", info['measurement']['type'])
+	#print( "measurement_info", info['measurement']['type'])
 
 	return render_template("blog/benchmark/measurement_info.html", info=info)
 
@@ -122,21 +122,22 @@ class QEstimation():
 			self.independentVars[k]=varWaveform.data
 			# Get C-Shape from Waveform object
 			C_Shape.append( varWaveform.count )
-
 		# Append datadensity to C-Shape (list) and Measurement.corder["C-Structure"] (list)
 		measurementObj.corder["C-Structure"].append("datadensity")
 		C_Shape.append( measurementObj.datadensity )
 		# Add C-Shape (list) to Measurement.corder (Dict)
 		self.measurementObj.corder["C_Shape"] = C_Shape
+		print("Init", self.measurementObj.corder)
 
 		# Optimize (developing)
+		'''
 		self.optCShpae = C_Shape
 		self.optCStructure = measurementObj.corder["C-Structure"]
 		for s, k in zip(C_Shape,measurementObj.corder["C-Structure"]) :
 			if s == 1:
 				self.optCShpae.remove(s)
 				self.optCStructure.remove(k)
-		
+		'''	
 	def _get_data_from_Measurement( self ):
 		writtensize = self.measurementObj.writtensize
 		pqfile = self.measurementObj.pqfile
@@ -155,26 +156,43 @@ class QEstimation():
 		cShape = self.measurementObj.corder["C_Shape"]
 		self.yAxisKey = yAxisKey
 		data = self._get_data_from_Measurement()
-		data.reshape( tuple(cShape) )
+		print("C Shape",tuple(cShape))
+
+		data = reshape( data, tuple(cShape) )
+		print("Shape",data.shape)
+
 		varsInd.append(1) # Temporary for connect with old data type
+
+
 		yAxisInd = self.measurementObj.corder["C-Structure"].index(self.yAxisKey) 
+		varNumber = len(varsInd)
+		#print("Origin Key and var",varsInd,"", yAxisKey)
 		densityInd = self.measurementObj.corder["C-Structure"].index("datadensity")
 		freqInd = self.measurementObj.corder["C-Structure"].index(self.freqKey)
-		varNumber = len(varsInd)
-
-		varsInd.insert( varNumber, varsInd.pop(freqInd),yAxisKey )
-		print("Key and var",varsInd,"", )
+		#print("Key and var",varsInd,"", yAxisKey)
+		newAxisPosition = []
 		if yAxisKey == None:
-			varsInd.insert( varNumber-1, varsInd.pop(densityInd))
-			data = moveaxis( data, [densityInd, freqInd], [-2, -1] )
-			varsInd = varsInd[:-2]
+			moveAxisKey = ("datadensity", self.freqKey)
+			newAxisPosition = [-2, -1]
+
 		else:
-			varsInd.insert( varNumber-1, varsInd.pop(densityInd))
-			varsInd.insert( varNumber-2, varsInd.pop(yAxisInd))
-			varsInd = varsInd[:-3]
-			data = moveaxis( data, [densityInd, yAxisInd, freqInd], [-3, -2, -1] )
-		print(varsInd)
-		for vi in varsInd:
+			moveAxisKey = (self.yAxisKey, "datadensity", self.freqKey)
+			newAxisPosition = [ -3, -2, -1]
+		
+		selectValInd = []
+		includeAxisInd = []
+		for i, k in enumerate(self.measurementObj.corder["C-Structure"]):
+			if k not in moveAxisKey:	
+				selectValInd.append(varsInd[i])
+			else:
+				includeAxisInd.append(i)
+		
+		print("Selected",selectValInd)
+		print("Axis",includeAxisInd)
+		data = moveaxis( data, includeAxisInd, newAxisPosition )
+
+
+		for vi in selectValInd:
 			data = data[vi]
 		data.squeeze()
 		self.iqData = data
@@ -226,9 +244,12 @@ def getJson_2Dplot_test():
 
 	indexData = json.loads(request.args.get('indexData'))
 	dimension = len(indexData["axisIndex"]["data"])
+	print( "axis index data", indexData["axisIndex"]["data"])
 	if dimension == 2:
 		axisInd = indexData["axisIndex"]["data"][1]
 		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
+		print("in 2D", axisInd, myQEstimation.measurementObj.corder["C-Structure"])
+
 	else:
 		yAxisKey = None
 	valueInd = indexData["valueIndex"]["data"]
