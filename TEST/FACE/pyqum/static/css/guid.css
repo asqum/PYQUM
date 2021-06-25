@@ -1,0 +1,198 @@
+/* Test */
+.atest {
+    align-content: center;
+    font-size: 35pt;
+    color: red;
+}
+
+/* Vertical Tabs #1 */
+.tab {
+    position: fixed;
+    align-content: space-around;
+    padding-left: 0%;
+    float: left;
+    background-color: #333333;
+    width: 6%; /*should align w/ margin-left for tabcontent! */
+    height: 93vh;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+.tab button {
+    background-color: inherit;
+    color: white;
+    display: block;
+    padding: 12px 8.8%; /*vertical horizontal padding*/
+    width: 100%;
+    border: none;
+    outline: none;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.3s;
+}
+/* for 1Q Calibration */
+.tab button.sqcal {
+    background-color: #111111;
+}
+.tab button:hover {
+    background-color:rgb(251, 255, 0);
+    color: #333333;
+}
+.tab button.active {
+    color: rgb(251, 255, 0);
+    font-weight: 950;
+    /* background-color: rgb(241, 230, 165); */
+}
+.tab button.active:hover {
+    background-color:inherit;
+}
+.tabcontent {
+    position: fixed;
+    display: none;
+    float: left;
+    padding: 0px 0.5%;
+    width: 93%;
+    height: 100vh; /*essential for mobile browsing*/
+    margin-left: 6%;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+
+/* Vertical Tabs #2 *//* Instrument content page */
+.tab2 {
+    position: fixed;
+    align-content: space-around;
+    padding-left: 0%;
+    float: left;
+    background-color: #f1f1f1;
+    width: 12%;
+    height: 93vh;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+.tab2 button {
+    display: block;
+    padding: 12px 8.8%; /*vertical horizontal padding*/
+    width: 100%;
+    border: none;
+    outline: none;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.tab2 button:hover {
+    background-color: rgb(98, 245, 233);
+}
+.tab2 button.active {
+    /* background-color: #ccc; */
+    background-color: gold;
+}
+
+/* 3rd-level */
+div.charcontent, div.manicontent {
+    position: fixed;
+    display: block;
+    float: left;
+    /* margin-top: 32px; */
+    margin-left: 12%;
+    padding-left: 2.5%;
+    padding-right: 2.5%;
+    width: 77%;
+    height: 100vh;
+    /* margin-bottom: 64px; */
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+
+/* Only allow iqcal-page to show-up when loading guide.html */
+.tabcontent#calc {
+    display: block;
+}
+
+/* Modified Tabs */
+.reset, .generate {
+    background-color: #4CAF50;
+    color: white;
+}
+.close, .abort {
+    background-color: tomato;
+    color: white;
+}
+.error {
+    background-color: darkslategray;
+}
+.selected {
+    background-color: gold;
+}
+.newupdate {
+    background-color: rgb(255, 145, 0);
+}
+
+/* special adjustment to job-queue-content due to the absence of secondary tabs */
+div.allcontent {
+    position: fixed;
+    display: block;
+    width: 94%;
+    height: 88vh;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /*momentum scroll*/
+}
+img {
+    object-fit: contain;
+    display: block;
+    width: 70%;
+}
+
+/* Chart */
+#data-chart-01, #char-chart-01 {
+    padding-top: 2rem;
+    height: 100%;
+}
+
+/* Tooltip */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: -5px;
+    left: 105%;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+
+/* Instrument's Log */
+/* .slider {
+    position: fixed;
+    background-color: darkblue;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 13px;
+}
+.slider h4 {
+    color: white;
+}
+.active, .slider:hover {
+    background-color: #555;
+} */
+

@@ -9,6 +9,7 @@ $(document).ready(function(){
         console.log("Current color: " + $("div.navbar").css("background-color"));
     });
     
+    // Highlight Tab (maybe wouldn't work here)
     // $('button.mission').hide();
     // console if only for debugging purposes:
     // console.log($(location).attr("href"));
@@ -47,10 +48,11 @@ $(document).ready(function(){
         // Thus we embedded the script in benchmark.html
     };
 
-    if (window.location.pathname == "/gd/guide"){
-        console.log(window.location.pathname);
-        $('.navbar button').removeClass('active');
-        $('.navbar button.guide').addClass('active'); 
+    if (window.location.pathname == "/guide"){
+        // can't find path for this case
+        console.log("Path:");
+        console.log(window.location.pathname); 
+        // Thus we embedded the script in guide.html
     };
 
     if (window.location.pathname == "/dsply"){
@@ -77,6 +79,12 @@ $(document).ready(function(){
 
 });
 
+// Encryption:
+function guidencrpytonian() {
+    return '/' + 'hgdfhghfle7';
+};
+
+// Loading pages:
 $(function () {
     $("button.home").bind('click', function(){
         window.open("/", '_self');  
@@ -114,7 +122,7 @@ $(function () {
 
 $(function () {
     $("button.guide").bind('click', function(){
-        window.open("/gd/guide", '_self');    
+        window.open(guidencrpytonian() + "/guide", '_self');    
         return false;
     });
 });

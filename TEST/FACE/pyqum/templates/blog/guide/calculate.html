@@ -1,0 +1,32 @@
+<!doctype html> <!--extended from parent: bridge.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/guid/calc.js') }}"></script>
+</head>
+
+<body class="guid">
+    <div class="calccontent">
+        <h3>Qubit frequency Prediction</h3>
+        
+        <div class="row">
+            <div class="col-12" id='left'><label>Flux-fraction (integer)</label></div>
+            <div class="col-12" id='left'><label>Flux-Offset (V/A)</label></div>
+            <div class="col-12" id='left'><label>Flux-0.5Phi (V/A)</label></div>
+            <div class="col-20" id='left'><label>Max-Tunable-Frequency (GHz)</label></div> 
+        </div>
+        <div class="row">
+            <div class="col-12" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-flux-fraction" type="number" value="8" step="1" min="1"/></div>
+            <div class="col-12" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-flux-offset" type="number" value="0.055"/></div>
+            <div class="col-12" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-flux-halfill" type="number" value="-0.028"/></div>
+            <div class="col-20" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-MT-frequency" type="number" value="4.84"/></div>
+        </div>
+        
+        <h4 id="guid-calc-freq-range"></h4>
+
+        
+
+    </div>
+</body>
+
+</html>

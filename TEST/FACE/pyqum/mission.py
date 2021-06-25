@@ -1343,7 +1343,7 @@ def mani_singleqb_time():
 def mani_singleqb_check_timsum():
     record_time_ns = int(request.args.get('record_time_ns'))
     record_sum = int(request.args.get('record_sum'))
-    from pyqum.instrument.modular import ALZDG
+    from pyqum.instrument.machine import ALZDG
     record_time_ns, record_sum = ALZDG.check_timsum(record_time_ns,record_sum)
     return jsonify(record_time_ns=record_time_ns, record_sum=record_sum)
 # run NEW measurement:

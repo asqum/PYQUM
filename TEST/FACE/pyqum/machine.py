@@ -18,10 +18,8 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 
 # Load instruments
 from pyqum import get_db, close_db
-from pyqum.instrument.modular import ALZDG # KMAWG # open native Agilent M933x -> Initiate VSA -> Initiate AWG (Success!!!)
-from pyqum.instrument.benchtop import DSO, YOKO, KEIT, TKAWG
+from pyqum.instrument.machine import DC, DSO, YOKO, KEIT, TKAWG, ALZDG
 from pyqum.instrument.dilution import bluefors
-from pyqum.instrument.serial import DC
 from pyqum.instrument.toolbox import match, waveform, pauselog
 from pyqum.instrument.analyzer import IQAParray, pulse_baseband, UnwraPhase
 from pyqum.instrument.composer import pulser
@@ -101,7 +99,7 @@ def sgconnect():
 	if sgname not in linkedsg and int(g.user['instrument'])>=3:
 		'''get in if not currently initiated'''
 		try:
-			SG[sgtype] = im("pyqum.instrument.benchtop.%s" %sgtype)
+			SG[sgtype] = im("pyqum.instrument.machine.%s" %sgtype)
 			sgbench[sgtag] = SG[sgtype].Initiate(sglabel)
 			message = "%s is successfully initiated by %s" %(sgname,sguser)
 			status = "connected"
@@ -478,7 +476,7 @@ def naconnect():
 	if naname not in linkedna and int(g.user['instrument'])>=2:
 		'''get in if not currently initiated'''
 		try:
-			NA[natype] = im("pyqum.instrument.benchtop.%s" %natype)
+			NA[natype] = im("pyqum.instrument.machine.%s" %natype)
 			nabench[natag] = NA[natype].Initiate(reset=False, which=nalabel)
 			message = "%s is successfully initiated by %s" %(naname,nauser)
 			status = "connected"
@@ -616,7 +614,7 @@ def saconnect():
 	if saname not in linkedsa and int(g.user['instrument'])>=3:
 		'''get in if not currently initiated'''
 		try:
-			SA[satype] = im("pyqum.instrument.benchtop.%s" %satype)
+			SA[satype] = im("pyqum.instrument.machine.%s" %satype)
 			sabench[satag] = SA[satype].Initiate(which=salabel)
 			message = "%s is successfully initiated by %s" %(saname,sauser)
 			status = "connected"

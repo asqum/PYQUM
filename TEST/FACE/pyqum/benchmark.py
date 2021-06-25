@@ -22,7 +22,7 @@ from si_prefix import si_format, si_parse
 from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean
 
 # Load instruments
-from pyqum.instrument.benchtop import TKAWG, PSGA, MXA
+# Please Delete this line in another branch (to: @Jackie)
 from pyqum.directive import calibrate 
 from pyqum.directive.MP_benchmark import assembler
 

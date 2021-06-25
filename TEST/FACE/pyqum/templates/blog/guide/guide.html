@@ -1,0 +1,43 @@
+{% extends 'base.html' %} 
+{% block title %}Guide your Measurement{% endblock %}
+
+{% block head %}
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guid.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/anime.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/progress.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='js/guid/guide.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+<body class="guid" style="overflow-y:hidden">
+
+<script>
+    //compensating what base.js cannot do
+    $('.navbar button').removeClass('active');
+    $('.navbar button.guide').addClass('active');
+    $(function(){
+      $("div#calc").load("{{ url_for('guide.calc') }}");
+      
+    });
+</script> 
+
+{% if g.user %}
+<div class="tab">
+  <!-- <button class="tablinks" id="all-tab" onclick="openTab(event, 'all')">ALL</button> -->
+
+  <!-- Basic Calculation -->
+  <button class="tablinks" id="calc-tab" onclick="openTab(event, 'calc')">CALC</button>
+  
+</div>
+
+<!-- <div id="all" class="tabcontent"></div> -->
+<div id="calc" class="tabcontent"></div>
+
+{% endif %}
+
+</body>
+
+{% endblock %}

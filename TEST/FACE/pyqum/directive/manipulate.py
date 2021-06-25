@@ -100,7 +100,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     # Optionals:
     # DC:
     [DC_type, DC_label] = instr['DC'].split('_')
-    DC = im("pyqum.instrument.benchtop.%s" %DC_type)
+    DC = im("pyqum.instrument.machine.%s" %DC_type)
     if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
         dcbench = DC.Initiate(current=biasmode, which=DC_label) # pending option
         DC.output(dcbench, 1)
@@ -108,7 +108,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     # SG for XY:
     SG_label = [None] * len(instr['SG']) # PENDING: LISTIFY ALL INSTR.VALUES()
     [SG_type, SG_label[0]] = instr['SG'][0].split('_')
-    SG0 = im("pyqum.instrument.benchtop.%s" %SG_type)
+    SG0 = im("pyqum.instrument.machine.%s" %SG_type)
     if "opt" not in xyfreq.data: # check if it is in optional-state / serious-state
         sogo = SG0.Initiate(which=SG_label[0])
         SG0.power(sogo, action=['Set', str(xypowa) + "dBm"])
@@ -117,7 +117,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     # Basics:
     # SG for RO:
     [SG_type, SG_label[1]] = instr['SG'][1].split('_')
-    SG1 = im("pyqum.instrument.benchtop.%s" %SG_type)
+    SG1 = im("pyqum.instrument.machine.%s" %SG_type)
     if "opt" not in rofreq.data: # check if it is in optional-state / serious-state
         saga = SG1.Initiate(which=SG_label[1])
         SG1.power(saga, action=['Set', str(ropowa) + "dBm"])
@@ -125,7 +125,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
 
     # DAC:
     [DAC_type, DAC_label] = instr['DAC'].split('_')
-    DAC = im("pyqum.instrument.benchtop.%s" %DAC_type)
+    DAC = im("pyqum.instrument.machine.%s" %DAC_type)
     daca = DAC.Initiate(which=DAC_label)
     DAC.clock(daca, action=['Set', 'EFIXed',2.5e9])
     DAC.clear_waveform(daca,'all')
@@ -147,7 +147,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     
     # ADC:
     [ADC_type, ADC_label] = instr['ADC'].split('_')
-    ADC = im("pyqum.instrument.modular.%s" %ADC_type)
+    ADC = im("pyqum.instrument.machine.%s" %ADC_type)
     adca = ADC.Initiate(which=ADC_label)
     '''Prepare ADC:'''
     ADC.ConfigureBoard_NPT(adca, triggerDelay_sec=trigger_delay_ns*1e-9)

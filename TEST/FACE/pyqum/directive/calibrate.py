@@ -8,9 +8,9 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 import copy
-from pyqum.instrument.benchtop import MXA
-from pyqum.instrument.benchtop import PSGA as PSG # RO: V, XY: A
-from pyqum.instrument.benchtop import TKAWG as DAC
+from pyqum.instrument.machine import MXA
+from pyqum.instrument.machine import PSGA as PSG # RO: V, XY: A
+from pyqum.instrument.machine import TKAWG as DAC
 from pyqum.instrument.logger import status_code, get_status, set_status, clocker
 from pyqum.instrument.analyzer import curve
 from pyqum.instrument.composer import pulser

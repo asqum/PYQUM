@@ -4,9 +4,7 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from pyqum.instrument import logger, reader, network, toolbox, analyzer
-from pyqum.instrument.benchtop import DSO, ENA, PSGV, PSGA, RDSO, YOKO, GW32, KEIT, DSA8, RSA5, MXA, RSSGS
-from pyqum.instrument.modular import AWG, VSA, KMAWG, ALZDG#, SDAWG
-from pyqum.instrument.serial import LAKE, DC
+from pyqum.instrument.machine import DSO, ENA, PSGV, PSGA, RDSO, YOKO, GW32, KEIT, DSA8, RSA5, MXA, RSSGS, AWG, VSA, KMAWG, ALZDG, LAKE, DC#, SDAWG
 from pyqum.directive import calibrate as CAL
 
 import inspect, numpy, time
