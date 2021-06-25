@@ -23,13 +23,12 @@ function get_selectInfo(){
     let axisIndex=[]
     let valueIndex=[]
 
-    // let a = {x: 1, x: 2}
-    // console.log(a) // {x: 2}
+
     let indexData = {
         axisIndex:{
             isChange:isAxisChange,
             data:axisIndex},
-            valueIndex:{
+        valueIndex:{
             isChange:isValueChange,
             data:valueIndex},
       }
@@ -93,6 +92,8 @@ function get_selectInfo(){
 function plot1D ( data, axisKeys, plotId ){
     console.log("Plotting 1D");
     let traceNumber = axisKeys.y.length;
+    console.log(axisKeys.x[0]);
+
     let tracies = new Array(traceNumber);
     let ix;
     for (let i = 0; i < traceNumber; i++){
@@ -129,7 +130,7 @@ function plot2D( data, axisKeys, plotId ) {
         width: 2.5
     };
     
-    console.log("1st z-trace: " + trace.z[0][0]);
+    //console.log("1st z-trace: " + trace.z[0][0]);
 
     // Plotting the Chart using assembled TRACE:
     var Trace = [trace]
@@ -157,39 +158,38 @@ $(function () {
             if ( indexData.axisIndex.isChange ){
                 console.log( "2D plot" );
                 console.log( indexData );
-                $.getJSON( '/benchmark/qestimate/plot',
+                $.getJSON( '/benchmark/qestimate/getJson_qestimate_plot',
                 {   indexData: JSON.stringify(indexData),}, 
                     function (data) {
                     console.log( data );
                     let axisKeys = {
-                        x: htmlIDs[indexData.axisIndex.data[0]],
+                        x: "Frequency",
                         y: htmlIDs[indexData.axisIndex.data[1]],
-                        z: "amplitude",
+                        z: "Data_point",
                     }
-                    console.log( axisKeys );
-
-                    plot2D(data, axisKeys, "qFactor-plot-Overview2D");
-                });
-            }
-            if ( indexData.valueIndex.isChange ){
-                let indexData1D = JSON.parse(JSON.stringify(indexData));
-                console.log(  "1D plot" );
-                console.log(  indexData1D );
-                indexData1D.axisIndex.data = [4];
-                $.getJSON( '/benchmark/qestimate/plot',
-                {   indexData: JSON.stringify(indexData1D),}, 
-                    function (data) {
                     console.log( data );
-                    let axisKeys = {
-                        x: [htmlIDs[indexData.axisIndex.data[0]]],
-                        y: ["amplitude"],
-                    }
-                    console.log( axisKeys );
 
-                    plot1D(data, axisKeys, "qFactor-plot-fittingResult");
+                    plot2D(data, axisKeys, "qFactor-plot-rawOverview2D");
                 });
-
             }
+            let indexData1D = JSON.parse(JSON.stringify(indexData));
+            console.log(  "1D plot" );
+            console.log(  indexData1D );
+            indexData1D.axisIndex.data = [4];
+            $.getJSON( '/benchmark/qestimate/getJson_qestimate_plot',
+            {   indexData: JSON.stringify(indexData1D),}, 
+                function (data) {
+                console.log( data );
+                let axisKeys = {
+                    x: ["Frequency"],
+                    y: ["Data_point","Fitted_curve"],
+                }
+                console.log( data.Fitted_curve );
+
+                plot1D(data, axisKeys, "qFactor-plot-fittingResult");
+            });
+
+            
         }else{
             console.log( "Too many axis." );
         }
@@ -198,9 +198,9 @@ $(function () {
         $.ajaxSettings.async = true;
 
     });
-    return false;
-});
-$(function () {
+
+
+    // Analysis data and plot
     $('#qFactor-fit-button').on('click', function () {
 
         $.ajaxSettings.async = false;
@@ -215,17 +215,27 @@ $(function () {
         let fittingRangeTo = document.getElementById("qFactor-fittingRange-to").value
         let indexData = get_selectInfo();
         console.log( "fit from " + fittingRangeFrom + " to ",  fittingRangeTo);
-        $.getJSON( '/benchmark/qestimate/fitting',{  
+        $.getJSON( '/benchmark/qestimate/getJson_qestimate_fitResult',{  
             fittingRangeFrom:fittingRangeFrom, fittingRangeTo:fittingRangeTo  
         }, function (data) {
             console.log( Object.keys(data) );
             console.log( data );
-            let axisKeys = {
+            
+            let axisKeys_fitCurve = {
+                x: htmlIDs[indexData.axisIndex.data[0]],
+                y: htmlIDs[indexData.axisIndex.data[1]],
+                z: "amplitude",
+            }
+            //plot2D( data, axisKeys_fitCurve, "qFactor-plot-fitOverview2D");
+            let axisKeys_fitResult = {
                 x: [htmlIDs[indexData.axisIndex.data[1]]],
                 y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr"],
             }
-            plot1D( data, axisKeys, "qFactor-plot-fittingParameters");
+            plot1D( data, axisKeys_fitResult, "qFactor-plot-fittingParameters");
+
         });
+
+
 
         $.ajaxSettings.async = true;
     });
@@ -266,10 +276,147 @@ $(function () {
         return false;
     });
 
+    // Plot 1D raw data and fitting curve
+    $('#qqFactor-plotFittedCurve-button').on('click', function () {
+
+        $.ajaxSettings.async = true;
+
+        $.getJSON( '/benchmark/get_parametersID', 
+        {}, 
+            function (id) {
+                htmlIDs = [...id];
+        });
+
+        let indexData = get_selectInfo();
+        let indexData1D = JSON.parse(JSON.stringify(indexData));
+        indexData1D.axisIndex.data = [4];
+
+        $.getJSON( '/benchmark/qestimate/get_qestimate_plot_fitCurve',{  
+            indexData: JSON.stringify(indexData1D)    
+        }, function (data) {
 
 
+            console.log( data )
+        });
+
+        $.getJSON( '/benchmark/qestimate/plot',
+        {   indexData: JSON.stringify(indexData1D),}, 
+            function (data) {
+            console.log( data );
+            let axisKeys = {
+                x: [htmlIDs[indexData.axisIndex.data[0]]],
+                y: ["amplitude"],
+            }
+            console.log( axisKeys );
+
+            plot1D(data, axisKeys, "qFactor-plot-fittingResult");
+        });
+
+        $.ajaxSettings.async = false;
+    });
+    //Just for test
+    $('#qFactor-test-button').on('click', function () {
 
 
+        $.getJSON( '/benchmark/test',{  
+            
+        }, function (data) {
+            console.log( data )
+        });
+
+    });
+    // Test new plot
+    $('#qFactor-plottest-button').on('click', function () {
+        console.log( "2D plot" );
+        $.ajaxSettings.async = false;
+        let htmlIDs=[];
+        $.getJSON( '/benchmark/get_parametersID', 
+        {}, 
+            function (id) {
+                htmlIDs = [...id];
+        });
+
+        let indexData = get_selectInfo();
+
+        if (gAxisIndex.length<=2 )
+        {
+
+            console.log( "2D plot" );
+            console.log( indexData );
+            $.getJSON( '/benchmark/qestimate/getJson_2Dplot_test',
+            {   indexData: JSON.stringify(indexData),}, 
+                function (data) {
+                console.log( data );
+                let axisKeys = {
+                    x: "frequency",
+                    y: htmlIDs[indexData.axisIndex.data[1]],
+                    z: "amplitude",
+                }
+                console.log( data );
+
+                plot2D(data, axisKeys, "qFactor-plot-rawOverview2D");
+            });
+            let indexData1D = JSON.parse(JSON.stringify(indexData));
+            console.log(  "1D plot" );
+            console.log(  indexData1D );
+            $.getJSON( '/benchmark/qestimate/getJson_1Dplot_test',
+            {   indexData: JSON.stringify(indexData1D),}, 
+                function (data) {
+                console.log( data );
+                let axisKeys = {
+                    x: ["Data_point_frequency","Fitted_curve_frequency"],
+                    y: ["Data_point_amplitude","Fitted_curve_amplitude"],
+                }
+                //console.log( data.Fitted_curve_amplitude );
+
+                plot1D(data, axisKeys, "qFactor-plot-fittingResult");
+            });
+
+            
+        }else{
+            console.log( "Too many axis." );
+        }
+        
+
+        $.ajaxSettings.async = true;
+
+    });
+    //Test fit data
+    $('#qFactor-fittest-button').on('click', function () {
+
+
+        $.ajaxSettings.async = false;
+        let htmlIDs=[];
+        $.getJSON( '/benchmark/get_parametersID', 
+        {}, 
+            function (id) {
+                htmlIDs = [...id];
+        });
+
+        let indexData = get_selectInfo();
+
+        console.log( "Fit plot" );
+        console.log( indexData );
+
+        let fittingRangeFrom = document.getElementById("qFactor-fittingRange-from").value
+        let fittingRangeTo = document.getElementById("qFactor-fittingRange-to").value
+        console.log( "fit from " + fittingRangeFrom + " to ",  fittingRangeTo);
+        $.getJSON( '/benchmark/qestimate/getJson_fitParaPlot_test',{  
+            fittingRangeFrom:fittingRangeFrom, fittingRangeTo:fittingRangeTo,
+            indexData: JSON.stringify(indexData), 
+        }, function (data) {
+
+            let axisKeys_fitResult = {
+                x: [htmlIDs[indexData.axisIndex.data[1]]],
+                y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr"],
+            }
+            plot1D( data, axisKeys_fitResult, "qFactor-plot-fittingParameters");
+
+            
+
+        $.ajaxSettings.async = true;
+        });
+    });
 
 });
 
