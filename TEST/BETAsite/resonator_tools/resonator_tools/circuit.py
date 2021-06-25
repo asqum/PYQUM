@@ -276,7 +276,7 @@ class reflection_port(circlefit, save_load, plotting, calibration):
 		else:
 			warnings.warn('Please perform the fit first',UserWarning)
 			return None
-	
+
 class notch_port(circlefit, save_load, plotting, calibration):
 	'''
 	notch type port probed in transmission
@@ -651,7 +651,7 @@ class resonator(object):
 		self.port.update({key:transm()})
 		pass
 
-   
+
 class batch_processing(object):
 	'''
 	A class for batch processing of resonator data as a function of another variable
@@ -682,7 +682,7 @@ class coupled_resonators(batch_processing):
 	def __init__(self,porttype):
 		self.porttype = porttype
 		self.results = []
-	
+
 #def GUIfit(porttype,f_data,z_data_raw):
 #	'''
 #	GUI based fitting process enabeling cutting the data and manually setting the delay

@@ -30,7 +30,7 @@ from pyqum.directive.MP_benchmark import assembler
 from pyqum.mission import get_measurementObject
 
 # Fitting
-from resonator_tools import circuit
+from resonator_tools.circuit import notch_port
 from collections import defaultdict
 
 # Save file
@@ -119,7 +119,7 @@ class QEstimation():
 			except(KeyError):
 				varWaveform = waveform('opt,')
 			# Get array from Waveform object
-			self.independentVars[k]=varWaveform.data
+			self.independentVars[k]=array(varWaveform.data)
 			# Get C-Shape from Waveform object
 			C_Shape.append( varWaveform.count )
 		# Append datadensity to C-Shape (list) and Measurement.corder["C-Structure"] (list)
@@ -163,21 +163,10 @@ class QEstimation():
 
 		varsInd.append(1) # Temporary for connect with old data type
 
-
-		yAxisInd = self.measurementObj.corder["C-Structure"].index(self.yAxisKey) 
-		varNumber = len(varsInd)
-		#print("Origin Key and var",varsInd,"", yAxisKey)
-		densityInd = self.measurementObj.corder["C-Structure"].index("datadensity")
-		freqInd = self.measurementObj.corder["C-Structure"].index(self.freqKey)
-		#print("Key and var",varsInd,"", yAxisKey)
-		newAxisPosition = []
 		if yAxisKey == None:
-			moveAxisKey = ("datadensity", self.freqKey)
-			newAxisPosition = [-2, -1]
-
+			moveAxisKey = ["datadensity", self.freqKey]
 		else:
-			moveAxisKey = (self.yAxisKey, "datadensity", self.freqKey)
-			newAxisPosition = [ -3, -2, -1]
+			moveAxisKey = ["datadensity", self.yAxisKey, self.freqKey]
 		
 		selectValInd = []
 		includeAxisInd = []
@@ -186,7 +175,13 @@ class QEstimation():
 				selectValInd.append(varsInd[i])
 			else:
 				includeAxisInd.append(i)
-		
+
+		includeAxisInd = []
+		newAxisPosition = []
+		for i, k in enumerate(moveAxisKey):
+			includeAxisInd.append(self.measurementObj.corder["C-Structure"].index(k) )
+			newAxisPosition.append(-len(moveAxisKey)+i)
+
 		print("Selected",selectValInd)
 		print("Axis",includeAxisInd)
 		data = moveaxis( data, includeAxisInd, newAxisPosition )
@@ -194,7 +189,7 @@ class QEstimation():
 
 		for vi in selectValInd:
 			data = data[vi]
-		data.squeeze()
+		#data.squeeze()
 		self.iqData = data
 
 
@@ -214,26 +209,25 @@ class QEstimation():
 			yAxisLen = self.independentVars[self.yAxisKey].shape[0]
 			self.fitCurve = empty([yAxisLen,xAxisLen])
 
-		
+		myResonator = notch_port() 
+		print("Type",myResonator.porttype)
 		# Creat notch port list
-		resonator = circuit.notch_port() 
 		for i in range(yAxisLen):
 			# Add data
-			resonator.add_data(f_data=rawFrequency, z_data_raw=rawIQ[i])
+			myResonator.add_data(rawFrequency, rawIQ[i])
 			# Fit
-			resonator.autofit( electric_delay=None, fcrop=fittingRange, Ql_guess=None, fr_guess=None )
+			myResonator.autofit(fcrop=fittingRange)
 
-			for key in resonator.fitresults.keys():
-				fittingValue = resonator.fitresults[key]
+			for key in myResonator.fitresults.keys():
+				fittingValue = myResonator.fitresults[key]
 				if isnan(fittingValue):
 					fittingValue = 0
 				if i==0 :
 						self.fitResult[key] = empty(yAxisLen)
 				self.fitResult[key][i] = fittingValue
 			# Save fitted curve	
-			self.fitCurve[i] = resonator.z_data_sim
+			self.fitCurve[i] = abs(myResonator.z_data_sim)
 
-	
 
 # Test return plot data in new way
 qEstimationDict = {}
@@ -253,13 +247,16 @@ def getJson_2Dplot_test():
 	else:
 		yAxisKey = None
 	valueInd = indexData["valueIndex"]["data"]
+
 	preYAxisKey = myQEstimation.yAxisKey
 	if preYAxisKey != yAxisKey or preYAxisKey == None:
 		myQEstimation.reshape_Data( valueInd, yAxisKey=yAxisKey )
+		print("reshape to ",myQEstimation.iqData.shape)
+
 	plotData = {
 			"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
 			yAxisKey: myQEstimation.independentVars[myQEstimation.yAxisKey],
-			"amplitude": 10*(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2)
+			"amplitude": sqrt(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2)
 		}
 
 	#print(plotData)
@@ -281,14 +278,10 @@ def getJson_1Dplot_test():
 	if preYAxisKey != yAxisKey or preYAxisKey == None:
 		myQEstimation.reshape_Data( valueInd, yAxisKey=yAxisKey )
 	plotData = {
-		"Data_point": {
-			"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-			"amplitude": 10*(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2),
-		},
-		"Fitted_curve": {
-			"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-			"amplitude": 20*abs(myQEstimation.fitCurve)
-		}
+		"Data_point_frequency": myQEstimation.independentVars[myQEstimation.freqKey],
+		"Data_point_amplitude": sqrt(myQEstimation.iqData[0][valueInd[axisInd]]**2+myQEstimation.iqData[1][valueInd[axisInd]]**2),
+		"Fitted_curve_frequency": myQEstimation.independentVars[myQEstimation.freqKey],
+		"Fitted_curve_amplitude": myQEstimation.fitCurve[valueInd[axisInd]]
 	}
 	#print(plotData)
 	return json.dumps(plotData, cls=NumpyEncoder)
@@ -297,11 +290,15 @@ def getJson_1Dplot_test():
 def getJson_fitParaPlot_test():
 
 	myQEstimation = qEstimationDict[session['user_name']]
-
-	myQEstimation.do_analysis()
+	fittingRangeFrom = json.loads(request.args.get('fittingRangeFrom'))
+	fittingRangeTo = json.loads(request.args.get('fittingRangeTo'))
+	fittingRange = ( fittingRangeFrom, fittingRangeTo )
+	myQEstimation.do_analysis( fittingRange=fittingRange )
 	plotData = myQEstimation.fitResult
 
+
 	indexData = json.loads(request.args.get('indexData'))
+
 	dimension = len(indexData["axisIndex"]["data"])
 	if dimension == 2:
 		axisInd = indexData["axisIndex"]["data"][1]
@@ -310,161 +307,7 @@ def getJson_fitParaPlot_test():
 		yAxisKey = None
 
 	plotData[yAxisKey] = myQEstimation.independentVars[myQEstimation.yAxisKey]
-
-	#print(plotData)
 	return json.dumps(plotData, cls=NumpyEncoder)
-
-def renew_iqData (valueIndex, axisIndex):
-
-	global iqData
-	info = get_json_measurementinfo(get_fileName())
-
-	stage, prev = clocker(0, agenda="2D Fresp")
-	iqData = assembler( valueIndex, axisIndex, info, session['user_name'] )
-	stage, prev = clocker(stage, prev, agenda="2D Fresp") # Marking time
-
-	return iqData
-
-
-def get_qestimate_plot_rawData(indexData):
-	global gIqData2D, gIqData1D, gValueIndex, gAxisIndex
-	
-	valueIndex = [int(vi) for vi in indexData["valueIndex"]["data"]]
-	axisIndex = [int(ai) for ai in indexData["axisIndex"]["data"]]
-	plotDimension = len(axisIndex)
-
-	if indexData["axisIndex"]["isChange"]:
-		renew_iqData(valueIndex, axisIndex)
-
-	info = get_json_measurementinfo(get_fileName())
-
-	paraInfo = info["measurement"]["parameters"]
-
-	if( plotDimension == 2):
-		iAmp = iqData['I']
-		qAmp = iqData['Q']
-		transAmp = sqrt(iAmp**2+qAmp**2)
-		plotData = {
-				paraInfo[axisIndex[0]]["htmlId"]: paraInfo[axisIndex[0]]["values"],
-				paraInfo[axisIndex[1]]["htmlId"]: paraInfo[axisIndex[1]]["values"],
-				"I": iAmp.transpose(),
-				"Q": qAmp.transpose(),
-				"amplitude": transAmp.transpose(),
-		}
-		gIqData2D = iqData
-		gAxisIndex = axisIndex
-
-		set_mat_analysis(plotData, "IQ_2Ddata[%s]"%session['user_name'])
-	else:
-		iAmp = iqData['I']
-		qAmp = iqData['Q']
-		transAmp = sqrt(iAmp**2+qAmp**2)
-		plotData = {
-			paraInfo[axisIndex[0]]["htmlId"]: paraInfo[axisIndex[0]]["values"],
-			"I": iAmp,
-			"Q": qAmp,			
-			"amplitude": transAmp
-		}
-
-	return plotData
-
-
-
-def get_qestimate_plot_fitCurve(indexData):
-
-	valueIndex = [int(vi) for vi in indexData["valueIndex"]["data"]]
-	axisIndex = [int(ai) for ai in indexData["axisIndex"]["data"]]
-	plotDimension = len(axisIndex)
-
-	print(Fore.GREEN + "User %s is plotting %dD Data" %(session['user_name'],plotDimension) )
-
-	print("valueIndex",valueIndex,",axisIndex",axisIndex)
-	print("valueIndex",valueIndex,",axisIndex",axisIndex)
-
-	if( plotDimension == 2):
-		plotData = {
-			"Frequency": fitResult["Frequency"],			
-			"amplitude": fitResult["amplitude"]
-		}
-	else:
-		plotData = {
-			"Frequency": fitResult["Frequency"],			
-			"amplitude": fitResult["amplitude"][valueIndex[axisIndex[0]]]
-		}
-
-	return plotData
-
-@bp.route('/qestimate/getJson_qestimate_plot',methods=['POST','GET'])
-def getJson_qestimate_plot():
-	indexData = json.loads(request.args.get('indexData'))
-	print(indexData)
-	try:
-		print("Try get_qestimate_plot_fitCurve(indexData)")
-		fitCurveData = get_qestimate_plot_fitCurve(indexData)
-	except:
-		fitCurveData = {"amplitude":[]}
-	rawData = get_qestimate_plot_rawData(indexData)
-	plotData = {
-		"Frequency": rawData["Frequency"],
-		"Data_point": rawData["amplitude"],
-		"Fitted_curve": fitCurveData["amplitude"]
-	}
-	#print(plotData)
-	return json.dumps(plotData, cls=NumpyEncoder)
-
-def do_qestimate_fitting( fittingRange ):
-	global fitResult
-	info = get_json_measurementinfo(get_fileName())
-	print("I shape:", gIqData2D["I"].shape, "Q shape:", gIqData2D["Q"].shape )
-
-	yAxisInfo = info["measurement"]["parameters"][gAxisIndex[1]]
-	yAxisLen = len(yAxisInfo["values"])
-
-	fitIQ = gIqData2D["I"].transpose()+1j*gIqData2D["Q"].transpose()
-	fitFrequency= array(info["measurement"]["parameters"][4]["values"])
-	#fittingRange = [float(fittingRangeFrom),float(fittingRangeTo)]
-
-	# get range for fitting
-	fittingIndex = find_nearestIndex( fitFrequency, fittingRange )
-	fittingIndex.sort()
-	xAxisLen = fitFrequency.shape[0]
-
-	port = circuit.notch_port()
-	fitResult = {
-		"amplitude" : empty([yAxisLen,xAxisLen]),
-		"Frequency" : fitFrequency,
-		yAxisInfo["lable"] : empty(xAxisLen)
-	}
-	for ifitIQ, i in zip(fitIQ, range(yAxisLen) ):
-		port.add_data( fitFrequency ,ifitIQ )
-		#port.autofit( electric_delay=None,fcrop=fittingRange,Ql_guess=None, fr_guess=None )
-		port.autofit( )
-		for key in port.fitresults.keys():
-			fittingValue = port.fitresults[key]
-			if isnan(fittingValue):
-				fittingValue = 0
-			if i==0 :
-					fitResult[key] = empty(yAxisLen)
-			fitResult[key][i] = fittingValue			
-		fitResult["amplitude"][i] = abs(port.z_data_sim)
-
-	#set_mat_analysis(fitResult, "resonator_fit[%s]"%session['user_name'])
-	return fitResult
-
-@bp.route('/qestimate/getJson_qestimate_fitResult',methods=['POST','GET'])
-def getJson_qestimate_fitResult():
-
-	fittingRangeFrom = request.args.get('fittingRangeFrom')
-	fittingRangeTo = request.args.get('fittingRangeTo')
-	info = get_json_measurementinfo(get_fileName())
-	print("I shape:", gIqData2D["I"].shape, "Q shape:", gIqData2D["Q"].shape )
-	print("Fitting range:", fittingRangeFrom, fittingRangeTo)
-
-	fittingRange = (float(fittingRangeFrom),float(fittingRangeTo))
-
-	print(json.dumps(do_qestimate_fitting(fittingRange), cls=NumpyEncoder))
-
-	return json.dumps(do_qestimate_fitting(fittingRange), cls=NumpyEncoder)#jsonify(fitResult)
 
 
 

@@ -92,6 +92,8 @@ function get_selectInfo(){
 function plot1D ( data, axisKeys, plotId ){
     console.log("Plotting 1D");
     let traceNumber = axisKeys.y.length;
+    console.log(axisKeys.x[0]);
+
     let tracies = new Array(traceNumber);
     let ix;
     for (let i = 0; i < traceNumber; i++){
@@ -346,9 +348,9 @@ $(function () {
                 function (data) {
                 console.log( data );
                 let axisKeys = {
-                    x: "Data_point.frequency",
+                    x: "frequency",
                     y: htmlIDs[indexData.axisIndex.data[1]],
-                    z: "Data_point",
+                    z: "amplitude",
                 }
                 console.log( data );
 
@@ -362,10 +364,10 @@ $(function () {
                 function (data) {
                 console.log( data );
                 let axisKeys = {
-                    x: ["Data_point.frequency","Fitted_curve.frequency"],
-                    y: ["Data_point.amplitude","Fitted_curve.amplitude"],
+                    x: ["Data_point_frequency","Fitted_curve_frequency"],
+                    y: ["Data_point_amplitude","Fitted_curve_amplitude"],
                 }
-                console.log( data.Fitted_curve );
+                //console.log( data.Fitted_curve_amplitude );
 
                 plot1D(data, axisKeys, "qFactor-plot-fittingResult");
             });
@@ -399,8 +401,9 @@ $(function () {
         let fittingRangeFrom = document.getElementById("qFactor-fittingRange-from").value
         let fittingRangeTo = document.getElementById("qFactor-fittingRange-to").value
         console.log( "fit from " + fittingRangeFrom + " to ",  fittingRangeTo);
-        $.getJSON( '/benchmark/qestimate/getJson_qestimate_fitResult',{  
-            fittingRangeFrom:fittingRangeFrom, fittingRangeTo:fittingRangeTo  
+        $.getJSON( '/benchmark/qestimate/getJson_fitParaPlot_test',{  
+            fittingRangeFrom:fittingRangeFrom, fittingRangeTo:fittingRangeTo,
+            indexData: JSON.stringify(indexData), 
         }, function (data) {
 
             let axisKeys_fitResult = {
