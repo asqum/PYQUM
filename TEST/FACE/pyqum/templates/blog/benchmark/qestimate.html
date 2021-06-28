@@ -11,28 +11,26 @@
         <h3>Welcome to Q Estimation</h3>
 
         <ul>
-            {% for paras in info["measurement"]["parameters"] %}
+            {% for parameterName in corder["C-Structure"] %}
                 <li>
-                    {% if paras["lable"]!="Frequency"%} 
                     <div class="row">
                         <div class="col-15">
                             <label>
-                                {{ paras["lable"] }}
+                                {{ parameterName }}
                             </label>
                         </div>
 
                     </div>
+                    {% if corder[C_Shape] != 1 or parameterName != freqKey %} 
 
                     <div class="row">
 
-                    <form> 
-                   
-                        
+                    <form>   
                         <div class="col-15">
                             <label>
-                                <input class="col-15" type="checkbox" id='check-{{paras["htmlId"]}}' >
-                                <select class='parameter' id='select-{{paras["htmlId"]}}' type="text">
-                                {% for v in paras["values"] %}
+                                <input class="col-15" type="checkbox" id='check-{{parameterName}}' >
+                                <select class='parameter' id='select-{{parameterName}}' type="text">
+                                {% for v in independentVars[parameterName] %}
                                 <option>{{v}}</option>
                                 {% endfor %}
                             </select></label>
@@ -41,8 +39,7 @@
 
                     {% else %}
                     <div class=row>
-                        <label>{{ paras["lable"] }} scanniing Range :</label>
-                        <p> {{paras["values"][0]}} ~ {{ paras["values"][paras["length"]-1] }} </p>
+                        <p> {{ corder[parameterName] }} </p>
                     </div>
                     {% endif %}
                 </li>
@@ -59,8 +56,8 @@
 
         </ul>
 
-        <button id="qFactor-plottest-button" type="button">Plot</button>
-        <button id="qFactor-fittest-button" type="button">Fit</button>
+        <button id="qFactor-plot-button" type="button">Plot</button>
+        <button id="qFactor-fit-button" type="button">Fit</button>
         <!-- <button id="qFactor-test-button" type="button">Test</button> -->
         <div id="qFactor-plot-rawOverview2D"></div>
         <div id="qFactor-plot-fitOverview2D"></div>
