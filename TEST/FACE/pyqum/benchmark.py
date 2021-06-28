@@ -81,8 +81,11 @@ def qestimate():
 	info = get_json_measurementinfo(get_fileName())
 	global qEstimationDict
 	qEstimationDict[session['user_name']] = QEstimation( get_measurementObject('frequency_response') )
-	print("-------------------------------------------",qEstimationDict[session['user_name']].measurementObj.corder)
-	return render_template("blog/benchmark/qestimate.html", info=info)
+	myQEstimation = qEstimationDict[session['user_name']]
+	corder = myQEstimation.measurementObj
+	independentVars = myQEstimation.independentVars
+	freqKey = myQEstimation.freqKey
+	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey)
 
 @bp.route('/get_user', methods=['POST', 'GET'])
 def get_user():
