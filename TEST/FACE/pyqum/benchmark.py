@@ -78,14 +78,23 @@ def get_parametersID():
 
 @bp.route('/qestimate', methods=['POST', 'GET'])
 def qestimate(): 
-	info = get_json_measurementinfo(get_fileName())
-	global qEstimationDict
-	qEstimationDict[session['user_name']] = QEstimation( get_measurementObject('frequency_response') )
 	myQEstimation = qEstimationDict[session['user_name']]
-	corder = myQEstimation.measurementObj
+	corder = myQEstimation.measurementObj.corder
 	independentVars = myQEstimation.independentVars
 	freqKey = myQEstimation.freqKey
+	print("C-Structure is ",corder["C-Structure"])
+	print("freqKey is ",freqKey)
 	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey)
+
+@bp.route('/qestimate_getMeasurement', methods=['POST', 'GET'])
+def qestimate_getMeasurement(): 
+	global qEstimationDict
+	measurementType = request.args.get('measurementType')
+	qEstimationDict[session['user_name']] = QEstimation( get_measurementObject(measurementType) )
+	print("Measurement Obj Init")
+	return "Send Measurement Object"
+
+
 
 @bp.route('/get_user', methods=['POST', 'GET'])
 def get_user():

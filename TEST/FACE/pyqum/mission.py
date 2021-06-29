@@ -1668,58 +1668,12 @@ def mani_singleqb_2ddata():
 
 # region: benchmark
 
-@bp.route( '/send_datainfo', methods=['POST', 'GET'])
-def send_datainfo():
-    # Build the JSON file that benchmark can get the information of measurement
-
-    measurementType = request.args.get('measurementType')
-    current_usr = session['user_name']
-
-    structurelable = ["Flux-Bias","S-Parameter", "IF-Bandwidth", "Power", "Frequency"]
-    htmlId = ["FluxBias","SParameter", "IFBandwidth", "Power", "Frequency"]
-
-
-    parameterInfo = []
-    parameterValues = []
-    c_structure = []
-    c_address = []
-    maxInd = 0
-    for i, v in enumerate(structurelable):
-        try: parameterInfo.append( waveform(M_fresp[current_usr].corder[v]) )
-        except(KeyError): parameterInfo.append( waveform('opt,') )
-        #parameterInfo.append( waveform(M_fresp[current_usr].corder[v]) )
-        maxInd = i
-        c_structure.append( parameterInfo[i].count )
-        print(parameterInfo[i].count)
-
-    #print(M_fresp[current_usr].datadensity)
-    c_structure[maxInd] *= M_fresp[current_usr].datadensity
-    #session['c_fresp_address'] = cdatasearch(M_fresp[current_usr].resumepoint-1, session['c_fresp_structure'])
-    c_address.append( cdatasearch(M_fresp[current_usr].resumepoint-1, c_structure) )
-    c_address = c_address[0]
-
-    # list each parameter range based on data-progress:
-    for i in range(maxInd):
-        parameterValues.append( parameterInfo[i].data[0:c_address[i]+1] )
-    parameterValues.append( parameterInfo[maxInd].data)
-
-    parameterList = [{"lable":lable, "htmlId":hid, "length":len(values), "values":values} for lable,hid,values in zip(structurelable,htmlId,parameterValues)]
-    measurement = { "type":measurementType,  "parameters": parameterList, }
-    MP_BencmarkDict = {
-            "pqfile": str(M_fresp[current_usr].pqfile), "datalocation": M_fresp[current_usr].datalocation, "writtensize": M_fresp[current_usr].writtensize,
-            "measurement": measurement, "c_structure": c_structure, 
-        }
-    set_status("MP_benchmark", MP_BencmarkDict)
-    print("file path: " + MP_BencmarkDict["pqfile"])
-    jsonFileName = "measurement_info["+current_usr+"]"
-    set_json_measurementinfo(MP_BencmarkDict,jsonFileName)
-    return jsonify(MP_BencmarkDict)
-
 def get_measurementObject( measurementType ):
 
     def fResp ():
         mObj = M_fresp[session['user_name']]
         mObj.corder["C-Structure"] = ["Flux-Bias", "S-Parameter", "IF-Bandwidth", "Power", "Frequency"]
+        print("fResp")
         return mObj
     measurementObject = {
         'frequency_response': fResp

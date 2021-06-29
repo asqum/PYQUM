@@ -713,10 +713,9 @@ $('input.char.benchmark').click( function(){
             console.log( data );  
                     
     });
-    $.getJSON( mssnencrpytonian() + '/mssn/send_datainfo', 
-    { measurementType: "fresp" }, 
-        function ( data ) {
-            console.log( data );            
+    $.getJSON( '/benchmark/qestimate_getMeasurement', 
+    { measurementType: "frequency_response" }, 
+        function ( ) {
     }); 
     
     return false;
