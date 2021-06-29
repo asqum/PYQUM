@@ -35,10 +35,10 @@ function openTab(evt, Name) {
     document.getElementById(Name).style.display = "block";
     evt.currentTarget.className += " active";
 
-    if (Name = "qestimate") 
-    {
-        $("div#qestimate").load("{{ url_for('benchmark.qestimate') }}");
-    }
+    // if (Name = "qestimate") 
+    // {
+    //     $("div#qestimate").load("{{ url_for('benchmark.qestimate') }}");
+    // }
 } 
 
 

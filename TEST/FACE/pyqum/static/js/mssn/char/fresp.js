@@ -701,7 +701,8 @@ $('input.fresp.notification').click( function(){
 
 // Event: Benchmark on click (Jacky)
 $('input.char.benchmark').click( function(){
-    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 160);
+
+    $.ajaxSettings.async = false;
 
     listimes_fresp();
     accessdata_fresp();
@@ -713,11 +714,15 @@ $('input.char.benchmark').click( function(){
             console.log( data );  
                     
     });
+
     $.getJSON( '/benchmark/qestimate_getMeasurement', 
     { measurementType: "frequency_response" }, 
         function ( ) {
     }); 
-    
+
+    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
+    $.ajaxSettings.async = true;
+
     return false;
     }
 );

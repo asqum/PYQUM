@@ -72,8 +72,8 @@ def show():
 
 @bp.route('/get_parametersID', methods=['POST', 'GET'])
 def get_parametersID():
-	info = get_json_measurementinfo(get_fileName())
-	htmlID = [ paras["htmlId"] for paras in info["measurement"]["parameters"] ]
+	myQEstimation = qEstimationDict[session['user_name']]
+	htmlID = myQEstimation.measurementObj.corder["C-Structure"]
 	return jsonify(htmlID)
 
 @bp.route('/qestimate', methods=['POST', 'GET'])
@@ -82,16 +82,27 @@ def qestimate():
 	corder = myQEstimation.measurementObj.corder
 	independentVars = myQEstimation.independentVars
 	freqKey = myQEstimation.freqKey
-	print("C-Structure is ",corder["C-Structure"])
-	print("freqKey is ",freqKey)
-	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey)
+
+	hiddenKeys = ["datadensity"]
+	shownInfo = []
+	for k, l in zip(corder["C-Structure"],corder["C_Shape"]):
+		if k not in hiddenKeys:
+			info = {
+				"name": k,
+				"length": l,
+			}
+		shownInfo.append(info)
+
+	varNumber = len(shownInfo)
+
+	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey, varNumber=varNumber, shownInfo=shownInfo)
 
 @bp.route('/qestimate_getMeasurement', methods=['POST', 'GET'])
 def qestimate_getMeasurement(): 
 	global qEstimationDict
 	measurementType = request.args.get('measurementType')
 	qEstimationDict[session['user_name']] = QEstimation( get_measurementObject(measurementType) )
-	print("Measurement Obj Init")
+	print("Measurement Obj Init", qEstimationDict[session['user_name']].measurementObj.corder)
 	return "Send Measurement Object"
 
 

@@ -11,36 +11,41 @@
         <h3>Welcome to Q Estimation</h3>
 
         <ul>
-            {% for parameterName in corder["C-Structure"] %}
+            {% for i in range(varNumber) %}
+                {% set name = shownInfo[i]["name"] %}
+                {% set varlen = shownInfo[i]["length"] %}
                 <li>
                     <div class="row">
                         <div class="col-15">
                             <label>
-                                {{ parameterName }}
+                                {{ name }}
                             </label>
                         </div>
-
                     </div>
-                    {% if corder[C_Shape] != 1 or parameterName != freqKey %} 
-
+                    {% if name != freqKey %} 
+                    {% if varlen != 1 %} 
                     <div class="row">
 
                     <form>   
                         <div class="col-15">
                             <label>
-                                <input class="col-15" type="checkbox" id='check-{{parameterName}}' >
-                                <select class='parameter' id='select-{{parameterName}}' type="text">
-                                {% for v in independentVars[parameterName] %}
+                                <input class="col-15" type="checkbox" id='check-{{name}}' >
+                                <select class='parameter' id='select-{{name}}' type="text">
+                                {% for v in independentVars[name] %}
                                 <option>{{v}}</option>
                                 {% endfor %}
                             </select></label>
                         </div>
                     </form>
-
                     {% else %}
                     <div class=row>
-                        <p> {{ corder[parameterName] }} </p>
+                        <p> {{ corder[name] }} </p>
                     </div>
+                    {% endif %}
+                    {% elif name == freqKey %} 
+                    <div class=row>
+                        <p> {{ corder[name] }} </p>
+                    </div>                      
                     {% endif %}
                 </li>
             {% endfor %}
