@@ -85,7 +85,7 @@ def qestimate():
 
 	htmlInfo = myQEstimation.get_htmlInfo()
 	varNumber = len(htmlInfo)
-
+	print("HTML++++++++++++",varNumber,"++++++++++",htmlInfo)
 	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey, varNumber=varNumber, htmlInfo=htmlInfo)
 
 @bp.route('/qestimate_getMeasurement', methods=['POST', 'GET'])
@@ -170,10 +170,10 @@ class QEstimation():
 		cShape = self.measurementObj.corder["C_Shape"]
 		self.yAxisKey = yAxisKey
 		data = self._get_data_from_Measurement()
-		print("C Shape",tuple(cShape))
+		#print("C Shape",tuple(cShape))
 
 		data = reshape( data, tuple(cShape) )
-		print("Shape",data.shape)
+		#PPprint("Shape",data.shape)
 
 		varsInd.append(1) # Temporary for connect with old data type
 
@@ -196,8 +196,8 @@ class QEstimation():
 			includeAxisInd.append(self.measurementObj.corder["C-Structure"].index(k) )
 			newAxisPosition.append(-len(moveAxisKey)+i)
 
-		print("Selected",selectValInd)
-		print("Axis",includeAxisInd)
+		#print("Selected",selectValInd)
+		#print("Axis",includeAxisInd)
 		data = moveaxis( data, includeAxisInd, newAxisPosition )
 
 
@@ -224,7 +224,7 @@ class QEstimation():
 			self.fitCurve = empty([yAxisLen,xAxisLen])
 
 		myResonator = notch_port() 
-		print("Type",myResonator.porttype)
+		#print("Type",myResonator.porttype)
 		# Creat notch port list
 		for i in range(yAxisLen):
 			# Add data
@@ -245,75 +245,61 @@ class QEstimation():
 	def get_htmlInfo( self ):
 		hiddenKeys = ["datadensity",self.freqKey]
 		htmlInfo = []
-		for i, k, l in enumerate(zip(self.corder["C-Structure"],self.corder["C_Shape"])):
+		for i, (k, l) in enumerate(zip(self.measurementObj.corder["C-Structure"],self.measurementObj.corder["C_Shape"])):
 			if k not in hiddenKeys:
 				info = {
 					"name": k,
 					"length": l,
 					"structurePosition": i,
 				}
-			htmlInfo.append(info)
+				htmlInfo.append(info)
 		return htmlInfo
 
 # Test return plot data in new way
 qEstimationDict = {}
 
-@bp.route('/qestimate/getJson_2Dplot_test',methods=['POST','GET'])
-def getJson_2Dplot_test():
+
+@bp.route('/qestimate/getJson_plot',methods=['POST','GET'])
+def getJson_plot():
+
 	myQEstimation = qEstimationDict[session['user_name']]
 
-	indexData = json.loads(request.args.get('indexData'))
-	dimension = len(indexData["axisIndex"]["data"])
-	print( "axis index data", indexData["axisIndex"]["data"])
-	if dimension == 2:
-		axisInd = indexData["axisIndex"]["data"][1]
+	plotDimension = json.loads(request.args.get('plotDimension'))
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
+	dimension = len(analysisIndex["axisIndex"])
+	if dimension == 1:
+		axisInd = analysisIndex["axisIndex"][0]
 		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
-		print("in 2D", axisInd, myQEstimation.measurementObj.corder["C-Structure"])
-
 	else:
 		yAxisKey = None
-	valueInd = indexData["valueIndex"]["data"]
-
+	valueInd = analysisIndex["valueIndex"]
 	preYAxisKey = myQEstimation.yAxisKey
 	if preYAxisKey != yAxisKey or preYAxisKey == None:
 		myQEstimation.reshape_Data( valueInd, yAxisKey=yAxisKey )
-		print("reshape to ",myQEstimation.iqData.shape)
 
-	plotData = {
-			"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-			yAxisKey: myQEstimation.independentVars[myQEstimation.yAxisKey],
-			"amplitude": sqrt(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2)
+	print("Plot shape",myQEstimation.fitCurve.shape,myQEstimation.iqData.shape)
+
+	if plotDimension == 2:
+		plotData = {
+				"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
+				yAxisKey: myQEstimation.independentVars[myQEstimation.yAxisKey],
+				"amplitude": sqrt(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2)
+			}
+	elif plotDimension == 1:
+		plotData = {
+			"Data_point_frequency": myQEstimation.independentVars[myQEstimation.freqKey],
+			"Data_point_amplitude": sqrt(myQEstimation.iqData[0][valueInd[axisInd]]**2+myQEstimation.iqData[1][valueInd[axisInd]]**2),
 		}
-
-	#print(plotData)
-	return json.dumps(plotData, cls=NumpyEncoder)
-@bp.route('/qestimate/getJson_1Dplot_test',methods=['POST','GET'])
-def getJson_1Dplot_test():
-
-	myQEstimation = qEstimationDict[session['user_name']]
-
-	indexData = json.loads(request.args.get('indexData'))
-	dimension = len(indexData["axisIndex"]["data"])
-	if dimension == 2:
-		axisInd = indexData["axisIndex"]["data"][1]
-		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
-	else:
-		yAxisKey = None
-	valueInd = indexData["valueIndex"]["data"]
-	preYAxisKey = myQEstimation.yAxisKey
-	if preYAxisKey != yAxisKey or preYAxisKey == None:
-		myQEstimation.reshape_Data( valueInd, yAxisKey=yAxisKey )
-	plotData = {
-		"Data_point_frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-		"Data_point_amplitude": sqrt(myQEstimation.iqData[0][valueInd[axisInd]]**2+myQEstimation.iqData[1][valueInd[axisInd]]**2),
-		"Fitted_curve_frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-		"Fitted_curve_amplitude": myQEstimation.fitCurve[valueInd[axisInd]]
-	}
+		if myQEstimation.fitCurve.shape[0] != 0:
+			plotData["Fitted_curve_frequency"]=myQEstimation.independentVars[myQEstimation.freqKey]
+			plotData["Fitted_curve_amplitude"]=myQEstimation.fitCurve[valueInd[axisInd]]
+			
 	#print(plotData)
 	return json.dumps(plotData, cls=NumpyEncoder)
 
-@bp.route('/qestimate/getJson_fitParaPlot_test',methods=['POST','GET'])
-def getJson_fitParaPlot_test():
+
+@bp.route('/qestimate/getJson_fitParaPlot',methods=['POST','GET'])
+def getJson_fitParaPlot():
 
 	myQEstimation = qEstimationDict[session['user_name']]
 	fittingRangeFrom = json.loads(request.args.get('fittingRangeFrom'))
@@ -323,11 +309,11 @@ def getJson_fitParaPlot_test():
 	plotData = myQEstimation.fitResult
 
 
-	indexData = json.loads(request.args.get('indexData'))
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
 
-	dimension = len(indexData["axisIndex"]["data"])
-	if dimension == 2:
-		axisInd = indexData["axisIndex"]["data"][1]
+	dimension = len(analysisIndex["axisIndex"])
+	if dimension == 1:
+		axisInd = analysisIndex["axisIndex"][0]
 		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
 	else:
 		yAxisKey = None
