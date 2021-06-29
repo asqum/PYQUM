@@ -11,80 +11,75 @@ $(document).ready(function(){
 let gAxisIndex = [];
 let gValueIndex = [];
 
-function isListChange(){}
+function get_htmlInfo_python(){
+    let htmlInfo;
+    $.getJSON( '/benchmark/get_parametersID', 
+    {},
+        function (data) {
+            htmlInfo = data;
+    });
+    return htmlInfo
+}
 
 function get_selectInfo(){
 
     $.ajaxSettings.async = false;
 
-    let isAxisChange = false
-    let isValueChange = false
-    
     let axisIndex=[]
     let valueIndex=[]
 
 
-    let indexData = {
-        axisIndex:{
-            isChange:isAxisChange,
-            data:axisIndex},
-        valueIndex:{
-            isChange:isValueChange,
-            data:valueIndex},
+    let AnalysisIndex = {
+        axisIndex:axisIndex,
+        valueIndex:valueIndex,
       }
-    console.log( indexData );
     // $.ajax({
     //     dataType: "json",
     //     url: "/benchmark/get_parametersID",
     //     async: false, 
     //     success: function(htmlIDs) {
-
-
     //     }
     // });
+    let htmlInfo;
     $.getJSON( '/benchmark/get_parametersID', 
-    {}, 
-        function (htmlIDs) {
-            axisIndex = [4];
-            valueIndex = new Array(htmlIDs.length);
-
-            // First time
-            if (gAxisIndex.length == 0){ gAxisIndex = [4]; }
-            if (gValueIndex.length == 0){ gValueIndex = new Array(htmlIDs.length); }
-
-            for ( i in htmlIDs) {
-                if ( htmlIDs[i] != "Frequency" ){
-                    valueIndex[i] = document.getElementById("select-"+htmlIDs[i]).selectedIndex;
-                    console.log(" test" + valueIndex +" add ", valueIndex[i]  );
-
-                    if ( valueIndex[i]!= gValueIndex[i] ){
-                        isValueChange=true;
-                        gValueIndex[i] = valueIndex[i];
-                    }
-                    let axisDimension = axisIndex.length;
-                    if ( document.getElementById("check-"+htmlIDs[i]).checked && axisIndex.length<2 )
-                    {
-                        console.log(htmlIDs[i] +" is checked ");
-                        axisIndex[axisDimension] = Number(i) ;
-                        if ( Number(i)!=gAxisIndex[axisDimension] ){
-                            isAxisChange=true;
-                            gAxisIndex[axisDimension] = axisIndex[axisDimension];
-                        }
-                    }
-                }else{
-                    valueIndex[i]=0;
-                }
-            }
-            indexData.axisIndex.isChange = isAxisChange;
-            indexData.axisIndex.data = axisIndex;
-
-            indexData.valueIndex.isChange = isValueChange;
-            indexData.valueIndex.data = valueIndex;
-
-
+    {},
+        function (data) {
+            htmlInfo = data;
     });
-    console.log( indexData );
-    return indexData
+
+
+    axisIndex = [];
+    valueIndex = new Array(varName.length);
+
+    // Initialize
+    if (gAxisIndex.length == 0){ gAxisIndex = []; }
+    if (gValueIndex.length == 0){ gValueIndex = new Array(varName.length); }
+
+    // Get select parameter index
+    for ( i in htmlInfo.length ) {
+        htmlName = htmlInfo[i]["name"];
+        varLength = htmlInfo[i]["length"];
+        structurePosition = htmlInfo[i]["structurePosition"]
+        if ( varLength = 0 ){ valueIndex[i]=0 }
+        else{
+            valueIndex[i] = document.getElementById("select-"+htmlName).selectedIndex;
+            console.log("Select " + valueIndex[i] );
+        }
+        console.log("valueIndex " + valueIndex );
+
+        let axisDimension = axisIndex.length;
+        if ( document.getElementById("check-"+htmlName).checked && axisIndex.length<2 )
+        {
+            console.log(htmlName +" is checked ");
+            axisIndex[axisDimension] = structurePosition ;
+        }
+
+    }
+    AnalysisIndex.valueIndex = valueIndex;
+    AnalysisIndex.axisIndex = axisIndex;
+
+    console.log( AnalysisIndex );
+    return plotIndex
 }
 
 
@@ -140,9 +135,6 @@ function plot2D( data, axisKeys, plotId ) {
 
 $(function () {
 
-
-
-
     // saving exported mat-data to client's PC:
     $('#qFactor-save-button').on('click', function () {
         console.log("SAVING MAT FILE");
@@ -195,38 +187,33 @@ $(function () {
     $('#qFactor-plot-button').on('click', function () {
         console.log( "2D plot" );
         $.ajaxSettings.async = false;
-        let htmlIDs=[];
-        $.getJSON( '/benchmark/get_parametersID', 
-        {}, 
-            function (id) {
-                htmlIDs = [...id];
-        });
+        let htmlInfo=get_htmlInfo_python();
+        
 
-        let indexData = get_selectInfo();
+        let AnalysisIndex = get_selectInfo();
 
         if (gAxisIndex.length<=2 )
         {
 
             console.log( "2D plot" );
-            console.log( indexData );
+            console.log( AnalysisIndex );
             $.getJSON( '/benchmark/qestimate/getJson_2Dplot',
-            {   indexData: JSON.stringify(indexData),}, 
+            {   AnalysisIndex: JSON.stringify(AnalysisIndex),}, 
                 function (data) {
                 console.log( data );
                 let axisKeys = {
                     x: "frequency",
-                    y: htmlIDs[indexData.axisIndex.data[1]],
+                    y: htmlInfo[AnalysisIndex.axisIndex[0]["name"]],
                     z: "amplitude",
                 }
                 console.log( data );
 
                 plot2D(data, axisKeys, "qFactor-plot-rawOverview2D");
             });
-            let indexData1D = JSON.parse(JSON.stringify(indexData));
+
             console.log(  "1D plot" );
-            console.log(  indexData1D );
             $.getJSON( '/benchmark/qestimate/getJson_1Dplot',
-            {   indexData: JSON.stringify(indexData1D),}, 
+            {   AnalysisIndex: JSON.stringify(AnalysisIndex),}, 
                 function (data) {
                 console.log( data );
                 let axisKeys = {
@@ -252,28 +239,24 @@ $(function () {
 
 
         $.ajaxSettings.async = false;
-        let htmlIDs=[];
-        $.getJSON( '/benchmark/get_parametersID', 
-        {}, 
-            function (id) {
-                htmlIDs = [...id];
-        });
+        let htmlInfo=get_htmlInfo_python();
 
-        let indexData = get_selectInfo();
+
+        let AnalysisIndex = get_selectInfo();
 
         console.log( "Fit plot" );
-        console.log( indexData );
+        console.log( AnalysisIndex );
 
         let fittingRangeFrom = document.getElementById("qFactor-fittingRange-from").value
         let fittingRangeTo = document.getElementById("qFactor-fittingRange-to").value
         console.log( "fit from " + fittingRangeFrom + " to ",  fittingRangeTo);
         $.getJSON( '/benchmark/qestimate/getJson_fitParaPlot',{  
             fittingRangeFrom:fittingRangeFrom, fittingRangeTo:fittingRangeTo,
-            indexData: JSON.stringify(indexData), 
+            AnalysisIndex: JSON.stringify(AnalysisIndex), 
         }, function (data) {
 
             let axisKeys_fitResult = {
-                x: [htmlIDs[indexData.axisIndex.data[1]]],
+                x: [htmlInfo[AnalysisIndex.axisIndex[0]]["name"]],
                 y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr"],
             }
             plot1D( data, axisKeys_fitResult, "qFactor-plot-fittingParameters");

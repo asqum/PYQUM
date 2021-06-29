@@ -12,43 +12,49 @@
 
         <ul>
             {% for i in range(varNumber) %}
-                {% set name = shownInfo[i]["name"] %}
-                {% set varlen = shownInfo[i]["length"] %}
-                <li>
-                    <div class="row">
-                        <div class="col-15">
-                            <label>
-                                {{ name }}
-                            </label>
-                        </div>
+            {% set name = htmlInfo[i]["name"] %}
+            {% set varlen = htmlInfo[i]["length"] %}
+            <li>
+                <div class="row">
+                    <div class="col-15">
+                        <label>
+                            {{ name }}
+                        </label>
                     </div>
-                    {% if name != freqKey %} 
-                    {% if varlen != 1 %} 
-                    <div class="row">
-
-                    <form>   
-                        <div class="col-15">
-                            <label>
-                                <input class="col-15" type="checkbox" id='check-{{name}}' >
-                                <select class='parameter' id='select-{{name}}' type="text">
-                                {% for v in independentVars[name] %}
-                                <option>{{v}}</option>
-                                {% endfor %}
-                            </select></label>
-                        </div>
-                    </form>
-                    {% else %}
-                    <div class=row>
-                        <p> {{ corder[name] }} </p>
+                </div>
+                {% if varlen != 1 %} 
+                <div class="row">
+                <form>   
+                    <div class="col-15">
+                        <label>
+                            <input class="col-15" type="checkbox" id='check-{{name}}' >
+                            <select class='parameter' id='select-{{name}}' type="text">
+                            {% for v in independentVars[name] %}
+                            <option>{{v}}</option>
+                            {% endfor %}
+                        </select></label>
                     </div>
-                    {% endif %}
-                    {% elif name == freqKey %} 
-                    <div class=row>
-                        <p> {{ corder[name] }} </p>
-                    </div>                      
-                    {% endif %}
-                </li>
+                </form>
+                {% else %}
+                <div class=row>
+                    <p> {{ corder[name] }} </p>
+                </div>
+                {% endif %}
             {% endfor %}
+            <!-- Show freqency info -->
+                <div class="row">
+                    <div class="col-15">
+                        <label>
+                            {{ freqKey }}
+                        </label>
+                    </div>
+                </div>
+                <div class=row>
+                    <p> {{ corder[freqKey] }} </p>
+                </div>                     
+            </li>
+        </ul>
+
             <form>
                 <label> Fitting Range : </label>
                 <div class="row">
@@ -59,7 +65,6 @@
                 </div>
             </form>
 
-        </ul>
 
         <button id="qFactor-plot-button" type="button">Plot</button>
         <button id="qFactor-fit-button" type="button">Fit</button>

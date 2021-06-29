@@ -73,8 +73,8 @@ def show():
 @bp.route('/get_parametersID', methods=['POST', 'GET'])
 def get_parametersID():
 	myQEstimation = qEstimationDict[session['user_name']]
-	htmlID = myQEstimation.measurementObj.corder["C-Structure"]
-	return jsonify(htmlID)
+	htmlInfo = myQEstimation.get_htmlInfo()
+	return jsonify(htmlInfo)
 
 @bp.route('/qestimate', methods=['POST', 'GET'])
 def qestimate(): 
@@ -83,19 +83,10 @@ def qestimate():
 	independentVars = myQEstimation.independentVars
 	freqKey = myQEstimation.freqKey
 
-	hiddenKeys = ["datadensity"]
-	shownInfo = []
-	for k, l in zip(corder["C-Structure"],corder["C_Shape"]):
-		if k not in hiddenKeys:
-			info = {
-				"name": k,
-				"length": l,
-			}
-		shownInfo.append(info)
+	htmlInfo = myQEstimation.get_htmlInfo()
+	varNumber = len(htmlInfo)
 
-	varNumber = len(shownInfo)
-
-	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey, varNumber=varNumber, shownInfo=shownInfo)
+	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey, varNumber=varNumber, htmlInfo=htmlInfo)
 
 @bp.route('/qestimate_getMeasurement', methods=['POST', 'GET'])
 def qestimate_getMeasurement(): 
@@ -251,6 +242,18 @@ class QEstimation():
 			# Save fitted curve	
 			self.fitCurve[i] = abs(myResonator.z_data_sim)
 
+	def get_htmlInfo( self ):
+		hiddenKeys = ["datadensity",self.freqKey]
+		htmlInfo = []
+		for i, k, l in enumerate(zip(self.corder["C-Structure"],self.corder["C_Shape"])):
+			if k not in hiddenKeys:
+				info = {
+					"name": k,
+					"length": l,
+					"structurePosition": i,
+				}
+			htmlInfo.append(info)
+		return htmlInfo
 
 # Test return plot data in new way
 qEstimationDict = {}
