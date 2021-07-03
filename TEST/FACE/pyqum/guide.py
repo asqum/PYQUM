@@ -24,8 +24,7 @@ def show():
     with suppress(KeyError):
         print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s "%session['user_name'] + Fore.LIGHTBLUE_EX + "has just logged in as Guest #%s!"%session['user_id'])
         # Security implementation:
-        if not g.user['measurement']:
-            abort(404)
+        if not g.user: abort(404)
         return render_template("blog/guide/guide.html")
     return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
@@ -36,7 +35,7 @@ def calc():
     return render_template("blog/guide/calculate.html", current_usr=current_usr)
 @bp.route('/calc/qfreq/predict', methods=['GET'])
 def calc_qfreq_predict():
-    flux_fraction = int(request.args.get('flux_fraction'))
+    flux_fraction = float(request.args.get('flux_fraction'))
     flux_offset = float(request.args.get('flux_offset'))
     flux_halfill = float(request.args.get('flux_halfill'))
     MT_frequency = float(request.args.get('MT_frequency'))

@@ -307,16 +307,40 @@ $(function() {
     });
 });
 
-//show wiring's page
+// Wiring-Designation by Management:
+function wiring_designation_update() {
+    $('table.BDR-WIRING thead.wiring.designation-update tr').empty();
+    $('table.BDR-WIRING tbody.wiring.designation-update tr').empty();
+    var header = ['Order', 'Category', 'Designation']
+    $.each(header, function (i,val) { $('table.BDR-WIRING thead.wiring.designation-update tr').append('<th>' + val + '</th>'); });
+    $.getJSON('/mach/bdr/wiring/instruments', {
+        qsystem: $('select.bdr.wiring.queue-system').val(),
+     }, function (data) {
+        $.each(data.inst_list, function (i,val) {
+            $('table.BDR-WIRING tbody.wiring.designation-update').append('<tr><td>' + (i+1) + '</td><td>' + val.category + '</td><td>' + val.designation + '</td></tr>');
+        });
+        $.each(data.category, function (i,cat) {
+            $('input.bdr.wiring-designation.'+cat).val(data.instr_organized[cat]);
+        });
+    });
+};
 $(function() {
     $('button.bdr#wiring').bind('click', function() {
         $('div.bdrcontent').hide();
         $('div.bdrcontent#wiring').show();
         $('button.bdr').removeClass('selected');
         $('button.bdr#wiring').addClass('selected');
+        wiring_designation_update();
         return false;
     });
 });
+$(function() {
+    $('select.bdr.wiring.queue-system').on('change', function() {
+        wiring_designation_update();
+        return false;
+    });
+});
+
 
 // Plotly Chart
 // var trace1 = {

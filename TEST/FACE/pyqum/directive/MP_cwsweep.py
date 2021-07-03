@@ -31,7 +31,7 @@ with open(pqfile, 'rb') as datapie:
 	pie = datapie.read(writtensize)
 	selectedata = list(struct.unpack('>' + 'd'*((writtensize)//8), pie))
 
-# y: fluxbias, x: repeat
+# 1. y: fluxbias, x: repeat
 def assembler_fluxbias_repeat(args):
 	(y,x) = args
 	I, Q = 0, 0
@@ -44,7 +44,7 @@ def assembler_fluxbias_repeat(args):
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
 
-# y: xyfreq, x: repeat
+# 2. y: xyfreq, x: repeat
 def assembler_xyfreq_repeat(args):
 	(y,x) = args
 	I, Q = 0, 0
@@ -57,7 +57,7 @@ def assembler_xyfreq_repeat(args):
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
 
-# y: xyfreq, x: fluxbias
+# 3. y: xyfreq, x: fluxbias
 def assembler_xyfreq_fluxbias(args):
 	(y,x) = args
 	I, Q = 0, 0
@@ -70,7 +70,20 @@ def assembler_xyfreq_fluxbias(args):
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
 
-# y: xypowa, x: xyfreq
+# 4. y: freq, x: fluxbias
+def assembler_freq_fluxbias(args):
+	(y,x) = args
+	I, Q = 0, 0
+	for i_prepeat in range(powa_repeat):
+		r_powa = int(ipowa) * powa_repeat + i_prepeat # from the beginning position of repeating power
+		I += selectedata[gotocdata([int(irepeat),x,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),y,2*r_powa],c_cwsweep_structure)]
+		Q += selectedata[gotocdata([int(irepeat),x,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),y,2*r_powa+1],c_cwsweep_structure)]
+	I /= powa_repeat
+	Q /= powa_repeat
+	Amp,P = IQAP(I,Q)
+	return I, Q, Amp, P
+
+# 5. y: xypowa, x: xyfreq
 def assembler_xypowa_xyfreq(args):
 	(y,x) = args
 	I, Q = 0, 0
@@ -83,7 +96,7 @@ def assembler_xypowa_xyfreq(args):
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
 
-# y: freq, x: xyfreq
+# 6. y: freq, x: xyfreq
 def assembler_freq_xyfreq(args):
 	(y,x) = args
 	I, Q = 0, 0
@@ -96,7 +109,7 @@ def assembler_freq_xyfreq(args):
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
 
-# y: powa, x: xyfreq
+# 7. y: powa, x: xyfreq
 def assembler_powa_xyfreq(args):
 	(y,x) = args
 	I, Q = 0, 0
@@ -109,16 +122,14 @@ def assembler_powa_xyfreq(args):
 	Amp,P = IQAP(I,Q)
 	return I, Q, Amp, P
 
-
-# pending:
-# y: freq, x: fluxbias
-def assembler_freq_fluxbias(args):
+# 8. y: powa, x: freq
+def assembler_powa_freq(args):
 	(y,x) = args
 	I, Q = 0, 0
 	for i_prepeat in range(powa_repeat):
-		r_powa = int(ipowa) * powa_repeat + i_prepeat # from the beginning position of repeating power
-		I += selectedata[gotocdata([int(irepeat),x,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),y,2*r_powa],c_cwsweep_structure)]
-		Q += selectedata[gotocdata([int(irepeat),x,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),y,2*r_powa+1],c_cwsweep_structure)]
+		r_powa = y * powa_repeat + i_prepeat # from the beginning position of repeating power
+		I += selectedata[gotocdata([int(irepeat),int(ifluxbias),int(ixyfreq),int(ixypowa),int(isparam),int(iifb),x,2*r_powa],c_cwsweep_structure)]
+		Q += selectedata[gotocdata([int(irepeat),int(ifluxbias),int(ixyfreq),int(ixypowa),int(isparam),int(iifb),x,2*r_powa+1],c_cwsweep_structure)]
 	I /= powa_repeat
 	Q /= powa_repeat
 	Amp,P = IQAP(I,Q)

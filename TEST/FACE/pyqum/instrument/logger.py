@@ -189,15 +189,16 @@ class address:
         
     def lookup(self, instr_name, label=1):
         '''Lookup from the database or the book'''
-        db = get_db()
         if self.mode=='DATABASE':
+            db = get_db()
             self.rs = db.execute('SELECT m.address FROM machine m WHERE m.codename = ?',('%s_%s'%(instr_name,label),)).fetchone()[0]
+            close_db()
         elif self.mode=='TEST':
             try:
                 if label>1: self.rs = self.book[instr_name]["alternative"][label-2]
                 else: self.rs = self.book[instr_name]["resource"]
             except(KeyError): self.rs = None # checking if instrument in the book
-        close_db()
+        
         print('resource: %s' %self.rs)
         return self.rs
     
@@ -673,18 +674,24 @@ def settings(datadensity=1):
                 # 2. Queue-IN and Wait for your turn:
                 M.status = qin(queue, JOBID)
                 while True:
-                    lisqueue(queue)
-                    sleep(7)
-                    if JOBID not in g.jobidlist[queue]: # get out in the middle of waiting
+                    jobsinqueue(queue)
+                    # 2.1. Get out in the middle of waiting:
+                    if JOBID not in g.jobidlist:
                         M.status = "M-JOB CANCELLED OR NOT QUEUED IN PROPERLY"
                         return M
-                    elif g.jobidlist[queue].index(JOBID)==0 and not address().macantouch(list(instr.values())):
+                    # 2.2. It's your turn AND all relevant instruments are free:
+                    elif g.jobidlist.index(JOBID)==0 and not address().macantouch(list(instr.values())):
                         '''All of the following should be fulfilled before taking turn to run:
                             1. ONLY FIRST-IN-LINE get to break the waiting loop
                             2. ALL instruments required are disconnected
                         '''
                         break
-                    print(Fore.YELLOW + "JOBID #%s is waiting every 7 seconds" %JOBID)
+                    # 2.3. Keep waiting behind:
+                    else:
+                        queue_behind = g.jobidlist.index(JOBID)
+                        waiting_interval = 3.17*queue_behind # adjust waiting time based on how far behind in queue
+                        sleep(waiting_interval)
+                        print(Fore.YELLOW + "JOBID #%s is waiting every %s seconds" %(JOBID,waiting_interval))
 
                 # 3. Start RUNNING / WORKING / MEASUREMENT:
                 M.selectday(dayindex, corder, perimeter, instr, datadensity, comment, tag, JOBID)
@@ -743,11 +750,9 @@ def lisqueue(queue):
     '''
     if g.user['measurement']:
         try:
-            g.Queue, g.jobidlist = {}, {}
-
             # Extracting list from SQL-Database: (took-out: "INNER JOIN sample s ON s.id = j.sample_id" since queue-system has to align with sample in order to run experiments)
             db = get_db()
-            g.Queue[queue] = db.execute(
+            g.Queue = db.execute(
                 '''
                 SELECT j.id, j.task, j.startime, u.username, j.instrument, j.comment
                 FROM user u
@@ -756,18 +761,26 @@ def lisqueue(queue):
                 ORDER BY c.id ASC
                 ''' %(queue)
                 ).fetchall()
-            close_db() # must stay open?
-            g.Queue[queue] = [dict(x) for x in g.Queue[queue]]
-            g.jobidlist[queue] = [x['id'] for x in g.Queue[queue]] # use to scheduling tasks in queue
+            close_db()
+            g.Queue = [dict(x) for x in g.Queue]
         
         except: raise
         # print(Fore.BLACK + Back.WHITE + "Clearance for queue %s: %s"%(queue, session['run_clearance']))
     return
+def jobsinqueue(queue):
+    if int(g.user['measurement']) > 0:
+        db = get_db()
+        g.jobidlist = db.execute("SELECT job_id FROM %s ORDER BY id"%queue).fetchall()
+        close_db()
+        g.jobidlist = [dict(x)['job_id'] for x in g.jobidlist] # use to scheduling tasks in queue
+        status = "JOBID-LIST in QUEUE has been extracted"
+    else: status = "Measurement clearance was not found"
+    return status
 
 # QUEUE
 def qin(queue,jobid):
     '''Queue in with a Job'''
-    if g.user['measurement']:
+    if int(g.user['measurement']) > 0:
         try:
             db = get_db()
             db.execute('INSERT INTO %s (job_id) VALUES (%s)' %(queue,jobid)).lastrowid
@@ -782,7 +795,7 @@ def qout(queue,jobid,username):
     '''Queue out without a Job'''
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if g.user['measurement'] and (username==jobrunner):
+    if (int(g.user['measurement']) > 0) and (username==jobrunner):
         try:
             db = get_db()
             db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))
