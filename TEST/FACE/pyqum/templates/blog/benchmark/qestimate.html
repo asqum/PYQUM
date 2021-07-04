@@ -11,62 +11,71 @@
         <h3>Welcome to Q Estimation</h3>
 
         <ul>
-            {% for paras in info["measurement"]["parameters"] %}
-                <li>
-                    {% if paras["lable"]!="Frequency"%} 
-                    <div class="row">
-                        <div class="col-15">
-                            <label>
-                                {{ paras["lable"] }}
-                            </label>
-                        </div>
-
-                    </div>
-
-                    <div class="row">
-
-                    <form> 
-                   
-                        
-                        <div class="col-15">
-                            <label>
-                                <input class="col-15" type="checkbox" id='check-{{paras["htmlId"]}}' >
-                                <select class='parameter' id='select-{{paras["htmlId"]}}' type="text">
-                                {% for v in paras["values"] %}
-                                <option>{{v}}</option>
-                                {% endfor %}
-                            </select></label>
-                        </div>
-                    </form>
-
-                    {% else %}
-                    <div class=row>
-                        <label>{{ paras["lable"] }} scanniing Range :</label>
-                        <p> {{paras["values"][0]}} ~ {{ paras["values"][paras["length"]-1] }} </p>
-                    </div>
-                    {% endif %}
-                </li>
-            {% endfor %}
-            <form>
-                <label> Fitting Range : </label>
+            {% for i in range(varNumber) %}
+            {% set name = htmlInfo[i]["name"] %}
+            {% set varlen = htmlInfo[i]["length"] %}
+            <li>
                 <div class="row">
-                    <div class="col-15"><label> From : </label><input type="text" id="qFactor-fittingRange-from" name="fitfrom"></div>
+                    <div class="col-15">
+                        <label>
+                            {{ name }}
+                        </label>
+                    </div>
                 </div>
+                {% if varlen != 1 %} 
                 <div class="row">
-                    <div class="col-15"><label> To : </label><input type="text" id="qFactor-fittingRange-to" name="fitto"></div>
+                <form>   
+                    <div class="col-15">
+                        <label>
+                            <input class="col-15" type="checkbox" id='check-{{name}}' >
+                            <select class='parameter' id='select-{{name}}' type="text">
+                            {% for v in independentVars[name] %}
+                            <option>{{v}}</option>
+                            {% endfor %}
+                        </select></label>
+                    </div>
+                </form>
+                {% else %}
+                <div class=row>
+                    <p> {{ corder[name] }} </p>
+                </div>
+                {% endif %}
+            {% endfor %}
+            <!-- Show freqency info -->
+                <div class="row">
+                    <div class="col-15">
+                        <label>
+                            {{ freqKey }}
+                        </label>
+                    </div>
+                </div>
+                <div class=row>
+                    <p> {{ corder[freqKey] }} </p>
+                </div>                     
+            </li>
+        </ul>
+
+            <form>
+                <div class="row">
+                <label> Fitting Range : </label>
+                    <div class="col-15"><label> From : </label><input type="text" id="qFactor-fit-range-from" name="fitfrom" value="{{independentVars[freqKey][0]}}"></div>
+                    <div class="col-15"><label> To : </label><input type="text" id="qFactor-fit-range-to" name="fitto" value="{{independentVars[freqKey][-1]}}"></div>
+                <label> Baseline Parameters : </label><input class="col-15" type="checkbox" id='qFactor-fit-baseline-correct' >
+                    <div class="col-15"><label> smoothness : </label><input type="text" id="qFactor-fit-baseline-smoothness" name="fitfrom" value="1e9"></div>
+                    <div class="col-15"><label> asymmetry : </label><input type="text" id="qFactor-fit-baseline-asymmetry" name="fitto" value="0.995"></div>                    
                 </div>
             </form>
 
-        </ul>
 
-        <button id="qFactor-plottest-button" type="button">Plot</button>
-        <button id="qFactor-fittest-button" type="button">Fit</button>
-        <!-- <button id="qFactor-test-button" type="button">Test</button> -->
-        <div id="qFactor-plot-rawOverview2D"></div>
-        <div id="qFactor-plot-fitOverview2D"></div>
-
-        <div id="qFactor-plot-fittingResult"></div>
+        <button id="qFactor-plot-button" type="button">Plot</button>
+        <button id="qFactor-fit-button" type="button">Fit</button>
+        <button id="qFactor-Download-button" type="button">Download</button>
         <div id="qFactor-plot-fittingParameters"></div>
+        <div id="qFactor-plot2D-rawOverview"></div>
+        <div id="qFactor-plot2D-fitOverview"></div>
+
+        <div id="qFactor-plot1D-ampPhase"></div>
+        <div id="qFactor-plot1D-IQ"></div>
 
     </div>
 </body>

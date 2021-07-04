@@ -9,7 +9,7 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and
 
 
 # Json to Javascrpt
@@ -72,17 +72,30 @@ def show():
 
 @bp.route('/get_parametersID', methods=['POST', 'GET'])
 def get_parametersID():
-	info = get_json_measurementinfo(get_fileName())
-	htmlID = [ paras["htmlId"] for paras in info["measurement"]["parameters"] ]
-	return jsonify(htmlID)
+	myQEstimation = qEstimationDict[session['user_name']]
+	htmlInfo = myQEstimation.get_htmlInfo()
+	return jsonify(htmlInfo)
 
 @bp.route('/qestimate', methods=['POST', 'GET'])
 def qestimate(): 
-	info = get_json_measurementinfo(get_fileName())
+	myQEstimation = qEstimationDict[session['user_name']]
+	corder = myQEstimation.measurementObj.corder
+	independentVars = myQEstimation.independentVars
+	freqKey = myQEstimation.freqKey
+
+	htmlInfo = myQEstimation.get_htmlInfo()
+	varNumber = len(htmlInfo)
+	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey, varNumber=varNumber, htmlInfo=htmlInfo)
+
+@bp.route('/qestimate_getMeasurement', methods=['POST', 'GET'])
+def qestimate_getMeasurement(): 
 	global qEstimationDict
-	qEstimationDict[session['user_name']] = QEstimation( get_measurementObject('frequency_response') )
-	print("-------------------------------------------",qEstimationDict[session['user_name']].measurementObj.corder)
-	return render_template("blog/benchmark/qestimate.html", info=info)
+	measurementType = request.args.get('measurementType')
+	qEstimationDict[session['user_name']] = QEstimation( get_measurementObject(measurementType) )
+	print("Measurement Obj Init", qEstimationDict[session['user_name']].measurementObj.corder)
+	return "Send Measurement Object"
+
+
 
 @bp.route('/get_user', methods=['POST', 'GET'])
 def get_user():
@@ -107,10 +120,15 @@ class QEstimation():
 		self.freqKey = "Frequency"
 		self.yAxisKey = None
 
-		self.iqData = empty([0])
-		self.fitCurve = empty([0])
+		self.rawData = {}
+		self.fitCurve = {}
+		self.baseline = {}
+		self.correctedIQData = {}
 		self.fitResult = {}
-
+		self._fitParameters = None
+		self._init_rawData()
+		self._init_fitCurve()
+		self._init_baselineCorrection()
 		C_Shape = []
 		for k in measurementObj.corder["C-Structure"] :
 			# Get wavefrom object from c-order
@@ -138,6 +156,51 @@ class QEstimation():
 				self.optCShpae.remove(s)
 				self.optCStructure.remove(k)
 		'''	
+	def _init_rawData( self, yAxisLen=0, xAxisLen=0 ):
+		self.rawData = {
+			"frequency": empty([xAxisLen]),
+			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
+		}
+
+
+	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
+		self.fitCurve = {
+			"frequency": empty([xAxisLen]),
+			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
+		}
+	def _init_baselineCorrection( self, yAxisLen=0, xAxisLen=0  ):
+		self.baseline = {
+			"frequency": empty([xAxisLen]),
+			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
+		}
+		self.correctedIQData = {
+			"frequency": empty([xAxisLen]),
+			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
+		}
+	@property
+	def fitParameters(self):
+		return self._fitParameters
+
+	@fitParameters.setter
+	def fitParameters(self, fitParameters=None):
+		if fitParameters == None:
+			fitParameters={
+				"range": {
+					"from": 5,
+					"to": 8
+				},
+				"baseline":{
+					"correction": False,
+					"smoothness": 1e9,
+					"asymmetry": 0.995,
+				}
+			}
+		else:	
+			fitParameters["range"]["from"] = float(fitParameters["range"]["from"])*1e9
+			fitParameters["range"]["to"] = float(fitParameters["range"]["to"])*1e9
+		self._fitParameters = fitParameters
+
+
 	def _get_data_from_Measurement( self ):
 		writtensize = self.measurementObj.writtensize
 		pqfile = self.measurementObj.pqfile
@@ -155,11 +218,12 @@ class QEstimation():
 
 		cShape = self.measurementObj.corder["C_Shape"]
 		self.yAxisKey = yAxisKey
+		self._init_baselineCorrection()
 		data = self._get_data_from_Measurement()
-		print("C Shape",tuple(cShape))
+		#print("C Shape",tuple(cShape))
 
 		data = reshape( data, tuple(cShape) )
-		print("Shape",data.shape)
+		#PPprint("Shape",data.shape)
 
 		varsInd.append(1) # Temporary for connect with old data type
 
@@ -182,42 +246,68 @@ class QEstimation():
 			includeAxisInd.append(self.measurementObj.corder["C-Structure"].index(k) )
 			newAxisPosition.append(-len(moveAxisKey)+i)
 
-		print("Selected",selectValInd)
-		print("Axis",includeAxisInd)
+
 		data = moveaxis( data, includeAxisInd, newAxisPosition )
 
-
+		# To 3 dimension
 		for vi in selectValInd:
 			data = data[vi]
-		#data.squeeze()
-		self.iqData = data
+		if data.ndim == 2:
+			data = expand_dims(data,axis=1)
+
+		# Convert to complex number
+		self.rawData = { 
+			"frequency": self.independentVars[self.freqKey]*1e9, #GHz to Hz
+			"iqSignal": data[0]+1j*data[1],
+		}
 
 
-	def do_analysis( self, fittingRange=None ):
+	def do_analysis( self ):
+		fitRange = ( self.fitParameters["range"]["from"], self.fitParameters["range"]["to"] )
 
+		xAxisLen = self.rawData["frequency"].shape[0]
 
-		rawFrequency = self.independentVars[self.freqKey]
-		xAxisLen = rawFrequency.shape[0]
-
-		rawIQ = self.iqData[0]+1j*self.iqData[1]
-
-		# Get 1D or 2D data to self.iqData
+		# Get 1D or 2D data to self.rawData
 		if self.yAxisKey == None:
 			yAxisLen = 1
-			self.fitCurve = empty([xAxisLen])
 		else:
 			yAxisLen = self.independentVars[self.yAxisKey].shape[0]
-			self.fitCurve = empty([yAxisLen,xAxisLen])
 
-		myResonator = notch_port() 
-		print("Type",myResonator.porttype)
+		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
+		self._init_baselineCorrection(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
+
+		# Set x-axis (frequency) of fit curve 
+		self.fitCurve["frequency"] = self.rawData["frequency"]
+
+		if self.fitParameters["baseline"]["correction"] == True :
+			self.baseline["frequency"] = self.rawData["frequency"]
+			self.correctedIQData["frequency"] = self.rawData["frequency"]
+		else: 
+			self._init_baselineCorrection()
+
+		myResonator = notch_port()
+
 		# Creat notch port list
 		for i in range(yAxisLen):
-			# Add data
-			myResonator.add_data(rawFrequency, rawIQ[i])
-			# Fit
-			myResonator.autofit(fcrop=fittingRange)
+			# Fit baseline
+			if self.fitParameters["baseline"]["correction"] == True :
+				fittedBaseline = myResonator.fit_baseline_amp( self.rawData["iqSignal"][i], float(self.fitParameters["baseline"]["smoothness"]), float(self.fitParameters["baseline"]["asymmetry"]),niter=1)
+				correctedIQ = self.rawData[i]/fittedBaseline
+				# Add data
+				myResonator.add_data(self.rawData["frequency"], correctedIQ )
+				# Save Corrected IQData
+				self.correctedIQData["iqSignal"][i] = correctedIQ+1j*correctedIQ
+				# Save baseline
+				self.baseline["iqSignal"][i] = fittedBaseline
+			else: 
+				self._init_baselineCorrection()
 
+				# Add data
+				myResonator.add_data(self.rawData["frequency"], self.rawData["iqSignal"][i])
+			# Fit
+			myResonator.autofit(fcrop=fitRange)
+
+			# Store fitting result in dict of array 
 			for key in myResonator.fitresults.keys():
 				fittingValue = myResonator.fitresults[key]
 				if isnan(fittingValue):
@@ -225,91 +315,141 @@ class QEstimation():
 				if i==0 :
 						self.fitResult[key] = empty(yAxisLen)
 				self.fitResult[key][i] = fittingValue
+			if i==0 :
+				self.fitResult["single_photon_limit"] = empty(yAxisLen)
+				self.fitResult["photons_in_resonator"] = empty(yAxisLen)
+			self.fitResult["single_photon_limit"][i] = myResonator.get_single_photon_limit(unit='dBm',diacorr=True)
+			self.fitResult["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.independentVars["Power"][i],unit='dBm',diacorr=True)
+
 			# Save fitted curve	
-			self.fitCurve[i] = abs(myResonator.z_data_sim)
+			self.fitCurve["iqSignal"][i] = myResonator.z_data_sim
 
+	def get_htmlInfo( self ):
+		hiddenKeys = ["datadensity",self.freqKey]
+		htmlInfo = []
+		for i, (k, l) in enumerate(zip(self.measurementObj.corder["C-Structure"],self.measurementObj.corder["C_Shape"])):
+			if k not in hiddenKeys:
+				info = {
+					"name": k,
+					"length": l,
+					"structurePosition": i,
+				}
+				htmlInfo.append(info)
+		return htmlInfo
 
-# Test return plot data in new way
+# Each user have own QEstimation object
 qEstimationDict = {}
 
-@bp.route('/qestimate/getJson_2Dplot_test',methods=['POST','GET'])
-def getJson_2Dplot_test():
+
+@bp.route('/qestimate/getJson_plot',methods=['POST','GET'])
+def getJson_plot():
+
 	myQEstimation = qEstimationDict[session['user_name']]
 
-	indexData = json.loads(request.args.get('indexData'))
-	dimension = len(indexData["axisIndex"]["data"])
-	print( "axis index data", indexData["axisIndex"]["data"])
-	if dimension == 2:
-		axisInd = indexData["axisIndex"]["data"][1]
-		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
-		print("in 2D", axisInd, myQEstimation.measurementObj.corder["C-Structure"])
+	plotDimension = json.loads(request.args.get('plotDimension'))
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
+	plotType = json.loads(request.args.get('plotType'))
 
+	valueInd = analysisIndex["valueIndex"]
+
+	dimension = len(analysisIndex["axisIndex"])
+	if dimension == 1:
+		axisInd = analysisIndex["axisIndex"][0]
+		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd]
+		yAxisValInd = valueInd[axisInd]
 	else:
 		yAxisKey = None
-	valueInd = indexData["valueIndex"]["data"]
-
+		yAxisValInd = 0
 	preYAxisKey = myQEstimation.yAxisKey
-	if preYAxisKey != yAxisKey or preYAxisKey == None:
-		myQEstimation.reshape_Data( valueInd, yAxisKey=yAxisKey )
-		print("reshape to ",myQEstimation.iqData.shape)
+	if preYAxisKey != yAxisKey or preYAxisKey == None or yAxisKey == None:
+	 	myQEstimation.reshape_Data( valueInd, yAxisKey=yAxisKey )
+	print("Plot type: ", plotType)
+	print("Plot shape Raw: ",myQEstimation.rawData["iqSignal"].shape, "Fit:", myQEstimation.fitCurve["iqSignal"].shape,)
+	print("yAxisKey: ",yAxisKey)
 
-	plotData = {
-			"frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-			yAxisKey: myQEstimation.independentVars[myQEstimation.yAxisKey],
-			"amplitude": sqrt(myQEstimation.iqData[0]**2+myQEstimation.iqData[1]**2)
-		}
+	plotData = {}
 
 	#print(plotData)
-	return json.dumps(plotData, cls=NumpyEncoder)
-@bp.route('/qestimate/getJson_1Dplot_test',methods=['POST','GET'])
-def getJson_1Dplot_test():
+	def plot_1D_show( originalArray ) :
+		fitRangeBoolean = logical_and(myQEstimation.rawData["frequency"]>=float(myQEstimation.fitParameters["range"]["from"]),myQEstimation.rawData["frequency"]<=float(myQEstimation.fitParameters["range"]["to"]) )
+		return originalArray[fitRangeBoolean]
 
-	myQEstimation = qEstimationDict[session['user_name']]
-
-	indexData = json.loads(request.args.get('indexData'))
-	dimension = len(indexData["axisIndex"]["data"])
-	if dimension == 2:
-		axisInd = indexData["axisIndex"]["data"][1]
-		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
-	else:
-		yAxisKey = None
-	valueInd = indexData["valueIndex"]["data"]
-	preYAxisKey = myQEstimation.yAxisKey
-	if preYAxisKey != yAxisKey or preYAxisKey == None:
-		myQEstimation.reshape_Data( valueInd, yAxisKey=yAxisKey )
-	plotData = {
-		"Data_point_frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-		"Data_point_amplitude": sqrt(myQEstimation.iqData[0][valueInd[axisInd]]**2+myQEstimation.iqData[1][valueInd[axisInd]]**2),
-		"Fitted_curve_frequency": myQEstimation.independentVars[myQEstimation.freqKey],
-		"Fitted_curve_amplitude": myQEstimation.fitCurve[valueInd[axisInd]]
+	def plot_2D_amp () :
+		plotData[yAxisKey]= myQEstimation.independentVars[myQEstimation.yAxisKey]
+		plotData["frequency"]= myQEstimation.rawData["frequency"]
+		plotData["amplitude"]= abs(myQEstimation.rawData["iqSignal"])
+		return plotData
+	def plot_1D_amp () :
+		plotData["Data_point_frequency"]= myQEstimation.rawData["frequency"]
+		plotData["Data_point_amplitude"]= abs(myQEstimation.rawData["iqSignal"][yAxisValInd])
+		if myQEstimation.fitCurve["frequency"].shape[0] != 0:
+			plotData["Fitted_curve_frequency"]=plot_1D_show( myQEstimation.fitCurve["frequency"] )
+			plotData["Fitted_curve_amplitude"]=plot_1D_show( abs(myQEstimation.fitCurve["iqSignal"][yAxisValInd]) )
+		if myQEstimation.baseline["frequency"].shape[0] != 0:
+			plotData["Fitted_baseline_frequency"]=myQEstimation.fitCurve["frequency"]
+			plotData["Fitted_baseline_amplitude"]=abs(myQEstimation.baseline["iqSignal"][yAxisValInd])
+		if myQEstimation.correctedIQData["frequency"].shape[0] != 0:
+			plotData["Corr_Data_point_frequency"]=myQEstimation.fitCurve["frequency"]
+			plotData["Corr_Data_point_amplitude"]=abs(myQEstimation.correctedIQData["iqSignal"][yAxisValInd])
+		return plotData
+	def plot_1D_IQ () :
+		plotData["Data_point_I"]= myQEstimation.rawData["iqSignal"][yAxisValInd].real
+		plotData["Data_point_Q"]= myQEstimation.rawData["iqSignal"][yAxisValInd].imag
+		if myQEstimation.fitCurve["frequency"].shape[0] != 0:
+			plotData["Fitted_curve_I"]= plot_1D_show( myQEstimation.fitCurve["iqSignal"][yAxisValInd].real )
+			plotData["Fitted_curve_Q"]= plot_1D_show( myQEstimation.fitCurve["iqSignal"][yAxisValInd].imag )
+		if myQEstimation.baseline["frequency"].shape[0] != 0:
+			plotData["Fitted_baseline_I"]= myQEstimation.baseline["iqSignal"][yAxisValInd].real
+			plotData["Fitted_baseline_Q"]= myQEstimation.baseline["iqSignal"][yAxisValInd].imag
+		if myQEstimation.correctedIQData["frequency"].shape[0] != 0:
+			plotData["Corr_Data_point_I"]=myQEstimation.correctedIQData["iqSignal"][yAxisValInd].real
+			plotData["Corr_Data_point_Q"]=myQEstimation.correctedIQData["iqSignal"][yAxisValInd].imag
+		return plotData
+	plotFunction = {
+		'2D_amp': plot_2D_amp,
+		'1D_amp': plot_1D_amp,
+		'1D_IQ': plot_1D_IQ,
 	}
-	#print(plotData)
-	return json.dumps(plotData, cls=NumpyEncoder)
+	return json.dumps(plotFunction[plotType](), cls=NumpyEncoder)
 
-@bp.route('/qestimate/getJson_fitParaPlot_test',methods=['POST','GET'])
-def getJson_fitParaPlot_test():
+	#return json.dumps(plotData, cls=NumpyEncoder)
+
+
+@bp.route('/qestimate/getJson_fitParaPlot',methods=['POST','GET'])
+def getJson_fitParaPlot():
 
 	myQEstimation = qEstimationDict[session['user_name']]
-	fittingRangeFrom = json.loads(request.args.get('fittingRangeFrom'))
-	fittingRangeTo = json.loads(request.args.get('fittingRangeTo'))
-	fittingRange = ( fittingRangeFrom, fittingRangeTo )
-	myQEstimation.do_analysis( fittingRange=fittingRange )
+	fitParameters = json.loads(request.args.get('fitParameters'))
+
+	myQEstimation.fitParameters = fitParameters
+	print( "Fit parameters: ",fitParameters)
+	myQEstimation.do_analysis()
 	plotData = myQEstimation.fitResult
 
 
-	indexData = json.loads(request.args.get('indexData'))
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
 
-	dimension = len(indexData["axisIndex"]["data"])
-	if dimension == 2:
-		axisInd = indexData["axisIndex"]["data"][1]
-		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] # Temporary for connect with old data type
+	dimension = len(analysisIndex["axisIndex"])
+	if dimension == 1:
+		axisInd = analysisIndex["axisIndex"][0]
+		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][axisInd] 
+		plotData[yAxisKey] = myQEstimation.independentVars[myQEstimation.yAxisKey]
+
 	else:
 		yAxisKey = None
+		plotData["Single_plot"] = array(1)
 
-	plotData[yAxisKey] = myQEstimation.independentVars[myQEstimation.yAxisKey]
 	return json.dumps(plotData, cls=NumpyEncoder)
 
-
+@bp.route('/qestimate/exportMat_fitPara',methods=['POST','GET'])
+def exportMat_fitPara():
+	try:
+		myQEstimation = qEstimationDict[session['user_name']]
+		set_mat_analysis( myQEstimation.fitResult, 'QEstimation[%s]'%session['user_name'] )
+		status = "Success"
+	except:
+		status = "Fail"
+	return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 
 @bp.route('/test',methods=['POST','GET'])
 def testFunc():

@@ -9,7 +9,6 @@ pyqum/authschema.sql
 pyqum/benchmark.py
 pyqum/blog.py
 pyqum/bridge.py
-pyqum/correction.py
 pyqum/display.py
 pyqum/guide.py
 pyqum/machine.py
@@ -26,6 +25,7 @@ pyqum/static/css/brdg.css
 pyqum/static/css/button.css
 pyqum/static/css/dsply.css
 pyqum/static/css/form.css
+pyqum/static/css/guid.css
 pyqum/static/css/mach.css
 pyqum/static/css/modal.css
 pyqum/static/css/mssn.css
@@ -1690,6 +1690,8 @@ pyqum/static/js/dsply/fastream.js
 pyqum/static/js/dsply/game01.js
 pyqum/static/js/dsply/static.js
 pyqum/static/js/dsply/stream.js
+pyqum/static/js/guid/calc.js
+pyqum/static/js/guid/guide.js
 pyqum/static/js/mach/all.js
 pyqum/static/js/mach/alzdg.js
 pyqum/static/js/mach/bdr.js
@@ -1738,6 +1740,8 @@ pyqum/templates/blog/dsply/figstatic.html
 pyqum/templates/blog/dsply/figstream.html
 pyqum/templates/blog/dsply/game01.html
 pyqum/templates/blog/dsply/test.html
+pyqum/templates/blog/guide/calculate.html
+pyqum/templates/blog/guide/guide.html
 pyqum/templates/blog/machn/all.html
 pyqum/templates/blog/machn/alzdg.html
 pyqum/templates/blog/machn/bdr.html
@@ -1755,4 +1759,3 @@ pyqum/templates/blog/msson/char/cwsweep.html
 pyqum/templates/blog/msson/char/fresp.html
 pyqum/templates/blog/msson/char/sqepulse.html
 pyqum/templates/blog/msson/mani/singleqb.html
-pyqum/templates/guide/papers.html
