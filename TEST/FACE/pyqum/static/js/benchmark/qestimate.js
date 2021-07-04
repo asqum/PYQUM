@@ -46,7 +46,6 @@ function get_selectInfo(){
         htmlName = htmlInfo[i]["name"];
         varLength = htmlInfo[i]["length"];
         structurePosition = htmlInfo[i]["structurePosition"]
-        console.log( "htmlInfo i", i, varLength );
         if ( varLength == 1 ){ valueIndex[i]=0 }
         else{
             valueIndex[i] = document.getElementById("select-"+htmlName).selectedIndex;
@@ -59,7 +58,6 @@ function get_selectInfo(){
                 axisIndex[axisDimension] = structurePosition ;
             }
         }
-        console.log("valueIndex " + valueIndex );
 
 
 
@@ -89,7 +87,7 @@ function plot1D ( data, axisKeys, plotId ){
             ix = 0
         }
 
-        if ( axisKeys.yErr.length == 0 ){
+        if ( axisKeys.yErr.length == 0 || axisKeys.yErr[i]=="" ){
             yErr = {
                 type: 'data',
                 array: [],
@@ -141,38 +139,36 @@ function plot2D( data, axisKeys, plotId ) {
 $(function () {
 
     // saving exported mat-data to client's PC:
-    $('#qFactor-save-button').on('click', function () {
-        console.log("SAVING MAT FILE");
-        $.ajaxSettings.async = false;
-
-        let user = "";
-        $.getJSON( '/benchmark/get_user', 
-        {}, 
-            function (name) {
-                user = name;
-        });
+    $('#qFactor-Download-button').on('click', function () {
+        console.log("SAVING CSV FILE");
+    
         // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
-        console.log("STATUS download");
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:5301/mach/uploads/ANALYSIS/resonator_fit[' + user + '].mat',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                console.log("USER HAS DOWNLOADED resonator_fit from " + String(window.URL));
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = 'resonator_fit.mat';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-            }
+        //$.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', { wmoment: wmoment }, function (data) {});
+    
+        $.getJSON( '/benchmark/qestimate/exportMat_fitPara', {
+            //ifreq: $('select.char.fresp.parameter[name="c-freq"]').val()
+        }, function (data) {
+            console.log("STATUS: " + data.status + ", PORT: " + data.qumport);
+            $.ajax({
+                url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/ANALYSIS/QEstimation[' + data.user_name + '].mat',
+                method: 'GET',
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function (data) {
+                    console.log("USER HAS DOWNLOADED QEstimation DATA from " + String(window.URL));
+                    var a = document.createElement('a');
+                    var url = window.URL.createObjectURL(data);
+                    a.href = url;
+                    a.download = 'QEstimation.mat';
+                    document.body.append(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    //$('#qFactor-Download-button').hide();
+                }
+            });
         });
-        $.ajaxSettings.async = true;
-
         return false;
     });
 
@@ -188,19 +184,22 @@ $(function () {
         });
 
     });
-    // Test new plot
+    // plot
     $('#qFactor-plot-button').on('click', function () {
         console.log( "2D plot" );
+        let plotID_2D = "qFactor-plot2D-rawOverview";
+        let plotID_1D_ampPhase = "qFactor-plot1D-ampPhase";
+        let plotID_1D_IQ = "qFactor-plot1D-IQ";
+
         $.ajaxSettings.async = false;
         let htmlInfo=get_htmlInfo_python();
         let analysisIndex = get_selectInfo();
-
-        console.log( "2D plot" );
-        console.log( analysisIndex );
-
+        if ( analysisIndex.axisIndex.length == 1 ){
+        
         $.getJSON( '/benchmark/qestimate/getJson_plot',
-        {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(2)} ,  
+        {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(2), plotType: JSON.stringify("2D_amp"), },
             function (data) {
+            console.log( "2D plot" );
             console.log( data );
             let axisKeys = {
                 x: "frequency",
@@ -208,25 +207,44 @@ $(function () {
                 z: "amplitude",
             }
             console.log( data );
-
-            plot2D(data, axisKeys, "qFactor-plot-rawOverview2D");
+            
+            document.getElementById(plotID_2D).style.display = "block";
+            plot2D(data, axisKeys, plotID_2D);
         });
+        }else{
+            document.getElementById(plotID_2D).style.display = "none";
+        }
 
-        console.log(  "1D plot" );
+
         $.getJSON( '/benchmark/qestimate/getJson_plot',
-        {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1)}, 
+        {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1), plotType: JSON.stringify("1D_amp"), },
             function (data) {
+            console.log( "1D plot" );
             console.log( data );
             let axisKeys = {
-                x: ["Data_point_frequency","Fitted_curve_frequency"],
-                y: ["Data_point_amplitude","Fitted_curve_amplitude"],
+                x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
+                y: ["Data_point_amplitude","Fitted_curve_amplitude","Fitted_baseline_amplitude","Corr_Data_point_amplitude"],
                 yErr: [],
             }
             //console.log( data.Fitted_curve_amplitude );
 
-            plot1D(data, axisKeys, "qFactor-plot-fittingResult");
+            plot1D(data, axisKeys, plotID_1D_ampPhase);
         });
 
+        $.getJSON( '/benchmark/qestimate/getJson_plot',
+        {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1), plotType: JSON.stringify("1D_IQ"), },
+            function (data) {
+            console.log( "1D plot" );
+            console.log( data );
+            let axisKeys = {
+                x: ["Data_point_I","Fitted_curve_I","Fitted_baseline_I","Corr_Data_point_I"],
+                y: ["Data_point_Q","Fitted_curve_Q","Fitted_baseline_Q","Corr_Data_point_Q"],
+                yErr: [],
+            }
+            //console.log( data.Fitted_curve_amplitude );
+
+            plot1D(data, axisKeys, plotID_1D_IQ);
+        });
 
         $.ajaxSettings.async = true;
 
@@ -234,35 +252,67 @@ $(function () {
     //Test fit data
     $('#qFactor-fit-button').on('click', function () {
 
-
         $.ajaxSettings.async = false;
         let htmlInfo=get_htmlInfo_python();
-
-
         let analysisIndex = get_selectInfo();
 
         console.log( "Fit plot" );
         console.log( analysisIndex );
 
-        let fittingRangeFrom = document.getElementById("qFactor-fittingRange-from").value
-        let fittingRangeTo = document.getElementById("qFactor-fittingRange-to").value
-        console.log( "fit from " + fittingRangeFrom + " to ",  fittingRangeTo);
+        let rangeFrom = document.getElementById("qFactor-fit-range-from").value;
+        let rangeTo = document.getElementById("qFactor-fit-range-to").value;
+        let baseline_correction = document.getElementById("qFactor-fit-baseline-correct").checked;
+        let baseline_smoothness = document.getElementById("qFactor-fit-baseline-smoothness").value;
+        let baseline_asymmetry = document.getElementById("qFactor-fit-baseline-asymmetry").value;
+
+        let fitParameters = {
+            range: {
+                from: rangeFrom,
+                to: rangeTo
+            },
+            baseline:{
+                correction: baseline_correction,
+                smoothness: baseline_smoothness,
+                asymmetry: baseline_asymmetry,
+            }
+        }
+        console.log(fitParameters);
+
+
+        // Plot fit parameters
         $.getJSON( '/benchmark/qestimate/getJson_fitParaPlot',{  
-            fittingRangeFrom:fittingRangeFrom, fittingRangeTo:fittingRangeTo,
+            fitParameters: JSON.stringify(fitParameters),
             analysisIndex: JSON.stringify(analysisIndex), 
         }, function (data) {
-
+            let xAxisKey = "Single_plot";
+            if (analysisIndex.axisIndex.length == 1) { xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"] }
             let axisKeys_fitResult = {
-                x: [htmlInfo[analysisIndex.axisIndex[0]]["name"]],
-                y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr"],
-                yErr: ["absQc_err", "Qi_dia_corr_err", "Ql_err", "fr_err"],
+                x: [xAxisKey],
+                y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr", "single_photon_limit", "photons_in_resonator"],
+                yErr: ["absQc_err", "Qi_dia_corr_err", "Ql_err", "fr_err", "", ""],
             }
             plot1D( data, axisKeys_fitResult, "qFactor-plot-fittingParameters");
 
-            
-
-        $.ajaxSettings.async = true;
         });
+
+
+        // Renew 1D plot
+        // $.getJSON( '/benchmark/qestimate/getJson_plot',
+        // {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1)}, 
+        //     function (data) {
+        //     console.log( "1D plot" );
+        //     console.log( data );
+        //     let axisKeys = {
+        //         x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
+        //         y: ["Data_point_amplitude","Fitted_curve_amplitude","Fitted_baseline_amplitude","Corr_Data_point_amplitude"],
+        //         yErr: [],
+        //     }
+        //     //console.log( data.Fitted_curve_amplitude );
+
+        //     plot1D(data, axisKeys, "qFactor-plot-fittingResult");
+        // });
+        $.ajaxSettings.async = true;
+
     });
 
 });

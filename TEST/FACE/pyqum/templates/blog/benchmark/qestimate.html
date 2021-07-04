@@ -56,24 +56,26 @@
         </ul>
 
             <form>
+                <div class="row">
                 <label> Fitting Range : </label>
-                <div class="row">
-                    <div class="col-15"><label> From : </label><input type="text" id="qFactor-fittingRange-from" name="fitfrom"></div>
-                </div>
-                <div class="row">
-                    <div class="col-15"><label> To : </label><input type="text" id="qFactor-fittingRange-to" name="fitto"></div>
+                    <div class="col-15"><label> From : </label><input type="text" id="qFactor-fit-range-from" name="fitfrom" value="{{independentVars[freqKey][0]}}"></div>
+                    <div class="col-15"><label> To : </label><input type="text" id="qFactor-fit-range-to" name="fitto" value="{{independentVars[freqKey][-1]}}"></div>
+                <label> Baseline Parameters : </label><input class="col-15" type="checkbox" id='qFactor-fit-baseline-correct' >
+                    <div class="col-15"><label> smoothness : </label><input type="text" id="qFactor-fit-baseline-smoothness" name="fitfrom" value="1e9"></div>
+                    <div class="col-15"><label> asymmetry : </label><input type="text" id="qFactor-fit-baseline-asymmetry" name="fitto" value="0.995"></div>                    
                 </div>
             </form>
 
 
         <button id="qFactor-plot-button" type="button">Plot</button>
         <button id="qFactor-fit-button" type="button">Fit</button>
-        <!-- <button id="qFactor-test-button" type="button">Test</button> -->
-        <div id="qFactor-plot-rawOverview2D"></div>
-        <div id="qFactor-plot-fitOverview2D"></div>
-
-        <div id="qFactor-plot-fittingResult"></div>
+        <button id="qFactor-Download-button" type="button">Download</button>
         <div id="qFactor-plot-fittingParameters"></div>
+        <div id="qFactor-plot2D-rawOverview"></div>
+        <div id="qFactor-plot2D-fitOverview"></div>
+
+        <div id="qFactor-plot1D-ampPhase"></div>
+        <div id="qFactor-plot1D-IQ"></div>
 
     </div>
 </body>
