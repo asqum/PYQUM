@@ -19,7 +19,8 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 
 # Load instruments
 from pyqum import get_db, close_db
-from pyqum.instrument.machine import DC, DSO, YOKO, KEIT, TKAWG, ALZDG
+from pyqum.instrument.machine import SDAWG as TKAWG
+from pyqum.instrument.machine import DC, DSO, YOKO, KEIT, ALZDG
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.toolbox import match, waveform, pauselog
 from pyqum.instrument.analyzer import IQAParray, pulse_baseband, UnwraPhase

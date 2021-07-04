@@ -25,9 +25,8 @@ def Initiate(which, mode='DATABASE', current=False):
         if moduleID < 0: print(Fore.RED + "Module open error:", moduleID)
         else: print(Fore.GREEN + "%s-%s's connection Initialized >> ID: %s, Name: %s, Chassis: %s, Slot: %s" % (mdlname,which, moduleID, module.getProductName(), module.getChassis(), module.getSlot()))
         
-        if current:
-            print(Fore.YELLOW + "DC-mode for DAC: ALL 4 channels")
-            for i in range(4): module.channelWaveShape(i+1, keysightSD1.SD_Waveshapes.AOU_HIZ)
+        if current: print(Fore.YELLOW + "DC-mode for DAC: ALL 4 channels") # to align with YOKO-DC
+        for i in range(4): module.channelWaveShape(i+1, keysightSD1.SD_Waveshapes.AOU_HIZ) # always HiZ ALL 4-channels
 
         set_status(mdlname, dict(state='connected'), which)
         ad.update_machine(1, "%s_%s"%(mdlname,which))
@@ -43,7 +42,7 @@ def triggerio(module, direction):
     direction: 0: output, 1: input
     '''
     return module.triggerIOconfig(int(direction))
-def run(module, channels=[1,2,3,4]):
+def play(module, channels=[1,2,3,4]):
     mask = 0
     for ch in channels: mask += 2**(ch-1)        
     return module.AWGstartMultiple(mask)
@@ -173,7 +172,7 @@ def compose_DAC(module, channel, pulsedata, markerMode=0, trgIOmask=0, markerVal
     sendWaveform(module, 0, pulsedata)
     queueWaveform(module, channel, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
     configureMarker(module, channel, markerMode, trgIOmask, markerValue)
-    run(module, [1,channel])
+    # play(module, [1,channel])
     
     return module
 
@@ -181,7 +180,7 @@ def compose_DAC(module, channel, pulsedata, markerMode=0, trgIOmask=0, markerVal
 def output(module, state):
     if state:
         for i in range(4): offset(module, i+1, 0) # zero ALL 4 channels
-        run(module, [1,2,3,4]) # open ALL 4 channels
+        play(module, [1,2,3,4]) # open ALL 4 channels
     else: stop(module, [1,2,3,4])
     return state
 def sweep(module, dcvalue, channel=1):
@@ -237,7 +236,7 @@ def test():
     sendWaveform(m1, 0, pulseq.music)
     queueWaveform(m1, 3, 0)
     configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    run(m1, [3])
+    play(m1, [3])
     
     input("Any key to RUN 2nd WAVE from AWG-1: ")
     pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,370,0;FLAT/,300000,0.95;")
@@ -246,7 +245,7 @@ def test():
     resendWaveform(m1, 0, pulseq.music)
     # queueWaveform(m1, 3, 0)
     # configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    run(m1, [3])
+    play(m1, [3])
 
     input("Any key to RUN 3rd WAVE from AWG-1: ")
     pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,370,0;FLAT/,500000,0.95;")
@@ -255,7 +254,7 @@ def test():
     resendWaveform(m1, 0, pulseq.music)
     # queueWaveform(m1, 3, 0)
     # configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    run(m1, [3])
+    play(m1, [3])
 
     # m2.triggerIOread()
     input("Any key to RUN 1st WAVE from AWG-2: ")
@@ -271,7 +270,7 @@ def test():
     sendWaveform(m2, 1, pulseq.music)
     queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
     configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    run(m2, [1,3])
+    play(m2, [1,3])
 
     input("Any key to RUN 2nd WAVE from AWG-2: ")
     pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,300000,0.95;")
@@ -286,7 +285,7 @@ def test():
     sendWaveform(m2, 1, pulseq.music)
     queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
     configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    run(m2, [1,3])
+    play(m2, [1,3])
 
     input("Any key to RUN 3rd WAVE from AWG-2: ")
     pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,500000,0.95;")
@@ -301,7 +300,7 @@ def test():
     sendWaveform(m2, 1, pulseq.music)
     queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
     configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    run(m2, [1,3])
+    play(m2, [1,3])
 
     # CLOSING:
     input("Any key to CLOSE AWG-1: ")
