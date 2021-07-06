@@ -4,6 +4,7 @@ $(document).ready(function(){
     $("a.new#cwsweep-job").text('JOBID: ');
     // get_repeat_cwsweep();
     window.cwsweepcomment = "";
+    window.cwsweep_jobids = "0";
     $('button.char#cwsweep-savecsv').hide();
     $('button.char#cwsweep-savemat').hide();
     $('div input.cwsweep.notification').hide();
@@ -49,7 +50,8 @@ function listimes_cwsweep() {
         $('.modal.new.cwsweep').toggleClass('is-visible');
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
-            $("textarea.char.cwsweep[name='ecomment']").val(cwsweepcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
+            $("textarea.char.cwsweep[name='ecomment']").val(cwsweepcomment.replace("\n"+cwsweepcomment.split("\n")[cwsweepcomment.split("\n").length-1], '')
+                 + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + cwsweep_jobids); // directly replace the old T6
         });
 
     } else if (wday == 's') {
@@ -73,6 +75,9 @@ function accessdata_cwsweep() {
     }, function (data) {
         // Indicate JOBID:
         $("a.new#cwsweep-job").text('JOBID: ' + String(data.JOBID));
+        cwsweep_jobids = [cwsweep_jobids.split(',')[0], cwsweep_jobids.split(',')[1]]
+        cwsweep_jobids = String(data.JOBID) + ',' + cwsweep_jobids.join(',') // also inside edittable-comment: limit to just 3 previous Job-ID(s)
+        
         // checking parameters:
         console.log(data.corder);
         // load each command:
@@ -650,6 +655,7 @@ $(function () {
             window.xtitle = data.xtitle;
             window.ytitle = data.ytitle;
             window.plot2dmessage = data.message;
+            // console.log("PLOTTING 2D: " + plot2dmessage);
             // Amplitude (default) or Phase
             $('select.char.data.cwsweep[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha (Raw)', value: 'Pha' }));
             // Data grooming
