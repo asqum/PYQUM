@@ -7,75 +7,62 @@
 
 <body class="benchmark">
     <div class="qestimatecontent">
-
         <h3>Welcome to Q Estimation</h3>
 
-        <ul>
-            {% for i in range(varNumber) %}
-            {% set name = htmlInfo[i]["name"] %}
-            {% set varlen = htmlInfo[i]["length"] %}
-            <li>
-                <div class="row">
-                    <div class="col-15">
-                        <label>
-                            {{ name }}
-                        </label>
-                    </div>
+        <div class="flex-allPara">
+            <div class="allMeasurePara">
+                {% for i in range(varNumber) %}
+                {% set name = htmlInfo[i]["name"] %}
+                {% set varlen = htmlInfo[i]["length"] %}
+                <div class="measurePara">
+                    <div class="measureParaSelect"><label>{{ name }}</label></div>
+                    {% if varlen != 1 %} 
+                        <div class="measureParaSelect"><input type="checkbox" id='check-{{name}}' ></div>
+                        <div class="measureParaSelect"><select id='select-{{name}}' type="text">
+                        {% for v in independentVars[name] %}
+                        <option>{{v}}</option>
+                        {% endfor %}
+                        </select></div>
+                    {% else %}
+                    <div class="measureCOrder"><p> {{ corder[name] }} </p></div>
+                    {% endif %}
                 </div>
-                {% if varlen != 1 %} 
-                <div class="row">
-                <form>   
-                    <div class="col-15">
-                        <label>
-                            <input class="col-15" type="checkbox" id='check-{{name}}' >
-                            <select class='parameter' id='select-{{name}}' type="text">
-                            {% for v in independentVars[name] %}
-                            <option>{{v}}</option>
-                            {% endfor %}
-                        </select></label>
-                    </div>
-                </form>
-                {% else %}
-                <div class=row>
-                    <p> {{ corder[name] }} </p>
+                {% endfor %}
+                <!-- Show freqency info -->
+                <div class="measurePara">
+                    <label class="measureParaSelect">{{ freqKey }} </label>
+                    <p class="measureCOrder"> {{ corder[freqKey] }} </p>
                 </div>
-                {% endif %}
-            {% endfor %}
-            <!-- Show freqency info -->
-                <div class="row">
-                    <div class="col-15">
-                        <label>
-                            {{ freqKey }}
-                        </label>
-                    </div>
-                </div>
-                <div class=row>
-                    <p> {{ corder[freqKey] }} </p>
-                </div>                     
-            </li>
-        </ul>
+                <button id="qFactor-plot-button" type="submit">Plot</button>
 
-            <form>
-                <div class="row">
-                <label> Fitting Range : </label>
-                    <div class="col-15"><label> From : </label><input type="text" id="qFactor-fit-range-from" name="fitfrom" value="{{independentVars[freqKey][0]}}"></div>
-                    <div class="col-15"><label> To : </label><input type="text" id="qFactor-fit-range-to" name="fitto" value="{{independentVars[freqKey][-1]}}"></div>
-                <label> Baseline Parameters : </label><input class="col-15" type="checkbox" id='qFactor-fit-baseline-correct' >
-                    <div class="col-15"><label> smoothness : </label><input type="text" id="qFactor-fit-baseline-smoothness" name="fitfrom" value="1e9"></div>
-                    <div class="col-15"><label> asymmetry : </label><input type="text" id="qFactor-fit-baseline-asymmetry" name="fitto" value="0.995"></div>                    
+            </div>
+
+            <div class="allFitPara">
+                <div class="fitPara">
+                    <div class="measureParaSelect"><label> Fitting Range : </label></div>
+                    <div class="measureParaSelect"><label> From : </label><input type="text" id="qFactor-fit-range-from" name="fitfrom" value="{{independentVars[freqKey][0]}}"></div>
+                    <div class="measureParaSelect"><label> To : </label><input type="text" id="qFactor-fit-range-to" name="fitto" value="{{independentVars[freqKey][-1]}}"></div>
                 </div>
-            </form>
+                <div class="fitPara">
+                    <div class="measureParaSelect"><label> Baseline Parameters : </label></div>
+                    <input class="measureParaSelect" type="checkbox" id='qFactor-fit-baseline-correct' >
+                    <div class="measureParaSelect"><label> smoothness : </label><input type="text" id="qFactor-fit-baseline-smoothness" name="fitfrom" value="1e9"></div>
+                    <div class="measureParaSelect"><label> asymmetry : </label><input type="text" id="qFactor-fit-baseline-asymmetry" name="fitto" value="0.995"></div>  
+                </div> 
+                <button id="qFactor-fit-button" type="submit">Fit</button>
+                <button id="qFactor-Download-button" type="submit">Download</button>
 
+            </div> 
+             
+        </div>
 
-        <button id="qFactor-plot-button" type="button">Plot</button>
-        <button id="qFactor-fit-button" type="button">Fit</button>
-        <button id="qFactor-Download-button" type="button">Download</button>
         <div id="qFactor-plot-fittingParameters"></div>
         <div id="qFactor-plot2D-rawOverview"></div>
         <div id="qFactor-plot2D-fitOverview"></div>
-
-        <div id="qFactor-plot1D-ampPhase"></div>
-        <div id="qFactor-plot1D-IQ"></div>
+        <div class="row">
+            <div class="col" style="width:60%" id="qFactor-plot1D-ampPhase"></div>
+            <div class="col" style="width:30%" id="qFactor-plot1D-IQ"></div>
+        </div>
 
     </div>
 </body>

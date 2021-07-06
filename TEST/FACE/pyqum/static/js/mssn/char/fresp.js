@@ -729,7 +729,7 @@ $('input.char.benchmark').click( function(){
                     
     });
 
-    $.getJSON( '/benchmark/qestimate_getMeasurement', 
+    $.getJSON( '/benchmark/benchmark_getMeasurement', 
     { measurementType: "frequency_response" }, 
         function ( ) {
     }); 

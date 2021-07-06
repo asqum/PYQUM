@@ -203,7 +203,7 @@ $(function () {
             console.log( data );
             let axisKeys = {
                 x: "frequency",
-                y: htmlInfo[analysisIndex.axisIndex[0]["name"]],
+                y: htmlInfo[analysisIndex.axisIndex[0]]["name"],
                 z: "amplitude",
             }
             console.log( data );
@@ -219,7 +219,7 @@ $(function () {
         $.getJSON( '/benchmark/qestimate/getJson_plot',
         {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1), plotType: JSON.stringify("1D_amp"), },
             function (data) {
-            console.log( "1D plot" );
+            console.log( "1D amp plot" );
             console.log( data );
             let axisKeys = {
                 x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
@@ -234,7 +234,7 @@ $(function () {
         $.getJSON( '/benchmark/qestimate/getJson_plot',
         {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1), plotType: JSON.stringify("1D_IQ"), },
             function (data) {
-            console.log( "1D plot" );
+            console.log( "1D IQ plot" );
             console.log( data );
             let axisKeys = {
                 x: ["Data_point_I","Fitted_curve_I","Fitted_baseline_I","Corr_Data_point_I"],
