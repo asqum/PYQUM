@@ -25,10 +25,8 @@ def Initiate(which, mode='DATABASE', current=False):
         if moduleID < 0: print(Fore.RED + "Module open error:", moduleID)
         else: print(Fore.GREEN + "%s-%s's connection Initialized >> ID: %s, Name: %s, Chassis: %s, Slot: %s" % (mdlname,which, moduleID, module.getProductName(), module.getChassis(), module.getSlot()))
         
-        if current:
-            # PENDING: multi-channel DC
-            print(Fore.YELLOW + "DC mode for DAC (only channel-1 will be used)")
-            module.channelWaveShape(int(current), keysightSD1.SD_Waveshapes.AOU_HIZ)
+        if current: print(Fore.YELLOW + "DC-mode for DAC: ALL 4 channels") # to align with YOKO-DC
+        for i in range(4): module.channelWaveShape(i+1, keysightSD1.SD_Waveshapes.AOU_HIZ) # always HiZ ALL 4-channels
 
         set_status(mdlname, dict(state='connected'), which)
         ad.update_machine(1, "%s_%s"%(mdlname,which))
@@ -44,7 +42,7 @@ def triggerio(module, direction):
     direction: 0: output, 1: input
     '''
     return module.triggerIOconfig(int(direction))
-def run(module, channels=[1,2,3,4]):
+def play(module, channels=[1,2,3,4]):
     mask = 0
     for ch in channels: mask += 2**(ch-1)        
     return module.AWGstartMultiple(mask)
@@ -174,29 +172,33 @@ def compose_DAC(module, channel, pulsedata, markerMode=0, trgIOmask=0, markerVal
     sendWaveform(module, 0, pulsedata)
     queueWaveform(module, channel, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
     configureMarker(module, channel, markerMode, trgIOmask, markerValue)
-    run(module, [1,channel])
+    # play(module, [1,channel])
     
     return module
 
 # Dedicated for DC-sweep:
 def output(module, state):
     if state:
-        offset(module, 1, 0)
-        run(module, [1])
-    else: stop(module, [1])
+        for i in range(4): offset(module, i+1, 0) # zero ALL 4 channels
+        play(module, [1,2,3,4]) # open ALL 4 channels
+    else: stop(module, [1,2,3,4])
     return state
-def sweep(module, dcvalue):
+def sweep(module, dcvalue, channel=1):
     '''DC amplitude in volts (–1.5 V to 1.5 V)
     '''
-    module.channelWaveShape(1, keysightSD1.SD_Waveshapes.AOU_DC)
-    status = module.channelAmplitude(1, float(dcvalue))
+    try:
+        module.channelWaveShape(int(channel), keysightSD1.SD_Waveshapes.AOU_DC)
+        status = module.channelAmplitude(int(channel), float(dcvalue))
+        print(Fore.GREEN + "Sweeping DCZ Channel-%s at %s"%(channel,dcvalue))
+    except(ValueError): print(Fore.CYAN + "DCZ is NOT sweeping Channel-%s"%(channel))
+    except Exception as err: print("Error:\n%s"%err)
     return status
 
 
 def close(module, which, reset=True, mode='DATABASE'):
     if reset:
         module.waveformFlush() # clear all old-waveforms in RAM
-        for i in range(4): 
+        for i in range(4): # close ALL 4 channels
             module.AWGstop(i+1) # stop awg
             module.AWGflush(i+1)
             module.channelWaveShape(i+1, -1) # -1: HiZ
@@ -219,7 +221,6 @@ def test():
     # INITIATION:
     m1 = Initiate(1, 'TEST')
     m2 = Initiate(2, 'TEST')
-    # m3 = Initiate(current=True, which=3, mode='TEST') # DC
 
     # PREPARATION:
     prepare_DAC(m1, 3, maxlevel=1.5, trigbyPXI=2, mode=1, sync=1)
@@ -235,7 +236,7 @@ def test():
     sendWaveform(m1, 0, pulseq.music)
     queueWaveform(m1, 3, 0)
     configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    run(m1, [3])
+    play(m1, [3])
     
     input("Any key to RUN 2nd WAVE from AWG-1: ")
     pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,370,0;FLAT/,300000,0.95;")
@@ -244,7 +245,7 @@ def test():
     resendWaveform(m1, 0, pulseq.music)
     # queueWaveform(m1, 3, 0)
     # configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    run(m1, [3])
+    play(m1, [3])
 
     input("Any key to RUN 3rd WAVE from AWG-1: ")
     pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,370,0;FLAT/,500000,0.95;")
@@ -253,7 +254,7 @@ def test():
     resendWaveform(m1, 0, pulseq.music)
     # queueWaveform(m1, 3, 0)
     # configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    run(m1, [3])
+    play(m1, [3])
 
     # m2.triggerIOread()
     input("Any key to RUN 1st WAVE from AWG-2: ")
@@ -269,7 +270,7 @@ def test():
     sendWaveform(m2, 1, pulseq.music)
     queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
     configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    run(m2, [1,3])
+    play(m2, [1,3])
 
     input("Any key to RUN 2nd WAVE from AWG-2: ")
     pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,300000,0.95;")
@@ -284,7 +285,7 @@ def test():
     sendWaveform(m2, 1, pulseq.music)
     queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
     configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    run(m2, [1,3])
+    play(m2, [1,3])
 
     input("Any key to RUN 3rd WAVE from AWG-2: ")
     pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,500000,0.95;")
@@ -299,22 +300,26 @@ def test():
     sendWaveform(m2, 1, pulseq.music)
     queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
     configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    run(m2, [1,3])
-    
-    # DC test:
-    # output(m3, 1)
-    # dcvalues = [0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.15]
-    # for val in dcvalues:
-    #     input("Any key to output DC=%sV from AWG-3: " %val)
-    #     sweep(m3, str(val))
+    play(m2, [1,3])
 
     # CLOSING:
     input("Any key to CLOSE AWG-1: ")
     close(m1, 1, True, 'TEST')
     input("Any key to CLOSE AWG-2: ")
     close(m2, 2, True, 'TEST')
-    # input("Any key to CLOSE AWG-3: ")
-    # close(m3, 3, True, 'TEST')
+
+
+    # Improvised DC test for Module 1-7:
+    m3 = Initiate(current=True, which=3, mode='TEST')
+    output(m3, 1)
+    dcvalues = [x*-0.01 for x in range(30)]
+    for val in dcvalues:
+        input("Any key to output DC=%sV from AWG-3: " %val)
+        sweep(m3, str(val), channel=2)
+
+    input("Any key to CLOSE AWG-3: ")
+    output(m3, 0)
+    close(m3, 3, True, 'TEST')
 
     return
 

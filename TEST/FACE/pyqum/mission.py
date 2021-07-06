@@ -1,11 +1,12 @@
 # region: Loading Modules
 from colorama import init, Back, Fore
+from numpy.lib.npyio import loads
 init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 from os.path import getmtime
 myname = bs(__file__).split('.')[0] # This py-script's name
 
-import requests, json, ast
+import json, ast
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
@@ -16,8 +17,8 @@ from random import random
 import numba as nb
 
 from pyqum import get_db, close_db
-from pyqum.instrument.dilution import bluefors
-from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, set_json_measurementinfo, jobtag
+from pyqum.instrument.logger import get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
+                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobsinqueue
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
@@ -86,7 +87,6 @@ def show(status="Mission started"):
 # region: ALL
 @bp.route('/all', methods=['GET'])
 def all(): 
-    global systemlist
     systemlist = [x['system'] for x in get_db().execute('SELECT system FROM queue').fetchall()]
     close_db()
     if g.user:
@@ -104,13 +104,8 @@ def all():
     return render_template("blog/msson/all.html", systemlist=systemlist, queue=queue)
 @bp.route('/all/job', methods=['GET']) # PENDING: horizontal tabs for different Quantum Universal Machines in the future
 def all_job():
-    g.jobidlist = {}
-    try: 
-        for q in systemlist: g.jobidlist[q] = []
-    except: 
-        return("<h3>SERVER HAS BEEN REFRESHED</h3><h3>Please press F5 to reload.</h3><h3 style='color:blue;'>Courtesy from HoDoR</h3>")
-        
     queue = request.args.get('queue')
+    jobsinqueue(queue)
     try: 
         missioname = get_db().execute( "SELECT mission FROM queue WHERE system = ?", (queue,) ).fetchone()['mission']
         close_db()
@@ -127,7 +122,7 @@ def all_job():
     for j in joblist:
         # print("Progress: %s" %j['progress'])
         # print("j.tag: %s" %j['tag'])
-        if (j['tag'] == "") and (j['id'] not in g.jobidlist[queue]) and (j['progress'] is None or j['progress'] < 100): # not allowing queued-job to be accessed to avoid database locks
+        if (j['tag'] == "") and (j['id'] not in g.jobidlist) and (j['progress'] is None or j['progress'] < 100): # not allowing queued-job to be accessed to avoid database locks
             try:
                 meas = measurement(mission=missioname, task=j['task'], owner=owner, sample=samplename) # but data is stored according to the owner of the sample
                 meas.selectday(meas.daylist.index(j['dateday']))
@@ -159,12 +154,12 @@ def all_queue():
         close_db()
     except(TypeError): 
         asample = ''
-    session['run_clearance'] = bool( asample==get_status("MSSN")[session['user_name']]['sample'] and int(g.user['measurement'])>1 )
+    session['run_clearance'] = bool( asample==get_status("MSSN")[session['user_name']]['sample'] and int(g.user['measurement'])>0 )
 
     # Security:
-    try: print(Fore.YELLOW + "CHECKING OUT QUEUE for %s: %s" %(queue,g.Queue[queue]))
+    try: print(Fore.YELLOW + "CHECKING OUT QUEUE for %s: %s" %(queue,g.Queue))
     except: abort(404)
-    return jsonify(QUEUE=g.Queue[queue], loginuser=session['user_name'])
+    return jsonify(QUEUE=g.Queue, loginuser=session['user_name'], access_active_job=session['run_clearance'])
 @bp.route('/all/queue/out', methods=['GET'])
 def all_queue_out():
     '''THIS IS ALSO PURPOSED TO STOP THE MEASUREMENT, EFFECTIVELY REPLACING THE PAUSE BUTTON & PAUSE-LOG FOR CERTAIN TASK!'''
@@ -275,11 +270,11 @@ def char_fresp_new():
         powa = request.args.get('powa')
         freq = request.args.get('freq')
         comment = request.args.get('comment').replace("\"","")
-        simulate = bool(int(request.args.get('simulate')))
+        PERIMETER = json.loads(request.args.get('PERIMETER'))
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
         TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
-        Run_fresp[TOKEN] = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday)
-        return jsonify(testeach=simulate, status=Run_fresp[TOKEN].status)
+        Run_fresp[TOKEN] = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, perimeter=PERIMETER)
+        return jsonify(status=Run_fresp[TOKEN].status)
     else: return show()
 
 
@@ -359,10 +354,11 @@ def char_fresp_resume():
         ifb = request.args.get('ifb')
         powa = request.args.get('powa')
         freq = request.args.get('freq')
+        PERIMETER = json.loads(request.args.get('PERIMETER'))
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
         M_fresp[session['user_name']].accesstructure()
         TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
-        Run_fresp[TOKEN] = F_Response(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_fresp[session['user_name']].resumepoint)
+        Run_fresp[TOKEN] = F_Response(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_fresp[session['user_name']].resumepoint, perimeter=PERIMETER)
         return jsonify(resumepoint=str(M_fresp[session['user_name']].resumepoint), datasize=str(M_fresp[session['user_name']].datasize), status=Run_fresp[TOKEN].status)
     else: return show()
 
@@ -460,7 +456,7 @@ def char_fresp_2ddata():
     ifreq = request.args.get('ifreq')
 
     if ifluxbias == "x" and ifreq == "y":
-        print("X: Flux-Bias, Y: Frequency")
+        message = "(2D) X: Flux-Bias, Y: Frequency"
         xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>Frequency(GHz)</b>"
         x, y = waveform(M_fresp[session['user_name']].corder['Flux-Bias']).data[0:session['c_fresp_address'][0]+1], waveform(M_fresp[session['user_name']].corder['Frequency']).data
         x_count, y_count = session['c_fresp_address'][0]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
@@ -475,7 +471,7 @@ def char_fresp_2ddata():
         stage, prev = clocker(stage, prev, agenda="2D-Plot for flux-frequency") # Marking time
 
     elif ipowa == "x" and ifreq == "y":
-        print("X: Power, Y: Frequency")
+        message = "(2D) X: Power, Y: Frequency"
         xtitle, ytitle = "<b>Power(dBm)</b>", "<b>Frequency(GHz)</b>"
         x, y = waveform(M_fresp[session['user_name']].corder['Power']).data[0:session['c_fresp_address'][3]+1], waveform(M_fresp[session['user_name']].corder['Frequency']).data
         x_count, y_count = session['c_fresp_address'][3]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
@@ -489,15 +485,15 @@ def char_fresp_2ddata():
             INPLANE[j,:], QUAD[j,:], Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
         stage, prev = clocker(stage, prev, agenda="2D-Plot for power-frequency") # Marking time
 
-    elif iifb == "x":
-        pass
+    elif ifluxbias == "x" and ipowa == "y":
+        message = "(2D) X: Flux-Bias, Y: Power (PENDING)"
 
     print("(x,y) is of length (%s,%s) and of type (%s,%s)" %(len(x),len(y),type(x),type(y)))
     print("Amp of shape %s" %str(array(Amp).shape))
     ZZI, ZZQ, ZZA, ZZP = INPLANE.tolist(), QUAD.tolist(), Amp.tolist(), Pha.tolist()
     fresp_2Ddata[session['user_name']] = dict(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 
-    return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
+    return jsonify(message=message, x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 # endregion
 
 # region: CHAR -> 2. CW-Sweeping =============================================================================================================================================
@@ -550,14 +546,14 @@ def char_cwsweep_new():
         freq = request.args.get('freq')
         powa = request.args.get('powa')
         comment = request.args.get('comment').replace("\"","")
-        simulate = bool(int(request.args.get('simulate')))
+        PERIMETER = json.loads(request.args.get('PERIMETER'))
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         
         # Start Running:
         TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
-        Run_cwsweep[TOKEN] = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday)
+        Run_cwsweep[TOKEN] = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, perimeter=PERIMETER)
         
-        return jsonify(testeach=simulate, status=Run_cwsweep[TOKEN].status)
+        return jsonify(status=Run_cwsweep[TOKEN].status)
     else: return show()
 
 
@@ -632,7 +628,8 @@ def char_cwsweep_access():
     # print("cpowa_data: %s" %cpowa_data)
     
     return jsonify(JOBID=JOBID,
-        data_progress=data_progress, measureacheta=measureacheta, corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
+        data_progress=data_progress, measureacheta=measureacheta, perimeter=M_cwsweep[session['user_name']].perimeter, 
+        corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
         data_repeat=data_repeat, cfluxbias_data=cfluxbias_data, cxyfreq_data=cxyfreq_data, cxypowa_data=cxypowa_data,
         csparam_data=csparam_data, cifb_data=cifb_data, cfreq_data=cfreq_data, cpowa_data=cpowa_data)
 # Resume the unfinished measurement
@@ -648,10 +645,11 @@ def char_cwsweep_resume():
         ifb = request.args.get('ifb')
         freq = request.args.get('freq')
         powa = request.args.get('powa')
+        PERIMETER = json.loads(request.args.get('PERIMETER'))
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         M_cwsweep[session['user_name']].accesstructure()
         TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
-        Run_cwsweep[TOKEN] = CW_Sweep(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_cwsweep[session['user_name']].resumepoint)
+        Run_cwsweep[TOKEN] = CW_Sweep(session['people'], corder=CORDER, dayindex=wday, taskentry=wmoment, resumepoint=M_cwsweep[session['user_name']].resumepoint, perimeter=PERIMETER)
         return jsonify(resumepoint=str(M_cwsweep[session['user_name']].resumepoint), datasize=str(M_cwsweep[session['user_name']].datasize), status=Run_cwsweep[TOKEN].status)
     else: return show()
 
@@ -851,49 +849,72 @@ def char_cwsweep_2ddata():
 
     # Selecting 2D options:
     # REPEAT:
+    # 1. y: fluxbias, x: repeat
     if irepeat == "x" and ifluxbias == "y":
         x_name, y_name = "repeat", "fluxbias"
-        print("X: REPEAT#, Y: Flux-Bias")
+        message = "(2D) X: REPEAT#, Y: Flux-Bias"
         xtitle, ytitle = "<b>REPEAT#</b>", "<b>Flux-Bias(V/A)</b>"
         x, y = list(range(session['c_cwsweep_address'][0]+offset)), waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data
         x_count, y_count = session['c_cwsweep_address'][0]+offset, waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).count
+    # 2. y: xyfreq, x: repeat
     if irepeat == "x" and ixyfreq == "y":
         x_name, y_name = "repeat", "xyfreq"
-        print("X: REPEAT#, Y: XY-Frequency")
+        message = "(2D) X: REPEAT#, Y: XY-Frequency"
         xtitle, ytitle = "<b>REPEAT#</b>", "<b>XY-Frequency(GHz)</b>"
         x, y = list(range(session['c_cwsweep_address'][0]+offset)), waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data
         x_count, y_count = session['c_cwsweep_address'][0]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).count
     # ONCE:
+    # 3. y: xyfreq, x: fluxbias
     elif ifluxbias == "x" and ixyfreq == "y":
         x_name, y_name = "fluxbias", "xyfreq"
-        print("X: Flux-Bias, Y: XY-Frequency")
+        message = "(2D) X: Flux-Bias, Y: XY-Frequency"
         xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>XY-Frequency(GHz)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data[0:session['c_cwsweep_address'][1]+offset], waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data
         x_count, y_count = session['c_cwsweep_address'][1]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).count
+    # 4. y: freq, x: fluxbias
+    elif ifluxbias == "x" and ifreq == "y":
+        x_name, y_name = "fluxbias", "freq"
+        message = "(2D) X: Flux-Bias, Y: Frequency"
+        xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>Probe-Frequency(GHz)</b>"
+        x, y = waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data[0:session['c_cwsweep_address'][1]+offset], waveform(M_cwsweep[session['user_name']].corder['Frequency']).data
+        x_count, y_count = session['c_cwsweep_address'][1]+offset, waveform(M_cwsweep[session['user_name']].corder['Frequency']).count
+    # 5. y: xypowa, x: xyfreq
     elif ixyfreq == "x" and ixypowa == "y":
         x_name, y_name = "xyfreq", "xypowa"
-        print("X: XY-Frequency, Y: XY-Power")
+        message = "(2D) X: XY-Frequency, Y: XY-Power"
         xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>XY-Power(dBm)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['XY-Power']).data
         x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Power']).count
+    # 6. y: freq, x: xyfreq
     elif ixyfreq == "x" and ifreq == "y":
         x_name, y_name = "xyfreq", "freq"
-        print("X: XY-Frequency, Y: Frequency")
+        message = "(2D) X: XY-Frequency, Y: Frequency"
         xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probe-Frequency(GHz)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['Frequency']).data
         x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['Frequency']).count
+    # 7. y: powa, x: xyfreq
     elif ixyfreq == "x" and ipowa == "y":
         x_name, y_name = "xyfreq", "powa"
-        print("X: XY-Frequency, Y: Power")
+        message = "(2D) X: XY-Frequency, Y: Power"
         xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probing-Power(dBm)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['Power']).data
         x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['Power']).count
+    # 8. y: powa, x: freq
     elif ifreq == "x" and ipowa == "y":
         x_name, y_name = "freq", "powa"
-        print("X: Frequency, Y: Power")
+        message = "(2D) X: Frequency, Y: Power"
         xtitle, ytitle = "<b>Probe-Frequency(GHz)</b>", "<b>Probing-Power(dBm)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['Frequency']).data[0:session['c_cwsweep_address'][6]+offset], waveform(M_cwsweep[session['user_name']].corder['Power']).data
         x_count, y_count = session['c_cwsweep_address'][6]+offset, waveform(M_cwsweep[session['user_name']].corder['Power']).count
+    # 9. y: xypowa, x: freq
+
+    # 10. y: powa, x: fluxbias
+
+    # 11. y: xypowa, x: fluxbias
+
+    # 12. y: xypowa, x: powa
+
+    else: message = "Please reverse X-ALL and Y-ALL order, OR just using compare-1D instead"
 
     # fast iteration method (parallel computing):
     stage, prev = clocker(0)
@@ -915,7 +936,7 @@ def char_cwsweep_2ddata():
     cwsweep_2Ddata[session['user_name']] = dict(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 
     # x = list(range(len(x))) # for repetitive data
-    return jsonify(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
+    return jsonify(message=message, x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 # endregion
 
 # region: CHAR -> 3. SQE-Pulsing =============================================================================================================================================

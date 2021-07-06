@@ -8,16 +8,9 @@ $(document).ready(function(){
     $('body.mssn div.tab button.tablinks#' + qsystem + '-tab').show()
     $('div.all.clock').append($('<h4 style="background-color: lightgreen;"></h4>').text(Date($.now())));
     window.queuejobid = [];
-    window.active_samples = [];
-    $.getJSON('/mach/bdr/samples/queues', { }, function (data) { $.each(data.bdrqlist, function (i,val) { active_samples.push(val.samplename); }); });
-    
-    // $.queue({},"", function() { qumjob(); });
-    // $.queue({},"", function() { qumqueue(); });
-    // $.queue({},"", function() { qumjob(); });
 
-    setTimeout(() => {qumjob();}, 101);
-    setTimeout(() => {qumqueue();}, 235);
-    setTimeout(() => {qumjob();}, 371);
+    // Sequencing asynchronous events:
+    $.when( qumqueue() ).then(function () { qumjob(); });
     
 });
 
@@ -30,13 +23,14 @@ function qumqueue() {
         $('h3.all-mssn-news').text("Welcome home, " + data.loginuser);
         console.log("user: " + data.loginuser);
         console.log("QUEUE: " + data.QUEUE);
+        console.log("User may access active job: " + data.access_active_job); // PENDING: ALSO CHECK IF THERE'S ANY ACTIVE CALIBRATION(S)
 
         queuejobid.splice(0, queuejobid.length);
         $('table.mssn-QUEUE tbody.all.mssn-queue-update').empty();
         $.each(data.QUEUE, function(i,val){
             queuejobid.push(val.id)
             // QUEUE_userlist.push(val.username);
-            if (i==0 && access_active_job==true) { // only the first in line has the data under construction:
+            if (i==0 && data.access_active_job==true) { // only the first in line has the data under construction:
                 var jobidlink = '<div class="buttons"><a class="all-mssn-access btn green" id="jid_' + val.id + '">' + val.id + ' <i class="fa fa-cog fa-spin fa-3x fa-fw" style="font-size:15px;color:green;"></i></a></div>';
                 var link = '</td><td><div class="col-100" id="left"><button class="all-queue-out push_button w-95 red" id="jid_' + val.id + '_' + qsystem + '">' + 'STOP</button></div></td>';
             } else {
@@ -63,13 +57,13 @@ function qumjob() {
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/job', {
         queue: qsystem,
     }, function (data) {
-        window.access_active_job = active_samples.includes(data.samplename); // PENDING: ALSO CHECK IF THERE'S ANY ACTIVE CALIBRATION(S)
-        console.log("User may access active job: " + access_active_job);
-
         $('div.row.all-job-by-sample').empty().append('<div class="col-20" id="left"><label class="parameter">' + data.update_count + '/' + data.Job_count + '/' + data.maxlist + ' JOB(s) WITH SAMPLE: </label></div>' + 
                                                         '<div class="col-20" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
         console.log("user: " + data.loginuser);
 
+        // BUILDING TABLE:
+        var day_index = 0; 
+        var prev_day = data.joblist[0]['dateday']
         $('table.mssn-JOB tbody.all.mssn-job-update').empty();
         $.each(data.joblist, function(i,val) {
             // excluding queued job(s):
@@ -81,13 +75,12 @@ function qumjob() {
                 } else if (parseInt(val.progress)===0) {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn red" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 } else if (val.tag!='') {
-                    var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn blue" id="jid_' + val.id + '">' + val.tag + '</a></div>';
+                    var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn blue" id="jid_' + val.id + '">' + val.tag + ': ' + parseInt(val.progress) + '</a></div>';
                 } else {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn orange" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 };
 
                 // data-status segregation:
-                console.log(val.id + ". " + val.dateday);
                 if (val.dateday==null) {
                     var datastatus = '<div class="buttons"><a class="all-mssn-requeue btn red" id="jid_' + val.id + '">' + 'REQUEUE' + '</a></div>';
                 } else {
@@ -101,8 +94,17 @@ function qumjob() {
                 var comments = new String(val.comment);
                 Comments = comments.replaceAll("\\n", "; ");
 
+                // Alternate row-background-color with each days:
+                if (val.dateday!=prev_day) {
+                    prev_day = val.dateday;
+                    day_index = day_index + 1;
+                };
+                if (day_index%2) { alt_BG = ' style="background-color: #f3f3f3;"' }
+                else { alt_BG = ' style="background-color: #dddddd;"' };
+                // console.log(val.id + ". " + val.dateday + " [" + day_index + "]");
+
                 // Filling the rows:
-                $('table.mssn-JOB tbody.all.mssn-job-update').append('<tr><td>' + val.id + '</td><td>' + datastatus + '</td><td>' + val.task + '</td><td>' + Startime +
+                $('table.mssn-JOB tbody.all.mssn-job-update').append('<tr' + alt_BG + '><td>' + val.id + '</td><td>' + datastatus + '</td><td>' + val.task + '</td><td>' + Startime +
                 '</td><td>' + val.username + '</td><td>' + val.instrument + actionbutton + '</td><td>' + Comments + '</td>' + '</tr>');
                 // console.log("Comment: " + val.comment.replace(/(\r\n|\n|\r)/gm,", "));
             };
@@ -114,8 +116,8 @@ function qumjob() {
 
 // When ALL tab is clicked upon:
 $('button.tablinks#ALL-tab').click( function () {
-    setTimeout(() => {qumqueue();}, 371);
-    qumjob();
+    // setTimeout(() => {qumqueue();}, 371); qumjob();
+    $.when( qumqueue() ).done(function () { qumjob(); });
     return false;
 });
 // When Certain Queue is selected:
@@ -124,8 +126,8 @@ $('select.all.mssn.queue').on('change', function() {
     $('body.mssn div.tab button.tablinks').hide()
     $('body.mssn div.tab button.tablinks#ALL-tab').show()
     $('body.mssn div.tab button.tablinks#' + qsystem + '-tab').show()
-    setTimeout(() => {qumqueue();}, 137);
-    qumjob();
+    // setTimeout(() => {qumqueue();}, 137); qumjob();
+    $.when( qumqueue() ).done(function () { qumjob(); });
     return false;
 });
 // When STOP / Q-OUT button is pressed inside Q-TABLE: 
@@ -137,8 +139,8 @@ $(document).on('click', 'table tbody tr td button.all-queue-out', function() { /
     }, function(data) {
         console.log(data.message);
         $('h3.all-mssn-warning').text("Queue has change: " + data.message);
-        qumqueue();
-        qumjob();
+        // qumqueue(); qumjob();
+        $.when( qumqueue() ).done(function () { qumjob(); });
     })
     return false;
 });
@@ -231,21 +233,7 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-reopen.green',
     return false;
 });
 
-// Refresh the list with:
-// live update
-$(function () {
-    $('input.all-mssn#live-update').click(function () { 
-        var livestat = $('input.all-mssn#live-update').is(':checked'); //use css to respond to click / touch
-        if (livestat == true) {
-            qumqueue();
-            var liveloop = setInterval(qumqueue, 3000);
-            $('input.all-mssn#live-update').click(function () {
-                clearInterval(liveloop); 
-                $( "i.all-mssn" ).remove(); //clear previous
-            });
-        };
-    });
-});
+
 
 
 

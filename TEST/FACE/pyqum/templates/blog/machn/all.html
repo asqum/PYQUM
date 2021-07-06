@@ -13,6 +13,9 @@
     <div class="container">
         <form method='GET'>
             <div class="row">
+                <h2 class="mach">Machine is dumb without Software.</h2>
+            </div>
+            <div class="row">
                 <div class="col-12" id='left'><button class='mach all push_button w-95 blue machine-update'>UPDATE</button></div>
             </div>
 
@@ -32,9 +35,9 @@
                 </table>
             </div>
 
-            <a href="http://192.168.1.188" target="_blank">
-                <h3 style='color:darkblue;'>Bluefors DR-2 Temperature (since 2021) <i class='fas fa-tv'></i></h3>
-            </a>
+            {% if g.user['management'] %}
+                <a href="http://192.168.1.188" target="_blank"><h3 style='color:darkblue;'>Bluefors DR-2 Temperature (since 2021) <i class='fas fa-tv'></i></h3></a>
+            {% endif %}
 
         </form>
     </div>

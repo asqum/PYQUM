@@ -1,10 +1,15 @@
-'''For reading data'''
+'''For reading data from different kinds of database'''
+from os import path
 from datetime import datetime
 from operator import itemgetter
 from contextlib import suppress
 from copy import deepcopy, copy
+from sqlite3 import connect, Row, PARSE_DECLTYPES
 
-import matplotlib.pyplot as plt
+from pathlib import Path
+pyfilename = Path(__file__).resolve() # current pyscript filename (usually with path)
+CONFIG_PATH = Path(pyfilename).parents[7] / "HODOR" / "CONFIG"
+DR_SETTINGS = path.join(CONFIG_PATH, 'DR_settings.sqlite')
 
 def dict_depth(d):
     if isinstance(d, dict):
@@ -98,9 +103,26 @@ def search_time(dictpaths, timestamp):
     selectedP = dictpaths[inearest]
     return nearest, selectedP
 
-def display():
-    
+def inst_order(queue, category='ALL'):
+    print("DR_SETTINGS: %s" %DR_SETTINGS)
+    db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES)
+    db.row_factory = Row
+    if str(category).lower()=='all': 
+        inst_list = db.execute("SELECT category, designation FROM %s ORDER BY id ASC"%queue,()).fetchall()
+        inst_list = [dict(x) for x in inst_list]
+    else: 
+        inst_list = db.execute("SELECT designation FROM %s WHERE category = ? ORDER BY id ASC"%queue,(category,)).fetchall()
+        inst_list = [dict(x)['designation'] for x in inst_list]
+    db.close()
+    return inst_list
+def inst_designate(queue, category, designation):
+    db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES)
+    db.row_factory = Row
+    db.execute("UPDATE %s SET designation = ? WHERE category = ?"%queue, (designation,category,))
+    db.commit()
+    db.close()
     return
+
 
 def test():
     Test_DATA = {'A': {'B': {'C': {'D': {'E': 100, 'mind': 'Great'}}}},
@@ -137,6 +159,14 @@ def test():
     print(DATA01)
     
     printTree(DATA01)
+
+    # SQL Database:
+    from json import loads, dumps
+    inst_list = inst_order("CHAR0")
+    print("inst_list: %s" %inst_list)
+    print(inst_order("CHAR0", 'DC'))
+    print(inst_order("QPC0", 'DAC'))
+    # inst_designate("CHAR0","DC","SDAWG_3")
     
     return
 

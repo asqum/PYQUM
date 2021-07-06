@@ -15,19 +15,9 @@ $(document).ready(function(){
 window.selecteday = ''
 window.frespcryption = 'hfhajfjkafh'
 
-// *functions are shared across all missions!
-// function set_repeat_fresp() {
-//     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/setrepeat', {
-//         repeat: $('input.char.fresp[name="repeat"]').is(':checked')?1:0
-//     });
-// };
-// function get_repeat_fresp() {
-//     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/getrepeat', {
-//     }, function (data) {
-//         console.log("Repeat: " + data.repeat);
-//         $('input.char.fresp[name="repeat"]').prop("checked", data.repeat);
-//     });
-// };
+// Local variables:
+var fresp_Perimeters = ['dcsweepch', 'z-idle']
+
 function listimes_fresp() {
     // $('input.char.data').removeClass("plotted");
     
@@ -38,6 +28,14 @@ function listimes_fresp() {
         $.getJSON('/mach/all/mxc', {}, function (data) {
             $("textarea.char.fresp[name='ecomment']").val(frespcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
         });
+        $.getJSON('/mach/bdr/wiring/dcsweep', {
+            qsystem: qsystem
+        }, function (data) {
+            $("input.char.fresp.perimeter#fresp-dcsweepch").val(data.dcsweepch);
+            $("input.char.fresp.perimeter#fresp-z-idle").val(data.Z_idle);
+            console.log("dcsweepch: " + data.dcsweepch);
+        });
+
 
     } else if (wday == 's') {
         // brings up search panel:
@@ -119,6 +117,14 @@ function accessdata_fresp() {
         $('.data-progress.fresp').css({"width": data_progress}).text(data_progress);
         $('.data-eta.fresp').text("data: " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
+
+        // Loading Perimeters for NEW RUN:
+        $.each(fresp_Perimeters, function(i,perimeter) { 
+            // ONLY LOAD DEFINED (EXISTING) PERIMETER(s):
+            if (typeof data.perimeter[perimeter] != "undefined") { $('input.char.fresp.perimeter#fresp-' + perimeter).val(data.perimeter[perimeter]); };
+            console.log((i+1) + ". " + perimeter + ": " + data.perimeter[perimeter]);
+        });
+
     });
     return;
 };
@@ -293,38 +299,36 @@ $(function () {
     return false;
 });
 
+
 // click to run:
 $('input.char#fresp-run').on('touchend click', function(event) {
     eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
-    setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+    setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 371);
     $('h3.all-mssn-warning').text(">> JOB STARTED >>");
-    // waveform commands
+    // Assemble PARAMETER:
     var fluxbias = $('input.char.fresp[name="fluxbias"]').val();
     var sparam = $('input.char.fresp[name="sparam"]').val();
     var ifb = $('input.char.fresp[name="ifb"]').val();
     var powa = $('input.char.fresp[name="powa"]').val();
     var freq = $('input.char.fresp[name="freq"]').val();
     var comment = JSON.stringify($('textarea.char.fresp[name="ecomment"]').val());
-    // Simulate or Real run?
-    var simulate = $('input.char.fresp[name="simulate"]').is(':checked')?1:0; //use css to respond to click / touch
-    console.log("simulate: " + simulate);
-    // var comment = $('textarea.char.fresp[name="comment"]').val();
+
+    // Assemble PERIMETER:
+    var PERIMETER = {};
+    $.each(fresp_Perimeters, function(i,perimeter) {
+        PERIMETER[perimeter] = $('input.char.fresp.perimeter#fresp-' + perimeter).val();
+        console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
+    });
+    
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/new', {
-        wday: wday, fluxbias: fluxbias, sparam: sparam, ifb: ifb, powa: powa, freq: freq, comment: comment, simulate: simulate
+        wday: wday, fluxbias: fluxbias, sparam: sparam, ifb: ifb, powa: powa, freq: freq, comment: comment, PERIMETER: JSON.stringify(PERIMETER),
     }, function (data) { 
-        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 7);
-        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 77);
+        // setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 7);
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 371);
         $('h3.all-mssn-warning').text("JOB STATUS: " + data.status);
     });
     return false;
 });
-// click to estimate ETA (PENDING: DATA-ANALYSIS FUNCTIONS?)
-// $("a.new#fresp-job").bind('click', function() {
-//     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/eta100', {
-//     }, function (data) {
-//         
-//     });
-// });
 
 // click to search:
 $('button.char.fresp[name="search"]').click( function() {
@@ -339,26 +343,36 @@ $('button.char.fresp[name="search"]').click( function() {
     return false;
 });
 
+// PENDING: perimeter-box specifically for "RESUME":
+
 // Click to resume measurement
 $(function () {
     $('button.char#fresp-resume').on('touchend click', function(event) {
         eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
-        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 371);
         $('h3.all-mssn-warning').text(">> JOB STARTED >>");
-        // waveform commands
+        // Assemble PARAMETER:
         var fluxbias = $('input.char.fresp[name="fluxbias"]').val();
         var sparam = $('input.char.fresp[name="sparam"]').val();
         var ifb = $('input.char.fresp[name="ifb"]').val();
         var powa = $('input.char.fresp[name="powa"]').val();
         var freq = $('input.char.fresp[name="freq"]').val();
+
+        // Assemble PERIMETER:
+        var PERIMETER = {};
+        $.each(fresp_Perimeters, function(i,perimeter) {
+            PERIMETER[perimeter] = $('input.char.fresp.perimeter#fresp-' + perimeter).val();
+            console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
+        });
+
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/resume', {
-            wday: wday, wmoment: wmoment, fluxbias: fluxbias, sparam: sparam, ifb: ifb, powa: powa, freq: freq
+            wday: wday, wmoment: wmoment, fluxbias: fluxbias, sparam: sparam, ifb: ifb, powa: powa, freq: freq, PERIMETER: JSON.stringify(PERIMETER),
         }, function (data) {
             if (data.resumepoint == data.datasize) {
                 console.log("The data was already complete!")
             } else { console.log("The data has just been completed")};
-            setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 7);
-            setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 77);
+            // setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 7);
+            setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 371);
             $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
         });
         return false;
@@ -551,6 +565,7 @@ $(function () {
             window.ZZP = data.ZZP;
             window.xtitle = data.xtitle;
             window.ytitle = data.ytitle;
+            window.plot2dmessage = data.message;
             // Amplitude (default) or Phase
             $('select.char.data.fresp[name="2d-amphase"]').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }));
             // Data grooming
@@ -558,15 +573,14 @@ $(function () {
             .append($('<option>', { text: 'normalYdip', value: 'normalYdip' })).append($('<option>', { text: 'normalYpeak', value: 'normalYpeak' }))
             .append($('<option>', { text: 'normalXdip', value: 'normalXdip' })).append($('<option>', { text: 'normalXpeak', value: 'normalXpeak' }));
             plot2D_fresp(x, y, ZZA, xtitle, ytitle, $('select.char.data.fresp[name="2d-type"]').val(),'fresp');
-            $( "i.fresp2d" ).remove(); //clear previous
         })
         .done(function(){
             $('button.char#fresp-savemat').show();
-            $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text("2D Plot Completed"));
+            $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text(plot2dmessage));
             $( "i.fresp2d" ).remove(); //clear the status
         })
         .fail(function(jqxhr, textStatus, error){
-            $('div#char-fresp-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error + "(" + textStatus + ")"));
+            $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Oops: " + error + ". MAYBE TRY TO REVERSE X-Y-ORDER."));
             $( "i.fresp2d" ).remove(); //clear the status
         });
     });

@@ -209,6 +209,62 @@
         </div>
     </div>
 
+    <!-- Wiring-Designation for respective Measurement-Systems -->
+    <div class="bdrcontent" id="wiring">
+        <div class="container">
+            <div class="row">
+                <h2 class="bdr" id="wiring">Instrument designations for DR-1</h2>
+            </div>
+            <!-- System selection -->
+            <div class="row" style="color: blue;">
+                <div class="col-15" id='left'><label class='parameter'>QUEUE-SYSTEM: </label></div>
+                <div class="col-10" id='left'>
+                    <select class='bdr wiring queue-system'>
+                        <option value='lobby'>--system--</option>
+                        {% for s in systemlist %}
+                        {% if s==queue %}
+                            <option value={{s}} selected>{{s}}</option>
+                        {% else %}
+                            <option value={{s}}>{{s}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <!-- Designation table: -->
+            <div class="row">
+                <table class="BDR-WIRING content-table">
+                    <thead class="wiring designation-update">
+                        <tr>
+                            
+                        </tr>
+                    </thead>
+                    <tbody class="wiring designation-update">
+                        <tr>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% if g.user['management'] %}
+                <div class="row">
+                    <div class="col-20" id='left'><h3 class="bdr wiring-designation">3 measurement systems:</h3></div>
+                </div>
+                {% for cat in category %}
+                    <div class="row">
+                            <div class="col-10" id='left'><label>{{cat}}</label></div>
+                            <div class="col-60" id='left'><input class='bdr wiring-designation {{cat}}' type="text"/></div>
+                    </div>
+                {% endfor %}
+                <div class="row">
+                    <div class="col-10" id='left'></div>
+                    <div class="col-10" id='left'><input class="bdr wiring-designation set" type="submit" value="SET"/></div>
+                </div>
+            {% endif %}
+            
+        </div>
+    </div>
+
 </div>
 
 </body>

@@ -158,7 +158,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     cstructure = [waveform(corder[param]).count for param in structure] # new version: separation between structure & buffer
 
     # 2. Start measuring:
-    JOBID = g.jobidlist[queue][0]
+    JOBID = g.jobidlist[0]
     measure_loop = range(resumepoint//buffersize,datasize//buffersize) # saving chunck by chunck improves speed a lot!
     while True:
         for i in measure_loop:
@@ -239,7 +239,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize*100), end='\r', flush=True)			
             
             lisqueue(queue)
-            if JOBID in g.jobidlist[queue]:
+            if JOBID in g.jobidlist:
                 # print(Fore.YELLOW + "Pushing Data into file...")
                 yield list(DATA)
             else: break # proceed to close all & queue out
@@ -257,8 +257,8 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.output(dcbench, 0)
             DC.close(dcbench, True, DC_label, sweeprate=sweeprate)
-        if JOBID in g.jobidlist[queue]:
-            qout(queue, g.jobidlist[queue][0],g.user['username'])
+        if JOBID in g.jobidlist:
+            qout(queue, g.jobidlist[0],g.user['username'])
         break
 
     return
