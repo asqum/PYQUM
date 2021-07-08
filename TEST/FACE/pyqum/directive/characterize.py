@@ -8,7 +8,7 @@ from numpy import prod
 from flask import session, g
 
 from importlib import import_module as im
-from pyqum.instrument.logger import settings, get_status, qout, lisqueue
+from pyqum.instrument.logger import settings, get_status, qout, jobsinqueue
 from pyqum.instrument.toolbox import cdatasearch, waveform
 from pyqum.instrument.reader import inst_order
 
@@ -122,7 +122,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
             # print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
             print(Fore.YELLOW + "Progress: %.3f%%" %((i+1)/datasize*buffersize_1*100))
 
-            lisqueue(queue)
+            jobsinqueue(queue)
             if JOBID in g.jobidlist:
                 # print(Fore.YELLOW + "Pushing Data into file...")
                 yield data
@@ -280,7 +280,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             data = NA.sdata(nabench)
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
             
-            lisqueue(queue)
+            jobsinqueue(queue)
             if JOBID in g.jobidlist:
                 # print(Fore.YELLOW + "Pushing Data into file...")
                 yield data

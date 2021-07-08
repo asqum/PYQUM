@@ -6,6 +6,7 @@ $(document).ready(function(){
     // console.log('encryptonian length: ' + mssnencrpytonian().length);
     // get_repeat_fresp();
     window.frespcomment = "";
+    window.fresp_jobids = "0";
     $('button.char#fresp-savecsv').hide();
     $('button.char#fresp-savemat').hide();
     $('div input.fresp.notification').hide();
@@ -26,7 +27,8 @@ function listimes_fresp() {
         $('.modal.new.fresp').toggleClass('is-visible');
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
-            $("textarea.char.fresp[name='ecomment']").val(frespcomment + "\nUpdate: T6=" + data.mxcmk + "mK");
+            $("textarea.char.fresp[name='ecomment']").val(frespcomment.replace("\n"+frespcomment.split("\n")[frespcomment.split("\n").length-1], '')
+                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + fresp_jobids); // directly replace the old T6
         });
         $.getJSON('/mach/bdr/wiring/dcsweep', {
             qsystem: qsystem
@@ -62,6 +64,9 @@ function accessdata_fresp() {
     }, function (data) {
         // Indicate JOBID:
         $("a.new#fresp-job").text('JOBID: ' + String(data.JOBID));
+        fresp_jobids = [fresp_jobids.split(',')[0], fresp_jobids.split(',')[1]]
+        fresp_jobids = String(data.JOBID) + ',' + fresp_jobids.join(',') // also inside edittable-comment: limit to just 3 previous Job-ID(s)
+
         // checking parameters:
         console.log("CORDER: " + JSON.stringify(data.corder) + "\nPERIMETER: " + JSON.stringify(data.perimeter));
         // load each command:

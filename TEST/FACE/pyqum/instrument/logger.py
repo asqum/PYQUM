@@ -524,7 +524,7 @@ class measurement:
                 datapie.seek(self.datalocation+7)
                 pie = datapie.read(self.writtensize)
                 # self.selectedata = array(struct.unpack('>' + 'd'*((self.writtensize)//8), pie))
-                self.selectedata = ndarray(shape=(self.writtensize//8,), dtype=">d", buffer=pie) # speed up with numpy ndarray
+                self.selectedata = ndarray(shape=(self.writtensize//8,), dtype=">d", buffer=pie) # speed up with numpy ndarray, with the ability to do indexing in it.
         except:
             # raise
             print("\ndata not found")

@@ -915,12 +915,14 @@ def char_cwsweep_2ddata():
     # 12. y: xypowa, x: powa
 
     else: message = "Please reverse X-ALL and Y-ALL order, OR just using compare-1D instead"
+    print(Fore.YELLOW + "PLOTTING: %s" %message)
 
     # fast iteration method (parallel computing):
     stage, prev = clocker(0)
     CMD = ["python", "-c", "from pyqum.directive import MP_cwsweep as mp; print(mp.worker(%s,%s,'%s','%s'))"%(y_count,x_count,y_name,x_name)]
     with Popen(CMD, stdout=PIPE, shell=True) as proc:
         doutput = proc.stdout.read().decode("utf-8")
+        print(Fore.BLACK + Back.YELLOW + "MP_cwsweep: %s" %doutput)
         output = json.loads(doutput.replace("\'", "\""))
         # try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
         # except: pass
@@ -928,9 +930,8 @@ def char_cwsweep_2ddata():
     Pha = output['rP'] # Raw Phase that is wrapped around -pi and pi
     stage, prev = clocker(stage, prev) # Marking time
 
-    print("x is of length %s and of type %s" %(len(x),type(x)))
-    print("y is of length %s and of type %s" %(len(y),type(y)))
-    print("Amp of shape %s" %str(array(Amp).shape))
+    print(Fore.GREEN + "(x,y) is of length (%s,%s) and of type (%s,%s)\nAmp is of shape %s" %(len(x),len(y),type(x),type(y),str(array(Amp).shape)))
+    print(Fore.CYAN + "CPU CORES: %s, x: %s, y: %s" %(output['coresum'],output['x'],output['y']))
     ZZA, ZZP = Amp, Pha
     
     cwsweep_2Ddata[session['user_name']] = dict(x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
