@@ -6,9 +6,11 @@ $(document).ready(function(){
 });
 
 function tracking_access_jobids(current_jobid, track_limit=7) {
+    if (mission_jobids.includes(String(current_jobid))==true) { mission_jobids = mission_jobids.replace(String(current_jobid),""); }; // AVOID RECURRANCE OF JOBID(s)
     let jobids_array = [];
-    for (i = 0; i < Math.min(track_limit-1, mission_jobids.split(',').length); i++) { jobids_array.push(mission_jobids.split(',')[i]); };
-    if (jobids_array.includes(String(current_jobid))==true) { jobids_array.splice(jobids_array.indexOf(String(current_jobid)),1); }; // AVOID RECURRANCE OF JOBID
+    for (i = 0; i < Math.min(track_limit-1, mission_jobids.split(',').length); i++) { 
+        if (mission_jobids.split(',')[i]!="") { jobids_array.push(mission_jobids.split(',')[i]); }; // REMOVE REDUNDANT COMMA(s)
+    };
     mission_jobids = String(current_jobid) + ',' + jobids_array.join(','); // ORDER: NEW -> OLD JOBID(s)
     return mission_jobids.split(',')[0];
 };
