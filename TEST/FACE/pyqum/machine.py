@@ -7,7 +7,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 from json import loads, dumps
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
-from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, clocker, set_mat
+from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, clocker, set_mat, bdr_zip_log
 
 # Error handling
 from contextlib import suppress
@@ -759,6 +759,20 @@ def bdrhistoryforecast():
     # fore = poly1d(coeff)
     
     return jsonify(eta_time=list(eta_time))
+@bp.route('/bdr/history/ziplog', methods=['GET'])
+def bdrhistoryziplog():
+    logtype = request.args.get('logtype')
+    designation = request.args.get('designation')
+    print(Fore.CYAN + "User %s is ziplogging DR-%s's %s-DATA" %(session['user_name'],designation,logtype))
+    if logtype.upper()=='P': LogDir = b.LogPath / b.Date
+    elif logtype.upper()=='T': LogDir = b.LogPath / b._TPath / b.Date
+    else: abort(Response('PLS Use Main Door to get in!'))
+    zipname = "%s,DR-%s,(%s)-%s-LOG"%(session['user_name'],designation,b.Date,logtype.upper())
+    bdr_zip_log(zipname, LogDir)
+    # NOTE: DR-Alice will always get BOTH P- and T-LOG altogether in one ZIP-File.
+    return jsonify(qumport=int(get_status("WEB")['port']), zipname=zipname)
+
+# SAMPLE SEATS IN BDR:
 @bp.route('/bdr/samples/queues', methods=['GET'])
 def bdrsamplesqueues():
     db = get_db()

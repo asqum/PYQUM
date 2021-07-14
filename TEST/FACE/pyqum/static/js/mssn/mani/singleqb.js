@@ -5,7 +5,6 @@ $(document).ready(function(){
     $('button.mani#singleqb-savemat').hide();
     $("a.new#singleqb-msg").text('Measurement Status');
     window.singleqbcomment = "";
-    window.singleqb_jobids = "0";
     // $('input.singleqb.notification').hide();
     $('input.singleqb.setchannels.pulse-width').parent().hide();
     $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-width').val() + '.pulse-width').parent().show();
@@ -63,7 +62,7 @@ function listimes_singleqb() {
         $.getJSON('/mach/all/mxc', {}, function (data) {
             window.mxcmk = data.mxcmk;
             $("textarea.mani.singleqb#singleqb-ecomment").val(singleqbcomment.replace("\n"+singleqbcomment.split("\n")[singleqbcomment.split("\n").length-1], '')
-                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + singleqb_jobids); // directly replace the old T6
+                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + mission_jobids); // directly replace the old T6
         });
 
     } else if (wday == 'm') {
@@ -129,8 +128,8 @@ function accessdata_singleqb() {
 
         // 3. load edittable comment & references for NEW RUN:
         singleqbcomment = data.comment;
-        singleqb_jobids = [singleqb_jobids.split(',')[0], singleqb_jobids.split(',')[1]]
-        singleqb_jobids = String(data.JOBID) + ',' + singleqb_jobids.join(',') // also inside edittable-comment: limit to just 3 previous Job-ID(s)
+        console.log("Last accessed Job: " + tracking_access_jobids(data.JOBID));
+        showing_access_jobids();
         // 4. load narrated comment:
         $('textarea.mani.singleqb.comment').text(data.comment);
         
@@ -1057,8 +1056,7 @@ $('input.singleqb.notification').click( function(){
 
     if (Day != null) {
         // Digesting Day & Moment on the back:
-        listimes_singleqb();
-        accessdata_singleqb();
+        $.when( listimes_singleqb() ).done(function () { accessdata_singleqb(); });
     };
     
     // Setting Day & Moment on the front:

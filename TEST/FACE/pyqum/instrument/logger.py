@@ -4,7 +4,7 @@ from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
 from pathlib import Path
-from os import mkdir, listdir, stat, SEEK_END
+from os import mkdir, listdir, stat, SEEK_END, walk
 from os.path import exists, getsize, getmtime, join, isdir, getctime
 from datetime import datetime
 from time import time, sleep
@@ -18,6 +18,8 @@ from json import loads
 
 # MAT SAVE & LOAD
 from scipy.io import savemat, loadmat
+# ZIP LOG
+from zipfile import ZipFile
 
 from flask import session, g
 from pyqum import get_db, close_db
@@ -147,11 +149,18 @@ def set_csv(data_dict, filename):
     df = DataFrame(data_dict, columns= [x for x in data_dict.keys()])
     export_csv = df.to_csv(Path(PORTAL_PATH) / filename, index = None, header=True)
     return export_csv
-
 # save data in mat for export and be used by clients:
 def set_mat(data_dict, filename):
     savemat(Path(PORTAL_PATH) / filename, data_dict)
     return None
+def bdr_zip_log(zipname, log_location=Path(r'\\BLUEFORSAS2\dr_bob') / "21-06-06"):
+    zipfilename = "bdr[%s].zip"%(zipname)
+    with ZipFile(Path(PORTAL_PATH) / zipfilename, 'w') as zipObj:
+        for folderName, subfolders, filenames in walk(log_location):
+            for filename in filenames:
+                filePath = join(folderName, filename) # create complete filepath of file in directory
+                status = zipObj.write(filePath) # Add file to zip
+    return status
 
 # save JSON(Jacky)
 def set_json_measurementinfo(data_dict, filename):
@@ -161,7 +170,6 @@ def set_json_measurementinfo(data_dict, filename):
     with open(totalPath, 'w') as outfile:
         json.dump(data_dict, outfile, indent=4)
     return None
-
 def get_json_measurementinfo(filename):
     jsonFilename = filename+".JSON"
     totalPath = ANALYSIS_PATH/jsonFilename
@@ -688,7 +696,7 @@ def settings(datadensity=1):
                         break
                     # 2.3. Keep waiting behind:
                     else:
-                        queue_behind = g.jobidlist.index(JOBID)
+                        queue_behind = g.jobidlist.index(JOBID) + 1 # "extra +1" just in case of machine still being occupied
                         waiting_interval = 3.17*queue_behind # adjust waiting time based on how far behind in queue
                         sleep(waiting_interval)
                         print(Fore.YELLOW + "JOBID #%s is waiting every %s seconds" %(JOBID,waiting_interval))

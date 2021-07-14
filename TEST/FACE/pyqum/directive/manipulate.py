@@ -13,7 +13,7 @@ from numpy import prod, array, mean, ceil
 from flask import session, g
 
 from importlib import import_module as im
-from pyqum.instrument.logger import settings, get_status, set_status, lisqueue, qout
+from pyqum.instrument.logger import settings, get_status, set_status, jobsinqueue, qout
 from pyqum.instrument.toolbox import cdatasearch, waveform
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.analyzer import pulse_baseband
@@ -238,7 +238,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
             # print("Operation Complete")
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize*100), end='\r', flush=True)			
             
-            lisqueue(queue)
+            jobsinqueue(queue)
             if JOBID in g.jobidlist:
                 # print(Fore.YELLOW + "Pushing Data into file...")
                 yield list(DATA)

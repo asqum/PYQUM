@@ -6,7 +6,6 @@ $(document).ready(function(){
     // console.log('encryptonian length: ' + mssnencrpytonian().length);
     // get_repeat_fresp();
     window.frespcomment = "";
-    window.fresp_jobids = "0";
     $('button.char#fresp-savecsv').hide();
     $('button.char#fresp-savemat').hide();
     $('div input.fresp.notification').hide();
@@ -28,14 +27,7 @@ function listimes_fresp() {
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
             $("textarea.char.fresp[name='ecomment']").val(frespcomment.replace("\n"+frespcomment.split("\n")[frespcomment.split("\n").length-1], '')
-                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + fresp_jobids); // directly replace the old T6
-        });
-        $.getJSON('/mach/bdr/wiring/dcsweep', {
-            qsystem: qsystem
-        }, function (data) {
-            $("input.char.fresp.perimeter#fresp-dcsweepch").val(data.dcsweepch);
-            $("input.char.fresp.perimeter#fresp-z-idle").val(data.Z_idle);
-            console.log("dcsweepch: " + data.dcsweepch);
+                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + mission_jobids); // directly replace the old T6
         });
 
 
@@ -64,8 +56,8 @@ function accessdata_fresp() {
     }, function (data) {
         // Indicate JOBID:
         $("a.new#fresp-job").text('JOBID: ' + String(data.JOBID));
-        fresp_jobids = [fresp_jobids.split(',')[0], fresp_jobids.split(',')[1]]
-        fresp_jobids = String(data.JOBID) + ',' + fresp_jobids.join(',') // also inside edittable-comment: limit to just 3 previous Job-ID(s)
+        console.log("Last accessed Job: " + tracking_access_jobids(data.JOBID));
+        showing_access_jobids();
 
         // checking parameters:
         console.log("CORDER: " + JSON.stringify(data.corder) + "\nPERIMETER: " + JSON.stringify(data.perimeter));
@@ -81,6 +73,8 @@ function accessdata_fresp() {
         frespcomment = data.comment;
         // load narrated comment:
         $('textarea.char.fresp[name="comment"]').text(data.comment);
+        // load narrated perimeter-JSON:
+        $('div#char-fresp-perimeters').empty().append($('<h4 style="color: blue;"></h4>').text(JSON.stringify(data.perimeter)));
         
         // load c-range for each command:
         $('select.char.fresp.parameter[name="c-fluxbias"]').empty();
@@ -707,8 +701,7 @@ $('input.fresp.notification').click( function(){
     wday = DAYLIST.length - 1 - DAYLIST.indexOf(Day);
     wmoment = Moment;
     // Digesting Day & Moment on the back:
-    listimes_fresp();
-    accessdata_fresp();
+    $.when( listimes_fresp() ).done(function () { accessdata_fresp(); });
     // Setting Day & Moment on the front:
     $('select.char.fresp[name="wday"]').val(wday);
     setTimeout(() => {

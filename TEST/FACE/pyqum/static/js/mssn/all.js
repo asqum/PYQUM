@@ -63,7 +63,7 @@ function qumjob() {
 
         // BUILDING TABLE:
         var day_index = 0; 
-        var prev_day = data.joblist[0]['dateday']
+        if (typeof data.joblist[0] == "undefined") { var prev_day = ""; } else { var prev_day = data.joblist[0]['dateday']; };
         $('table.mssn-JOB tbody.all.mssn-job-update').empty();
         $.each(data.joblist, function(i,val) {
             // excluding queued job(s):
@@ -145,7 +145,7 @@ $(document).on('click', 'table tbody tr td button.all-queue-out', function() { /
     return false;
 });
 // IF ACCESS button is pressed inside JOB-TABLE (or currently active JOB inside QUEUE-TABLE):
-$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-access', function() {
+$(document).on('click', 'div.buttons a.all-mssn-access', function() {
     var jobid = $(this).attr('id').split('_')[1];
     console.log('jobid: ' + jobid);
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/access/job', {

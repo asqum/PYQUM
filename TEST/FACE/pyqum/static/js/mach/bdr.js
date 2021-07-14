@@ -1,6 +1,7 @@
 //when page is loading:
 $(document).ready(function(){
     $('div.bdrcontent').hide();
+    $('.bdr.download').hide();
     $("a.new#bdr-forecast-P").text('Forecast P');
     $("a.new#bdr-forecast-T").text('Forecast T');
     
@@ -190,6 +191,13 @@ function bdr_plot() {
 
         // access sessions:
         // console.log("User: " + $.session.get('abc'));
+    })
+    .done(function(data) {
+        $('.bdr.download').show();
+        // $('div.bdr#bdr-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text("PLOTTING " + bdr_attr + " SUCCESSFULLY"));
+    })
+    .fail(function(jqxhr, textStatus, error){
+        // $('div.bdr#bdr-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
     });
     return false;
 };
@@ -197,6 +205,7 @@ function bdr_plot() {
 //show history's page and load Days
 $(function() {
     $('button.bdr.history').bind('click', function() {
+        $('.bdr.download').hide();
         window.designation = $(this).attr('id');
         $('div.bdrcontent').hide();
         $('div.bdrcontent#history').show();
@@ -269,6 +278,35 @@ $("a.new#bdr-forecast-T").bind('click', function() {
     }, function (data) {
         $("a.new#bdr-forecast-T").text('ETA in >' + String(data.eta_time) + ' hours');
     });
+});
+// Download Zip Log:
+$("button.bdr.download#bdr-saveziplog").bind('click', function() {
+    var logtype = $('select.bdr.download.log-type').val();
+    $.getJSON('/mach/bdr/history/ziplog', {
+        logtype: logtype, designation: designation,
+    }, function (data) {
+        var zipfilename = 'bdr[' + data.zipname + '].zip';
+        $.ajax({
+            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/' + zipfilename,
+            method: 'GET',
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function (data) {
+                console.log("USER HAS DOWNLOADED BDR-ZIPLOG from " + String(window.URL));
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                a.download = String(zipfilename);
+                document.body.append(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                $('.bdr.download').hide();
+            }
+        });
+    });
+    return false;
 });
 
 // Samples-Allocation by Management:

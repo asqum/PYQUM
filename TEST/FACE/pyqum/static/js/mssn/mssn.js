@@ -2,7 +2,23 @@
 $(document).ready(function(){
     // $('.mssn div#STATE').show();
     $('button#ALL-tab').toggleClass('active'); // default show-up of 'ALL' content is set by mssn.css
+    window.mission_jobids = "";
 });
+
+function tracking_access_jobids(current_jobid, track_limit=7) {
+    let jobids_array = [];
+    for (i = 0; i < Math.min(track_limit-1, mission_jobids.split(',').length); i++) { jobids_array.push(mission_jobids.split(',')[i]); };
+    if (jobids_array.includes(String(current_jobid))==true) { jobids_array.splice(jobids_array.indexOf(String(current_jobid)),1); }; // AVOID RECURRANCE OF JOBID
+    mission_jobids = String(current_jobid) + ',' + jobids_array.join(','); // ORDER: NEW -> OLD JOBID(s)
+    return mission_jobids.split(',')[0];
+};
+function showing_access_jobids() {
+    $('.mssn div.tab div.buttons').remove();
+    $.each(mission_jobids.split(','), function(i,jobid) {
+        if (jobid!="") { $('.mssn div.tab').append('<div class="buttons"><a class="all-mssn-access btn yellow" id="jid_' + jobid + '">' + jobid + '</a></div>'); };
+    });
+    return false;
+};
 
 function mssnencrpytonian() {
     return '/' + 'ghhgjad';
