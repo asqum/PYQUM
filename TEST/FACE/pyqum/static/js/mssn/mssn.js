@@ -2,25 +2,44 @@
 $(document).ready(function(){
     // $('.mssn div#STATE').show();
     $('button#ALL-tab').toggleClass('active'); // default show-up of 'ALL' content is set by mssn.css
-    window.mission_jobids = "";
+    window.access_jobids = "";
+    window.ref_jobids = "";
 });
 
 function tracking_access_jobids(current_jobid, track_limit=7) {
-    if (mission_jobids.includes(String(current_jobid))==true) { mission_jobids = mission_jobids.replace(String(current_jobid),""); }; // AVOID RECURRANCE OF JOBID(s)
-    let jobids_array = [];
-    for (i = 0; i < Math.min(track_limit-1, mission_jobids.split(',').length); i++) { 
-        if (mission_jobids.split(',')[i]!="") { jobids_array.push(mission_jobids.split(',')[i]); }; // REMOVE REDUNDANT COMMA(s)
+    if (access_jobids.includes(String(current_jobid))==true) { 
+        // AVOID RECURRANCE OF JOBID(s), REMOVE REDUNDANT COMMA(s)
+        access_jobids = access_jobids.replace(String(current_jobid),"nil").replace("nil,","").replace(",nil","").replace("nil","");
     };
-    mission_jobids = String(current_jobid) + ',' + jobids_array.join(','); // ORDER: NEW -> OLD JOBID(s)
-    return mission_jobids.split(',')[0];
+    let jobids_array = [];
+    if (access_jobids!="") { 
+        for (i = 0; i < Math.min(track_limit-1, access_jobids.split(',').length); i++) { jobids_array.push(access_jobids.split(',')[i]); }; 
+    };
+    access_jobids = [String(current_jobid)].concat(jobids_array).join(','); // ORDER: NEW -> OLD JOBID(s)
+    return access_jobids.split(',')[0];
 };
-function showing_access_jobids() {
+function showing_tracked_jobids() {
     $('.mssn div.tab div.buttons').remove();
-    $.each(mission_jobids.split(','), function(i,jobid) {
-        if (jobid!="") { $('.mssn div.tab').append('<div class="buttons"><a class="all-mssn-access btn yellow" id="jid_' + jobid + '">' + jobid + '</a></div>'); };
-    });
+    if ($('select.mssn.tracking_type').val()=="access-jobid") {
+        $.each(access_jobids.split(','), function(i,jobid) { 
+            if (jobid!="") { $('.mssn div.tab').append('<div class="buttons"><a class="all-mssn-access btn yellow" id="jid_' + jobid + '">' + jobid + '</a></div>'); };
+        });
+    };
+    if ($('select.mssn.tracking_type').val()=="ref-jobid") {
+        if (typeof ref_jobids!="undefined") {
+            $.each(ref_jobids.split(','), function(i,jobid) {
+                jobid = parseInt(jobid);
+                if (isNaN(jobid)==false) { $('.mssn div.tab').append('<div class="buttons"><a class="all-mssn-access btn yellow" id="jid_' + jobid + '">' + jobid + '</a></div>'); };
+            });
+        };
+    };
+    
     return false;
 };
+$(function () {
+    $('select.mssn.tracking_type').on('change', function() { showing_tracked_jobids(); });
+    return false; 
+});
 
 function mssnencrpytonian() {
     return '/' + 'ghhgjad';
@@ -143,3 +162,4 @@ function eventHandler(event, selector) {
     event.preventDefault(); // Prevent default behaviour
     if (event.type === 'touchend') selector.off('click'); // If event type was touch turn off clicks to prevent phantom clicks.
 };
+
