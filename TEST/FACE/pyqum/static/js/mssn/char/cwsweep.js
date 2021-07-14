@@ -4,7 +4,6 @@ $(document).ready(function(){
     $("a.new#cwsweep-job").text('JOBID: ');
     // get_repeat_cwsweep();
     window.cwsweepcomment = "";
-    window.cwsweep_jobids = "0";
     $('button.char#cwsweep-savecsv').hide();
     $('button.char#cwsweep-savemat').hide();
     $('div input.cwsweep.notification').hide();
@@ -43,7 +42,7 @@ function transpose(a) {
   };
 
 function listimes_cwsweep() {
-    // $('input.char.data').removeClass("plotted");
+    // console.log("test_var: " + test_var);
     
     if (Number(wday) < 0) {
         // brings up parameter-input panel for new measurement:
@@ -51,7 +50,7 @@ function listimes_cwsweep() {
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
             $("textarea.char.cwsweep[name='ecomment']").val(cwsweepcomment.replace("\n"+cwsweepcomment.split("\n")[cwsweepcomment.split("\n").length-1], '')
-                 + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + cwsweep_jobids); // directly replace the old T6
+                 + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + mission_jobids); // directly replace the old T6
         });
 
     } else if (wday == 's') {
@@ -75,8 +74,8 @@ function accessdata_cwsweep() {
     }, function (data) {
         // Indicate JOBID:
         $("a.new#cwsweep-job").text('JOBID: ' + String(data.JOBID));
-        cwsweep_jobids = [cwsweep_jobids.split(',')[0], cwsweep_jobids.split(',')[1]]
-        cwsweep_jobids = String(data.JOBID) + ',' + cwsweep_jobids.join(',') // also inside edittable-comment: limit to just 3 previous Job-ID(s)
+        console.log("Last accessed Job: " + tracking_access_jobids(data.JOBID));
+        showing_access_jobids();
         
         // checking parameters:
         console.log(data.corder);
@@ -100,6 +99,8 @@ function accessdata_cwsweep() {
         cwsweepcomment = data.comment;
         // load narrated comment:
         $('textarea.char.cwsweep[name="comment"]').text(data.comment);
+        // load narrated perimeter-JSON:
+        $('div#char-cwsweep-perimeters').empty().append($('<h4 style="color: blue;"></h4>').text(JSON.stringify(data.perimeter)));
 
         // load c-range for each command:
         // SCROLL: scroll out repeated data (the exact reverse of averaging)
@@ -804,8 +805,7 @@ $('input.cwsweep.notification').click( function(){
     wday = DAYLIST.length - 1 - DAYLIST.indexOf(Day);
     wmoment = Moment;
     // Digesting Day & Moment on the back:
-    listimes_cwsweep();
-    accessdata_cwsweep();
+    $.when( listimes_cwsweep() ).done(function () { accessdata_cwsweep(); });
     // Setting Day & Moment on the front:
     $('select.char.cwsweep[name="wday"]').val(wday);
     setTimeout(() => {
