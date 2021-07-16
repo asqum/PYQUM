@@ -9,7 +9,7 @@ init(autoreset=True) #to convert termcolor to wins color
 
 import copy
 from pyqum.instrument.machine import MXA
-from pyqum.instrument.machine import PSGA as PSG # RO: V, XY: A
+from pyqum.instrument.machine import PSGV as PSG # RO: V, XY: A
 from pyqum.instrument.machine import TKAWG as DAC
 from pyqum.instrument.logger import status_code, get_status, set_status, clocker
 from pyqum.instrument.analyzer import curve
@@ -110,8 +110,8 @@ class IQ_Cal:
         if "xy" in mixer_module: self.channels_group = 3
         elif "ro" in mixer_module: self.channels_group = 1
 
-        # 1. PSG
-        self.saga = PSG.Initiate(2, mode="TEST")
+        # 1. PSG (RO:PSGV_1 XY:PSGA_2)
+        self.saga = PSG.Initiate(1, mode="TEST")
         PSG.rfoutput(self.saga, action=['Set', 1])
         PSG.frequency(self.saga, action=['Set', "%sGHz" %self.LO_freq])
         PSG.power(self.saga, action=['Set', "%sdBm" %LO_powa])
@@ -142,7 +142,8 @@ class IQ_Cal:
         BW_Hz = fspan_MHz*1e6 / 100
         points = 1000
         SA_Setup(self.mxa, self.LO_freq, fspan_MHz=fspan_MHz, BW_Hz=BW_Hz, points=points)
-        MXA.trigger_source(self.mxa, action=['Set','EXTernal1'])
+        # Trigger Number XY:1 RO:2
+        MXA.trigger_source(self.mxa, action=['Set','EXTernal2'])
         sleep(3)
 
     def settings(self, suppression='LO', STEP=array([-0.5,-0.5,0.5,12,12]), logratio=1):
@@ -391,7 +392,8 @@ def test():
     s, t = clocker(agenda="IQ-CAL")
     # ===============================================================
     #C = IQ_Cal(4.58, 19, -75, 100000, 0.125, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
-    C = IQ_Cal(8.76, 18, -17, 100000, 0.7, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    #C = IQ_Cal(8.76, 18, -17, 100000, 0.7, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    C = IQ_Cal(6.26255, 18, -0.7, 100000, 0.7, 'ro1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
 
     C.run()
     # ===============================================================
