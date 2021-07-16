@@ -9,7 +9,7 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan
 
 
 # Json to Javascrpt
@@ -119,17 +119,22 @@ class QEstimation():
 		self.independentVars = {}
 		# Key and index
 		self.freqKey = "Frequency"
+		self.powerKey = "Power"
+
 		self.yAxisKey = None
 		self.varsInd = []
 
 		# Data
 		self.rawData = {}
+		
 		# Fit
 		self.fitCurve = {}
 		self.baseline = {}
 		self.correctedIQData = {}
 		self.fitResult = {}
+
 		self._fitParameters = None
+		self._init_fitResult()
 		self._init_rawData()
 		self._init_fitCurve()
 		self._init_baselineCorrection()
@@ -166,6 +171,28 @@ class QEstimation():
 			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
 		}
 
+	def _init_fitResult( self, yAxisLen=0 ):
+		nanArray = empty([yAxisLen])
+		nanArray.fill( nan )
+
+		resultKeys = ["Qi_dia_corr","Qi_no_corr","absQc","Qc_dia_corr","Ql","fr","theta0","phi0"]
+		errorKeys = ["phi0_err", "Ql_err", "absQc_err", "fr_err","chi_square","Qi_no_corr_err","Qi_dia_corr_err"]
+		extendResultKeys = ["power_corr", "single_photon_limit", "photons_in_resonator"]
+		results ={}
+		errors ={}
+		extendResults ={}
+		for rk in resultKeys:
+			results[rk] = nanArray.copy()
+		for ek in errorKeys:
+			errors[ek] = nanArray.copy()
+		for erk in extendResultKeys:
+			extendResults[erk] = nanArray.copy()
+
+		self.fitResult={
+			"results": results,
+			"errors": errors,
+			"extendResults": extendResults,
+		}
 
 	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
 		self.fitCurve = {
@@ -197,11 +224,15 @@ class QEstimation():
 					"correction": False,
 					"smoothness": 1e9,
 					"asymmetry": 0.995,
-				}
+				},				
+				"gain":0,
 			}
-		else:	
+		else:
 			fitParameters["range"]["from"] = float(fitParameters["range"]["from"])*1e9
 			fitParameters["range"]["to"] = float(fitParameters["range"]["to"])*1e9
+			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
+			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
+			fitParameters["gain"] = float(fitParameters["gain"])
 		self._fitParameters = fitParameters
 
 
@@ -225,6 +256,8 @@ class QEstimation():
 		self.yAxisKey = yAxisKey
 		self.varsInd = varsInd.copy()
 		self._init_baselineCorrection()
+		self._init_fitResult()
+
 		data = self._get_data_from_Measurement()
 
 		data = reshape( data, tuple(cShape) )
@@ -278,6 +311,7 @@ class QEstimation():
 
 		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
 		self._init_baselineCorrection(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
+		self._init_fitResult(yAxisLen=yAxisLen)
 
 		# Set x-axis (frequency) of fit curve 
 		self.fitCurve["frequency"] = self.rawData["frequency"]
@@ -287,43 +321,49 @@ class QEstimation():
 			self.correctedIQData["frequency"] = self.rawData["frequency"]
 		else: 
 			self._init_baselineCorrection()
-
 		myResonator = notch_port()
 		# Creat notch port list
 		for i in range(yAxisLen):
 			# Fit baseline
 			if self.fitParameters["baseline"]["correction"] == True :
-				fittedBaseline = myResonator.fit_baseline_amp( self.rawData["iqSignal"][i], float(self.fitParameters["baseline"]["smoothness"]), float(self.fitParameters["baseline"]["asymmetry"]),niter=1)
+				fittedBaseline = myResonator.fit_baseline_amp( self.rawData["iqSignal"][i], self.fitParameters["baseline"]["smoothness"], self.fitParameters["baseline"]["asymmetry"],niter=1)
 				correctedIQ = self.rawData["iqSignal"][i]/fittedBaseline
-				# Add data
-				myResonator.add_data(self.rawData["frequency"], correctedIQ )
 				# Save Corrected IQData
 				self.correctedIQData["iqSignal"][i] = correctedIQ
 				# Save baseline
 				self.baseline["iqSignal"][i] = fittedBaseline
 			else: 
 				self._init_baselineCorrection()
-				# Add data
-				myResonator.add_data(self.rawData["frequency"], self.rawData["iqSignal"][i])
+				correctedIQ = self.rawData["iqSignal"][i]
+			# Add data
+			myResonator.add_data(self.rawData["frequency"], correctedIQ)
 			# Fit
-			myResonator.autofit(fcrop=fitRange)
+			try:
+				myResonator.autofit(fcrop=fitRange)
+				fitSuccess = True
+			except:
+				fitSuccess = False
 
-			# Store fitting result in dict of array 
-			for key in myResonator.fitresults.keys():
-				fittingValue = myResonator.fitresults[key]
-				if isnan(fittingValue):
-					fittingValue = 0
-				if i==0 :
-						self.fitResult[key] = empty(yAxisLen)
-				self.fitResult[key][i] = fittingValue
-			if i==0 :
-				self.fitResult["single_photon_limit"] = empty(yAxisLen)
-				self.fitResult["photons_in_resonator"] = empty(yAxisLen)
-			self.fitResult["single_photon_limit"][i] = myResonator.get_single_photon_limit(unit='dBm',diacorr=True)
-			self.fitResult["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.independentVars["Power"][i],unit='dBm',diacorr=True)
+			if fitSuccess:
 
-			# Save fitted curve	
-			self.fitCurve["iqSignal"][i] = myResonator.z_data_sim
+				for k in self.fitResult["results"].keys():
+					self.fitResult["results"][k][i] = myResonator.fitresults[k]
+
+				for k in self.fitResult["errors"].keys():
+					self.fitResult["errors"][k][i] = myResonator.fitresults[k]
+
+
+				self.fitResult["extendResults"]["single_photon_limit"][i] = myResonator.get_single_photon_limit(unit='dBm',diacorr=True)
+
+				if self.yAxisKey == self.powerKey:
+					powerIndex = i
+				else:
+					powerAxisIndex = self.measurementObj.corder["C-Structure"].index(self.powerKey)
+					powerIndex = self.varsInd[powerAxisIndex]
+				self.fitResult["extendResults"]["power_corr"][i] = self.independentVars["Power"][powerIndex]+self.fitParameters["gain"]
+				self.fitResult["extendResults"]["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.fitResult["extendResults"]["power_corr"][i],unit='dBm',diacorr=True)
+				self.fitCurve["iqSignal"][i] =myResonator.z_data_sim
+
 
 	def get_htmlInfo( self ):
 		hiddenKeys = ["datadensity",self.freqKey]
@@ -427,9 +467,12 @@ def getJson_fitParaPlot():
 	myQEstimation.fitParameters = fitParameters
 	print( "Fit parameters: ",fitParameters)
 	myQEstimation.do_analysis()
-	plotData = myQEstimation.fitResult
+	print("Fit results: ",myQEstimation.fitResult)
 
-
+	plotData = myQEstimation.fitResult["results"]
+	plotData.update(myQEstimation.fitResult["errors"])
+	plotData.update(myQEstimation.fitResult["extendResults"])
+	print("Fit plot results: ",plotData)
 	analysisIndex = json.loads(request.args.get('analysisIndex'))
 
 	dimension = len(analysisIndex["axisIndex"])
@@ -441,6 +484,7 @@ def getJson_fitParaPlot():
 	else:
 		yAxisKey = None
 		plotData["Single_plot"] = array(1)
+		#plotData["Single_plot"] = myQEstimation.fitResult["extendResults"]["power_corr"]
 
 	return json.dumps(plotData, cls=NumpyEncoder)
 

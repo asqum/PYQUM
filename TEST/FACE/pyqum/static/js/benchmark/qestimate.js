@@ -264,6 +264,7 @@ $(function () {
         let baseline_correction = document.getElementById("qFactor-fit-baseline-correct").checked;
         let baseline_smoothness = document.getElementById("qFactor-fit-baseline-smoothness").value;
         let baseline_asymmetry = document.getElementById("qFactor-fit-baseline-asymmetry").value;
+        let gain = document.getElementById("qFactor-fit-gain").value;
 
         let fitParameters = {
             range: {
@@ -274,7 +275,9 @@ $(function () {
                 correction: baseline_correction,
                 smoothness: baseline_smoothness,
                 asymmetry: baseline_asymmetry,
-            }
+            },
+            gain:gain,
+            
         }
         console.log(fitParameters);
 
@@ -286,6 +289,8 @@ $(function () {
         }, function (data) {
             let xAxisKey = "Single_plot";
             if (analysisIndex.axisIndex.length == 1) { xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"] }
+            //if ( xAxisKey == "Power" ) { xAxisKey = "power_corr" }
+
             let axisKeys_fitResult = {
                 x: [xAxisKey],
                 y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr", "single_photon_limit", "photons_in_resonator"],
