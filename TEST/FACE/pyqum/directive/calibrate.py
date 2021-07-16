@@ -390,7 +390,9 @@ class IQ_Cal:
 def test():
     s, t = clocker(agenda="IQ-CAL")
     # ===============================================================
-    C = IQ_Cal(4.58, 19, -75, 100000, 0.125, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    #C = IQ_Cal(4.58, 19, -75, 100000, 0.125, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    C = IQ_Cal(8.76, 18, -17, 100000, 0.7, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+
     C.run()
     # ===============================================================
     clocker(s, t, agenda="IQ-CAL")
