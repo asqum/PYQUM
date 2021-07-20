@@ -29,7 +29,7 @@ function showing_tracked_jobids() {
         if (typeof ref_jobids!="undefined") {
             $.each(ref_jobids.split(','), function(i,jobid) {
                 jobid = parseInt(jobid);
-                if (isNaN(jobid)==false) { $('.mssn div.tab').append('<div class="buttons"><a class="all-mssn-access btn yellow" id="jid_' + jobid + '">' + jobid + '</a></div>'); };
+                if (isNaN(jobid)==false) { $('.mssn div.tab').append('<div class="buttons"><a class="all-mssn-access btn blue" id="jid_' + jobid + '">' + jobid + '</a></div>'); };
             });
         };
     };

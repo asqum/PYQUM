@@ -45,6 +45,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     # User-defined Controlling-PARAMETER(s) & -PERIMETER(s) ======================================================================================
     dcsweepch = perimeter['dcsweepch']
     z_idle = literal_eval(perimeter['z-idle']) # Idle Z-JSON: {<Channel>: <DC Value>, ... }
+    fluxbias_lock = dict()
     fluxbias = waveform(corder['Flux-Bias'])
     Sparam = waveform(corder['S-Parameter'])
     ifb = waveform(corder['IF-Bandwidth'])
@@ -68,8 +69,10 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     if "opt" not in fluxbias.data: # check if it is in optional-state
         dcbench = DC.Initiate(current=True, which=DC_label) # PENDING option: choose between Voltage / Current output
         DC.output(dcbench, 1)
-        # Pre-fixed Z settings (idle Z-channels):
-        for key in z_idle: DC.sweep(dcbench, z_idle[key], channel=key)
+        # Pre-setting Z-Idle-Channels:
+        for key in z_idle: 
+            if "lock" not in str(z_idle[key]).lower(): DC.sweep(dcbench, z_idle[key], channel=key) # locked to itself
+            else: fluxbias_lock[key] = waveform(z_idle[key].lower().replace("lock",str(fluxbias.count-1))) # locked to fluxbias
 
     # Buffer setting(s) for certain loop(s):
     buffersize_1 = freq.count * 2 #data density of 2 due to IQ
@@ -101,6 +104,9 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
             if not i%prod(cstructure[1::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in fluxbias.data: # check if it is in optional-state
                     DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
+                    # Locking Z-Idle-Channels to Sweeping-Master-Channel:
+                    for key in z_idle: 
+                        if "lock" in str(z_idle[key]).lower(): DC.sweep(dcbench, str(fluxbias_lock[key].data[caddress[0]]), channel=key)
                     
             if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
                 NA.setrace(nabench, Mparam=[Sparam.data[caddress[1]]])
@@ -164,6 +170,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     # User-defined Controlling-PARAMETER(s) & -PERIMETER(s) ======================================================================================
     dcsweepch = perimeter['dcsweepch']
     z_idle = literal_eval(perimeter['z-idle']) # Idle Z-JSON: {<Channel>: <DC Value>, ... }
+    fluxbias_lock = dict()
     fluxbias = waveform(corder['Flux-Bias'])
     xyfreq = waveform(corder['XY-Frequency'])
     xypowa = waveform(corder['XY-Power'])
@@ -202,8 +209,10 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
         dcbench = DC.Initiate(current=True, which=DC_label) # pending option
         DC.output(dcbench, 1)
-        # Pre-fixed Z settings (idle Z-channels):
-        for key in z_idle: DC.sweep(dcbench, z_idle[key], channel=key)
+        # Pre-setting Z-Idle-Channels:
+        for key in z_idle: 
+            if "lock" not in str(z_idle[key]).lower(): DC.sweep(dcbench, z_idle[key], channel=key) # locked to itself
+            else: fluxbias_lock[key] = waveform(z_idle[key].lower().replace("lock",str(fluxbias.count-1))) # locked to fluxbias
 
     # SG:
     [SG_type, SG_label] = instr['SG'].split('_')
@@ -248,6 +257,9 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             if not i%prod(cstructure[1::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in fluxbias.data: # check if it is in optional-state
                     DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
+                    # Locking Z-Idle-Channels to Sweeping-Master-Channel:
+                    for key in z_idle: 
+                        if "lock" in str(z_idle[key]).lower(): DC.sweep(dcbench, str(fluxbias_lock[key].data[caddress[0]]), channel=key)
             
             if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in xyfreq.data: # check if it is in optional-state
