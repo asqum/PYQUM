@@ -70,7 +70,8 @@ def sweep(bench, wave, sweeprate=0.0007, channel=''):
     '''
     pulsewidth=77*1e-3 # waiting/staying/settling/stabilization time in sec
     GPIBspeed = 62 #pts/s
-    Vdata = waveform(str(wave)).data
+    wave = str(wave)
+    Vdata = waveform(wave).data
     SweepTime = abs(waveform(wave).data[0] - waveform(wave).data[-1]) / sweeprate + pulsewidth * waveform(wave).count
     
     for i,V in enumerate(Vdata):

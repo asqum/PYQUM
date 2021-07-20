@@ -62,7 +62,7 @@ function listimes_singleqb() {
         $.getJSON('/mach/all/mxc', {}, function (data) {
             window.mxcmk = data.mxcmk;
             $("textarea.mani.singleqb#singleqb-ecomment").val(singleqbcomment.replace("\n"+singleqbcomment.split("\n")[singleqbcomment.split("\n").length-1], '')
-                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + mission_jobids); // directly replace the old T6
+                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + access_jobids); // directly replace the old T6
         });
 
     } else if (wday == 'm') {
@@ -129,7 +129,8 @@ function accessdata_singleqb() {
         // 3. load edittable comment & references for NEW RUN:
         singleqbcomment = data.comment;
         console.log("Last accessed Job: " + tracking_access_jobids(data.JOBID));
-        showing_access_jobids();
+        ref_jobids = data.comment.split("REF#")[1]; // load ref-jobids from comment
+        showing_tracked_jobids();
         // 4. load narrated comment:
         $('textarea.mani.singleqb.comment').text(data.comment);
         

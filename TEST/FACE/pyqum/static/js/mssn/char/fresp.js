@@ -27,7 +27,7 @@ function listimes_fresp() {
         // Update Live Informations:
         $.getJSON('/mach/all/mxc', {}, function (data) {
             $("textarea.char.fresp[name='ecomment']").val(frespcomment.replace("\n"+frespcomment.split("\n")[frespcomment.split("\n").length-1], '')
-                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + mission_jobids); // directly replace the old T6
+                + "\nUpdate: T6=" + data.mxcmk + "mK, REF#" + access_jobids); // directly replace the old T6
         });
 
 
@@ -57,7 +57,9 @@ function accessdata_fresp() {
         // Indicate JOBID:
         $("a.new#fresp-job").text('JOBID: ' + String(data.JOBID));
         console.log("Last accessed Job: " + tracking_access_jobids(data.JOBID));
-        showing_access_jobids();
+        // load ref-jobids from comment:
+        ref_jobids = data.comment.split("REF#")[1];
+        showing_tracked_jobids();
 
         // checking parameters:
         console.log("CORDER: " + JSON.stringify(data.corder) + "\nPERIMETER: " + JSON.stringify(data.perimeter));
