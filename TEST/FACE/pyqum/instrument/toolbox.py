@@ -61,6 +61,7 @@ class waveform:
     '''
     def __init__(self, command):
         # defaulting to lower case
+        command = str(command)
         self.command = command.lower()
 
         # special treatment to inner-repeat command: (to extract 'inner_repeat' for cwsweep averaging)
