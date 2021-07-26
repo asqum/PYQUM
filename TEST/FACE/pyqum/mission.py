@@ -1695,10 +1695,14 @@ def get_measurementObject( measurementType ):
     def fResp ():
         mObj = M_fresp[session['user_name']]
         mObj.corder["C-Structure"] = ["Flux-Bias", "S-Parameter", "IF-Bandwidth", "Power", "Frequency"]
-        #print("fResp", mObj.corder)
+        return mObj
+    def singleQ ():
+        mObj = M_fresp[session['user_name']]
         return mObj
     measurementObject = {
-        'frequency_response': fResp
+        'frequency_response': fResp,
+        'single_qubit': singleQ
+
     }
 
     return measurementObject[measurementType]()
