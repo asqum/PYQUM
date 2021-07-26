@@ -225,7 +225,10 @@ def getJson_fitParaPlot():
 def exportMat_fitPara():
 	try:
 		myQEstimation = qEstimationDict[session['user_name']]
-		set_mat_analysis( myQEstimation.fitResult, 'QEstimation[%s]'%session['user_name'] )
+		matData = myQEstimation.fitResult["results"]
+		matData.update(myQEstimation.fitResult["errors"])
+		matData.update(myQEstimation.fitResult["extendResults"])
+		set_mat_analysis( matData, 'QEstimation[%s]'%session['user_name'] )
 		status = "Success"
 	except:
 		status = "Fail"
