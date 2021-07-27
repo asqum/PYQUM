@@ -4,7 +4,7 @@
 
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
-    console.log( "QESTIMATE JS" );
+    console.log( "DECOHERENCE JS" );
 });
 
 
@@ -308,4 +308,3 @@ $(function () {
     });
 
 });
-

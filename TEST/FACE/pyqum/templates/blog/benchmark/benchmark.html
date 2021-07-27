@@ -18,6 +18,8 @@
     $(function(){
       $("div#measurement_info").load("{{ url_for('benchmark.measurement_info') }}");
       $("div#qestimate").load("{{ url_for('benchmark.qestimate') }}");
+      $("div#decoherence").load("{{ url_for('benchmark.decoherence') }}");
+
     });
 </script> 
 
@@ -28,11 +30,13 @@
 
   <!-- Q factor -->
   <button class="tablinks" id="qestimate-tab" onclick="openTab(event, 'qestimate')">Q-FACTOR</button>
+  <button class="tablinks" id="decoherence-tab" onclick="openTab(event, 'decoherence')">Decoherence</button>
   
 </div>
 <!-- <div id="all" class="tabcontent"></div> -->
 <div id="measurement_info" class="tabcontent"></div>
 <div id="qestimate" class="tabcontent"></div>
+<div id="decoherence" class="tabcontent"></div>
 
 {% endif %}
 
