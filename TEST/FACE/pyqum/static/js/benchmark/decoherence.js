@@ -52,7 +52,7 @@ function get_selectInfo(){
             console.log("Select " +valueIndex[i] );
             console.log("check " +htmlName );
             let axisDimension = axisIndex.length;
-            if ( document.getElementById("check-"+htmlName).checked && axisIndex.length<1 )
+            if ( document.getElementById("plot_type-"+htmlName).value == "y_value" && axisIndex.length<1 )
             {
                 console.log(htmlName +" is checked ");
                 axisIndex[axisDimension] = structurePosition ;

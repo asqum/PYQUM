@@ -1702,7 +1702,6 @@ def get_measurementObject( measurementType ):
     measurementObject = {
         'frequency_response': fResp,
         'single_qubit': singleQ
-
     }
 
     return measurementObject[measurementType]()

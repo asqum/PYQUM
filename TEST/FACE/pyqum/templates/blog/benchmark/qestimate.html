@@ -7,7 +7,7 @@
 
 <body class="benchmark">
     <div class="qestimatecontent">
-        <h3>Welcome to Q Estimation</h3>
+        <h3>Q Estimation</h3>
 
         <div class="flex-allPara">
             <div class="allMeasurePara">
@@ -17,7 +17,13 @@
                 <div class="measurePara">
                     <div class="measureParaSelect"><label>{{ name }}</label></div>
                     {% if varlen != 1 %} 
-                        <div class="measureParaSelect"><input type="checkbox" id='check-{{name}}' ></div>
+                        <!-- Select what is the variable use for -->
+                        <div class="measureParaSelect"><select id='plot_type-{{name}}' type="text">
+                        <option value="single_value">single point</option>
+                        <option value="y_value">y axis - value</option>
+                        <option value="count">y axis - Count</option>
+                        </div>
+                        <!-- Select value -->
                         <div class="measureParaSelect"><select id='select-{{name}}' type="text">
                         {% for v in independentVars[name] %}
                         <option>{{v}}</option>

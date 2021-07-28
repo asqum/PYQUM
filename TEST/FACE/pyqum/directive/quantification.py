@@ -20,7 +20,7 @@ from contextlib import suppress
 
 # Scientific
 from scipy import constants as cnst
-from si_prefix import si_format, si_parse
+#from si_prefix import si_format, si_parse
 from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean
 
 # Load instruments
@@ -35,33 +35,22 @@ from collections import defaultdict
 # Save file
 from scipy.io import savemat
 
-class QEstimation():
 
-	def __init__( self, measurementObj, *args,**kwargs ):
-
+class Quantification ():
+	def __init__( self, measurementObj, quantificationType, *args,**kwargs ):
 		self.measurementObj = measurementObj
+		self.quantificationType = quantificationType
 		self.independentVars = {}
 		# Key and index
-		self.freqKey = "Frequency"
-		self.powerKey = "Power"
-
+		self.xAxisKey = None
 		self.yAxisKey = None
 		self.varsInd = []
 
 		# Data
 		self.rawData = {}
-		
-		# Fit
-		self.fitCurve = {}
-		self.baseline = {}
-		self.correctedIQData = {}
-		self.fitResult = {}
-
-		self._fitParameters = None
-		self._init_fitResult()
+		# Initialize
 		self._init_rawData()
-		self._init_fitCurve()
-		self._init_baselineCorrection()
+
 		C_Shape = []
 		for k in measurementObj.corder["C-Structure"] :
 			# Get wavefrom object from c-order
@@ -88,12 +77,102 @@ class QEstimation():
 			if s == 1:
 				self.optCShpae.remove(s)
 				self.optCStructure.remove(k)
-		'''	
+		'''
+
+	def _get_data_from_Measurement( self ):
+		writtensize = self.measurementObj.writtensize
+		pqfile = self.measurementObj.pqfile
+		datalocation = self.measurementObj.datalocation
+
+		with open(pqfile, 'rb') as datapie:
+			datapie.seek(datalocation+7)
+			pie = datapie.read(writtensize)
+			selectedata = list(struct.unpack('>' + 'd'*((writtensize)//8), pie))
+			
+		return array(selectedata)
+
 	def _init_rawData( self, yAxisLen=0, xAxisLen=0 ):
 		self.rawData = {
-			"frequency": empty([xAxisLen]),
+			"x": empty([xAxisLen]),
 			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
 		}
+
+	def reshape_Data ( self, varsInd, xAxisKey=None, yAxisKey=None ):
+		# Data dimension should <= 3
+		print("Reshape Data")
+
+		cShape = self.measurementObj.corder["C_Shape"]
+		self.yAxisKey = yAxisKey
+		self.xAxisKey = xAxisKey
+
+		self.varsInd = varsInd.copy()
+		self._init_baselineCorrection()
+		self._init_fitResult()
+
+		data = self._get_data_from_Measurement()
+
+		data = reshape( data, tuple(cShape) )
+		varsInd.append(1) # Temporary for connect with old data type
+
+		if yAxisKey == None:
+			moveAxisKey = ["datadensity", self.xAxisKey]
+		else:
+			moveAxisKey = ["datadensity", self.yAxisKey, self.xAxisKey]
+		
+		selectValInd = []
+		includeAxisInd = []
+		for i, k in enumerate(self.measurementObj.corder["C-Structure"]):
+			if k not in moveAxisKey:	
+				selectValInd.append(varsInd[i])
+			else:
+				includeAxisInd.append(i)
+
+		includeAxisInd = []
+		newAxisPosition = []
+		for i, k in enumerate(moveAxisKey):
+			includeAxisInd.append(self.measurementObj.corder["C-Structure"].index(k) )
+			newAxisPosition.append(-len(moveAxisKey)+i)
+
+
+		data = moveaxis( data, includeAxisInd, newAxisPosition )
+
+		# To 3 dimension
+		for vi in selectValInd:
+			data = data[vi]
+		if data.ndim == 2:
+			data = expand_dims(data,axis=1)
+
+		# Get data to analysis
+		self.rawData = { 
+			"x": self.independentVars[self.xAxisKey], 
+			"iqSignal": data[0]+1j*data[1],
+		}
+
+
+
+class QEstimation( Quantification ):
+
+	def __init__( self, measurementObj, *args,**kwargs ):
+
+		# Key and index
+		self.freqKey = "Frequency"
+		self.powerKey = "Power"
+		self.xAxisKey = self.freqKey
+		super().__init__( measurementObj, "qfactor_estimation" )
+		
+		# Fit
+		self.fitCurve = {}
+		self.baseline = {}
+		self.correctedIQData = {}
+		self.fitResult = {}
+
+		self._fitParameters = None
+		self._init_fitResult()
+		
+		self._init_fitCurve()
+		self._init_baselineCorrection()
+
+
 
 	def _init_fitResult( self, yAxisLen=0 ):
 		nanArray = empty([yAxisLen])
@@ -160,66 +239,7 @@ class QEstimation():
 		self._fitParameters = fitParameters
 
 
-	def _get_data_from_Measurement( self ):
-		writtensize = self.measurementObj.writtensize
-		pqfile = self.measurementObj.pqfile
-		datalocation = self.measurementObj.datalocation
 
-		with open(pqfile, 'rb') as datapie:
-			datapie.seek(datalocation+7)
-			pie = datapie.read(writtensize)
-			selectedata = list(struct.unpack('>' + 'd'*((writtensize)//8), pie))
-			
-		return array(selectedata)
-
-	def reshape_Data ( self, varsInd, yAxisKey=None ):
-		# Data dimension should <= 3
-		print("Reshape Data")
-
-		cShape = self.measurementObj.corder["C_Shape"]
-		self.yAxisKey = yAxisKey
-		self.varsInd = varsInd.copy()
-		self._init_baselineCorrection()
-		self._init_fitResult()
-
-		data = self._get_data_from_Measurement()
-
-		data = reshape( data, tuple(cShape) )
-		varsInd.append(1) # Temporary for connect with old data type
-
-		if yAxisKey == None:
-			moveAxisKey = ["datadensity", self.freqKey]
-		else:
-			moveAxisKey = ["datadensity", self.yAxisKey, self.freqKey]
-		
-		selectValInd = []
-		includeAxisInd = []
-		for i, k in enumerate(self.measurementObj.corder["C-Structure"]):
-			if k not in moveAxisKey:	
-				selectValInd.append(varsInd[i])
-			else:
-				includeAxisInd.append(i)
-
-		includeAxisInd = []
-		newAxisPosition = []
-		for i, k in enumerate(moveAxisKey):
-			includeAxisInd.append(self.measurementObj.corder["C-Structure"].index(k) )
-			newAxisPosition.append(-len(moveAxisKey)+i)
-
-
-		data = moveaxis( data, includeAxisInd, newAxisPosition )
-
-		# To 3 dimension
-		for vi in selectValInd:
-			data = data[vi]
-		if data.ndim == 2:
-			data = expand_dims(data,axis=1)
-
-		# Convert to complex number
-		self.rawData = { 
-			"frequency": self.independentVars[self.freqKey]*1e9, #GHz to Hz
-			"iqSignal": data[0]+1j*data[1],
-		}
 
 
 	def do_analysis( self ):
@@ -301,7 +321,7 @@ class QEstimation():
 				}
 				htmlInfo.append(info)
 		return htmlInfo
-		
+"""		
 class Decoherence():
 
 	def __init__( self, measurementObj, *args,**kwargs ):
@@ -353,7 +373,7 @@ class Decoherence():
 			if s == 1:
 				self.optCShpae.remove(s)
 				self.optCStructure.remove(k)
-		'''	
+		'''
 	def _init_rawData( self, yAxisLen=0, xAxisLen=0 ):
 		self.rawData = {
 			"time": empty([xAxisLen]),
@@ -479,71 +499,71 @@ class Decoherence():
 		}
 
 
-	# def do_analysis( self ):
-	# 	fitRange = ( self.fitParameters["range"]["from"], self.fitParameters["range"]["to"] )
+	def do_analysis( self ):
+		fitRange = ( self.fitParameters["range"]["from"], self.fitParameters["range"]["to"] )
 
-	# 	xAxisLen = self.rawData["frequency"].shape[0]
+		xAxisLen = self.rawData["frequency"].shape[0]
 
-	# 	# Get 1D or 2D data to self.rawData
-	# 	if self.yAxisKey == None:
-	# 		yAxisLen = 1
-	# 	else:
-	# 		yAxisLen = self.independentVars[self.yAxisKey].shape[0]
+		# Get 1D or 2D data to self.rawData
+		if self.yAxisKey == None:
+			yAxisLen = 1
+		else:
+			yAxisLen = self.independentVars[self.yAxisKey].shape[0]
 
-	# 	self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
-	# 	self._init_baselineCorrection(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
-	# 	self._init_fitResult(yAxisLen=yAxisLen)
+		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
+		self._init_baselineCorrection(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
+		self._init_fitResult(yAxisLen=yAxisLen)
 
-	# 	# Set x-axis (frequency) of fit curve 
-	# 	self.fitCurve["frequency"] = self.rawData["frequency"]
+		# Set x-axis (frequency) of fit curve 
+		self.fitCurve["frequency"] = self.rawData["frequency"]
 
-	# 	if self.fitParameters["baseline"]["correction"] == True :
-	# 		self.baseline["frequency"] = self.rawData["frequency"]
-	# 		self.correctedIQData["frequency"] = self.rawData["frequency"]
-	# 	else: 
-	# 		self._init_baselineCorrection()
-	# 	myResonator = notch_port()
-	# 	# Creat notch port list
-	# 	for i in range(yAxisLen):
-	# 		# Fit baseline
-	# 		if self.fitParameters["baseline"]["correction"] == True :
-	# 			fittedBaseline = myResonator.fit_baseline_amp( self.rawData["iqSignal"][i], self.fitParameters["baseline"]["smoothness"], self.fitParameters["baseline"]["asymmetry"],niter=1)
-	# 			correctedIQ = self.rawData["iqSignal"][i]/fittedBaseline
-	# 			# Save Corrected IQData
-	# 			self.correctedIQData["iqSignal"][i] = correctedIQ
-	# 			# Save baseline
-	# 			self.baseline["iqSignal"][i] = fittedBaseline
-	# 		else: 
-	# 			self._init_baselineCorrection()
-	# 			correctedIQ = self.rawData["iqSignal"][i]
-	# 		# Add data
-	# 		myResonator.add_data(self.rawData["frequency"], correctedIQ)
-	# 		# Fit
-	# 		try:
-	# 			myResonator.autofit(fcrop=fitRange)
-	# 			fitSuccess = True
-	# 		except:
-	# 			fitSuccess = False
+		if self.fitParameters["baseline"]["correction"] == True :
+			self.baseline["frequency"] = self.rawData["frequency"]
+			self.correctedIQData["frequency"] = self.rawData["frequency"]
+		else: 
+			self._init_baselineCorrection()
+		myResonator = notch_port()
+		# Creat notch port list
+		for i in range(yAxisLen):
+			# Fit baseline
+			if self.fitParameters["baseline"]["correction"] == True :
+				fittedBaseline = myResonator.fit_baseline_amp( self.rawData["iqSignal"][i], self.fitParameters["baseline"]["smoothness"], self.fitParameters["baseline"]["asymmetry"],niter=1)
+				correctedIQ = self.rawData["iqSignal"][i]/fittedBaseline
+				# Save Corrected IQData
+				self.correctedIQData["iqSignal"][i] = correctedIQ
+				# Save baseline
+				self.baseline["iqSignal"][i] = fittedBaseline
+			else: 
+				self._init_baselineCorrection()
+				correctedIQ = self.rawData["iqSignal"][i]
+			# Add data
+			myResonator.add_data(self.rawData["frequency"], correctedIQ)
+			# Fit
+			try:
+				myResonator.autofit(fcrop=fitRange)
+				fitSuccess = True
+			except:
+				fitSuccess = False
 
-	# 		if fitSuccess:
+			if fitSuccess:
 
-	# 			for k in self.fitResult["results"].keys():
-	# 				self.fitResult["results"][k][i] = myResonator.fitresults[k]
+				for k in self.fitResult["results"].keys():
+					self.fitResult["results"][k][i] = myResonator.fitresults[k]
 
-	# 			for k in self.fitResult["errors"].keys():
-	# 				self.fitResult["errors"][k][i] = myResonator.fitresults[k]
+				for k in self.fitResult["errors"].keys():
+					self.fitResult["errors"][k][i] = myResonator.fitresults[k]
 
 
-	# 			self.fitResult["extendResults"]["single_photon_limit"][i] = myResonator.get_single_photon_limit(unit='dBm',diacorr=True)
+				self.fitResult["extendResults"]["single_photon_limit"][i] = myResonator.get_single_photon_limit(unit='dBm',diacorr=True)
 
-	# 			if self.yAxisKey == self.powerKey:
-	# 				powerIndex = i
-	# 			else:
-	# 				powerAxisIndex = self.measurementObj.corder["C-Structure"].index(self.powerKey)
-	# 				powerIndex = self.varsInd[powerAxisIndex]
-	# 			self.fitResult["extendResults"]["power_corr"][i] = self.independentVars["Power"][powerIndex]+self.fitParameters["gain"]
-	# 			self.fitResult["extendResults"]["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.fitResult["extendResults"]["power_corr"][i],unit='dBm',diacorr=True)
-	# 			self.fitCurve["iqSignal"][i] =myResonator.z_data_sim
+				if self.yAxisKey == self.powerKey:
+					powerIndex = i
+				else:
+					powerAxisIndex = self.measurementObj.corder["C-Structure"].index(self.powerKey)
+					powerIndex = self.varsInd[powerAxisIndex]
+				self.fitResult["extendResults"]["power_corr"][i] = self.independentVars["Power"][powerIndex]+self.fitParameters["gain"]
+				self.fitResult["extendResults"]["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.fitResult["extendResults"]["power_corr"][i],unit='dBm',diacorr=True)
+				self.fitCurve["iqSignal"][i] =myResonator.z_data_sim
 
 
 	def get_htmlInfo( self ):
@@ -558,8 +578,8 @@ class Decoherence():
 				}
 				htmlInfo.append(info)
 		return htmlInfo
+"""
 
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
 	
-

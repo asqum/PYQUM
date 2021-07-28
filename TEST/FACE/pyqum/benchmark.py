@@ -54,7 +54,8 @@ def show():
 		# Security implementation:
 		if not g.user['instrument']:
 			abort(404)
-		return render_template("blog/benchmark/benchmark.html")
+		quantificationType = qEstimationDict[session['user_name']].quantificationType
+		return render_template("blog/benchmark/benchmark.html", quantificationType=quantificationType)
 	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
 @bp.route('/get_parametersID', methods=['POST', 'GET'])
@@ -75,10 +76,22 @@ def qestimate():
 	return render_template("blog/benchmark/qestimate.html", corder=corder, independentVars=independentVars, freqKey=freqKey, varNumber=varNumber, htmlInfo=htmlInfo)
 
 @bp.route('/benchmark_getMeasurement', methods=['POST', 'GET'])
-def benchmark_getMeasurement(): 
+def benchmark_getMeasurement():
+	'''
+	quantification type "qfactor_estimation"
+	''' 
 	global qEstimationDict
 	measurementType = request.args.get('measurementType')
-	qEstimationDict[session['user_name']] = QEstimation( get_measurementObject(measurementType) )
+	quantificationType = json.loads(request.args.get('quantificationType'))
+
+	def qfactor_estimation ():
+		return  QEstimation( get_measurementObject(measurementType) )
+
+	quantificationObj = {
+		'qfactor_estimation': qfactor_estimation,
+	}
+
+	qEstimationDict[session['user_name']] = quantificationObj[quantificationType[0]]() 
 	print("Measurement Obj Init", qEstimationDict[session['user_name']].measurementObj.corder)
 	return "Send Measurement Object"
 
@@ -124,7 +137,7 @@ def getJson_plot():
 	preValueInd = myQEstimation.varsInd
 	if preYAxisKey != yAxisKey  or ( yAxisKey==None and preValueInd != valueInd):
 		print("Previous index",preValueInd,"New index",valueInd)
-		myQEstimation.reshape_Data( valueInd, yAxisKey=yAxisKey )
+		myQEstimation.reshape_Data( valueInd, yAxisKey=myQEstimation.xAxisKey, yAxisKey=yAxisKey )
 
 
 	print("Plot type: ", plotType)

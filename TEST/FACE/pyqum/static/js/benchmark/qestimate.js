@@ -49,12 +49,12 @@ function get_selectInfo(){
         if ( varLength == 1 ){ valueIndex[i]=0 }
         else{
             valueIndex[i] = document.getElementById("select-"+htmlName).selectedIndex;
-            console.log("Select " +valueIndex[i] );
-            console.log("check " +htmlName );
+            console.log( htmlName +" select " +valueIndex[i] );
             let axisDimension = axisIndex.length;
-            if ( document.getElementById("check-"+htmlName).checked && axisIndex.length<1 )
+            
+            if ( document.getElementById("plot_type-"+htmlName).value == "y_value" && axisIndex.length<1 )
             {
-                console.log(htmlName +" is checked ");
+                console.log(htmlName +" for y-axis ");
                 axisIndex[axisDimension] = structurePosition ;
             }
         }

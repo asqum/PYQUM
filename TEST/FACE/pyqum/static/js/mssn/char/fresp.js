@@ -730,7 +730,7 @@ $('input.char.benchmark').click( function(){
     });
 
     $.getJSON( '/benchmark/benchmark_getMeasurement', 
-    { measurementType: "frequency_response" }, 
+    { measurementType: "frequency_response", quantificationType = ["qfactor_estimation"] }, 
         function ( ) {
     }); 
 
