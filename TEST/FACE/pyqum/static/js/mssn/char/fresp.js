@@ -728,9 +728,9 @@ $('input.char.benchmark').click( function(){
             console.log( data );  
                     
     });
-
+    let quantificationType = ["qfactor_estimation"];
     $.getJSON( '/benchmark/benchmark_getMeasurement', 
-    { measurementType: "frequency_response", quantificationType = ["qfactor_estimation"] }, 
+    { measurementType: "frequency_response", quantificationType: quantificationType }, 
         function ( ) {
     }); 
 

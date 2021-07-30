@@ -17,15 +17,16 @@
 <script>
   $(function(){
     $("div#measurement_info").load("{{ url_for('benchmark.measurement_info') }}");
+    // $("div#qestimate").load("{{ url_for('benchmark.qestimate') }}");
   });
 </script> 
-{% for qtype in quantificationType %}
+<!-- {% for qtype in quantificationType %}
 <script>
   $(function(){
     $("div#{{qtype}}").load("{{ url_for('benchmark.{{qtype}}') }}");
   });
 </script> 
-{% endfor %}
+{% endfor %} -->
 
 
 {% if g.user %}
@@ -34,16 +35,19 @@
   <button class="tablinks" id="measurement_info-tab" onclick="openTab(event, 'measurement_info')">Home</button>
 
   <!-- Q factor -->
-  {% for qtype in quantificationType %}
+  <!-- {% for qtype in quantificationType %}
   <button class="tablinks" id="{{qtype}}-tab" onclick="openTab(event, {{qtype}})">{{qtype}}</button>
-  {% endfor %}
-  
+  {% endfor %} -->
+  <button class="tablinks" id="qestimate-tab" onclick="openTab(event, 'qestimate')">qestimate</button>
+
 </div>
 <!-- <div id="all" class="tabcontent"></div> -->
 <div id="measurement_info" class="tabcontent"></div>
-{% for qtype in quantificationType %}
-<div id={{qtype}} class="tabcontent"></div>
-{% endfor %}
+<div id="qestimate" class="tabcontent"></div>
+
+<!-- {% for qtype in quantificationType %}
+<div id="{{qtype}}" class="tabcontent"></div>
+{% endfor %} -->
 
 {% endif %}
 
