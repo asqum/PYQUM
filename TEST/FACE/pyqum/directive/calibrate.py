@@ -7,15 +7,21 @@ Created on Wed Jan 15 11:17:10 2020
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
+mode = "XY"
+
 import copy
 from pyqum.instrument.machine import MXA
-from pyqum.instrument.machine import PSGV as PSG # RO: V, XY: A
+
+if mode=="XY": from pyqum.instrument.machine import PSGA as PSG # RO: V, XY: A
+if mode=="RO": from pyqum.instrument.machine import PSGV as PSG # RO: V, XY: A
 from pyqum.instrument.machine import TKAWG as DAC
 from pyqum.instrument.logger import status_code, get_status, set_status, clocker
 from pyqum.instrument.analyzer import curve
 from pyqum.instrument.composer import pulser
 from numpy import sin, cos, pi, array, float64, sum, dot, log10  
 from time import sleep
+
+
 
 # Instrument acting on feedback:
 # 1. DAC taking feedback from Optimization loop:
@@ -52,7 +58,10 @@ def Update_DAC(daca, ifreq, IQparams, IF_period, IF_scale, mixer_module, channel
         dt = round(1/float(DAC.clock(daca)[1]['SRATe'])/1e-9, 2)
         pulseq = pulser(dt=dt, clock_multiples=1, score=SCORE_DEFINED['CH%s'%channel])
         pulseq.song()
-        DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, 2) # ODD for PIN-SWITCH, EVEN for TRIGGER; RO-TRIGGER: 1: ALZDG, 2: MXA; XY-TRIGGER: 1: MXA, 2: SCOPE
+
+        if mode=="XY": marker=1
+        if mode=="RO": marker=2
+        DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, marker) # ODD for PIN-SWITCH, EVEN for TRIGGER; RO-TRIGGER: 1: ALZDG, 2: MXA; XY-TRIGGER: 1: MXA, 2: SCOPE
     DAC.ready(daca)
     sleep(0.73) # wait for trigger to complete MXA measurement
 
@@ -111,7 +120,9 @@ class IQ_Cal:
         elif "ro" in mixer_module: self.channels_group = 1
 
         # 1. PSG (RO:PSGV_1 XY:PSGA_2)
-        self.saga = PSG.Initiate(1, mode="TEST")
+        if mode=="XY": which=2
+        if mode=="RO": which=1
+        self.saga = PSG.Initiate(which, mode="TEST")
         PSG.rfoutput(self.saga, action=['Set', 1])
         PSG.frequency(self.saga, action=['Set', "%sGHz" %self.LO_freq])
         PSG.power(self.saga, action=['Set', "%sdBm" %LO_powa])
@@ -143,7 +154,9 @@ class IQ_Cal:
         points = 1000
         SA_Setup(self.mxa, self.LO_freq, fspan_MHz=fspan_MHz, BW_Hz=BW_Hz, points=points)
         # Trigger Number XY:1 RO:2
-        MXA.trigger_source(self.mxa, action=['Set','EXTernal2'])
+        if mode=="XY": trigger=1
+        if mode=="RO": trigger=2
+        MXA.trigger_source(self.mxa, action=['Set','EXTernal%s'%trigger])
         sleep(3)
 
     def settings(self, suppression='LO', STEP=array([-0.5,-0.5,0.5,12,12]), logratio=1):
@@ -393,7 +406,7 @@ def test():
     # ===============================================================
     #C = IQ_Cal(4.58, 19, -75, 100000, 0.125, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
     #C = IQ_Cal(8.76, 18, -17, 100000, 0.7, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
-    C = IQ_Cal(6.26255, 18, -0.7, 100000, 0.7, 'ro1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    C = IQ_Cal(8.794, 18, -23, 100000, 0.3, 'xy1') # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
 
     C.run()
     # ===============================================================
