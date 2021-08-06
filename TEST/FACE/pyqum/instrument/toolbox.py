@@ -130,6 +130,13 @@ def match(List, Value):
     index = abs(array(List) - Value).argmin()
     return index
 
+def normalize_dipeak(arr):
+    '''unidirectional normalization'''
+    arr = array(arr)
+    if abs(max(arr)) >= abs(min(arr)): arr = (arr - min(arr)) / (max(arr) - min(arr)) # 0 < x < 1
+    elif abs(max(arr)) < abs(min(arr)): arr = (arr - max(arr)) / (max(arr) - min(arr)) # -1 < x < 0
+    return arr
+
 # pause logging for some route:
 def pauselog():
 	log = logging.getLogger('werkzeug')
@@ -186,6 +193,8 @@ def test():
     # s = [0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,10,12,13,15]
     # idx = match(s, 7.3)
     # print("7.3 is nearest to %s at index %s of s" %(s[idx],idx))
+
+    print(normalize_dipeak([0,0,0,-0.3,-0.3,-0.3,0,0]))
 
     return
 

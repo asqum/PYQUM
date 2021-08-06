@@ -1,4 +1,4 @@
-# Communicating with Benchtop DSA8300 (Tektronix Sampling Scope)
+# Communicating with Benchtop TKAWG (Tektronix AWG)
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
@@ -11,6 +11,7 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 from numpy import array, zeros, ceil, where, floor
 import array as arr
 
+from pyqum.instrument.toolbox import normalize_dipeak
 from pyqum.instrument.composer import pulser
 from time import sleep
 debugger = debug(mdlname)
@@ -241,7 +242,7 @@ def close(bench, which, reset=True, mode='DATABASE'):
     return status
 
 # Composite functions for directives:
-def prepare_DAC(bench, channel, datasize, maxlevel=0.75):
+def prepare_DAC(bench, channel, datasize, maxlevel=0.75, update_settings={}):
     initwaveform(bench, "Waveform-%s"%channel, datasize)
     normalize_waveform(bench, "Waveform-%s"%channel)
     runmode(bench, channel, action=['Set','CONT'])
@@ -264,7 +265,7 @@ def compose_DAC(bench, channel, pulsedata, envelope=[], marker=0):
             mkr_array[first_rising_edge : last_falling_edge] = 1
         else: # ODD-Channel: for DRIVING PIN-SWITCH:
             if len(envelope): 
-                mkr_array = ceil(envelope)
+                mkr_array = abs(normalize_dipeak(envelope))
         create_markers(bench, "Waveform-%s"%channel, channel, marker, array(list(mkr_array)*marker))
     else:
         sourceresolution(bench, channel, action=['Set',16])
