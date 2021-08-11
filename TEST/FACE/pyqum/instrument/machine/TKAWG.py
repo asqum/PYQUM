@@ -242,7 +242,7 @@ def close(bench, which, reset=True, mode='DATABASE'):
     return status
 
 # Composite functions for directives:
-def prepare_DAC(bench, channel, datasize, maxlevel=0.75, update_settings={}):
+def prepare_DAC(bench, channel, datasize, maxlevel=1.5, update_settings={}):
     initwaveform(bench, "Waveform-%s"%channel, datasize)
     normalize_waveform(bench, "Waveform-%s"%channel)
     runmode(bench, channel, action=['Set','CONT'])
