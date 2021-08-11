@@ -1,8 +1,11 @@
 '''For building, extracting, searching....... '''
 
+from colorama import init, Fore, Back
+init(autoreset=True) #to convert termcolor to wins color
+
 import logging, collections
 from time import sleep
-from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul, transpose, ones
+from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul, transpose, ones, exp, log10, log2, log, power
 
 def flatten(x):
     result = []
@@ -57,6 +60,10 @@ class waveform:
         2. Use comma separated string to represent string list.\n
         3. Inner-Repeat is ONLY used for CW_SWEEP: MUST use EXACTLY ' r ' (in order to differentiate from r inside word-string).\n
         4. waveform.inner_repeat: the repeat-counts indicated after the ' r ' or '^', determining how every .data's element will be repeated.\n
+        5. Option to let waveform be 'function-ized' using f: <base/power/log..> at the end of the command/ order:
+            a. Base: data points from dense to sparse.
+            b. Power: 0-1: same with Log, >1: same with Base, but slower.
+            c: Log: data points from sparse to dense.
         NOTE: '^' is equivalent to ' r ' without any spacing restrictions.
     '''
     def __init__(self, command):
@@ -86,20 +93,34 @@ class waveform:
         while " to" in self.command or "to " in self.command:
             self.command = self.command.replace(" to","to")
             self.command = self.command.replace("to ","to")
+        while " (" in self.command or "( " in self.command:
+            self.command = self.command.replace(" (","(")
+            self.command = self.command.replace("( ","(")
+        while " )" in self.command or ") " in self.command:
+            self.command = self.command.replace(" )",")")
+            self.command = self.command.replace(") ",")")
+        while " f" in self.command or "f " in self.command:
+            self.command = self.command.replace(" f","f")
+            self.command = self.command.replace("f ","f")
+        while " :" in self.command or ": " in self.command:
+            self.command = self.command.replace(" :",":")
+            self.command = self.command.replace(": ",":")
+        while " /" in self.command or "/ " in self.command:
+            self.command = self.command.replace(" /","/")
+            self.command = self.command.replace("/ ","/")
+        # print(Fore.CYAN + "Command: %s" %self.command)
         
         command = self.command.split(" ") + [""]
-        # 1. building function generator: (Still PENDING, Refer 'composer')
-        if command[0].lower() == "fx":
-            pass
-        # 2. building string list:
-        elif ("," in command[0]) or ("," in command[1]):
+        
+        # 1. building string list:
+        if ("," in command[0]) or ("," in command[1]):
             # remove all sole-commas from string list command:
             command = [x for x in command if x != ',']
             # remove all attached-commas from string list command:
             command = [i for x in command for i in x.split(',') if i != '']
             self.data = command
             self.count = len(command)
-        # 3. building linear numbers
+        # 2. building number list:
         else:
             command = [x for x in command if x != ""]
             self.data, self.count = [], 0
@@ -107,17 +128,37 @@ class waveform:
                 self.count += 1
                 if "*" in cmd and "to" in cmd:
                     C = [j for i in cmd.split("*") for j in i.split('to')]
-                    # rooting out wrong command:
                     try:
                         start = float(C[0])
                         steps = range(int(len(C[:-1])/2))
-                        for i,target,num in zip(steps,C[1::2],C[2::2]):
+                        for i, target, asterisk in zip(steps,C[1::2],C[2::2]):
+                            num = asterisk.split("f:")[0]
                             self.count += int(num)
+                            # 2a. Simple linear space / function:
                             self.data += list(linspace(start, float(target), int(num), endpoint=False, dtype=float64))
-                            # print("data: %s"%self.data)
-                            if i==steps[-1]: self.data += [float(target)]
-                            else: start = float(target)
-                    except:
+                            if i==steps[-1]: 
+                                self.data += [float(target)] # data assembly complete
+                                # 2b. Customized space / function for the WHOLE waveform: base, power, log scales
+                                if "f:" in asterisk:
+                                    func = asterisk.split("f:")[1]
+                                    # print(Fore.CYAN + "Function: %s" %func)
+                                    if 'base' in func:
+                                        if "e" == func.split('/')[1]: self.data = list(exp(self.data))
+                                        else: self.data = list(power(float(func.split('/')[1]), self.data))
+                                    elif 'power' in func:
+                                        self.data = list(power(self.data, float(func.split('/')[1])))
+                                    elif 'log10' in func:
+                                        self.data = list(log10(self.data))
+                                    elif 'log2' in func:
+                                        self.data = list(log2(self.data))
+                                    elif 'log' in func:
+                                        self.data = list(log(self.data))
+                                    else: print(Fore.RED + "Function NOT defined YET. Please consult developers")
+                                    print(Fore.YELLOW + "scaled %s points" %len(self.data))
+                            else: 
+                                start = float(target)
+                    except: # rooting out the wrong command:
+                        # raise
                         print("Invalid command")
                         pass
                 else: self.data.append(float(cmd))     
@@ -181,20 +222,22 @@ def test():
     # command = ",s12 ,s21, s22,s11 ,   S22,S12,S21"
     # command = "S,"
     # command = "10.0to0.0*1"
-    command = "1e-6 to 5e-6 *4"
+    # command = "1e-6 to 5e-6 *4"
+    # command = "0 to 10 * 10 f : power/ 0.5"
+    command = "0.1 to 10.1 * 10 f:power/0.5"
     wave = waveform(command)
     if wave.count == len(wave.data):
-        print("Waveform of length %s is:\n %s" %(wave.count, wave.data))
+        print("\nWaveform of length %s is:\n %s" %(wave.count, wave.data))
 
-    command = "5to12*7   ^100"
+    command = "0 1   2   to  10  * 1 TO  20  *1 25 26  to35*  1to 70 *  5 73  75   to80  *5 81 82 to  101*  8  ^101"
     wave = waveform(command)
-    print("data %s is repeating %s times" %(wave.data,wave.inner_repeat))
+    print("\nData %s is repeating %s times" %(wave.data,wave.inner_repeat))
 
     # s = [0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,10,12,13,15]
     # idx = match(s, 7.3)
     # print("7.3 is nearest to %s at index %s of s" %(s[idx],idx))
 
-    print(normalize_dipeak([0,0,0,-0.3,-0.3,-0.3,0,0]))
+    # print(normalize_dipeak([0,0,0,-0.3,-0.3,-0.3,0,0]))
 
     return
 
