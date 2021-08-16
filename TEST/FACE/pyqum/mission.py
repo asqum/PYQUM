@@ -1703,7 +1703,6 @@ def get_measurementObject( measurementType ):
         'frequency_response': fResp,
         'single_qubit': singleQ
     }
-
     return measurementObject[measurementType]()
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

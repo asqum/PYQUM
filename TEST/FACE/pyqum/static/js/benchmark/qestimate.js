@@ -5,6 +5,7 @@
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
     console.log( "QESTIMATE JS" );
+    render_QEstimation ();
 });
 
 
@@ -34,7 +35,7 @@ function get_selectInfo(){
     //     }
     // });
     let htmlInfo = get_htmlInfo_python();
-    let axisIndex=[];
+    let axisIndex=new Array(1);
     let valueIndex=new Array(htmlInfo.length);
     let analysisIndex = {};
 
@@ -48,15 +49,26 @@ function get_selectInfo(){
         structurePosition = htmlInfo[i]["structurePosition"]
         if ( varLength == 1 ){ valueIndex[i]=0 }
         else{
-            valueIndex[i] = document.getElementById("select-"+htmlName).selectedIndex;
-            console.log( htmlName +" select " +valueIndex[i] );
-            let axisDimension = axisIndex.length;
-            
-            if ( document.getElementById("plot_type-"+htmlName).value == "y_value" && axisIndex.length<1 )
+
+            if ( document.getElementById("plot_type-"+htmlName).value == "y_value" )
             {
                 console.log(htmlName +" for y-axis ");
-                axisIndex[axisDimension] = structurePosition ;
+                axisIndex[axisIndex.length] = structurePosition ;
+                valueIndex[i]=0;
+                
             }
+            if( document.getElementById("plot_type-"+htmlName).value == "x_value" ){
+                console.log(htmlName +" for x-axis ");
+                axisIndex[0] = structurePosition ;
+                valueIndex[i]=0;
+
+            }
+            if( document.getElementById("plot_type-"+htmlName).value == "single_value" ){
+                console.log(htmlName +" select single value ");
+                valueIndex[i]=document.getElementById("select_value-"+htmlName).selectedIndex;
+
+            }
+            
         }
 
 
@@ -135,7 +147,101 @@ function plot2D( data, axisKeys, plotId ) {
     Plotly.newPlot(plotId, Trace, {showSendToCloud: true});
 };
 
+// Render Qestimation
+function render_QEstimation ()
+{
 
+    $.ajaxSettings.async = false;
+
+    let measureParameters = document.getElementById("qFactor-parameters");
+
+
+
+    let htmlInfo = [];
+    $.getJSON( '/benchmark/get_parametersID', 
+    {},
+        function (data) {
+            htmlInfo = data;
+    });
+    console.log( htmlInfo );
+    for(i = 0; i < htmlInfo.length; i++) {
+        let DOM_parameterSetting = document.createElement("div");
+        DOM_parameterSetting.setAttribute("class", "measurePara");
+        measureParameters.appendChild(DOM_parameterSetting);
+
+
+        let parameterName = htmlInfo[i]["name"]
+        console.log(i, parameterName);
+        let DOM_parameterName = document.createElement("label");
+        DOM_parameterName.innerHTML = parameterName;
+        DOM_parameterName.setAttribute("class", "measureParaSelect");
+
+        DOM_parameterSetting.appendChild(DOM_parameterName);
+        // Create parameters information and plot selection
+        if (htmlInfo[i]["length"] == 1) // The parameter only have one value
+        {
+            let DOM_parameterCOrder = document.createElement("p");
+            DOM_parameterCOrder.innerHTML = htmlInfo[i]["c_order"];
+            DOM_parameterCOrder.setAttribute("class", "measureCOrder");
+
+            DOM_parameterSetting.appendChild(DOM_parameterCOrder);
+
+        }
+        else{ // The parameter number > 1
+            let DOM_parameterPlotTypeSelector = document.createElement("select");
+            DOM_parameterPlotTypeSelector.id = "plot_type-"+parameterName;
+            DOM_parameterPlotTypeSelector.setAttribute("class", "measureParaSelect");
+            DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
+
+            let plotType = ["single value","x axis - value","y axis - value","y axis - count"];
+            let plotTypeValue = ["single_value","x_value","y_value","y_count"];
+
+            for( ipt=0; ipt<plotType.length; ipt++)
+            {
+                let DOM_parameterPlotType = document.createElement("option");
+                DOM_parameterPlotType.innerHTML = plotType[ipt];
+                DOM_parameterPlotType.setAttribute("value", plotTypeValue[ipt]);
+                DOM_parameterPlotTypeSelector.appendChild(DOM_parameterPlotType);
+            }
+
+
+
+            if ( htmlInfo[i]["length"]<50 ){
+                let DOM_parameterValueSelector = document.createElement("select");
+                DOM_parameterValueSelector.id = "select_value-"+parameterName;
+                DOM_parameterValueSelector.setAttribute("class", "measureParaSelect");
+                DOM_parameterSetting.appendChild(DOM_parameterValueSelector);
+                let parameterValue;
+                console.log(parameterName, " Selector ");
+
+                $.getJSON( '/benchmark/get_parameterValue',
+                {   parameterKey: parameterName,},
+                    function (data) {
+                    parameterValue=data;
+                });
+                for ( iv=0; iv<parameterValue.length; iv++)
+                {
+                    let DOM_parameterValue = document.createElement("option");
+                    DOM_parameterValue.innerHTML = parameterValue[iv];
+                    
+                    DOM_parameterValueSelector.appendChild(DOM_parameterValue);
+                }
+            }else{
+                let DOM_parameterValueInput = document.createElement("input");
+                DOM_parameterValueInput.setAttribute("class", "measureParaSelect");
+                DOM_parameterSetting.appendChild(DOM_parameterValueInput);
+
+            }
+
+
+        }
+
+    }
+
+    $.ajaxSettings.async = true;
+
+
+}
 $(function () {
 
     // saving exported mat-data to client's PC:
@@ -186,15 +292,14 @@ $(function () {
     });
     // plot
     $('#qFactor-plot-button').on('click', function () {
-        console.log( "2D plot" );
         let plotID_2D = "qFactor-plot2D-rawOverview";
         let plotID_1D_ampPhase = "qFactor-plot1D-ampPhase";
         let plotID_1D_IQ = "qFactor-plot1D-IQ";
-
+        console.log( "plot!!" );
         $.ajaxSettings.async = false;
         let htmlInfo=get_htmlInfo_python();
         let analysisIndex = get_selectInfo();
-        if ( analysisIndex.axisIndex.length == 1 ){
+        if ( analysisIndex.axisIndex.length == 2 ){
         
         $.getJSON( '/benchmark/qestimate/getJson_plot',
         {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(2), plotType: JSON.stringify("2D_amp"), },

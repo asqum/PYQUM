@@ -17,16 +17,10 @@
 <script>
   $(function(){
     $("div#measurement_info").load("{{ url_for('benchmark.measurement_info') }}");
-    // $("div#qestimate").load("{{ url_for('benchmark.qestimate') }}");
+    $("div#qestimate").load("{{ url_for('benchmark.qestimate') }}");
   });
 </script> 
-<!-- {% for qtype in quantificationType %}
-<script>
-  $(function(){
-    $("div#{{qtype}}").load("{{ url_for('benchmark.{{qtype}}') }}");
-  });
-</script> 
-{% endfor %} -->
+
 
 
 {% if g.user %}
