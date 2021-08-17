@@ -54,7 +54,7 @@ function get_selectInfo(){
             {
                 console.log(htmlName +" for y-axis ");
                 axisIndex[axisIndex.length] = structurePosition ;
-                valueIndex[i]=0;
+                valueIndex[i]=document.getElementById("select_value-"+htmlName).selectedIndex;
                 
             }
             if( document.getElementById("plot_type-"+htmlName).value == "x_value" ){
@@ -127,7 +127,7 @@ function plot1D ( data, axisKeys, plotId ){
 
 function plot2D( data, axisKeys, plotId ) {
     console.log("Plotting 2D");
-    console.log( "x length: " +data[axisKeys.x].length );
+    console.log( "x axis: " +axisKeys.x );
 
     // Frame assembly:
     var trace = {
@@ -300,29 +300,28 @@ $(function () {
         let htmlInfo=get_htmlInfo_python();
         let analysisIndex = get_selectInfo();
         if ( analysisIndex.axisIndex.length == 2 ){
-        
-        $.getJSON( '/benchmark/qestimate/getJson_plot',
-        {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(2), plotType: JSON.stringify("2D_amp"), },
-            function (data) {
-            console.log( "2D plot" );
-            console.log( data );
-            let axisKeys = {
-                x: "frequency",
-                y: htmlInfo[analysisIndex.axisIndex[0]]["name"],
-                z: "amplitude",
-            }
-            console.log( data );
-            
-            document.getElementById(plotID_2D).style.display = "block";
-            plot2D(data, axisKeys, plotID_2D);
-        });
+            $.getJSON( '/benchmark/qestimate/getJson_plot',
+            {   analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("2D_amp"), },
+                function (data) {
+                console.log( "2D plot" );
+                console.log( data );
+                let axisKeys = {
+                    x: htmlInfo[analysisIndex.axisIndex[0]]["name"],
+                    y: htmlInfo[analysisIndex.axisIndex[1]]["name"],
+                    z: "amplitude",
+                }
+                console.log( data );
+                
+                document.getElementById(plotID_2D).style.display = "block";
+                plot2D(data, axisKeys, plotID_2D);
+            });
         }else{
             document.getElementById(plotID_2D).style.display = "none";
         }
 
 
         $.getJSON( '/benchmark/qestimate/getJson_plot',
-        {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1), plotType: JSON.stringify("1D_amp"), },
+        {   analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("1D_amp"), },
             function (data) {
             console.log( "1D amp plot" );
             console.log( data );
@@ -337,7 +336,7 @@ $(function () {
         });
 
         $.getJSON( '/benchmark/qestimate/getJson_plot',
-        {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1), plotType: JSON.stringify("1D_IQ"), },
+        {   analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("1D_IQ"), },
             function (data) {
             console.log( "1D IQ plot" );
             console.log( data );
@@ -393,7 +392,7 @@ $(function () {
             analysisIndex: JSON.stringify(analysisIndex), 
         }, function (data) {
             let xAxisKey = "Single_plot";
-            if (analysisIndex.axisIndex.length == 1) { xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"] }
+            if (analysisIndex.axisIndex.length == 2) { xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"] }
             //if ( xAxisKey == "Power" ) { xAxisKey = "power_corr" }
 
             let axisKeys_fitResult = {

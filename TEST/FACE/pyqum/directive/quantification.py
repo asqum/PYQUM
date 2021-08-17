@@ -45,6 +45,7 @@ class Quantification ():
 		self.xAxisKey = None
 		self.yAxisKey = None
 		self.varsInd = []
+		self.axisInd = []
 
 		# Data
 		self.rawData = {}
@@ -97,17 +98,20 @@ class Quantification ():
 			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
 		}
 
-	def reshape_Data ( self, varsInd, axisInd=None ):
+	def reshape_Data ( self, varsInd, axisInd=[] ):
 		# Data dimension should <= 3
 		print("Reshape Data")
 
 		cShape = self.measurementObj.corder["C_Shape"]
 		self.xAxisKey = self.measurementObj.corder["C-Structure"][axisInd[0]]
-		if (len(axisInd)==2):
+		# Get axis key from C-order
+		if len(axisInd)== 2:
 			self.yAxisKey = self.measurementObj.corder["C-Structure"][axisInd[1]]
 		else:
 			self.yAxisKey = None
+
 		self.varsInd = varsInd.copy()
+		self.axisInd = axisInd.copy()
 
 
 		data = self._get_data_from_Measurement()
@@ -230,8 +234,8 @@ class QEstimation( Quantification ):
 				"gain":0,
 			}
 		else:
-			fitParameters["range"]["from"] = float(fitParameters["range"]["from"])*1e9
-			fitParameters["range"]["to"] = float(fitParameters["range"]["to"])*1e9
+			fitParameters["range"]["from"] = float(fitParameters["range"]["from"])
+			fitParameters["range"]["to"] = float(fitParameters["range"]["to"])
 			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
 			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
 			fitParameters["gain"] = float(fitParameters["gain"])
@@ -241,10 +245,15 @@ class QEstimation( Quantification ):
 
 
 
-	def do_analysis( self ):
-		fitRange = ( self.fitParameters["range"]["from"], self.fitParameters["range"]["to"] )
+	def do_analysis( self, freqUnit = "GHz" ):
 
 		xAxisLen = self.rawData["x"].shape[0]
+
+		freqUnitConvertor = 1 # Convert to Hz
+		if freqUnit == "GHz":
+			freqUnitConvertor = 1e9
+
+		fitRange = ( self.fitParameters["range"]["from"]*freqUnitConvertor, self.fitParameters["range"]["to"]*freqUnitConvertor )
 
 		# Get 1D or 2D data to self.rawData
 		if self.yAxisKey == None:
@@ -256,14 +265,9 @@ class QEstimation( Quantification ):
 		self._init_baselineCorrection(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
 		self._init_fitResult(yAxisLen=yAxisLen)
 
-		# Set x-axis (frequency) of fit curve 
-		self.fitCurve["x"] = self.rawData["x"]*1e9
 
-		if self.fitParameters["baseline"]["correction"] == True :
-			self.baseline["x"] = self.rawData["x"]*1e9
-			self.correctedIQData["x"] = self.rawData["x"]*1e9
-		else: 
-			self._init_baselineCorrection()
+
+
 		myResonator = notch_port()
 		# Creat notch port list
 		for i in range(yAxisLen):
@@ -279,7 +283,7 @@ class QEstimation( Quantification ):
 				self._init_baselineCorrection()
 				correctedIQ = self.rawData["iqSignal"][i]
 			# Add data
-			myResonator.add_data(self.rawData["x"]*1e9, correctedIQ)
+			myResonator.add_data(self.rawData["x"]*freqUnitConvertor, correctedIQ)
 			# Fit
 			try:
 				myResonator.autofit(fcrop=fitRange)
@@ -305,8 +309,17 @@ class QEstimation( Quantification ):
 					powerIndex = self.varsInd[powerAxisIndex]
 				self.fitResult["extendResults"]["power_corr"][i] = self.independentVars["Power"][powerIndex]+self.fitParameters["gain"]
 				self.fitResult["extendResults"]["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.fitResult["extendResults"]["power_corr"][i],unit='dBm',diacorr=True)
+				
+				# Set x-axis (frequency) of fit curve 
+				self.fitCurve["x"] = self.rawData["x"]
 				self.fitCurve["iqSignal"][i] =myResonator.z_data_sim
 
+				# Set x-axis (frequency) of baseline and corrected data 
+				if self.fitParameters["baseline"]["correction"] == True :
+					self.baseline["x"] = self.rawData["x"]
+					self.correctedIQData["x"] = self.rawData["x"]
+				else: 
+					self._init_baselineCorrection()
 
 	def get_htmlInfo( self ):
 		hiddenKeys = ["datadensity"]

@@ -55,20 +55,20 @@ def show():
 		# Security implementation:
 		if not g.user['instrument']:
 			abort(404)
-		quantificationType = qEstimationDict[session['user_name']].quantificationType
+		quantificationType = benchmarkDict[session['user_name']].quantificationType
 		return render_template("blog/benchmark/benchmark.html", quantificationType=quantificationType)
 	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
 # Get Information for Render HTML
 @bp.route('/get_parametersID', methods=['POST', 'GET'])
 def get_parametersID():
-	myQEstimation = qEstimationDict[session['user_name']]
+	myQEstimation = benchmarkDict[session['user_name']]
 	htmlInfo = myQEstimation.get_htmlInfo()
 	return jsonify(htmlInfo)
 
 @bp.route('/get_parameterValue', methods=['POST', 'GET'])
 def get_parameterValue():
-	myQEstimation = qEstimationDict[session['user_name']]
+	myQEstimation = benchmarkDict[session['user_name']]
 	parameterKey = request.args.get('parameterKey')
 	htmlInfo = myQEstimation.independentVars[parameterKey]
 	return json.dumps(htmlInfo, cls=NumpyEncoder)
@@ -87,7 +87,7 @@ def benchmark_getMeasurement():
 	'''
 	quantification type "qfactor_estimation"
 	''' 
-	global qEstimationDict
+	global benchmarkDict
 	measurementType = request.args.get('measurementType')
 	quantificationType = json.loads(request.args.get('quantificationType'))
 	def qfactor_estimation ():
@@ -97,8 +97,8 @@ def benchmark_getMeasurement():
 		'qfactor_estimation': qfactor_estimation,
 	}
 
-	qEstimationDict[session['user_name']] = quantificationObj[quantificationType[0]]() 
-	print("Measurement Obj Init", qEstimationDict[session['user_name']].measurementObj.corder)
+	benchmarkDict[session['user_name']] = quantificationObj[quantificationType[0]]() 
+	#print("Measurement Obj Init", benchmarkDict[session['user_name']].measurementObj.corder)
 	return "Send Measurement Object"
 
 
@@ -109,7 +109,7 @@ def get_user():
 @bp.route('/measurement_info', methods=['POST', 'GET'])
 def measurement_info(): 
 
-	myMeasurement = qEstimationDict[session['user_name']].measurementObj
+	myMeasurement = benchmarkDict[session['user_name']].measurementObj
 
 	if 'jobid' in myMeasurement.perimeter.keys(): 
 		JOBID = myMeasurement.perimeter['jobid']
@@ -119,29 +119,30 @@ def measurement_info():
 
 
 # Each user have own QEstimation object
-qEstimationDict = {}
+benchmarkDict = {}
 
 
 @bp.route('/qestimate/getJson_plot',methods=['POST','GET'])
 def getJson_plot():
 
-	myQEstimation = qEstimationDict[session['user_name']]
+	myQEstimation = benchmarkDict[session['user_name']]
 	analysisIndex = json.loads(request.args.get('analysisIndex'))
 	plotType = json.loads(request.args.get('plotType'))
 
 	valueInd = analysisIndex["valueIndex"]
 	axisInd = analysisIndex["axisIndex"]
 	dimension = len(axisInd)
+
+	xAxisKey = myQEstimation.measurementObj.corder["C-Structure"][analysisIndex["axisIndex"][0]]
+
 	if dimension == 2:
-		xAxisKey = myQEstimation.measurementObj.corder["C-Structure"][analysisIndex["axisIndex"][0]]
 		yAxisKey = myQEstimation.measurementObj.corder["C-Structure"][analysisIndex["axisIndex"][1]]
 		yAxisValInd = valueInd[analysisIndex["axisIndex"][1]]
 	elif dimension == 1:
-		xAxisKey = myQEstimation.measurementObj.corder["C-Structure"][analysisIndex["axisIndex"][0]]
 		yAxisKey = None
 		yAxisValInd = 0
 
-	preAxisInd = [myQEstimation.xAxisKey,myQEstimation.yAxisKey]
+	preAxisInd = myQEstimation.axisInd
 	preValueInd = myQEstimation.varsInd
 	if preAxisInd != axisInd  or ( yAxisKey==None and preValueInd != valueInd):
 		print("Previous index",preValueInd,"New index",valueInd)
@@ -160,8 +161,8 @@ def getJson_plot():
 		return originalArray[fitRangeBoolean]
 
 	def plot_2D_amp () :
-		plotData[yAxisKey]= myQEstimation.independentVars[myQEstimation.yAxisKey]
-		plotData["frequency"]= myQEstimation.rawData["x"]
+		plotData[yAxisKey]= myQEstimation.independentVars[yAxisKey]
+		plotData[xAxisKey]= myQEstimation.rawData["x"]
 		plotData["amplitude"]= abs(myQEstimation.rawData["iqSignal"])
 		return plotData
 	def plot_1D_amp () :
@@ -203,18 +204,18 @@ def getJson_plot():
 @bp.route('/qestimate/getJson_fitParaPlot',methods=['POST','GET'])
 def getJson_fitParaPlot():
 
-	myQEstimation = qEstimationDict[session['user_name']]
+	myQEstimation = benchmarkDict[session['user_name']]
 	fitParameters = json.loads(request.args.get('fitParameters'))
 
 	myQEstimation.fitParameters = fitParameters
-	print( "Fit parameters: ",fitParameters)
+	#print( "Fit parameters: ",fitParameters)
 	myQEstimation.do_analysis()
-	print("Fit results: ",myQEstimation.fitResult)
+	#print("Fit results: ",myQEstimation.fitResult)
 
 	plotData = myQEstimation.fitResult["results"]
 	plotData.update(myQEstimation.fitResult["errors"])
 	plotData.update(myQEstimation.fitResult["extendResults"])
-	print("Fit plot results: ",plotData)
+	#print("Fit plot results: ",plotData)
 	analysisIndex = json.loads(request.args.get('analysisIndex'))
 
 	dimension = len(analysisIndex["axisIndex"])
@@ -233,7 +234,7 @@ def getJson_fitParaPlot():
 @bp.route('/qestimate/exportMat_fitPara',methods=['POST','GET'])
 def exportMat_fitPara():
 	try:
-		myQEstimation = qEstimationDict[session['user_name']]
+		myQEstimation = benchmarkDict[session['user_name']]
 		set_mat_analysis( myQEstimation.fitResult, 'QEstimation[%s]'%session['user_name'] )
 		status = "Success"
 	except:
@@ -243,7 +244,7 @@ def exportMat_fitPara():
 @bp.route('/decoherence/getJson_plot',methods=['POST','GET'])
 def decoherence_getJson_plot():
 
-	myQEstimation = qEstimationDict[session['user_name']]
+	myQEstimation = benchmarkDict[session['user_name']]
 	analysisIndex = json.loads(request.args.get('analysisIndex'))
 	plotType = json.loads(request.args.get('plotType'))
 
@@ -315,7 +316,7 @@ def decoherence_getJson_plot():
 	
 @bp.route('/decoherence/get_parametersID', methods=['POST', 'GET'])
 def decoherence_get_parametersID():
-	myQEstimation = qEstimationDict[session['user_name']]
+	myQEstimation = benchmarkDict[session['user_name']]
 	htmlInfo = myQEstimation.get_htmlInfo()
 	return jsonify(htmlInfo)
 '''
