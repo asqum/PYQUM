@@ -42,10 +42,11 @@ bp = Blueprint(myname, __name__, url_prefix='/benchmark')
 
 
 class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
+	def default(self, obj):
+		if isinstance(obj, ndarray):
+			return obj.tolist()
+			
+		return json.JSONEncoder.default(self, obj)
 	
 
 @bp.route('/')
@@ -55,8 +56,8 @@ def show():
 		# Security implementation:
 		if not g.user['instrument']:
 			abort(404)
-		quantificationType = benchmarkDict[session['user_name']].quantificationType
-		return render_template("blog/benchmark/benchmark.html", quantificationType=quantificationType)
+		#quantificationType = benchmarkDict[session['user_name']].quantificationType
+		return render_template("blog/benchmark/benchmark.html")
 	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
 
 # Get Information for Render HTML
@@ -78,7 +79,9 @@ def get_parameterValue():
 def qestimate():
 	return render_template("blog/benchmark/qestimate.html")
 
-
+@bp.route('/decoherence', methods=['POST', 'GET'])
+def decoherence():
+	return render_template("blog/benchmark/decoherence.html")
 
 
 
@@ -210,7 +213,7 @@ def getJson_fitParaPlot():
 	myQEstimation.fitParameters = fitParameters
 	#print( "Fit parameters: ",fitParameters)
 	myQEstimation.do_analysis()
-	#print("Fit results: ",myQEstimation.fitResult)
+	print("Fit results: ",myQEstimation.fitResult)
 
 	plotData = myQEstimation.fitResult["results"]
 	plotData.update(myQEstimation.fitResult["errors"])

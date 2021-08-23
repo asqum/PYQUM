@@ -46,7 +46,7 @@ class Quantification ():
 		self.yAxisKey = None
 		self.varsInd = []
 		self.axisInd = []
-
+		self.innerRepeatKeys = []
 		# Data
 		self.rawData = {}
 		# Initialize
@@ -62,7 +62,10 @@ class Quantification ():
 			# Get array from Waveform object
 			self.independentVars[k]=array(varWaveform.data)
 			# Get C-Shape from Waveform object
-			C_Shape.append( varWaveform.count )
+			C_Shape.append( varWaveform.count*varWaveform.inner_repeat  )
+			if varWaveform.inner_repeat != 1:
+				self.innerRepeatKeys.append( k )
+
 		# Append datadensity to C-Shape (list) and Measurement.corder["C-Structure"] (list)
 		measurementObj.corder["C-Structure"].append("datadensity")
 		C_Shape.append( measurementObj.datadensity )

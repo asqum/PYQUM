@@ -714,7 +714,7 @@ $('input.fresp.notification').click( function(){
 });
 
 // Event: Benchmark on click (Jacky)
-$('input.char.benchmark').click( function(){
+$('#char-fresp-to-benchmark').click( function(){
 
     $.ajaxSettings.async = false;
 
@@ -730,7 +730,7 @@ $('input.char.benchmark').click( function(){
     });
     let quantificationType = ["qfactor_estimation"];
     $.getJSON( '/benchmark/benchmark_getMeasurement', 
-    { measurementType: "frequency_response", quantificationType: JSON.stringify(quantificationType) }, 
+    { measurementType: "fresp", quantificationType: JSON.stringify(quantificationType) }, 
         function ( ) {
     }); 
 

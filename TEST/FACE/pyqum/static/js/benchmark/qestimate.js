@@ -153,7 +153,7 @@ function render_QEstimation ()
 
     $.ajaxSettings.async = false;
 
-    let measureParameters = document.getElementById("qFactor-parameters");
+    let measureParameters = document.getElementById("decoherence-parameters");
 
 
 
@@ -400,6 +400,10 @@ $(function () {
                 y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr", "single_photon_limit", "photons_in_resonator"],
                 yErr: ["absQc_err", "Qi_dia_corr_err", "Ql_err", "fr_err", "", ""],
             }
+            console.log("fitResult");
+
+            console.log(data);
+
             plot1D( data, axisKeys_fitResult, "qFactor-plot-fittingParameters");
 
         });

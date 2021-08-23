@@ -1087,31 +1087,31 @@ $('input.mani.singleqb#search').change( function() {
 });
 
 // Event: Benchmark on click (Jacky)
-// $('input.char.benchmark').click( function(){
+$('#mani-singleqb-to-benchmark').click( function(){
 
-//     $.ajaxSettings.async = false;
+    $.ajaxSettings.async = false;
 
-//     listimes_singleqb();
-//     accessdata_singleqb();
-//     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', 
-//         { wmoment: wmoment },
-//         //input/select value here:  
-//         function (data) {
-//             //console.log("JOBID: " + JSON.stringify(data.JOBID) );
-//             console.log( data );  
+    listimes_singleqb();
+    accessdata_singleqb();
+    $.getJSON(mssnencrpytonian() + '/mssn/singleqb/access', 
+        { wmoment: wmoment },
+        //input/select value here:  
+        function (data) {
+            //console.log("JOBID: " + JSON.stringify(data.JOBID) );
+            console.log( data );  
                     
-//     });
+    });
+    let quantificationType = ["qfactor_estimation"];
+    $.getJSON( '/benchmark/benchmark_getMeasurement', 
+    { measurementType: "singleqb", quantificationType: JSON.stringify(quantificationType) }, 
+        function ( ) {
+    }); 
 
-//     $.getJSON( '/benchmark/benchmark_getMeasurement', 
-//     { measurementType: "single_qubit", quantificationType: JSON.stringify(quantificationType) }, 
-//         function ( ) {
-//     }); 
+    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
+    $.ajaxSettings.async = true;
 
-//     setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
-//     $.ajaxSettings.async = true;
-
-//     return false;
-//     }
-// );
+    return false;
+    }
+);
 
 // (PENDING: DATA ANALYSIS FUNCTIONS)

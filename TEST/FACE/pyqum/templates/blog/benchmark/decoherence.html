@@ -10,56 +10,17 @@
         <h3>T1 fitting</h3>
 
         <div class="flex-allPara">
-            <div class="allMeasurePara">
-                {% for i in range(varNumber) %}
-                {% set name = htmlInfo[i]["name"] %}
-                {% set varlen = htmlInfo[i]["length"] %}
-                <div class="measurePara">
-                    <div class="measureParaSelect"><label>{{ name }}</label></div>
-                    {% if varlen != 1 %} 
-                        <div class="measureParaSelect"><select id='select-{{name}}' type="text">
-                        <option value="xAxis">X axis</option>
-                        <option value="one">One</option>
-                        </div>
-                        <div class="measureParaSelect"><select id='select-{{name}}' type="text">
-                        {% for v in independentVars[name] %}
-                        <option>{{v}}</option>
-                        {% endfor %}
-                        </select></div>
-                    {% else %}
-                    <div class="measureCOrder"><p> {{ corder[name] }} </p></div>
-                    {% endif %}
-                </div>
-                {% endfor %}
 
+            <div class="allMeasurePara" id="decoherence-parameters">
                 <button id="decoherence-plot-button" type="submit">Plot</button>
-
             </div>
 
             <div class="allFitPara">
-                <div class="fitPara">
-                    <div class="measureParaSelect"><label> Fitting Range : </label></div>
-                    <div class="measureParaSelect"><label> From : </label><input type="text" id="decoherence-fit-range-from" name="fitfrom" value="{{independentVars[freqKey][0]}}"></div>
-                    <div class="measureParaSelect"><label> To : </label><input type="text" id="decoherence-fit-range-to" name="fitto" value="{{independentVars[freqKey][-1]}}"></div>
-                </div>
 
-                <button id="decoherence-fit-button" type="submit">Fit</button>
-                <button id="decoherence-Download-button" type="submit">Download</button>
 
             </div> 
              
         </div>
-
-        <div id="decoherence-plot-fittingParameters"></div>
-        <div id="decoherence-plot2D-rawOverview"></div>
-        <div id="decoherence-plot2D-fitOverview"></div>
-        <div class="flex-allPara">
-            <div id="decoherence-plot1D-ampPhase"></div>
-            <div id="decoherence-plot1D-IQ"></div>
-        </div>
-
-
-    </div>
 </body>
 
 </html>
