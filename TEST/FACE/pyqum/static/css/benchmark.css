@@ -260,6 +260,12 @@ label {
 .measureCOrder{
     flex-basis: 50%;
 }
+.name{
+    flex-basis: 50%;
+}
+.c_order{
+    flex-basis: 50%;
+}
 button[type=submit] {
     background-color: #4CAF50;
     color: white;

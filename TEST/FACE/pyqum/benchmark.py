@@ -259,7 +259,6 @@ def getJson_fitParaPlot():
 		yAxisKey = None
 		plotData["Single_plot"] = array(1)
 		#plotData["Single_plot"] = myExtendMeasurement.fitResult["extendResults"]["power_corr"]
-	print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Fit results: ", plotData)
 
 	return json.dumps(plotData, cls=NumpyEncoder)
 
