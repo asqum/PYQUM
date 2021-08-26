@@ -122,11 +122,12 @@ $(function () {
 
         console.log( "Fit plot" );
         console.log( analysisIndex );
+        let xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"];
+        let fitRange = document.getElementById("decoherence"+"-fitting_input-"+xAxisKey).value;
 
         let fitParameters = {
             range: {
-                from: 0,
-                to: 10000,
+                input: fitRange,
             },
             baseline:{
                 correction: 0,
@@ -143,8 +144,7 @@ $(function () {
             fitParameters: JSON.stringify(fitParameters),
             analysisIndex: JSON.stringify(analysisIndex), 
         }, function (data) {
-            let xAxisKey = "Single_plot";
-            if (analysisIndex.axisIndex.length == 2) { xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"] }
+            if (analysisIndex.axisIndex.length == 1) { xAxisKey = "Single_plot" }
             //if ( xAxisKey == "Power" ) { xAxisKey = "power_corr" }
             console.log("fitResult");
             console.log(data);

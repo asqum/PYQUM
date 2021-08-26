@@ -249,6 +249,7 @@ function render_selection ( quantificationType )
             let DOM_parameterFit = document.createElement("input");
             DOM_parameterFit.id = quantificationType+"-fitting_input-"+parameterName;
             DOM_parameterFit.setAttribute("class", "measureParaSelect fitting_input");
+            DOM_parameterFit.setAttribute("value", parameterValue[0]+","+parameterValue[parameterValue.length-1]);
             DOM_parameterFit.style.display = "none";
             DOM_parameterSetting.appendChild(DOM_parameterFit);
             
@@ -273,7 +274,7 @@ function showAveInput(selectObject) {
     let DOM_parameterValueInput = DOM_parameterSetting.getElementsByClassName("input_value")[0];
     DOM_parameterValueInput.style.display = "none";
 
-    let DOM_parameterFit = DOM_parameterSetting.getElementsByClassName("input_value")[0];
+    let DOM_parameterFit = DOM_parameterSetting.getElementsByClassName("fitting_input")[0];
     DOM_parameterFit.style.display = "none";
 
     if (selectObject.value == "average")
@@ -291,7 +292,7 @@ function showAveInput(selectObject) {
     if (selectObject.value == "x_value" )
     {
         console.log("select "+selectObject.value)
-        DOM_parameterValueInput.style.display = "block";
+        DOM_parameterFit.style.display = "block";
 
     }
     // document.getElementById(parameterSetting).style.display = "none";

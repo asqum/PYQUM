@@ -135,9 +135,13 @@ $(function () {
 
         console.log( "Fit plot" );
         console.log( analysisIndex );
-
+        let xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"];
+        let fitRange = document.getElementById("qEstimation"+"-fitting_input-"+xAxisKey).value;
         let rangeFrom = document.getElementById("qFactor-fit-range-from").value;
         let rangeTo = document.getElementById("qFactor-fit-range-to").value;
+
+
+
         let baseline_correction = document.getElementById("qFactor-fit-baseline-correct").checked;
         let baseline_smoothness = document.getElementById("qFactor-fit-baseline-smoothness").value;
         let baseline_asymmetry = document.getElementById("qFactor-fit-baseline-asymmetry").value;
@@ -145,8 +149,7 @@ $(function () {
 
         let fitParameters = {
             range: {
-                from: rangeFrom,
-                to: rangeTo
+                input: fitRange,
             },
             baseline:{
                 correction: baseline_correction,
@@ -164,8 +167,7 @@ $(function () {
             fitParameters: JSON.stringify(fitParameters),
             analysisIndex: JSON.stringify(analysisIndex), 
         }, function (data) {
-            let xAxisKey = "Single_plot";
-            if (analysisIndex.axisIndex.length == 2) { xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"] }
+            if (analysisIndex.axisIndex.length == 1) { xAxisKey = "Single_plot" }
             //if ( xAxisKey == "Power" ) { xAxisKey = "power_corr" }
             console.log("fitResult");
             console.log(data);           

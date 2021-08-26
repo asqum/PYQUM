@@ -284,8 +284,9 @@ class QEstimation():
 				"gain":0,
 			}
 		else:
-			fitParameters["range"]["from"] = float(fitParameters["range"]["from"])
-			fitParameters["range"]["to"] = float(fitParameters["range"]["to"])
+			fitRange = [float(k) for k in fitParameters["range"]["input"].split(",")]
+			fitParameters["range"]["from"] = fitRange[0]
+			fitParameters["range"]["to"] = fitRange[1]
 			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
 			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
 			fitParameters["gain"] = float(fitParameters["gain"])
@@ -454,8 +455,9 @@ class Decoherence():
 				"gain":0,
 			}
 		else:
-			fitParameters["range"]["from"] = float(fitParameters["range"]["from"])
-			fitParameters["range"]["to"] = float(fitParameters["range"]["to"])
+			fitRange = [float(k) for k in fitParameters["range"]["input"].split(",")]
+			fitParameters["range"]["from"] = fitRange[0]
+			fitParameters["range"]["to"] = fitRange[1]
 			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
 			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
 			fitParameters["gain"] = float(fitParameters["gain"])
