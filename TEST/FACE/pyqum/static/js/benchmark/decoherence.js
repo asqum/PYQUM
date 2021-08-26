@@ -1,166 +1,167 @@
 
 
 
-
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
-    console.log( "DECOHERENCE JS" );
-    render_Decoherence ();
+    render_selection("decoherence");
+    console.log( "Load decoherence" );
 });
 
 
-function get_selectInfo(){
 
-    $.ajaxSettings.async = false;
+$(function () {
 
-
-    // $.ajax({
-    //     dataType: "json",
-    //     url: "/benchmark/get_parametersID",
-    //     async: false, 
-    //     success: function(htmlIDs) {
-    //     }
-    // });
-    let htmlInfo = get_htmlInfo_python();
-    let axisIndex=new Array(1);
-    let valueIndex=new Array(htmlInfo.length);
-    let analysisIndex = {};
-
+    // saving exported mat-data to client's PC:
+    $('#qFactor-Download-button').on('click', function () {
+        console.log("SAVING CSV FILE");
     
-    console.log( "htmlInfo " );
-    console.log( htmlInfo.length );
-    // Get select parameter index
-    for (let i=0; i<htmlInfo.length; i++ ) {
-        htmlName = htmlInfo[i]["name"];
-        varLength = htmlInfo[i]["length"];
-        structurePosition = htmlInfo[i]["structurePosition"]
-        if ( varLength == 1 ){ valueIndex[i]=0 }
-        else{
+        // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
+        //$.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', { wmoment: wmoment }, function (data) {});
+    
+        $.getJSON( '/benchmark/qestimate/exportMat_fitPara', {
+            //ifreq: $('select.char.fresp.parameter[name="c-freq"]').val()
+        }, function (data) {
+            console.log("STATUS: " + data.status + ", PORT: " + data.qumport);
+            $.ajax({
+                url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/ANALYSIS/QEstimation[' + data.user_name + '].mat',
+                method: 'GET',
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function (data) {
+                    console.log("USER HAS DOWNLOADED QEstimation DATA from " + String(window.URL));
+                    var a = document.createElement('a');
+                    var url = window.URL.createObjectURL(data);
+                    a.href = url;
+                    a.download = 'QEstimation.mat';
+                    document.body.append(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    //$('#qFactor-Download-button').hide();
+                }
+            });
+        });
+        return false;
+    });
 
-            if ( document.getElementById("plot_type-"+htmlName).value == "y_value" )
-            {
-                console.log(htmlName +" for y-axis ");
-                axisIndex[axisIndex.length] = structurePosition ;
-                valueIndex[i]=document.getElementById("select_value-"+htmlName).selectedIndex;
+
+    // plot
+    $('#decoherence-plot-button').on('click', function () {
+        let plotID_2D = "decoherence-plot2D-rawOverview";
+        let plotID_1D_ampPhase = "decoherence-plot1D-ampPhase";
+        let plotID_1D_IQ = "decoherence-plot1D-IQ";
+        console.log( "plot!!" );
+        $.ajaxSettings.async = false;
+        let htmlInfo = get_htmlInfo_python();
+        let analysisIndex = get_selectInfo("decoherence");
+        if ( analysisIndex.axisIndex.length == 2 ){
+            $.getJSON( '/benchmark/qestimate/getJson_plot',
+            {   quantificationType: JSON.stringify("decoherence"), analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("2D_amp"), },
+                function (data) {
+                console.log( "2D plot" );
+                console.log( data );
+                let axisKeys = {
+                    x: htmlInfo[analysisIndex.axisIndex[0]]["name"],
+                    y: htmlInfo[analysisIndex.axisIndex[1]]["name"],
+                    z: "amplitude",
+                }
+                console.log( data );
                 
-            }
-            if( document.getElementById("plot_type-"+htmlName).value == "x_value" ){
-                console.log(htmlName +" for x-axis ");
-                axisIndex[0] = structurePosition ;
-                valueIndex[i]=0;
+                document.getElementById(plotID_2D).style.display = "block";
+                plot2D(data, axisKeys, plotID_2D);
+            });
+        }else{
+            document.getElementById(plotID_2D).style.display = "none";
+        }
 
-            }
-            if( document.getElementById("plot_type-"+htmlName).value == "single_value" ){
-                console.log(htmlName +" select single value ");
-                valueIndex[i]=document.getElementById("select_value-"+htmlName).selectedIndex;
 
+        $.getJSON( '/benchmark/qestimate/getJson_plot',
+        {   quantificationType: JSON.stringify("decoherence"), analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("1D_amp"), },
+            function (data) {
+            console.log( "1D amp plot" );
+            console.log( data );
+            let axisKeys = {
+                x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
+                y: ["Data_point_amplitude","Fitted_curve_amplitude","Fitted_baseline_amplitude","Corr_Data_point_amplitude"],
+                yErr: [],
             }
+            //console.log( data.Fitted_curve_amplitude );
+
+            plot1D(data, axisKeys, plotID_1D_ampPhase);
+        });
+
+        $.getJSON( '/benchmark/qestimate/getJson_plot',
+        {   
+            quantificationType: JSON.stringify("decoherence"), 
+            analysisIndex: JSON.stringify(analysisIndex), 
+            plotType: JSON.stringify("1D_IQ"), 
+        },
+            function (data) {
+            console.log( "1D IQ plot" );
+            console.log( data );
+            let axisKeys = {
+                x: ["Data_point_I","Fitted_curve_I","Fitted_baseline_I","Corr_Data_point_I"],
+                y: ["Data_point_Q","Fitted_curve_Q","Fitted_baseline_Q","Corr_Data_point_Q"],
+                yErr: [],
+            }
+            //console.log( data.Fitted_curve_amplitude );
+
+            plot1D(data, axisKeys, plotID_1D_IQ);
+        });
+
+        $.ajaxSettings.async = true;
+
+    });
+    //Test fit data
+    $('#decoherence-fit-button').on('click', function () {
+
+        $.ajaxSettings.async = false;
+        let htmlInfo=get_htmlInfo_python();
+        let analysisIndex = get_selectInfo( "decoherence" );
+
+        console.log( "Fit plot" );
+        console.log( analysisIndex );
+
+        let fitParameters = {
+            range: {
+                from: 0,
+                to: 10000,
+            },
+            baseline:{
+                correction: 0,
+                smoothness: 0,
+                asymmetry: 0,
+            },
+            gain:0,
             
         }
+        console.log(fitParameters);
 
+        // Plot fit parameters
+        $.getJSON( '/benchmark/qestimate/getJson_fitParaPlot',{  
+            fitParameters: JSON.stringify(fitParameters),
+            analysisIndex: JSON.stringify(analysisIndex), 
+        }, function (data) {
+            let xAxisKey = "Single_plot";
+            if (analysisIndex.axisIndex.length == 2) { xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"] }
+            //if ( xAxisKey == "Power" ) { xAxisKey = "power_corr" }
+            console.log("fitResult");
+            console.log(data);
 
+            let axisKeys_fitResult = {
+                x: [xAxisKey],
+                y: Object.keys(data["results"]),
+                yErr: Object.keys(data["errors"]),
+            }
+            let plotdata = Object.assign({}, data["results"], data["errors"]);
+            plot1D( plotdata, axisKeys_fitResult, "decoherence-plot-fittingParameters");
 
-    }
-    analysisIndex["valueIndex"] = valueIndex;
-    analysisIndex["axisIndex"] = axisIndex;
-    console.log( "Selection " );
-    console.log( analysisIndex );
-    $.ajaxSettings.async = true;
+        });
+        $.ajaxSettings.async = true;
 
-    return analysisIndex
-}
-
-function render_Decoherence ()
-{
-
-    $.ajaxSettings.async = false;
-
-    let measureParameters = document.getElementById("qFactor-parameters");
-
-
-
-    let htmlInfo = [];
-    $.getJSON( '/benchmark/get_parametersID', 
-    {},
-        function (data) {
-            htmlInfo = data;
     });
-    console.log( htmlInfo );
-    for(i = 0; i < htmlInfo.length; i++) {
-        let DOM_parameterSetting = document.createElement("div");
-        DOM_parameterSetting.setAttribute("class", "measurePara");
-        measureParameters.appendChild(DOM_parameterSetting);
+
+});
 
 
-        let parameterName = htmlInfo[i]["name"]
-        console.log(i, parameterName);
-        let DOM_parameterName = document.createElement("label");
-        DOM_parameterName.innerHTML = parameterName;
-        DOM_parameterName.setAttribute("class", "measureParaSelect");
-
-        DOM_parameterSetting.appendChild(DOM_parameterName);
-        // Create parameters information and plot selection
-        if (htmlInfo[i]["length"] == 1) // The parameter only have one value
-        {
-            let DOM_parameterCOrder = document.createElement("p");
-            DOM_parameterCOrder.innerHTML = htmlInfo[i]["c_order"];
-            DOM_parameterCOrder.setAttribute("class", "measureCOrder");
-
-            DOM_parameterSetting.appendChild(DOM_parameterCOrder);
-
-        }
-        else{ // The parameter number > 1
-            let DOM_parameterPlotTypeSelector = document.createElement("select");
-            DOM_parameterPlotTypeSelector.id = "plot_type-"+parameterName;
-            DOM_parameterPlotTypeSelector.setAttribute("class", "measureParaSelect");
-            DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
-
-            let plotType = ["single value","x axis - value","y axis - value","y axis - count"];
-            let plotTypeValue = ["single_value","x_value","y_value","y_count"];
-
-            for( ipt=0; ipt<plotType.length; ipt++)
-            {
-                let DOM_parameterPlotType = document.createElement("option");
-                DOM_parameterPlotType.innerHTML = plotType[ipt];
-                DOM_parameterPlotType.setAttribute("value", plotTypeValue[ipt]);
-                DOM_parameterPlotTypeSelector.appendChild(DOM_parameterPlotType);
-            }
-
-
-
-            if ( htmlInfo[i]["length"]<50 ){
-                let DOM_parameterValueSelector = document.createElement("select");
-                DOM_parameterValueSelector.id = "select_value-"+parameterName;
-                DOM_parameterValueSelector.setAttribute("class", "measureParaSelect");
-                DOM_parameterSetting.appendChild(DOM_parameterValueSelector);
-                let parameterValue;
-                console.log(parameterName, " Selector ");
-
-                $.getJSON( '/benchmark/get_parameterValue',
-                {   parameterKey: parameterName,},
-                    function (data) {
-                    parameterValue=data;
-                });
-                for ( iv=0; iv<parameterValue.length; iv++)
-                {
-                    let DOM_parameterValue = document.createElement("option");
-                    DOM_parameterValue.innerHTML = parameterValue[iv];
-                    
-                    DOM_parameterValueSelector.appendChild(DOM_parameterValue);
-                }
-            }else{
-                let DOM_parameterValueInput = document.createElement("input");
-                DOM_parameterValueInput.setAttribute("class", "measureParaSelect");
-                DOM_parameterSetting.appendChild(DOM_parameterValueInput);
-
-            }
-
-
-        }
-
-    }
-
-    $.ajaxSettings.async = true;
-
-
-}

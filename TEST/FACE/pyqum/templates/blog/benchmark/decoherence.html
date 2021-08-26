@@ -2,7 +2,9 @@
 
 <head>
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/decoherence.js') }}"></script>
+
 </head>
 
 <body class="benchmark">
@@ -17,9 +19,17 @@
 
             <div class="allFitPara">
 
+                <button id="decoherence-fit-button" type="submit">Fit</button>
 
             </div> 
              
+        </div>
+        <div id="decoherence-plot-fittingParameters"></div>
+
+        <div id="decoherence-plot2D-rawOverview"></div>
+        <div class="flex-allPara">
+            <div id="decoherence-plot1D-ampPhase"></div>
+            <div id="decoherence-plot1D-IQ"></div>
         </div>
 </body>
 
