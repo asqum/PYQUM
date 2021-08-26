@@ -74,7 +74,7 @@ class DualChannel(DigitalHomodyne):
         self.downconversion_freq = freq
         self._iq_mixer = iq_mixer
         bias = mean(self.signal,axis=1)
-        print("native signal offset by average: %s" %bias)
+        #print("native signal offset by average: %s" %bias)
         self.iq_mixer.mixer.bias = (bias[0],bias[1])
         IQ_vect = self.signal.transpose().reshape((len(self.time),2,1))
         # ROTATION BY VECTORIZATION:

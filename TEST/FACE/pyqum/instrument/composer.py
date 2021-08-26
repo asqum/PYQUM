@@ -86,8 +86,9 @@ class pulser:
         if self.mix_params.split("/")[0] == 'i': iffunction = "sin"
         elif self.mix_params.split("/")[0] == 'q': iffunction = "cos"
         else: print(Fore.RED + "UNRECOGNIZED CW-TYPE. PLEASE CONSULT HELP.")
-        
+
         ifamp, ifphase, ifoffset = [float(x) for x in get_status("MIXER")[self.mixer_module].split("/")]
+
         self.music = self.music * ifamp * eval(iffunction + '((self.timeline-pulse_starting_time)*%s/1000*2*pi + %s/180*pi)' %(self.iffreq,ifphase)) + ifoffset
 
         # Confine music between -1 and 1:

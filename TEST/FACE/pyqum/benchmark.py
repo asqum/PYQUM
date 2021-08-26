@@ -269,6 +269,7 @@ def exportMat_fitPara():
 	try:
 		myExtendMeasurement = benchmarkDict[session['user_name']]
 		set_mat_analysis( myExtendMeasurement.fitResult, 'ExtendMeasurement[%s]'%session['user_name'] )
+
 		status = "Success"
 	except:
 		status = "Fail"

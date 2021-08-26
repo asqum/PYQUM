@@ -500,7 +500,7 @@ class measurement:
             # For newer version where seperation between structure & buffer is adopted:
             if 'READOUTYPE' in self.perimeter.keys():
                 RJSON = loads(self.perimeter['R-JSON'].replace("'",'"'))
-                for k in RJSON.keys(): self.datasize = self.datasize * waveform(RJSON[k]).count
+                for k in RJSON.keys(): self.datasize = self.datasize * waveform(str(RJSON[k])).count
                 if self.perimeter['READOUTYPE'] == 'one-shot': bufferkey = 'RECORD-SUM'
                 else: bufferkey = 'RECORD_TIME_NS'
                 self.datasize = self.datasize * int(self.perimeter[bufferkey])
