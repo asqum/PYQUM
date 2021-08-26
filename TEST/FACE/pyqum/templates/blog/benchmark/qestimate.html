@@ -2,46 +2,25 @@
 
 <head>
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/qestimate.js') }}"></script>
 </head>
 
 <body class="benchmark">
     <div class="qestimatecontent">
-        <h3>Welcome to Q Estimation</h3>
+        <h3>Q Estimation</h3>
 
         <div class="flex-allPara">
-            <div class="allMeasurePara">
-                {% for i in range(varNumber) %}
-                {% set name = htmlInfo[i]["name"] %}
-                {% set varlen = htmlInfo[i]["length"] %}
-                <div class="measurePara">
-                    <div class="measureParaSelect"><label>{{ name }}</label></div>
-                    {% if varlen != 1 %} 
-                        <div class="measureParaSelect"><input type="checkbox" id='check-{{name}}' ></div>
-                        <div class="measureParaSelect"><select id='select-{{name}}' type="text">
-                        {% for v in independentVars[name] %}
-                        <option>{{v}}</option>
-                        {% endfor %}
-                        </select></div>
-                    {% else %}
-                    <div class="measureCOrder"><p> {{ corder[name] }} </p></div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-                <!-- Show freqency info -->
-                <div class="measurePara">
-                    <label class="measureParaSelect">{{ freqKey }} </label>
-                    <p class="measureCOrder"> {{ corder[freqKey] }} </p>
-                </div>
-                <button id="qFactor-plot-button" type="submit">Plot</button>
 
+            <div class="allMeasurePara" id="qEstimation-parameters">
+                <button id="qFactor-plot-button" type="submit">Plot</button>
             </div>
 
             <div class="allFitPara">
                 <div class="fitPara">
                     <div class="measureParaSelect"><label> Fitting Range : </label></div>
-                    <div class="measureParaSelect"><label> From : </label><input type="text" id="qFactor-fit-range-from" name="fitfrom" value="{{independentVars[freqKey][0]}}"></div>
-                    <div class="measureParaSelect"><label> To : </label><input type="text" id="qFactor-fit-range-to" name="fitto" value="{{independentVars[freqKey][-1]}}"></div>
+                    <div class="measureParaSelect"><label> From : </label><input type="text" id="qFactor-fit-range-from" name="fitfrom" value=""></div>
+                    <div class="measureParaSelect"><label> To : </label><input type="text" id="qFactor-fit-range-to" name="fitto" value=""></div>
                 </div>
                 <div class="fitPara">
                     <div class="measureParaSelect"><label> Baseline Parameters : </label><input type="checkbox" id='qFactor-fit-baseline-correct' ></div>

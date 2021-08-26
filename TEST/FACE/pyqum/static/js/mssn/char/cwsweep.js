@@ -817,3 +817,32 @@ $('input.cwsweep.notification').click( function(){
 
     return false;
 });
+
+
+// Event: Benchmark on click (Jacky)
+$('#char-cwsweep-to-benchmark').click( function(){
+
+    $.ajaxSettings.async = false;
+
+    listimes_cwsweep();
+    accessdata_cwsweep();
+    $.getJSON(mssnencrpytonian() + '/mssn/cwsweep/access', 
+        { wmoment: wmoment },
+        //input/select value here:  
+        function (data) {
+            //console.log("JOBID: " + JSON.stringify(data.JOBID) );
+            console.log( data );  
+                    
+    });
+    let quantificationType = ["qfactor_estimation"];
+    $.getJSON( '/benchmark/benchmark_getMeasurement', 
+    { measurementType: "cwsweep", quantificationType: JSON.stringify(quantificationType) }, 
+        function ( ) {
+    }); 
+
+    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
+    $.ajaxSettings.async = true;
+
+    return false;
+    }
+);

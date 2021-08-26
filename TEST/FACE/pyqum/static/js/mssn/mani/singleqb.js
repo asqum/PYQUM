@@ -1086,4 +1086,32 @@ $('input.mani.singleqb#search').change( function() {
     return false;
 });
 
+// Event: Benchmark on click (Jacky)
+$('#mani-singleqb-to-benchmark').click( function(){
+
+    $.ajaxSettings.async = false;
+
+    listimes_singleqb();
+    accessdata_singleqb();
+    $.getJSON(mssnencrpytonian() + '/mssn/singleqb/access', 
+        { wmoment: wmoment },
+        //input/select value here:  
+        function (data) {
+            //console.log("JOBID: " + JSON.stringify(data.JOBID) );
+            console.log( data );  
+                    
+    });
+    let quantificationType = ["qfactor_estimation"];
+    $.getJSON( '/benchmark/benchmark_getMeasurement', 
+    { measurementType: "singleqb", quantificationType: JSON.stringify(quantificationType) }, 
+        function ( ) {
+    }); 
+
+    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
+    $.ajaxSettings.async = true;
+
+    return false;
+    }
+);
+
 // (PENDING: DATA ANALYSIS FUNCTIONS)

@@ -280,7 +280,7 @@ def usersamples_access():
 
         message = "Accessing Sample %s owned by %s" %(sname,sample_owner)
     except:
-        # raise # NOTE: please run first measurement test to create USRLOG directory!
+        raise # NOTE: please run first measurement test to create USRLOG directory!
         sample_cv = []
         message = "Consult ABC"
     close_db()

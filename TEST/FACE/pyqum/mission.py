@@ -1692,15 +1692,23 @@ def mani_singleqb_2ddata():
 
 def get_measurementObject( measurementType ):
 
-    def fResp ():
+    def frequency_response ():
         mObj = M_fresp[session['user_name']]
         mObj.corder["C-Structure"] = ["Flux-Bias", "S-Parameter", "IF-Bandwidth", "Power", "Frequency"]
-        #print("fResp", mObj.corder)
+        return mObj
+    def CW_sweep ():
+        mObj = M_cwsweep[session['user_name']]
+        mObj.corder["C-Structure"] = ["Repeat", "Flux-Bias", "XY-Frequency", "XY-Power", "S-Parameter", "IF-Bandwidth", "Frequency", "Power"]
+        mObj.corder["Repeat"] = "OPT,"
+        return mObj
+    def single_qubit ():
+        mObj = M_singleqb[session['user_name']]
         return mObj
     measurementObject = {
-        'frequency_response': fResp
+        'fresp': frequency_response,
+        'cwsweep': CW_sweep,
+        'singleqb': single_qubit
     }
-
     return measurementObject[measurementType]()
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

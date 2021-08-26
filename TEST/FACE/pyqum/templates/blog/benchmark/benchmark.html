@@ -15,11 +15,15 @@
 <body class="benchmark" style="overflow-y:hidden">
 
 <script>
-    $(function(){
-      $("div#measurement_info").load("{{ url_for('benchmark.measurement_info') }}");
-      $("div#qestimate").load("{{ url_for('benchmark.qestimate') }}");
-    });
+  $(function(){
+    $("div#measurement_info").load("{{ url_for('benchmark.measurement_info') }}");
+    $("div#qEstimation").load("{{ url_for('benchmark.qestimate') }}");
+    $("div#decoherence").load("{{ url_for('benchmark.decoherence') }}");
+
+  });
 </script> 
+
+
 
 {% if g.user %}
 <div class="tab">
@@ -27,12 +31,21 @@
   <button class="tablinks" id="measurement_info-tab" onclick="openTab(event, 'measurement_info')">Home</button>
 
   <!-- Q factor -->
-  <button class="tablinks" id="qestimate-tab" onclick="openTab(event, 'qestimate')">Q-FACTOR</button>
-  
+  <!-- {% for qtype in quantificationType %}
+  <button class="tablinks" id="{{qtype}}-tab" onclick="openTab(event, {{qtype}})">{{qtype}}</button>
+  {% endfor %} -->
+  <button class="tablinks" id="qEstimation-tab" onclick="openTab(event, 'qEstimation')">qestimate</button>
+  <button class="tablinks" id="decoherence-tab" onclick="openTab(event, 'decoherence')">decoherence</button>
+
 </div>
 <!-- <div id="all" class="tabcontent"></div> -->
 <div id="measurement_info" class="tabcontent"></div>
-<div id="qestimate" class="tabcontent"></div>
+<div id="qEstimation" class="tabcontent"></div>
+<div id="decoherence" class="tabcontent"></div>
+
+<!-- {% for qtype in quantificationType %}
+<div id="{{qtype}}" class="tabcontent"></div>
+{% endfor %} -->
 
 {% endif %}
 

@@ -3,10 +3,10 @@
 
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
-    render_selection("qEstimation");
-    console.log( "Load qEstimation" );
-
+    render_selection("decoherence");
+    console.log( "Load decoherence" );
 });
+
 
 
 $(function () {
@@ -46,31 +46,18 @@ $(function () {
     });
 
 
-    //Just for test
-    $('#qFactor-test-button').on('click', function () {
-
-
-        $.getJSON( '/benchmark/test',{  
-            
-        }, function (data) {
-            console.log( data )
-        });
-
-    });
     // plot
-    $('#qFactor-plot-button').on('click', function () {
-        let plotID_2D = "qFactor-plot2D-rawOverview";
-        let plotID_1D_ampPhase = "qFactor-plot1D-ampPhase";
-        let plotID_1D_IQ = "qFactor-plot1D-IQ";
+    $('#decoherence-plot-button').on('click', function () {
+        let plotID_2D = "decoherence-plot2D-rawOverview";
+        let plotID_1D_ampPhase = "decoherence-plot1D-ampPhase";
+        let plotID_1D_IQ = "decoherence-plot1D-IQ";
         console.log( "plot!!" );
         $.ajaxSettings.async = false;
-        let htmlInfo=get_htmlInfo_python();
-        let analysisIndex = get_selectInfo("qEstimation");
+        let htmlInfo = get_htmlInfo_python();
+        let analysisIndex = get_selectInfo("decoherence");
         if ( analysisIndex.axisIndex.length == 2 ){
             $.getJSON( '/benchmark/qestimate/getJson_plot',
-            {   quantificationType: JSON.stringify("qEstimation"), 
-                analysisIndex: JSON.stringify(analysisIndex), 
-                plotType: JSON.stringify("2D_amp"), },
+            {   quantificationType: JSON.stringify("decoherence"), analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("2D_amp"), },
                 function (data) {
                 console.log( "2D plot" );
                 console.log( data );
@@ -90,9 +77,7 @@ $(function () {
 
 
         $.getJSON( '/benchmark/qestimate/getJson_plot',
-        {   quantificationType: JSON.stringify("qEstimation"), 
-            analysisIndex: JSON.stringify(analysisIndex), 
-            plotType: JSON.stringify("1D_amp"), },
+        {   quantificationType: JSON.stringify("decoherence"), analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("1D_amp"), },
             function (data) {
             console.log( "1D amp plot" );
             console.log( data );
@@ -107,9 +92,11 @@ $(function () {
         });
 
         $.getJSON( '/benchmark/qestimate/getJson_plot',
-        {   quantificationType: JSON.stringify("qEstimation"), 
-            analysisIndex: JSON.stringify(analysisIndex),
-            plotType: JSON.stringify("1D_IQ"), },
+        {   
+            quantificationType: JSON.stringify("decoherence"), 
+            analysisIndex: JSON.stringify(analysisIndex), 
+            plotType: JSON.stringify("1D_IQ"), 
+        },
             function (data) {
             console.log( "1D IQ plot" );
             console.log( data );
@@ -127,37 +114,29 @@ $(function () {
 
     });
     //Test fit data
-    $('#qFactor-fit-button').on('click', function () {
+    $('#decoherence-fit-button').on('click', function () {
 
         $.ajaxSettings.async = false;
         let htmlInfo=get_htmlInfo_python();
-        let analysisIndex = get_selectInfo("qEstimation");
+        let analysisIndex = get_selectInfo( "decoherence" );
 
         console.log( "Fit plot" );
         console.log( analysisIndex );
 
-        let rangeFrom = document.getElementById("qFactor-fit-range-from").value;
-        let rangeTo = document.getElementById("qFactor-fit-range-to").value;
-        let baseline_correction = document.getElementById("qFactor-fit-baseline-correct").checked;
-        let baseline_smoothness = document.getElementById("qFactor-fit-baseline-smoothness").value;
-        let baseline_asymmetry = document.getElementById("qFactor-fit-baseline-asymmetry").value;
-        let gain = document.getElementById("qFactor-fit-gain").value;
-
         let fitParameters = {
             range: {
-                from: rangeFrom,
-                to: rangeTo
+                from: 0,
+                to: 10000,
             },
             baseline:{
-                correction: baseline_correction,
-                smoothness: baseline_smoothness,
-                asymmetry: baseline_asymmetry,
+                correction: 0,
+                smoothness: 0,
+                asymmetry: 0,
             },
-            gain:gain,
+            gain:0,
             
         }
         console.log(fitParameters);
-
 
         // Plot fit parameters
         $.getJSON( '/benchmark/qestimate/getJson_fitParaPlot',{  
@@ -168,37 +147,21 @@ $(function () {
             if (analysisIndex.axisIndex.length == 2) { xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"] }
             //if ( xAxisKey == "Power" ) { xAxisKey = "power_corr" }
             console.log("fitResult");
-            console.log(data);           
+            console.log(data);
+
             let axisKeys_fitResult = {
                 x: [xAxisKey],
-                y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr"],
-                yErr: ["absQc_err", "Qi_dia_corr_err", "Ql_err", "fr_err"],
+                y: Object.keys(data["results"]),
+                yErr: Object.keys(data["errors"]),
             }
             let plotdata = Object.assign({}, data["results"], data["errors"]);
-
-            plot1D( plotdata, axisKeys_fitResult, "qFactor-plot-fittingParameters");
+            plot1D( plotdata, axisKeys_fitResult, "decoherence-plot-fittingParameters");
 
         });
-
-
-        // Renew 1D plot
-        // $.getJSON( '/benchmark/qestimate/getJson_plot',
-        // {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1)}, 
-        //     function (data) {
-        //     console.log( "1D plot" );
-        //     console.log( data );
-        //     let axisKeys = {
-        //         x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
-        //         y: ["Data_point_amplitude","Fitted_curve_amplitude","Fitted_baseline_amplitude","Corr_Data_point_amplitude"],
-        //         yErr: [],
-        //     }
-        //     //console.log( data.Fitted_curve_amplitude );
-
-        //     plot1D(data, axisKeys, "qFactor-plot-fittingResult");
-        // });
         $.ajaxSettings.async = true;
 
     });
 
 });
+
 
