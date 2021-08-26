@@ -153,43 +153,50 @@ function render_selection ( quantificationType )
     });
     console.log( htmlInfo );
     for(i = 0; i < htmlInfo.length; i++) {
-        let DOM_parameterSetting = document.createElement("div");
-        DOM_parameterSetting.setAttribute("class", "measurePara");
-        measureParameters.appendChild(DOM_parameterSetting);
-
-
-        let parameterName = htmlInfo[i]["name"]
-        console.log(i, parameterName);
-
 
 
         // Create parameters information and plot selection
         if (htmlInfo[i]["length"] > 1) // The parameter only have one value
-        {
+        {   
+            // get parameter name    
+            let parameterName = htmlInfo[i]["name"]
+            console.log(i, parameterName);
 
-            // Create parameter name
+            // div for parameter infomation
+            let DOM_parameterInfo = document.createElement("div");
+            DOM_parameterInfo.id = quantificationType+"-info-"+parameterName;
+            DOM_parameterInfo.setAttribute("class", "measurePara");
+            measureParameters.appendChild(DOM_parameterInfo);
+
+            // Create element for parameter name
             let DOM_parameterName = document.createElement("label");
             DOM_parameterName.innerHTML = parameterName;
-            DOM_parameterName.setAttribute("class", "measureParaSelect");
-            DOM_parameterSetting.appendChild(DOM_parameterName);
+            DOM_parameterName.setAttribute("class", "name");
+            DOM_parameterInfo.appendChild(DOM_parameterName);
 
-            // Create c-order string
+            // Create element for c-order string
             let DOM_parameterCOrder = document.createElement("p");
             DOM_parameterCOrder.innerHTML = htmlInfo[i]["c_order"];
-            DOM_parameterCOrder.setAttribute("class", "measureCOrder");
+            DOM_parameterCOrder.setAttribute("class", "c_order");
+            DOM_parameterInfo.appendChild(DOM_parameterCOrder);
 
-            DOM_parameterSetting.appendChild(DOM_parameterCOrder);
 
+            // Creat div for parameter setting
+            let DOM_parameterSetting = document.createElement("div");
+            DOM_parameterSetting.id = quantificationType+"-setting-"+parameterName;
+            DOM_parameterSetting.setAttribute("class", "measurePara");
+            measureParameters.appendChild(DOM_parameterSetting);
 
+            // Creat select for parameter plot type 
             let DOM_parameterPlotTypeSelector = document.createElement("select");
             DOM_parameterPlotTypeSelector.id = quantificationType+"-plot_type-"+parameterName;
-            DOM_parameterPlotTypeSelector.setAttribute("class", "measureParaSelect");
+            DOM_parameterPlotTypeSelector.setAttribute("class", "measureParaSelect plotTypeSelect");
+            DOM_parameterPlotTypeSelector.setAttribute("onchange", "showAveInput(this)");
             DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
 
             // Create plot selection
             let plotType = ["single value","x axis - value","y axis - value","y axis - count","average"];
             let plotTypeValue = ["single_value","x_value","y_value","y_count","average"];
-
             for( ipt=0; ipt<plotType.length; ipt++)
             {
                 let DOM_parameterPlotType = document.createElement("option");
@@ -199,40 +206,52 @@ function render_selection ( quantificationType )
             }
 
 
-            // Create parameter selection
-            if ( htmlInfo[i]["length"]<500 ){
-                let DOM_parameterValueSelector = document.createElement("select");
-                DOM_parameterValueSelector.id = quantificationType+"-select_value-"+parameterName;
-                DOM_parameterValueSelector.setAttribute("class", "measureParaSelect");
-                //DOM_parameterValueSelector.setAttribute("onchange", "myFunction()");
-                DOM_parameterSetting.appendChild(DOM_parameterValueSelector);
-                let parameterValue;
-                console.log(parameterName, " Selector ");
-
-                $.getJSON( '/benchmark/get_parameterValue',
-                {   parameterKey: parameterName,},
-                    function (data) {
-                    parameterValue=data;
-                });
-                for ( iv=0; iv<parameterValue.length; iv++)
-                {
-                    let DOM_parameterValue = document.createElement("option");
-                    DOM_parameterValue.innerHTML = parameterValue[iv];
-                    
-                    DOM_parameterValueSelector.appendChild(DOM_parameterValue);
-                }
-            }else{
-                let DOM_parameterValueInput = document.createElement("input");
-                DOM_parameterValueInput.setAttribute("class", "measureParaSelect");
-                DOM_parameterSetting.appendChild(DOM_parameterValueInput);
-
+            // Create parameter value selection
+            let DOM_parameterValueSelector = document.createElement("select");
+            DOM_parameterValueSelector.id = quantificationType+"-select_value-"+parameterName;
+            DOM_parameterValueSelector.setAttribute("class", "measureParaSelect select_value");
+            //DOM_parameterValueSelector.style.display = "none";
+            DOM_parameterSetting.appendChild(DOM_parameterValueSelector);
+            let parameterValue;
+            console.log(parameterName, " Selector ");
+            $.getJSON( '/benchmark/get_parameterValue',
+            {   parameterKey: parameterName,},
+                function (data) {
+                parameterValue=data;
+            });
+            let selectLen = parameterValue.length;
+            if ( htmlInfo[i]["length"]>50 ){ selectLen = 50;}
+            for ( iv=0; iv<selectLen; iv++)
+            {
+                let DOM_parameterValue = document.createElement("option");
+                DOM_parameterValue.innerHTML = parameterValue[iv];
+                DOM_parameterValueSelector.appendChild(DOM_parameterValue);
             }
+            
+            // Create parameter value input
+            let DOM_parameterValueInput = document.createElement("input");
+            DOM_parameterValueInput.id = quantificationType+"-input_value-"+parameterName;
+            DOM_parameterValueInput.setAttribute("class", "measureParaSelect input_value");
+            //DOM_parameterValueInput.style.display = "none";
+            DOM_parameterSetting.appendChild(DOM_parameterValueInput);
+
+            
 
             // Create average input
             let DOM_parameterAve = document.createElement("input");
             DOM_parameterAve.id = quantificationType+"-ave_value-"+parameterName;
-            DOM_parameterAve.setAttribute("class", "measureParaSelect");
+            DOM_parameterAve.setAttribute("class", "measureParaSelect ave_value");
+            DOM_parameterAve.style.display = "none";
             DOM_parameterSetting.appendChild(DOM_parameterAve);
+
+
+            // Create x axis fitting input
+            let DOM_parameterFit = document.createElement("input");
+            DOM_parameterFit.id = quantificationType+"-fitting_input-"+parameterName;
+            DOM_parameterFit.setAttribute("class", "measureParaSelect fitting_input");
+            DOM_parameterFit.setAttribute("value", parameterValue[0]+","+parameterValue[parameterValue.length-1]);
+            DOM_parameterFit.style.display = "none";
+            DOM_parameterSetting.appendChild(DOM_parameterFit);
             
         }
 
@@ -243,7 +262,43 @@ function render_selection ( quantificationType )
 
 
 }
+function showAveInput(selectObject) {
+    let DOM_parameterSetting=selectObject.parentElement;
+    console.log("showAveInput trigger by "+selectObject.id)
+    let DOM_parameterAve = DOM_parameterSetting.getElementsByClassName("ave_value")[0];
+    DOM_parameterAve.style.display = "none";
 
+    let DOM_parameterValueSelect = DOM_parameterSetting.getElementsByClassName("select_value")[0];
+    DOM_parameterValueSelect.style.display = "none";
+
+    let DOM_parameterValueInput = DOM_parameterSetting.getElementsByClassName("input_value")[0];
+    DOM_parameterValueInput.style.display = "none";
+
+    let DOM_parameterFit = DOM_parameterSetting.getElementsByClassName("fitting_input")[0];
+    DOM_parameterFit.style.display = "none";
+
+    if (selectObject.value == "average")
+    {
+        console.log("select "+selectObject.value)
+        DOM_parameterAve.style.display = "block";
+    }
+    if (selectObject.value == "single_value" || selectObject.value == "y_value" || selectObject.value == "y_count")
+    {
+        console.log("select "+selectObject.value)
+        DOM_parameterValueInput.style.display = "block";
+        DOM_parameterValueSelect.style.display = "block";
+
+    }
+    if (selectObject.value == "x_value" )
+    {
+        console.log("select "+selectObject.value)
+        DOM_parameterFit.style.display = "block";
+
+    }
+    // document.getElementById(parameterSetting).style.display = "none";
+    // let DOM_parameterAve = document.createElement("input");
+    // DOM_parameterAve.style.display = "block";
+}
 
 function plot1D ( data, axisKeys, plotId ){
     console.log("Plotting 1D");

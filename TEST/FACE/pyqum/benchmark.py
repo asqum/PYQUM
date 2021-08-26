@@ -185,9 +185,8 @@ def getJson_plot():
 
 	#print(plotData)
 	def plot_1D_show( originalArray ) :
-		#fitRangeBoolean = logical_and(myExtendMeasurement.rawData["x"]>=float(myExtendMeasurement.fitParameters["range"]["from"]),myExtendMeasurement.rawData["x"]<=float(myExtendMeasurement.fitParameters["range"]["to"]) )
-		#return originalArray[fitRangeBoolean]
-		return originalArray
+		fitRangeBoolean = logical_and(myExtendMeasurement.rawData["x"]>=float(myQuantification.fitParameters["range"]["from"]),myExtendMeasurement.rawData["x"]<=float(myQuantification.fitParameters["range"]["to"]) )
+		return originalArray[fitRangeBoolean]
 
 	def plot_2D_amp () :
 		plotData[yAxisKey]= myExtendMeasurement.independentVars[yAxisKey]
@@ -259,7 +258,6 @@ def getJson_fitParaPlot():
 		yAxisKey = None
 		plotData["Single_plot"] = array(1)
 		#plotData["Single_plot"] = myExtendMeasurement.fitResult["extendResults"]["power_corr"]
-	print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Fit results: ", plotData)
 
 	return json.dumps(plotData, cls=NumpyEncoder)
 

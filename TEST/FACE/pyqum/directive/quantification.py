@@ -284,8 +284,9 @@ class QEstimation():
 				"gain":0,
 			}
 		else:
-			fitParameters["range"]["from"] = float(fitParameters["range"]["from"])
-			fitParameters["range"]["to"] = float(fitParameters["range"]["to"])
+			fitRange = [float(k) for k in fitParameters["range"]["input"].split(",")]
+			fitParameters["range"]["from"] = fitRange[0]
+			fitParameters["range"]["to"] = fitRange[1]
 			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
 			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
 			fitParameters["gain"] = float(fitParameters["gain"])
@@ -454,8 +455,9 @@ class Decoherence():
 				"gain":0,
 			}
 		else:
-			fitParameters["range"]["from"] = float(fitParameters["range"]["from"])
-			fitParameters["range"]["to"] = float(fitParameters["range"]["to"])
+			fitRange = [float(k) for k in fitParameters["range"]["input"].split(",")]
+			fitParameters["range"]["from"] = fitRange[0]
+			fitParameters["range"]["to"] = fitRange[1]
 			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
 			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
 			fitParameters["gain"] = float(fitParameters["gain"])
@@ -481,13 +483,12 @@ class Decoherence():
 
 		# Creat notch port list
 		for i in range(yAxisLen):
-			ampData = abs(qObj.rawData["x"])
+			ampData = abs(qObj.rawData["iqSignal"][i])
 			guess = array([ampData[0]-ampData[ampData.shape[0]-1], 1000, ampData[ampData.shape[0]-1] ])
 			print(guess)
 			popt,pcov=curve_fit(expDecay,qObj.rawData["x"],abs(qObj.rawData["iqSignal"][i]),guess)
 			self.fitCurve["iqSignal"][i] = expDecay( qObj.rawData["x"],popt[0],popt[1],popt[2])
 			perr = sqrt(diag(pcov))
-			print(pcov,perr)
 			fitresults={
 				"amp":popt[0],
 				"tau":popt[1],
