@@ -486,22 +486,27 @@ class Decoherence():
 			ampData = abs(qObj.rawData["iqSignal"][i])
 			guess = array([ampData[0]-ampData[ampData.shape[0]-1], 1000, ampData[ampData.shape[0]-1] ])
 			print(guess)
-			popt,pcov=curve_fit(expDecay,qObj.rawData["x"],abs(qObj.rawData["iqSignal"][i]),guess)
-			self.fitCurve["iqSignal"][i] = expDecay( qObj.rawData["x"],popt[0],popt[1],popt[2])
-			perr = sqrt(diag(pcov))
-			fitresults={
-				"amp":popt[0],
-				"tau":popt[1],
-				"offset":popt[2],
-				"amp_cov":perr[0],
-				"tau_cov":perr[1],
-				"offset_cov":perr[2],
-			}
-			
-			for k in self.fitResult["results"].keys():
-				self.fitResult["results"][k][i] = fitresults[k]
-			for k in self.fitResult["errors"].keys():
-				self.fitResult["errors"][k][i] = fitresults[k]
+			try:
+				popt,pcov=curve_fit(expDecay,qObj.rawData["x"],abs(qObj.rawData["iqSignal"][i]),guess)
+				fitSuccess = True
+			except:
+				fitSuccess = False
+
+			if fitSuccess:
+				self.fitCurve["iqSignal"][i] = expDecay( qObj.rawData["x"],popt[0],popt[1],popt[2])
+				perr = sqrt(diag(pcov))
+				fitresults={
+					"amp":popt[0],
+					"tau":popt[1],
+					"offset":popt[2],
+					"amp_cov":perr[0],
+					"tau_cov":perr[1],
+					"offset_cov":perr[2],
+				}
+				for k in self.fitResult["results"].keys():
+					self.fitResult["results"][k][i] = fitresults[k]
+				for k in self.fitResult["errors"].keys():
+					self.fitResult["errors"][k][i] = fitresults[k]
 
 		# Set x-axis (frequency) of fit curve 
 		self.fitCurve["x"] = qObj.rawData["x"]

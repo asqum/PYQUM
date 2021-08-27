@@ -242,10 +242,10 @@ def getJson_fitParaPlot():
 	plotData = myQuantification.fitResult
 	
 
-	# plotData = myQuantification.fitResult["results"]
+	# plotData = myQuantification.fitResult["results"]P1
+
 	# plotData.update(myQuantification.fitResult["errors"])
 	# plotData.update(myQuantification.fitResult["extendResults"])
-	#print("Fit plot results: ",plotData)
 	analysisIndex = json.loads(request.args.get('analysisIndex'))
 
 	dimension = len(analysisIndex["axisIndex"])
@@ -258,8 +258,9 @@ def getJson_fitParaPlot():
 		yAxisKey = None
 		plotData["Single_plot"] = array(1)
 		#plotData["Single_plot"] = myExtendMeasurement.fitResult["extendResults"]["power_corr"]
-
-	return json.dumps(plotData, cls=NumpyEncoder)
+	print("Fit plot results: ",json.dumps(plotData, cls=NumpyEncoder))
+	return json.dumps(plotData, cls=NumpyEncoder).replace('NaN','null')
+	#return json.dumps(plotData, cls=NumpyEncoder).replace('NaN','')
 
 
 @bp.route('/qestimate/exportMat_fitPara',methods=['POST','GET'])

@@ -137,8 +137,6 @@ $(function () {
         console.log( analysisIndex );
         let xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"];
         let fitRange = document.getElementById("qEstimation"+"-fitting_input-"+xAxisKey).value;
-        let rangeFrom = document.getElementById("qFactor-fit-range-from").value;
-        let rangeTo = document.getElementById("qFactor-fit-range-to").value;
 
 
 
@@ -167,10 +165,13 @@ $(function () {
             fitParameters: JSON.stringify(fitParameters),
             analysisIndex: JSON.stringify(analysisIndex), 
         }, function (data) {
+            console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA fitResult");
+            console.log(data);
+            
             if (analysisIndex.axisIndex.length == 1) { xAxisKey = "Single_plot" }
             //if ( xAxisKey == "Power" ) { xAxisKey = "power_corr" }
-            console.log("fitResult");
-            console.log(data);           
+
+            
             let axisKeys_fitResult = {
                 x: [xAxisKey],
                 y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr"],
