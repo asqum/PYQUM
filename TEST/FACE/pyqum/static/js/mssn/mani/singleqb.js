@@ -23,7 +23,6 @@ window.VdBm_selector2 = 'select.mani.data.singleqb#singleqb-2d-VdBm'
 // Parameter, Perimeter & Channel LIST for INITIATING NEW RUN:
 var singleqb_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
 var singleqb_Perimeters = ['DIGIHOME', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
-var singleqb_Channels = ['RO-I', 'RO-Q', 'XY-I', 'XY-Q'];
 
 function transpose(a) {
     // Calculate the width and height of the Array
@@ -142,14 +141,21 @@ function accessdata_singleqb() {
 
         // 6. Loading Perimeters for NEW RUN:
         $.each(singleqb_Perimeters, function(i,perimeter) { $('.mani.config.singleqb#' + perimeter).val(data.perimeter[perimeter]); });
-        $.each(Array(4), function(i,v){ $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val(data.perimeter['SCORE-JSON']["CH" + String(i+1)]); });
+        $.each(DAC_CH_Matrix, function(i,channel_set) {
+            $.each(channel_set, function(j,channel) {
+                let CH_Address = String(i+1) + "-" + String(channel); 
+                $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(data.perimeter['SCORE-JSON']["CH" + CH_Address]); 
+            });
+        });
         $('select.mani.scheme.singleqb#SCHEME_LIST').show();
         $('input.singleqb.perimeter-settings.save').show();
 
         // 7. PERIMETER Statement:
+        var singleqb_Channels = [];
+        $.each(Object.keys(data.perimeter['SCORE-JSON']), function(i,val){ singleqb_Channels.push(val); });
         var sheet = '';
         $.each(Object.values(data.perimeter['SCORE-JSON']), function(i,val){
-            sheet += "CH" + String(i+1) + " > " + singleqb_Channels[i] + ":\n" + val.replaceAll("\n"," ") + "\n\n";
+            sheet += singleqb_Channels[i] + ":\n" + val.replaceAll("\n"," ") + "\n\n";
         });
         $.each(Object.keys(data.perimeter), function(i,key){
             if (key!='SCORE-JSON' && key!='R-JSON'){
@@ -502,18 +508,30 @@ $('select.singleqb.setchannels.finite-variable').on('change', function() {
     $('input.singleqb.setchannels.pulse-height').parent().hide();
     $('input.singleqb.setchannels.' + $('select.singleqb.setchannels.finite-variable.pulse-height').val() + '.pulse-height').parent().show();
 });
+// Surfing through Channels One-by-one or Altogether:
+$('select.channel-matrix').on('change', function() {
+    $("div.row.perimeter.score").hide();
+    selected_dach_address = $(this).val();
+    if ($(this).val()=="ALL") { $("div.row.perimeter.score").show(); 
+    } else { $("div.row.perimeter.score.CH" + $(this).val()).show(); };
+    return false;
+});
 // Initiate ALL Scores with Pulse-period:
 $("input.singleqb.set-period").bind('click', function () {
     var pperiod = $('input.singleqb.setchannels.pulse-period').val();
-    $.each(Array(4), function(i,v){ $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val("NS=" + pperiod + ";\n"); });
+    $.each(DAC_CH_Matrix, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = String(i+1) + "-" + String(channel); 
+            $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val("NS=" + pperiod + ";\n"); 
+        });
+    });
     $('textarea.mani.singleqb#R-JSON').val(JSON.stringify({}));
     $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text("ALL SCORES INITIATED WITH LENGTH " + pperiod + "ns"));
     return false;
 });
 // Inserting shapes into respective score sheet:
 $('input.singleqb.setchannels.insert').bind('click', function () {
-    var channel = $('select.singleqb.setchannels.score-channel').val();
-    var lascore = $('textarea.mani.singleqb.SCORE-JSON.channel-' + channel).val();
+    var lascore = $('textarea.mani.singleqb.SCORE-JSON.channel-' + selected_dach_address).val();
     var shape = $('select.singleqb.setchannels.pulse-shape').val();
     var RJSON = JSON.parse($('textarea.mani.singleqb#R-JSON').val());
 
@@ -536,16 +554,15 @@ $('input.singleqb.setchannels.insert').bind('click', function () {
         $('textarea.mani.singleqb#R-JSON').val(JSON.stringify(RJSON));
     };
 
-    $('textarea.mani.singleqb.SCORE-JSON.channel-' + channel).val(lascore + shape + '/,' + pwidth + ',' + pheight + ';\n');
-    $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text("EXTENDING SCORE-" + channel + " WITH " + shape + " (" + pwidth + ", " + pheight + ")"));
+    $('textarea.mani.singleqb.SCORE-JSON.channel-' + selected_dach_address).val(lascore + shape + '/,' + pwidth + ',' + pheight + ';\n');
+    $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text("EXTENDING SCORE-" + selected_dach_address + " WITH " + shape + " (" + pwidth + ", " + pheight + ")"));
     return false;
 });
 // Take a step back in Score:
 $('input.singleqb.setchannels.back').bind('click', function() {
-    var channel = $('select.singleqb.setchannels.score-channel').val();
-    var lascore = $('textarea.mani.singleqb.SCORE-JSON.channel-' + channel).val();
+    var lascore = $('textarea.mani.singleqb.SCORE-JSON.channel-' + selected_dach_address).val();
     if (lascore.split(';').length > 2) {
-        $('textarea.mani.singleqb.SCORE-JSON.channel-' + channel).val(lascore.split(';').slice(0,-2).join(";") + ';\n');
+        $('textarea.mani.singleqb.SCORE-JSON.channel-' + selected_dach_address).val(lascore.split(';').slice(0,-2).join(";") + ';\n');
     };
     return false;
 });
@@ -556,8 +573,8 @@ $('.mani.config.singleqb').on('change', function() {
     $('input.mani#singleqb-run').hide();
     $('div.singleqb.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text("!!! VALUES CHANGED !!!"));
 });
-// 1. Check ALZDG TIMSUM:
-$('input.singleqb.alzdg-timsum.check').bind('click', function() {
+// 1. Check ADC TIMSUM:
+$('input.singleqb.adc-timsum.check').bind('click', function() {
     $('div.singleqb.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text(">> VALIDATING TIMSUM >>"));
     $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/check/timsum', {
         record_time_ns: $('.mani.config.singleqb#RECORD_TIME_NS').val(),
@@ -571,7 +588,7 @@ $('input.singleqb.alzdg-timsum.check').bind('click', function() {
         $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text("RECORD TIMSUM VALIDATED. PROCEED TO CHECK R-JSON"));
     })
     .fail(function(jqxhr, textStatus, error){
-        $('div.singleqb.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text("Please Check ALZDG Status"));
+        $('div.singleqb.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text("Please Check ADC Status"));
     });
     return false;
 });
@@ -582,9 +599,13 @@ $('input.singleqb.setchannels.check').bind('click', function() {
     var allfilled = 1;
 
     // accumulate all the scores
-    $.each(Array(4), function(i,v){
-        allscores += $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val();
-        allfilled *= $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val().replaceAll(" ","").replaceAll("\n","").length;
+    // $.each(Array(4), function(i,v){
+    $.each(DAC_CH_Matrix, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = String(i+1) + "-" + String(channel);
+            allscores += $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val();
+            allfilled *= $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val().replaceAll(" ","").replaceAll("\n","").length;
+        });
     });
     allscores = allscores.replaceAll(" ","");
     console.log("allscores's length: " + allscores.length);
@@ -625,7 +646,12 @@ $('input.singleqb.perimeter-settings.load').on('touchend click', function(event)
         console.log(scheme_name + " " + data.status);
         // """6. Loading Perimeters for NEW RUN:"""
         $.each(singleqb_Perimeters, function(i,perimeter) { $('.mani.config.singleqb#' + perimeter).val(data.perimeter[perimeter]); });
-        $.each(Array(4), function(i,v){ $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val(data.perimeter['SCORE-JSON']["CH" + String(i+1)]); });
+        $.each(DAC_CH_Matrix, function(i,channel_set) {
+            $.each(channel_set, function(j,channel) {
+                let CH_Address = String(i+1) + "-" + String(channel); 
+                $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(data.perimeter['SCORE-JSON']["CH" + CH_Address]); 
+            });
+        });
         // Pre-scribe comment / reference accordingly:
         $("textarea.mani.singleqb#singleqb-ecomment").val("Cavity/Qubit-?: CHECK/SCOUT/FIND/GET WHAT?" + "\n[RO -??dB EXT, IQ-CAL: XY(0) + RO(0), SPAN: ??, RES: ??, ...]"  + "\n" + scheme_name + " from " + data.perimeter["jobid"] + "\nT6=" + mxcmk + "mK");
         $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text(scheme_name + " " + data.status + data.perimeter["jobid"]));
@@ -633,7 +659,7 @@ $('input.singleqb.perimeter-settings.load').on('touchend click', function(event)
     return false;
 });
     
-
+// Click on TASK-TAB:
 // show Single-QB's daylist (also switch content-page to Single-QB)
 $(function() {
     $('button.mani.access.singleqb').bind('click', function() {
@@ -644,9 +670,8 @@ $(function() {
         $('button.mani.access.singleqb').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/init', {
         }, function (data) {
-            // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
+            // 1. Check Run Permission:
             window.run_permission = data.run_permission;
-            window.DAYLIST = data.daylist;
             console.log("run permission: " + run_permission);
             if (run_permission == false) {
                 $('button.mani.singleqb.run').hide();
@@ -656,6 +681,8 @@ $(function() {
                 $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON ENABLED"));
             };
             
+            // 2. Loading Day-List and relevant Options:
+            window.DAYLIST = data.daylist;
             $('select.mani.singleqb.wday').empty();
             $('select.mani.singleqb.wday').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
@@ -665,16 +692,34 @@ $(function() {
                 }));
             });
             $('select.mani.singleqb.wday').append($('<option>', { text: '--Manage--', value: 'm' }));
-
             if (run_permission == true) {
                 $('select.mani.singleqb.wday').append($('<option>', { text: '--New--', value: -1 }));
             };
+
+            // 3. Pre-arrange Channel-inputs accordingly based on the WIRING-settings:
+            $('select.channel-matrix').empty();
+            $('div.channel-matrix').empty();
+            window.DAC_CH_Matrix = data.DAC_CH_Matrix;
+            window.DAC_Role = data.DAC_Role;
+            window.DAC_Which = data.DAC_Which;
+            $.each(DAC_CH_Matrix, function(i,channel_set) {
+                $.each(channel_set, function(j,channel) {
+                    let CH_Address = String(i+1) + "-" + String(channel);
+                    $('select.channel-matrix').append($('<option>', { text: DAC_Which[i] + ": " + DAC_Role[i][j] + ": " + CH_Address, value: CH_Address }));
+                    $('div.channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
+                        .append($('<label>').text( DAC_Which[i] + ": " + DAC_Role[i][j] + ": CHANNEL-" + CH_Address ))));
+                    $('div.channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
+                        .append($('<textarea class="mani singleqb SCORE-JSON channel-' + CH_Address + '" type="text" rows="3" cols="13" style="color:red;">').val('Good Luck'))));
+                    if (i!=0 || j!=0) { $("div.row.perimeter.score.CH" + CH_Address).hide(); };
+                });
+            });
+            $('select.channel-matrix').append($('<option>', { text: "ALL", value: "ALL" }));
+            window.selected_dach_address = $('select.channel-matrix').val(); // selected DAC-CH-Address
             
         });
         return false;
     });
 });
-
 // list times based on day picked
 $(function () {
     $('select.mani.singleqb.wday').on('change', function () {
@@ -698,7 +743,12 @@ $('input.mani#singleqb-run').on('touchend click', function(event) {
     });
     // Assemble SCORE-JSON for PERIMETER:
     PERIMETER['SCORE-JSON'] = {}
-    $.each(Array(4), function(i,v){ PERIMETER['SCORE-JSON']["CH" + String(i+1)] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + String(i+1)).val(); });
+    $.each(DAC_CH_Matrix, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = String(i+1) + "-" + String(channel); 
+            PERIMETER['SCORE-JSON']["CH" + CH_Address] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(); 
+        });
+    });
     console.log("PERIMETER: " + PERIMETER)
 
     // Assemble CORDER:

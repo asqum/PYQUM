@@ -137,7 +137,7 @@ def get_status(instr_name, label=1):
 def set_status(instr_name, info, label=1):
     '''Set Instrument Status for LOG
     * <info> must be a DICT'''
-    instrument = get_status(instr_name)
+    instrument = get_status(instr_name, label)
     if instrument is None:
         instrument = {}
     instrument.update(info)
@@ -227,6 +227,7 @@ class address:
         '''return total connection(s) based on instrument-list given'''
         db = get_db()
         connection = 0
+        print(Fore.CYAN + "instr_list: %s" %instr_list)
         for mach in flatten(instr_list):
             connection += int(db.execute('''SELECT connected FROM machine WHERE codename = ?''', (mach,) ).fetchone()['connected'])
         close_db()
@@ -263,7 +264,14 @@ def translate_scpi(Name, instance, a, b):
     headers = SCPIcore[0].split(':')
     parakeys, paravalues, getspecific, command = [headers[-1]] + SCPIcore[1:], [], [], []
 
-    if action[0] == 'Get':
+    # Setting extra perimeter(s) like channel, window, S-param etc.
+    prime = ''
+    if '_' in action[0]: prime = action[0].split('_')[1]
+    if headers[0]=='': headers[1] += prime # only the first header has this priviledge in this version # PENDING: more than one perimeter / prime (since it precedes parameter)
+    else: headers[0] += prime
+
+
+    if 'Get' in action[0]:
         try:
             for i in range(len(parakeys)):
                 if len(str(action[i+1])) > 0: #special type of query (e.g. commentstate)
@@ -282,12 +290,12 @@ def translate_scpi(Name, instance, a, b):
             status = "query unsuccessful"
             ans = None
 
-    if action[0] == 'Set':
-
+    if 'Set' in action[0]:
+        
         for i in range(len(parakeys)):
             if str(action[i+1]) == '':
                 paravalues.append("NIL") # allow for arbitrary choosing (turn-off certain parameter(s))
-            elif ' ' in str(action[i+1]) and not "'" in str(action[i+1]): #set parameters for each header by certain parakey
+            elif ' ' in str(action[i+1]) and not "'" in str(action[i+1]): #set parameters for each header by certain parakey (very rare)
                 actionwords = str(action[i+1]).split(' ')
                 oddwords, evenwords, J = actionwords[1::2], actionwords[0::2], []
                 # print("Odd: %s; Even: %s"%(oddwords,evenwords))
@@ -310,17 +318,17 @@ def translate_scpi(Name, instance, a, b):
     ans = dict(zip([a.replace('*','') for a in parakeys], paravalues))
 
     # Logging answer
-    if action[0] == 'Get': # No logging for "Set"
+    if 'Get' in action[0]: # No logging for "Set"
         set_status(mdlname, {Name.__name__ : ans})
 
     # debugging
     if eval(debugger):
         print(Fore.LIGHTBLUE_EX + "SCPI Header: {%s}" %headers[:-1])
         print(Fore.CYAN + "SCPI Command: {%s}" %command)
-        if action[0] == 'Get':
-            print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__, ans, status))
-        if action[0] == 'Set':
-            print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0], mdlname, Name.__name__ , ans, status))
+        if 'Get' in action[0]:
+            print(Fore.YELLOW + "%s %s's %s: %s <%s>" %(action[0].split('_')[0], mdlname, Name.__name__, ans, status))
+        if 'Set' in action[0]:
+            print(Back.YELLOW + Fore.MAGENTA + "%s %s's %s: %s <%s>" %(action[0].split('_')[0], mdlname, Name.__name__ , ans, status))
 
     return status, ans
 
@@ -497,14 +505,21 @@ class measurement:
             else:
                 self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
 
+            # PENDING: USING JOBID TO EXTRACT TIME RESOLUTION (ns) through Back-door:
+            try: print(Fore.YELLOW + "JOBID: %s" %self.perimeter['jobid'])
+            except: pass
             # For newer version where seperation between structure & buffer is adopted:
             if 'READOUTYPE' in self.perimeter.keys():
                 RJSON = loads(self.perimeter['R-JSON'].replace("'",'"'))
                 for k in RJSON.keys(): self.datasize = self.datasize * waveform(str(RJSON[k])).count
-                if self.perimeter['READOUTYPE'] == 'one-shot': bufferkey = 'RECORD-SUM'
-                else: bufferkey = 'RECORD_TIME_NS'
-                self.datasize = self.datasize * int(self.perimeter[bufferkey])
-
+                if self.perimeter['READOUTYPE'] == 'one-shot':
+                    self.datasize = self.datasize * int(self.perimeter['RECORD-SUM'])
+                else:
+                    # EXTRACT "TIME_RESOLUTION_NS" IF AVAILABLE: TOTAL_READ_POINTS = RECORD_TIME_NS / TIME_RESOLUTION_NS
+                    if 'TIME_RESOLUTION_NS' in self.perimeter.keys(): TIME_RESOLUTION_NS = int(self.perimeter['TIME_RESOLUTION_NS'])
+                    else: TIME_RESOLUTION_NS = 1 # backward-compatible with ALZDG's 1GSPS sampling-rate
+                    self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS']) / TIME_RESOLUTION_NS
+                
             self.data_progress = float(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)
@@ -823,6 +838,27 @@ def qid(queue,jobid):
         close_db()
     except: id = None
     return id
+def check_sample_alignment(queue):
+    '''
+    TO QUEUE-IN, the assigned-sample for that queue-system (by admin) MUST be aligned with the sample chosen (MEAL):
+    '''
+    try: 
+        db = get_db()
+        assigned_sample = db.execute( '''SELECT samplename FROM queue WHERE system = ?''', (queue,) ).fetchone()['samplename'] # assigned sample by admin
+        close_db()
+    except(TypeError): 
+        assigned_sample = ''
+    session['run_clearance'] = bool( assigned_sample==get_status("MSSN")[session['user_name']]['sample'] and int(g.user['measurement'])>0 )
+    return session['run_clearance']
+def which_queue_system(sample):
+    '''Find out which system is the sample being hooked up to'''
+    try:
+        db = get_db()
+        system = db.execute( '''SELECT system FROM queue WHERE samplename = ?''', (sample,) ).fetchone()['system']
+        close_db()
+    except(TypeError):
+        system = "NULL"
+    return system
 
 # JOB
 def jobin(task,corder,perimeter,instr,comment,tag):
@@ -899,13 +935,29 @@ def jobtag(JOBID, tag, mode=0):
     '''
     if g.user['measurement']:
         try:
-            if int(mode): tag = db.execute('SELECT tag FROM job WHERE id = ?', (JOBID,)).fetchone()[0] + tag
             db = get_db()
+            if int(mode): tag = db.execute('SELECT tag FROM job WHERE id = ?', (JOBID,)).fetchone()[0] + tag
             db.execute('UPDATE job SET tag = ? WHERE id = ?', (tag,JOBID))
             db.commit()
             close_db()
             action = ['replace', 'extend']
             print(Fore.GREEN + "User %s has successfully %s JOB#%s with tag: %s" %(g.user['username'],action[mode],JOBID,tag))
+        except:
+            print(Fore.RED + Back.WHITE + "INVALID JOBID")
+            raise
+    else: pass
+    return
+def job_update_perimeter(JOBID, perimeter):
+    '''
+    Update (Replace) Job's Perimeter.
+    '''
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            db.execute('UPDATE job SET perimeter = ? WHERE id = ?', (str(perimeter),JOBID))
+            db.commit()
+            close_db()
+            print(Fore.GREEN + "User %s has successfully updated JOB#%s's perimeter as: %s" %(g.user['username'],JOBID,perimeter))
         except:
             print(Fore.RED + Back.WHITE + "INVALID JOBID")
             raise

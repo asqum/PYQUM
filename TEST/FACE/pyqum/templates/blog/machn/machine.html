@@ -24,8 +24,8 @@
       $("div#dc").load("{{ url_for('machine.dc') }}");
       $("div#na").load("{{ url_for('machine.na') }}");
       $("div#sg").load("{{ url_for('machine.sg') }}"); 
-      $("div#tkawg").load("{{ url_for('machine.tkawg') }}");
-      $("div#alzdg").load("{{ url_for('machine.alzdg') }}");
+      $("div#dac").load("{{ url_for('machine.dac') }}");
+      $("div#adc").load("{{ url_for('machine.adc') }}");
       $("div#sa").load("{{ url_for('machine.sa') }}");
     });
 </script> 
@@ -45,9 +45,9 @@
   <button class="tablinks continuous-rf" id="sg-tab"  onclick="openTab(event, 'sg')"> SG </button>
 
   <!-- Pulse: Tektronix AWG -->
-  <button class="tablinks pulse-rf" id="tkawg-tab" onclick="openTab(event, 'tkawg')">DAC</button>
+  <button class="tablinks pulse-rf" id="dac-tab" onclick="openTab(event, 'dac')">DAC</button>
   <!-- Pulse: AlazarTech DIG -->
-  <button class="tablinks pulse-rf" id="alzdg-tab" onclick="openTab(event, 'alzdg')">ALZDG</button>
+  <button class="tablinks pulse-rf" id="adc-tab" onclick="openTab(event, 'adc')">ADC</button>
   
   <!-- Diagnostic: Spectrum Analyzer -->
   <button class="tablinks diagnostic" id="sa-tab" onclick="openTab(event, 'sa')">SA</button>
@@ -58,8 +58,8 @@
 <div id="dc" class="tabcontent"></div>
 <div id="na" class="tabcontent"></div>
 <div id="sg" class="tabcontent"></div>
-<div id="tkawg" class="tabcontent"></div>
-<div id="alzdg" class="tabcontent"></div>
+<div id="dac" class="tabcontent"></div>
+<div id="adc" class="tabcontent"></div>
 <div id="sa" class="tabcontent"></div>
 {% endif %}
 

@@ -11,8 +11,8 @@
 <div class="container">
 
         <div class="row access"> <!-- New Role for File-status -->
-            <div class="col-15" id='left'><select class='mani singleqb wday' type="text"></select></div>
-            <div class="col-7" id='left'><select class='mani singleqb wmoment' type="number"></select></div>
+            <div class="col-15" id='left'><select class='mani singleqb wday zoomSelect' type="text" style="color: navy;"></select></div>
+            <div class="col-7" id='left'><select class='mani singleqb wmoment zoomSelect-1' type="number" style="color: orangered;"></select></div>
             <div class="col-20" id='left'>
                 <ul class="data-status singleqb">
                     <li>
@@ -26,8 +26,10 @@
                 <!-- Notification -->
                 <div><input class='singleqb notification' type='submit' value="EXTRACT JOB FROM ALL-PAGE"></input></div>
             </div>
-            <div class="col-10" id='right'><button class="mani push_button w-95 blue" id="singleqb-savecsv">CSV-1D</button></div>
-            <div class="col-10" id='right'><button class="mani push_button w-95 blue" id="singleqb-savemat">MAT-2D</button></div>
+            <div class="col-2" id='right'><button class="plusButton-1" style="color: orangered;">+</button></div>
+            <div class="col-2" id='right'><button class="minusButton-1" style="color: orangered;">-</button></div>
+            <div class="col-2" id='right'><button class="plusButton" style="color: navy;">+</button></div>
+            <div class="col-2" id='right'><button class="minusButton" style="color: navy;">-</button></div>
         </div>
 
         <div class="row">
@@ -117,13 +119,14 @@
             <div class="col-10" id='left'><input class="singleqb perimeter-settings save" type="submit" value="SAVE"/></div>
             
         </div>
-        <!-- Go to benchmark -->
-        <div class="row">
-            <div class="col-15" id='left'><input class='char benchmark singleqb' name='singleqb-benchmark' type="submit" value="Benchmark" id="mani-singleqb-to-benchmark"/></div>
-        </div>
-        <!-- Analysis -->
-        <div class="row analysis">
 
+        <!-- Analysis -->
+        <div class="row">
+            <!-- Go to benchmark -->
+            <div class="col-15" id='left'><input class='char benchmark singleqb' name='singleqb-benchmark' type="submit" value="Benchmark" id="mani-singleqb-to-benchmark"/></div>
+            <!-- Download for external analysis -->
+            <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savecsv">CSV-1D</button></div>
+            <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savemat">MAT-2D</button></div>
         </div>
 
         <div id="mani-singleqb-announcement"></div>
@@ -169,12 +172,13 @@
                             <option value='GAUSS DN'>GAUSS DN</option>
                         </select></div>
 
-                        <div class="col-10" id='left'><select class='singleqb setchannels score-channel' type="text">
+                        <!-- <div class="col-10" id='left'><select class='singleqb setchannels score-channel' type="text">
                             <option value='1' selected>Score-1</option>
                             <option value='2'>Score-2</option>
                             <option value='3'>Score-3</option>
                             <option value='4'>Score-4</option>
-                        </select></div>
+                        </select></div> -->
+
                         <div class="col-10" id='left'><input class="singleqb setchannels insert" type="submit" value="INSERT"/></div>
                         <div class="col-10" id='left'><input class="singleqb setchannels back" type="submit" value="BACK"/></div>
                     </div>
@@ -218,7 +222,7 @@
                         <div class="col-16" id='left'><label> </label></div>
 
                         <div class="col-16" id='left'><input class='mani config singleqb' id="TRIGGER_DELAY_NS" type="number" value="0" step=8 min=0 /></div>
-                        <div class="col-16" id='left'><input class="singleqb alzdg-timsum check" type="submit" value="CHECK-TIMSUM"/></div>
+                        <div class="col-16" id='left'><input class="singleqb adc-timsum check" type="submit" value="CHECK-TIMSUM"/></div>
                     </div>
 
                     <!-- 2. Instrument Settings -->
@@ -245,8 +249,15 @@
                         </select></div>
                     </div>
 
-                    <!-- 3. Pulse Settings -->
+                    <!-- 3. Pulse Settings (PENDING: ADJUSTABLE CHANNEL-MATRIX) -->
                     <div class="row perimeter">
+                        <div class="col-16" id='left'><select class="channel-matrix zoomSelect"></select></div>
+                        <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                        <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                    </div>
+                    <div class="channel-matrix"></div>
+
+                    <!-- <div class="row perimeter">
                         <div class="col-48" id='left'><label>Score-1 (RO-I)</label></div>
                         <div class="col-48" id='left'><label>Score-2 (RO-Q)</label></div>
                     </div>
@@ -269,7 +280,8 @@
                         <div class="col-48" id='left'>
                             <textarea class='mani singleqb SCORE-JSON channel-4' type="text" rows="3" cols="13" style="color:red;"></textarea>
                         </div>
-                    </div>
+                    </div> -->
+                    
                     <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
                     <div class="row perimeter">
                         <div class="col-97" id='left'>
@@ -285,8 +297,8 @@
 
                         <div class="row">
                             <div class="col-16" id='left'><label>Flux-Bias (V/A)</label></div>
-                            <div class="col-16" id='left'><label>XY-LO-Frequency (GHz)</label></div>
-                            <div class="col-16" id='left'><label>RO-LO-Frequency (GHz)</label></div>
+                            <div class="col-16" id='left'><label>XY-Frequency (GHz)</label></div>
+                            <div class="col-16" id='left'><label>RO-Frequency (GHz)</label></div>
                             
                         </div>
                         <div class="row"> <!-- NOTE: The id should be aligned with the corresponding CORDER's key! --> 

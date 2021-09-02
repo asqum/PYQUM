@@ -390,11 +390,7 @@ $(function() {
                 $('button.char.cwsweep.run').show(); // RESUME
                 $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON ENABLED"));
             };
-            // console.log("run status: " + data.run_status);
-            // if (data.run_status == true) {
-            //     $( "i.cwsweep-run" ).remove(); //clear previous
-            //     $('button.char.cwsweep').prepend("<i class='cwsweep-run fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-            // } else {};
+            
             $('select.char.cwsweep[name="wday"]').empty();
             $('select.char.cwsweep[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){

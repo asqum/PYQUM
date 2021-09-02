@@ -28,6 +28,8 @@ function AccesSample(sname) {
         $('textarea.user-samples#update[name="description"]').val(data.sample_cv['description']);
         $('textarea.user-samples#update[name="history"]').val(data.sample_cv['history']);
         $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("Since " + data.sample_cv['registered'].replace('\n',' ')));
+        if (data.system=="NULL") { $('div#which_queue_system').empty().append($('<h4 style="color: red;"></h4>').text("Please assign the queue-system via MACHINE/BDR/SAMPLES")); }
+        else { $('div#which_queue_system').empty().append($('<h4 style="color: blue;"></h4>').text("Assigned to: " + data.system)); };
     });
 };
  

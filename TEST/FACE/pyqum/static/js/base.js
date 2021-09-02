@@ -175,3 +175,36 @@ $(function () {
         return false;
     });
 });
+
+// Iterate through select options with button click for a certain row:
+// Column 0
+$(document).on('click', 'button.minusButton', function() {
+    var select_element = $(this).closest('.row').find(".zoomSelect");
+    var selIndex = select_element.prop('selectedIndex');
+    if (selIndex != 0) { select_element.val(select_element.children('option').eq(selIndex - 1).val()); };
+    select_element.trigger("change");
+    console.log("Going BACK");
+});
+$(document).on('click', 'button.plusButton', function() {
+    var select_element = $(this).closest('.row').find(".zoomSelect");
+    var selIndex = select_element.prop('selectedIndex');
+    if (selIndex != select_element.children('option').length - 1) { select_element.val(select_element.children('option').eq(selIndex + 1).val()); };
+    select_element.trigger("change");
+    console.log("Going FORWARD");
+});
+// Column 1 (Use this if there's already another same feature on that same row!)
+$(document).on('click', 'button.minusButton-1', function() {
+    var select_element = $(this).closest('.row').find(".zoomSelect-1");
+    var selIndex = select_element.prop('selectedIndex');
+    if (selIndex != 0) { select_element.val(select_element.children('option').eq(selIndex - 1).val()); };
+    select_element.trigger("change");
+    console.log("Going BACK");
+});
+$(document).on('click', 'button.plusButton-1', function() {
+    var select_element = $(this).closest('.row').find(".zoomSelect-1");
+    var selIndex = select_element.prop('selectedIndex');
+    if (selIndex != select_element.children('option').length - 1) { select_element.val(select_element.children('option').eq(selIndex + 1).val()); };
+    select_element.trigger("change");
+    console.log("Going FORWARD");
+});
+

@@ -16,7 +16,7 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from pyqum import get_db, close_db
-from pyqum.instrument.logger import lisample, set_status, get_status
+from pyqum.instrument.logger import lisample, set_status, get_status, which_queue_system
 
 bp = Blueprint(myname, __name__, url_prefix='/auth')
 
@@ -85,7 +85,7 @@ def load_logged_in_user():
         # 5. Instrument list & details for each DR (PyQUM) platform:
         g.machlist = get_db().execute(
             '''
-            SELECT m.codename, connected, category, sequence, system, u.username
+            SELECT m.codename, connected, category, sequence, system, note, u.username
             FROM machine m
             INNER JOIN user u ON m.user_id = u.id
             ORDER BY m.id DESC
@@ -94,9 +94,13 @@ def load_logged_in_user():
         close_db()
         g.machlist = [dict(x) for x in g.machlist]
         g.instlist = [x['codename'].replace('_','-') for x in g.machlist]
+        g.machspecs = dict()
+        for x in g.machlist: g.machspecs[x['codename']] = x['note']
 
         # 6. Appointed sample in each measurement system:
         g.CHAR0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='CHAR0'").fetchone()[0]
+        close_db()
+        g.CHAR1_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='CHAR1'").fetchone()[0]
         close_db()
         g.QPC0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC0'").fetchone()[0]
         close_db()
@@ -284,7 +288,9 @@ def usersamples_access():
         sample_cv = []
         message = "Consult ABC"
     close_db()
-    return jsonify(sample_cv=sample_cv, message=message, saved=saved)
+
+    system = which_queue_system(sname)
+    return jsonify(sample_cv=sample_cv, message=message, saved=saved, system=system)
 @bp.route('/user/samples/update')
 def usersamples_update():
     sname = request.args.get('sname')

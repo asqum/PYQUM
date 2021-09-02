@@ -25,28 +25,27 @@
 
         <div class="row">
             <div class="col-28" id='left'>
-                <!-- Notification -->
+                <!-- Notification (from ALL-page) -->
                 <div><input class='fresp notification' type='submit' value=""></input></div>
             </div>
         </div>
         
         
         <div class="row"> <!-- New Role for File-status -->
-            <div class="col-15" id='left'><select class='char fresp' name="wday" type="text"></select></div>
-            <div class="col-10" id='left'><select class='char fresp' name="wmoment" type="number"></select></div>
-            <div class="col-20" id='left'>
-                <ul class="data-status fresp">
-                    <li>
-                        <span class="bar data-progress fresp"></span>
-                        <h4 class="data-eta fresp"></h4>
-                    </li>
-                </ul>
-            </div>
+            <div class="col-15" id='left'><select class='char fresp zoomSelect' name="wday" type="text" style="color: navy;"></select></div>
+            <div class="col-10" id='left'><select class='char fresp zoomSelect-1' name="wmoment" type="number" style="color: orangered;"></select></div>
+            <div class="col-20" id='left'><ul class="data-status fresp"><li>
+                <span class="bar data-progress fresp"></span>
+                <h4 class="data-eta fresp"></h4>
+            </li></ul></div>
 
             <div class="col-15" id='right'><div class="buttons"><a class="char new btn blue" id="fresp-job"></a></div></div>
             <div class="col-10" id='right'><button class="char push_button w-95 red" id="fresp-datareset">CLIP</button></div>
-            <div class="col-10" id='right'><button class="char fresp analysis push_button w-95 blue" id="fresp-savenote">SAVE NOTE</button></div>
             <div class="col-10" id='right'><button class="char fresp run push_button w-95 blue" id="fresp-resume">RESUME</button></div>
+            <div class="col-2" id='right'><button class="plusButton-1" style="color: orangered;">+</button></div>
+            <div class="col-2" id='right'><button class="minusButton-1" style="color: orangered;">-</button></div>
+            <div class="col-2" id='right'><button class="plusButton" style="color: navy;">+</button></div>
+            <div class="col-2" id='right'><button class="minusButton" style="color: navy;">-</button></div>
             
         </div>
 
@@ -55,7 +54,7 @@
             <div class="col" id='left' style="width:49%">
                 <textarea class='char fresp' name="comment" type="text" rows="5" cols="73" readonly>--comment--</textarea>
             </div>
-            <!-- Editable Note -->
+            <!-- Editable Note ()-->
             <div class="col" id='left' style="width:49%">
                 <textarea class='char fresp' name="note" type="text" rows="15" cols="73">--note--</textarea>
             </div>
@@ -159,9 +158,7 @@
                         </div>
                         
                         <div class="row"> <!-- New Row for RUNNING -->
-                            {% if session['run_clearance'] %}
-                                <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-run"  type="submit" value="RUN"/></div>
-                            {% endif %}
+                            <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-run"  type="submit" value="RUN"/></div>
                             <div class="col-15" id='left'><input class="char modal-toggle new fresp" id="fresp-cancel" type="submit" value="CANCEL"/></div>
                         </div>
                         <div class="row">

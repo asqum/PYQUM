@@ -15,7 +15,9 @@ class pulser:
     dt: time-resolution of AWG in ns\n
     clock_multiples: depends on AWG model, waveform must consist of certain multiple of points\n
     score: analogous to music score, basically a set of syntatical instructions to build the "music": \n
-            "ns=<totaltime>; <shape>/<param#1>/.../<param#n>, pulse-width, pulse-height; ... ..."
+            "ns=<totaltime: pulse-period> , [mhz=<i/q>/<IF>[/<mixer-module>]] (-> mix_params); 
+            <shape>/[<param#1>/.../<param#n>], <pulse-width>, <pulse-height>; 
+            ... ... "
     music: pulse-sequence output (numpy array)
     NOTE: implement delay as one of the beats for the sake of simplicity, instead of seperated parameter. (Ex: to delay 100ns, write: "flat,100,0")
     '''
@@ -31,11 +33,15 @@ class pulser:
         self.beatime, self.music = 0, zeros([self.totalpoints])
         self.timeline = linspace(self.dt, self.totaltime, self.totalpoints)
         # mixing module:
-        try: self.mixer_module = self.mix_params.split("/")[2]
-        except(IndexError): self.mixer_module = "pure"
+        try: 
+            self.mixer_module = self.mix_params.split("/")[2]
+            # while ' ' in self.mixer_module: self.mixer_module = self.mixer_module.replace(' ','') # omit spaces (already did from the very beginning.)
+            if self.mixer_module=='' : self.mixer_module = "pure" # for the case where mhz=i/37/<empty>
+        except(IndexError): 
+            self.mixer_module = "pure" # "pure": "1/0/0" in json-configuration for MIXER
         if "i" in self.mixer_module.lower(): self.IF_MHz_rotation = float(self.mixer_module.split('i')[1]) # in MHz
         elif "q" in self.mixer_module.lower(): self.IF_MHz_rotation = float(self.mixer_module.split('q')[1])
-        else: self.IF_MHz_rotation = 0 # normally baseband without the ability to be calibrated
+        else: self.IF_MHz_rotation = self.iffreq # uncalibrated pure case, generalised to support baseband case where IF=0
 
     def song(self):
         '''
@@ -44,7 +50,7 @@ class pulser:
             <pulse-shape>/[<unique factor(s): default (to pulse-library) database) if blank], <pulse-period>, <pulse-height: between -1 & +1>;
             stack a variety of pulse-instruction(s) according to the format illustrated above.
         '''
-        # BB Shaping:
+        # 1. BB Shaping:
         for beat in self.score.split(";")[1:]:
             if beat == '': break # for the last semicolon
 
@@ -71,10 +77,10 @@ class pulser:
 
             else: print(Fore.RED + "UNRECOGNIZED PULSE-SHAPE. PLEASE CONSULT HELP.")
         
-        # Envelope before IF-Mixing:
+        # 2. Envelope before IF-Mixing:
         self.envelope = copy(self.music)
 
-        # Offsetting phase to the starting of the pulse (1. to lock readout-phase 2. ?):
+        # 3. Offsetting phase to the starting of the pulse (1. to lock readout-phase 2. ?):
         try: 
             pulse_starting_time = self.dt * where(ceil(abs(self.music-self.music[-1]))==1)[0][0]
             # print(Back.WHITE + Fore.BLUE + "Pulse starting from %s ns" %pulse_starting_time)
@@ -82,13 +88,17 @@ class pulser:
             pulse_starting_time = 0 # for PURE FLAT LINE!
             # print(Back.WHITE + Fore.RED + "PURE FLAT LINE!")
 
-        # IF Mixing:
+        # 4. IF Mixing:
+        '''
+        ns=<Pulse-period>,mhz=<I/Q>/<PENDING: relative-IF>/<Mixer-calibration>; <Pulse-shape>,<Pulse-width>,<Pulse-height>; ...
+        <Mixer-calibration> = <Mixer-module> + <i/q> + <IF-correction> (PENDING: + <LO> + <IF-amplitude>)
+        <Converted-RF> or <Target-RF> = <LO> + <IF-correction>
+        '''
         if self.mix_params.split("/")[0] == 'i': iffunction = "sin"
         elif self.mix_params.split("/")[0] == 'q': iffunction = "cos"
         else: print(Fore.RED + "UNRECOGNIZED CW-TYPE. PLEASE CONSULT HELP.")
 
         ifamp, ifphase, ifoffset = [float(x) for x in get_status("MIXER")[self.mixer_module].split("/")]
-
         self.music = self.music * ifamp * eval(iffunction + '((self.timeline-pulse_starting_time)*%s/1000*2*pi + %s/180*pi)' %(self.iffreq,ifphase)) + ifoffset
 
         # Confine music between -1 and 1:

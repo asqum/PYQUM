@@ -74,7 +74,7 @@ def create_app(test_config=None):
         SECRET_KEY='good',
         # store the main database & settings in the instance folder
         DATABASE=os.path.join(app.instance_path, 'pyqum.sqlite'),
-        SETTINGS=os.path.join(app.instance_path, 'settings.sqlite'),
+        # SETTINGS=os.path.join(app.instance_path, 'settings.sqlite'), # moved to reader for other databases
     )
     
     if test_config is None:

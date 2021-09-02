@@ -1,0 +1,214 @@
+<!doctype html> <!--extended from parent: machine.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/dac.js') }}"></script>
+</head>
+
+<body class="mach">
+<div>
+
+    <div class="tab2">
+    <form method='GET'>
+        {% if 'TKAWG-1' in g.instlist %}<button class='dac dacname' name='TKAWG-1'>TKAWG-1</button>{% endif %}
+        {% if 'TKAWG-2' in g.instlist %}<button class='dac dacname' name='TKAWG-2'>TKAWG-2</button>{% endif %}
+        {% if 'SDAWG-1' in g.instlist %}<button class='dac dacname' name='SDAWG-1'>SDAWG-1</button>{% endif %}
+        {% if 'SDAWG-2' in g.instlist %}<button class='dac dacname' name='SDAWG-2'>SDAWG-2</button>{% endif %}
+        {% if 'SDAWG-3' in g.instlist %}<button class='dac dacname' name='SDAWG-3'>SDAWG-3</button>{% endif %}
+
+        <button class='dac log'>INSTR-LOG</button>
+        <button class='dac channels' name='channel-1'>CHANNEL-1</button>
+        <button class='dac channels' name='channel-2'>CHANNEL-2</button>
+        <button class='dac channels' name='channel-3'>CHANNEL-3</button>
+        <button class='dac channels' name='channel-4'>CHANNEL-4</button>
+    </form>
+    </div>
+
+    <div class="daccontent log"></div>
+    <div class="daccontent settings">
+        <div class="container">
+            <form method='GET'>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Activity</label></div>
+                    <div class="col-49" id='left'>
+                        <div class='dac' id="dac-activity"></div>
+                    </div>
+                    <!-- Close / Reset -->
+                    <div class="col-15" id='right'>
+                        <button class='dac push_button w-95 red closet'>LEAVE</button>
+                    </div>
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Status</label></div>
+                    <div class="col-49" id='left'>
+                        <div class='dac' id="dac-status"></div>
+                    </div>
+                    <!-- Test Script -->
+                    <div class="col-15" id='right'>
+                        <button class='dac push_button w-95 blue' id='dac-testing'>TEST</button>
+                    </div>
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Model</label></div>
+                    <div class="col-20" id='left'>
+                        <div class='dac' id="dac-model"></div>
+                    </div>
+
+                    
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Clock Rate</label></div>
+                    <div class="col-12" id='left'><input class="dac scale settings clockfreq" type="text" value=""/></div>
+                    <div class="col-10" id='left'><input class="dac unit settings clockfreq" value=""/></div>
+                    
+                </div>
+
+                {% if 'SDAWG-1' in g.instlist %}
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Trigger by</label></div>
+                    <div class="col-12" id='left'><select class="dac settings trigbyPXI">
+                        <option value='0'>PXI-0</option>
+                        <option value='1'>PXI-1</option>
+                        <option value='2' selected>PXI-2</option>
+                        <option value='3'>PXI-3</option>
+                        <option value='4'>PXI-4</option>
+                        <option value='5'>PXI-5</option>
+                        <option value='6'>PXI-6</option>
+                        <option value='7'>PXI-7</option>
+                        <option value='-13'>Trigger I/O</option>
+                    </select></div>
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Delay</label></div>
+                    <div class="col-12" id='left'><input class="dac scale settings markerdelay" type="number" value="0"/></div>
+                    <div class="col-10" id='left'><input class="dac unit settings markerdelay" value="ns"/></div>
+                    
+                </div>
+                {% endif %}
+                
+            </form>
+        </div>
+    </div>
+
+    <!-- Channels -->
+    <div class="daccontent setchannels">
+        <div class="container">
+            <form method='GET'>
+                <!-- Channel Status -->
+                <div class="row">
+                    <div class="col-12" id='left'><label class='parameter'>Status</label></div>
+                    <div class="col-49" id='left'>
+                        <div class='dac' id="dac-chstatus"></div>
+                    </div>
+
+                    <!-- PLAY -->
+                    <div class="col-10" id='right'><button class='dac push_button w-95 green' id='dac-play'>PLAY</button></div>
+                    {% if 'TKAWG-1' in g.instlist %}
+                        <!-- STOP -->
+                        <div class="col-10" id='right'><button class='dac push_button w-95 red' id='dac-stop'>STOP</button></div>
+                    {% endif %}
+                    {% if 'SDAWG-1' in g.instlist %}
+                        <!-- Master or Slave -->
+                        <div class="col-10" id='right'>
+                            <label class="switch"><input class='dac master trigger' type="checkbox">
+                                <div class="slider smooth"><span class="on">MASTER</span><span class="off">SLAVE</span></div>
+                            </label>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Pulse Width, Height * Max-level - Offset -->
+                <div class="row">
+                    <div class="col-12" id='left'><label class='parameter'>Pulse Width</label></div>
+                    <div class="col-7" id='left'>
+                        <input style="color:blue;" class="dac scale setchannels pulse-width" type="number" value='100'/>
+                    </div>
+                    <div class="col-3" id='left'><input class="dac unit setchannels pulse-width" value="ns"/></div>
+
+                    <div class="col-8" id='left'><label class='parameter'>Height</label></div>
+                    <div class="col-7" id='left'>
+                        <input style="color:blue;" class="dac scale setchannels pulse-height" type="number" value=0.53 min=-1 max=1 step=0.01/>
+                    </div>
+                    <div class="col-8" id='left'><input class="dac scale setchannels source-amplitude" type="number" value=750 min=0 max=1500/></div>
+                    <div class="col-7" id='left'><input class="dac unit setchannels source-amplitude" value=""/></div>
+                    
+                    <div class="col-8" id='left'><label class='parameter'>Offset</label></div>
+                    <div class="col-7" id='left'><input class="dac scale setchannels source-offset" type="text" value=""/></div>
+                    <div class="col-3" id='left'><input class="dac unit setchannels source-offset" value=""/></div>
+                    
+                    <!-- Clear Waveform -->
+                    <div class="col-10" id='right'><button class='dac push_button w-95 red' id='dac-clearall'>CLEAR MEM</button></div>
+                    {% if 'TKAWG-1' in g.instlist %}
+                        <!-- All-Off -->
+                        <div class="col-10" id='right'><button class='dac push_button w-95 red' id='dac-alloff'>ALL OFF</button></div>
+                    {% endif %}
+                </div>
+
+                <!-- Shapes -->
+                <div class="row">
+                    {% if 'TKAWG-1' in g.instlist %}
+                        <!-- Output state for each channel -->
+                        <div class="col-12" id='left'>
+                            <label class="switch"><input class='dac setchannels output' type="checkbox">
+                                <div class="slider smooth"><span class="on">ON</span><span class="off">OFF</span></div>
+                            </label>
+                        </div>
+                    {% endif %}
+                    {% if 'SDAWG-1' in g.instlist %}
+                        <!-- SEND / RESEND -->
+                        <div class="col-12" id='left'>
+                            <label class="switch"><input class='dac replace waveform' type="checkbox">
+                                <div class="slider smooth"><span class="on">RESEND</span><span class="off">SEND</span></div>
+                            </label>
+                        </div>
+                    {% endif %}
+                    <div class="col-6" id='left'><input class="dac shapes setchannels" type="submit" value="FLAT"/></div>
+                    <div class="col-6" id='left'><input class="dac shapes setchannels" type="submit" value="GAUSS UP"/></div>
+                    <div class="col-6" id='left'><input class="dac shapes setchannels" type="submit" value="GAUSS DN"/></div>
+
+                </div>
+                    
+                <!-- Score -->
+                <div class="row">
+                    <!-- SET CHANNELS & MARKERS -->
+                    <div class="col-12" id='left'>
+                        <div class="row"><button class='dac push_button w-95 blue' id='dac-score'>SCORE IN</button></div>
+                        <div class="row"><select class="dac setchannels marker-option">
+                            <option value='0'>NO Marker</option>
+                            <option value='1'>1 Marker</option>
+                            <option value='2'>2 Markers</option>
+                            <option value='3'>3 Markers</option>
+                            <option value='4'>4 Markers</option>
+                            <option value='7'>PINSW CH4</option>
+                        </select></div>
+                    </div>
+                    <div class="col-60" id='left'>
+                        <textarea class='dac score setchannels' type="text" rows="3" cols="73" style="color:blue;"></textarea>
+                    </div>
+
+                    <!-- Initiate Score starting with Pulse Period -->
+                    <div class="col-20" id='right'>
+                        <div class="row">
+                            <input class="dac initscore" type="submit" value="INIT SCORE W/ PERIOD"/>
+                        </div>
+                        <div class="row">
+                            <div class="col-66" id='left'><input style="color:blue;" class="dac scale setchannels pulse-period" type="number" value='8000'/></div>
+                            <div class="col-25" id='left'><input style="color:blue;" class="dac unit setchannels pulse-period" value="ns"/></div>
+                        </div>
+                    </div>
+                </div>
+                
+
+                <div id="dac-IQAP-chart"></div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+</body>
+
+</html>

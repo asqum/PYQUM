@@ -20,8 +20,8 @@
     $('.navbar button.mission').addClass('active');
     $(function(){
       $("div#ALL").load("{{ url_for('mission.all') }}");
-      $("div#CHAR0").load("{{ url_for('mission.char') }}");
-      $("div#QPC0").load("{{ url_for('mission.mani') }}");
+      $("div#CHAR").load("{{ url_for('mission.char') }}");
+      $("div#QPC").load("{{ url_for('mission.mani') }}");
       
     });
 </script> 
@@ -32,8 +32,10 @@
 
 <div class="tab">
   <button class="tablinks" id="ALL-tab" onclick="openTab(event, 'ALL')"><i class='fa fa-refresh' style='font-size:15px;color:lightseagreen;'></i>ALL</button>
-  <button class="tablinks" id="CHAR0-tab" onclick="openTab(event, 'CHAR0')">CHAR-0</button>
-  <button class="tablinks" id="QPC0-tab" onclick="openTab(event, 'QPC0')">QPC-0</button>
+  <button class="tablinks" id="CHAR0-tab" onclick="openTab(event, 'CHAR')">CHAR-0</button>
+  <button class="tablinks" id="CHAR1-tab" onclick="openTab(event, 'CHAR')">CHAR-1</button>
+  <button class="tablinks" id="QPC0-tab" onclick="openTab(event, 'QPC')">QPC-0</button>
+  <button class="tablinks" id="QPC1-tab" onclick="openTab(event, 'QPC')">QPC-1</button>
 
   <select class="mssn tracking_type">
     <option value="access-jobid" selected>ACCESS</option>
@@ -43,8 +45,8 @@
 </div>
 
 <div id="ALL" class="tabcontent"></div>
-<div id="CHAR0" class="tabcontent"></div>
-<div id="QPC0" class="tabcontent"></div>
+<div id="CHAR" class="tabcontent"></div>
+<div id="QPC" class="tabcontent"></div>
 <!-- PENDING: REMOVE/UNIFY THE MSSN-TABS AND SHARING DIRECTIVES ACROSS QUEUE-SYSTEMS -->
 
 

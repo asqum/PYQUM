@@ -1,0 +1,386 @@
+<!doctype html> <!--extended from parent: mission.html, which in turn inherited base.html-->
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/mani/qubits.js') }}"></script>
+</head>
+
+<body class='mani'>
+
+<div class="container">
+
+        <div class="row access"> <!-- New Role for File-status -->
+            <div class="col-15" id='left'><select class='mani qubits wday' type="text"></select></div>
+            <div class="col-7" id='left'><select class='mani qubits wmoment' type="number"></select></div>
+            <div class="col-20" id='left'>
+                <ul class="data-status qubits">
+                    <li>
+                        <span class="bar data-progress qubits"></span>
+                        <h4 class="data-eta qubits"></h4>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="col-28" id='right'>
+                <!-- Notification -->
+                <div><input class='qubits notification' type='submit' value="EXTRACT JOB FROM ALL-PAGE"></input></div>
+            </div>
+            <div class="col-10" id='right'><button class="mani push_button w-95 blue" id="qubits-savecsv">CSV-1D</button></div>
+            <div class="col-10" id='right'><button class="mani push_button w-95 blue" id="qubits-savemat">MAT-2D</button></div>
+        </div>
+
+        <div class="row">
+           
+            <div class="col" id='left' style="width:49%">
+                <div class="row">
+                     <!-- Read-only Comment -->
+                    <textarea class='mani qubits comment' type="text" rows="15" cols="73" readonly>--comment--</textarea>
+                </div>
+                <div class="row">
+                    <!-- Editable Note -->
+                    <textarea class='mani qubits note' type="text" rows="15" cols="73">--note--</textarea>
+                </div>
+            </div>
+            
+            <div class="col" id='left' style="width:49%">
+                <div class="row">
+                    <!-- Read-only SCORE Statement -->
+                    <textarea class='mani qubits PSTATEMENT' type="text" rows="15" cols="73" readonly>--P-STATEMENT(s)--</textarea>
+                </div>
+                
+            </div>
+            
+            
+            <!-- Read-only Peripheral Statement -->
+            <!-- <div class="col" id='left' style="width:49%">
+                <textarea class='mani qubits Peripheral-STATEMENT' type="text" rows="15" cols="73" readonly>--PERIPHERAL(s)--</textarea>
+            </div> -->
+            
+        </div>
+
+        <!-- 1. Perimeters -->
+        <div class="row perimeter">
+            <div id="mani-qubits-perimeter"></div>
+        </div>
+
+        <!-- 2. Parameters -->
+        <div class="row parameter"></div>
+
+        <!-- Check, Plot & Download 1D-Data -->
+        <div class="row 1D">
+            <div class="col-10" id='left'><input class='mani data qubits' id="qubits-1d-data" type="submit" value="1D-Data"/></div>
+            <div class="col-5" id='left'><select class='mani data qubits' id="qubits-1d-VdBm" type="text">
+                <option value='V'>V</option>
+                <option value='dBm'>dBm</option>
+            </select></div>
+            <div class="col-15" id='left'><input class='mani data qubits' id="qubits-sample-range" type="text" value="100,200,500,700"/></div>
+            <div class="col-7" id='left'><select class='mani data qubits' id="qubits-sample-mode" type="text">
+                <option value='A' selected>A. DRS</option>
+                <option value='B'>B. RSD</option>
+                <option value='C'>C. MON</option>
+                <option value='D'>D. RMS</option>
+            </select></div>
+            <div class="col-8" id='left'><select class='mani data qubits' id="qubits-1d-mode" type="text">
+                <option value='lines'>Line</option>
+                <option value='markers'>Marker</option>
+            </select></div>
+            <div class="col-10" id='left'><button class="mani push_button w-95 green" id="qubits-insert-1D">COMPARE-1D</button></div>
+            <div class="col-10" id='left'><select class='mani data qubits compare' id="qubits-compare-nml" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data qubits compare' id="qubits-compare-iqap" type="text"></select></div>
+            <div class="col-10" id='left'><input class='mani data qubits compare' id="qubits-shot-range" type="text" value="1,4300"/></div>
+            <div class="col-5" id='left'><h4>shots</h4></div>
+        </div>
+
+        <!-- 2D-Data Assembly and Grooming -->
+        <div class="row 2D">
+            <div class="col-10" id='left'><input class='mani data qubits' id="qubits-2d-data" type="submit" value="2D-Data"/></div>
+            <div class="col-5" id='left'><select class='mani data qubits' id="qubits-2d-VdBm" type="text">
+                <option value='V'>V</option>
+                <option value='dBm'>dBm</option>
+            </select></div>
+            <div class="col-10" id='left'><select class='mani data qubits' id="qubits-2d-iqamphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data qubits' id="qubits-2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data qubits' id="qubits-2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data qubits' id="qubits-2d-direction" type="text"></select></div>
+            <!-- SAVE PERIMETER SETTINGS (PULSE SCHEMES) -->
+            <div class="col-20" id='left'><select class='mani scheme qubits' id="SCHEME_LIST" type="text">
+                <option value='TRANSFER' selected>TRANSFER</option>
+                <option value='FRESP'>FREQ. RESPONSE</option>
+                <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
+                <option value='RABI'>RABI DRIVING</option>
+                <option value='T1'>T1 DELAY</option>
+                <option value='T2'>T2 DELAY</option>
+                <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
+                <option value='QJUMPS'>QUANTUM JUMPS</option>
+            </select></div>
+            <div class="col-10" id='left'><input class="qubits perimeter-settings save" type="submit" value="SAVE"/></div>
+            
+        </div>
+
+        <!-- Analysis -->
+        <div class="row analysis">
+
+        </div>
+
+        <div id="mani-qubits-announcement"></div>
+
+        <div id="mani-qubits-chart"></div>
+        
+        <!-- Brings up dialogue box for parameter settings -->
+        <div class="modal new qubits">
+            <div class="modal-overlay modal-toggle new qubits"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading">Setting up Single-Qubit Measurement:</h2>
+                    <div class="qubits settingstatus"></div>
+                </div>
+
+                <div class="modal-header">
+                    <h4 style="color: rgb(5, 70, 16);">0. Inserting Pulse:</h4>
+                    <div class="row">
+                        <div class="col-10" id='left'><input class="qubits set-period" type="submit" value="INITIALIZE"/></div>
+
+                        <div class="col-10" id='left'><label class='parameter'>Width(ns)</label></div>
+                        <div class="col-10" id='left'><select class='qubits setchannels finite-variable pulse-width' type="text">
+                            <option value='finite'>finite</option><option value='variable'>variable</option></select></div>
+
+                        <div class="col-10" id='left'><label class='parameter'>Height(au)</label></div>
+                        <div class="col-10" id='left'><select class='qubits setchannels finite-variable pulse-height' type="text">
+                            <option value='finite'>finite</option><option value='variable'>variable</option></select></div>
+
+                        <div class="col-10" id='left'><label class='parameter'>Shape</label></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-10" id='left'><input style="color:blue;" class="qubits setchannels finite pulse-period" type="number" value='20000' min=0 max=1000000/></div>
+
+                        <div class="col-20" id='left'><input style="color:blue;" class="qubits setchannels finite pulse-width" type="number" value='100'/></div>
+                        <div class="col-20" id='left'><input style="color:blue;" class='qubits setchannels variable pulse-width' type="text" value="R1 = 0 to 10000 * 5000"/></div>
+
+                        <div class="col-20" id='left'><input style="color:blue;" class="qubits setchannels finite pulse-height" type="number" value=0.42 min=0 max=1 step=0.05/></div>
+                        <div class="col-20" id='left'><input style="color:blue;" class='qubits setchannels variable pulse-height' type="text" value="R2 = 0 to 1 * 1000"/></div>
+
+                        <div class="col-10" id='left'><select class='qubits setchannels pulse-shape' type="text">
+                            <option value='FLAT' selected>FLAT</option>
+                            <option value='GAUSS UP'>GAUSS UP</option>
+                            <option value='GAUSS DN'>GAUSS DN</option>
+                        </select></div>
+
+                        <div class="col-10" id='left'><select class='qubits setchannels score-channel' type="text">
+                            <option value='1' selected>Score-1</option>
+                            <option value='2'>Score-2</option>
+                            <option value='3'>Score-3</option>
+                            <option value='4'>Score-4</option>
+                        </select></div>
+                        <div class="col-10" id='left'><input class="qubits setchannels insert" type="submit" value="INSERT"/></div>
+                        <div class="col-10" id='left'><input class="qubits setchannels back" type="submit" value="BACK"/></div>
+                    </div>
+                    <!-- LOAD PERIMETER SETTINGS (PULSE SCHEMES) -->
+                    <div class="row perimeter">
+                        <div class="col-10" id='left'><input class="loaded qubits perimeter-settings load" type="submit" value="LOAD"/></div>
+                        <div class="col-20" id='left'><select class='mani config qubits' id="SCHEME_LIST" type="text">
+                            <option value='TRANSFER' selected>TRANSFER</option>
+                            <option value='FRESP'>FREQ. RESPONSE</option>
+                            <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
+                            <option value='RABI'>RABI DRIVING</option>
+                            <option value='T1'>T1 DELAY</option>
+                            <option value='T2'>T2 DELAY</option>
+                            <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
+                            <option value='QJUMPS'>QUANTUM JUMPS</option>
+                        </select></div>
+                    </div>
+                </div>
+
+                <div class="modal-header">
+                    <h4 style="color: rgb(12, 18, 100);">1. Perimeters:</h4>
+
+                    <!-- 1. DSP Settings -->
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><label>Digital Homodyne</label></div>
+                        <!-- <div class="col-16" id='left'><label>IF (MHz) > LO-MOD</label></div> -->
+                        <div class="col-16" id='left'><label>IF Align (kHz)</label></div>
+                        <div class="col-16" id='left'><label> </label></div>
+
+                        <div class="col-16" id='left'><label>Trigger-Delay(ns)</label></div>
+                    </div>
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><select class='mani config qubits' id="DIGIHOME" type="text">
+                            <option value='original' selected>Original</option>
+                            <option value='dual_digital_homodyne'>Dual roll-back</option>
+                            <option value='i_digital_homodyne'>I integration</option>
+                            <option value='q_digital_homodyne'>Q integration</option>
+                        </select></div>
+                        <!-- <div class="col-16" id='left'><input class='mani config qubits' id="IF_MHZ" type="number" value="0" step=1 /></div> -->
+                        <div class="col-16" id='left'><input class='mani config qubits' id="IF_ALIGN_KHZ" type="number" value="0" step=1 /></div>
+                        <div class="col-16" id='left'><label> </label></div>
+
+                        <div class="col-16" id='left'><input class='mani config qubits' id="TRIGGER_DELAY_NS" type="number" value="0" step=8 min=0 /></div>
+                        <div class="col-16" id='left'><input class="qubits alzdg-timsum check" type="submit" value="CHECK-TIMSUM"/></div>
+                    </div>
+
+                    <!-- 2. Instrument Settings -->
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><label>Bias Mode</label></div>
+                        <div class="col-16" id='left'><label>XY-LO-Power</label></div>
+                        <div class="col-16" id='left'><label>RO-LO-Power</label></div>
+                        <div class="col-16" id='left'><label>Record-Sum</label></div>
+                        <div class="col-16" id='left'><label>Record-Time(ns)</label></div>
+                        <div class="col-16" id='left'><label>Readout TYPE</label></div>
+                    </div>
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><select class='mani config qubits' id="BIASMODE" type="text">
+                            <option value='0'>Voltage</option>
+                            <option value='1' selected>Current</option>
+                        </select></div>
+                        <div class="col-16" id='left'><input class='mani config qubits' id="XY-LO-Power" type="number" value="16" step=1 /></div>
+                        <div class="col-16" id='left'><input class='mani config qubits' id="RO-LO-Power" type="number" value="18" step=1 /></div>
+                        <div class="col-16" id='left'><input class='mani config qubits' id="RECORD-SUM" type="number" value="1024" step=128 min=1024 max=102400/></div>
+                        <div class="col-16" id='left'><input class='mani config qubits' id="RECORD_TIME_NS" type="number" value="1280" step=128 min=1280 max=128000/></div>
+                        <div class="col-16" id='left'><select class='mani config qubits' id="READOUTYPE" type="text">
+                            <option value='one-shot'>ONE-SHOT</option>
+                            <option value='continuous' selected>CONTINUOUS</option>
+                        </select></div>
+                    </div>
+
+                    <!-- 3. Pulse Settings -->
+                    <div class="row perimeter">
+                        <div class="col-48" id='left'><label>Score-1 (RO-I)</label></div>
+                        <div class="col-48" id='left'><label>Score-2 (RO-Q)</label></div>
+                    </div>
+                    <div class="row perimeter">
+                        <div class="col-48" id='left'>
+                            <textarea class='mani qubits SCORE-JSON channel-1' type="text" rows="3" cols="13" style="color:red;"></textarea>
+                        </div>
+                        <div class="col-48" id='left'>
+                            <textarea class='mani qubits SCORE-JSON channel-2' type="text" rows="3" cols="13" style="color:red;"></textarea>
+                        </div>
+                    </div>
+                    <div class="row perimeter">
+                        <div class="col-48" id='left'><label>Score-3 (XY-I)</label></div>
+                        <div class="col-48" id='left'><label>Score-4 (XY-Q)</label></div>
+                    </div>
+                    <div class="row perimeter">
+                        <div class="col-48" id='left'>
+                            <textarea class='mani qubits SCORE-JSON channel-3' type="text" rows="3" cols="13" style="color:red;"></textarea>
+                        </div>
+                        <div class="col-48" id='left'>
+                            <textarea class='mani qubits SCORE-JSON channel-4' type="text" rows="3" cols="13" style="color:red;"></textarea>
+                        </div>
+                    </div>
+                    <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
+                    <div class="row perimeter">
+                        <div class="col-97" id='left'>
+                            <textarea class='mani config qubits' id='R-JSON' type="text" rows="3" cols="13" style="color:blue;">{}</textarea>
+                        </div>
+                    </div>
+
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <h4 style="color: rgb(12, 18, 100);">2. Parameters:</h4>
+
+                        <div class="row">
+                            <div class="col-16" id='left'><label>Flux-Bias (V/A)</label></div>
+                            <div class="col-16" id='left'><label>XY-LO-Frequency (GHz)</label></div>
+                            <div class="col-16" id='left'><label>RO-LO-Frequency (GHz)</label></div>
+                            
+                        </div>
+                        <div class="row"> <!-- NOTE: The id should be aligned with the corresponding CORDER's key! --> 
+                            <div class="col-16" id='left'><input class='mani qubits' id="Flux-Bias" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='mani qubits' id="XY-LO-Frequency" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='mani qubits' id="RO-LO-Frequency" type="text" value="6 to 7 * 3000"/></div>
+                            
+                        </div>
+
+                        <!-- Comment -->
+                        <div class="row">
+                            <div class="col-75" id='left'>
+                                <textarea class='mani qubits' id="qubits-ecomment" type="text" rows="3" cols="73">--comment--</textarea>
+                            </div>
+                        </div>                      
+
+                        <!-- RUN -->
+                        <div class="row">
+                            <div class="col-15" id='left'><input class="qubits setchannels check" type="submit" value="CHECK-RJSON"/></div> 
+                            <div class="col-15" id='left'><input class="mani modal-toggle new qubits" id="qubits-run"  type="submit" value="RUN"/></div>
+                            <div class="col-15" id='left'><input class="mani modal-toggle new qubits" id="qubits-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" id='left'><label class='parameter'>Queue system: </label></div>
+                            <div class="col-49" id='left'><div class='qubits queue-system'></div></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brings up dialogue box for file-managing -->
+        <div class="modal manage qubits">
+            <div class="modal-overlay modal-toggle manage qubits"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading">Management office:</h2>
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <div class="row"> <!-- New Row for Parameter-input -->
+                            {% if session['run_clearance'] %}
+                                <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="qubits-resume">RESUME</button></div>
+                            {% endif %}
+                            <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="qubits-savenote">SAVE NOTE</button></div>
+                            <div class="col-10" id='left'><button class="mani push_button w-95 red" id="qubits-datareset">CLIP</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brings up dialogue box for data-reset -->
+        <div class="modal data-reset qubits">
+            <div class="modal-overlay modal-toggle data-reset qubits"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading" style="color:red">DATA RESET: PLEASE CONSIDER IT CAREFULLY. THIS ACTION CANNOT BE UNDONE.</h2>
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <div class="row">
+                            <div class="col-20" id='left'><label>File Owner Password:</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-20" id='left'><input class='mani qubits' id="qubits-ownerpassword" type="password"/></div>   
+                        </div>
+
+                        <div class="row">
+                            <div class="col-20" id='left'><label>Truncate After:</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-20" id='left'><input class='mani qubits' id="qubits-truncateafter" type="text"/></div> 
+                            <div class="col-10" id='left'><label>point(s)</label></div>  
+                        </div>
+
+                        <div class="row">
+                            <div class="col-10" id='left'><input class="mani modal-toggle data-reset qubits" id="qubits-reset" type="submit" value="RESET"/></div>
+                            <div class="col-10" id='left'><input class="mani modal-toggle data-reset qubits" id="qubits-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mani qubits confirm">
+            <h1>Confirm your action</h1>
+            <p>Are you really <em>really</em> <strong>really</strong> sure that you want to make changes to the FILE?</p>
+            <button class="mani qubits reset-no" autofocus>NO</button>
+            <button class="mani qubits reset-yes">YES</button>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
+

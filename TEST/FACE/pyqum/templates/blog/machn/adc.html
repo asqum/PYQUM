@@ -1,0 +1,158 @@
+<!doctype html> <!--extended from parent: machine.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mach/adc.js') }}"></script>
+</head>
+
+<body class="mach">
+<div>
+
+    <div class="tab2">
+    <form method='GET'>
+        {% if 'ALZDG-1' in g.instlist %}<button class='adc adcname' id='ALZDG-1'>ALZDG-1</button>{% endif %}
+        {% if 'SDDIG-1' in g.instlist %}<button class='adc adcname' id='SDDIG-1'>SDDIG-1</button>{% endif %}
+        {% if 'SDDIG-2' in g.instlist %}<button class='adc adcname' id='SDDIG-2'>SDDIG-2</button>{% endif %}
+        
+        <button class='adc log'>INSTR-LOG</button>
+        
+    </form>
+    </div>
+
+    <div class="adccontent" id="settings">
+        <div class="container">
+            <form method='GET'>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Activity</label></div>
+                    <div class="col-49" id='left'>
+                        <div class='adc' id="adc-activity"></div>
+                    </div>
+                    <!-- Close / Reset -->
+                    <div class="col-15" id='right'>
+                        <button class='adc push_button w-95 red closet'>LEAVE</button>
+                    </div>
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Status</label></div>
+                    <div class="col-49" id='left'>
+                        <div class='adc' id="adc-status"></div>
+                    </div>
+
+                    <div class="col-15" id='right'>
+                        <label class="switch"><input class='adc settings live' name='stream' type="checkbox">
+                            <div class="slider smooth"><span class="on">LIVE</span><span class="off">STREAM</span></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Model</label></div>
+                    <div class="col-20" id='left'>
+                        <div class='adc' id="adc-model"></div>
+                    </div>
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Trigger Delay</label></div>
+                    <div class="col-10" id='left'><input class='adc settings configure' name='trigdelay-scale' type="number" value="0" min=0 step=8 /></div>
+                    <div class="col-10" id='left'><input class="adc settings configure" name='trigdelay-unit' value="ns"></div>
+                    <div class="col-5" id='left'><label class='parameter SDDIG'></label></div>
+                    <div class="col-10" id='left'><select class='adc settings configure SDDIG PXI-trigger'>
+                        <option value='0'>PXI-0</option>
+                        <option value='1'>PXI-1</option>
+                        <option value='2' selected>PXI-2</option>
+                        <option value='3'>PXI-3</option>
+                        <option value='4'>PXI-4</option>
+                        <option value='5'>PXI-5</option>
+                        <option value='6'>PXI-6</option>
+                        <option value='7'>PXI-7</option>
+                        <!-- <option value='-13'>Trigger I/O</option> -->
+                    </select></div>
+                    <div class="col-5" id='left'><label class='parameter SDDIG'></label></div>
+                    <div class="col-5" id='left'><select class='adc settings configure SDDIG full-scale'>
+                        <option value='0.1'>0.1V</option>
+                        <option value='0.2'>0.2V</option>
+                        <option value='0.4'>0.4V</option>
+                        <option value='0.8'>0.8V</option>
+                        <option value='2' selected>2V</option>
+                        <option value='4'>4V</option>
+                        <option value='8'>8V</option>
+                    </select></div>
+                    <div class="col-5" id='left'><input class="adc settings acquire SDDIG IQ-pair" type='text' value="3,4"></div>
+                    <div class="col-7" id='left'><label class='parameter SDDIG'>I,Q pair</label></div>
+
+                    <!-- Configure Board -->
+                    <div class="col-15" id='right'>
+                        <button class='adc push_button w-95 green' id='configureboard'>Configure Board</button>
+                    </div>
+                </div>
+
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-12" id='left'><label class='parameter'>Record time</label></div>
+                    <div class="col-10" id='left'><input class='adc settings acquire records' name='recordtime-scale' type="number" value="1280" step=128 /></div>
+                    <div class="col-10" id='left'><input class="adc settings acquire records" name='recordtime-unit' value="ns"></div>
+                    <div class="col-5" id='left'><label class='parameter'>X</label></div>
+                    <div class="col-10" id='left'><input class='adc settings acquire records' name='recordsum-scale' type="number" value="1024" step=128 /></div>
+                    <div class="col-5" id='left'><label class='parameter recordbuff'>X</label></div>
+                    <div class="col-5" id='left'><input class='adc settings acquire records' name='recordbuff-scale' type="number" value="32" step=32 min=32 /></div>
+                    <div class="col-5" id='left'><input class="adc settings acquire records" name='recordbuff-unit' value="MB"></div>
+                    <div class="col-20" id='left'><div class='adc' id="adc-transfer-time"></div></div>
+                    <!-- Data Acquisition -->
+                    <div class="col-15" id='right'>
+                        <button class='adc push_button w-95 green' id='acquiredata'>Acquire Data</button>
+                    </div>
+                </div>
+
+                <div class="row" id='adc-playdata-settings'>
+                    <div class="col-12" id='left'></div>
+                    <div class="col-10" id='left'>
+                        <select class='adc data handling'>
+                            <option value='select' selected>Select</option>
+                            <option value='all'>ALL</option>
+                            <option value='average'>AVERAGE</option>
+                        </select>
+                    </div>
+                    <div class="col-10" id='left'><input class='adc data handling' type="number" value="1" /></div>
+                    <div class="col-5" id='left'><label class='parameter'>X</label></div>
+                    <div class="col-10" id='left'>
+                        <select class='adc data type'>
+                            <option value='time' selected>Time</option>
+                            <option value='phase'>Phase</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row" id='adc-signal-postprocessing'>
+                    <div class="col-12" id='left'></div>
+                    <div class="col-20" id='left'>
+                        <select class='adc data signal_processing'>
+                            <option value='original' selected>Original</option>
+                            <option value='dual_digital_homodyne'>Dual Digital Homodyne (roll-back)</option>
+                            <option value='i_digital_homodyne'>I Digital Homodyne (integrate)</option>
+                            <option value='q_digital_homodyne'>Q Digital Homodyne (integrate)</option>
+                        </select>
+                    </div>
+                    <div class="col-5" id='left'><label class='parameter left'>IF(MHz)</label></div>
+                    <div class="col-10" id='left'><input class='adc data signal rotation_compensate' type="number" value="-100" /></div>
+                    <div class="col-5" id='left'><label class='parameter left'>+(kHz)</label></div>
+                    <div class="col-10" id='left'><input class='adc data signal ifreqcorrection' type="number" value="8" /></div>
+                    
+
+                </div>
+
+                
+                <div id="adc-IQAP-chart"></div>
+                    
+            </form>
+        </div>
+    </div>
+
+    <div class="adccontent" id="log">
+        <div class="container"></div>
+    </div>
+
+</div>
+</body>
+
+</html>

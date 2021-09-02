@@ -10,14 +10,14 @@ from pathlib import Path
 pyfilename = Path(__file__).resolve() # current pyscript filename (usually with path)
 CONFIG_PATH = Path(pyfilename).parents[7] / "HODOR" / "CONFIG"
 DR_SETTINGS = path.join(CONFIG_PATH, 'DR_settings.sqlite')
+MIXER_SETTINGS = path.join(CONFIG_PATH, 'MIXER_settings.sqlite')
 
+# JSON LIBRARY:
 def dict_depth(d):
     if isinstance(d, dict):
         return 1 + (max(map(dict_depth, d.values())) if d else 0)
     return 0
-
-# unresolved generator objects
-def search_value(usrdata, val, prepath=()): # non-destructive
+def search_value(usrdata, val, prepath=()): # non-destructive # unresolved generator objects
     for k, v in usrdata.items():
         path = prepath + (k,)
         if v == val:
@@ -26,18 +26,15 @@ def search_value(usrdata, val, prepath=()): # non-destructive
             p = search_value(v, val, path)
             if p is not None:
                 yield p
-
 def goto_siblings(usrdata, path): #non-destructive probe
     for key in path[:-1]:
         usrdata = usrdata[key]
     return usrdata
-
 def update_siblings(usrdata, path, item={}): #constructive
     for key in path[:-1]:
         usrdata = usrdata[key]
     usrdata.update(item)
     return usrdata
-
 def searchpop_value(usrdata, val, prepath=()): #destructive
     for k, v in usrdata.items():
         path = prepath + (k,)
@@ -48,7 +45,6 @@ def searchpop_value(usrdata, val, prepath=()): #destructive
             p = searchpop_value(v, val, path)
             if p is not None:
                 return p
-
 def search_allpaths(usrdata, val): # non-destructive
     '''return the paths that contain val
     '''
@@ -61,16 +57,13 @@ def search_allpaths(usrdata, val): # non-destructive
     for p in Paths:
         update_siblings(usrdata, p, {p[-1]: val})
     return Paths
-
-# untested
-def delete_allkeys(usrdata, keys):
+def delete_allkeys(usrdata, keys): # untested
     for key in keys:
         with suppress(KeyError):
             del usrdata[key]
     for v in usrdata.values():
         if hasattr(v, 'items'):
             delete_allkeys(v, keys)
-
 def printTree(tree, depth = 0, parents="", branches=[], treeline='', div=None, idiv=0):
         if not hasattr(tree, 'items'):
             branches.append(parents.split('── '))
@@ -90,7 +83,6 @@ def printTree(tree, depth = 0, parents="", branches=[], treeline='', div=None, i
                     idiv += 1
                     div = len(tree)
                 printTree(val, depth+1, parents+str(key)+"── ", div=div, idiv=idiv)
-
 def search_time(dictpaths, timestamp):
     '''timestamp = Year month day'''
     tstamp0 = [i[0] for i in dictpaths]
@@ -103,9 +95,54 @@ def search_time(dictpaths, timestamp):
     selectedP = dictpaths[inearest]
     return nearest, selectedP
 
-def inst_order(queue, category='ALL'):
-    print("DR_SETTINGS: %s" %DR_SETTINGS)
-    db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES)
+# SQLite DATADASE:
+# 0. Server port:
+def device_port(dev):
+    db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
+    db.row_factory = Row
+    dev_port = db.execute('SELECT p.Port FROM PORT p WHERE p.Device = ?', (dev,)).fetchone()[0]
+    return dev_port
+    
+# 1. Instrument Allocation:
+def inst_order(queue, category='ALL', tabulate=True):
+    '''Return list of instruments accordingly'''
+    db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
+    db.row_factory = Row
+    if str(category).lower()=='all': 
+        inst_list = db.execute("SELECT category, designation FROM %s ORDER BY id ASC"%queue,()).fetchall()
+        inst_list = [dict(x) for x in inst_list]
+    else: 
+        try: 
+            inst_list = db.execute("SELECT q.designation FROM %s q WHERE q.category = ? ORDER BY q.id ASC"%queue,(category,)).fetchone()[0]
+            
+            if tabulate:
+                if category=='CH' or category=='ROLE': # output: dict
+                    inst_list = inst_list.split('>>')
+                    inst_list = [{x.split(':')[0]:x.split(':')[1].split(',')} for x in inst_list]
+                    inst_list = {k:[x.split('/') for x in v] for d in inst_list for k,v in d.items()}
+                else: inst_list = inst_list.split(',') # output: list
+            else: 
+                inst_list = str(inst_list) # for editting on WIRING-page
+
+        except(TypeError): inst_list = ['DUMMY_1'] # Creating Dummy Instrument for Compatibility reason...
+    db.close()
+
+    return inst_list
+def inst_designate(queue, category, designation):
+    '''
+    category: instrument-type based on their unique role
+    designation: a list of instruments that have been assigned the role
+    '''
+    db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
+    db.row_factory = Row
+    db.execute("UPDATE %s SET designation = ? WHERE category = ?"%queue, (designation,category,))
+    db.commit()
+    db.close()
+    return
+
+# 2. Mixer-parameters Catalog: (PENDING)
+def mixer_order(module, LO_frequency):
+    db = connect(MIXER_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
     db.row_factory = Row
     if str(category).lower()=='all': 
         inst_list = db.execute("SELECT category, designation FROM %s ORDER BY id ASC"%queue,()).fetchall()
@@ -115,8 +152,8 @@ def inst_order(queue, category='ALL'):
         inst_list = [dict(x)['designation'] for x in inst_list]
     db.close()
     return inst_list
-def inst_designate(queue, category, designation):
-    db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES)
+def mixer_designate(queue, category, designation):
+    db = connect(MIXER_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
     db.row_factory = Row
     db.execute("UPDATE %s SET designation = ? WHERE category = ?"%queue, (designation,category,))
     db.commit()
@@ -166,7 +203,17 @@ def test():
     print("inst_list: %s" %inst_list)
     print(inst_order("CHAR0", 'DC'))
     print(inst_order("QPC0", 'DAC'))
+    print(inst_order("QPC0", 'DC'))
+    print(inst_order("QPC0", 'CH'))
+    print(inst_order("QPC0", 'ROLE'))
+    print("DAC's Channel-Matrix: %s" %(inst_order("QPC0", 'CH')['DAC']))
     # inst_designate("CHAR0","DC","SDAWG_3")
+    from pyqum.instrument.toolbox import find_in_list
+    DACH_Role = inst_order("QPC0", 'ROLE')['DAC']
+    RO_addr = find_in_list(DACH_Role, 'I1')
+    XY_addr = find_in_list(DACH_Role, 'X1')
+    print("RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
+
     
     return
 

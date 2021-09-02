@@ -156,7 +156,7 @@ $(document).on('click', 'div.buttons a.all-mssn-access', function() {
         $('.mssn button.tablinks').removeClass('active');
         $('.mssn button.tablinks#' + data.tdmpack.queue + '-tab').addClass('active');
         $('.mssn div.tabcontent').hide();
-        $('.mssn div.tabcontent#' + data.tdmpack.queue).show();
+        $('.mssn div.tabcontent#' + data.tdmpack.queue.replace(/\d+/g, '')).show(); // remove any digits from the string
         // Click on TASK-TAB:
         $('button.access.' + TASK[data.tdmpack.task]).click();
         // Posting Notification:

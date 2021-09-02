@@ -8,13 +8,26 @@ from time import sleep
 from numpy import array, append, zeros, prod, floor, inner, linspace, float64, abs, argmin, dot, int64, sum, flip, cumprod, matmul, transpose, ones, exp, log10, log2, log, power
 
 def flatten(x):
+    '''flatten multi-dimensional list into a single-dimensional list of strings.
+    '''
     result = []
     for el in x:
-        if isinstance(x, collections.Iterable) and not isinstance(el, str):
-            result.extend(flatten(el))
-        else:
-            result.append(el)
+        if isinstance(x, collections.Iterable) and not isinstance(el, str): result.extend(flatten(el))
+        else: result.append(el)
     return result
+def flatten_address(x, start_from=1):
+    '''Get the address of each element in their previous unflatten list of strings.
+    '''
+    result = []
+    for i,el in enumerate(x):
+        if isinstance(x, collections.Iterable) and not isinstance(el, str): result.extend(["%s-%s" %(i+start_from,y) for y in flatten_address(el)]) # extend and update on the way up
+        else: result.append(i+start_from) # append at the bottom
+    return result
+def find_in_list(str_list, element):
+    '''find the address (channel-location) of an element in a non-repeating multi-dimensional list.
+    Used in looking for matching role among DAC channels.
+    '''
+    return flatten_address(str_list)[flatten(str_list).index(element)]
 
 def cdatasearch(Order, Structure):
     ''' Give the address of the data essentially!
@@ -238,6 +251,13 @@ def test():
     # print("7.3 is nearest to %s at index %s of s" %(s[idx],idx))
 
     # print(normalize_dipeak([0,0,0,-0.3,-0.3,-0.3,0,0]))
+
+    complicated_list = [ [ ['a','b'],['c','d'],['e','f','g'] ], [ 'h',['i','j','k'],['l','m'] ], [ ['n'], ['o','p'] ], ['q'] ]
+    print("UNFlatten complicated_list: %s" %(complicated_list))
+    print("Flatten complicated_list: %s" %flatten(complicated_list))
+    print("Flatten complicated_list's address: %s" %flatten_address(complicated_list))
+    print("f is located at %s" %find_in_list(complicated_list, 'f'))
+    print(complicated_list[0][2][1])
 
     return
 
