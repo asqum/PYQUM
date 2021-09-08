@@ -9,7 +9,7 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag, concatenate, append
 
 
 # Json to Javascrpt
@@ -309,15 +309,14 @@ class QEstimation():
 		fitRange = ( self.fitParameters["range"]["from"]*freqUnitConvertor, self.fitParameters["range"]["to"]*freqUnitConvertor )
 
 		# Get 1D or 2D data to self.rawData
-		if self.quantificationObj.yAxisKey == None:
+		if qObj.yAxisKey == None:
 			yAxisLen = 1
 		else:
-			yAxisLen = self.quantificationObj.independentVars[self.quantificationObj.yAxisKey].shape[0]
+			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
 
 		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
 		self._init_baselineCorrection(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
 		self._init_fitResult(yAxisLen=yAxisLen)
-
 
 
 
@@ -341,8 +340,12 @@ class QEstimation():
 			try:
 				myResonator.autofit(fcrop=fitRange)
 				fitSuccess = True
+				print("Good fitting")
+
 			except:
 				fitSuccess = False
+				print("Bad fitting")
+
 
 			if fitSuccess:
 
@@ -360,6 +363,7 @@ class QEstimation():
 				else:
 					powerAxisIndex = qObj.measurementObj.corder["C-Structure"].index(self.powerKey)
 					powerIndex = qObj.varsInd[powerAxisIndex]
+
 				self.fitResult["extendResults"]["power_corr"][i] = qObj.independentVars["Power"][powerIndex]+self.fitParameters["gain"]
 				self.fitResult["extendResults"]["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.fitResult["extendResults"]["power_corr"][i],unit='dBm',diacorr=True)
 				
@@ -402,8 +406,8 @@ class Decoherence():
 		nanArray = empty([yAxisLen])
 		nanArray.fill( nan )
 
-		resultKeys = ["amp","tau","offset"]
-		errorKeys = ["amp_cov", "tau_cov", "offset_cov"]
+		resultKeys = ["ampI", "offsetI", "ampQ", "offsetQ", "tau"]
+		errorKeys = ["ampI_cov", "offsetI_cov", "ampQ_cov", "offsetQ_cov", "tau_cov"]
 		extendResultKeys = []
 		results ={}
 		errors ={}
@@ -478,30 +482,43 @@ class Decoherence():
 		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
 		self._init_fitResult(yAxisLen=yAxisLen)
 
-		def expDecay ( x, amp, tau, offset):
+		def expDecay ( x, amp, offset, tau):
 			return amp*exp(-x/tau)+offset
+
+		def iqExpDecay ( x, ampI, offsetI, ampQ, offsetQ, tau):
+			return concatenate( (expDecay( x, ampI, offsetI, tau), expDecay( x, ampQ, offsetQ, tau )) )
 
 		# Creat notch port list
 		for i in range(yAxisLen):
-			ampData = abs(qObj.rawData["iqSignal"][i])
-			guess = array([ampData[0]-ampData[ampData.shape[0]-1], 1000, ampData[ampData.shape[0]-1] ])
-			print(guess)
+			ampI = qObj.rawData["iqSignal"][i].real
+			ampIEndPoint = (ampI[0],ampI[ampI.shape[0]-1])
+			ampQ = qObj.rawData["iqSignal"][i].imag
+			ampQEndPoint = (ampQ[0],ampQ[ampQ.shape[0]-1])
+			guess = array([ampIEndPoint[0]-ampIEndPoint[1], ampIEndPoint[1], ampQEndPoint[0]-ampQEndPoint[1], ampQEndPoint[1],1000 ])
 			try:
-				popt,pcov=curve_fit(expDecay,qObj.rawData["x"],abs(qObj.rawData["iqSignal"][i]),guess)
+				popt,pcov=curve_fit(iqExpDecay,qObj.rawData["x"],append(ampI,ampQ),guess)
 				fitSuccess = True
+				print("Good fitting")
 			except:
 				fitSuccess = False
+				print("Bad fitting")
 
 			if fitSuccess:
-				self.fitCurve["iqSignal"][i] = expDecay( qObj.rawData["x"],popt[0],popt[1],popt[2])
+				self.fitCurve["iqSignal"][i] = expDecay( qObj.rawData["x"],popt[0],popt[1],popt[4]) +1j*expDecay( qObj.rawData["x"],popt[2],popt[3],popt[4])
 				perr = sqrt(diag(pcov))
 				fitresults={
-					"amp":popt[0],
-					"tau":popt[1],
-					"offset":popt[2],
-					"amp_cov":perr[0],
-					"tau_cov":perr[1],
-					"offset_cov":perr[2],
+					"ampI":popt[0],
+					"offsetI":popt[1],
+					"ampQ":popt[2],
+					"offsetQ":popt[3],
+					"tau":popt[4],
+
+					"ampI_cov":perr[0],
+					"offsetI_cov":perr[1],
+					"ampQ_cov":perr[2],
+					"offsetQ_cov":perr[3],
+					"tau_cov":perr[4],
+
 				}
 				for k in self.fitResult["results"].keys():
 					self.fitResult["results"][k][i] = fitresults[k]

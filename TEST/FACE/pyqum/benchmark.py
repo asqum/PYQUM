@@ -249,6 +249,7 @@ def getJson_fitParaPlot():
 	analysisIndex = json.loads(request.args.get('analysisIndex'))
 
 	dimension = len(analysisIndex["axisIndex"])
+
 	if dimension == 2:
 		axisInd = analysisIndex["axisIndex"][1]
 		yAxisKey = myExtendMeasurement.measurementObj.corder["C-Structure"][axisInd] 
