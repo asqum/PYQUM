@@ -2,7 +2,37 @@
 $(document).ready(function(){
     $('div.sgcontent').hide();
     $('div.sgcontent.settings').show();
+    $('input.sg.settings[name="channel"]').hide();
 });
+
+// Functions:
+function put_values(message) {
+    console.log(Date($.now()) + ':\nGetting:\n' + JSON.stringify(message));
+    $('input.sg.settings').addClass('getvalue');
+    $('input.sg.scale.settings[name="freq"]').val(message['frequency'].split(' ')[0]);
+    $('input.sg.unit.settings[name="freq"]').val(message['frequency'].split(' ')[1]);
+    $('input.sg.scale.settings[name="powa"]').val(message['power'].split(" ")[0]);
+    $('input.sg.unit.settings[name="powa"]').val(message['power'].split(' ')[1]);
+    $('input.sg[name="oupt"]').prop( "checked", Boolean(message['rfoutput']) );
+    return false;
+};
+function set_channel() {
+    var channel = $('select.sg.settings[name="channel"]').val();
+    $.getJSON('/mach/sg/set/channel', {
+        sgname: sgname, sgtype: sgtype, channel: channel,
+    }, function(data){
+        put_values(data.message);
+        $('select.sg.settings[name="channel"]').removeClass('getvalue').addClass('setvalue');
+    })
+    .done(function(data) {
+        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text(sgname + "'s CHANNEL SET TO " + channel));
+    })
+    .fail(function(jqxhr, textStatus, error){
+        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
+    });
+    return false;
+};
+
 
 //Select model to proceed:
 $(function () {
@@ -14,9 +44,12 @@ $(function () {
         // Indicate current instrument we are operating on:
         $("i.sg.fa-check").remove();
         $(this).prepend("<i class='sg fa fa-check' style='font-size:15px;color:green;'></i> ");
+        // Display inputs accordingly:
+        if (sgtype=="DDSLO") { $('select.sg.settings[name="channel"]').empty().append($('<option>', { text: '1', value: '1' })).append($('<option>', { text: '2', value: '2' }));
+        } else { $('select.sg.settings[name="channel"]').empty().append($('<option>', { text: 'None', value: '' })) };
         // connecting to each models:
         $.getJSON('/mach/sg/connect', {
-            sgname: sgname
+            sgname: sgname,
         }, function (data) {
             console.log(data.message);
             $('div.sg#sg-current-user').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
@@ -27,17 +60,7 @@ $(function () {
                 // Get ALL value:
                 $('div.sgcontent').hide();
                 $('div.sgcontent.settings').show();
-                $.getJSON('/mach/sg/get', {
-                    sgname: sgname, sgtype: sgtype
-                }, function(data){
-                    console.log('Getting:\n' + JSON.stringify(data.message));
-                    $('input.sg.settings').addClass('getvalue');
-                    $('input.sg.scale.settings[name="freq"]').val(data.message['frequency'].split(' ')[0]);
-                    $('input.sg.unit.settings[name="freq"]').val(data.message['frequency'].split(' ')[1]);
-                    $('input.sg.scale.settings[name="powa"]').val(data.message['power'].split(" ")[0]);
-                    $('input.sg.unit.settings[name="powa"]').val(data.message['power'].split(' ')[1]);
-                    $('input.sg[name="oupt"]').prop( "checked", Boolean(data.message['rfoutput']) );
-                });
+                set_channel();
             } else if (data.status=='waiting') {
                 $('button.sg.sgname[name='+sgname+']').removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
             } else if (data.status=='error') {
@@ -58,7 +81,7 @@ $(function () {
  
 // Set each value on change:
 // RF Output
-$('input.sg[name="oupt"]').change( function () { // the enter key code
+$('input.sg[name="oupt"]').change( function () {
     var oupt = $('input.sg[name="oupt"]').is(':checked')?1:0;
     $.getJSON('/mach/sg/set/oupt', {
         sgname: sgname, sgtype: sgtype, oupt: oupt
@@ -79,7 +102,7 @@ $('input.sg[name="oupt"]').change( function () { // the enter key code
     return false;
 });
 // RF Frequency
-$('input.sg[name="freq"]').change( function () { // the enter key code
+$('input.sg[name="freq"]').change( function () {
     $.getJSON('/mach/sg/set/freq', {
         sgname: sgname, sgtype: sgtype,
         freq: $('input.sg.scale[name="freq"]').val(), frequnit: $('input.sg.unit[name="freq"]').val()
@@ -96,7 +119,7 @@ $('input.sg[name="freq"]').change( function () { // the enter key code
     return false;
 });
 // RF Power
-$('input.sg[name="powa"]').change( function () { // the enter key code
+$('input.sg[name="powa"]').change( function () {
     $.getJSON('/mach/sg/set/powa', {
         sgname: sgname, sgtype: sgtype,
         powa: $('input.sg.scale[name="powa"]').val(), powaunit: $('input.sg.unit[name="powa"]').val()
@@ -112,6 +135,8 @@ $('input.sg[name="powa"]').change( function () { // the enter key code
     });
     return false;
 });
+// Set channel
+$('select.sg.settings[name="channel"]').change( function () { set_channel(); return false; });
 
 // close & reset = closet OR re-connect
 $('button.sg.closet').bind('click', function () {

@@ -18,8 +18,8 @@
         </div>
 
         <div class="row"> <!-- New Role for File-status -->
-            <div class="col-15" id='left'><select class='char cwsweep' name="wday" type="text"></select></div>
-            <div class="col-7" id='left'><select class='char cwsweep' name="wmoment" type="number"></select></div>
+            <div class="col-15" id='left'><select class='char cwsweep zoomSelect' name="wday" type="text" style="color: navy;"></select></div>
+            <div class="col-7" id='left'><select class='char cwsweep zoomSelect-1' name="wmoment" type="number" style="color: orangered;"></select></div>
             <div class="col-20" id='left'>
                 <ul class="data-status cwsweep">
                     <li>
@@ -32,6 +32,10 @@
             <div class="col-10" id='right'><button class="char push_button w-95 red" id="cwsweep-datareset">CLIP</button></div>
             <div class="col-10" id='right'><button class="char push_button w-95 blue" id="cwsweep-savenote">SAVE NOTE</button></div>
             <div class="col-10" id='right'><button class="char cwsweep run push_button w-95 blue" id="cwsweep-resume">RESUME</button></div>
+            <div class="col-2" id='right'><button class="plusButton-1" style="color: orangered;">+</button></div>
+            <div class="col-2" id='right'><button class="minusButton-1" style="color: orangered;">-</button></div>
+            <div class="col-2" id='right'><button class="plusButton" style="color: navy;">+</button></div>
+            <div class="col-2" id='right'><button class="minusButton" style="color: navy;">-</button></div>
                 
         </div>
 
@@ -157,9 +161,7 @@
                         </div>
                         
                         <div class="row"> <!-- New Row for RUNNING -->
-                            {% if session['run_clearance'] %}
-                                <div class="col-15" id='left'><input class="char modal-toggle new cwsweep" id="cwsweep-run"  type="submit" value="RUN"/></div>
-                            {% endif %}
+                            <div class="col-15" id='left'><input class="char modal-toggle new cwsweep" id="cwsweep-run"  type="submit" value="RUN"/></div>
                             <div class="col-15" id='left'><input class="char modal-toggle new cwsweep" id="cwsweep-cancel" type="submit" value="CANCEL"/></div>
                         </div>
                         <div class="row">

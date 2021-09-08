@@ -267,12 +267,7 @@ $(function() {
                 $('button.char.fresp.run').show(); // RESUME
                 $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON ENABLED"));
             };
-            // Check Run Status:
-            // console.log("run status: " + data.run_status);
-            // if (data.run_status == true) {
-            //     $( "i.fresp" ).remove(); //clear previous
-            //     $('button.char.access.fresp').prepend("<i class='fresp fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
-            // } else {};
+            
             // List Days:
             $('select.char.fresp[name="wday"]').empty();
             $('select.char.fresp[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
@@ -295,6 +290,7 @@ $(function () {
     $('select.char.fresp[name="wday"]').on('change', function () {
         // make global wday
         window.wday = $('select.char.fresp[name="wday"]').val();
+        console.log("Day " + wday + " selected.");
         listimes_fresp();
     });
     return false;

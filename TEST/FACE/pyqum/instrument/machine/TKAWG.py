@@ -249,7 +249,7 @@ def prepare_DAC(bench, channel, datasize, maxlevel=1.5, update_settings={}):
     sourcelevel(bench, channel, action=['Set',maxlevel,0])
     outputpath(bench, channel, action=['Set','DCHB'])
     return bench
-def compose_DAC(bench, channel, pulsedata, envelope=[], marker=0):
+def compose_DAC(bench, channel, pulsedata, envelope=[], marker=0, update_settings={}):
     # MUST Create waveform before markers:
     create_waveform(bench, "Waveform-%s"%channel, pulsedata)
     if marker-1 in range(4): # only 1-4 is valid

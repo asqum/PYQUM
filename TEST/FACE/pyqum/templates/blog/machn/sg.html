@@ -14,6 +14,8 @@
         {% if 'PSGA-1' in g.instlist %}<button class='sg sgname' name='PSGA-1'>PSGA-1</button>{% endif %}
         {% if 'PSGA-2' in g.instlist %}<button class='sg sgname' name='PSGA-2'>PSGA-2</button>{% endif %}
         {% if 'RSSGS-1' in g.instlist %}<button class='sg sgname' name='RSSGS-1'>RSSGS-1</button>{% endif %}
+        {% if 'DDSLO-1' in g.instlist %}<button class='sg sgname' name='DDSLO-1'>DDSLO-1</button>{% endif %}
+        {% if 'DDSLO-2' in g.instlist %}<button class='sg sgname' name='DDSLO-2'>DDSLO-2</button>{% endif %}
 
         <button class='sg log'>INSTR-LOG</button>
         
@@ -30,7 +32,11 @@
                         <div class='sg' id="sg-current-user"></div>
                     </div>
                 </div>
-
+                
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-10" id='left'><label class='parameter'>Channel</label></div>
+                    <div class="col-12" id='left'><select class='sg settings' name='channel'></select></div> 
+                </div>
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                     <div class="col-10" id='left'><label class='parameter'>Frequency</label></div>
                     <div class="col-12" id='left'><input class='sg scale settings' name='freq' type="number" value=""/></div>

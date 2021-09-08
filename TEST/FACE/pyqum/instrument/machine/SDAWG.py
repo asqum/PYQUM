@@ -4,15 +4,17 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
-from numpy import array, zeros, ceil, empty, float32, pad
+from numpy import zeros, ceil
 from pyqum.instrument.logger import address, set_status
-from pyqum.instrument.analyzer import curve
 from pyqum.instrument.composer import pulser
+from pyqum.instrument.toolbox import normalize_dipeak
 
 # SD1 Libraries
 import sys
-sys.path.append(r'C:\\Program Files (x86)\\Keysight\SD1\\Libraries\\Python')
-from pyqum.API.KeySight import keysightSD1
+# sys.path.append(r'C:\\Program Files (x86)\\Keysight\SD1\\Libraries\\Python')
+# from pyqum.API.KeySight import keysightSD1
+sys.path.append('C:\Program Files (x86)\Keysight\SD1\Libraries\Python')
+import keysightSD1
 
 # INITIALIZATION
 def Initiate(which, mode='DATABASE', current=False):
@@ -37,19 +39,49 @@ def Initiate(which, mode='DATABASE', current=False):
     return module
 
 # FUNCTIONS
+def model(module):
+    return ["model", {"IDN": "%s (%s)" %(module.getProductName(), module.getSerialNumber())}]
+def clock(module, action=['Get', '']):
+    if 'Set' in action:
+        module.clockSetFrequency(action[2], 0) # 0: low-jitter, 1: fast-tune
+    return ["Success", {"SOURce": module.clockGetSyncFrequency(), "SRATe": module.clockGetFrequency()}]
 def triggerio(module, direction):
     '''get direction and sync from index of combo-boxes
     direction: 0: output, 1: input
     '''
     return module.triggerIOconfig(int(direction))
-def play(module, channels=[1,2,3,4]):
+def runstate(module):
+    '''This command returns the run-state of the AWG. (Query ONLY, Adapted from TKAWG)
+        0 indicates that the AWG has stopped. 
+        1 indicates that the AWG is waiting for trigger. 
+        2 indicates that the AWG is running. (any channel will do)
+    '''
+    rstate = 0
+    for i in range (4): rstate += int(module.AWGisRunning(i+1)) # Returns ‘1’ if the AWG is running or ‘0’ if it is stopped.
+    rstate /= 4
+    return ["runstate", {"RSTATE": ceil(rstate)*2}]
+def ready(module, channels=[1,2,3,4]):
+    '''Start ALL Channels by defaults'''
     mask = 0
-    for ch in channels: mask += 2**(ch-1)        
-    return module.AWGstartMultiple(mask)
+    for ch in channels: mask += 2**(ch-1) 
+    status = module.AWGstartMultiple(mask) 
+    print(Fore.GREEN + "PLAYING MASK: %s" %mask)      
+    return status
+def play(module):
+    '''A Dummy function To be compatible with TKAWG'''
+    # print(Fore.YELLOW + "Waveform loading status: %s" %bool(keysightSD1.SD_Wave.getStatus))
+    if bool(keysightSD1.SD_Wave.getStatus): return module.AWGnWFplaying(1)
 def stop(module, channels=[1,2,3,4]):
     mask = 0
     for ch in channels: mask += 2**(ch-1)        
     return module.AWGstopMultiple(mask)
+def alloff(module, action=['Set',1]):
+    if int(action[1]):
+        mask = 0
+        for ch in [1,2,3,4]: mask += 2**(ch-1)   
+        status = module.AWGstopMultiple(mask)
+    else: status = -1     
+    return status
 def triggerall(module, last_channel):
     nMask = int(2**last_channel - 1) # mask to trigger up to the last channel
     return module.AWGtriggerMultiple(nMask)
@@ -66,10 +98,13 @@ def waveshape(module, channel, shape):
     Partner CH  EVEN channel set as a partner to the previous ODD channel:                  AOU_PARTNER 8
     ''' 
     return module.channelWaveShape(channel, shape)
-def amplitude(module, channel, value):
+def sourcelevel(module, channel, action=['Get','','']):
     '''value in volts (–1.5 V to 1.5 V)
     '''
-    return module.channelAmplitude(channel, value)
+    if 'Set' in action:
+        module.channelAmplitude(channel, action[1])
+        module.channelOffset(channel, action[2])
+    return ["Defaults", {'AMPLITUDE': "1.5", "OFFSET": "0"}]
 def frequency(module, channel, value):
     '''value in Hz. (Refer to the product’s Data Sheet for frequency specifications.)
     '''
@@ -89,10 +124,9 @@ def configureExternalTrigger(module, channel, extSource, trigBehavior=4, sync=1)
     sync:         0 NO-CLK, 1 10-CLK
     """
     return module.AWGtriggerExternalConfig(channel, int(extSource), int(trigBehavior), int(sync))
-def clearOldWaveforms(module):
-    """Flush AWG queue and remove all cached waveforms"""
+def clear_waveform(module, channel="ALL"):
+    print(Fore.CYAN + "Flush AWG queue and remove %s cached waveforms"%channel)
     return module.waveformFlush()
-
 def sendWaveform(module, waveform_id, data=None):
     """Send waveform marked by waveform_id to AWG channel:
     """
@@ -121,14 +155,13 @@ def queueWaveform(module, channel, waveform_id, trigMode=0, delay=0, cycles=0, p
     stat = module.AWGqueueWaveform(channel, waveform_id, trigMode, delay, cycles, prescaler)
     if stat < 0: print('Queue error:', keysightSD1.SD_Error.getErrorMessage(stat))
     return stat
-def processWaveform(module, channel,):
+def processWaveform(module, channel, data):
     '''
     WAVEFORM FROM ARRAY/LIST: This function is equivalent to create a waveform with new, and then to call waveformLoad, AWGqueueWaveform and AWGstart
     '''
     stat = module.AWGfromArray(channel, 0, 0, 0, 0, 0, data)
     return stat
-    
-def configureMarker(module, channel, active_pxi_trgline=[2], trgIOmask=1, markerMode=3, markerValue=0, syncMode=1, length=731, delay=0):
+def configureMarker(module, channel, active_pxi_trgline=[2], markerMode=3, trgIOmask=0, markerValue=0, syncMode=1, length=731, delay=0):
     """Configure marker for given channel, must be done after queueing
     markerMode          0: ‘Disabled’, 1: ‘On Start Event (when Start trigger is received)’, 2: ‘On First Sample of Waveform (after WF startDelay)’, 3: ‘On Every Cycle’.
     active_pxi_trgline  Array of active PXI trigger lines, ex: [0,1,2]
@@ -140,7 +173,7 @@ def configureMarker(module, channel, active_pxi_trgline=[2], trgIOmask=1, marker
     """
     trgPXImask = 0 # initial PXI trigger mask
     for i in active_pxi_trgline: trgPXImask += 2**i
-    print("Trigger PXI Mask: %s" %trgPXImask)
+    # print("Trigger PXI Mask: %s" %trgPXImask)
     # configure
     stat = module.AWGqueueMarkerConfig(nAWG=channel, markerMode=markerMode, trgPXImask=trgPXImask,
                                     trgIOmask=trgIOmask, value=markerValue, syncMode=syncMode,
@@ -150,30 +183,99 @@ def configureMarker(module, channel, active_pxi_trgline=[2], trgIOmask=1, marker
 
 
 # Composite functions for directives:
-def prepare_DAC(module, channel, maxlevel=1.5, trigbyPXI=2, mode=1, sync=1):
+def prepare_DAC(module, channel, datasize, maxlevel=1.5, update_settings={}):
     '''
-    maxlevel: -1.5V to 1.5V
-    trigbyPXI: 0 to 7 (out-of-range value: EXT)
-    portDirection: 0: output, 1: input
-    mode: ‘0’ indicates ‘One shot’ and ‘1’ indicates ‘Cyclic’
-    sync:         0 NO-CLK, 1 10-CLK
-    '''
-    if int(trigbyPXI) in range(8): extSource, portDirection = 4000+int(trigbyPXI), 0
-    else: extSource, portDirection = 0, 1
+    datasize: dummy-parameter to be compatible with TKAWG\n
+    maxlevel: -1.5V to 1.5V\n
+    trigbyPXI: 0 to 7 (negative-value: Front Trig I/O port)\n
+    mode: ‘0’ indicates ‘One shot’ and ‘1’ indicates ‘Cyclic’\n
+    sync:  0 NO-CLK, 1 10-CLK \n
 
-    triggerio(module, portDirection) # Trigger-IO port-direction
-    waveshape(module, channel, keysightSD1.SD_Waveshapes.AOU_AWG) # Arbitrary Shape for DAC
-    amplitude(module, channel, maxlevel) # Maximum amplitude in V
-    module.AWGqueueConfig(channel, mode) # Operation-mode of the queue 
-    configureExternalTrigger(module, channel, extSource, keysightSD1.SD_TriggerBehaviors.TRIGGER_FALL, sync) # Only FALL works: PXItrigger are active low signals
+    External Trigger options:\n
+    External I/O Trigger: 0 (Card's Front 1st SMA-port)\n
+    PXI Trigger [0 to n]: 4000 + Trigger No. (Chassis's Backplane)\n
+
+    Default: 
+    Master triggering PXI-2 lane\n
+    Assign Ch-4 for PIN-SWITCH if and only if markeroption=7.\n
+
+    REFERENCES:
+    trigMode:  AUTOTRIG 0, SWHVITRIG 1, SWHVITRIG_CYCLE 5, EXTTRIG 2, EXTTRIG_CYCLE 6
+    markerValue         0: ‘Low’, 1: ‘High’. Note that PXItrigger are active low signals, ‘1’ will generate a ‘0’ pulse. (i.e. 1: active-high, 0: active-low)
+    trigBehavior:       1 HIGH, 2 LOW, 3 RISE, 4 FALL
+
+    NOTE:
+    1. Slave cannot produce marker output on either PXI or Trigger-I/O port without having some serious trigger instabilities!
+    2. For perfect inter-Pulse alignment, Master-Card can only play 3-channels at most, while Slave-Card can play up to ALL-channels as long as clearQ is set to be True.
+    '''
+    # 1. Loading the settings:
+    settings=dict(trigbyPXI=2, mode=1, sync=1, markeroption=0, Master=True, markerdelay=0) # default settings for SDAWG
+    settings.update(update_settings)
+    trigbyPXI, mode, sync, markeroption, Master, markerdelay = \
+        settings['trigbyPXI'], settings['mode'], settings['sync'], settings['markeroption'], settings['Master'], settings['markerdelay']
+
+    # 2. Choose Trigger Source:
+    if int(trigbyPXI) in range(8): extSource = 4000 + int(trigbyPXI)
+    else: extSource = 0
+
+    channelist= [channel]
+    if int(markeroption)==7: channelist.append(4)
+    for channel in channelist:
+        # 3. Pre-Settings:
+        waveshape(module, channel, keysightSD1.SD_Waveshapes.AOU_AWG) # Arbitrary Shape for DAC
+        sourcelevel(module, channel, ['Set', maxlevel, 0]) # Maximum amplitude in V
+        module.AWGqueueConfig(channel, mode) # Operation-mode of the queue 
+        configureExternalTrigger(module, channel, extSource, keysightSD1.SD_TriggerBehaviors.TRIGGER_FALL, sync) # Only FALL works: PXItrigger are active low signals
+
+        # 4. Pre-Loading / Initiate waveform(s):
+        waveform_id = int(channel) + 10 * module.getSlot() +  1000 * module.getChassis() # Unique ID: <Chassis___><Slot__><Channel_>
+        sendWaveform(module, waveform_id, zeros([datasize]))
+
+        # 5. Queue-up waveform(s):
+        # NOTE: Follow orders AND Giving orders simultaneously: will produce an up-spike in marker-pulse.
+        if Master: trigMode, markerMode = 0, keysightSD1.SD_MarkerModes.EVERY_CYCLE # Master / Commander / Default.
+        else: trigMode, markerMode = keysightSD1.SD_TriggerModes.EXTTRIG, 0 # Follow orders from Master-Card.
+        queueWaveform(module, channel, waveform_id, trigMode)
+        
+        # 6. Setting Trigger-IO port:
+        trgIOmask = 1 # always open up trig-IO port
+        triggerio(module, 0) # always output marker (hopefully)
+        # trgIOmask = (abs(trigbyPXI) - trigbyPXI) / abs(trigbyPXI) / 2 # +ve: 0, -ve: 1
+        # if trgIOmask==1: triggerio(module, not Master) # Trigger-IO ONLY (Card's Front 1st SMA-port) port-direction
+
+        # 7. Configure marker(s):
+        configureMarker(module, channel, [abs(trigbyPXI)], markerMode, int(trgIOmask), markerValue=0, delay=markerdelay) # PXI and Trig-IO can output marker simultaneously!
+        
     return module
-def compose_DAC(module, channel, pulsedata, markerMode=0, trgIOmask=0, markerValue=0, clearALL=False):
-    if clearALL: clearOldWaveforms(module)
-    sendWaveform(module, 0, pulsedata)
-    queueWaveform(module, channel, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
-    configureMarker(module, channel, markerMode, trgIOmask, markerValue)
-    # play(module, [1,channel])
-    
+def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_settings={}):
+    '''
+    markeroption: 0 (disabled), 7 (PIN-Switch on MixerBox)
+    clearQ: MUST be used when ALL channels are FULLY assigned.
+    '''
+    # 1. Loading the settings:
+    settings=dict(clearQ=0, Master=True) # default settings for SDAWG
+    settings.update(update_settings)
+    clearQ, Master = int(settings['clearQ']), settings['Master']
+
+    channelist= [channel]
+    if int(markeroption)==7: channelist.append(4)
+    for channel in channelist:
+        waveform_id = channel + 10 * module.getSlot() +  1000 * module.getChassis() # Unique ID: <Chassis___><Slot__><Channel_>
+        if (int(markeroption)==7) and (channel==4): pulsedata = abs(normalize_dipeak(envelope))
+        
+        if clearQ: 
+            module.AWGstop(channel)
+            module.AWGflush(channel) # Clear queue TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT
+        
+        resendWaveform(module, waveform_id, pulsedata)
+        
+        if clearQ:
+            # NOTE: TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT, step-2 are just repetitions of step-5 respectively from the "prepare_DAC".
+            # 2. Queue-up waveform(s):
+            if Master: trigMode, markerMode = 0, keysightSD1.SD_MarkerModes.EVERY_CYCLE # Master / Commander / Default.
+            else: trigMode, markerMode = keysightSD1.SD_TriggerModes.EXTTRIG, 0 # Follow orders from Master-Card.
+            queueWaveform(module, channel, waveform_id, trigMode)
+
     return module
 
 # Dedicated for DC-sweep:
@@ -181,9 +283,12 @@ def output(module, state):
     if state:
         for i in range(4): offset(module, i+1, 0) # zero ALL 4 channels
         play(module, [1,2,3,4]) # open ALL 4 channels
-    else: stop(module, [1,2,3,4])
+        print(Fore.CYAN + "PLAYING ALL 4 channels")
+    else: 
+        stop(module, [1,2,3,4])
+        print(Fore.CYAN + "STOPPING ALL 4 channels")
     return state
-def sweep(module, dcvalue, channel=1):
+def sweep(module, dcvalue, channel=1, sweeprate=0):
     '''DC amplitude in volts (–1.5 V to 1.5 V)
     '''
     try:
@@ -217,109 +322,71 @@ def close(module, which, reset=True, mode='DATABASE'):
 
 # Test Zone
 def test():
+    DAC_MATRIX = [[1,2,3,4],[1,2,3,4]]
+    DAC_LABEL = [3, 1]
+    Master = [True, False]
+    M = [None]*len(DAC_MATRIX)
 
-    # INITIATION:
-    m1 = Initiate(1, 'TEST')
-    m2 = Initiate(2, 'TEST')
+    for i, channel_set in enumerate(DAC_MATRIX):
+        print("channel_set for slot-%s: %s" %(i+1,channel_set))
+        # INITIATION:
+        M[i] = Initiate(DAC_LABEL[i], 'TEST')
+        print(Fore.YELLOW + "Model: %s" %model(M[i])[1]['IDN'])
+        clock(M[i], action=['Set', 'EFIXed',1e9])
+        clear_waveform(M[i],'all')
+        alloff(M[i], action=['Set',1])
+        
+        # Initiate PulseQ:
+        dt = round(1/float(clock(M[i])[1]['SRATe'])/1e-9, 2)
+        # print("Source: %s, Sampling rate: %s, dt: %s"%(clock(M[i])[1]['SOURce'], clock(M[i])[1]['SRATe'], dt))
+        pulseq = pulser(dt, clock_multiples=1, score="ns=30000;")
+        pulseq.song()
+        pulseq = pulser(dt, clock_multiples=1, score="ns=%s"%pulseq.totaltime)
+        pulseq.song()
 
-    # PREPARATION:
-    prepare_DAC(m1, 3, maxlevel=1.5, trigbyPXI=2, mode=1, sync=1)
-    prepare_DAC(m2, 1, maxlevel=1.5, trigbyPXI=2, mode=1, sync=1)
-    prepare_DAC(m2, 3, maxlevel=1.5, trigbyPXI=2, mode=1, sync=1)
+        # PREPARATION:
+        for ch in channel_set:
+            prepare_DAC(M[i], int(ch), pulseq.totalpoints, update_settings=dict(Master=Master[i], trigbyPXI=2))
+        # PRE-COMPOSITION:
+        for ch in channel_set:
+            compose_DAC(M[i], int(ch), pulseq.music)#, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+        alloff(M[i], action=['Set',0])
+        ready(M[i])
+        play(M[i])
     
-    # COMPOSITION:
-    input("Any key to RUN 1st WAVE from AWG-1: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,370,0;FLAT/,100000,0.95;")
-    pulseq.song()
-    # pulseq.
-    clearOldWaveforms(m1)
-    sendWaveform(m1, 0, pulseq.music)
-    queueWaveform(m1, 3, 0)
-    configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    play(m1, [3])
-    
-    input("Any key to RUN 2nd WAVE from AWG-1: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,370,0;FLAT/,300000,0.95;")
-    pulseq.song()
-    # clearOldWaveforms(m1)
-    resendWaveform(m1, 0, pulseq.music)
-    # queueWaveform(m1, 3, 0)
-    # configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    play(m1, [3])
+    # Multiple WAVEs:
+    for waveth,pulse_width in enumerate([1000,1100,1200,1300,1400,1500,1600,1700]):
+        # stop(M[0]) # suggested by NCHU (YuHan)
+        # stop(M[1]) # suggested by NCHU (YuHan)
+        input("Any key to RUN %sth WAVE: "%(waveth+1))
+        for i, channel_set in enumerate(DAC_MATRIX):
+            print("Playing CH-%s for slot-%s" %(channel_set,i+1))
+            for ch in channel_set:
+                # RE-COMPOSITION:
+                pulseq = pulser(dt, clock_multiples=1, score="ns=30000;FLAT/,%s,0.01;" %pulse_width)
+                pulseq.song()
+                compose_DAC(M[i], int(ch), pulseq.music, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+            ready(M[i])
 
-    input("Any key to RUN 3rd WAVE from AWG-1: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,370,0;FLAT/,500000,0.95;")
-    pulseq.song()
-    # clearOldWaveforms(m1)
-    resendWaveform(m1, 0, pulseq.music)
-    # queueWaveform(m1, 3, 0)
-    # configureMarker(m1, 3, markerMode=3, trgIOmask=0, markerValue=0)
-    play(m1, [3])
-
-    # m2.triggerIOread()
-    input("Any key to RUN 1st WAVE from AWG-2: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,100000,0.95;")
-    pulseq.song()
-    clearOldWaveforms(m2)
-    # ch-1
-    sendWaveform(m2, 0, pulseq.music)
-    queueWaveform(m2, 1, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
-    # ch-3
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,200000,0.95;")
-    pulseq.song()
-    sendWaveform(m2, 1, pulseq.music)
-    queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
-    configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    play(m2, [1,3])
-
-    input("Any key to RUN 2nd WAVE from AWG-2: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,300000,0.95;")
-    pulseq.song()
-    clearOldWaveforms(m2)
-    # ch-1
-    sendWaveform(m2, 0, pulseq.music)
-    queueWaveform(m2, 1, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
-    # ch-3
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,400000,0.95;")
-    pulseq.song()
-    sendWaveform(m2, 1, pulseq.music)
-    queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
-    configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    play(m2, [1,3])
-
-    input("Any key to RUN 3rd WAVE from AWG-2: ")
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,500000,0.95;")
-    pulseq.song()
-    clearOldWaveforms(m2)
-    # ch-1
-    sendWaveform(m2, 0, pulseq.music)
-    queueWaveform(m2, 1, 0, keysightSD1.SD_TriggerModes.EXTTRIG)
-    # ch-3
-    pulseq = pulser(dt=2, clock_multiples=1, score="ns=1000000;FLAT/,600000,0.95;")
-    pulseq.song()
-    sendWaveform(m2, 1, pulseq.music)
-    queueWaveform(m2, 3, 1, keysightSD1.SD_TriggerModes.EXTTRIG)
-    configureMarker(m2, 3, markerMode=0, trgIOmask=0, markerValue=0)
-    play(m2, [1,3])
+    # print(Fore.CYAN + "Waveform-list: %s" %m2.waveformListLoad())
+    # print(Fore.YELLOW + "PXI-%s: %s" %(1, m1.PXItriggerRead(1)))
+    # print(Fore.YELLOW + "PXI-%s: %s" %(2, m1.PXItriggerRead(2)))
 
     # CLOSING:
-    input("Any key to CLOSE AWG-1: ")
-    close(m1, 1, True, 'TEST')
-    input("Any key to CLOSE AWG-2: ")
-    close(m2, 2, True, 'TEST')
-
+    reset = bool(int(input("Reset (1/0): ")))
+    for i, channel_set in enumerate(DAC_MATRIX):
+        close(M[i], DAC_LABEL[i], reset, 'TEST')
 
     # Improvised DC test for Module 1-7:
-    m3 = Initiate(current=True, which=3, mode='TEST')
-    output(m3, 1)
-    dcvalues = [x*-0.01 for x in range(30)]
-    for val in dcvalues:
-        input("Any key to output DC=%sV from AWG-3: " %val)
-        sweep(m3, str(val), channel=2)
-
-    input("Any key to CLOSE AWG-3: ")
-    output(m3, 0)
-    close(m3, 3, True, 'TEST')
+    # m3 = Initiate(current=True, which=3, mode='TEST')
+    # output(m3, 1)
+    # dcvalues = [x*-0.01 for x in range(30)]
+    # for val in dcvalues:
+    #     input("Any key to output DC=%sV from AWG-3: " %val)
+    #     sweep(m3, str(val), channel=2)
+    # input("Any key to CLOSE AWG-3: ")
+    # output(m3, 0)
+    # close(m3, 3, True, 'TEST')
 
     return
 

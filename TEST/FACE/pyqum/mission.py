@@ -1,12 +1,12 @@
 # region: Loading Modules
 from colorama import init, Back, Fore
-from numpy.lib.npyio import loads
 init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 from os.path import getmtime
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 import json, ast
+from numpy.lib.npyio import loads
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
@@ -15,12 +15,14 @@ from time import sleep, strptime, mktime
 from datetime import timedelta, datetime
 from random import random
 import numba as nb
+from importlib import import_module as im
 
 from pyqum import get_db, close_db
 from pyqum.instrument.logger import get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
-                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobsinqueue
+                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobsinqueue, check_sample_alignment
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
+from pyqum.instrument.reader import inst_order
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
 from pyqum.directive.manipulate import Single_Qubit
 
@@ -146,15 +148,7 @@ def all_queue():
     queue = request.args.get('queue')
     set_status("MSSN", {session['user_name']: dict(sample=get_status("MSSN")[session['user_name']]['sample'], queue=queue)})
     lisqueue(queue)
-
-    # TO QUEUE-IN, the assigned sample for that queue-system (by admin) MUST be aligned with the sample chosen (MEAL):
-    try: 
-        db = get_db()
-        asample = db.execute( '''SELECT samplename FROM queue WHERE system = ?''', (queue,) ).fetchone()['samplename'] # assigned sample by admin
-        close_db()
-    except(TypeError): 
-        asample = ''
-    session['run_clearance'] = bool( asample==get_status("MSSN")[session['user_name']]['sample'] and int(g.user['measurement'])>0 )
+    check_sample_alignment(queue)
 
     # Security:
     try: print(Fore.YELLOW + "CHECKING OUT QUEUE for %s: %s" %(queue,g.Queue))
@@ -922,7 +916,7 @@ def char_cwsweep_2ddata():
     CMD = ["python", "-c", "from pyqum.directive import MP_cwsweep as mp; print(mp.worker(%s,%s,'%s','%s'))"%(y_count,x_count,y_name,x_name)]
     with Popen(CMD, stdout=PIPE, shell=True) as proc:
         doutput = proc.stdout.read().decode("utf-8")
-        print(Fore.BLACK + Back.YELLOW + "MP_cwsweep: %s" %doutput)
+        # print(Fore.BLACK + Back.YELLOW + "MP_cwsweep: %s" %doutput)
         output = json.loads(doutput.replace("\'", "\""))
         # try: os.kill(os.getppid(), signal.SIGTERM) # terminate parent process
         # except: pass
@@ -1353,7 +1347,12 @@ def mani_singleqb_init():
     try: print(Fore.CYAN + "Connected SQP-USER(s) for Single-Qubit: %s" %c_singleqb_progress.keys())
     except: c_singleqb_progress = {}
 
-    return jsonify(daylist=M_singleqb[session['user_name']].daylist, run_permission=session['run_clearance'])
+    # Loading Channel-Matrix & Channel-Role based on WIRING-settings
+    DAC_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DAC']
+    DAC_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['DAC']
+    DAC_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'DAC')
+
+    return jsonify(daylist=M_singleqb[session['user_name']].daylist, run_permission=session['run_clearance'], DAC_CH_Matrix=DAC_CH_Matrix, DAC_Role=DAC_Role, DAC_Which=DAC_Which)
 # list task entries based on day picked
 @bp.route('/mani/singleqb/time', methods=['GET'])
 def mani_singleqb_time():
@@ -1365,8 +1364,9 @@ def mani_singleqb_time():
 def mani_singleqb_check_timsum():
     record_time_ns = int(request.args.get('record_time_ns'))
     record_sum = int(request.args.get('record_sum'))
-    from pyqum.instrument.machine import ALZDG
-    record_time_ns, record_sum = ALZDG.check_timsum(record_time_ns,record_sum)
+    ADC_type = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ADC')[0].split('_')[0]
+    ADC = im("pyqum.instrument.machine.%s" %ADC_type)
+    record_time_ns, record_sum = ADC.check_timsum(record_time_ns,record_sum)
     return jsonify(record_time_ns=record_time_ns, record_sum=record_sum)
 # run NEW measurement:
 @bp.route('/mani/singleqb/new', methods=['GET'])
@@ -1413,6 +1413,7 @@ def mani_singleqb_export_1dcsv():
 # list set-parameters based on selected task-entry
 @bp.route('/mani/singleqb/access', methods=['GET'])
 def mani_singleqb_access():
+    # Measurement details:
     wmoment = int(request.args.get('wmoment'))
     try: JOBID = jobsearch(dict(samplename=get_status("MSSN")[session['user_name']]['sample'], task="Single_Qubit", dateday=M_singleqb[session['user_name']].day, wmoment=wmoment))
     except: JOBID = 0 # Old version of data before job-queue implementation
@@ -1435,9 +1436,13 @@ def mani_singleqb_access():
     RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
     for k in RJSON.keys(): corder[k] = RJSON[k]
     # Recombine Buffer back into C-Order:
-    if perimeter['READOUTYPE'] == 'one-shot': bufferkey = 'RECORD-SUM'
-    else: bufferkey = 'RECORD_TIME_NS'
-    corder[bufferkey] = "1 to %s * %s" %(perimeter[bufferkey], int(perimeter[bufferkey])-1)
+    if perimeter['READOUTYPE'] == 'one-shot': 
+        bufferkey, buffer_resolution = 'RECORD-SUM', 1
+    else: 
+        if "TIME_RESOLUTION_NS" in perimeter.keys(): bufferkey, buffer_resolution = 'RECORD_TIME_NS', int(perimeter['TIME_RESOLUTION_NS'])
+        else: bufferkey, buffer_resolution = 'RECORD_TIME_NS', 1
+    corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
+    print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
     # Extend C-Structure with R-Parameters & Buffer keys:
     SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
 
@@ -1587,8 +1592,11 @@ def mani_singleqb_1ddata():
                     Pdata[i] = arctan2(Qdata[i], Idata[i]) # -pi < phase < pi    
 
     print("Structure: %s" %c_singleqb_structure[session['user_name']])
+
     # x-data:
     selected_progress = waveform(selected_sweep).data[0:len(isweep)]
+    print(Fore.RED + "DEBUG: selected_sweep: %s, isweep: %s" %(selected_sweep,isweep))
+
     # facilitate index location (or count) for range clipping:
     cselection = (",").join([s for s in cselect.values()])
     if "c" in cselection:

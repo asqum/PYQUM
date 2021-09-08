@@ -7,7 +7,10 @@ Created on Wed Jan 15 11:17:10 2020
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
 
-mode = "XY"
+mode="XY"
+settings = {}
+settings['XY'] = {}
+settings['RO'] = {}
 
 import copy
 from pyqum.instrument.machine import MXA
@@ -49,7 +52,7 @@ def Update_DAC(daca, ifreq, IQparams, IF_period, IF_scale, mixer_module, channel
     mix_dict["%sq%s" %(mixer_module, ifreq)] = "%s/%s/%s" %(Qamp,Qphase,Qoffset)
     set_status("MIXER", mix_dict)
     # Translate into SCORE:
-    SCORE_DEFINED['CH%s' %(channels_group)] = "ns=%s,mhz=I/%s/%si%s;FLAT/,%s,%s;" %(IF_period,abs(ifreq),mixer_module,ifreq,IF_period,IF_scale) # IF carrier should always be +ve
+    SCORE_DEFINED['CH%s' %(channels_group)] = "ns=%s,mhz=I/%s/%si%s;FLAT/,%s,%s;" %(IF_period,abs(ifreq),mixer_module,ifreq,IF_period,IF_scale) # PENDING: make IF relative
     SCORE_DEFINED['CH%s' %(channels_group+1)] = "ns=%s,mhz=Q/%s/%sq%s;FLAT/,%s,%s;" %(IF_period,abs(ifreq),mixer_module,ifreq,IF_period,IF_scale)
     
     # Update DAC

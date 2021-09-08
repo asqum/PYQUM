@@ -150,7 +150,7 @@
     <div class="bdrcontent" id="samples">
         <div class="container">
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <h2 class="bdr" id="samples">Output assignment for DR-1</h2>
+                <h2 class="bdr" id="samples">Output assignment for DR-{{DR_platform}}</h2>
             </div>
             <!-- Allocation table: -->
             <div class="row">
@@ -171,9 +171,10 @@
                 <div class="row">
                     <div class="col-20" id='left'><h3 class="bdr samples-allocation">Loaded {{loaded}} NEW sample(s)</h3></div>
                 </div>
+                <div id="samples-allocation-status"></div>
                 <div class="row">
                     <div class="col-11" id='left'><select class='bdr samples-allocation CHAR0' id='system-CHAR0' type="text">
-                        <option value=0> -main- </option>
+                        <option value='null'> -reset- </option>
                         {% for s in recent_samples %}
                         {% if s==CHAR0_sample %}
                             <option value={{s}} selected>{{s}}</option>
@@ -182,8 +183,18 @@
                         {% endif %}
                         {% endfor %}
                     </select></div>
+                    <div class="col-11" id='left'><select class='bdr samples-allocation CHAR1' id='system-CHAR1' type="text">
+                        <option value='null'> -reset- </option>
+                        {% for s in recent_samples %}
+                        {% if s==CHAR1_sample %}
+                            <option value={{s}} selected>{{s}}</option>
+                        {% else %}
+                            <option value={{s}}>{{s}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select></div>
                     <div class="col-11" id='left'><select class='bdr samples-allocation QPC0' id='system-QPC0' type="text">
-                        <option value=0> -main- </option>
+                        <option value='null'> -reset- </option>
                         {% for s in recent_samples %}
                         {% if s==QPC0_sample %}
                             <option value={{s}} selected>{{s}}</option>
@@ -193,7 +204,7 @@
                         {% endfor %}
                     </select></div>
                     <div class="col-11" id='left'><select class='bdr samples-allocation QPC1' id='system-QPC1' type="text">
-                        <option value=0> -main- </option>
+                        <option value='null'> -reset- </option>
                         {% for s in recent_samples %}
                         {% if s==QPC1_sample %}
                             <option value={{s}} selected>{{s}}</option>
@@ -212,7 +223,7 @@
     <div class="bdrcontent" id="wiring">
         <div class="container">
             <div class="row">
-                <h2 class="bdr" id="wiring">Instrument designations for DR-1</h2>
+                <h2 class="bdr" id="wiring">Instrument designations for DR-{{DR_platform}}</h2>
             </div>
             <!-- System selection -->
             <div class="row" style="color: blue;">
@@ -249,9 +260,10 @@
                 <div class="row">
                     <div class="col-20" id='left'><h3 class="bdr wiring-designation">3 measurement systems:</h3></div>
                 </div>
+                <div id="wiring-designation-status"></div>
                 {% for cat in category %}
-                    <div class="row">
-                            <div class="col-10" id='left'><label>{{cat}}</label></div>
+                    <div class="row" id='wiring-designation-{{cat}}'>
+                            <div class="col-10" id='left'><label class='bdr wiring-designation'>{{cat}}</label></div>
                             <div class="col-60" id='left'><input class='bdr wiring-designation {{cat}}' type="text"/></div>
                     </div>
                 {% endfor %}

@@ -76,13 +76,21 @@ def model(board):
     kind = board.getBoardKind()
     name = list(ATS_Family.keys())[list(ATS_Family.values()).index(int(kind))]
     return name
+def sampling_rate(board="ALZDG"):
+    '''
+    Sampling rate of the Digitizer in "Sampling Per Second"
+    '''
+    return float(1000000000.0)
 
-# NPT: Multiple Records without Pre-Trigger Samples:
+# NOTE: Here adopting NPT: Multiple Records without Pre-Trigger Samples:
 # Configures a board for acquisition
-def ConfigureBoard_NPT(board, triggerDelay_sec = 0*1e-9, samplesPerSec=1000000000.0):
+def ConfigureBoard(board, update_settings={}):
     '''
     Configure Board
     '''
+    settings=dict(triggerDelay_sec = 0*1e-9, samplesPerSec=sampling_rate()) # default settings
+    settings.update(update_settings)
+    triggerDelay_sec, samplesPerSec = settings['triggerDelay_sec'], settings['samplesPerSec']
 
     # CLOCK:
     # Configure clock parameters as required to generate this sample rate
@@ -128,11 +136,11 @@ def ConfigureBoard_NPT(board, triggerDelay_sec = 0*1e-9, samplesPerSec=100000000
     # Configure AUX I/O connector as required
     board.configureAuxIO(ats.AUX_OUT_TRIGGER, 0)
     
-    # dt = 1 / samplesPerSec # in sec
-    return "Configure Board Successfully"
+    dt_ns = 1 / samplesPerSec / 1e-9 # in nano-second
+    return dt_ns
     
 
-def AcquireData_NPT(board, recordtime, recordsum, OPT_DMA_Buffer_Size=32, dt=1/1000000000.0):
+def AcquireData(board, recordtime, recordsum, update_settings={}):
     '''
     board: given by {Initiate}
     dt (s): given by {ConfigureBoard}
@@ -140,6 +148,9 @@ def AcquireData_NPT(board, recordtime, recordsum, OPT_DMA_Buffer_Size=32, dt=1/1
     recordsum: Total sum of records to be acquired for fidelity test or fast averaging
     OPT_DMA_Buffer_Size (MB): Optimal Buffer size for DMA transfer between CPU and the board PER Channel
     '''
+    settings=dict(OPT_DMA_Buffer_Size=32, dt=1/1000000000.0) # default settings
+    settings.update(update_settings)
+    OPT_DMA_Buffer_Size, dt = settings['OPT_DMA_Buffer_Size'], settings['dt']
 
     # CONSTANTS:
     preTriggerSamples = 0 # No pre-trigger samples in NPT mode
@@ -240,7 +251,7 @@ def AcquireData_NPT(board, recordtime, recordsum, OPT_DMA_Buffer_Size=32, dt=1/1
             data_binary = buffer.buffer.reshape(recordsPerBuffer, postTriggerSamples, channelCount)
             data_binary = rangeconv * (data_binary - offset)
             # print("Buffer of shape %s: %s" %(data_binary.shape, data_binary))
-            data_V[(buffersCompleted - 1) * recordsPerBuffer :  (buffersCompleted) * recordsPerBuffer, :, :] = data_binary
+            data_V[(buffersCompleted - 1)*recordsPerBuffer:(buffersCompleted)*recordsPerBuffer, :, :] = data_binary
             # print("Data of shape %s: %s" %(data_V.shape, data_V))
 
             # Add the buffer to the end of the list of available buffers.
@@ -315,14 +326,14 @@ def check_timsum(record_time_ns, record_sum, OPT_DMA_Buffer_Size=32):
     return (int(samplesPerRecord), int(recordsPerBuffer*buffersPerAcquisition))
 
 def test(board):
-    ConfigureBoard_NPT(board, triggerDelay_sec=0)
+    ConfigureBoard(board, triggerDelay_sec=0)
     dt = 1/1000000000.0 
 
     N = 5
     for i in range(1):
         DMA_transfer_size = 2**(N-i)
         print("\nMaximum DMA Buffer PER Channel: %sMB" %DMA_transfer_size)
-        ACQ = AcquireData_NPT(board, 1e-6, 512000, DMA_transfer_size)
+        ACQ = AcquireData(board, 1e-6, 512000, DMA_transfer_size)
 
     DATA = ACQ[0] 
     recordsPerBuffer = ACQ[2]

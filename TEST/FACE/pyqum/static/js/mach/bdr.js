@@ -337,6 +337,7 @@ $(function() {
             set_system: set_system,
             set_sample: $('select.bdr.samples-allocation.' + set_system).val(),
          }, function (data) {
+            $('div#samples-allocation-status').empty().append($('<h4 style="color: blue;"></h4>').text(data.status));
             setTimeout(() => { $('button.bdr#samples').trigger('click'); }, 100);
 
         });
@@ -354,11 +355,13 @@ function wiring_designation_update() {
     $.getJSON('/mach/bdr/wiring/instruments', {
         qsystem: $('select.bdr.wiring.queue-system').val(),
      }, function (data) {
+         window.category = data.category;
         $.each(data.inst_list, function (i,val) {
             $('table.BDR-WIRING tbody.wiring.designation-update').append('<tr><td>' + (i+1) + '</td><td>' + val.category + '</td><td>' + val.designation + '</td></tr>');
         });
         $.each(data.category, function (i,cat) {
-            $('input.bdr.wiring-designation.'+cat).val(data.instr_organized[cat]);
+            if (data.instr_organized[cat].includes("DUMMY")==false) { var designation = data.instr_organized[cat]; };
+            $('input.bdr.wiring-designation.'+cat).val(designation);
         });
     });
 };
@@ -374,9 +377,45 @@ $(function() {
 });
 $(function() {
     $('select.bdr.wiring.queue-system').on('change', function() {
+        $('div#wiring-designation-status').empty();
         wiring_designation_update();
+        $('div#wiring-designation-status').append($('<h4 style="color: green;"></h4>').text("Inspecting " + $('select.bdr.wiring.queue-system').val()));
         return false;
     });
+});
+$(function() {
+    $(document).on('click', 'input.bdr.wiring-designation.set', function() {
+        $('div#wiring-designation-status').empty();
+        var instr_organized = {};
+        $.each(category, function (i,cat) {
+            instr_organized[cat] = $('input.bdr.wiring-designation.'+cat).val();
+        });
+        console.log('instr_organized: ' + JSON.stringify(instr_organized));
+        $.getJSON('/mach/bdr/wiring/set/instruments', {
+            instr_organized: JSON.stringify(instr_organized),
+            qsystem: $('select.bdr.wiring.queue-system').val(),
+        }, function (data) {
+            $('div#wiring-designation-status').append($('<h4 style="color: blue;"></h4>').text(data.message));
+        })
+        .done(function(){
+            wiring_designation_update();
+        });
+    });
+    return false;
+});
+$(function () {
+    $(document).on('change', 'input.bdr.wiring-designation', function() {
+        $('div#wiring-designation-status').empty();
+        var cat = $(this).parent().parent().attr('id').split('-')[2];
+        $.getJSON('/mach/bdr/wiring/check/instruments', {
+            cat: cat,
+            instr_set: $('input.bdr.wiring-designation.'+cat).val(),
+        }, function (data) {
+            $('input.bdr.wiring-designation.'+cat).val(data.checked_instr_set);
+            $('div#wiring-designation-status').append($('<h4 style="color: red;"></h4>').text(data.message));
+        });
+    });
+    return false;
 });
 
 

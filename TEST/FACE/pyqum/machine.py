@@ -7,7 +7,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 from json import loads, dumps
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
-from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code, clocker, set_mat, bdr_zip_log
+from pyqum.instrument.logger import get_status, set_status, status_code, output_code, clocker, set_mat, bdr_zip_log, debug
 
 # Error handling
 from contextlib import suppress
@@ -19,13 +19,12 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 
 # Load instruments
 from pyqum import get_db, close_db
-from pyqum.instrument.machine import TKAWG as TKAWG
-from pyqum.instrument.machine import DC, DSO, YOKO, KEIT, ALZDG
+from pyqum.instrument.machine import YOKO, KEIT, ALZDG
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.toolbox import match, waveform, pauselog
 from pyqum.instrument.analyzer import IQAParray, pulse_baseband, UnwraPhase
 from pyqum.instrument.composer import pulser
-from pyqum.instrument.reader import inst_order
+from pyqum.instrument.reader import inst_designate, inst_order, device_port
 
 encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/mach')
@@ -48,10 +47,12 @@ def show():
 @bp.route('/all', methods=['POST', 'GET'])
 def all(): 
     current_usr = session['user_name']
-    return render_template("blog/machn/all.html", current_usr=current_usr)
+    Bob_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("TC"))
+    Scope_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("RTP"))
+    return render_template("blog/machn/all.html", current_usr=current_usr, Bob_Address=Bob_Address, Scope_Address=Scope_Address)
 @bp.route('/all/machine', methods=['GET'])
 def allmachine():
-    print("Instrument list:\n%s"%g.instlist)
+    print(Fore.CYAN + "Registered Instrument-list:\n%s"%g.instlist)
     return jsonify(machlist=g.machlist)
 @bp.route('/all/set/machine', methods=['GET'])
 def allsetmachine():
@@ -59,7 +60,7 @@ def allsetmachine():
     return jsonify()
 @bp.route('/all/mxc', methods=['GET'])
 def allmxc():
-    # DR-specific T6:
+    # DR-specific T6 to be appended at the bottomline of measurement comment:
     DR_platform = int(get_status("WEB")['port']) - 5300
     DR_list = ["Alice", "Bob"]
     dr = bluefors(designation=DR_list[DR_platform-1])
@@ -82,12 +83,14 @@ def allmxc():
     return jsonify(mxcmk=dr.temperaturelog(6)[1][-1]*1000)
 # endregion
 
-# region: SG (user-specific)
+# region: SG (user-specific, Generalized)
 @bp.route('/sg', methods=['GET'])
 def sg(): 
-    global sgbench, SG
+    global sgbench, SG, sgchannel
     try: print(Fore.GREEN + "Connected SG: %s" %sgbench.keys())
     except: sgbench, SG = {}, {}
+    try: print(Fore.GREEN + "SG Channel: %s" %sgchannel.keys())
+    except: sgchannel = {}
     return render_template("blog/machn/sg.html")
 @bp.route('/sg/log', methods=['GET'])
 def sglog():
@@ -95,8 +98,8 @@ def sglog():
     return jsonify(log=log)
 @bp.route('/sg/connect', methods=['GET'])
 def sgconnect():
-    sgname = request.args.get('sgname')
-    sgtag = '%s:%s' %(sgname,session['user_name'])
+    sgname = request.args.get('sgname') # name = type + label
+    sgtag = '%s:%s' %(sgname,session['user_name']) # tag = <type>-<label>:<user>
     sgtype, sglabel, sguser = sgtag.split('-')[0], sgtag.split('-')[1].split(':')[0], sgtag.split('-')[1].split(':')[1]
     linkedsg = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in sgbench.keys()]
     if sgname not in linkedsg and int(g.user['instrument'])>=3:
@@ -104,9 +107,11 @@ def sgconnect():
         try:
             SG[sgtype] = im("pyqum.instrument.machine.%s" %sgtype)
             sgbench[sgtag] = SG[sgtype].Initiate(sglabel)
+            sgchannel[sgtag] = request.args.get('channel') # Default channel
             message = "%s is successfully initiated by %s" %(sgname,sguser)
             status = "connected"
         except:
+            # raise
             message = "Please check if %s's connection configuration is OK or is it being used!" %(sgname)
             status = 'error'
     else:
@@ -140,265 +145,295 @@ def sgsetfreq():
     sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
     freq = request.args.get('freq')
     frequnit = request.args.get('frequnit')
-    stat = SG[sgtype].frequency(sgbench[sgtag], action=['Set', freq + frequnit])
+    stat = SG[sgtype].frequency(sgbench[sgtag], action=['Set_%s'%sgchannel[sgtag], freq + frequnit])
     message = 'frequency: %s <%s>' %(stat[1], stat[0])
-    return jsonify(message=message) #message will go to debug log
+    return jsonify(message=message)
 @bp.route('/sg/set/powa', methods=['GET'])
 def sgsetpowa():
     sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
     powa = request.args.get('powa')
-    powaunit = request.args.get('powaunit')
-    stat = SG[sgtype].power(sgbench[sgtag], action=['Set', powa + powaunit])
+    powaunit = '' #request.args.get('powaunit') # UNIT DOESN'T WORK IN DDSLO's SCPI-COMMAND!
+    stat = SG[sgtype].power(sgbench[sgtag], action=['Set_%s'%sgchannel[sgtag], powa + powaunit])
     message = 'power: %s <%s>' %(stat[1], stat[0])
-    return jsonify(message=message) #message will go to debug log
+    return jsonify(message=message)
 @bp.route('/sg/set/oupt', methods=['GET'])
 def sgsetoupt():
     sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
     oupt = request.args.get('oupt')
-    stat = SG[sgtype].rfoutput(sgbench[sgtag], action=['Set',int(oupt)])
+    stat = SG[sgtype].rfoutput(sgbench[sgtag], action=['Set_%s'%sgchannel[sgtag], int(oupt)])
     message = 'RF output: %s <%s>' %(stat[1], stat[0])
-    return jsonify(message=message) #message will go to debug log
-@bp.route('/sg/get', methods=['GET'])
-def sgget():
+    return jsonify(message=message)
+@bp.route('/sg/set/channel', methods=['GET'])
+def sgsetchannel():
     sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
+    sgchannel[sgtag] = request.args.get('channel')
     message = {}
+    if sgtype=='DDSLO': parakeys = dict(frequency="FREQUENCY", power="POWER")
+    else: parakeys = dict(frequency="CW", power="AMPLITUDE")
     try:
-        message['frequency'] = si_format(float(SG[sgtype].frequency(sgbench[sgtag])[1]['CW']),precision=12) + "Hz" # frequency
-        message['power'] = si_format(float(SG[sgtype].power(sgbench[sgtag])[1]['AMPLITUDE']),precision=2) + "dBm" # power
-        message['rfoutput'] = int(SG[sgtype].rfoutput(sgbench[sgtag])[1]['STATE']) # rf output
+        message['frequency'] = si_format(float(SG[sgtype].frequency(sgbench[sgtag], ['Get_%s'%sgchannel[sgtag], ''])[1][parakeys['frequency']]),precision=12) + "Hz"
+        message['power'] = si_format(float(SG[sgtype].power(sgbench[sgtag], ['Get_%s'%sgchannel[sgtag], ''])[1][parakeys['power']]),precision=2) + "dBm"
+        message['rfoutput'] = int(SG[sgtype].rfoutput(sgbench[sgtag], ['Get_%s'%sgchannel[sgtag], ''])[1]['STATE']) # rf output
     except:
         # raise
         message = dict(status='%s is not connected' %sgtype)
     return jsonify(message=message)
 # endregion
 
-# region: TKAWG (user-specific)
-@bp.route('/tkawg', methods=['GET'])
-def tkawg(): 
-    global tkawgbench
-    try: print(Fore.GREEN + "Connected TKAWG: %s" %tkawgbench.keys())
-    except: 
-        print(Fore.BLUE + "TKAWG status log not yet initialized")
-        tkawgbench = {}
-    return render_template("blog/machn/tkawg.html")
-@bp.route('/tkawg/log', methods=['GET'])
-def tkawglog():
-    tkawglabel = request.args.get('tkawglabel')
-    log = get_status(tkawglabel.split('-')[0], tkawglabel.split('-')[1])
+# region: DAC (user-specific, Generalized)
+@bp.route('/dac', methods=['GET'])
+def dac(): 
+    global DAC_handle, DAC
+    try: print(Fore.GREEN + "Connected DAC: %s" %DAC_handle.keys())
+    except: DAC_handle, DAC = {}, {}
+    return render_template("blog/machn/dac.html")
+@bp.route('/dac/log', methods=['GET'])
+def daclog():
+    log = get_status(request.args.get('dacname').split('-')[0], request.args.get('dacname').split('-')[1])
     return jsonify(log=log)
-@bp.route('/tkawg/connect', methods=['GET'])
-def tkawgconnect():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    tkawgnum, tkawguser = tkawglabel.split('-')[1], tkawgtag.split(':')[1]
-    linkedtkawg = [x.split(':')[0] for x in tkawgbench.keys()]
-    if tkawglabel not in linkedtkawg and int(g.user['instrument'])>=3:
+@bp.route('/dac/connect', methods=['GET'])
+def dacconnect():
+    dacname = request.args.get('dacname')
+    dactag = '%s:%s' %(dacname,session['user_name'])
+    print("dactag: %s" %dactag)
+    dactype, daclabel, dacuser = dactag.split('-')[0], dactag.split('-')[1].split(':')[0], dactag.split('-')[1].split(':')[1]
+    linkeddac = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in DAC_handle.keys()]
+    if dacname not in linkeddac and int(g.user['instrument'])>=3:
+        '''get in if not currently initiated'''
         try:
-            tkawgbench[tkawgtag] = TKAWG.Initiate(tkawgnum)
-            message = "%s is successfully initiated by %s" %(tkawglabel,tkawguser)
+            DAC[dactype] = im("pyqum.instrument.machine.%s" %dactype)
+            DAC_handle[dactag] = DAC[dactype].Initiate(daclabel)
+            message = "%s is successfully initiated by %s" %(dacname,dacuser)
             status = "connected"
         except:
-            message = "Please check if %s's connection configuration is OK or is it being used by non-user!" %(tkawglabel)
+            message = "Please check if %s's connection configuration is OK or is it being used!" %(dacname)
             status = 'error'
     else:
-        # Check who is currently using the board:
-        try:
+        # Check who is currently using the instrument:
+        
+        try: 
             db = get_db()
-            instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', (tkawglabel.replace('-','_'),)).fetchone()[0]
+            instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(dactype,daclabel),)).fetchone()[0]
             close_db()
-            message = "%s is being connected to %s" %(tkawglabel,instr_user)
+            message = "%s is being connected to %s" %(dacname,instr_user)
         except(TypeError):
             instr_user = None
             message = "INSTRUMENT IS COMING SOON" # in the process of procurement
-
+        
         # Connecting or Waiting or Forbidden?
         if instr_user == session['user_name']: status = 'connected'
         elif int(g.user['instrument'])>=3: status = 'waiting'
         else: message, status = 'NOT ENOUGH CLEARANCE', 'forbidden'
     return jsonify(message=message,status=status)
-@bp.route('/tkawg/closet', methods=['GET'])
-def tkawgcloset():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    status = TKAWG.close(tkawgbench[tkawgtag], tkawglabel.split('-')[1], reset=False)
-    del tkawgbench[tkawgtag]
+@bp.route('/dac/closet', methods=['GET'])
+def daccloset():
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
+    status = DAC[dactype].close(DAC_handle[dactag], dactag.split('-')[1].split(':')[0], reset=False)
+    del DAC_handle[dactag]
     return jsonify(message=status)
-@bp.route('/tkawg/testing', methods=['GET'])
-def tkawgtesting():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    status = TKAWG.test(tkawgbench[tkawgtag])
+@bp.route('/dac/testing', methods=['GET'])
+def dactesting():
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
+    status = DAC[dactype].test(DAC_handle[dactag])
     return jsonify(message=status)
-@bp.route('/tkawg/alloff', methods=['GET'])
-def tkawgalloff():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    status = TKAWG.alloff(tkawgbench[tkawgtag], action=['Set',1])
+@bp.route('/dac/alloff', methods=['GET'])
+def dacalloff():
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
+    status = DAC[dactype].alloff(DAC_handle[dactag], action=['Set',1])
     return jsonify(message=status)
-@bp.route('/tkawg/clearall', methods=['GET'])
-def tkawgclearall():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    status = TKAWG.clear_waveform(tkawgbench[tkawgtag], 'all')
+@bp.route('/dac/clearall', methods=['GET'])
+def dacclearall():
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
+    status = DAC[dactype].clear_waveform(DAC_handle[dactag], 'all')
+    set_status(request.args.get('dacname').split('-')[0], {'resend': 0}, request.args.get('dacname').split('-')[1])
     return jsonify(message=status)
-@bp.route('/tkawg/set/clockfreq', methods=['GET'])
-def tkawgsetclockfreq():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
+@bp.route('/dac/set/clockfreq', methods=['GET'])
+def dacsetclockfreq():
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
     clockfreq = request.args.get('clockfreq')
     clockfrequnit = request.args.get('clockfrequnit')[0]
-    stat = TKAWG.clock(tkawgbench[tkawgtag], action=['Set', 'EFIXed', si_parse(clockfreq + clockfrequnit)])
+    stat = DAC[dactype].clock(DAC_handle[dactag], action=['Set', 'EFIXed', si_parse(clockfreq + clockfrequnit)])
     message = 'frequency: %s <%s>' %(stat[1], stat[0])
     return jsonify(message=message)
-@bp.route('/tkawg/get/channels', methods=['GET'])
-def tkawggetchannels():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    Channel = request.args.get('Channel')
-    level = TKAWG.sourcelevel(tkawgbench[tkawgtag], Channel)[1]
+@bp.route('/dac/get/channels', methods=['GET'])
+def dacgetchannels():
+    dactag, dactype, Channel = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype'), request.args.get('Channel')
+    dac_status = get_status(request.args.get('dacname').split('-')[0], request.args.get('dacname').split('-')[1])
+    level = DAC[dactype].sourcelevel(DAC_handle[dactag], Channel)[1]
     message = {}
     message['source-amplitude'], message['source-offset'] = si_format(float(level['AMPLITUDE']), precision=3) + "Vpp", si_format(float(level['OFFSET']), precision=3) + "V"
-    message['chstate'] = int(TKAWG.output(tkawgbench[tkawgtag], Channel)[1]['STATE'])
-    try: message['score'] = get_status(tkawglabel.split('-')[0], tkawglabel.split('-')[1])['SCORE-%s'%Channel]
-    except(KeyError): message['score'] = 'ns=8000;\n' # default score
+    if dactype=="TKAWG": message['chstate'] = int(DAC[dactype].output(DAC_handle[dactag], Channel)[1]['STATE']) # TKAWG ONLY
+    try: message['score'] = dac_status['SCORE-%s'%Channel]
+    except(KeyError): pass
+    try: message['master'] = dac_status['master']
+    except(KeyError): pass
+    try: message['resend'] = dac_status['resend']
+    except(KeyError): pass
+    try: message['markeroption'] = dac_status['markeroption-ch%s'%Channel]
+    except(KeyError): pass
     return jsonify(message=message)
-@bp.route('/tkawg/set/channels', methods=['GET'])
-def tkawgsetchannels():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    Channel = int(request.args.get('Channel'))
-    score = request.args.get('score')
-    maxlevel = si_parse(request.args.get('maxlvl') + request.args.get('maxlvlunit')[0])
-    set_status(tkawglabel.split('-')[0], {'SCORE-%s'%Channel: score}, tkawglabel.split('-')[1])
-    dt = round(1/float(TKAWG.clock(tkawgbench[tkawgtag])[1]['SRATe'])/1e-9, 2)
+@bp.route('/dac/set/channels', methods=['GET'])
+def dacsetchannels():
+    dactag, dactype, Channel = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype'), int(request.args.get('Channel'))
+    score, master = request.args.get('score'), bool(int(request.args.get('master')))
+    maxlevel = si_parse(request.args.get('maxlvl') + request.args.get('maxlvlunit').split("Vpp")[0])
+    trigbyPXI, markerdelay, markeroption = int(request.args.get('trigbyPXI')), int(request.args.get('markerdelay')), int(request.args.get('markeroption'))
+
+    # PULSE ASSEMBLY:
+    dt = round(1/float(DAC[dactype].clock(DAC_handle[dactag])[1]['SRATe'])/1e-9, 2)
     pulseq = pulser(dt=dt, clock_multiples=1, score=score)
     pulseq.song()
-    TKAWG.prepare_DAC(tkawgbench[tkawgtag], Channel, pulseq.totalpoints, maxlevel)
-    TKAWG.compose_DAC(tkawgbench[tkawgtag], Channel, pulseq.music, pulseq.envelope, 2) # PENDING: MARKER OPTIONS UI
-    return jsonify(music=list(pulseq.music), timeline=list(pulseq.timeline))
-@bp.route('/tkawg/output/channels', methods=['GET'])
-def tkawgoutputchannels():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
+
+    # SCORE INJECTION:
+    if dactype=="TKAWG": New = True
+    elif dactype=="SDAWG": New = not bool(int(request.args.get('resend')))
+    if New: DAC[dactype].prepare_DAC(DAC_handle[dactag], Channel, pulseq.totalpoints, maxlevel, dict(Master=master, trigbyPXI=trigbyPXI, markerdelay=markerdelay, markeroption=markeroption))
+    DAC[dactype].compose_DAC(DAC_handle[dactag], Channel, pulseq.music, pulseq.envelope, markeroption) # PENDING: MARKER OPTIONS UI
+
+    update_items = {'SCORE-%s'%Channel: score, 'master': int(master), 'trigbyPXI': trigbyPXI, 'markerdelay': markerdelay, 'markeroption-ch%s'%Channel: markeroption}
+    set_status(request.args.get('dacname').split('-')[0], update_items, request.args.get('dacname').split('-')[1])
+    
+    music, timeline =list(pulseq.music)[::20], list(pulseq.timeline)[::20]
+    return jsonify(music=music, timeline=timeline)
+@bp.route('/dac/output/channels', methods=['GET'])
+def dacoutputchannels():
+    '''TKAWG ONLY'''
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
     Channel = int(request.args.get('Channel'))
     state = request.args.get('state')
-    status = TKAWG.output(tkawgbench[tkawgtag], Channel, action=['Set',state])
+    status = DAC[dactype].output(DAC_handle[dactag], Channel, action=['Set',state])
     return jsonify(status=status)
-@bp.route('/tkawg/get', methods=['GET'])
-def tkawgget():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
+@bp.route('/dac/get', methods=['GET'])
+def dacget():
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
+    dac_status = get_status(request.args.get('dacname').split('-')[0], request.args.get('dacname').split('-')[1])
     message = {}
     try:
-        message['clockfreq'] = si_format(float(TKAWG.clock(tkawgbench[tkawgtag])[1]['SRATe']),precision=3) + "S/s" # clock-frequency
-        message['model'] = TKAWG.model(tkawgbench[tkawgtag])[1]['IDN']
-        message['runstate'] = int(TKAWG.runstate(tkawgbench[tkawgtag])[1]['RSTATE'])
-        try: message['wlist'] = [x.split('-')[1] for x in TKAWG.waveformlist(tkawgbench[tkawgtag])[1]['LIST'].replace('\"','').split(',')]
-        except(IndexError): message['wlist'] = []
+        message['clockfreq'] = si_format(float(DAC[dactype].clock(DAC_handle[dactag])[1]['SRATe']),precision=3) + "S/s" # clock-frequency
+        message['model'] = DAC[dactype].model(DAC_handle[dactag])[1]['IDN']
+        message['runstate'] = int(DAC[dactype].runstate(DAC_handle[dactag])[1]['RSTATE'])
+        try: message['wlist'] = [x.split('-')[1] for x in DAC[dactype].waveformlist(DAC_handle[dactag])[1]['LIST'].replace('\"','').split(',')]
+        except: message['wlist'] = []
+
+        # Check waveform presence in each channels:
+        if dactype=="TKAWG": pass #PENDING: check output-state instead?
+        elif dactype=="SDAWG":
+            try: 
+                message['ready2play'] = []
+                for i in range(4): message['ready2play'].append(int(DAC[dactype].ready(DAC_handle[dactag], channel=(i+1))))
+            except: message['ready2play'] = [0,0,0,0]
     except:
-        message = dict(status='%s is not connected or busy or error' %tkawglabel)
+        message = dict(status='%s is not connected or busy or error' %request.args.get('dacname'))
+    try: message['trigbyPXI'] = dac_status['trigbyPXI']
+    except(KeyError): pass
+    try: message['markerdelay'] = dac_status['markerdelay']
+    except(KeyError): pass
+    
     print("message: %s" %message)
     return jsonify(message=message)
-@bp.route('/tkawg/play', methods=['GET'])
-def tkawgplay():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    TKAWG.alloff(tkawgbench[tkawgtag], action=['Set',0])
-    TKAWG.ready(tkawgbench[tkawgtag])
-    status = TKAWG.play(tkawgbench[tkawgtag])
+@bp.route('/dac/play', methods=['GET'])
+def dacplay():
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
+    DAC[dactype].alloff(DAC_handle[dactag], action=['Set',0])
+    DAC[dactype].ready(DAC_handle[dactag])
+    status = DAC[dactype].play(DAC_handle[dactag])
+    set_status(request.args.get('dacname').split('-')[0], {'resend': 1}, request.args.get('dacname').split('-')[1])
     return jsonify(status=status)
-@bp.route('/tkawg/stop', methods=['GET'])
-def tkawgstop():
-    tkawglabel = request.args.get('tkawglabel')
-    tkawgtag = '%s:%s' %(tkawglabel,session['user_name'])
-    status = TKAWG.stop(tkawgbench[tkawgtag])
+@bp.route('/dac/stop', methods=['GET'])
+def dacstop():
+    dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
+    status = DAC[dactype].stop(DAC_handle[dactag])
+    set_status(request.args.get('dacname').split('-')[0], {'resend': 0}, request.args.get('dacname').split('-')[1])
     return jsonify(status=status)
 # endregion
 
-# region: ALZDG (user-specific)
-@bp.route('/alzdg', methods=['GET'])
-def alzdg(): 
-    global alzdgboard, alzdg_1Ddata
-    # List users
-    try: print(Fore.GREEN + "Connected ALZDG: %s" %alzdgboard.keys())
-    except: alzdgboard = {}
+# region: ADC (user-specific, Generalized)
+@bp.route('/adc', methods=['GET'])
+def adc(): 
+    global adcboard, ADC, adc_1Ddata
+    try: print(Fore.GREEN + "Connected ADC: %s" %adcboard.keys())
+    except: adcboard, ADC = {}, {}
     # Initialize 1D Data-Holder:
-    try: print(Fore.CYAN + "Connected M-USER(s) holding ALZDG's 1D-DATA: %s" %alzdg_1Ddata.keys())
-    except: alzdg_1Ddata = {}
-    return render_template("blog/machn/alzdg.html")
-@bp.route('/alzdg/log', methods=['GET'])
-def alzdglog():
-    log = get_status(request.args.get('alzdglabel').split('-')[0], request.args.get('alzdglabel').split('-')[1])
+    try: print(Fore.CYAN + "Connected M-USER(s) holding ADC's 1D-DATA: %s" %adc_1Ddata.keys())
+    except: adc_1Ddata = {}
+    return render_template("blog/machn/adc.html")
+@bp.route('/adc/log', methods=['GET'])
+def adclog():
+    log = get_status(request.args.get('adcname').split('-')[0], request.args.get('adcname').split('-')[1])
     return jsonify(log=log)
-@bp.route('/alzdg/connect', methods=['GET'])
-def alzdgconnect():
-    alzdglabel = request.args.get('alzdglabel')
-    alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
-    alzdgnum, alzdguser = alzdglabel.split('-')[1], alzdgtag.split(':')[1]
-    linkedalzdg = [x.split(':')[0] for x in alzdgboard.keys()]
-    if alzdglabel not in linkedalzdg and int(g.user['instrument'])>=3:
+@bp.route('/adc/connect', methods=['GET'])
+def adcconnect():
+    adcname = request.args.get('adcname')
+    adctag = '%s:%s' %(adcname,session['user_name'])
+    print("adctag: %s" %adctag)
+    adctype, adclabel, adcuser = adctag.split('-')[0], adctag.split('-')[1].split(':')[0], adctag.split('-')[1].split(':')[1]
+    linkedadc = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in adcboard.keys()]
+    if adcname not in linkedadc and int(g.user['instrument'])>=3:
+        '''get in if not currently initiated'''
         try:
-            alzdgboard[alzdgtag] = ALZDG.Initiate(alzdgnum)
-            message = "%s is successfully initiated by %s" %(alzdglabel,alzdguser)
+            ADC[adctype] = im("pyqum.instrument.machine.%s" %adctype)
+            adcboard[adctag] = ADC[adctype].Initiate(adclabel)
+            message = "%s is successfully initiated by %s" %(adcname,adcuser)
             status = "connected"
         except:
-            message = "Please check if %s's connection configuration is OK or is it being used by non-user!" %(alzdglabel)
+            message = "Please check if %s's connection configuration is OK or is it being used!" %(adcname)
             status = 'error'
-    else: 
-        # Check who is currently using the board:
-        try:
+    else:
+        # Check who is currently using the instrument:
+        
+        try: 
             db = get_db()
-            instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', (alzdglabel.replace('-','_'),)).fetchone()[0]
+            instr_user = db.execute('SELECT u.username FROM user u JOIN machine m ON m.user_id = u.id WHERE m.codename = ?', ('%s_%s'%(adctype,adclabel),)).fetchone()[0]
             close_db()
-            message = "%s is being connected to %s" %(alzdglabel,instr_user)
+            message = "%s is being connected to %s" %(adcname,instr_user)
         except(TypeError):
             instr_user = None
             message = "INSTRUMENT IS COMING SOON" # in the process of procurement
-
+        
         # Connecting or Waiting or Forbidden?
         if instr_user == session['user_name']: status = 'connected'
         elif int(g.user['instrument'])>=3: status = 'waiting'
         else: message, status = 'NOT ENOUGH CLEARANCE', 'forbidden'
     return jsonify(message=message,status=status)
-@bp.route('/alzdg/configureboard', methods=['GET'])
-def alzdgconfigureboard():
-    alzdglabel = request.args.get('alzdglabel')
-    alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
+@bp.route('/adc/configureboard', methods=['GET'])
+def adcconfigureboard():
+    adctag, adctype = '%s:%s' %(request.args.get('adcname'),session['user_name']), request.args.get('adctype')
     trigdelay, trigdelayunit = request.args.get('trigdelay'), request.args.get('trigdelayunit')[0]
-    status = ALZDG.ConfigureBoard_NPT(alzdgboard[alzdgtag], triggerDelay_sec=si_parse(trigdelay + trigdelayunit))
+    
+    # PENDING: EXTRACT & STORE MACHINE's SPEC IN DATABASE (Sampling-rate etc.)
+
+    update_items = dict( triggerDelay_sec=si_parse(trigdelay+trigdelayunit), TOTAL_POINTS=round(int(request.args.get('recordtime'))/2), NUM_CYCLES=int(request.args.get('recordsum')), \
+                            PXI=int(request.args.get('PXI')), FULL_SCALE=float(request.args.get('fullscale')) )
+    dt_ns = ADC[adctype].ConfigureBoard(adcboard[adctag], update_items)
+    update_items.update(trigdelay=trigdelay)
+    set_status(request.args.get('adcname').split('-')[0], update_items, request.args.get('adcname').split('-')[1])
+
+    status = "Configure Board Successfully: %s-ns per point." %dt_ns
     return jsonify(message=status)
-@bp.route('/alzdg/acquiredata', methods=['GET'])
-def alzdgacquiredata():
-    alzdglabel = request.args.get('alzdglabel')
-    alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
-    recordtime, recordtimeunit = request.args.get('recordtime'), request.args.get('recordtimeunit')[0]
+@bp.route('/adc/acquiredata', methods=['GET'])
+def adcacquiredata():
+    adctag, adctype = '%s:%s' %(request.args.get('adcname'),session['user_name']), request.args.get('adctype')
+    recordtime = si_parse(request.args.get('recordtime') + request.args.get('recordtimeunit')[0])
     recordsum = int(request.args.get('recordsum'))
     recordbuff = int(request.args.get('recordbuff')) # default: 32MB
-    [DATA, transferTime_sec, recordsPerBuff, buffersPerAcq] = ALZDG.AcquireData_NPT(alzdgboard[alzdgtag], recordtime=si_parse(recordtime + recordtimeunit), recordsum=recordsum,
-                                                                                        OPT_DMA_Buffer_Size=recordbuff)
-    global I_data, Q_data, t_data
-    I_data, Q_data, t_data = {}, {}, {}
-    I_data[alzdgtag] = DATA[:,:,0]
-    Q_data[alzdgtag] = DATA[:,:,1]
-    t_data[alzdgtag] = list(1e-9*linspace(1, len(DATA[0,:,0]), len(DATA[0,:,0])))
-    # print(Fore.GREEN + "Data-type: %s" %DATA.dtype) # numpy default: float64 (But we adapted to float32 for Quadro-GPU sake!)
 
-    # store eligible timsum configuration:
-    datalen = len(DATA[0,:,0])
-    record_timsum_buff = "%s*%s*%s"%(datalen,recordsPerBuff*buffersPerAcq,recordbuff) # <record-time-ns>*<record-sum>
-    try: 
-        timsum = get_status(request.args.get('alzdglabel').split('-')[0], request.args.get('alzdglabel').split('-')[1])["timsum_list"]
-        if record_timsum_buff not in timsum:
-            timsum = ",".join([timsum, record_timsum_buff])
-            set_status(request.args.get('alzdglabel').split('-')[0], dict(timsum_list=timsum), request.args.get('alzdglabel').split('-')[1])
-    except: 
-        print(Fore.RED + "ALZDG TIMSUM NOT YET SETUP OR HAD BEEN RESET")
-        set_status(request.args.get('alzdglabel').split('-')[0], dict(timsum_list=''), request.args.get('alzdglabel').split('-')[1])
-    return jsonify(datalen=datalen, transferTime_sec=transferTime_sec, recordsPerBuff=recordsPerBuff, buffersPerAcq=buffersPerAcq)
-@bp.route('/alzdg/playdata', methods=['GET'])
-def alzdgplaydata():
-    alzdglabel = request.args.get('alzdglabel')
-    alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
+    update_items = dict(OPT_DMA_Buffer_Size=recordbuff, FULL_SCALE=float(request.args.get('fullscale')), IQ_PAIR=[int(x) for x in request.args.get('iqpair').split(',')])
+    [DATA, transferTime_sec, recordsPerBuff, buffersPerAcq] = ADC[adctype].AcquireData(adcboard[adctag], recordtime, recordsum, update_items)
+    update_items.update(recordtime=request.args.get('recordtime'),recordsum=recordsum)
+    set_status(request.args.get('adcname').split('-')[0], update_items, request.args.get('adcname').split('-')[1])
+
+    global I_data, Q_data, t_data, TIME_RESOLUTION_NS
+    I_data, Q_data, t_data = {}, {}, {}
+    I_data[adctag] = DATA[:,:,0]
+    Q_data[adctag] = DATA[:,:,1]
+    t_data[adctag] = list(1 / ADC[adctype].sampling_rate(adcboard[adctag]) * linspace(1, len(DATA[0,:,0]), len(DATA[0,:,0])))
+    TIME_RESOLUTION_NS = round(1 / ADC[adctype].sampling_rate(adcboard[adctag]) / 1e-9)
+    recordtime_ns = TIME_RESOLUTION_NS * len(DATA[0,:,0])
+    print(Fore.GREEN + "Data-type: %s" %DATA.dtype) # numpy default: float64 (But we adapted to float32 for Quadro-GPU sake!)
+    return jsonify(recordtime_ns=recordtime_ns, transferTime_sec=si_format(transferTime_sec,1), recordsPerBuff=recordsPerBuff, buffersPerAcq=buffersPerAcq)
+@bp.route('/adc/playdata', methods=['GET'])
+def adcplaydata():
+    adctag = '%s:%s' %(request.args.get('adcname'),session['user_name'])
     average = int(request.args.get('average'))
     signal_processing = request.args.get('signal_processing')
     rotation_compensate_MHz = float(request.args.get('rotation_compensate'))
@@ -407,59 +442,61 @@ def alzdgplaydata():
     tracenum = int(request.args.get('tracenum'))
     # data post-processing:
     if average: # PENDING: verify fast CUDA average?
-        trace_I = mean(I_data[alzdgtag][:,:], 0)
-        trace_Q = mean(Q_data[alzdgtag][:,:], 0)
+        trace_I = mean(I_data[adctag][:,:], 0)
+        trace_Q = mean(Q_data[adctag][:,:], 0)
     else:
-        trace_I = I_data[alzdgtag][tracenum,:]
-        trace_Q = Q_data[alzdgtag][tracenum,:]
+        trace_I = I_data[adctag][tracenum,:]
+        trace_Q = Q_data[adctag][tracenum,:]
 
     # signal processing
-    if signal_processing != "original": trace_I, trace_Q = pulse_baseband(signal_processing, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorrection_kHz)
+    if signal_processing != "original":
+        trace_I, trace_Q = pulse_baseband(signal_processing, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
 
     trace_A = sqrt(power(trace_I, 2) + power(trace_Q, 2))
-    t = t_data[alzdgtag]
+    t = t_data[adctag]
     # print(Fore.CYAN + "plotting trace #%s"%tracenum)
     log = pauselog() #disable logging (NOT applicable on Apache)
 
-    alzdg_1Ddata[alzdgtag] = dict(t=t, I=list(trace_I.astype(float64)), Q=list(trace_Q.astype(float64)))
+    adc_1Ddata[adctag] = dict(t=t, I=list(trace_I.astype(float64)), Q=list(trace_Q.astype(float64)))
 
     return jsonify(log=str(log), I=list(trace_I.astype(float64)), Q=list(trace_Q.astype(float64)), A=list(trace_A.astype(float64)), t=t) # JSON only supports float64 conversion (to str-list eventually)
 # export to mat
-@bp.route('/alzdg/export/1dmat', methods=['GET'])
-def alzdg_export_1dmat():
-    alzdglabel = request.args.get('alzdglabel')
-    alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
-    set_mat(alzdg_1Ddata[alzdgtag], '1Dalzdg[%s].mat'%alzdgtag.replace(':','-')) # colon is not allowed in filename
-    status = "alzdg-mat written"
-    print(Fore.GREEN + "User %s has setup MAT-FILE in ALZDG-%s" %(alzdgtag.split(':')[1],alzdgtag.split(':')[0]))
-    return jsonify(status=status, alzdgtag=alzdgtag)
+@bp.route('/adc/export/1dmat', methods=['GET'])
+def adc_export_1dmat():
+    adctag = '%s:%s' %(request.args.get('adcname'),session['user_name'])
+    set_mat(adc_1Ddata[adctag], '1Dadc[%s].mat'%adctag.replace(':','-')) # colon is not allowed in filename
+    status = "adc-mat written"
+    print(Fore.GREEN + "User %s has setup MAT-FILE in ALZDG-%s" %(adctag.split(':')[1],adctag.split(':')[0]))
+    return jsonify(status=status, adctag=adctag)
 
-@bp.route('/alzdg/closet', methods=['GET'])
-def alzdgcloset():
-    alzdglabel = request.args.get('alzdglabel')
-    alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
-    status = ALZDG.close(alzdgboard[alzdgtag], alzdglabel.split('-')[1])
+@bp.route('/adc/closet', methods=['GET'])
+def adccloset():
+    adctag, adctype = '%s:%s' %(request.args.get('adcname'),session['user_name']), request.args.get('adctype')
+    status = ADC[adctype].close(adcboard[adctag], adctag.split('-')[1].split(':')[0])
+    del adcboard[adctag]
     return jsonify(message=status)
-@bp.route('/alzdg/testing', methods=['GET'])
-def alzdgtesting():
-    alzdglabel = request.args.get('alzdglabel')
-    alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
-    status = ALZDG.test(alzdgboard[alzdgtag])
+@bp.route('/adc/testing', methods=['GET'])
+def adctesting():
+    adctag, adctype = '%s:%s' %(request.args.get('adcname'),session['user_name']), request.args.get('adctype')
+    status = ADC[adctype].test(adcboard[adctag])
     return jsonify(message=status)
-@bp.route('/alzdg/get', methods=['GET'])
-def alzdgget():
-    alzdglabel = request.args.get('alzdglabel')
-    alzdgtag = '%s:%s' %(alzdglabel,session['user_name'])
+@bp.route('/adc/get', methods=['GET'])
+def adcget():
+    adctag, adctype = '%s:%s' %(request.args.get('adcname'),session['user_name']), request.args.get('adctype')
+    adc_history = get_status(request.args.get('adcname').split('-')[0], request.args.get('adcname').split('-')[1])
     message = {}
     try:
-        message['model'] = ALZDG.model(alzdgboard[alzdgtag])
+        message['model'] = ADC[adctype].model(adcboard[adctag])[1]['IDN']
+        if adctype=="ALZDG": message['sampling_rate'] = '1GSPS'
+        elif adctype=="SDDIG": message['sampling_rate'] = '500MSPS'
+        else: message['sampling_rate'] = 'SPEC NOT FOUND INSIDE DATABASE!'
     except:
-        message = dict(status='%s is not connected or busy or error' %alzdglabel)
+        message = dict(status='%s is not connected or busy or error' %request.args.get('adcname'))
     print("message: %s" %message)
-    return jsonify(message=message)
+    return jsonify(message=message, adc_history=adc_history)
 # endregion
 
-# region: NA (user-specific)
+# region: NA (user-specific, Generalized)
 @bp.route('/na', methods=['GET'])
 def na(): 
     global NA, nabench, freqrange
@@ -703,10 +740,11 @@ def bdr():
         try: queue = get_status("MSSN")[session['user_name']]['queue']
         except: queue = 'CHAR0' # default
         global category
-        category = ['DC','SG','NA','DAC','ADC','SA','SC']
+        category = ['ROLE','CH','DC','SG','NA','DAC','ADC','SA','SC']
         
-        return render_template("blog/machn/bdr.html", loaded=loaded, recent_samples=recent_samples, machine_list=machine_list, systemlist=systemlist, queue=queue, \
-            category=category, CHAR0_sample=g.CHAR0_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample)
+        DR_platform = int(get_status("WEB")['port']) - 5300
+        return render_template("blog/machn/bdr.html", DR_platform=DR_platform, loaded=loaded, recent_samples=recent_samples, machine_list=machine_list, systemlist=systemlist, queue=queue, \
+            category=category, CHAR0_sample=g.CHAR0_sample, CHAR1_sample=g.CHAR1_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample)
     else: abort(404)
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():
@@ -787,7 +825,8 @@ def bdrsamplesallocate():
     if int(g.user['management'])>=3:
         try:
             db = get_db()
-            db.execute("UPDATE queue SET samplename = ? WHERE system = ?", (set_sample,set_system,))
+            if set_sample == "null": db.execute("UPDATE queue SET samplename = null WHERE system = ?", (set_system,))
+            else: db.execute("UPDATE queue SET samplename = ? WHERE system = ?", (set_sample,set_system,))
             db.commit()
             close_db()
             status = "User %s has set sample %s into system %s" %(g.user['username'],set_sample,set_system)
@@ -805,16 +844,37 @@ def bdr_wiring_instruments():
     qsystem = request.args.get('qsystem')
     inst_list = inst_order(qsystem)
     instr_organized = {}
-    for cat in category: instr_organized[cat] = ", ".join(inst_order(qsystem,cat))
+    for cat in category: instr_organized[cat] = inst_order(qsystem,cat,False)
     print(Fore.CYAN + "Organized instruments: %s"%instr_organized)
     return jsonify(category=category, inst_list=inst_list, instr_organized=instr_organized)
 @bp.route('/bdr/wiring/set/instruments', methods=['GET'])
 def bdr_wiring_set_instruments():
     qsystem = request.args.get('qsystem')
-    if int(g.user['management'])>=3:
-        pass
-    
-    return jsonify()
+    instr_organized = loads(request.args.get('instr_organized'))
+    try:
+        if int(g.user['management'])>=3:
+            for key, val in instr_organized.items(): 
+                inst_designate(qsystem, key, val)
+        message = "%s's instrument assignment has been set successfully" %qsystem
+    except:
+        message = "database error"
+    return jsonify(message=message)
+@bp.route('/bdr/wiring/check/instruments', methods=['GET'])
+def bdr_wiring_check_instruments():
+    instr_set = request.args.get('instr_set').replace(" ","").upper() # CSV-string
+    CAT = request.args.get('cat')
+    message = "working on %s" %CAT
+
+    if CAT=="CH" or CAT=="ROLE": pass
+    else:
+        for instr in instr_set.split(','):
+            if instr.replace('_','-') not in g.instlist: # All registered machines 
+                instr_set = instr_set.replace(instr,'')
+                message = "Make sure %s is in ALL-MACHINE-LIST" %(instr)
+
+    while ',,' in instr_set: instr_set = instr_set.replace(',,',',') # omit extra commas
+    while ' ' in instr_set: instr_set = instr_set.replace(' ','') # omit spaces
+    return jsonify(checked_instr_set=instr_set, message=message)
 
 # endregion
 
