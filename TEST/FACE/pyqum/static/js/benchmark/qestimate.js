@@ -135,11 +135,9 @@ $(function () {
 
         console.log( "Fit plot" );
         console.log( analysisIndex );
-        let xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"];
+
+        let xAxisKey = htmlInfo[analysisIndex["axisIndex"][0]]["name"];
         let fitRange = document.getElementById("qEstimation"+"-fitting_input-"+xAxisKey).value;
-
-
-
 
         let baseline_correction = document.getElementById("qFactor-fit-baseline-correct").checked;
         let baseline_smoothness = document.getElementById("qFactor-fit-baseline-smoothness").value;
@@ -158,24 +156,29 @@ $(function () {
             gain:gain,
             
         }
+        
         console.log(fitParameters);
-
 
         // Plot fit parameters
         $.getJSON( '/benchmark/qestimate/getJson_fitParaPlot',{  
             fitParameters: JSON.stringify(fitParameters),
             analysisIndex: JSON.stringify(analysisIndex), 
         }, function (data) {
-            if (analysisIndex.axisIndex.length == 1) { xAxisKey = "Single_plot" }
-            //if ( xAxisKey == "Power" ) { xAxisKey = "power_corr" }
             console.log("fitResult");
-            console.log(data);           
+            console.log(data);
+            let fitResultxAxisKey = "Single_plot";
+
+            if (analysisIndex.axisIndex.length == 2) { fitResultxAxisKey = htmlInfo[analysisIndex["axisIndex"][0]]["name"] }
+            if ( fitResultxAxisKey == "Power" ) { fitResultxAxisKey = "power_corr" }
+
+            console.log("xAxisKey: "+fitResultxAxisKey);
+
             let axisKeys_fitResult = {
-                x: [xAxisKey],
-                y: ["Qc_dia_corr", "Qi_dia_corr", "Ql", "fr"],
-                yErr: ["absQc_err", "Qi_dia_corr_err", "Ql_err", "fr_err"],
+                x: [fitResultxAxisKey],
+                y: ["Qi_dia_corr","Qi_no_corr","absQc","Qc_dia_corr","Ql","fr","theta0","phi0"],
+                yErr: ["Qi_dia_corr_err", "Qi_no_corr_err", "absQc_err", "absQc_err", "Ql_err", "fr_err", "", "phi0_err"],
             }
-            let plotdata = Object.assign({}, data["results"], data["errors"]);
+            let plotdata = Object.assign({}, data["extendResults"], data["results"], data["errors"]);
 
             plot1D( plotdata, axisKeys_fitResult, "qFactor-plot-fittingParameters");
 

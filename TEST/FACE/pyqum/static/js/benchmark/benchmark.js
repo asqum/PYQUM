@@ -93,7 +93,14 @@ function get_selectInfo( quantificationType ){
             console.log( "Plot type " +plotType );
             if ( plotType == "y_value" )
             {
-                console.log(htmlName +" for y-axis ");
+                console.log(htmlName +" for y-axis value");
+                axisIndex[axisIndex.length] = structurePosition ;
+                valueIndex[i]=document.getElementById(quantificationType+"-select_value-"+htmlName).selectedIndex;
+                
+            }
+            if ( plotType == "y_count" )
+            {
+                console.log(htmlName +" for y-axis count");
                 axisIndex[axisIndex.length] = structurePosition ;
                 valueIndex[i]=document.getElementById(quantificationType+"-select_value-"+htmlName).selectedIndex;
                 
@@ -303,9 +310,10 @@ function showAveInput(selectObject) {
 function plot1D ( data, axisKeys, plotId ){
     console.log("Plotting 1D");
     let traceNumber = axisKeys.y.length;
+    console.log(Object.keys(data));
     console.log(axisKeys.x);
     console.log(axisKeys.y);
-    console.log(axisKeys.yrr);
+    console.log(axisKeys.yErr);
     let tracies = new Array(traceNumber);
     let ix;
     for (let i = 0; i < traceNumber; i++){
