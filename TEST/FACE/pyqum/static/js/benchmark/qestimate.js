@@ -139,8 +139,6 @@ $(function () {
         let xAxisKey = htmlInfo[analysisIndex["axisIndex"][0]]["name"];
         let fitRange = document.getElementById("qEstimation"+"-fitting_input-"+xAxisKey).value;
 
-
-
         let baseline_correction = document.getElementById("qFactor-fit-baseline-correct").checked;
         let baseline_smoothness = document.getElementById("qFactor-fit-baseline-smoothness").value;
         let baseline_asymmetry = document.getElementById("qFactor-fit-baseline-asymmetry").value;
