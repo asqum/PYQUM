@@ -44,13 +44,10 @@
 
                  <!-- IF-Bandwidth & Power -->
                 <div class="row">
-                    <div class="col-10" id='left'><label class='parameter'>IFB</label></div>
-                    <div class="col-12" id='left'><input class='sa scale settings' name='ifb' type="text" value="1000"/></div>
-                    <div class="col-10" id='left'><input class="sa unit settings" name='ifb' value="Hz"></div>
+                    <div class="col-10" id='left'><label class='parameter'>RBW</label></div>
+                    <div class="col-12" id='left'><input class='sa scale settings' name='rbw' type="text" value="1000"/></div>
+                    <div class="col-10" id='left'><input class="sa unit settings" name='rbw' value="Hz"></div>
                     <div class="col-3" id='left'></div>
-                    <div class="col-10" id='left'><label class='parameter'>Power</label></div>
-                    <div class="col-12" id='left'><input class='sa scale settings' name='powa' type="text" value="-5"/></div>
-                    <div class="col-10" id='left'><input class="sa unit settings" name='powa' value="dBm"></div>
 
                     <!-- SWEEP -->
                     <div class="col-15" id='right'>
@@ -61,69 +58,24 @@
                 <!-- S-Parameters -->
                 <div class="row">
                     <div class="col-10" id='left'><label class='parameter'></label></div>
+                    <!-- AVERAGE -->
                     <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='sa sparam settings' name='S21' type="checkbox">
-                            <div class="slider smooth"></div><span class="on">S21</span><span class="off">S21</span>
+                        <label class="switch"><input class='sa average settings' name='AVERAGE' type="checkbox">
+                            <div class="slider smooth"><span class="on">AVERAGE</span><span class="off">RAW</span></div>
                         </label>
                     </div>
-                    <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='sa sparam settings' name='S11' type="checkbox">
-                            <div class="slider smooth"><span class="on">S11</span><span class="off">S11</span></div>
+                    <!-- CONT. SWEEP -->
+                    <div class="col-12" id='left'>
+                        <label class="switch"><input class='sa cont-sweep settings' name='scanning' type="checkbox">
+                            <div class="slider smooth"><span class="on">Continuous</span><span class="off">Hold</span></div>
                         </label>
                     </div>
-
+                    
                     <div class="col" id='left' style="width: 2%"></div>
-
-                    <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='sa sparam settings' name='S12' type="checkbox">
-                            <div class="slider smooth"><span class="on">S12</span><span class="off">S12</span></div>
-                        </label>
-                    </div>
-                    <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='sa sparam settings' name='S22' type="checkbox">
-                            <div class="slider smooth"><span class="on">S22</span><span class="off">S22</span></div>
-                        </label>
-                    </div>
 
                     <!-- AUTOSCALE -->
                     <div class="col-15" id='right'>
                         <button class='sa push_button w-95 blue' id='autoscale'>AUTOSCALE</button>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-10" id='left'><label class='parameter'></label></div>
-                    <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='sa sparam settings' name='S43' type="checkbox">
-                            <div class="slider smooth"></div><span class="on">S43</span><span class="off">S43</span>
-                        </label>
-                    </div>
-                    <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='sa sparam settings' name='S33' type="checkbox">
-                            <div class="slider smooth"><span class="on">S33</span><span class="off">S33</span></div>
-                        </label>
-                    </div>
-
-                    <div class="col" id='left' style="width: 2%"></div>
-
-                    <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='sa sparam settings' name='S34' type="checkbox">
-                            <div class="slider smooth"><span class="on">S34</span><span class="off">S34</span></div>
-                        </label>
-                    </div>
-                    <div class="col-12" id='left' style="margin-right:0.5%">
-                        <label class="switch"><input class='sa sparam settings' name='S44' type="checkbox">
-                            <div class="slider smooth"><span class="on">S44</span><span class="off">S44</span></div>
-                        </label>
-                    </div>
-
-                    <!-- SWEEP -->
-                    <div class="row">
-                        <div class="col-15" id='right'>
-                            <label class="switch"><input class='sa settings' name='scanning' type="checkbox">
-                                <div class="slider smooth"><span class="on">Continuous</span><span class="off">Hold</span></div>
-                            </label>
-                        </div>
                     </div>
                 </div>
 

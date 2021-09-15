@@ -215,8 +215,10 @@ def prepare_DAC(module, channel, datasize, maxlevel=1.5, update_settings={}):
         settings['trigbyPXI'], settings['mode'], settings['sync'], settings['markeroption'], settings['Master'], settings['markerdelay']
 
     # 2. Choose Trigger Source:
-    if int(trigbyPXI) in range(8): extSource = 4000 + int(trigbyPXI)
-    else: extSource = 0
+    markerValue, trigio_direction = 0, 0
+    if int(trigbyPXI) in range(8): extSource = 4000 + int(trigbyPXI) # BOTH Marking & Triggered by PXI.
+    elif int(trigbyPXI)==-13: markerValue, extSource = 1, 4000 # Marking active-high via TrigIO-port on front panel, make PXI just a dummy.
+    elif int(trigbyPXI)==-1: extSource, trigio_direction = 0, 1 # Triggered by TrigIO-port on front panel.
 
     channelist= [channel]
     if int(markeroption)==7: channelist.append(4)
@@ -239,17 +241,17 @@ def prepare_DAC(module, channel, datasize, maxlevel=1.5, update_settings={}):
         
         # 6. Setting Trigger-IO port:
         trgIOmask = 1 # always open up trig-IO port
-        triggerio(module, 0) # always output marker (hopefully)
+        triggerio(module, trigio_direction) # always output marker (hopefully)
         # trgIOmask = (abs(trigbyPXI) - trigbyPXI) / abs(trigbyPXI) / 2 # +ve: 0, -ve: 1
         # if trgIOmask==1: triggerio(module, not Master) # Trigger-IO ONLY (Card's Front 1st SMA-port) port-direction
 
         # 7. Configure marker(s):
-        configureMarker(module, channel, [abs(trigbyPXI)], markerMode, int(trgIOmask), markerValue=0, delay=markerdelay) # PXI and Trig-IO can output marker simultaneously!
+        configureMarker(module, channel, [abs(trigbyPXI)], markerMode, int(trgIOmask), markerValue=markerValue, delay=markerdelay) # PXI and Trig-IO can output marker simultaneously!
         
     return module
 def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_settings={}):
     '''
-    markeroption: 0 (disabled), 7 (PIN-Switch on MixerBox)
+    markeroption: 0 (disabled), 7 (PIN-Switch on MixerBox) (a.k.a. marker[1-4] for TKAWG)
     clearQ: MUST be used when ALL channels are FULLY assigned.
     '''
     # 1. Loading the settings:

@@ -132,9 +132,9 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
             SG_instance[i] = SG[i].Initiate(which=SG_label[i])
             SG[i].power(SG_instance[i], action=['Set', str(SG_powa[i]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
             SG[i].rfoutput(SG_instance[i], action=['Set', 1])
-            if SG_type[i] in 'DDSLO,...' and i==1: # Set CH-2 for DDSLO(-2) type of SG (PENDING: BASED ON WIRING DATABASE instead)
-                SG[i].power(SG_instance[i], action=['Set_2', str(SG_powa[i]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
-                SG[i].rfoutput(SG_instance[i], action=['Set_2', 1])
+            # if SG_type[i] in 'DDSLO,...' and i==1: # Set CH-2 for DDSLO(-2) type of SG (PENDING: BASED ON WIRING DATABASE instead)
+            #     SG[i].power(SG_instance[i], action=['Set_2', str(SG_powa[i]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
+            #     SG[i].rfoutput(SG_instance[i], action=['Set_2', 1])
 
     # DAC for [ROXY]:
     DAC_qty = len(instr['DAC'])
@@ -228,7 +228,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                     elif structure[j] == 'RO-LO-Frequency':
                         if "opt" not in rofreq.data: # check if it is in optional-state
                             SG[1].frequency(SG_instance[1], action=['Set_', str(rofreq.data[caddress[j]] + RO_Compensate_MHz/1e3) + "GHz"])
-                            if SG_type[1] in 'DDSLO,...': SG[1].frequency(SG_instance[1], action=['Set_2', str(rofreq.data[caddress[j]] + RO_Compensate_MHz/1e3) + "GHz"])
+                            # if SG_type[1] in 'DDSLO,...': SG[1].frequency(SG_instance[1], action=['Set_2', str(rofreq.data[caddress[j]] + RO_Compensate_MHz/1e3) + "GHz"])
 
                 # DAC's SCORE-UPDATE:
                 if j > 2:
@@ -260,6 +260,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                     7 for SDAWG: PIN-Switch on MixerBox
                     0 for BOTH: disabled.
                     '''
+                    # PENDING: edittable markeroption instead of just "2":
                     DAC[i].compose_DAC(DAC_instance[i], int(ch), pulseq.music, pulseq.envelope, 2, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
                 DAC[i].ready(DAC_instance[i])
                 print('Waveform from Slot-%s is Ready!'%(i))

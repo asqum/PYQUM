@@ -1652,7 +1652,7 @@ def mani_singleqb_2ddata():
     Adata = zeros([len(ysweep), len(xsweep)])
     Pdata = zeros([len(ysweep), len(xsweep)])
     for j in ysweep:
-        if not (j+1)%10: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
+        if not (j+1)%600: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
         selected_caddress[SQ_CParameters[session['user_name']].index(selected_y)] = j # register y-th position
         for i in xsweep:
             selected_caddress[SQ_CParameters[session['user_name']].index(selected_x)] = i # register x-th position

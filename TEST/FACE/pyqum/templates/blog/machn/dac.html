@@ -78,7 +78,8 @@
                         <option value='5'>PXI-5</option>
                         <option value='6'>PXI-6</option>
                         <option value='7'>PXI-7</option>
-                        <option value='-13'>Trigger I/O</option>
+                        <option value='-13'>EXT OUT</option>
+                        <option value='-1'>EXT IN</option>
                     </select></div>
                 </div>
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
@@ -198,6 +199,13 @@
                             <div class="col-66" id='left'><input style="color:blue;" class="dac scale setchannels pulse-period" type="number" value='8000'/></div>
                             <div class="col-25" id='left'><input style="color:blue;" class="dac unit setchannels pulse-period" value="ns"/></div>
                         </div>
+                        <div class="row">
+                            <!-- AUTO-SCORE-IN -->
+                            <label class="switch"><input class='dac live-update-channel' type="checkbox">
+                                <div class="slider smooth"><span class="on">LIVE-SCORE</span><span class="off">MANUAL-MODE</span></div>
+                            </label>
+                        </div>
+                        
                     </div>
                 </div>
                 
