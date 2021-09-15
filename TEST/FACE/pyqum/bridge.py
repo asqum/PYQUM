@@ -82,7 +82,7 @@ def iqcal_manual_calibrate():
         SA.measure(iqcal_sabench[session['user_name']])
         SA.autoscal(iqcal_sabench[session['user_name']])
         full_spectrum_x = waveform('%s to %s * %s' %(fstart, fstop, npoints-1)).data
-        full_spectrum_y = SA.sdata(iqcal_sabench[session['user_name']])
+        full_spectrum_y = SA.sdata(iqcal_sabench[session['user_name']], mode="")
     except: 
         freq_list, powa_list, full_spectrum_x, full_spectrum_y = [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]
 

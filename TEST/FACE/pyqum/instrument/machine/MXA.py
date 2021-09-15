@@ -170,9 +170,10 @@ def measure(bench):
     ready = bench.query("*OPC?") # when opc return, the sweep is done
     return ready
 
-def sdata(bench):
+def sdata(bench, mode="NA"):
     '''Collect data from MXA
     This returns the data from the FIRST TRACE.
+    mode: to be analogy with the NA in order to be called in "characterize".
     '''
     bench.query('*OPC?')
     try:
@@ -186,6 +187,10 @@ def sdata(bench):
             datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 64-bit)
         elif 'ASC' in datatype[1]['DATA']:
             datas = bench.query_ascii_values(sdatacore) # convert the transferred ascii-encoded binaries into list (slower)
+        if mode=="NA":
+            # NOTE: interleaving the data with Q=0 or I=0 depending on which gives a zero phase:
+
+            pass
     except Exception as err:
         datas = [0]
         print(err)
@@ -207,7 +212,7 @@ def fpower(bench, frequency_GHz, ave_points=100, resBW_kHz=3, ave_counts=10):
         sweep_time_s = float(bench.query(":SENSe:SWEep:TIME?"))
         print(Fore.CYAN + "Sweeping time: %ss" %sweep_time_s)
         dataform(bench, action=['Set', 'REAL'])
-        powerlist = sdata(bench) # data in list
+        powerlist = sdata(bench, mode="") # data in list
     else: powerlist = [0]*int(ave_points)
     # Average all the collected points:
     power = mean(powerlist)
@@ -228,6 +233,9 @@ def close(bench, reset=True, which=1, mode='DATABASE'):
     set_status(mdlname, dict(state='disconnected'))
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
     return status
+
+# Dummies:
+def power(bench, action): pass
         
 
 # Test Zone
@@ -269,7 +277,7 @@ def test(detail=True):
                 x = waveform('%s to %s * %s' %(freq-span/1000, freq+span/1000, npoints-1)).data
                 marking_power = mark_power(s,freq)
                 dataform(s, action=['Set', 'REAL'])
-                y = sdata(s)
+                y = sdata(s, mode="")
                 print("data points extracted: %s" %len(y))
                 curve(x, y, 'Power at %sGHz: %s' %(freq,marking_power), 'frequency (GHz)', 'power (dBm)')
 
@@ -286,7 +294,7 @@ def test(detail=True):
                 measure(s)
                 autoscal(s)
                 x = waveform('%s to %s * %s' %(fstart, fstop, npoints-1)).data
-                y = sdata(s)
+                y = sdata(s, mode="")
                 curve(x, y, 'power spectrum-2', 'frequency (GHz)', 'power (dBm)')
 
             elif int(input("Press 1 (others) to proceed (skip) PHASE-3 (Zero-span power for IQ-Calibration): "))==1:

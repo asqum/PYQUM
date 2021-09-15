@@ -545,9 +545,10 @@ $(function () {
         var iifb = $('select.char.cwsweep.parameter#c-ifb').val();
         var ifreq = $('select.char.cwsweep.parameter#c-freq').val();
         var ipowa = $('select.char.cwsweep.parameter#c-powa').val();
-        console.log("Picked: " + isparam);
+        var noise = $('input.char.cwsweep.bottomost-data-block#c-noise-data').is(':checked')?1:0;
+        console.log("Picked: " + isparam + ", Noise-data: " + noise);
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/1ddata', {
-            irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
+            irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa, noise: noise,
         }, function (data) {
             window.x1 = data.x1;
             window.y1 = new Object();
@@ -587,9 +588,10 @@ $(function () {
         var iifb = $('select.char.cwsweep.parameter#c-ifb').val();
         var ifreq = $('select.char.cwsweep.parameter#c-freq').val();
         var ipowa = $('select.char.cwsweep.parameter#c-powa').val();
-        console.log("Picked: " + isparam);
+        var noise = $('input.char.cwsweep.bottomost-data-block#c-noise-data').is(':checked')?1:0;
+        console.log("Picked: " + isparam + ", Noise-data: " + noise);
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/1ddata', {
-            irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa
+            irepeat: irepeat, ifluxbias: ifluxbias, ixyfreq: ixyfreq, ixypowa: ixypowa, isparam: isparam, iifb: iifb, ifreq: ifreq, ipowa: ipowa, noise: noise,
         }, function (data) {
             window.x1C = data.x1;
             window.y1C = new Object();
