@@ -816,7 +816,7 @@ def char_cwsweep_1ddata():
     x1, y1, yup, yp = selected_progress, Amp, list(UnwraPhase(selected_progress, Pha)), Pha #list(unwrap(Pha)) 
     cwsweep_1Ddata[session['user_name']] = {xtitle: x1, 'Amplitude': y1, 'UPhase': yup, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
     
-    return jsonify(x1=x1, y1=y1, yup=yup, yp=yp, x1title=xtitle)
+    return jsonify(x1=x1, y1=y1, yup=yup, yp=yp, x1title=xtitle, selected_I=selected_I, selected_Q=selected_Q)
 
 # Pending renovation below:
 @bp.route('/char/cwsweep/2ddata', methods=['GET'])

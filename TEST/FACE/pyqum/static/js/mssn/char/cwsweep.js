@@ -182,7 +182,7 @@ function accessdata_cwsweep() {
     });
     return false;
 };
-function plot1D_cwsweep(x1,y1,y2,xtitle,phasetype) {
+function plot1D_cwsweep(x1,y1,y2,y3,y4,xtitle,phasetype) {
     console.log(xtitle);
     
     let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
@@ -193,6 +193,15 @@ function plot1D_cwsweep(x1,y1,y2,xtitle,phasetype) {
         name: 'Phase (' + wday + ', ' + wmoment + ')',
         line: {color: 'blue', width: 2.5},
         yaxis: 'y2' };
+
+    let traceI = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'Amplitude (' + wday + ', ' + wmoment + ')',
+        line: {color: 'rgb(23, 151, 6)', width: 2.5},
+        yaxis: 'y' };
+    let traceQ = {x: [], y: [], mode: 'lines', type: 'scatter', 
+        name: 'Amplitude (' + wday + ', ' + wmoment + ')',
+        line: {color: 'rgb(23, 151, 6)', width: 2.5},
+        yaxis: 'y' };
 
     let layout = {
         legend: {x: 1.08},
@@ -244,7 +253,11 @@ function plot1D_cwsweep(x1,y1,y2,xtitle,phasetype) {
     $.each(x1, function(i, val) {traceR.x.push(val);});
     $.each(y2, function(i, val) {traceR.y.push(val);});
 
-    var Trace = [traceL, traceR]
+    $.each(x1, function(i, val) {traceI.x.push(val);});
+    $.each(y3, function(i, val) {traceI.y.push(val);});
+    $.each(x1, function(i, val) {traceQ.x.push(val);});
+    $.each(y4, function(i, val) {traceQ.y.push(val);});
+    var Trace = [traceL, traceR, traceI, traceQ]
     Plotly.newPlot('char-cwsweep-chart', Trace, layout, {showSendToCloud: true});
     $( "i.cwsweep1d" ).remove(); //clear previous
 };
@@ -556,9 +569,11 @@ $(function () {
             window.y1.P = data.yp;
             window.y1.UP = data.yup;
             window.x1title = data.x1title;
+            window.y1.I = data.selected_I;
+            window.y1.Q = data.selected_Q;
             // Phase option
             $('select.char.data.cwsweep[name="1d-phase-type"]').empty().append($('<option>', { text: 'Pha', value: 'Pha' })).append($('<option>', { text: 'UPha', value: 'UPha' }));
-            plot1D_cwsweep(x1,y1.A,y1.P,x1title,'<b>Raw-Pha(rad)</b>');
+            plot1D_cwsweep(x1,y1.A,y1.P,y1.I,y1.Q,x1title,'<b>Raw-Pha(rad)</b>');
             $('button.char#cwsweep-savecsv').show();
         });
     });
@@ -567,10 +582,10 @@ $(function () {
 $('select.char.data.cwsweep').on('change', function() {
     if ($('select.char.data.cwsweep[name="1d-phase-type"]').val() == "Pha") {
         console.log("Pha mode");
-        plot1D_cwsweep(x1,y1.A,y1.P,x1title,'<b>Raw-Pha(rad)</b>');
+        plot1D_cwsweep(x1,y1.A,y1.P,y1.I,y1.Q,x1title,'<b>Raw-Pha(rad)</b>');
     } else if ($('select.char.data.cwsweep[name="1d-phase-type"]').val() == "UPha") {
         console.log("UPha mode");
-        plot1D_cwsweep(x1,y1.A,y1.UP,x1title,'<b>UFN-Pha(rad)</b>');
+        plot1D_cwsweep(x1,y1.A,y1.UP,y1.I,y1.Q,x1title,'<b>UFN-Pha(rad)</b>');
     };
     return false;
 });
@@ -599,7 +614,8 @@ $(function () {
             window.y1C.P = data.yp;
             window.y1C.UP = data.yup;
             window.x1titleC = data.x1title;
-
+            window.y1C.I = data.selected_I;
+            window.y1C.Q = data.selected_Q;
             // Normalization Options:
             $('select.char.data.cwsweep#cwsweep-compare-nml').empty().append($('<option>', { text: 'direct', value: 'direct' }))
                                                                 .append($('<option>', { text: 'normaldip', value: 'normaldip' }))
@@ -611,10 +627,12 @@ $(function () {
             // APUP Options:
             $('select.char.data.cwsweep#cwsweep-compare-apup').empty().append($('<option>', { text: 'Amplitude', value: 'A' }))
                                                                 .append($('<option>', { text: 'Phase', value: 'P' }))
-                                                                .append($('<option>', { text: 'UPhase', value: 'UP' }));
+                                                                .append($('<option>', { text: 'UPhase', value: 'UP' }))
+                                                                .append($('<option>', { text: 'I', value: 'I' }))
+                                                                .append($('<option>', { text: 'Q', value: 'Q' }));
 
-            var APUP = $('select.char.data.cwsweep#cwsweep-compare-apup').val();
-            compare1D(x1,y1[APUP],x1C,y1C[APUP],x1titleC,APUP,normalize,direction,'char-cwsweep');
+            var APUPIQ = $('select.char.data.cwsweep#cwsweep-compare-apup').val();
+            compare1D(x1,y1[APUPIQ],x1C,y1C[APUPIQ],x1titleC,APUPIQ,normalize,direction,'char-cwsweep');
         })
             .fail(function(jqxhr, textStatus, error){
                 $('div#char-cwsweep-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error));
@@ -626,8 +644,8 @@ $(function () {
 $('.char.data.cwsweep.compare').on('change', function() {
     normalize = Boolean($('select.char.data.cwsweep#cwsweep-compare-nml').val()!='direct');
     direction = $('select.char.data.cwsweep#cwsweep-compare-nml').val().split('normal')[1];
-    var APUP = $('select.char.data.cwsweep#cwsweep-compare-apup').val();
-    compare1D(x1,y1[APUP],x1C,y1C[APUP],x1titleC,APUP,normalize,direction,'char-cwsweep');
+    var APUPIQ = $('select.char.data.cwsweep#cwsweep-compare-apup').val();
+    compare1D(x1,y1[APUPIQ],x1C,y1C[APUPIQ],x1titleC,APUPIQ,normalize,direction,'char-cwsweep');
     return false;
 });
 
