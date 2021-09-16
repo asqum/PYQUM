@@ -4,6 +4,7 @@
 
 from colorama import init, Fore, Back
 from numpy.core.fromnumeric import mean
+from numpy import array, zeros, transpose
 init(autoreset=True) #to convert termcolor to wins color
 
 from os.path import basename as bs
@@ -46,11 +47,12 @@ def model(bench, action=['Get', '']):
     SCPIcore = '*IDN'  #inquiring machine identity: "who r u?"
     return mdlname, bench, SCPIcore, action
 @Attribute
-def sweep(bench, action=['Get', '']):
+def sweepSA(bench, action=['Get', '']):
     '''Specifies the number of measurement points for one sweep run.\n
         action=['Set','101']'''
     SCPIcore = ':SWEep:POINts'
     return mdlname, bench, SCPIcore, action
+    
 @Attribute
 def averag(bench, action=['Get', '']):
     '''
@@ -179,6 +181,7 @@ def sdata(bench, mode="NA"):
     try:
         sdatacore = ":TRACe:DATA? TRACE1"
         datatype = dataform(bench)
+        #Temp setting (Jacky)
         # databorder = str(bench.query("FORMat:BORDer?"))
         # print(Fore.CYAN + "Endian (Byte-order): %s" %databorder)
         if datatype[1]['DATA'] == 'REAL,32':
@@ -189,8 +192,12 @@ def sdata(bench, mode="NA"):
             datas = bench.query_ascii_values(sdatacore) # convert the transferred ascii-encoded binaries into list (slower)
         if mode=="NA":
             # NOTE: interleaving the data with Q=0 or I=0 depending on which gives a zero phase:
-
-            pass
+            
+            fakeI = array(datas)
+            fakeQ = zeros(fakeI.shape[0])
+            datas = transpose( array([fakeI,fakeQ]) )
+            datas = list(datas.flat)
+            #print( type(datas), datas )
     except Exception as err:
         datas = [0]
         print(err)
@@ -236,7 +243,17 @@ def close(bench, reset=True, which=1, mode='DATABASE'):
 
 # Dummies:
 def power(bench, action): pass
-        
+     
+def setrace(nabench, Mparam=""): pass
+
+def sweep(nabench, action=['Get','','']): #Default from NA
+    if len(action)==3: action = [ action[0], action[2] ] # omit "TIME:AUTO ON"
+    if len(action)==2: pass
+    sweepSA(nabench, action)
+
+def ifbw(nabench, action=['Get', '']):
+    rbw(nabench, action=action)
+    vbw(nabench, action=action)
 
 # Test Zone
 def test(detail=True):
@@ -257,8 +274,8 @@ def test(detail=True):
             model(s)
             if int(input("Press 1 (others) to proceed (skip) PHASE-1 (Basic sweep with certain span): "))==1:
                 npoints = 371
-                sweep(s)
-                sweep(s, action=['Set','%s'%npoints])
+                sweepSA(s)
+                sweepSA(s, action=['Set','%s'%npoints])
                 freq = 7
                 fcenter(s)
                 fcenter(s, action=['Set','%sGHz'%freq])
@@ -285,7 +302,7 @@ def test(detail=True):
                 # dataform, sweep, ...(rbw,linfreq), measure, autoscal, sdata
                 dataform(s, action=['Set', 'REAL'])
                 npoints = 371
-                sweep(s, action=['Set','%s'%npoints])
+                sweepSA(s, action=['Set','%s'%npoints])
                 fstart, fstop = 5, 9
                 linfreq(s, action=['Set', '%sGHz'%fstart, '%sGHz'%fstop]) # F-sweep
                 rbw(s, action=['Set','1MHz'])
@@ -321,4 +338,4 @@ def test(detail=True):
     close(s, reset=state, mode="TEST")
     return
 
-# test()
+#test()

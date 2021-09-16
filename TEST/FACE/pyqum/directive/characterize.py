@@ -274,9 +274,11 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
                 NA.setrace(nabench, Mparam=[Sparam.data[caddress[3]]])
 
             if not i%prod(cstructure[5::]): # virtual for-loop using exact-multiples condition
+                print("IFB", ifb.data[caddress[4]] )
                 NA.ifbw(nabench, action=['Set', ifb.data[caddress[4]]])
 
             if not i%prod(cstructure[6::]): # virtual for-loop using exact-multiples condition
+                print("cwfreq", freq.data[caddress[5]]*1e9 )
                 NA.cwfreq(nabench, action=['Set', freq.data[caddress[5]]*1e9])
 
             if powa_repeat > 1:
@@ -284,14 +286,13 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 
             # start sweeping:
             stat = NA.sweep(nabench) #getting the estimated sweeping time
-            print("Time-taken for this loop would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
+            #print("Time-taken for this loop would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
             print("Operation Complete: %s" %bool(NA.measure(nabench)))
             # adjusting display on NA:
             NA.autoscal(nabench)
             # NA.selectrace(nabench, action=['Set', 'para 1 calc 1'])
             data = NA.sdata(nabench)
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
-            
             jobsinqueue(queue)
             if JOBID in g.jobidlist:
                 # print(Fore.YELLOW + "Pushing Data into file...")
