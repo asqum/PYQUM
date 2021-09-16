@@ -20,7 +20,7 @@ from contextlib import suppress
 # Scientific
 from scipy import constants as cnst
 from si_prefix import si_format, si_parse
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, logical_and, nan
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, logical_and, nan, angle
 
 # Load instruments
 from pyqum.directive.quantification import ExtendMeasurement, QEstimation, Decoherence
@@ -200,10 +200,10 @@ def getJson_plot():
 			plotData["Fitted_curve_frequency"]=plot_1D_show( myQuantification.fitCurve["x"] )
 			plotData["Fitted_curve_amplitude"]=plot_1D_show( abs(myQuantification.fitCurve["iqSignal"][yAxisValInd]) )
 		if myQuantification.baseline["x"].shape[0] != 0:
-			plotData["Fitted_baseline_frequency"]=myQuantification.fitCurve["x"]
+			plotData["Fitted_baseline_frequency"]=myExtendMeasurement.rawData["x"]
 			plotData["Fitted_baseline_amplitude"]=abs(myQuantification.baseline["iqSignal"][yAxisValInd])
 		if myQuantification.correctedIQData["x"].shape[0] != 0:
-			plotData["Corr_Data_point_frequency"]=myQuantification.fitCurve["x"]
+			plotData["Corr_Data_point_frequency"]=myExtendMeasurement.rawData["x"]
 			plotData["Corr_Data_point_amplitude"]=abs(myQuantification.correctedIQData["iqSignal"][yAxisValInd])
 		return plotData
 	def plot_1D_IQ () :
@@ -216,10 +216,62 @@ def getJson_plot():
 			plotData["Corr_Data_point_I"]= myQuantification.correctedIQData["iqSignal"][yAxisValInd].real
 			plotData["Corr_Data_point_Q"]= myQuantification.correctedIQData["iqSignal"][yAxisValInd].imag
 		return plotData
+	def plot_1D_all () :
+		rawDataComplex = myExtendMeasurement.rawData["iqSignal"][yAxisValInd]
+		RawDataXaxis = myExtendMeasurement.rawData["x"]
+		plotData = {}
+		plotRaw = {
+			xAxisKey: RawDataXaxis,
+			"I": rawDataComplex.real,
+			"Q": rawDataComplex.imag,
+			"Amplitude": abs(rawDataComplex),
+			"Phase": angle(rawDataComplex),
+		}
+
+		plotData["raw"] = plotRaw
+		# plot fitted cerve
+		fitXaxis = myQuantification.fitCurve["x"]
+		baselineXaxis = myQuantification.baseline["x"]
+		corrXaxis = myQuantification.correctedIQData["x"]
+		if fitXaxis.shape[0] != 0:
+			complexFitData = myQuantification.fitCurve["iqSignal"][yAxisValInd]
+			plotFit = {
+				xAxisKey: plot_1D_show(fitXaxis) ,
+				"I": complexFitData.real,
+				"Q": complexFitData.imag,
+				"Amplitude": abs(complexFitData),
+				"Phase": angle(complexFitData),
+			}
+			plotData["fitted"] = plotFit
+
+		if baselineXaxis.shape[0] != 0:
+			complexBaselineData = myQuantification.baseline["iqSignal"][yAxisValInd]
+			plotBaseline = {
+				xAxisKey: plot_1D_show(baselineXaxis) ,
+				"I": complexBaselineData.real,
+				"Q": complexBaselineData.imag,
+				"Amplitude": abs(complexBaselineData),
+				"Phase": angle(complexBaselineData),
+			}
+			plotData["baseline"] = plotBaseline
+
+		if corrXaxis.shape[0] != 0:
+			complexcorrectedData = myQuantification.correctedIQData["iqSignal"][yAxisValInd]
+			plotCorrectedData = {
+				xAxisKey: plot_1D_show(corrXaxis) ,
+				"I": complexcorrectedData.real,
+				"Q": complexcorrectedData.imag,
+				"Amplitude": abs(complexcorrectedData),
+				"Phase": angle(complexcorrectedData),
+			}
+			plotData["corrected"] = plotCorrectedData
+
+		return plotData
 	plotFunction = {
 		'2D_amp': plot_2D_amp,
 		'1D_amp': plot_1D_amp,
 		'1D_IQ': plot_1D_IQ,
+		'1D_all': plot_1D_all,
 	}
 	return json.dumps(plotFunction[plotType](), cls=NumpyEncoder)
 
