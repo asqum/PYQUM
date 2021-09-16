@@ -122,20 +122,22 @@
                         <!-- Some Perimeter(s) -->
                         <div class="row">
                             <div class="col-20" id='left'><label>Flux-Idle-Config</label></div>
+                            <div class="col-20" id='left'><label>Flux-Sweep-Channel</label></div>
+                            <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
                         </div>
                         <div class="row">
                             <div class="col-20" id='left'><input class='char cwsweep perimeter' id='cwsweep-z-idle' type="text" value="{}"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep perimeter' id='cwsweep-dcsweepch' type="number" value="1" min="1" step="1" max="4"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep' name="fluxbias" type="text" value="OPT,"/></div>
                         </div>
                         <!-- Optional Parameter(s) -->
                         <div class="row">
-                            <div class="col-20" id='left'><label>Flux-Sweep-Channel</label></div>
-                            <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
+                            <div class="col-40" id='left'><label>Locked-SG-Config</label></div>
                             <div class="col-20" id='left'><label>XY-Frequency (GHz)</label></div>
                             <div class="col-20" id='left'><label>XY-Power (dBm)</label></div> 
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char cwsweep perimeter' id='cwsweep-dcsweepch' type="number" value="1" min="1" step="1" max="4"/></div>
-                            <div class="col-20" id='left'><input class='char cwsweep' name="fluxbias" type="text" value="OPT,"/></div>
+                            <div class="col-40" id='left'><input class='char cwsweep perimeter' id='cwsweep-sg-locked' type="text" value="{}"/></div>
                             <div class="col-20" id='left'><input class='char cwsweep' name="xyfreq" type="text" value="OPT,"/></div>
                             <div class="col-20" id='left'><input class='char cwsweep' name="xypowa" type="text" value="OPT,"/></div>
                         </div>

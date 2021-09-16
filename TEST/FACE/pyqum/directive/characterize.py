@@ -43,8 +43,10 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
 
     # User-defined Controlling-PARAMETER(s) & -PERIMETER(s) ======================================================================================
+    # 1. PERIMETER:
     dcsweepch = perimeter['dcsweepch']
     z_idle = literal_eval(perimeter['z-idle']) # Idle Z-JSON: {<Channel>: <DC Value>, ... }
+    # 2. PARAMETER:
     fluxbias_lock = dict()
     fluxbias = waveform(corder['Flux-Bias'])
     Sparam = waveform(corder['S-Parameter'])
@@ -168,12 +170,15 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
 
     # User-defined Controlling-PARAMETER(s) & -PERIMETER(s) ======================================================================================
+    # 1. PERIMETER:
     dcsweepch = perimeter['dcsweepch']
     z_idle = literal_eval(perimeter['z-idle']) # Idle Z-JSON: {<Channel>: <DC Value>, ... }
-    fluxbias_lock = dict()
-    fluxbias = waveform(corder['Flux-Bias'])
-    xyfreq = waveform(corder['XY-Frequency'])
-    xypowa = waveform(corder['XY-Power'])
+    sg_locked = literal_eval(perimeter['sg-locked']) # Locked SG-JSON: {<INSTR>/<ATTR>: <Set LOCK-Waveform>, ... }
+    # 2. PARAMETER:
+    fluxbias, fluxbias_lock = waveform(corder['Flux-Bias']), dict()
+    SG_LOCKED, sglocked_bench = dict(), dict()
+    xyfreq, xyfreq_lock = waveform(corder['XY-Frequency']), dict()
+    xypowa, xypowa_lock = waveform(corder['XY-Power']), dict()
     Sparam = waveform(corder['S-Parameter'])
     ifb = waveform(corder['IF-Bandwidth'])
     freq = waveform(corder['Frequency'])
@@ -211,7 +216,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
         DC.output(dcbench, 1)
         # Pre-setting Z-Idle-Channels:
         for key in z_idle: 
-            if "lock" not in str(z_idle[key]).lower(): DC.sweep(dcbench, z_idle[key], channel=key) # locked to itself
+            if "lock" not in str(z_idle[key]).lower(): DC.sweep(dcbench, z_idle[key], channel=key) # locked to itself: constant peri-flux output
             else: fluxbias_lock[key] = waveform(z_idle[key].lower().replace("lock",str(fluxbias.count-1))) # locked to fluxbias
 
     # SG:
@@ -220,6 +225,21 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     if "opt" not in xyfreq.data: # check if it is in optional-state / serious-state
         sgbench = SG.Initiate(which=SG_label)
         SG.rfoutput(sgbench, action=['Set', 1])
+        # NOTE: Routine below will only iterate if there's ANY listed locked-SG:
+        SGLOCKED_NAME_LIST = [x.split('/')[0] for x in list(sg_locked.keys())[::2]] # /F & /P for every SG
+        for SGLOCKED_NAME in SGLOCKED_NAME_LIST:
+            [SGLOCKED_type, SGLOCKED_label] = list(sg_locked.keys())[0].split('/')[0].split('_')
+            SG_LOCKED[SGLOCKED_NAME] = im("pyqum.instrument.machine.%s" %SGLOCKED_type)
+            sglocked_bench[SGLOCKED_NAME] = SG_LOCKED[SGLOCKED_NAME].Initiate(which=SGLOCKED_label)
+            SG_LOCKED[SGLOCKED_NAME].rfoutput(sglocked_bench[SGLOCKED_NAME], action=['Set', 1])
+            # 1. PRESET FREQUENCY:
+            if "lock" in sg_locked['%s/F'%SGLOCKED_NAME].lower(): xyfreq_lock[SGLOCKED_NAME] = waveform(sg_locked['%s/F'%SGLOCKED_NAME].lower().replace("lock",str(xyfreq.count-1)))
+            elif "*" in sg_locked['%s/F'%SGLOCKED_NAME].lower(): print(Fore.WHITE + Back.MAGENTA + "COMING NEW FEATURE of FLEXIBLE C_STRUCTURE ON SG-ATTRIBUTES")
+            else: SG_LOCKED[SGLOCKED_NAME].frequency(sglocked_bench[SGLOCKED_NAME], action=['Set', str(sg_locked['%s/F'%SGLOCKED_NAME]) + "GHz"])
+            # 2. PRESET POWER:
+            if "lock" in sg_locked['%s/P'%SGLOCKED_NAME].lower(): xypowa_lock[SGLOCKED_NAME] = waveform(sg_locked['%s/P'%SGLOCKED_NAME].lower().replace("lock",str(xypowa.count-1)))
+            elif "*" in sg_locked['%s/P'%SGLOCKED_NAME].lower(): print(Fore.WHITE + Back.MAGENTA + "COMING NEW FEATURE of FLEXIBLE C_STRUCTURE ON SG-ATTRIBUTES")
+            else: SG_LOCKED[SGLOCKED_NAME].power(sglocked_bench[SGLOCKED_NAME], action=['Set', str(sg_locked['%s/P'%SGLOCKED_NAME]) + "dBm"])
 
     # User-defined Measurement-FLOW ==============================================================================================
     
@@ -264,10 +284,16 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in xyfreq.data: # check if it is in optional-state
                     SG.frequency(sgbench, action=['Set', str(xyfreq.data[caddress[1]]) + "GHz"])
+                    # Lock XY-Frequency to another SG(s) below:
+                    for SGLOCKED_NAME in SGLOCKED_NAME_LIST:
+                        if "lock" in sg_locked['%s/F'%SGLOCKED_NAME].lower(): SG_LOCKED[SGLOCKED_NAME].frequency(sglocked_bench[SGLOCKED_NAME], action=['Set', str(xyfreq_lock.data[caddress[1]]) + "GHz"])
 
             if not i%prod(cstructure[3::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in xypowa.data: # check if it is in optional-state
                     SG.power(sgbench, action=['Set', str(xypowa.data[caddress[2]]) + "dBm"])
+                    # Lock XY-Power to another SG(s) below:
+                    for SGLOCKED_NAME in SGLOCKED_NAME_LIST:
+                        if "lock" in sg_locked['%s/P'%SGLOCKED_NAME].lower(): SG_LOCKED[SGLOCKED_NAME].power(sglocked_bench[SGLOCKED_NAME], action=['Set', str(xypowa_lock.data[caddress[2]]) + "dBm"])
 
             # Basics:
             if not i%prod(cstructure[4::]): # virtual for-loop using exact-multiples condition
@@ -304,6 +330,9 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
         if "opt" not in xyfreq.data: # check if it is in optional-state
             SG.rfoutput(sgbench, action=['Set', 0])
             SG.close(sgbench, SG_label, False)
+            for SGLOCKED_NAME in SGLOCKED_NAME_LIST:
+                SG_LOCKED[SGLOCKED_NAME].rfoutput(sglocked_bench[SGLOCKED_NAME], action=['Set', 0])
+                SG_LOCKED[SGLOCKED_NAME].close(sglocked_bench[SGLOCKED_NAME], SGLOCKED_NAME.split("_")[1], False)
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.output(dcbench, 0)
             DC.close(dcbench, reset=True, which=DC_label)
