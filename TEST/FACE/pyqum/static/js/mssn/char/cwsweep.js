@@ -195,12 +195,12 @@ function plot1D_cwsweep(x1,y1,y2,y3,y4,xtitle,phasetype) {
         yaxis: 'y2' };
 
     let traceI = {x: [], y: [], mode: 'lines', type: 'scatter', 
-        name: 'Amplitude (' + wday + ', ' + wmoment + ')',
-        line: {color: 'rgb(23, 151, 6)', width: 2.5},
+        name: 'I (' + wday + ', ' + wmoment + ')',
+        line: {color: 'rgb(255, 151, 6)', width: 2.5},
         yaxis: 'y' };
     let traceQ = {x: [], y: [], mode: 'lines', type: 'scatter', 
-        name: 'Amplitude (' + wday + ', ' + wmoment + ')',
-        line: {color: 'rgb(23, 151, 6)', width: 2.5},
+        name: 'Q (' + wday + ', ' + wmoment + ')',
+        line: {color: 'rgb(255, 6, 151)', width: 2.5},
         yaxis: 'y' };
 
     let layout = {
