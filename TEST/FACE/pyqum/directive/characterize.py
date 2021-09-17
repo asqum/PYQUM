@@ -232,10 +232,13 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             SG_LOCKED[SGLOCKED_NAME] = im("pyqum.instrument.machine.%s" %SGLOCKED_type)
             sglocked_bench[SGLOCKED_NAME] = SG_LOCKED[SGLOCKED_NAME].Initiate(which=SGLOCKED_label)
             SG_LOCKED[SGLOCKED_NAME].rfoutput(sglocked_bench[SGLOCKED_NAME], action=['Set', 1])
+            #print("SGLOCKED_NAME "+SGLOCKED_NAME)#Checkpoint
             # 1. PRESET FREQUENCY:
             if "lock" in sg_locked['%s/F'%SGLOCKED_NAME].lower(): xyfreq_lock[SGLOCKED_NAME] = waveform(sg_locked['%s/F'%SGLOCKED_NAME].lower().replace("lock",str(xyfreq.count-1)))
             elif "*" in sg_locked['%s/F'%SGLOCKED_NAME].lower(): print(Fore.WHITE + Back.MAGENTA + "COMING NEW FEATURE of FLEXIBLE C_STRUCTURE ON SG-ATTRIBUTES")
             else: SG_LOCKED[SGLOCKED_NAME].frequency(sglocked_bench[SGLOCKED_NAME], action=['Set', str(sg_locked['%s/F'%SGLOCKED_NAME]) + "GHz"])
+            #print("xyfreq_lock[SGLOCKED_NAME]= "+sg_locked['%s/F'%SGLOCKED_NAME].lower().replace("lock",str(xyfreq.count-1)) )#Checkpoint
+
             # 2. PRESET POWER:
             if "lock" in sg_locked['%s/P'%SGLOCKED_NAME].lower(): xypowa_lock[SGLOCKED_NAME] = waveform(sg_locked['%s/P'%SGLOCKED_NAME].lower().replace("lock",str(xypowa.count-1)))
             elif "*" in sg_locked['%s/P'%SGLOCKED_NAME].lower(): print(Fore.WHITE + Back.MAGENTA + "COMING NEW FEATURE of FLEXIBLE C_STRUCTURE ON SG-ATTRIBUTES")
@@ -284,16 +287,19 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in xyfreq.data: # check if it is in optional-state
                     SG.frequency(sgbench, action=['Set', str(xyfreq.data[caddress[1]]) + "GHz"])
+                    #print("SG.frequency "+str(xyfreq.data[caddress[1]]))#Checkpoint
+
                     # Lock XY-Frequency to another SG(s) below:
                     for SGLOCKED_NAME in SGLOCKED_NAME_LIST:
-                        if "lock" in sg_locked['%s/F'%SGLOCKED_NAME].lower(): SG_LOCKED[SGLOCKED_NAME].frequency(sglocked_bench[SGLOCKED_NAME], action=['Set', str(xyfreq_lock.data[caddress[1]]) + "GHz"])
+                        if "lock" in sg_locked['%s/F'%SGLOCKED_NAME].lower(): SG_LOCKED[SGLOCKED_NAME].frequency(sglocked_bench[SGLOCKED_NAME], action=['Set', str(xyfreq_lock[SGLOCKED_NAME].data[caddress[1]]) + "GHz"])
+                        #print(SGLOCKED_NAME +" Lock XY-Frequency " +str(xyfreq_lock[SGLOCKED_NAME].data[caddress[1]]))#Checkpoint
 
             if not i%prod(cstructure[3::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in xypowa.data: # check if it is in optional-state
                     SG.power(sgbench, action=['Set', str(xypowa.data[caddress[2]]) + "dBm"])
                     # Lock XY-Power to another SG(s) below:
                     for SGLOCKED_NAME in SGLOCKED_NAME_LIST:
-                        if "lock" in sg_locked['%s/P'%SGLOCKED_NAME].lower(): SG_LOCKED[SGLOCKED_NAME].power(sglocked_bench[SGLOCKED_NAME], action=['Set', str(xypowa_lock.data[caddress[2]]) + "dBm"])
+                        if "lock" in sg_locked['%s/P'%SGLOCKED_NAME].lower(): SG_LOCKED[SGLOCKED_NAME].power(sglocked_bench[SGLOCKED_NAME], action=['Set', str(xypowa_lock[SGLOCKED_NAME].data[caddress[2]]) + "dBm"])
 
             # Basics:
             if not i%prod(cstructure[4::]): # virtual for-loop using exact-multiples condition
