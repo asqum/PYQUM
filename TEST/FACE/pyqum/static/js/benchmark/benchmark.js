@@ -307,13 +307,177 @@ function showAveInput(selectObject) {
     // DOM_parameterAve.style.display = "block";
 }
 
+function plot1D_2y ( data, axisKeys, plotId ){
+    console.log("Plotting 1D test");
+    let groupNumber = axisKeys.x.length;
+
+    let tracies = [];
+    let ix;
+    let yGroup = ["y","y2"];
+    
+
+    for ( gi=0; gi<groupNumber; gi++ ){
+        let xKeysInGroup = axisKeys.x[gi]
+        let yKeysInGroup = axisKeys.y[gi]
+        let yErrKeysInGroup = axisKeys.yErr[gi]
+
+        let yNumberInGroup = yKeysInGroup.length;
+        console.log("yNumberInGroup is "+yNumberInGroup);
+
+        for (let i = 0; i < yNumberInGroup; i++){
+            
+            for ( let dataSetKey of Object.keys(data) ) {
+
+                if ( xKeysInGroup.length != 1 ){
+                    ix = i;
+                }else{
+                    ix = 0;
+                }
+        
+                if ( yErrKeysInGroup.length == 0 || yErrKeysInGroup[i]=="" ){
+                    yErr = {
+                        type: 'data',
+                        array: [],
+                        visible: false
+                    }
+                }else{
+                    yErr = {
+                        type: 'data',
+                        array: data[dataSetKey][yErrKeys[i]],
+                        visible: true
+                    }
+                }
+                let newTrace = {
+                    x: data[dataSetKey][axisKeys.x[gi][ix]],
+                    y: data[dataSetKey][axisKeys.y[gi][i]],
+                    error_y: yErr,
+                    yaxis: yGroup[gi],
+                    name: axisKeys.y[gi][i],
+                    mode: 'markers',
+                    type: 'scatter'
+                }
+                console.log(newTrace);
+                tracies.push(newTrace);
+            }
+        }
+    }
+    
+    var layout = {
+        xaxis: {
+            title: 'I Amplitude',
+            titlefont: {color: '#1f77b4'},
+            tickfont: {color: '#1f77b4'}
+          },
+        yaxis: {
+            title: 'Q Amplitude',
+            titlefont: {color: '#1f77b4'},
+            tickfont: {color: '#1f77b4'}
+          },
+        yaxis2: {
+            title: 'yaxis2 title',
+            titlefont: {color: '#ff7f0e'},
+            tickfont: {color: '#ff7f0e'},
+            anchor: 'free',
+            overlaying: 'y',
+            side: 'right',
+            position: 1
+          },
+        showlegend: true,
+        legend: {
+          x: 1,
+          xanchor: 'right',
+          y: 1
+        }
+      };
+    Plotly.newPlot(plotId, tracies, layout, {showSendToCloud: true});
+}
+
+function plot1D_2subplot_shareX ( data, axisKeys, plotId ){
+        console.log("Plotting 1D test");
+        let groupNumber = axisKeys.x.length;
+    
+        let tracies = [];
+        let ix;
+        let yGroup = ["y","y2"];
+        
+    
+        for ( gi=0; gi<groupNumber; gi++ ){
+            let xKeysInGroup = axisKeys.x[gi]
+            let yKeysInGroup = axisKeys.y[gi]
+            let yErrKeysInGroup = axisKeys.yErr[gi]
+    
+            let yNumberInGroup = yKeysInGroup.length;
+            console.log("yNumberInGroup is "+yNumberInGroup);
+    
+            for (let i = 0; i < yNumberInGroup; i++){
+                
+                for ( let dataSetKey of Object.keys(data) ) {
+    
+                    if ( xKeysInGroup.length != 1 ){
+                        ix = i
+                    }else{
+                        ix = 0
+                    }
+            
+                    if ( yErrKeysInGroup.length == 0 || yErrKeysInGroup[i]=="" ){
+                        yErr = {
+                            type: 'data',
+                            array: [],
+                            visible: false
+                        }
+                    }else{
+                        yErr = {
+                            type: 'data',
+                            array: data[dataSetKey][yErrKeys[i]],
+                            visible: true
+                        }
+                    }
+                    let newTrace = {
+                        x: data[dataSetKey][axisKeys.x[gi][ix]],
+                        y: data[dataSetKey][axisKeys.y[gi][i]],
+                        error_y: yErr,
+                        yaxis: yGroup[gi],
+                        name: dataSetKey,
+                        mode: 'markers',
+                        type: 'scatter'
+                    }
+                    console.log(newTrace);
+                    tracies.push(newTrace);
+                }
+            }
+        }
+        
+        var layout = {
+            yaxis: {
+                title: 'Amplitude',
+                titlefont: {color: '#1f77b4'},
+                tickfont: {color: '#1f77b4'}
+              },
+            yaxis2: {
+                title: 'Phase',
+                titlefont: {color: '#ff7f0e'},
+                tickfont: {color: '#ff7f0e'},
+              },
+            showlegend: true,
+            legend: {
+              x: 1,
+              xanchor: 'right',
+              y: 1
+            },
+            grid: {
+                rows: 2,
+                columns: 1,
+                subplots:[['xy'],['xy2']],
+                roworder:'bottom to top'
+              }
+          };
+        Plotly.newPlot(plotId, tracies, layout, {showSendToCloud: true});
+    }
+
 function plot1D ( data, axisKeys, plotId ){
     console.log("Plotting 1D");
     let traceNumber = axisKeys.y.length;
-    console.log(Object.keys(data));
-    console.log(axisKeys.x);
-    console.log(axisKeys.y);
-    console.log(axisKeys.yErr);
+
     let tracies = new Array(traceNumber);
     let ix;
     for (let i = 0; i < traceNumber; i++){
@@ -345,9 +509,18 @@ function plot1D ( data, axisKeys, plotId ){
         type: 'scatter'
         };
     }
-
-    Plotly.newPlot(plotId, tracies, {showSendToCloud: true});
+    var layout = {
+        showlegend: true,
+        legend: {
+          x: 1,
+          xanchor: 'right',
+          y: 1
+        }
+      };
+    Plotly.newPlot(plotId, tracies, layout, {showSendToCloud: true});
 }
+
+
 
 function plot2D( data, axisKeys, plotId ) {
     console.log("Plotting 2D");

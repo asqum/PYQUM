@@ -89,40 +89,59 @@ $(function () {
         }
 
 
-        $.getJSON( '/benchmark/qestimate/getJson_plot',
-        {   quantificationType: JSON.stringify("qEstimation"), 
-            analysisIndex: JSON.stringify(analysisIndex), 
-            plotType: JSON.stringify("1D_amp"), },
-            function (data) {
-            console.log( "1D amp plot" );
-            console.log( data );
-            let axisKeys = {
-                x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
-                y: ["Data_point_amplitude","Fitted_curve_amplitude","Fitted_baseline_amplitude","Corr_Data_point_amplitude"],
-                yErr: [],
-            }
-            //console.log( data.Fitted_curve_amplitude );
+        // $.getJSON( '/benchmark/qestimate/getJson_plot',
+        // {   quantificationType: JSON.stringify("qEstimation"), 
+        //     analysisIndex: JSON.stringify(analysisIndex), 
+        //     plotType: JSON.stringify("1D_amp"), },
+        //     function (data) {
+        //     console.log( "1D amp plot" );
+        //     console.log( data );
+        //     let axisKeys = {
+        //         x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
+        //         y: ["Data_point_amplitude","Fitted_curve_amplitude","Fitted_baseline_amplitude","Corr_Data_point_amplitude"],
+        //         yErr: [],
+        //     }
 
-            plot1D(data, axisKeys, plotID_1D_ampPhase);
-        });
+        //     plot1D(data, axisKeys, plotID_1D_ampPhase);
+        // });
+
+        // $.getJSON( '/benchmark/qestimate/getJson_plot',
+        // {   quantificationType: JSON.stringify("qEstimation"), 
+        //     analysisIndex: JSON.stringify(analysisIndex),
+        //     plotType: JSON.stringify("1D_IQ"), },
+        //     function (data) {
+        //     console.log( "1D IQ plot" );
+        //     console.log( data );
+        //     let axisKeys = {
+        //         x: ["Data_point_I","Fitted_curve_I","Fitted_baseline_I","Corr_Data_point_I"],
+        //         y: ["Data_point_Q","Fitted_curve_Q","Fitted_baseline_Q","Corr_Data_point_Q"],
+        //         yErr: [],
+        //     }
+        //     //console.log( data.Fitted_curve_amplitude );
+
+        //     plot1D(data, axisKeys, plotID_1D_IQ);
+        // });
 
         $.getJSON( '/benchmark/qestimate/getJson_plot',
         {   quantificationType: JSON.stringify("qEstimation"), 
             analysisIndex: JSON.stringify(analysisIndex),
-            plotType: JSON.stringify("1D_IQ"), },
+            plotType: JSON.stringify("1D_all"), },
             function (data) {
-            console.log( "1D IQ plot" );
+            console.log( "1D plot test Q" );
             console.log( data );
-            let axisKeys = {
-                x: ["Data_point_I","Fitted_curve_I","Fitted_baseline_I","Corr_Data_point_I"],
-                y: ["Data_point_Q","Fitted_curve_Q","Fitted_baseline_Q","Corr_Data_point_Q"],
-                yErr: [],
+            let ampPhaseKeys = {
+                x: [ [htmlInfo[analysisIndex.axisIndex[0]]["name"]], [htmlInfo[analysisIndex.axisIndex[0]]["name"]] ] ,
+                y: [ ["Amplitude"],["Phase"] ],
+                yErr: [ [],[] ],
             }
-            //console.log( data.Fitted_curve_amplitude );
-
-            plot1D(data, axisKeys, plotID_1D_IQ);
+            plot1D_2subplot_shareX(data, ampPhaseKeys, plotID_1D_ampPhase);
+            let iqKeys = {
+                x: [["I"]],
+                y: [["Q"]],
+                yErr: [[]],
+            }
+            plot1D_2y(data, iqKeys, plotID_1D_IQ);
         });
-
         $.ajaxSettings.async = true;
 
     });
@@ -175,8 +194,8 @@ $(function () {
 
             let axisKeys_fitResult = {
                 x: [fitResultxAxisKey],
-                y: ["Qi_dia_corr","Qi_no_corr","absQc","Qc_dia_corr","Ql","fr","theta0","phi0"],
-                yErr: ["Qi_dia_corr_err", "Qi_no_corr_err", "absQc_err", "absQc_err", "Ql_err", "fr_err", "", "phi0_err"],
+                y: ["Qi_dia_corr","Qi_no_corr","absQc","Qc_dia_corr","Ql","fr","theta0","phi0","single_photon_limit", "photons_in_resonator"],
+                yErr: ["Qi_dia_corr_err", "Qi_no_corr_err", "absQc_err", "absQc_err", "Ql_err", "fr_err", "", "phi0_err","",""],
             }
             let plotdata = Object.assign({}, data["extendResults"], data["results"], data["errors"]);
 

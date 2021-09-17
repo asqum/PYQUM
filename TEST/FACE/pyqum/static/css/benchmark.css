@@ -277,6 +277,35 @@ button[type=submit] {
     margin: 2.5px 0;
 }
 
+.result-plot-area{
+    width: 1300px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+
+    margin: 5px;
+    padding: 15px;
+    background-color: #ffffff;
+}
+
+.plot1D-area{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+
+    margin: 5px;
+    padding: 15px;
+    background-color: #ffffff;
+}
+.plotIQ{
+    height: 500px;
+    width: 500px;
+}
+.plotAmpPha{
+    height: 500px;
+    width: 800px;
+}
+
 /* Instrument's Log */
 /* .slider {
     position: fixed;
