@@ -9,6 +9,8 @@
     <div class="iqcalcontent">
 
         <h3>Welcome to IQ Calibration on Mixer Modules</h3>
+        <div class="row"><div class="col-35 iqcal" id='left'><label for="iqcal" id='iqcal-message'></label></div></div>
+
         <!-- IQ Calibration Routines -->
         <div class="row brdg" id="iqcal-routines">
         
@@ -16,8 +18,34 @@
 
         <!-- Settings for each routines -->
         <div class="row brdg" id="iqcal-settings">
-            
+            <!-- Adjusting IQ-Correction -->
+            <div class="row iqcal mixer-module libraries">
+                <div class="col-10" id='left'><input class="iqcal mixer-module-KEY"/></div>
+                <div class="col-48" id='left'><input class="iqcal manual SA sweep mixer-module-VAL"/></div>
+                <div class="col-1 sweeping-spectrum" id='left'></div>
+                <div class="col-30" id='left'><label for="iqcal" id='iqcal-live-dach'></label></div>
+            </div>
+            <!-- Inspecting Sidebands -->
+            <div class="row">
+                <div class="col-10" id='left'><label>SA status</label></div>
+                <div class="col-10" id='left'><label>LO-frequency (GHz)</label></div>
+                <div class="col-10" id='left'><label>IF-frequency (MHz)</label></div>
+                <div class="col-10" id='left'><label>Sweep-points</label></div>
+                <div class="col-10" id='left'><label>RBW (kHz)</label></div>
+                <div class="col-10" id='left'><label>Average#</label></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><label class="switch"><input class='iqcal manual SA connect' type="checkbox">
+                    <div class="slider smooth"><span class="on">ONLINE</span><span class="off">OFFLINE</span></div>
+                </label></div>
+                <div class="col-10" id='left'><input class='iqcal manual SA sweep LO-frequency-GHz' type="text" value="7"/></div>
+                <div class="col-10" id='left'><input class='iqcal manual SA sweep IF-frequency-MHz' type="text" value="3"/></div>
+                <div class="col-10" id='left'><input class='iqcal manual SA sweep Sweep-points' type="number" value='1001' min=0 step=1/></div>
+                <div class="col-10" id='left'><input class='iqcal manual SA sweep RBW_kHz' type="number" value='10' min=1 step=1 max=1000/></div>
+                <div class="col-10" id='left'><input class='iqcal manual SA sweep AveCount' type="number" value='4' min=1 step=1 max=1000000/></div>
+            </div>
         </div>
+        <div id="iqcal-SA-scouting"></div>
 
         
 

@@ -7,7 +7,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 from json import loads, dumps
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
-from pyqum.instrument.logger import get_status, set_status, status_code, output_code, clocker, set_mat, bdr_zip_log, debug
+from pyqum.instrument.logger import get_status, set_status, status_code, output_code, clocker, set_mat, bdr_zip_log, address
 
 # Error handling
 from contextlib import suppress
@@ -47,9 +47,13 @@ def show():
 @bp.route('/all', methods=['POST', 'GET'])
 def all(): 
     current_usr = session['user_name']
-    Bob_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("TC"))
-    Scope_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("RTP"))
-    return render_template("blog/machn/all.html", current_usr=current_usr, Bob_Address=Bob_Address, Scope_Address=Scope_Address)
+    try: Bob_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("TC"))
+    except: abort(404)
+    try: Scope_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("RTP"))
+    except: abort(404)
+    try: MXA_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("MXA"))
+    except: abort(404)
+    return render_template("blog/machn/all.html", current_usr=current_usr, Bob_Address=Bob_Address, Scope_Address=Scope_Address, MXA_Address=MXA_Address)
 @bp.route('/all/machine', methods=['GET'])
 def allmachine():
     print(Fore.CYAN + "Registered Instrument-list:\n%s"%g.instlist)
@@ -288,13 +292,19 @@ def dacsetchannels():
     if dactype=="TKAWG": New = True
     elif dactype=="SDAWG": New = not bool(int(request.args.get('resend')))
     if New: DAC[dactype].prepare_DAC(DAC_handle[dactag], Channel, pulseq.totalpoints, maxlevel, dict(Master=master, trigbyPXI=trigbyPXI, markerdelay=markerdelay, markeroption=markeroption))
-    DAC[dactype].compose_DAC(DAC_handle[dactag], Channel, pulseq.music, pulseq.envelope, markeroption) # PENDING: MARKER OPTIONS UI
+    DAC[dactype].compose_DAC(DAC_handle[dactag], Channel, pulseq.music, pulseq.envelope, markeroption)
 
     update_items = {'SCORE-%s'%Channel: score, 'master': int(master), 'trigbyPXI': trigbyPXI, 'markerdelay': markerdelay, 'markeroption-ch%s'%Channel: markeroption}
     set_status(request.args.get('dacname').split('-')[0], update_items, request.args.get('dacname').split('-')[1])
     
     music, timeline =list(pulseq.music)[::20], list(pulseq.timeline)[::20]
     return jsonify(music=music, timeline=timeline)
+@bp.route('/dac/live/update/channel', methods=['GET'])
+def dacliveupdatechannel():
+    Channel = int(request.args.get('Channel'))
+    dacupdate = int(request.args.get('dacupdate'))
+    set_status('RELAY', {'dacupdate_%s/%s'%(request.args.get('dacname'),Channel): dacupdate})
+    return jsonify(message="RELAY UPDATED!")
 @bp.route('/dac/output/channels', methods=['GET'])
 def dacoutputchannels():
     '''TKAWG ONLY'''
@@ -441,7 +451,7 @@ def adcplaydata():
     print(Fore.GREEN + "Signal Processing: %s" %signal_processing)
     tracenum = int(request.args.get('tracenum'))
     # data post-processing:
-    if average: # PENDING: verify fast CUDA average?
+    if average: # NOTE: CUDA-averaging speed is bottlenecked by the Data Transfer Rate between GPU's and CPU's associated memory.
         trace_I = mean(I_data[adctag][:,:], 0)
         trace_Q = mean(Q_data[adctag][:,:], 0)
     else:
@@ -634,7 +644,7 @@ def naget():
     return jsonify(message=message)
 # endregion
 
-# region: SA (user-specific)
+# region: SA (user-specific, Generalized, Databased)
 @bp.route('/sa', methods=['GET'])
 def sa(): 
     global sabench, SA
@@ -647,19 +657,22 @@ def salog():
     return jsonify(log=log)
 @bp.route('/sa/connect', methods=['GET'])
 def saconnect():
-    saname = request.args.get('saname')
-    satag = '%s:%s' %(saname,session['user_name'])
+    saname = request.args.get('saname') # name: <type>-<label>
+    satag = '%s:%s' %(saname,session['user_name']) # tag: <type>-<label>:<user>
     satype, salabel, sauser = satag.split('-')[0], satag.split('-')[1].split(':')[0], satag.split('-')[1].split(':')[1]
-    linkedsa = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in sabench.keys()]
-    if saname not in linkedsa and int(g.user['instrument'])>=3:
+    # NOTE: LIMIT down to Single-User ONLY per Instrument:
+    # linkedsa = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in sabench.keys()] #OLD version without Database
+    # if saname not in linkedsa and int(g.user['instrument'])>=3: #OLD version without Database
+    if not address().macantouch([saname.replace('-','_')]) and int(g.user['instrument'])>=3:
         '''get in if not currently initiated'''
         try:
             SA[satype] = im("pyqum.instrument.machine.%s" %satype)
             sabench[satag] = SA[satype].Initiate(which=salabel)
+            # g.shared_sabench = sabench[satag] # Sharing handle across pages: become None?
             message = "%s is successfully initiated by %s" %(saname,sauser)
             status = "connected"
         except:
-            # raise
+            raise
             message = "Please check if %s's connection configuration is OK or is it being used!" %(saname)
             status = 'error'
     else:
@@ -838,7 +851,7 @@ def bdrsamplesallocate():
     
     return jsonify(status=status)
 
-# PENDING: ADMIN PAGE TO ASSIGN INSTRUMENTs AT THE TOP-MOST LAYER:
+# ADMIN PAGE TO ASSIGN INSTRUMENTs FROM THE TOP-MOST UI:
 @bp.route('/bdr/wiring/instruments', methods=['GET'])
 def bdr_wiring_instruments():
     qsystem = request.args.get('qsystem')
@@ -906,7 +919,7 @@ def dc_yokogawa_vwave():
     global yokog
     YOKO.output(yokog, 1)
     vwave = request.args.get('vwave') #V-waveform command
-    pwidth = float(request.args.get("pwidth")) #ms
+    pwidth = float(request.args.get("pwidth")) #ms #PENDING: make it into the update_settings dict as optional parameter to accommodate all sort of DC sources.
     swprate = float(request.args.get("swprate")) #V/s
     stat = YOKO.sweep(yokog, vwave, sweeprate=swprate)
     return jsonify(SweepTime=stat[1])
@@ -952,7 +965,7 @@ def download(filename):
     Servers = ['ASQUM', 'ASQUM_2']
     uploads = "C:/Users/%s/HODOR/CONFIG/PORTAL" %(Servers[int(get_status("WEB")['port']) - 5300 -1])
     print(Fore.GREEN + "User %s is downloading %s from %s" %(session['user_name'], filename, uploads))
-    return send_from_directory(directory=uploads, filename=filename)
+    return send_from_directory(directory=uploads, path=filename)
 
 
 

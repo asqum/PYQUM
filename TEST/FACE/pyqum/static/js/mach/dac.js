@@ -6,6 +6,7 @@ $(document).ready(function(){
     window.music =[[0],[0],[0],[0]]; 
     window.musicname = [];
     window.musicolor = [];
+    window.dacupdate = false;
 });
 
 // Functions:
@@ -47,6 +48,42 @@ function awgmultiplot(xdata,YDATA,Yname,Ycolor,xtitle,ytitle) {
         };
 
     Plotly.react('dac-IQAP-chart', Trace, layout);
+};
+function dac_set_channel(callback) {
+    $('div.dac#dac-chstatus').empty().append($('<h4 style="color: red;"></h4>').text("SETTING CHANNEL " + Channel));
+    var ccolor = ['blue','red','cyan','magenta'];
+    $.getJSON('/mach/dac/set/channels', {
+        dacname: dacname, dactype: dactype, Channel: Channel,
+        maxlvl: $('input.dac.scale.source-amplitude').val(),
+        maxlvlunit: $('input.dac.unit.source-amplitude').val(),
+        // PENDING: offset control
+        score: $('textarea.dac.score.setchannels').val(),
+        resend: $('input.dac.replace.waveform').is(':checked')?1:0,
+        master: $('input.dac.master.trigger').is(':checked')?1:0,
+        trigbyPXI: $('select.dac.settings.trigbyPXI').val(),
+        markerdelay: $('input.dac.scale.settings.markerdelay').val(),
+        markeroption: $('select.dac.setchannels.marker-option').val(),
+    }, function (data) {
+        console.log("Waveform CH-" + Channel + " injected.");
+        musicname[parseInt(Channel)-1] = "CH-" + Channel;
+        musicolor[parseInt(Channel)-1] = ccolor[parseInt(Channel)-1]
+        music[parseInt(Channel)-1] = data.music;
+        awgmultiplot(data.timeline, music, musicname, musicolor, 'time', 'waveform');
+    
+        if (typeof callback === "function") callback();
+    })
+    .done(function(data) {
+        $('button.dac.channels[name="channel-' + Channel + '"]').trigger('click');
+        $('button.dac.channels[name="channel-' + Channel + '"]' + " i.dac.fa-angle-double-left").remove();
+        $('button.dac.channels[name="channel-' + Channel + '"]').append("<i class='dac fas fa-angle-double-left' style='font-size:15px;color:black;'></i> ");
+        $('div.dac#dac-chstatus').empty().append($('<h4 style="color: blue;"></h4>').text("SET CHANNEL " + Channel + " SUCCESSFULLY"));
+        if (dacupdate==true) { 
+            $('button.dac.channels[name="channel-' + Channel + '"]' + " i.dac.fas.fa-spinner.fa-pulse").remove(); // clear pulse animation
+            $('button.dac.channels[name="channel-' + Channel + '"]').prepend("<i class='dac fas fa-spinner fa-pulse' style='font-size:15px;color:red;'></i> "); };
+    })
+    .fail(function(jqxhr, textStatus, error){
+        $('div.dac#dac-chstatus').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
+    });
 };
 
 //Select model to proceed:
@@ -268,35 +305,7 @@ $('input.dac.shapes.setchannels').bind('click', function () {
 
 // Score (Injecting waveform-data into DAC):
 $('button#dac-score').click( function () {
-    $('div.dac#dac-chstatus').empty().append($('<h4 style="color: red;"></h4>').text("SETTING CHANNEL " + Channel));
-    var ccolor = ['blue','red','cyan','magenta'];
-    $.getJSON('/mach/dac/set/channels', {
-        dacname: dacname, dactype: dactype, Channel: Channel,
-        maxlvl: $('input.dac.scale.source-amplitude').val(),
-        maxlvlunit: $('input.dac.unit.source-amplitude').val(),
-        // PENDING: offset control
-        score: $('textarea.dac.score.setchannels').val(),
-        resend: $('input.dac.replace.waveform').is(':checked')?1:0,
-        master: $('input.dac.master.trigger').is(':checked')?1:0,
-        trigbyPXI: $('select.dac.settings.trigbyPXI').val(),
-        markerdelay: $('input.dac.scale.settings.markerdelay').val(),
-        markeroption: $('select.dac.setchannels.marker-option').val(),
-    }, function (data) {
-        console.log("Waveform CH-" + Channel + " injected.");
-        musicname[parseInt(Channel)-1] = "CH-" + Channel;
-        musicolor[parseInt(Channel)-1] = ccolor[parseInt(Channel)-1]
-        music[parseInt(Channel)-1] = data.music;
-        awgmultiplot(data.timeline, music, musicname, musicolor, 'time', 'waveform');
-    })
-    .done(function(data) {
-        $('button.dac.channels[name="channel-' + Channel + '"]').trigger('click');
-        $('button.dac.channels[name="channel-' + Channel + '"]' + " i.dac.fa-angle-double-left").remove();
-        $('button.dac.channels[name="channel-' + Channel + '"]').append("<i class='dac fas fa-angle-double-left' style='font-size:15px;color:black;'></i> ");
-        $('div.dac#dac-chstatus').empty().append($('<h4 style="color: blue;"></h4>').text("SET CHANNEL " + Channel + " SUCCESSFULLY"));
-    })
-    .fail(function(jqxhr, textStatus, error){
-        $('div.dac#dac-chstatus').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
-    });
+    dac_set_channel();
     return false;
 });
 // Set Channel State:
@@ -328,6 +337,28 @@ $('button#dac-play').click( function () {
         $('div.dac#dac-chstatus').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
     });
     return false;
+});
+// LIVE DAC UPDATE:
+$(function () {
+    $('input.dac.live-update-channel').click(function (e, callback) { 
+        dacupdate = $('input.dac.live-update-channel').is(':checked'); //use css to respond to click / touch
+        if (dacupdate == true) {
+            
+            // LIVE activity:
+            dac_set_channel(callback);
+            var dacstream = setInterval(dac_set_channel, 1730);
+            $('input.dac.live-update-channel').click(function () {
+                clearInterval(dacstream); 
+                
+                $('button.dac.channels[name="channel-' + Channel + '"]' + " i.dac.fas.fa-spinner.fa-pulse").remove(); // clear pulse animation
+            });
+        };
+    });
+});
+$('input.dac.live-update-channel').click(function () {
+    dacupdate = $('input.dac.live-update-channel').is(':checked')?1:0;
+    $.getJSON('/mach/dac/live/update/channel', { dacname:dacname, Channel:Channel, dacupdate:dacupdate }, function(data) { console.log(data.message); });
+    // return false;
 });
 
 // STOP

@@ -699,13 +699,20 @@ def char_cwsweep_1ddata():
     iifb = request.args.get('iifb')
     ifreq = request.args.get('ifreq')
     ipowa = request.args.get('ipowa')
+    noise = bool(int(request.args.get('noise')))
 
     # pre-transform ipowa:
     xpowa = waveform(M_cwsweep[session['user_name']].corder['Power'])
     ipowa_repeat = xpowa.inner_repeat
 
     # selecting data:
-    if "x" in ifluxbias:
+    if noise:
+        # THE OPTION TO EXPLORE REPEATED_POWER_DATA: "NOISE" DATA:
+        xtitle = "<b>Repeated#</b>"
+        xsweep = range(ipowa_repeat)
+        selected_I = [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*(int(ipowa)*ipowa_repeat+x)], session['c_cwsweep_structure'])] for x in xsweep]
+        selected_Q = [selectedata[gotocdata([int(irepeat), int(ifluxbias), int(ixyfreq), int(ixypowa), int(isparam), int(iifb), int(ifreq), 2*(int(ipowa)*ipowa_repeat+x)+1], session['c_cwsweep_structure'])] for x in xsweep]
+    elif "x" in ifluxbias:
         xtitle = "<b>Flux-Bias(V/A)</b>"
         selected_sweep = M_cwsweep[session['user_name']].corder['Flux-Bias']
         
@@ -798,7 +805,8 @@ def char_cwsweep_1ddata():
         Amp.append(i); Pha.append(j)
 
     # x-range:
-    if "x" in ipowa: selected_progress = xpowa.data[0:(len(xsweep) // xpowa_repeat)]
+    if noise: selected_progress = list(range(ipowa_repeat))
+    elif "x" in ipowa: selected_progress = xpowa.data[0:(len(xsweep) // xpowa_repeat)]
     else: selected_progress = waveform(selected_sweep).data[0:len(xsweep)]
 
     # to avoid exception when encountering recursive parameters:
@@ -808,7 +816,7 @@ def char_cwsweep_1ddata():
     x1, y1, yup, yp = selected_progress, Amp, list(UnwraPhase(selected_progress, Pha)), Pha #list(unwrap(Pha)) 
     cwsweep_1Ddata[session['user_name']] = {xtitle: x1, 'Amplitude': y1, 'UPhase': yup, 'I': selected_I, 'Q': selected_Q, "exported by": session['user_name']}
     
-    return jsonify(x1=x1, y1=y1, yup=yup, yp=yp, x1title=xtitle)
+    return jsonify(x1=x1, y1=y1, yup=yup, yp=yp, x1title=xtitle, selected_I=selected_I, selected_Q=selected_Q)
 
 # Pending renovation below:
 @bp.route('/char/cwsweep/2ddata', methods=['GET'])
@@ -952,7 +960,6 @@ def char_sqepulse_init():
     M_sqepulse[session['user_name']] = SQE_Pulse(session['people'])
     print(Fore.BLUE + Back.WHITE + "User %s is looking at %s's data" %(session['user_name'],session['people']))
 
-    # PENDING: Flexible C-Structure:
     CParameters = {}
     CParameters['SQE_Pulse'] = ['repeat', 'Flux-Bias', 'XY-Frequency', 'XY-Power', 'RO-Frequency', 'RO-Power',
                 'Pulse-Period', 'RO-ifLevel', 'RO-Pulse-Delay', 'RO-Pulse-Width', 'XY-ifLevel', 'XY-Pulse-Delay', 'XY-Pulse-Width', 
@@ -1149,7 +1156,6 @@ def char_sqepulse_1ddata():
             Adata = zeros(len(isweep))
             Pdata = zeros(len(isweep))
             for i in isweep:
-                # PENDING: VECTORIZATION OR MULTI-PROCESS
                 selected_caddress[CParameters['SQE_Pulse'].index(k)] = i # register x-th position
                 if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
                     srange = request.args.get('srange').split(",") # sample range
@@ -1652,7 +1658,7 @@ def mani_singleqb_2ddata():
     Adata = zeros([len(ysweep), len(xsweep)])
     Pdata = zeros([len(ysweep), len(xsweep)])
     for j in ysweep:
-        if not (j+1)%10: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
+        if not (j+1)%600: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
         selected_caddress[SQ_CParameters[session['user_name']].index(selected_y)] = j # register y-th position
         for i in xsweep:
             selected_caddress[SQ_CParameters[session['user_name']].index(selected_x)] = i # register x-th position

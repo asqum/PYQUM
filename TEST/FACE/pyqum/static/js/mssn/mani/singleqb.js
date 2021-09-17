@@ -734,6 +734,7 @@ $(function () {
 $('input.mani#singleqb-run').on('touchend click', function(event) {
     eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+    setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 120);
     $('h3.all-mssn-warning').text(">> JOB STARTED >>");
     // Assemble PERIMETER:
     var PERIMETER = {};
@@ -774,6 +775,7 @@ $(function () {
     $('button.mani#singleqb-resume').on('touchend click', function(event) {
         eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
         setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 120);
         $('h3.all-mssn-warning').text(">> JOB STARTED >>");
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/resume', {
             wday: selecteday, wmoment: wmoment

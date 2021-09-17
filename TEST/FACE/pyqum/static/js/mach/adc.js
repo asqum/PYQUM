@@ -6,6 +6,7 @@ $(document).ready(function(){
     $('.SDDIG').hide();
     $('div#adc-playdata-settings').hide();
     $('div#adc-signal-postprocessing').hide();
+    window.adc_streamlive = false;
 });
 
 function acquire_play(callback) {
@@ -41,6 +42,10 @@ function acquire_play(callback) {
         $('div.adc#adc-transfer-time').empty().append($('<h4 style="color: blue;"></h4>')
                                     .text(" (" + data.buffersPerAcq + " buff *" + data.recordsPerBuff + " cycles in " + data.transferTime_sec + "s)"));
         $('input.adc.settings.acquire').removeClass('getvalue').addClass('setvalue');
+        if (adc_streamlive==true) {
+            $( "i.adcplay" ).remove(); //clear previous
+            $('button.adc#play').prepend("<i class='adcplay fas fa-circle-notch fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        };
     })
     .fail(function(jqxhr, textStatus, error){
         $('div.adc#adc-status').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nStopped at acquire_play" + "\nPlease Refresh!"));
@@ -380,10 +385,8 @@ $('input.adc.settings.records').on('change', function () {
 // LIVE update
 $(function () {
     $('input.adc.settings.live[name="stream"]').click(function (e, callback) { 
-        var stream = $('input.adc.settings.live[name="stream"]').is(':checked'); //use css to respond to click / touch
-        if (stream == true) {
-            $( "i.adcplay" ).remove(); //clear previous
-            $('button.adc#play').prepend("<i class='adcplay fas fa-circle-notch fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        adc_streamlive = $('input.adc.settings.live[name="stream"]').is(':checked'); //use css to respond to click / touch
+        if (adc_streamlive == true) {
             $('input.adc.settings[name="recordsum-scale"]').val(1); // single-record per stream for real-time inspection
             // LIVE activity:
             acquire_play(callback);

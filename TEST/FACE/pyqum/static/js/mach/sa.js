@@ -34,23 +34,24 @@ $(function () {
                     console.log('Getting:\n' + JSON.stringify(data.message));
                     $('input.sa.settings').addClass('getvalue');
                     // output freq range:
-                    var freqrange = data.message['start-frequency'].split(' ')[0] + " to " + data.message['stop-frequency'].split(' ')[0] + " * "
-                                        + data.message['step-points'];
-                    $('input.sa.scale.settings[name="freqrange"]').val(freqrange);
-                    $('input.sa.unit.settings[name="freqrange"]').val(data.message['start-frequency'].split(' ')[1]);
-                    // output power (w/ unit), IF-bandwidth (w/ unit) & S-Parameter:
-                    $('input.sa.scale.settings[name="powa"]').val(data.message['power'].split(" ")[0]);
-                    $('input.sa.unit.settings[name="powa"]').val(data.message['power'].split(' ')[1]);
-                    $('input.sa.scale.settings[name="ifb"]').val(data.message['ifb'].split(" ")[0]);
-                    $('input.sa.unit.settings[name="ifb"]').val(data.message['ifb'].split(' ')[1]);
-                    $('input.sa.sparam[name="S21"]').prop( "checked", Boolean(data.message['s21']) );
-                    $('input.sa.sparam[name="S12"]').prop( "checked", Boolean(data.message['s12']) );
-                    $('input.sa.sparam[name="S11"]').prop( "checked", Boolean(data.message['s11']) );
-                    $('input.sa.sparam[name="S22"]').prop( "checked", Boolean(data.message['s22']) );
-                    $('input.sa.sparam[name="S43"]').prop( "checked", Boolean(data.message['s43']) );
-                    $('input.sa.sparam[name="S34"]').prop( "checked", Boolean(data.message['s34']) );
-                    $('input.sa.sparam[name="S33"]').prop( "checked", Boolean(data.message['s33']) );
-                    $('input.sa.sparam[name="S44"]').prop( "checked", Boolean(data.message['s44']) );
+                    // Get value from machine
+                    // var freqrange = data.message['start-frequency'].split(' ')[0] + " to " + data.message['stop-frequency'].split(' ')[0] + " * "
+                    //                     + data.message['step-points'];
+                    // $('input.sa.scale.settings[name="freqrange"]').val(freqrange);
+                    // $('input.sa.unit.settings[name="freqrange"]').val(data.message['start-frequency'].split(' ')[1]);
+                    // // output power (w/ unit), IF-bandwidth (w/ unit) & S-Parameter:
+                    // $('input.sa.scale.settings[name="powa"]').val(data.message['power'].split(" ")[0]);
+                    // $('input.sa.unit.settings[name="powa"]').val(data.message['power'].split(' ')[1]);
+                    // $('input.sa.scale.settings[name="ifb"]').val(data.message['ifb'].split(" ")[0]);
+                    // $('input.sa.unit.settings[name="ifb"]').val(data.message['ifb'].split(' ')[1]);
+                    // $('input.sa.sparam[name="S21"]').prop( "checked", Boolean(data.message['s21']) );
+                    // $('input.sa.sparam[name="S12"]').prop( "checked", Boolean(data.message['s12']) );
+                    // $('input.sa.sparam[name="S11"]').prop( "checked", Boolean(data.message['s11']) );
+                    // $('input.sa.sparam[name="S22"]').prop( "checked", Boolean(data.message['s22']) );
+                    // $('input.sa.sparam[name="S43"]').prop( "checked", Boolean(data.message['s43']) );
+                    // $('input.sa.sparam[name="S34"]').prop( "checked", Boolean(data.message['s34']) );
+                    // $('input.sa.sparam[name="S33"]').prop( "checked", Boolean(data.message['s33']) );
+                    // $('input.sa.sparam[name="S44"]').prop( "checked", Boolean(data.message['s44']) );
                 });
             } else if (data.status=='waiting') {
                 $('button.sa.saname#'+saname).removeClass('error').removeClass('close').removeClass('connect').addClass('wait');
