@@ -13,7 +13,7 @@ $(document).ready(function(){
 window.selecteday = ''
 
 // Local variables:
-var cwsweep_Perimeters = ['dcsweepch', 'z-idle']
+var cwsweep_Perimeters = ['dcsweepch', 'z-idle', 'sg-locked']
 
 // *functions are shared across all missions!
 function transpose(a) {
