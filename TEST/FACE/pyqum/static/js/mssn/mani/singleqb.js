@@ -130,8 +130,11 @@ function accessdata_singleqb() {
         console.log("Last accessed Job: " + tracking_access_jobids(data.JOBID));
         ref_jobids = data.comment.split("REF#")[1]; // load ref-jobids from comment
         showing_tracked_jobids();
-        // 4. load narrated comment:
+        // 4.0 load narrated comment:
         $('textarea.mani.singleqb.comment').text(data.comment);
+        // 4.1 load narrated note:
+        window.ACCESSED_JOBID = data.JOBID;
+        $('textarea.mani.singleqb.note').val(data.note);
         
         // 5. Loading data progress:
         var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
@@ -1166,4 +1169,13 @@ $('#mani-singleqb-to-benchmark').click( function(){
     }
 );
 
-// (PENDING: DATA ANALYSIS FUNCTIONS)
+// SAVE NOTE:
+$('textarea.mani.singleqb.note').change( function () {
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/save/jobnote', {
+        ACCESSED_JOBID: ACCESSED_JOBID,
+        note: $('textarea.mani.singleqb.note').val(),
+    }, function (data) {
+        $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
+    });
+    return false;
+});

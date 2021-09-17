@@ -55,6 +55,7 @@ function accessdata_fresp() {
         wmoment: wmoment
     }, function (data) {
         // Indicate JOBID:
+        window.ACCESSED_JOBID = data.JOBID;
         $("a.new#fresp-job").text('JOBID: ' + String(data.JOBID));
         console.log("Last accessed Job: " + tracking_access_jobids(data.JOBID));
         // load ref-jobids from comment:
@@ -77,6 +78,8 @@ function accessdata_fresp() {
         $('textarea.char.fresp[name="comment"]').text(data.comment);
         // load narrated perimeter-JSON:
         $('div#char-fresp-perimeters').empty().append($('<h4 style="color: blue;"></h4>').text(JSON.stringify(data.perimeter)));
+        // load narrated note:
+        $('textarea.char.fresp[name="note"]').val(data.note);
         
         // load c-range for each command:
         $('select.char.fresp.parameter[name="c-fluxbias"]').empty();
@@ -736,3 +739,14 @@ $('#char-fresp-to-benchmark').click( function(){
     return false;
     }
 );
+
+// SAVE NOTE:
+$('textarea.char.fresp[name="note"]').change( function () {
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/save/jobnote', {
+        ACCESSED_JOBID: ACCESSED_JOBID,
+        note: $('textarea.char.fresp[name="note"]').val(),
+    }, function (data) {
+        $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
+    });
+    return false;
+});

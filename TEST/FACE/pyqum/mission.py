@@ -19,7 +19,7 @@ from importlib import import_module as im
 
 from pyqum import get_db, close_db
 from pyqum.instrument.logger import get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
-                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobsinqueue, check_sample_alignment
+                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobnote, jobsinqueue, check_sample_alignment
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.instrument.reader import inst_order
@@ -204,6 +204,14 @@ def all_reopen_job():
     jobtag(jobid, "")
     message = "JOB REOPEN"
     return jsonify(message=message)
+# save note on the fly:
+@bp.route('/all/save/jobnote', methods=['GET'])
+def all_save_jobnote():
+    ACCESSED_JOBID = request.args.get('ACCESSED_JOBID')
+    note = request.args.get('note')
+    jobnote(ACCESSED_JOBID, note)
+    message = "NOTE for JOB-%s has just been UPDATED" %(ACCESSED_JOBID)
+    return jsonify(message=message)
 # endregion
 
 # region: CHAR:
@@ -332,7 +340,8 @@ def char_fresp_access():
     cpowa_data = cpowa.data[0:session['c_fresp_address'][3]+1]
     cfreq_data = cfreq.data # within buffer
 
-    return jsonify(JOBID=JOBID,
+    note = jobsearch(JOBID, mode="note")
+    return jsonify(JOBID=JOBID, note=note,
         data_progress=data_progress, measureacheta=measureacheta, corder=M_fresp[session['user_name']].corder, comment=M_fresp[session['user_name']].comment,
         perimeter=M_fresp[session['user_name']].perimeter, 
         cfluxbias_data=cfluxbias_data,csparam_data=csparam_data, cifb_data=cifb_data, cpowa_data=cpowa_data, cfreq_data=cfreq_data)
@@ -621,7 +630,8 @@ def char_cwsweep_access():
     cpowa_data = cpowa.data[0:(session['c_cwsweep_address'][7]+1)//cpowa_repeat//2]  # (to be adjusted ***)
     # print("cpowa_data: %s" %cpowa_data)
     
-    return jsonify(JOBID=JOBID,
+    note = jobsearch(JOBID, mode="note")
+    return jsonify(JOBID=JOBID, note=note,
         data_progress=data_progress, measureacheta=measureacheta, perimeter=M_cwsweep[session['user_name']].perimeter, 
         corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
         data_repeat=data_repeat, cfluxbias_data=cfluxbias_data, cxyfreq_data=cxyfreq_data, cxypowa_data=cxypowa_data,
@@ -1462,7 +1472,8 @@ def mani_singleqb_access():
         pdata[params] = waveform(corder[params]).data[0:c_singleqb_progress[session['user_name']][SQ_CParameters[session['user_name']].index(params)]+1]
     # print("RECORD_TIME_NS's parameter-data: %s" %pdata['RECORD_TIME_NS'])
 
-    return jsonify(JOBID=JOBID,
+    note = jobsearch(JOBID, mode="note")
+    return jsonify(JOBID=JOBID, note=note,
         data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, comment=comment, 
         pdata=pdata, SQ_CParameters=SQ_CParameters[session['user_name']])
 # save perimeter settings for different measurements (Fresp, Cwsweep, Rabi, T1, T2, Wigner, Fidelity, QST etc)
