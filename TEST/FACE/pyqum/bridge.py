@@ -4,6 +4,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
+from json import loads
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, status_code, output_code
@@ -19,7 +20,7 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 
 # Load instruments
 from pyqum.instrument.machine import TKAWG, PSGA, MXA
-from pyqum.directive import calibrate
+from pyqum.directive.calibrate import IQ_Cal
 
 encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/bridge')
@@ -38,6 +39,10 @@ def show():
 # IQ-CALIBRATION:
 @bp.route('/iqcal', methods=['POST', 'GET'])
 def iqcal(): 
+    global IQCAL_instance, saname
+    try: print(Fore.GREEN + "Connected IQCAL: %s" %IQCAL_instance.keys())
+    except: IQCAL_instance = {}
+    saname = 'MXA_1' # PENDING: ADD Options to choose from available SA-list. (via database)
     current_usr = session['user_name']
     return render_template("blog/bridg/iqcal.html", current_usr=current_usr)
 @bp.route('/iqcal/load/mixermodules', methods=['GET'])
@@ -89,9 +94,8 @@ def iqcal_manual_calibrate():
     return jsonify(freq_list=freq_list, powa_list=powa_list, full_spectrum_x=full_spectrum_x, full_spectrum_y=full_spectrum_y)
 @bp.route('/iqcal/manual/sa/connect', methods=['GET'])
 def iqcal_manual_saconnect():
-    # PENDING: ADD Options to choose from available SA-list. (via database)
-    saname = 'MXA_1'
-    if not address().macantouch([saname]) and int(g.user['instrument'])>=3:
+    if saname not in IQCAL_instance.keys() and not address().macantouch([saname]) and int(g.user['instrument'])>=3:
+        IQCAL_instance[saname] = session['user_name']
         try:
             global iqcal_sabench, SA
             iqcal_sabench, SA = {}, im("pyqum.instrument.machine.%s"%(saname.split("_")[0]))
@@ -100,26 +104,56 @@ def iqcal_manual_saconnect():
             SA.preamp_band(iqcal_sabench[session['user_name']], action=['Set','FULL'])
             SA.attenuation(iqcal_sabench[session['user_name']], action=['Set','0dB'])
             SA.attenuation_auto(iqcal_sabench[session['user_name']], action=['Set','ON'])
-            status = 1
+            status = "%s initiated by %s"%(saname, session['user_name'])
         except:
-            print(Fore.RED + "Please check if %s's connection configuration is OK or is it being used!" %(saname))
-            status = -1
-    else: status = 0
+            status = "Please check if %s's connection configuration is OK" %(saname)
+    else: status = "%s already connected to %s"%(saname, IQCAL_instance[saname])
     return jsonify(status=status)
 @bp.route('/iqcal/manual/sa/closet', methods=['GET'])
 def iqcal_manual_sacloset():
     status = SA.close(iqcal_sabench[session['user_name']],which=1,reset=False)
-    del iqcal_sabench[session['user_name']]
+    del iqcal_sabench[session['user_name']], IQCAL_instance[saname]
     return jsonify(status=status)
-@bp.route('/iqcal/auto/calibrate', methods=['GET'])
-def iqcal_auto_calibrate():
-    
-    return jsonify()
+@bp.route('/iqcal/auto/calibrate/run', methods=['GET'])
+def iqcal_auto_calibrate_run():
+    if saname not in IQCAL_instance.keys() and not address().macantouch([saname]) and int(g.user['instrument'])>=3:
+        IQCAL_instance[saname] = session['user_name']
 
+        # IQ Auto-Calibration routine:
+        Conv_frequency_GHz = float(request.args.get('Conv_frequency_GHz'))
+        IF_rotation_MHz = int(request.args.get('IF_rotation_MHz')) # +/-: directional
+        LO_power_dBm = float(request.args.get('LO_power_dBm'))
+        IF_period_ns = int(request.args.get('IF_period_ns'))
+        IF_scale = float(request.args.get('IF_scale'))
+        Mixer_module = request.args.get('Mixer_module')
+        Wiring_config = loads(request.args.get('Wiring_config'))
+        Channels_group = int(request.args.get('Channels_group')) # 1:1,2; 2:2,3; 3:3,4; ...
+        C = IQ_Cal(Conv_frequency_GHz, LO_power_dBm, IF_rotation_MHz, IF_period_ns, IF_scale, Mixer_module, Wiring_config, Channels_group)
+        C.run()
+        C.close()
 
+        del IQCAL_instance[saname]
+        message="AUTO-IQCAL closed"
+    else: message="%s is currently used by %s" %(saname, IQCAL_instance[saname])
+
+    return jsonify(message=message)
+@bp.route('/iqcal/auto/check/status', methods=['GET'])
+def iqcal_auto_check_status():
+    running = get_status("RELAY")["autoIQCAL"]
+    iteration = get_status("RELAY")["autoIQCAL_iteration"]
+    autoIQCAL_dur_s = get_status("RELAY")["autoIQCAL_dur_s"]
+    autoIQCAL_frequencies = get_status("RELAY")["autoIQCAL_frequencies"]
+    autoIQCAL_spectrum = get_status("RELAY")["autoIQCAL_spectrum"]
+    return jsonify(running=running, iteration=iteration, autoIQCAL_dur_s=autoIQCAL_dur_s, \
+                    autoIQCAL_frequencies=autoIQCAL_frequencies, autoIQCAL_spectrum=autoIQCAL_spectrum)
+@bp.route('/iqcal/auto/calibrate/stop', methods=['GET'])
+def iqcal_auto_calibrate_stop():
+    set_status("RELAY", dict(autoIQCAL=0))
+    return jsonify(message="AUTO-IQCAL will stop on the next iteration. Please wait...")
 
 
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
+
 

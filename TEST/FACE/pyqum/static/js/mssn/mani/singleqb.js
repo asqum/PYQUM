@@ -768,6 +768,7 @@ $('input.mani#singleqb-run').on('touchend click', function(event) {
         wday: wday, PERIMETER: JSON.stringify(PERIMETER), CORDER: JSON.stringify(CORDER), comment: comment
     }, function (data) {       
         console.log("Status: " + data.status);
+        setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 371);
         $('h3.all-mssn-warning').text("JOB STATUS: " + data.status);
     });
     return false;
@@ -790,6 +791,7 @@ $(function () {
                 console.log("The data has just been updated");
                 $('h3.all-mssn-warning').text("JOB COMPLETE: " + data.status);
             };
+            setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 371);
         });
         return false;
     });

@@ -751,7 +751,7 @@ def lisjob(sample, queue, maxlist=12):
         # Extracting list from SQL-Database:
         Joblist = get_db().execute(
             '''
-            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress, u.username, j.tag
+            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress, u.username, j.tag, j.note
             FROM user u
             INNER JOIN job j ON j.user_id = u.id
             INNER JOIN sample s ON s.id = j.sample_id
@@ -883,6 +883,7 @@ def jobin(task,corder,perimeter,instr,comment,tag):
             # raise
             JOBID = None 
             print(Fore.RED + Back.WHITE + "Check all database input parameters")
+            print(Fore.BLUE + "Stop server and make sure queue's 'check'-constraint has included the new queue!")
     else: JOBID = None
     return JOBID
 def jobstart(day,task_index,JOBID):
