@@ -861,14 +861,14 @@ def char_cwsweep_2ddata():
 
     # Selecting 2D options:
     # REPEAT:
-    # 1. y: fluxbias, x: repeat
+    # 1. x: repeat, y: fluxbias
     if irepeat == "x" and ifluxbias == "y":
         x_name, y_name = "repeat", "fluxbias"
         message = "(2D) X: REPEAT#, Y: Flux-Bias"
         xtitle, ytitle = "<b>REPEAT#</b>", "<b>Flux-Bias(V/A)</b>"
         x, y = list(range(session['c_cwsweep_address'][0]+offset)), waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data
         x_count, y_count = session['c_cwsweep_address'][0]+offset, waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).count
-    # 2. y: xyfreq, x: repeat
+    # 2. x: repeat, y: xyfreq
     if irepeat == "x" and ixyfreq == "y":
         x_name, y_name = "repeat", "xyfreq"
         message = "(2D) X: REPEAT#, Y: XY-Frequency"
@@ -876,55 +876,78 @@ def char_cwsweep_2ddata():
         x, y = list(range(session['c_cwsweep_address'][0]+offset)), waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data
         x_count, y_count = session['c_cwsweep_address'][0]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).count
     # ONCE:
-    # 3. y: xyfreq, x: fluxbias
+    # 3. x: fluxbias, y: xyfreq
     elif ifluxbias == "x" and ixyfreq == "y":
         x_name, y_name = "fluxbias", "xyfreq"
         message = "(2D) X: Flux-Bias, Y: XY-Frequency"
         xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>XY-Frequency(GHz)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data[0:session['c_cwsweep_address'][1]+offset], waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data
         x_count, y_count = session['c_cwsweep_address'][1]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).count
-    # 4. y: freq, x: fluxbias
+    # 4. x: fluxbias, y: freq
     elif ifluxbias == "x" and ifreq == "y":
         x_name, y_name = "fluxbias", "freq"
         message = "(2D) X: Flux-Bias, Y: Frequency"
         xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>Probe-Frequency(GHz)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data[0:session['c_cwsweep_address'][1]+offset], waveform(M_cwsweep[session['user_name']].corder['Frequency']).data
         x_count, y_count = session['c_cwsweep_address'][1]+offset, waveform(M_cwsweep[session['user_name']].corder['Frequency']).count
-    # 5. y: xypowa, x: xyfreq
+    # 5. x: xyfreq, y: xypowa
     elif ixyfreq == "x" and ixypowa == "y":
         x_name, y_name = "xyfreq", "xypowa"
         message = "(2D) X: XY-Frequency, Y: XY-Power"
         xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>XY-Power(dBm)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['XY-Power']).data
         x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Power']).count
-    # 6. y: freq, x: xyfreq
+    # 6. x: xyfreq, y: freq
     elif ixyfreq == "x" and ifreq == "y":
         x_name, y_name = "xyfreq", "freq"
         message = "(2D) X: XY-Frequency, Y: Frequency"
         xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probe-Frequency(GHz)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['Frequency']).data
         x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['Frequency']).count
-    # 7. y: powa, x: xyfreq
+    # 7. x: xyfreq, y: powa
     elif ixyfreq == "x" and ipowa == "y":
         x_name, y_name = "xyfreq", "powa"
         message = "(2D) X: XY-Frequency, Y: Power"
         xtitle, ytitle = "<b>XY-Frequency(GHz)</b>", "<b>Probing-Power(dBm)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Frequency']).data[0:session['c_cwsweep_address'][2]+offset], waveform(M_cwsweep[session['user_name']].corder['Power']).data
         x_count, y_count = session['c_cwsweep_address'][2]+offset, waveform(M_cwsweep[session['user_name']].corder['Power']).count
-    # 8. y: powa, x: freq
+    # 8. x: freq, y: powa
     elif ifreq == "x" and ipowa == "y":
         x_name, y_name = "freq", "powa"
         message = "(2D) X: Frequency, Y: Power"
         xtitle, ytitle = "<b>Probe-Frequency(GHz)</b>", "<b>Probing-Power(dBm)</b>"
         x, y = waveform(M_cwsweep[session['user_name']].corder['Frequency']).data[0:session['c_cwsweep_address'][6]+offset], waveform(M_cwsweep[session['user_name']].corder['Power']).data
         x_count, y_count = session['c_cwsweep_address'][6]+offset, waveform(M_cwsweep[session['user_name']].corder['Power']).count
-    # 9. y: xypowa, x: freq
-
-    # 10. y: powa, x: fluxbias
-
-    # 11. y: xypowa, x: fluxbias
-
-    # 12. y: xypowa, x: powa
+    
+    # NOTE: starting below is for JPA measurement:
+    # 9. x: xypowa, y: freq
+    elif ixypowa == "x" and ifreq == "y":
+        x_name, y_name = "xypowa", "freq"
+        message = "(2D) X: XY-Power, Y: Frequency"
+        xtitle, ytitle = "<b>XY-Power(GHz)</b>", "<b>Probe-Frequency(GHz)</b>"
+        x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Power']).data[0:session['c_cwsweep_address'][3]+offset], waveform(M_cwsweep[session['user_name']].corder['Frequency']).data
+        x_count, y_count = session['c_cwsweep_address'][3]+offset, waveform(M_cwsweep[session['user_name']].corder['Frequency']).count
+    # 10. x: fluxbias, y: powa
+    elif ifluxbias == "x" and ipowa == "y":
+        x_name, y_name = "fluxbias", "powa"
+        message = "(2D) X: Flux-Bias, Y: Power"
+        xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>Probing-Power(dBm)</b>"
+        x, y = waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data[0:session['c_cwsweep_address'][1]+offset], waveform(M_cwsweep[session['user_name']].corder['Power']).data
+        x_count, y_count = session['c_cwsweep_address'][1]+offset, waveform(M_cwsweep[session['user_name']].corder['Power']).count
+    # 11. x: fluxbias, y: xypowa
+    elif ifluxbias == "x" and ixypowa == "y":
+        x_name, y_name = "fluxbias", "xypowa"
+        message = "(2D) X: Flux-Bias, Y: XY-Power"
+        xtitle, ytitle = "<b>Flux-Bias(V/A)</b>", "<b>XY-Power(dBm)</b>"
+        x, y = waveform(M_cwsweep[session['user_name']].corder['Flux-Bias']).data[0:session['c_cwsweep_address'][1]+offset], waveform(M_cwsweep[session['user_name']].corder['XY-Power']).data
+        x_count, y_count = session['c_cwsweep_address'][1]+offset, waveform(M_cwsweep[session['user_name']].corder['XY-Power']).count
+    # 12. x: xypowa, y: powa
+    elif ixypowa == "x" and ipowa == "y":
+        x_name, y_name = "xypowa", "powa"
+        message = "(2D) X: XY-Power, Y: Power"
+        xtitle, ytitle = "<b>XY-Power(dBm)</b>", "<b>Probing-Power(dBm)</b>"
+        x, y = waveform(M_cwsweep[session['user_name']].corder['XY-Power']).data[0:session['c_cwsweep_address'][3]+offset], waveform(M_cwsweep[session['user_name']].corder['Power']).data
+        x_count, y_count = session['c_cwsweep_address'][3]+offset, waveform(M_cwsweep[session['user_name']].corder['Power']).count
 
     else: message = "Please reverse X-ALL and Y-ALL order, OR just using compare-1D instead"
     print(Fore.YELLOW + "PLOTTING: %s" %message)
