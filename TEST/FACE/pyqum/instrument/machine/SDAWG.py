@@ -4,7 +4,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
-from numpy import zeros, ceil
+from numpy import zeros, ceil, where
 from pyqum.instrument.logger import address, set_status
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.toolbox import normalize_dipeak
@@ -42,6 +42,7 @@ def Initiate(which, mode='DATABASE', current=False):
 def model(module):
     return ["model", {"IDN": "%s (%s)" %(module.getProductName(), module.getSerialNumber())}]
 def clock(module, action=['Get', '']):
+    '''simulated SCPI: return clock-source & clock-rate'''
     if 'Set' in action:
         module.clockSetFrequency(action[2], 0) # 0: low-jitter, 1: fast-tune
     return ["Success", {"SOURce": module.clockGetSyncFrequency(), "SRATe": module.clockGetFrequency()}]
@@ -255,16 +256,30 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
     clearQ: MUST be used when ALL channels are FULLY assigned.
     '''
     # 1. Loading the settings:
-    settings=dict(clearQ=0, Master=True) # default settings for SDAWG
+    settings=dict(clearQ=0, Master=True, PINSW=False) # default settings for SDAWG
     settings.update(update_settings)
-    clearQ, Master = int(settings['clearQ']), settings['Master']
+    clearQ, Master, PINSW = int(settings['clearQ']), settings['Master'], settings['PINSW']
 
     channelist= [channel]
     if int(markeroption)==7: channelist.append(4)
     for channel in channelist:
         waveform_id = channel + 10 * module.getSlot() +  1000 * module.getChassis() # Unique ID: <Chassis___><Slot__><Channel_>
-        if (int(markeroption)==7) and (channel==4): pulsedata = abs(normalize_dipeak(envelope))
-        
+        if (int(markeroption)==7) and (channel==4): 
+            # Output MARKER through CH-4:
+            mkr_array = zeros(len(pulsedata))
+            if PINSW: # For DRIVING PIN-SWITCH: Following envelope.
+                if len(envelope): mkr_array = abs(normalize_dipeak(envelope)) # always RISING
+            else: # For TRIGGER PURPOSES: Making sure marker-width is finite & less than pulse-length.
+                try: # pulse case
+                    shrinkage = 3
+                    first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][0], where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][-1]
+                    last_falling_edge = first_rising_edge + int(ceil((last_falling_edge - first_rising_edge)/shrinkage))
+                except: # CW case
+                    first_rising_edge, last_falling_edge = 0, 300
+                mkr_array[first_rising_edge : last_falling_edge] = 1
+                print(Fore.YELLOW + "Output Trigger marker = 1/3 envelop: (%s - %s)" %(first_rising_edge, last_falling_edge))
+            pulsedata = mkr_array
+
         if clearQ: 
             module.AWGstop(channel)
             module.AWGflush(channel) # Clear queue TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT
@@ -284,7 +299,8 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
 def output(module, state):
     if state:
         for i in range(4): offset(module, i+1, 0) # zero ALL 4 channels
-        play(module, [1,2,3,4]) # open ALL 4 channels
+        ready(module, [1,2,3,4]) # open ALL 4 channels
+        play(module)
         print(Fore.CYAN + "PLAYING ALL 4 channels")
     else: 
         stop(module, [1,2,3,4])

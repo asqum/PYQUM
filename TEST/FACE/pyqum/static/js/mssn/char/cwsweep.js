@@ -73,6 +73,7 @@ function accessdata_cwsweep() {
         wmoment: wmoment
     }, function (data) {
         // Indicate JOBID:
+        window.ACCESSED_JOBID = data.JOBID;
         $("a.new#cwsweep-job").text('JOBID: ' + String(data.JOBID));
         console.log("Last accessed Job: " + tracking_access_jobids(data.JOBID));
         // load ref-jobids from comment:
@@ -103,6 +104,8 @@ function accessdata_cwsweep() {
         $('textarea.char.cwsweep[name="comment"]').text(data.comment);
         // load narrated perimeter-JSON:
         $('div#char-cwsweep-perimeters').empty().append($('<h4 style="color: blue;"></h4>').text(JSON.stringify(data.perimeter)));
+        // load narrated note:
+        $('textarea.char.cwsweep[name="note"]').val(data.note);
 
         // load c-range for each command:
         // SCROLL: scroll out repeated data (the exact reverse of averaging)
@@ -862,3 +865,14 @@ $('#char-cwsweep-to-benchmark').click( function(){
     return false;
     }
 );
+
+// SAVE NOTE:
+$('textarea.char.cwsweep[name="note"]').change( function () {
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/save/jobnote', {
+        ACCESSED_JOBID: ACCESSED_JOBID,
+        note: $('textarea.char.cwsweep[name="note"]').val(),
+    }, function (data) {
+        $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
+    });
+    return false;
+});

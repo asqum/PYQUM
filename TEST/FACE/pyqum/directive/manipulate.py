@@ -138,22 +138,26 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
 
     # DAC for [ROXY]:
     DAC_qty = len(instr['DAC'])
-    DAC_label, DAC, DAC_instance = [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty
+    DAC_type, DAC_label, DAC, DAC_instance = [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty
     # PENDING: ASSIGN according to instr['CH']
     # if DAC_qty>1: DACH_Matrix = [[1,2,3,4],[1,2]] # [[RO-I,RO-Q,Z1,Z2],[XY-I,XY-Q]]
     # elif DAC_qty==1: DACH_Matrix = [[1,2,3,4]] # [[RO-I,RO-Q,XY-I,XY-Q]]
 
     for i, channel_set in enumerate(DACH_Matrix):
-        [DAC_type, DAC_label[i]] = instr['DAC'][i].split('_')
-        DAC[i] = im("pyqum.instrument.machine.%s" %DAC_type)
+        [DAC_type[i], DAC_label[i]] = instr['DAC'][i].split('_')
+        DAC[i] = im("pyqum.instrument.machine.%s" %DAC_type[i])
         DAC_instance[i] = DAC[i].Initiate(which=DAC_label[i])
         DAC[i].clock(DAC_instance[i], action=['Set', 'EFIXed', CLOCK_HZ])
         DAC[i].clear_waveform(DAC_instance[i],'all')
         DAC[i].alloff(DAC_instance[i], action=['Set',1])
         
         # PENDING: Extract the settings from the machine database instead.
-        if i==0: update_settings = dict(Master=True, trigbyPXI=2) # First-in-line = Master
-        else: update_settings = dict(Master=False, trigbyPXI=2)
+        if i==0: 
+            markeroption = 7
+            update_settings = dict(Master=True, trigbyPXI=2, markeroption=7) # First-in-line = Master (usually RO giving Trigger through CH-4)
+        else: 
+            markeroption = 0
+            update_settings = dict(Master=False, trigbyPXI=2)
         print(Fore.CYAN + "%s's setting: %s" %(instr['DAC'][i], update_settings))
 
         '''Prepare DAC:'''
@@ -164,7 +168,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
         for channel in channel_set:
             DAC[i].prepare_DAC(DAC_instance[i], int(channel), pulseq.totalpoints, update_settings=update_settings)
         for channel in channel_set:
-            DAC[i].compose_DAC(DAC_instance[i], int(channel), pulseq.music) # we don't need marker yet initially
+            DAC[i].compose_DAC(DAC_instance[i], int(channel), pulseq.music, [], markeroption) # we don't need marker yet initially
         # Turn on all 4 channels:
         DAC[i].alloff(DAC_instance[i], action=['Set',0])
         DAC[i].ready(DAC_instance[i])
@@ -176,7 +180,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     adca = ADC.Initiate(which=ADC_label)
     '''Prepare ADC:'''
     TOTAL_POINTS = round(recordtime_ns / TIME_RESOLUTION_NS)
-    update_items = dict( triggerDelay_sec=trigger_delay_ns*1e-9, TOTAL_POINTS=TOTAL_POINTS, NUM_CYCLES=recordsum )
+    update_items = dict( triggerDelay_sec=trigger_delay_ns*1e-9, TOTAL_POINTS=TOTAL_POINTS, NUM_CYCLES=recordsum, PXI=-13 ) # HARDWIRED to receive trigger from the front-panel EXT.
     ADC.ConfigureBoard(adca, update_items)
     
 
@@ -233,24 +237,24 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                 # DAC's SCORE-UPDATE:
                 if j > 2:
                     # for ch in range(4):
-                    for i, channel_set in enumerate(DACH_Matrix):
+                    for i_slot_order, channel_set in enumerate(DACH_Matrix):
                         for ch in channel_set:
                             # channel = str(ch + 1)
-                            dach_address = "%s-%s" %(i+1,ch)
+                            dach_address = "%s-%s" %(i_slot_order+1,ch)
                             SCORE_DEFINED['CH%s'%dach_address] = SCORE_DEFINED['CH%s'%dach_address].replace("{%s}"%structure[j], str(R_waveform[structure[j]].data[caddress[j]]))
 
             # print(Fore.YELLOW + "DEFINED SCORE-CH1: %s" %(SCORE_DEFINED['CH1']))
             # IN THE FUTURE: HVI-ROUTINE STARTS HERE:
             # Basic Control (Every-loop)
             # DAC
-            for i, channel_set in enumerate(DACH_Matrix):
+            for i_slot_order, channel_set in enumerate(DACH_Matrix):
                 # PENDING: Extract the settings from the machine database instead.
-                if i==0: update_settings = dict(Master=True, clearQ=int(bool(len(channel_set)==4)) ) # First-in-line = Master
+                if i_slot_order==0: update_settings = dict(Master=True, clearQ=int(bool(len(channel_set)==4)) ) # First-in-line = Master
                 else: update_settings = dict(Master=False, clearQ=int(bool(len(channel_set)==4)) )
 
                 for ch in channel_set:
                     # channel = str(ch + 1)
-                    dach_address = "%s-%s" %(i+1,ch)
+                    dach_address = "%s-%s" %(i_slot_order+1,ch)
                     pulseq = pulser(dt=dt, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address])
                     pulseq.song()
                     '''
@@ -261,10 +265,11 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                     0 for BOTH: disabled.
                     '''
                     # PENDING: edittable markeroption instead of just "2":
-                    DAC[i].compose_DAC(DAC_instance[i], int(ch), pulseq.music, pulseq.envelope, 2, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
-                DAC[i].ready(DAC_instance[i])
-                print('Waveform from Slot-%s is Ready!'%(i))
-                # print("PROBE BUG for DAC-%s: %s" %(i+1,sleep(7)))
+                    if (i_slot_order==0) and ("SDAWG" in DAC_type[i_slot_order]): marker = 7
+                    else: marker = 2
+                    DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), pulseq.music, pulseq.envelope, marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
+                DAC[i_slot_order].ready(DAC_instance[i_slot_order])
+                print('Waveform from Slot-%s is Ready!'%(i_slot_order+1))
                 
             # Basic Readout (Buffer Every-loop):
             # ADC 
@@ -295,7 +300,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                 break # proceed to close all & queue out
             
             # print("Operation Complete")
-            print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize*100), end='\r', flush=True)			
+            print(Fore.YELLOW + "\rProgress-(%s): %.3f%%" %((i+1), (i+1)/datasize*buffersize*100), end='\r', flush=True)			
             
             jobsinqueue(queue)
             if JOBID in g.jobidlist:
@@ -305,9 +310,9 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
 
         # PENDING: LISTIFY / DICTIFY THE HANDLE?
         ADC.close(adca, which=ADC_label)
-        for i, channel_set in enumerate(DACH_Matrix):
-            DAC[i].alloff(DAC_instance[i], action=['Set',1])
-            DAC[i].close(DAC_instance[i], which=DAC_label[i])
+        for i_slot_order, channel_set in enumerate(DACH_Matrix):
+            DAC[i_slot_order].alloff(DAC_instance[i_slot_order], action=['Set',1])
+            DAC[i_slot_order].close(DAC_instance[i_slot_order], which=DAC_label[i_slot_order])
         if "opt" not in rofreq.data: # check if it is in optional-state
             SG[1].rfoutput(SG_instance[1], action=['Set_', 0])
             if SG_type[1] in 'DDSLO,...': SG[1].rfoutput(SG_instance[1], action=['Set_2', 0])

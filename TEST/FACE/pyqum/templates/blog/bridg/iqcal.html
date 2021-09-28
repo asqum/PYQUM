@@ -9,7 +9,7 @@
     <div class="iqcalcontent">
 
         <h3>Welcome to IQ Calibration on Mixer Modules</h3>
-        <div class="row"><div class="col-35 iqcal" id='left'><label for="iqcal" id='iqcal-message'></label></div></div>
+        <div class="row"><div class="col-88 iqcal" id='left'><label for="iqcal" id='iqcal-message'></label></div></div>
 
         <!-- IQ Calibration Routines -->
         <div class="row brdg" id="iqcal-routines">
@@ -28,15 +28,15 @@
             <!-- Inspecting Sidebands -->
             <div class="row">
                 <div class="col-10" id='left'><label>SA status</label></div>
-                <div class="col-10" id='left'><label>LO-frequency (GHz)</label></div>
-                <div class="col-10" id='left'><label>IF-frequency (MHz)</label></div>
+                <div class="col-10" id='left'><label>LO-freq (GHz)</label></div>
+                <div class="col-10" id='left'><label>IF-freq (MHz)</label></div>
                 <div class="col-10" id='left'><label>Sweep-points</label></div>
                 <div class="col-10" id='left'><label>RBW (kHz)</label></div>
                 <div class="col-10" id='left'><label>Average#</label></div>
             </div>
             <div class="row">
                 <div class="col-10" id='left'><label class="switch"><input class='iqcal manual SA connect' type="checkbox">
-                    <div class="slider smooth"><span class="on">ONLINE</span><span class="off">OFFLINE</span></div>
+                    <div class="slider smooth"><span class="on">ONLINE</span><span class="off">CONNECT</span></div>
                 </label></div>
                 <div class="col-10" id='left'><input class='iqcal manual SA sweep LO-frequency-GHz' type="text" value="7"/></div>
                 <div class="col-10" id='left'><input class='iqcal manual SA sweep IF-frequency-MHz' type="text" value="3"/></div>
@@ -44,7 +44,39 @@
                 <div class="col-10" id='left'><input class='iqcal manual SA sweep RBW_kHz' type="number" value='10' min=1 step=1 max=1000/></div>
                 <div class="col-10" id='left'><input class='iqcal manual SA sweep AveCount' type="number" value='4' min=1 step=1 max=1000000/></div>
             </div>
+            <div class="row">
+                <div class="col-10" id='left'><label> </label></div>
+                <div class="col-10" id='left'><label>Conv-freq (GHz)</label></div>
+                <div class="col-10" id='left'><label>IF-rotation (MHz)</label></div>
+                <div class="col-10" id='left'><label>LO-Power (dBm)</label></div>
+                <div class="col-10" id='left'><label>IF-Period (ns)</label></div>
+                <div class="col-10" id='left'><label>IF-Scale (0-1)</label></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><div class="buttons"><a class="btn green iqcal auto AI run">RUN</a></div></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI Conv-frequency-GHz' type="text" value="5"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI IF-rotation-MHz' type="text" value="-37"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI LO-power-dBm' type="text" value="4.3"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI IF-period-ns' type="text" value="300000"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI IF-scale' type="text" value="0.03"/></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><i class='fa fa-solid fa-sync fa-spin fa-2x fa-fw iqcal auto AI stop' style='font-size:17px;color:red;'></i></div>
+                <div class="col-10" id='left'><label>Mixer-module</label></div>
+                <div class="col-30" id='left'><label>Wiring-config</label></div>
+                <div class="col-10" id='left'><label>Channels-group</label></div>
+            </div>
+            <div class="row">
+                <div class="col-10" id='left'><div class="buttons"><a class="btn rred iqcal auto AI stop">STOP</a></div></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI Mixer-module' type="text" value="xy3"/></div>
+                <div class="col-30" id='left'><input class='iqcal auto AI Wiring-config' type="text" value='{"SG":"DDSLO_1","DA":"SDAWG_1","SA":"MXA_1"}'/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI Channels-group' type="text" value="1"/></div>
+                <div class="col-10" id='left'><label class="switch"><input class='iqcal auto status' type="checkbox">
+                    <div class="slider smooth"><span class="on">LIVE</span><span class="off">GO LIVE</span></div>
+                </label></div>
+            </div>
         </div>
+        <div class="row"><div class="col-88 iqcal" id='left'><label for="iqcal" id='auto-iqcal-update'></label></div></div>
         <div id="iqcal-SA-scouting"></div>
 
         

@@ -124,7 +124,7 @@ def inst_order(queue, category='ALL', tabulate=True):
             else: 
                 inst_list = str(inst_list) # for editting on WIRING-page
 
-        except(TypeError): inst_list = ['DUMMY_1'] # Creating Dummy Instrument for Compatibility reason...
+        except(TypeError): inst_list = ['DUMMY_1'] # Creating Dummy Instrument for Compatibility reason: for macantouch...
     db.close()
 
     return inst_list

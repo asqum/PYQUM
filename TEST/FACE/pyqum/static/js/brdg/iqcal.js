@@ -2,6 +2,30 @@ $(document).ready(function(){
     // $('div.iqcalcontent').show();
     $('div.sweeping-spectrum').prepend("<i class='fa fa-cog fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
     $('div.sweeping-spectrum').hide();
+    $('.iqcal.auto.AI.run').hide();
+    $('.iqcal.auto.AI.stop').hide();
+});
+
+// When page loads:
+$( function() {
+    // load module-list:
+    var mixermodule_list = [];
+    $.getJSON("/bridge/iqcal/load/mixermodules", {}, function (data) {
+        $.each(data.mixermodule_list, function(i,mixermodule) {
+            mixermodule_list.push(mixermodule);
+        });
+        console.log(mixermodule_list.join(', '));
+        $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: red;"></h4>').text("Total IQ-corrections available: " + mixermodule_list.length));
+    });
+    
+    // Auto-complete:
+    // mixermodule_list is still empty outside here: weird.
+    $( "input.iqcal.mixer-module-KEY" ).autocomplete({
+        source: mixermodule_list
+    });
+
+    // check auto IQCAL:
+    check_auto_iqcal();
 });
 
 // Functions:
@@ -37,8 +61,6 @@ function plot_sidebands(x1,y1,x2,y2,xtitle,ytitle) {
 
     var Trace = [trace1,trace2];
     Plotly.react('iqcal-SA-scouting', Trace, layout);
-    $('div.sweeping-spectrum').hide();
-    $('.iqcal > label#iqcal-message').append($('<h4 style="color: blue;"></h4>').text("Red-band: " + y1[1] + ", LO-Leak: " + y1[2] + ", Blue-band: " + y1[3] + ". "));
 };
 function manual_calibrate() {
     $('div.sweeping-spectrum').show();
@@ -58,6 +80,25 @@ function manual_calibrate() {
     .done( function (data) {
         $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: blue;"></h4>').text(mixermodule_key + " has just been updated. "));
         plot_sidebands(data.freq_list, data.powa_list, data.full_spectrum_x, data.full_spectrum_y, 'Frequency (GHz)','Power (dBm)');
+        $('div.sweeping-spectrum').hide();
+        $('.iqcal > label#iqcal-message').append($('<h4 style="color: blue;"></h4>')
+            .text("Red-band: " + data.powa_list[1].toFixed(3) + ", LO-Leak: " + data.powa_list[2].toFixed(3) + ", Blue-band: " + data.powa_list[3].toFixed(3) + ". "));
+    });
+};
+function check_auto_iqcal() {
+    $("input.iqcal.mixer-module-KEY").val($('input.iqcal.auto.AI.Mixer-module').val() + "i" + $('input.iqcal.auto.AI.IF-rotation-MHz').val()).trigger("change");
+    $.getJSON("/bridge/iqcal/auto/check/status", {}, function (data) {
+        console.log("running: " + data.running + ", iteration: " + data.iteration + ", autoIQCAL_dur_s: " + data.autoIQCAL_dur_s);
+        if (data.running==true) { 
+            $('.iqcal.auto.AI.run').hide();
+            $('.iqcal.auto.AI.stop').show();
+        } else {
+            $('.iqcal.auto.AI.stop').hide();
+            $('.iqcal.auto.AI.run').show();
+        };
+        $('.iqcal > label#auto-iqcal-update').empty().append($('<h4 style="color: blue;"></h4>')
+                .text("Last iteration-" + data.iteration + " took " + data.autoIQCAL_dur_s + "-sec to improve: "));
+        plot_sidebands([],[],data.autoIQCAL_frequencies,data.autoIQCAL_spectrum,"Frequency (GHz)","Power (dBm)");
     });
 };
 
@@ -86,37 +127,71 @@ $(document).on("change", "input.iqcal.manual.SA.sweep", function () {
     manual_calibrate();
     return false;
 });
-// PENDING: SOLVE the HANG issue...
-// $(document).on("click", "input.iqcal.manual.SA", function () {
-//     manual_calibrate();
-//     return false;
-// });
-
-// Auto-complete:
-$( function() {
-    var mixermodule_list = [];
-    $.getJSON("/bridge/iqcal/load/mixermodules", {}, function (data) {
-        $.each(data.mixermodule_list, function(i,mixermodule) {
-            mixermodule_list.push(mixermodule);
-        });
-        console.log(mixermodule_list.join(', '));
-        $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: red;"></h4>').text("Available: " + mixermodule_list.join(', ')));
-    });
-    
-    // mixermodule_list is still empty outside here: weird.
-    $( "input.iqcal.mixer-module-KEY" ).autocomplete({
-        source: mixermodule_list
-    });
-});
 
 // SA CONNECTION:
 $(function () {
     $('input.iqcal.manual.SA.connect').click(function (e, callback) { 
         saconnect = $('input.iqcal.manual.SA.connect').is(':checked'); //use css to respond to click / touch
         if (saconnect == true) {
-            $.getJSON("/bridge/iqcal/manual/sa/connect", {}, function (data) { console.log("status: " + data.status) });
+            $.getJSON("/bridge/iqcal/manual/sa/connect", {}, function (data) { console.log("status: " + data.status) })
+            .done( function (data) { $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: blue;"></h4>').text(data.status)); })
+            .fail(function(jqxhr, textStatus, error){ $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: blue;"></h4>').text(error + "\nPlease Refresh!")); });
         } else {
-            $.getJSON("/bridge/iqcal/manual/sa/closet", {}, function (data) { console.log("status: " + data.status) });
+            $.getJSON("/bridge/iqcal/manual/sa/closet", {}, function (data) { console.log("status: " + data.status) })
+            .done( function (data) { $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: red;"></h4>').text(data.status)); })
+            .fail(function(jqxhr, textStatus, error){ $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: blue;"></h4>').text(error + "\nPlease Refresh!")); });
         };
+    });
+});
+
+// AUTO IQ-CALIBRATION:
+// LIVE UPDATE STATUS:
+$(function () {
+    $('input.iqcal.auto.status').click(function () { 
+        var livestat = $('input.iqcal.auto.status').is(':checked'); //use css to respond to click / touch
+        if (livestat == true) {
+            check_auto_iqcal();
+            var live_loop = setInterval(check_auto_iqcal, 3170);
+            $('input.iqcal.auto.status').click(function () {
+                clearInterval(live_loop); 
+            });
+        };
+    });
+});
+// RUN:
+$(function () {
+    $("a.iqcal.auto.AI.run").click( function() {
+        if ($('input.iqcal.auto.status').is(':checked')==false) { $('input.iqcal.auto.status').trigger("click"); }; // CLICK-ON the LIVE-UPDATE-STATUS
+        $.getJSON("/bridge/iqcal/auto/calibrate/run", {
+            Conv_frequency_GHz: $('input.iqcal.auto.AI.Conv-frequency-GHz').val(),
+            IF_rotation_MHz: $('input.iqcal.auto.AI.IF-rotation-MHz').val(),
+            LO_power_dBm: $('input.iqcal.auto.AI.LO-power-dBm').val(),
+            IF_period_ns: $('input.iqcal.auto.AI.IF-period-ns').val(),
+            IF_scale: $('input.iqcal.auto.AI.IF-scale').val(),
+            Mixer_module: $('input.iqcal.auto.AI.Mixer-module').val(),
+            Wiring_config: $('input.iqcal.auto.AI.Wiring-config').val(),
+            Channels_group: $('input.iqcal.auto.AI.Channels-group').val(),
+        }, function (data) {
+            $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
+        });
+        return false;
+    });
+});
+// STOP:
+$(function () {
+    $("a.iqcal.auto.AI.stop").click( function() {
+        if ($('input.iqcal.auto.status').is(':checked')==false) { $('input.iqcal.auto.status').trigger("click"); }; // CLICK-ON the LIVE-UPDATE-STATUS
+        $.getJSON("/bridge/iqcal/auto/calibrate/stop", {}, function (data) {
+            $('.iqcal > label#iqcal-message').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
+        });
+        return false;
+    });
+});
+
+$(function () {
+    $("#iqcal-tab").click( function () {
+        
+
+        return false;
     });
 });

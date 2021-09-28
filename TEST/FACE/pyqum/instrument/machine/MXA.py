@@ -156,12 +156,18 @@ def mark_power(bench, freq_GHz):
     # Extract power reading:
     power = float(bench.query(":CALCulate:MARKer:Y?").split('dBm')[0])
     bench.write("INIT:CONT ON")
-    return power
+    return [power]
 
-def autoscal(bench):
-    preamp(bench, action=['Set','OFF'])
+def autoscal(bench, preamp_mode=0):
     preamp_band(bench, action=['Set','FULL'])
-    attenuation(bench, action=['Set','0dB'])
+    
+    if preamp_mode:
+        preamp(bench, action=['Set','ON'])
+        attenuation(bench, action=['Set','24dB'])
+    else:
+        preamp(bench, action=['Set','OFF'])
+        attenuation(bench, action=['Set','0dB'])
+
     status = attenuation_auto(bench, action=['Set','ON'])
     return status
 
@@ -239,10 +245,10 @@ def close(bench, reset=True, which=1, mode='DATABASE'):
     else: set_status(mdlname, dict(config='previous'))
     try:
         bench.close() #None means Success?
-        status = "Success"
+        status = "%s Closed Successfully"%(mdlname)
         ad = address(mode)
         ad.update_machine(0, "%s_%s"%(mdlname,which))
-    except: status = "Error"
+    except: status = "Error Closing up %s"%(mdlname)
     set_status(mdlname, dict(state='disconnected'))
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
     return status
@@ -298,7 +304,7 @@ def test(detail=True):
                 attenuation_auto(s, action=['Set','ON'])
 
                 x = waveform('%s to %s * %s' %(freq-span/1000, freq+span/1000, npoints-1)).data
-                marking_power = mark_power(s,freq)
+                marking_power = mark_power(s,freq)[0]
                 dataform(s, action=['Set', 'REAL'])
                 y = sdata(s, mode="")
                 print("data points extracted: %s" %len(y))
@@ -315,7 +321,7 @@ def test(detail=True):
                 vbw(s, action=['Set','100kHz'])
                 
                 measure(s)
-                autoscal(s)
+                autoscal(s, 1)
                 x = waveform('%s to %s * %s' %(fstart, fstop, npoints-1)).data
                 y = sdata(s, mode="")
                 curve(x, y, 'power spectrum-2', 'frequency (GHz)', 'power (dBm)')
@@ -344,4 +350,4 @@ def test(detail=True):
     close(s, reset=state, mode="TEST")
     return
 
-#test()
+# test()
