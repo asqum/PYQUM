@@ -360,8 +360,9 @@ function wiring_designation_update() {
             $('table.BDR-WIRING tbody.wiring.designation-update').append('<tr><td>' + (i+1) + '</td><td>' + val.category + '</td><td>' + val.designation + '</td></tr>');
         });
         $.each(data.category, function (i,cat) {
-            if (data.instr_organized[cat].includes("DUMMY")==false) { var designation = data.instr_organized[cat]; };
-            $('input.bdr.wiring-designation.'+cat).val(designation);
+            console.log("Category [" + cat + "] has enlisted: " + data.instr_organized[cat]);
+            if (data.instr_organized[cat].includes("DUMMY_1")==false) { var enlisted_instr = data.instr_organized[cat]; };
+            $('input.bdr.wiring-designation.'+cat).val(enlisted_instr); // undefined=blank: leave the input blank if it contain DUMMY_1!
         });
     });
 };

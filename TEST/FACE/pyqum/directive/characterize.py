@@ -67,7 +67,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     NA.linfreq(nabench, action=['Set', fstart, fstop]) # Linear Freq-sweep-range
     # DC:
     [DC_type, DC_label] = instr['DC'].split('_')
-    DC = im("pyqum.instrument.machine.%s" %DC_type)
+    if "DUMMY" not in DC_type.upper(): DC = im("pyqum.instrument.machine.%s" %DC_type)
     if "opt" not in fluxbias.data: # check if it is in optional-state
         dcbench = DC.Initiate(current=True, which=DC_label) # PENDING option: choose between Voltage / Current output
         DC.output(dcbench, 1)
@@ -210,7 +210,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
 
     # DC:
     [DC_type, DC_label] = instr['DC'].split('_')
-    DC = im("pyqum.instrument.machine.%s" %DC_type)
+    if "DUMMY" not in DC_type.upper(): DC = im("pyqum.instrument.machine.%s" %DC_type)
     if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
         dcbench = DC.Initiate(current=True, which=DC_label) # pending option
         DC.output(dcbench, 1)

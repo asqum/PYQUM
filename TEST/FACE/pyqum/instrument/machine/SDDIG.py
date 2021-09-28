@@ -59,7 +59,10 @@ def ConfigureBoard(module, update_settings={}):
         DAQ_CH += 1
         module.channelInputConfig(DAQ_CH, fullScale=FULL_SCALE, impedance=1, coupling=0)
         module.DAQconfig(DAQ_CH, pointsPerCycle=TOTAL_POINTS, nCycles=NUM_CYCLES, triggerDelay=round(triggerDelay_sec/dt_s), triggerMode=keysightSD1.SD_TriggerModes.EXTTRIG) 
-        module.DAQdigitalTriggerConfig(DAQ_CH, keysightSD1.SD_TriggerExternalSources.TRIGGER_PXI+PXI, keysightSD1.SD_TriggerBehaviors.TRIGGER_FALL)
+        if PXI < 0: # EXTERNAL FRONT-PANEL TRIGGER:
+            print(Fore.CYAN + "Trigger from front panel EXT:")
+            module.DAQdigitalTriggerConfig(DAQ_CH, keysightSD1.SD_TriggerExternalSources.TRIGGER_EXTERN, keysightSD1.SD_TriggerBehaviors.TRIGGER_RISE)
+        else: module.DAQdigitalTriggerConfig(DAQ_CH, keysightSD1.SD_TriggerExternalSources.TRIGGER_PXI+PXI, keysightSD1.SD_TriggerBehaviors.TRIGGER_FALL)
 
     samplesPerSec = sampling_rate(module)
     dt_ns = 1 / samplesPerSec / 1e-9 # in nano-second

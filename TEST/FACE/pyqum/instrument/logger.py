@@ -751,7 +751,7 @@ def lisjob(sample, queue, maxlist=12):
         # Extracting list from SQL-Database:
         Joblist = get_db().execute(
             '''
-            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress, u.username, j.tag
+            SELECT j.id, j.task, j.dateday, j.wmoment, j.startime, j.instrument, j.comment, j.progress, u.username, j.tag, j.note
             FROM user u
             INNER JOIN job j ON j.user_id = u.id
             INNER JOIN sample s ON s.id = j.sample_id
@@ -883,6 +883,7 @@ def jobin(task,corder,perimeter,instr,comment,tag):
             # raise
             JOBID = None 
             print(Fore.RED + Back.WHITE + "Check all database input parameters")
+            print(Fore.BLUE + "Stop server and make sure queue's 'check'-constraint has included the new queue!")
     else: JOBID = None
     return JOBID
 def jobstart(day,task_index,JOBID):
@@ -899,15 +900,26 @@ def jobstart(day,task_index,JOBID):
             raise
     else: pass
     return
-def jobnote():
+def jobnote(JOBID, note):
     '''Add NOTE to a JOB after analyzing the data'''
-
+    if g.user['measurement']:
+        try:
+            db = get_db()
+            db.execute('UPDATE job SET note = ? WHERE id = ?', (note,JOBID))
+            db.commit()
+            close_db()
+            print(Fore.GREEN + "User %s has successfully updated JOB#%s with NOTE: %s" %(g.user['username'],JOBID,note))
+        except:
+            print(Fore.RED + Back.WHITE + "INVALID JOBID")
+            raise
+    else: pass
     return
 def jobsearch(criteria, mode='jobid'):
     '''Search for JOB(s) based on criteria (keywords)
         \nmode <jobid>: get job-id based on criteria
         \nmode <tdmq>: get task, dateday, wmoment & queue based on job-id given as criteria
         \nmode <requeue>: get task, parameter, perimeter, comment & tag based on job-id given as criteria for REQUEUE
+        \nmode <note>: get note based on job-id given as criteria
     '''
     db = get_db()
     if mode=='jobid':
@@ -925,6 +937,8 @@ def jobsearch(criteria, mode='jobid'):
         result = db.execute('SELECT task, dateday, wmoment, queue FROM job WHERE id = ?', (criteria,)).fetchone()
     elif mode=='requeue':
         result = db.execute('SELECT task, parameter, perimeter, comment, tag FROM job WHERE id = ?', (criteria,)).fetchone()
+    elif mode=='note':
+        result = db.execute('SELECT j.note FROM job j WHERE j.id = ?', (criteria,)).fetchone()[0]
     else: result = None 
     close_db()
     return result

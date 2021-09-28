@@ -91,8 +91,14 @@ function qumjob() {
                 var date = new Date(val.startime);
                 Startime = date.toLocaleString("en-GB"); // British English uses day-month-year order and 24-hour time without AM/PM
                 // Startime = date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-                var comments = new String(val.comment);
-                Comments = comments.replaceAll("\\n", "; ");
+                
+                // Showing COMMENT or NOTE:
+                if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Comment') {
+                    var Comment_Note = new String(val.comment).replaceAll("\\n", "; ");
+                } else if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Note') {
+                    if (val.note==null) { var Comment_Note = "";
+                    } else { var Comment_Note = new String(val.note); };
+                };
 
                 // Alternate row-background-color with each days:
                 if (val.dateday!=prev_day) {
@@ -105,7 +111,7 @@ function qumjob() {
 
                 // Filling the rows:
                 $('table.mssn-JOB tbody.all.mssn-job-update').append('<tr' + alt_BG + '><td>' + val.id + '</td><td>' + datastatus + '</td><td>' + val.task + '</td><td>' + Startime +
-                '</td><td>' + val.username + '</td><td>' + val.instrument + actionbutton + '</td><td>' + Comments + '</td>' + '</tr>');
+                '</td><td>' + val.username + '</td><td>' + val.instrument + actionbutton + '</td><td>' + Comment_Note + '</td>' + '</tr>');
                 // console.log("Comment: " + val.comment.replace(/(\r\n|\n|\r)/gm,", "));
             };
         });
@@ -177,6 +183,10 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-requeue', func
         $('h3.all-mssn-warning').text("Clearance: " + data.clearance + "; Perimeter: " + data.requeue.perimeter);
     });
     return false;
+});
+// Revert between COMMENT and NOTE:
+$(document).on('change', 'table.mssn-JOB tr th select.all_comment_note', function() {
+    qumjob();
 });
 // TO SIMPLE-INSPECT PARAMETER & PERIMETER OF JOB IN QUEUE: (PENDING)
 $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-inspect.yellow', function() {
