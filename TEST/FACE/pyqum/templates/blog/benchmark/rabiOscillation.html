@@ -3,35 +3,35 @@
 <head>
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/decoherence.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/rabiOscillation.js') }}"></script>
 
 </head>
 
 <body class="benchmark">
     <div class="qestimatecontent">
-        <h3>T1 fitting</h3>
+        <h3>Rabi fitting</h3>
 
         <div class="flex-allPara">
 
-            <div class="allMeasurePara" id="decoherence-parameters">
-                <button id="decoherence-plot-button" type="submit">Plot</button>
+            <div class="allMeasurePara" id="rabiOscillation-parameters">
+                <button id="rabiOscillation-plot-button" type="submit">Plot</button>
             </div>
 
             <div class="allFitPara">
 
-                <button id="decoherence-fit-button" type="submit">Fit</button>
+                <button id="rabiOscillation-fit-button" type="submit">Fit</button>
 
             </div> 
              
         </div>
-        <div id="decoherence-plot-fittingParameters"></div>
+        <div id="rabiOscillation-plot-fittingParameters"></div>
         <div class="result-plot-area">
             <div class="2D-plot-area">
-                <div id="decoherence-plot2D-rawOverview"></div>
+                <div id="rabiOscillation-plot2D-rawOverview"></div>
             </div>
             <div class="plot1D-area">
-                <div id="decoherence-plot1D-ampPhase"></div>
-                <div id="decoherence-plot1D-IQ"></div>
+                <div id="rabiOscillation-plot1D-ampPhase"></div>
+                <div id="rabiOscillation-plot1D-IQ"></div>
             </div>
         </div>
 </body>
