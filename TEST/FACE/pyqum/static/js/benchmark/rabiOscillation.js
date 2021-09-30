@@ -3,8 +3,8 @@
 
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
-    render_selection("decoherence");
-    console.log( "Load decoherence" );
+    render_selection("rabiOscillation");
+    console.log( "Load rabiOscillation" );
 });
 
 
@@ -47,17 +47,17 @@ $(function () {
 
 
     // plot
-    $('#decoherence-plot-button').on('click', function () {
-        let plotID_2D = "decoherence-plot2D-rawOverview";
-        let plotID_1D_ampPhase = "decoherence-plot1D-ampPhase";
-        let plotID_1D_IQ = "decoherence-plot1D-IQ";
+    $('#rabiOscillation-plot-button').on('click', function () {
+        let plotID_2D = "rabiOscillation-plot2D-rawOverview";
+        let plotID_1D_ampPhase = "rabiOscillation-plot1D-ampPhase";
+        let plotID_1D_IQ = "rabiOscillation-plot1D-IQ";
         console.log( "plot!!" );
         $.ajaxSettings.async = false;
         let htmlInfo = get_htmlInfo_python();
-        let analysisIndex = get_selectInfo("decoherence");
+        let analysisIndex = get_selectInfo("rabiOscillation");
         if ( analysisIndex.axisIndex.length == 2 ){
             $.getJSON( '/benchmark/qestimate/getJson_plot',
-            {   quantificationType: JSON.stringify("decoherence"), analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("2D_amp"), },
+            {   quantificationType: JSON.stringify("rabiOscillation"), analysisIndex: JSON.stringify(analysisIndex), plotType: JSON.stringify("2D_amp"), },
                 function (data) {
                 console.log( "2D plot" );
                 console.log( data );
@@ -74,6 +74,7 @@ $(function () {
         }else{
             document.getElementById(plotID_2D).style.display = "none";
         }
+
 
 
         $.getJSON( '/benchmark/qestimate/getJson_plot',
@@ -104,16 +105,16 @@ $(function () {
 
     });
     //Test fit data
-    $('#decoherence-fit-button').on('click', function () {
+    $('#rabiOscillation-fit-button').on('click', function () {
 
         $.ajaxSettings.async = false;
         let htmlInfo=get_htmlInfo_python();
-        let analysisIndex = get_selectInfo( "decoherence" );
+        let analysisIndex = get_selectInfo( "rabiOscillation" );
 
         console.log( "Fit plot" );
         console.log( analysisIndex );
         let xAxisKey = htmlInfo[analysisIndex.axisIndex[0]]["name"];
-        let fitRange = document.getElementById("decoherence"+"-fitting_input-"+xAxisKey).value;
+        let fitRange = document.getElementById("rabiOscillation"+"-fitting_input-"+xAxisKey).value;
 
         let fitParameters = {
             range: {
@@ -145,7 +146,7 @@ $(function () {
                 yErr: Object.keys(data["errors"]),
             }
             let plotdata = Object.assign({}, data["results"], data["errors"]);
-            plot1D( plotdata, axisKeys_fitResult, "decoherence-plot-fittingParameters");
+            plot1D( plotdata, axisKeys_fitResult, "rabiOscillation-plot-fittingParameters");
 
         });
         $.ajaxSettings.async = true;

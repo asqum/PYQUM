@@ -23,7 +23,7 @@ from si_prefix import si_format, si_parse
 from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, logical_and, nan, angle
 
 # Load instruments
-from pyqum.directive.quantification import ExtendMeasurement, QEstimation, Decoherence
+from pyqum.directive.quantification import ExtendMeasurement, QEstimation, Decoherence, RabiOscillation
 from pyqum.mission import get_measurementObject
 
 # Fitting
@@ -82,6 +82,9 @@ def qestimate():
 def decoherence():
 	return render_template("blog/benchmark/decoherence.html")
 
+@bp.route('/rabiOscillation', methods=['POST', 'GET'])
+def rabiOscillation():
+	return render_template("blog/benchmark/rabiOscillation.html")
 
 
 @bp.route('/benchmark_getMeasurement', methods=['POST', 'GET'])
@@ -126,9 +129,12 @@ def register_Quantification():
 		return QEstimation(myExtendMeasurement)
 	def get_decoherence ( myExtendMeasurement ):
 		return Decoherence(myExtendMeasurement)
+	def get_RabiOscillation ( myExtendMeasurement ):
+		return RabiOscillation(myExtendMeasurement)
 	quantification = {
 		'qEstimation': get_qEstimation,
 		'decoherence': get_decoherence,
+		'rabiOscillation': get_RabiOscillation,
 	}
 	try: QDict[session['user_name']] = quantification[quantificationType](myExtendMeasurement)
 	except(KeyError): print("No such quantification type")

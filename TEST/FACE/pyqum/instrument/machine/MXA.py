@@ -32,6 +32,9 @@ def Initiate(reset=True, which=1, mode='DATABASE'): # PENDING INCLUSION INTO THE
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 150000 #set timeout in ms
         stat = bench.write(":INIT:CONT ON") #continuous mode
+
+        bench.write(":DISPlay:ENABle OFF") #Display off
+
         # sleep(3)
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat)))
@@ -233,6 +236,9 @@ def fpower(bench, frequency_GHz, ave_points=100, resBW_kHz=3, ave_counts=10):
     return power, powerlist
 
 def close(bench, reset=True, which=1, mode='DATABASE'):
+
+    bench.write(":DISPlay:ENABle ON") #Display on
+
     if reset:
         bench.write('*RST') # reset to factory setting (including switch-off)
         set_status(mdlname, dict(config='reset'))
