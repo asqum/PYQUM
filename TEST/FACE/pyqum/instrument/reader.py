@@ -119,7 +119,7 @@ def inst_order(queue, category='ALL', tabulate=True):
                 if category=='CH' or category=='ROLE': # output: dict
                     inst_list = inst_list.split('>>')
                     inst_list = [{x.split(':')[0]:x.split(':')[1].split(',')} for x in inst_list]
-                    inst_list = {k:[x.split('/') for x in v] for d in inst_list for k,v in d.items()}
+                    inst_list = {k:[x.split('/') for x in v] for d in inst_list for k,v in d.items()} # {<inst>: <slot-channel> ...}
                 else: inst_list = inst_list.split(',') # output: list
             else: 
                 inst_list = str(inst_list) # for editting on WIRING-page

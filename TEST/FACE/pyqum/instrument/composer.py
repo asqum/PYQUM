@@ -60,20 +60,34 @@ class pulser:
             duration = range(round(self.beatime/self.dt) - round(pulsewidth/self.dt), round(self.beatime/self.dt))
 
             # Shapes of Tones:
+            # 1. Constant Flat Line:
             if beat.split(',')[0].split('/')[0] == 'flat':
                 self.music[duration] = pulseheight
                 
+            # 2. Gaussian Up from zero:
             elif beat.split(',')[0].split('/')[0] == 'gaussup':
                 if beat.split(',')[0].split('/')[1] == '': sfactor = 6
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor
                 self.music[duration] = pulseheight * exp(-power((linspace(self.dt, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth), 2) / 2 / (sigma**2))
 
+            # 3. Gaussian Down to zero:
             elif beat.split(',')[0].split('/')[0] == 'gaussdn':
                 if beat.split(',')[0].split('/')[1] == '': sfactor = 6
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor
                 self.music[duration] = pulseheight * exp(-power((linspace(pulsewidth, self.dt, round(pulsewidth/self.dt)) - pulsewidth), 2) / 2 / (sigma**2))
+
+            # PENDING: BUILD CONNECTORS: require the knowledge of the last height
+            # 4. Linear connector: 
+
+            # 5. Gaussian connector:
+
+            # 6. Sine
+
+            # 7. Cosine
+
+            # 8. Hyperbolic
 
             else: print(Fore.RED + "UNRECOGNIZED PULSE-SHAPE. PLEASE CONSULT HELP.")
         

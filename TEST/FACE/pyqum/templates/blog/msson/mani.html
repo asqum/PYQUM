@@ -14,22 +14,22 @@
             <input class='mani loaded' id='sample-name' type='submit' value={{ samplename }}></input>
             <input class='mani people' id='sample-owner' type='submit' value={{ people }}></input>
             <button class='mani access singleqb'>Single-Q</button>
-            
+            <button class='mani access qubits'>Qubits</button>
             
         </div>
 
         <script>
             $(function(){
                 $("div.manicontent.singleqb").load("{{ url_for('mission.mani_singleqb') }}");
+                $("div.manicontent.qubits").load("{{ url_for('mission.mani_qubits') }}");
                 
             });
         </script>
         
         <!-- page content based on button clicked -->
         <div class="manicontent singleqb"></div>
+        <div class="manicontent qubits"></div>
         
-        
-    
     </div>
 
 </body>

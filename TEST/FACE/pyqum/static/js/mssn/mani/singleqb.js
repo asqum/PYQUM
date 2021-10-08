@@ -98,31 +98,38 @@ function accessdata_singleqb() {
                 $('table.mani-singleqb-extra.E' + row).append($('<tbody class="mani-singleqb parameter"></tbody>').append($('<tr></tr>')));
             };
             // console.log('cparam: ' + cparam + '\ndata: ' + data.pdata[cparam]);
-            $('table.mani-singleqb-extra.E' + row + ' thead tr').append('<th class="mani singleqb ' + String(cparam) + '">' + cparam + '</th>');
-            $('table.mani-singleqb-extra.E' + row + ' tbody tr').append('<th><select class="mani singleqb" id="' + cparam + '" type="text"></select></th>');
+            // Create columns for each c-parameters:
+            if (cparam.includes(">")) {
+                // to avoid ">" from messing with HTML syntax
+            } else {
+                $('table.mani-singleqb-extra.E' + row + ' thead tr').append('<th class="mani singleqb ' + String(cparam) + '">' + cparam + '</th>');
+                $('table.mani-singleqb-extra.E' + row + ' tbody tr').append('<th><select class="mani singleqb" id="' + cparam + '" type="text"></select></th>');
+            }; 
         });
 
         // 2. Loading data into parameter-range selectors:
         $.each(SQ_CParameters, function(i,cparam){
-            // console.log('cparam: ' + cparam + '\ndata: ' + data.pdata[cparam]);
-            // 2.1 Loading Sweeping Options:
-            $('select.mani.singleqb#' + cparam).empty();
-            if ( data.pdata[cparam].length > 1) {
-                $('select.mani.singleqb#' + cparam).append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
-                    .append($('<option>', { text: 'SAMPLE', value: 's' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
-            };
-            // 2.2 Loading Constant Values:
-            var max_selection = 1001; // to speed up loading process, entries per request is limited.
-            if (data.pdata[cparam].length > max_selection) {
-                $.each(data.pdata[cparam].slice(0,max_selection), function(i,v){ $('select.mani.singleqb#' + cparam).append($('<option>', { text: v, value: i })); });
-                $('select.mani.singleqb#' + cparam).append($('<option>', { text: 'more...', value: 'm' }));
-                // Pending:  Use "more" to select/enter value manually!
-            } else {
-                $.each(data.pdata[cparam], function(i,v){ $('select.mani.singleqb#' + cparam).append($('<option>', { text: v, value: i })); });
-            };
+            // console.log('cparam: ' + cparam + '\ndata-length: ' + data.pdata[cparam].length);
+            if (cparam.includes(">")==false) { // to avoid ">" from messing with HTML syntax
 
-            // 2.3 Loading parameter-range into inputs for NEW RUN:
-            $('input.mani.singleqb#' + cparam).val(data.corder[cparam]);
+                // 2.1 Loading Sweeping Options:
+                $('select.mani.singleqb#' + cparam).empty();
+                if ( data.pdata[cparam].length > 1) {
+                    $('select.mani.singleqb#' + cparam).append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
+                        .append($('<option>', { text: 'SAMPLE', value: 's' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
+                };
+                // 2.2 Loading Constant Values:
+                var max_selection = 1001; // to speed up loading process, entries per request is limited.
+                if (data.pdata[cparam].length > max_selection) {
+                    $.each(data.pdata[cparam].slice(0,max_selection), function(i,v){ $('select.mani.singleqb#' + cparam).append($('<option>', { text: v, value: i })); });
+                    $('select.mani.singleqb#' + cparam).append($('<option>', { text: 'more...', value: 'm' }));
+                    // Pending:  Use "more" to select/enter value manually!
+                } else { $.each(data.pdata[cparam], function(i,v){ $('select.mani.singleqb#' + cparam).append($('<option>', { text: v, value: i })); }); };
+
+                // 2.3 Loading parameter-range into inputs for NEW RUN:
+                $('input.mani.singleqb#' + cparam).val(data.corder[cparam]);
+
+            };
         });
 
         // 3. load edittable comment & references for NEW RUN:
@@ -532,7 +539,7 @@ $("input.singleqb.set-period").bind('click', function () {
     $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text("ALL SCORES INITIATED WITH LENGTH " + pperiod + "ns"));
     return false;
 });
-// Inserting shapes into respective score sheet:
+// Inserting shapes into respective score sheet: // ONLY work for SINGLE-view: PENDING: make it also work in ALL-view.
 $('input.singleqb.setchannels.insert').bind('click', function () {
     var lascore = $('textarea.mani.singleqb.SCORE-JSON.channel-' + selected_dach_address).val();
     var shape = $('select.singleqb.setchannels.pulse-shape').val();
@@ -600,6 +607,7 @@ $('input.singleqb.setchannels.check').bind('click', function() {
     var RJSON = JSON.parse($('textarea.mani.singleqb#R-JSON').val());
     var allscores = '';
     var allfilled = 1;
+    var empty_values = 0;
 
     // accumulate all the scores
     // $.each(Array(4), function(i,v){
@@ -613,18 +621,25 @@ $('input.singleqb.setchannels.check').bind('click', function() {
     allscores = allscores.replaceAll(" ","");
     console.log("allscores's length: " + allscores.length);
 
-    // take out all {R-JSON's keys}
-    $.each(Object.keys(RJSON), function(i,v) {
-        allscores = allscores.replaceAll("{"+v+"}","");
-    });
+    // 2.1. Make sure all {variables} in the SCOREs are ALL accounted for in R-JSON:
+    $.each(Object.keys(RJSON), function(i,v) { allscores = allscores.replaceAll("{"+v+"}",""); }); // take out all {R-JSON's keys aka variables}
+    // 2.2 Make sure there's NO EMPTY VALUES in R-JSON:
+    $.each(Object.values(RJSON), function(i,v) { if (v.replaceAll(" ","").replaceAll(",","")=="") { empty_values += 1 }; });
+    console.log("empty_values: " + empty_values);
 
     // VALIDATE RUN based on total absence of unsolicited {stranger}
-    if (allscores.includes("{") || allscores.includes("}") || allfilled==0) {
-        $('input.mani#singleqb-run').hide(); // RUN
+    if (allscores.includes("{") || allscores.includes("}") || allfilled==0 || empty_values>0) {
+        $('input.mani#singleqb-run').hide();
+        var RJSON_status_color = "red";
+        var RJSON_check_status = empty_values + " invalid values\n ALL variables accounted for: " 
+                                    + !Boolean(allscores.includes("{") || allscores.includes("}")) + "\nALL SCOREs filled up: " + Boolean(allfilled);
     } else {
-        $('input.mani#singleqb-run').show(); // RUN
+        $('input.mani#singleqb-run').show();
+        var RJSON_status_color = "blue";
+        var RJSON_check_status = "ALL PASSED. CHECK COMMENT AND CLICK RUN. GODSPEED!"
     };
 
+    $('div.singleqb.check-rjson-status').empty().append($('<h4 style="color: ' + RJSON_status_color + ';"></h4>').text(RJSON_check_status));
     return false;
 });
 // 3a. Save the past perimeter settings:
@@ -656,7 +671,7 @@ $('input.singleqb.perimeter-settings.load').on('touchend click', function(event)
             });
         });
         // Pre-scribe comment / reference accordingly:
-        $("textarea.mani.singleqb#singleqb-ecomment").val("Cavity/Qubit-?: CHECK/SCOUT/FIND/GET WHAT?" + "\n[RO -??dB EXT, IQ-CAL: XY(0) + RO(0), SPAN: ??, RES: ??, ...]"  + "\n" + scheme_name + " from " + data.perimeter["jobid"] + "\nT6=" + mxcmk + "mK");
+        $("textarea.mani.singleqb#singleqb-ecomment").val("Cavity/Qubit-?: CHECK/SCOUT/FIND/GET WHAT?" + "\n[RO -??dB EXT, IQ-CAL: XY(0) + RO(0), SPAN: ??, RES: ??, ...]"  + "\n" + scheme_name + " from REF#" + data.perimeter["jobid"] + "\nT6=" + mxcmk + "mK");
         $('div.singleqb.settingstatus').empty().append($('<h4 style="color: blue;"></h4>').text(scheme_name + " " + data.status + data.perimeter["jobid"]));
     });
     return false;
@@ -832,7 +847,11 @@ $(function () {
         $('button.mani.access.singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
-        $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
+        $.each(SQ_CParameters, function(i,cparam){ 
+            // to avoid ">" from messing with HTML syntax
+            if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
+            } else { cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); };
+        });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
         var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();
@@ -870,7 +889,11 @@ $(function () {
         $('button.mani.access.singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
-        $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
+        $.each(SQ_CParameters, function(i,cparam){ 
+            // to avoid ">" from messing with HTML syntax
+            if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
+            } else { cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); };
+        });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
         var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();
@@ -935,7 +958,11 @@ $(function () {
         $('button.mani.access.singleqb').prepend("<i class='singleqb2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.singleqb#repeat').val();
         var cselect = {};
-        $.each(SQ_CParameters, function(i,cparam){ cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); });
+        $.each(SQ_CParameters, function(i,cparam){ 
+            // to avoid ">" from messing with HTML syntax
+            if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
+            } else { cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); };
+        });
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
         var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();

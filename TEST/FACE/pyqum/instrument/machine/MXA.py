@@ -19,7 +19,7 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate(reset=True, which=1, mode='DATABASE'): # PENDING INCLUSION INTO THE DATABASE
+def Initiate(reset=True, which=1, mode='DATABASE', screenoff=1): # PENDING INCLUSION INTO THE DATABASE
     ad = address(mode)
     rs = ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
@@ -33,7 +33,7 @@ def Initiate(reset=True, which=1, mode='DATABASE'): # PENDING INCLUSION INTO THE
         bench.timeout = 150000 #set timeout in ms
         stat = bench.write(":INIT:CONT ON") #continuous mode
 
-        bench.write(":DISPlay:ENABle OFF") #Display off
+        if screenoff: bench.write(":DISPlay:ENABle OFF") #Display off
 
         # sleep(3)
         set_status(mdlname, dict(state='connected'))
@@ -316,7 +316,8 @@ def test(detail=True):
                 npoints = 371
                 sweepSA(s, action=['Set','%s'%npoints])
                 fstart, fstop = 5, 9
-                linfreq(s, action=['Set', '%sGHz'%fstart, '%sGHz'%fstop]) # F-sweep
+                # linfreq(s, action=['Set', '%sGHz'%fstart, '%sGHz'%fstop]) # F-sweep
+                cwfreq(s, ['Set','6.4GHz'])
                 rbw(s, action=['Set','1MHz'])
                 vbw(s, action=['Set','100kHz'])
                 
