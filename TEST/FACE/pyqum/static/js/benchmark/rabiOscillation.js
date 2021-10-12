@@ -117,7 +117,7 @@ $(function () {
         let fitRange = document.getElementById("rabiOscillation"+"-fitting_input-"+xAxisKey).value;
 
         let fitParameters = {
-            range: {
+            interval: {
                 input: fitRange,
             },
             baseline:{

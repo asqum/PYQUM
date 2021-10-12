@@ -272,9 +272,9 @@ class QEstimation():
 	def fitParameters(self, fitParameters=None):
 		if fitParameters == None:
 			fitParameters={
-				"range": {
-					"from": 5,
-					"to": 8
+				"interval": {
+					"start": 5,
+					"end": 8
 				},
 				"baseline":{
 					"correction": False,
@@ -284,9 +284,9 @@ class QEstimation():
 				"gain":0,
 			}
 		else:
-			fitRange = [float(k) for k in fitParameters["range"]["input"].split(",")]
-			fitParameters["range"]["from"] = fitRange[0]
-			fitParameters["range"]["to"] = fitRange[1]
+			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
+			fitParameters["interval"]["start"] = fitRange[0]
+			fitParameters["interval"]["end"] = fitRange[1]
 			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
 			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
 			fitParameters["gain"] = float(fitParameters["gain"])
@@ -306,7 +306,7 @@ class QEstimation():
 		if freqUnit == "GHz":
 			freqUnitConvertor = 1e9
 
-		fitRange = ( self.fitParameters["range"]["from"]*freqUnitConvertor, self.fitParameters["range"]["to"]*freqUnitConvertor )
+		fitRange = ( self.fitParameters["interval"]["start"]*freqUnitConvertor, self.fitParameters["interval"]["end"]*freqUnitConvertor )
 
 		# Get 1D or 2D data to self.rawData
 		if qObj.yAxisKey == None:
@@ -387,18 +387,17 @@ class Decoherence():
 
 		self.quantificationObj = quantificationObj
 		# Key and index
-		
+		self.resultKeys = ["ampI", "offsetI", "ampQ", "offsetQ", "tau"]
+		self.errorKeys = ["ampI_cov", "offsetI_cov", "ampQ_cov", "offsetQ_cov", "tau_cov"]		
 		# Fit
 		self.fitCurve = {}
 		self.baseline = {}
-		self.correctedIQData = {}
 		self.fitResult = {}
 
 		self._fitParameters = None
 		self._init_fitResult()
-		
 		self._init_fitCurve()
-		self._init_baselineCorrection()
+
 
 
 
@@ -406,23 +405,16 @@ class Decoherence():
 		nanArray = empty([yAxisLen])
 		nanArray.fill( nan )
 
-		resultKeys = ["ampI", "offsetI", "ampQ", "offsetQ", "tau"]
-		errorKeys = ["ampI_cov", "offsetI_cov", "ampQ_cov", "offsetQ_cov", "tau_cov"]
-		extendResultKeys = []
 		results ={}
 		errors ={}
-		extendResults ={}
-		for rk in resultKeys:
+		for rk in self.resultKeys:
 			results[rk] = nanArray.copy()
-		for ek in errorKeys:
+		for ek in self.errorKeys:
 			errors[ek] = nanArray.copy()
-		for erk in extendResultKeys:
-			extendResults[erk] = nanArray.copy()
 
 		self.fitResult={
 			"results": results,
 			"errors": errors,
-			"extendResults": extendResults,
 		}
 
 	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
@@ -430,15 +422,7 @@ class Decoherence():
 			"x": empty([xAxisLen]),
 			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
 		}
-	def _init_baselineCorrection( self, yAxisLen=0, xAxisLen=0  ):
-		self.baseline = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
-		self.correctedIQData = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
+
 	@property
 	def fitParameters(self):
 		return self._fitParameters
@@ -446,25 +430,21 @@ class Decoherence():
 	@fitParameters.setter
 	def fitParameters(self, fitParameters=None):
 		if fitParameters == None:
+			
 			fitParameters={
-				"range": {
-					"from": 5,
-					"to": 8
+				"interval": {
+					"start": 5,
+					"end": 8
 				},
-				"baseline":{
-					"correction": False,
-					"smoothness": 1e9,
-					"asymmetry": 0.995,
-				},				
-				"gain":0,
+				"initial_value":{
+				}
 			}
+
 		else:
-			fitRange = [float(k) for k in fitParameters["range"]["input"].split(",")]
-			fitParameters["range"]["from"] = fitRange[0]
-			fitParameters["range"]["to"] = fitRange[1]
-			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
-			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
-			fitParameters["gain"] = float(fitParameters["gain"])
+			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
+			fitParameters["interval"]["start"] = fitRange[0]
+			fitParameters["interval"]["end"] = fitRange[1]
+
 		self._fitParameters = fitParameters
 
 	def do_analysis ( self ):
@@ -488,13 +468,14 @@ class Decoherence():
 		def iqExpDecay ( x, ampI, offsetI, ampQ, offsetQ, tau):
 			return concatenate( (expDecay( x, ampI, offsetI, tau), expDecay( x, ampQ, offsetQ, tau )) )
 
-		# Creat notch port list
 		for i in range(yAxisLen):
+			# Find initial value
 			ampI = qObj.rawData["iqSignal"][i].real
 			ampIEndPoint = (ampI[0],ampI[ampI.shape[0]-1])
 			ampQ = qObj.rawData["iqSignal"][i].imag
 			ampQEndPoint = (ampQ[0],ampQ[ampQ.shape[0]-1])
 			guess = array([ampIEndPoint[0]-ampIEndPoint[1], ampIEndPoint[1], ampQEndPoint[0]-ampQEndPoint[1], ampQEndPoint[1],1000 ])
+			# start fitting
 			try:
 				popt,pcov=curve_fit(iqExpDecay,qObj.rawData["x"],append(ampI,ampQ),guess)
 				fitSuccess = True
@@ -506,24 +487,11 @@ class Decoherence():
 			if fitSuccess:
 				self.fitCurve["iqSignal"][i] = expDecay( qObj.rawData["x"],popt[0],popt[1],popt[4]) +1j*expDecay( qObj.rawData["x"],popt[2],popt[3],popt[4])
 				perr = sqrt(diag(pcov))
-				fitresults={
-					"ampI":popt[0],
-					"offsetI":popt[1],
-					"ampQ":popt[2],
-					"offsetQ":popt[3],
-					"tau":popt[4],
 
-					"ampI_cov":perr[0],
-					"offsetI_cov":perr[1],
-					"ampQ_cov":perr[2],
-					"offsetQ_cov":perr[3],
-					"tau_cov":perr[4],
-
-				}
-				for k in self.fitResult["results"].keys():
-					self.fitResult["results"][k][i] = fitresults[k]
-				for k in self.fitResult["errors"].keys():
-					self.fitResult["errors"][k][i] = fitresults[k]
+				for ki, k in enumerate(self.resultKeys):
+					self.fitResult["results"][k][i] = popt[ki]
+				for ki, k in enumerate(self.errorKeys):
+					self.fitResult["errors"][k][i] = perr[ki]
 
 		# Set x-axis (frequency) of fit curve 
 		self.fitCurve["x"] = qObj.rawData["x"]
@@ -535,42 +503,34 @@ class RabiOscillation():
 
 		self.quantificationObj = quantificationObj
 		# Key and index
+		self.resultKeys = ["ampI", "offsetI", "ampQ", "offsetQ", "tau", "omega", "phi"]
+		self.errorKeys = ["ampI_cov", "offsetI_cov", "ampQ_cov", "offsetQ_cov", "tau_cov", "omega_cov", "phi_cov"]
 		
 		# Fit
 		self.fitCurve = {}
-		self.baseline = {}
-		self.correctedIQData = {}
 		self.fitResult = {}
 
 		self._fitParameters = None
 		self._init_fitResult()
 		
 		self._init_fitCurve()
-		self._init_baselineCorrection()
-
 
 
 	def _init_fitResult( self, yAxisLen=0 ):
 		nanArray = empty([yAxisLen])
 		nanArray.fill( nan )
 
-		resultKeys = ["ampI", "offsetI", "ampQ", "offsetQ", "tau", "omega", "phi"]
-		errorKeys = ["ampI_cov", "offsetI_cov", "ampQ_cov", "offsetQ_cov", "tau_cov", "omega_cov", "phi_cov"]
-		extendResultKeys = []
 		results ={}
 		errors ={}
-		extendResults ={}
-		for rk in resultKeys:
+		for rk in self.resultKeys:
 			results[rk] = nanArray.copy()
-		for ek in errorKeys:
+		for ek in self.errorKeys:
 			errors[ek] = nanArray.copy()
-		for erk in extendResultKeys:
-			extendResults[erk] = nanArray.copy()
+
 
 		self.fitResult={
 			"results": results,
 			"errors": errors,
-			"extendResults": extendResults,
 		}
 
 	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
@@ -578,15 +538,7 @@ class RabiOscillation():
 			"x": empty([xAxisLen]),
 			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
 		}
-	def _init_baselineCorrection( self, yAxisLen=0, xAxisLen=0  ):
-		self.baseline = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
-		self.correctedIQData = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
+
 	@property
 	def fitParameters(self):
 		return self._fitParameters
@@ -595,22 +547,19 @@ class RabiOscillation():
 	def fitParameters(self, fitParameters=None):
 		if fitParameters == None:
 			fitParameters={
-				"range": {
-					"from": 5,
-					"to": 8
+				"interval": {
+					"start": 5,
+					"end": 8
 				},
-				"baseline":{
-					"correction": False,
-					"smoothness": 1e9,
-					"asymmetry": 0.995,
-				},
+				"initial_value":{
 
-				"gain":0,
+				}
+
 			}
 		else:
-			fitRange = [float(k) for k in fitParameters["range"]["input"].split(",")]
-			fitParameters["range"]["from"] = fitRange[0]
-			fitParameters["range"]["to"] = fitRange[1]
+			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
+			fitParameters["interval"]["start"] = fitRange[0]
+			fitParameters["interval"]["end"] = fitRange[1]
 		self._fitParameters = fitParameters
 
 	def do_analysis ( self ):
@@ -652,27 +601,11 @@ class RabiOscillation():
 			if fitSuccess:
 				self.fitCurve["iqSignal"][i] = dampingOscillation( qObj.rawData["x"],popt[0],popt[1],popt[4],popt[5],popt[6]) +1j*dampingOscillation( qObj.rawData["x"],popt[2],popt[3],popt[4],popt[5],popt[6])
 				perr = sqrt(diag(pcov))
-				fitresults={
-					"ampI":popt[0],
-					"offsetI":popt[1],
-					"ampQ":popt[2],
-					"offsetQ":popt[3],
-					"tau":popt[4],
-					"omega":popt[5],
-					"phi":popt[6],
 
-					"ampI_cov":perr[0],
-					"offsetI_cov":perr[1],
-					"ampQ_cov":perr[2],
-					"offsetQ_cov":perr[3],
-					"tau_cov":perr[4],
-					"omega_cov":popt[5],
-					"phi_cov":popt[6],
-				}
-				for k in self.fitResult["results"].keys():
-					self.fitResult["results"][k][i] = fitresults[k]
-				for k in self.fitResult["errors"].keys():
-					self.fitResult["errors"][k][i] = fitresults[k]
+				for ki, k in enumerate(self.resultKeys):
+					self.fitResult["results"][k][i] = popt[ki]
+				for ki, k in enumerate(self.errorKeys):
+					self.fitResult["errors"][k][i] = perr[ki]
 
 		# Set x-axis (frequency) of fit curve 
 		self.fitCurve["x"] = qObj.rawData["x"]
@@ -680,145 +613,3 @@ class RabiOscillation():
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
 	
-class FittingFramework():
-
-	def __init__( self, quantificationObj, *args,**kwargs ):
-
-		self.quantificationObj = quantificationObj
-		# Key and index
-		
-		# Fit
-		self.fitCurve = {}
-		self.baseline = {}
-		self.correctedIQData = {}
-		self.fitResult = {}
-
-		self._fittingInfo = None
-		self._init_fitResult()
-		
-		self._init_fitCurve()
-		self._init_baselineCorrection()
-
-
-
-	def _init_fitResult( self, yAxisLen=0 ):
-		nanArray = empty([yAxisLen])
-		nanArray.fill( nan )
-
-		resultKeys = ["ampI", "offsetI", "ampQ", "offsetQ", "tau", "omega", "phi"]
-		errorKeys = ["ampI_cov", "offsetI_cov", "ampQ_cov", "offsetQ_cov", "tau_cov", "omega_cov", "phi_cov"]
-		extendResultKeys = []
-		results ={}
-		errors ={}
-		extendResults ={}
-		for rk in resultKeys:
-			results[rk] = nanArray.copy()
-		for ek in errorKeys:
-			errors[ek] = nanArray.copy()
-		for erk in extendResultKeys:
-			extendResults[erk] = nanArray.copy()
-
-		self.fitResult={
-			"results": results,
-			"errors": errors,
-			"extendResults": extendResults,
-		}
-
-	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
-		self.fitCurve = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
-	def _init_baselineCorrection( self, yAxisLen=0, xAxisLen=0  ):
-		self.baseline = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
-		self.correctedIQData = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
-	@property
-	def fittingInfo(self):
-		return self._fittingInfo
-
-	@fittingInfo.setter
-	def fittingInfo(self, fittingInfo=None):
-		if fittingInfo == None:
-			fittingInfo={
-				"initial_value":{
-					"a": 3,
-					"b": 1
-				},
-				"interval": {
-					"from": 5,
-					"to": 8
-				},
-				"baseline":{
-				},
-			}
-		else:
-			fitRange = [float(k) for k in fittingInfo["range"]["input"].split(",")]
-			fittingInfo["range"]["from"] = fitRange[0]
-			fittingInfo["range"]["to"] = fitRange[1]
-		self._fittingInfo = fittingInfo
-
-	def do_fit ( self ):
-
-		qObj = self.quantificationObj
-
-		xAxisLen = qObj.rawData["x"].shape[0]
-
-		# Get 1D or 2D data to self.rawData
-		if qObj.yAxisKey == None:
-			yAxisLen = 1
-		else:
-			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
-
-		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
-		self._init_fitResult(yAxisLen=yAxisLen)
-
-		def dampingOscillation ( x, amp, offset, tau, omega, phi):
-			return amp*exp(-x/tau)*cos(omega*x+phi)+offset
-
-		def iqDampingOscillation ( x, ampI, offsetI, ampQ, offsetQ, tau, omega, phi):
-			return concatenate( (dampingOscillation( x, ampI, offsetI, tau, omega, phi), dampingOscillation( x, ampQ, offsetQ, tau, omega, phi )) )
-
-		# Creat notch port list
-		for i in range(yAxisLen):
-			guess = array(fittingInfo["initial_value"][])
-			try:
-				popt,pcov=curve_fit(iqDampingOscillation,qObj.rawData["x"],append(ampI,ampQ),guess)
-				fitSuccess = True
-				print("Good fitting")
-			except:
-				fitSuccess = False
-				print("Bad fitting")
-
-			if fitSuccess:
-				self.fitCurve["iqSignal"][i] = dampingOscillation( qObj.rawData["x"],popt[0],popt[1],popt[4],popt[5],popt[6]) +1j*dampingOscillation( qObj.rawData["x"],popt[2],popt[3],popt[4],popt[5],popt[6])
-				perr = sqrt(diag(pcov))
-				fitresults={
-					"ampI":popt[0],
-					"offsetI":popt[1],
-					"ampQ":popt[2],
-					"offsetQ":popt[3],
-					"tau":popt[4],
-					"omega":popt[5],
-					"phi":popt[6],
-
-					"ampI_cov":perr[0],
-					"offsetI_cov":perr[1],
-					"ampQ_cov":perr[2],
-					"offsetQ_cov":perr[3],
-					"tau_cov":perr[4],
-					"omega_cov":popt[5],
-					"phi_cov":popt[6],
-				}
-				for k in self.fitResult["results"].keys():
-					self.fitResult["results"][k][i] = fitresults[k]
-				for k in self.fitResult["errors"].keys():
-					self.fitResult["errors"][k][i] = fitresults[k]
-
-		# Set x-axis (frequency) of fit curve 
-		self.fitCurve["x"] = qObj.rawData["x"]
