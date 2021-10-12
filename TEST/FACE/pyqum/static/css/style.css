@@ -138,11 +138,11 @@ textarea.PSTATEMENT {
     margin-top: -5px;
 }
 textarea.SCORE-JSON {
-    height: 68px;
+    height: 88px;
     margin-top: -5px;
 }
 textarea#R-JSON {
-    height: 48px;
+    height: 88px;
     margin-top: -5px;
 }
 label.parameter {

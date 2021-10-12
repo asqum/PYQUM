@@ -256,36 +256,12 @@
                         <div class="col-2" id='left'><button class="minusButton">-</button></div>
                     </div>
                     <div class="channel-matrix"></div>
-
-                    <!-- <div class="row perimeter">
-                        <div class="col-48" id='left'><label>Score-1 (RO-I)</label></div>
-                        <div class="col-48" id='left'><label>Score-2 (RO-Q)</label></div>
-                    </div>
-                    <div class="row perimeter">
-                        <div class="col-48" id='left'>
-                            <textarea class='mani singleqb SCORE-JSON channel-1' type="text" rows="3" cols="13" style="color:red;"></textarea>
-                        </div>
-                        <div class="col-48" id='left'>
-                            <textarea class='mani singleqb SCORE-JSON channel-2' type="text" rows="3" cols="13" style="color:red;"></textarea>
-                        </div>
-                    </div>
-                    <div class="row perimeter">
-                        <div class="col-48" id='left'><label>Score-3 (XY-I)</label></div>
-                        <div class="col-48" id='left'><label>Score-4 (XY-Q)</label></div>
-                    </div>
-                    <div class="row perimeter">
-                        <div class="col-48" id='left'>
-                            <textarea class='mani singleqb SCORE-JSON channel-3' type="text" rows="3" cols="13" style="color:red;"></textarea>
-                        </div>
-                        <div class="col-48" id='left'>
-                            <textarea class='mani singleqb SCORE-JSON channel-4' type="text" rows="3" cols="13" style="color:red;"></textarea>
-                        </div>
-                    </div> -->
                     
                     <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
                     <div class="row perimeter">
                         <div class="col-97" id='left'>
-                            <textarea class='mani config singleqb' id='R-JSON' type="text" rows="3" cols="13" style="color:blue;">{}</textarea>
+                            <!-- Change the dimension in style.css -->
+                            <textarea class='mani config singleqb' id='R-JSON' type="text" rows="7" cols="13" style="color:blue;">{}</textarea>
                         </div>
                     </div>
 
@@ -321,9 +297,14 @@
                             <div class="col-15" id='left'><input class="mani modal-toggle new singleqb" id="singleqb-run"  type="submit" value="RUN"/></div>
                             <div class="col-15" id='left'><input class="mani modal-toggle new singleqb" id="singleqb-cancel" type="submit" value="CANCEL"/></div>
                         </div>
+                        <div class="row"><div class="col-49" id='left'><div class='singleqb check-rjson-status'></div></div></div>
                         <div class="row">
                             <div class="col-12" id='left'><label class='parameter'>Queue system: </label></div>
                             <div class="col-49" id='left'><div class='singleqb queue-system'></div></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" id='left'><label class='parameter'>Instruments: </label></div>
+                            <div class="col-49" id='left'><div class='singleqb all-instruments'></div></div>
                         </div>
 
                     </div>

@@ -283,6 +283,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
         if clearQ: 
             module.AWGstop(channel)
             module.AWGflush(channel) # Clear queue TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT
+            print(Fore.CYAN + "Clearing CH%s's queue..." %(channel))
         
         resendWaveform(module, waveform_id, pulsedata)
         
@@ -292,6 +293,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
             if Master: trigMode, markerMode = 0, keysightSD1.SD_MarkerModes.EVERY_CYCLE # Master / Commander / Default.
             else: trigMode, markerMode = keysightSD1.SD_TriggerModes.EXTTRIG, 0 # Follow orders from Master-Card.
             queueWaveform(module, channel, waveform_id, trigMode)
+            # PENDING: SEE IF BY ADDING "configureMarker" to Master the alignment would be solved?
 
     return module
 

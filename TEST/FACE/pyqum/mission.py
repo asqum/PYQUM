@@ -24,7 +24,7 @@ from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.instrument.reader import inst_order
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
-from pyqum.directive.manipulate import Single_Qubit
+from pyqum.directive.manipulate import Single_Qubit, Qubits
 
 # Memory handling
 import concurrent.futures
@@ -184,6 +184,9 @@ def all_requeue_job():
         elif requeue['task'] == "Single_Qubit":
             print(Fore.YELLOW + "Requeue Single_Qubit for JOB#%s" %jobid)
             Single_Qubit(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
+        elif requeue['task'] == "Qubits":
+            print(Fore.YELLOW + "Requeue Qubits for JOB#%s" %jobid)
+            Qubits(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
 
         else: print(Fore.RED + "UNKNOWN TASK: %s" %requeue['task'])
         clearance = True
@@ -1346,7 +1349,7 @@ def mani():
     return render_template("blog/msson/mani.html", samplename=samplename, people=session['people'])
 # endregion
 
-# region: MANI -> 1. Single-Qubit =============================================================================================================================================
+# region: MANI -> 1. Single_Qubit =============================================================================================================================================
 '''Complete 1Q Manipulation'''
 @bp.route('/mani/singleqb', methods=['GET'])
 def mani_singleqb(): 
@@ -1732,9 +1735,396 @@ def mani_singleqb_2ddata():
 
     return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 
+# endregion
 
+# region: MANI -> 2. Qubits =============================================================================================================================================
+'''Multiple Qubit Manipulation (Scaling up...)'''
+@bp.route('/mani/qubits', methods=['GET'])
+def mani_qubits(): 
+    return render_template("blog/msson/mani/qubits.html")
+# Initialize and list days specific to task
+@bp.route('/mani/qubits/init', methods=['GET'])
+def mani_qubits_init():
+    global Run_qubits, M_qubits, SQ_CParameters, qubits_1Ddata, qubits_2Ddata, c_qubits_structure, c_qubits_progress
+
+    # Managing / Initialize token-specific Measurement M:
+    try: print(Fore.GREEN + "Connected M-TOKEN(s) for Single-Qubit: %s" %Run_qubits.keys())
+    except: Run_qubits = {}
+    
+    # Managing / Initialize user-specific Measurement Access MA:
+    try: print(Fore.BLUE + "Connected MA-USER(s) for Single-Qubit: %s" %M_qubits.keys())
+    except: M_qubits = {}
+    # 'user_name' accessing 'people' data:
+    M_qubits[session['user_name']] = Qubits(session['people'])
+    print(Fore.BLUE + Back.WHITE + "User %s is managing %s's data" %(session['user_name'],session['people']))
+
+    # Managing / Initialize user-specific Control Parameters CP:
+    try: print(Fore.CYAN + "Connected CP-USER(s) for Single-Qubit: %s" %SQ_CParameters.keys())
+    except: SQ_CParameters = {}
+
+    # Managing / Initialize user-specific 1D Data-Holder 1DH:
+    try: print(Fore.CYAN + "Connected 1DH-USER(s) for Single-Qubit: %s" %qubits_1Ddata.keys())
+    except: qubits_1Ddata = {}
+    # Managing / Initialize user-specific 2D Data-Holder 2DH:
+    try: print(Fore.CYAN + "Connected 2DH-USER(s) for Single-Qubit: %s" %qubits_2Ddata.keys())
+    except: qubits_2Ddata = {}
+
+    # Managing / Initialize user-specific SQ Structure SQS:
+    try: print(Fore.CYAN + "Connected SQS-USER(s) for Single-Qubit: %s" %c_qubits_structure.keys())
+    except: c_qubits_structure = {}
+
+    # Managing / Initialize user-specific SQ Progress SQP:
+    try: print(Fore.CYAN + "Connected SQP-USER(s) for Single-Qubit: %s" %c_qubits_progress.keys())
+    except: c_qubits_progress = {}
+
+    # Loading Channel-Matrix & Channel-Role based on WIRING-settings
+    DAC_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DAC']
+    DAC_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['DAC']
+    DAC_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'DAC')
+
+    return jsonify(daylist=M_qubits[session['user_name']].daylist, run_permission=session['run_clearance'], DAC_CH_Matrix=DAC_CH_Matrix, DAC_Role=DAC_Role, DAC_Which=DAC_Which)
+# list task entries based on day picked
+@bp.route('/mani/qubits/time', methods=['GET'])
+def mani_qubits_time():
+    wday = int(request.args.get('wday'))
+    M_qubits[session['user_name']].selectday(wday)
+    return jsonify(taskentries=M_qubits[session['user_name']].taskentries)
+# Check DIGITIZER TIME & SUM:
+@bp.route('/mani/qubits/check/timsum', methods=['GET'])
+def mani_qubits_check_timsum():
+    record_time_ns = int(request.args.get('record_time_ns'))
+    record_sum = int(request.args.get('record_sum'))
+    ADC_type = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ADC')[0].split('_')[0]
+    ADC = im("pyqum.instrument.machine.%s" %ADC_type)
+    record_time_ns, record_sum = ADC.check_timsum(record_time_ns,record_sum)
+    return jsonify(record_time_ns=record_time_ns, record_sum=record_sum)
+# run NEW measurement:
+@bp.route('/mani/qubits/new', methods=['GET'])
+def mani_qubits_new():
+    # Check user's current queue status:
+    if session['run_clearance']:
+        wday = int(request.args.get('wday'))
+        if wday < 0: print("Running New Single-Qubit...")
+
+        PERIMETER = json.loads(request.args.get('PERIMETER'))
+        CORDER = json.loads(request.args.get('CORDER'))
+        comment = request.args.get('comment').replace("\"","")
+        
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
+        Run_qubits[TOKEN] = Qubits(session['people'], perimeter=PERIMETER, corder=CORDER, comment=comment, tag='', dayindex=wday)
+        return jsonify(status=Run_qubits[TOKEN].status)
+    else: return show("PLEASE CHECK YOUR RUN-CLEARANCE WITH ABC")
+
+# DATA DOWNLOAD
+# export to mat
+@bp.route('/mani/qubits/export/2dmat', methods=['GET'])
+def char_qubits_export_2dmat():
+    interaction = request.args.get('interaction') # merely for security reason to block out unsolicited visits by return None from this request
+    print("interaction: %s" %interaction)
+    status = None
+    if interaction is not None:
+        set_mat(qubits_2Ddata[session['user_name']], '2Dqubits[%s].mat'%session['user_name'])
+        status = "mat written"
+        print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+# export to csv
+@bp.route('/mani/qubits/export/1dcsv', methods=['GET'])
+def mani_qubits_export_1dcsv():
+    ifreq = request.args.get('ifreq') # merely for security reason to block out unsolicited visits by return None from this request
+    print("ifreq: %s" %ifreq)
+    status = None
+    if ifreq is not None:
+        set_csv(qubits_1Ddata[session['user_name']], '1Dqubits[%s].csv'%session['user_name'])
+        status = "csv written"
+        print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+
+# DATA ACCESS
+# list set-parameters based on selected task-entry
+@bp.route('/mani/qubits/access', methods=['GET'])
+def mani_qubits_access():
+    # Measurement details:
+    wmoment = int(request.args.get('wmoment'))
+    try: JOBID = jobsearch(dict(samplename=get_status("MSSN")[session['user_name']]['sample'], task="Qubits", dateday=M_qubits[session['user_name']].day, wmoment=wmoment))
+    except: JOBID = 0 # Old version of data before job-queue implementation
+    M_qubits[session['user_name']].selectmoment(wmoment)
+    M_qubits[session['user_name']].accesstructure()
+    corder = M_qubits[session['user_name']].corder
+    perimeter = M_qubits[session['user_name']].perimeter
+    comment = M_qubits[session['user_name']].comment
+    data_progress = M_qubits[session['user_name']].data_progress
+    data_repeat = data_progress // 100 + int(bool(data_progress % 100))
+
+    # Measurement time:
+    filetime = getmtime(M_qubits[session['user_name']].pqfile) # in seconds
+    startmeasure = mktime(strptime(M_qubits[session['user_name']].day + " " + M_qubits[session['user_name']].startime(), "%Y-%m-%d(%a) %H:%M")) # made into seconds
+
+    if data_progress==0: measureacheta=0
+    else: measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress)))
+      
+    # Integrate R-Parameters back into C-Order:
+    RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
+    for k in RJSON.keys(): corder[k] = RJSON[k]
+    # Recombine Buffer back into C-Order:
+    if perimeter['READOUTYPE'] == 'one-shot': 
+        bufferkey, buffer_resolution = 'RECORD-SUM', 1
+    else: 
+        if "TIME_RESOLUTION_NS" in perimeter.keys(): bufferkey, buffer_resolution = 'RECORD_TIME_NS', int(perimeter['TIME_RESOLUTION_NS'])
+        else: bufferkey, buffer_resolution = 'RECORD_TIME_NS', 1
+    corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
+    print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
+    # Extend C-Structure with R-Parameters & Buffer keys:
+    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
+
+    # Structure & Addresses:
+    c_qubits_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \
+                                        + [waveform(corder[SQ_CParameters[session['user_name']][-1]]).count*M_qubits[session['user_name']].datadensity]
+    c_qubits_progress[session['user_name']] = cdatasearch(M_qubits[session['user_name']].resumepoint-1, c_qubits_structure[session['user_name']])
+    
+    pdata = dict()
+    for params in SQ_CParameters[session['user_name']]:
+        pdata[params] = waveform(corder[params]).data[0:c_qubits_progress[session['user_name']][SQ_CParameters[session['user_name']].index(params)]+1]
+    # print("RECORD_TIME_NS's parameter-data: %s" %pdata['RECORD_TIME_NS'])
+
+    note = jobsearch(JOBID, mode="note")
+    return jsonify(JOBID=JOBID, note=note,
+        data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, comment=comment, 
+        pdata=pdata, SQ_CParameters=SQ_CParameters[session['user_name']])
+# save perimeter settings for different measurements (Fresp, Cwsweep, Rabi, T1, T2, Wigner, Fidelity, QST etc)
+@bp.route('/mani/qubits/perisettings/save', methods=['GET'])
+def mani_qubits_perisettings_save():
+    scheme_name = request.args.get('scheme_name')
+    presetting = { '%s'%scheme_name : M_qubits[session['user_name']].perimeter }
+    try:
+        if scheme_name=="TRANSFER" or int(g.user['measurement'])>2: set_status('SCHEME', presetting)
+        else: scheme_name = "Nothing"
+    except(ValueError): scheme_name = "NULL" # for Those with No measurement clearance
+    return jsonify(scheme_name=scheme_name)
+# load perimeter settings for different measurements (Fresp, Cwsweep, Rabi, T1, T2, Wigner, Fidelity, QST etc)
+@bp.route('/mani/qubits/perisettings/load', methods=['GET'])
+def mani_qubits_perisettings_load():
+    scheme_name = request.args.get('scheme_name')
+    try: perimeter, status = get_status('SCHEME')[scheme_name], 'Loaded from '
+    except: perimeter, status = {}, 'Not Found.'
+    return jsonify(perimeter=perimeter, status=status)
+
+# DATA MANAGEMENT
+# Resume the unfinished measurement
+@bp.route('/mani/qubits/resume', methods=['GET'])
+def mani_qubits_resume():
+    if session['run_clearance']:
+        # retrieve from ui-selection:
+        wday = int(request.args.get('wday'))
+        wmoment = int(request.args.get('wmoment'))
+        # retrieve from file:
+        M_qubits[session['user_name']].accesstructure()
+        perimeter = M_qubits[session['user_name']].perimeter
+        corder = M_qubits[session['user_name']].corder
+        resumepoint = M_qubits[session['user_name']].resumepoint
+
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
+        Run_qubits[TOKEN] = Qubits(session['people'], perimeter=perimeter, corder=corder, dayindex=wday, taskentry=wmoment, resumepoint=resumepoint)
+        return jsonify(resumepoint=str(resumepoint), datasize=str(M_qubits[session['user_name']].datasize), status=Run_qubits[TOKEN].status)
+    else: return show()
+@bp.route('/mani/qubits/trackdata', methods=['GET'])
+def mani_qubits_trackdata():
+    fixed = request.args.get('fixed')
+    fixedvalue = request.args.get('fixedvalue')
+    # list data position in file:
+    try:
+        data_location = None
+        try:
+            fixed_caddress = array(c_qubits_structure[session['user_name']],dtype=int64)-1
+            fixed_caddress[SQ_CParameters[session['user_name']].index(fixed)] = int(fixedvalue)
+            fixed_caddress[SQ_CParameters[session['user_name']].index(fixed)+1:] = 0
+            data_location = int(gotocdata(fixed_caddress, c_qubits_structure[session['user_name']]))
+        except(IndexError): 
+            data_location = None
+            print(Fore.RED + "Structure not properly setup")
+        except(KeyError): 
+            data_location = None
+            print(Fore.YELLOW + "Not yet accessed any data")
+        
+    # except: raise
+    except(ValueError):
+        print(Back.RED + Fore.WHITE + "All parameters before branch must be FIXED!")
+        pass
+
+    print("Data location: %s" %data_location)
+    return jsonify(data_location=data_location)
+@bp.route('/mani/qubits/resetdata', methods=['GET'])
+def mani_qubits_resetdata():
+    ownerpassword = request.args.get('ownerpassword')
+    truncateafter = int(request.args.get('truncateafter'))
+
+    db = get_db()
+    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    close_db()
+
+    if check_password_hash(people['password'], ownerpassword): message = M_qubits[session['user_name']].resetdata(truncateafter)
+    else: message = 'PASSWORD NOT VALID'
+
+    return jsonify(message=message)
+
+# DATA PRESENTATION:
+# Chart is supposedly shared by all measurements (under construction for multi-purpose)
+@bp.route('/mani/qubits/1ddata', methods=['GET'])
+def mani_qubits_1ddata():
+    print(Fore.GREEN + "User %s is plotting QUBITS 1D-Data" %session['user_name'])
+    M_qubits[session['user_name']].loadata()
+    selectedata = M_qubits[session['user_name']].selectedata
+    print("Data length: %s" %len(selectedata))
+    
+    # load parameter indexes from json call:
+    cselect = json.loads(request.args.get('cselect'))
+
+    for k in cselect.keys():
+        if "x" in cselect[k]:
+            xtitle = "<b>" + k + "</b>"
+            selected_caddress = [s for s in cselect.values()]
+        
+            # Sweep-command:
+            selected_sweep = M_qubits[session['user_name']].corder[k]
+
+            # Adjusting c-parameters range for data analysis based on progress:
+            parent_address = selected_caddress[:SQ_CParameters[session['user_name']].index(k)] # address's part before x
+            if [int(s) for s in parent_address] < c_qubits_progress[session['user_name']][0:len(parent_address)]:
+                print(Fore.YELLOW + "selection is well within progress")
+                sweepables = c_qubits_structure[session['user_name']][SQ_CParameters[session['user_name']].index(k)]
+            else: sweepables = c_qubits_progress[session['user_name']][SQ_CParameters[session['user_name']].index(k)]+1
+
+            # Special treatment on the last 'buffer' parameter to factor out the data-density first: 
+            if SQ_CParameters[session['user_name']].index(k) == len(SQ_CParameters[session['user_name']])-1 :
+                isweep = range(sweepables//M_qubits[session['user_name']].datadensity)
+            else:
+                isweep = range(sweepables) # flexible access until progress resume-point
+            print(Back.WHITE + Fore.BLACK + "Sweeping %s points" %len(isweep))
+
+            Idata = zeros(len(isweep))
+            Qdata = zeros(len(isweep))
+            Adata = zeros(len(isweep))
+            Pdata = zeros(len(isweep))
+            for i in isweep:
+                # PENDING: VECTORIZATION OR MULTI-PROCESS
+                selected_caddress[SQ_CParameters[session['user_name']].index(k)] = i # register x-th position
+                if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
+                    srange = request.args.get('srange').split(",") # sample range
+                    smode = request.args.get('smode') # sampling mode
+                    Idata[i], Qdata[i], Adata[i], Pdata[i] = \
+                        pulseresp_sampler(srange, selected_caddress, selectedata, c_qubits_structure[session['user_name']], M_qubits[session['user_name']].datadensity, mode=smode)
+                else:
+                    # Ground level Pulse shape response:
+                    selected_caddress = [int(s) for s in selected_caddress]
+                    Basic = selected_caddress[-1]
+                    # Extracting I & Q:
+                    Idata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], c_qubits_structure[session['user_name']])]
+                    Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], c_qubits_structure[session['user_name']])]
+                    Adata[i] = sqrt(Idata[i]**2 + Qdata[i]**2)
+                    Pdata[i] = arctan2(Qdata[i], Idata[i]) # -pi < phase < pi    
+
+    print("Structure: %s" %c_qubits_structure[session['user_name']])
+
+    # x-data:
+    selected_progress = waveform(selected_sweep).data[0:len(isweep)]
+    print(Fore.RED + "DEBUG: selected_sweep: %s, isweep: %s" %(selected_sweep,isweep))
+
+    # facilitate index location (or count) for range clipping:
+    cselection = (",").join([s for s in cselect.values()])
+    if "c" in cselection:
+        selected_progress = list(range(len(selected_progress)))
+
+    x, yI, yQ, yA, yUFNP = selected_progress, list(Idata), list(Qdata), list(Adata), list(Pdata)
+    qubits_1Ddata[session['user_name']] = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, 'UFNP(rad/x)': yUFNP, "exported by": session['user_name']}
+    
+    return jsonify(x=x, yI=yI, yQ=yQ, yA=yA, yUFNP=yUFNP, xtitle=xtitle)
+
+@bp.route('/mani/qubits/2ddata', methods=['GET'])
+def mani_qubits_2ddata():
+    print(Fore.GREEN + "User %s is plotting QUBITS 2D-Data using vectorization" %session['user_name'])
+    M_qubits[session['user_name']].loadata()
+    selectedata = M_qubits[session['user_name']].selectedata
+    print("Data length: %s" %len(selectedata))
+    
+    # load parameter indexes from json call:
+    cselect = json.loads(request.args.get('cselect'))
+
+    try:
+        x_loc = [k for k in cselect.values()].index('x')
+        selected_x = [c for c in cselect.keys()][x_loc]
+        y_loc = [k for k in cselect.values()].index('y')
+        selected_y = [c for c in cselect.keys()][y_loc]
+        xtitle = "<b>" + selected_x + "</b>"
+        ytitle = "<b>" + selected_y + "</b>"
+        selected_caddress = [s for s in cselect.values()]
+    except: 
+        print("x and y parameters not selected or not valid")
+        
+    # Adjusting c-parameters range for data analysis based on progress:
+    parent_address = selected_caddress[:SQ_CParameters[session['user_name']].index(selected_x)] # address's part before x (higher-level data)
+    if [int(s) for s in parent_address] < c_qubits_progress[session['user_name']][0:len(parent_address)]: # must be matched with the parameter-select-range on the front-page
+        print(Fore.YELLOW + "selection is well within progress")
+        sweepables = [c_qubits_structure[session['user_name']][SQ_CParameters[session['user_name']].index(selected_x)], c_qubits_structure[session['user_name']][SQ_CParameters[session['user_name']].index(selected_y)]]
+    else: 
+        sweepables = [c_qubits_progress[session['user_name']][SQ_CParameters[session['user_name']].index(selected_x)]+1, c_qubits_progress[session['user_name']][SQ_CParameters[session['user_name']].index(selected_y)]+1]
+
+            
+    # flexible access until progress resume-point
+    xsweep = range(sweepables[0])
+    if SQ_CParameters[session['user_name']].index(selected_y) == len(SQ_CParameters[session['user_name']])-1 :
+        # Special treatment on the last 'buffer' parameter to factor out the data-density first:
+        ysweep = range(sweepables[1]//M_qubits[session['user_name']].datadensity)
+    else:
+        ysweep = range(sweepables[1]) 
+    print(Back.WHITE + Fore.BLACK + "Sweeping %s x-points" %len(xsweep))
+    print(Back.WHITE + Fore.BLACK + "Sweeping %s y-points" %len(ysweep))
+
+    Idata = zeros([len(ysweep), len(xsweep)])
+    Qdata = zeros([len(ysweep), len(xsweep)])
+    Adata = zeros([len(ysweep), len(xsweep)])
+    Pdata = zeros([len(ysweep), len(xsweep)])
+    for j in ysweep:
+        if not (j+1)%600: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
+        selected_caddress[SQ_CParameters[session['user_name']].index(selected_y)] = j # register y-th position
+        for i in xsweep:
+            selected_caddress[SQ_CParameters[session['user_name']].index(selected_x)] = i # register x-th position
+            if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
+                srange = request.args.get('srange').split(",") # sample range
+                smode = request.args.get('smode') # sampling mode
+                Idata[j,i], Qdata[j,i], Adata[j,i], Pdata[j,i] = \
+                    pulseresp_sampler(srange, selected_caddress, selectedata, c_qubits_structure[session['user_name']], M_qubits[session['user_name']].datadensity, mode=smode)
+
+            else:
+                # Ground level Pulse shape response:
+                selected_caddress = [int(s) for s in selected_caddress]
+                Basic = selected_caddress[-1]
+                # Extracting I & Q:
+                Idata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], c_qubits_structure[session['user_name']])]
+                Qdata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], c_qubits_structure[session['user_name']])]  
+
+    print("Mapping complete. Structure: %s" %c_qubits_structure[session['user_name']])
+    
+    # x-data:
+    selected_xsweep = M_qubits[session['user_name']].corder[selected_x]
+    x = waveform(selected_xsweep).data[0:len(xsweep)]
+
+    # y-data:
+    selected_ysweep = M_qubits[session['user_name']].corder[selected_y]
+    y = waveform(selected_ysweep).data[0:len(ysweep)]
+    
+    # IQ-data:
+    Adata = sqrt(Idata**2 + Qdata**2)
+    UPdata = unwrap(arctan2(Qdata, Idata)) # -pi < phase < pi -> Unwrapped
+
+    # Packing data into dictionary:
+    ZZI, ZZQ, ZZA, ZZUP = Idata.tolist(), Qdata.tolist(), Adata.tolist(), UPdata.tolist()
+    qubits_2Ddata[session['user_name']] = dict(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
+
+    # executor.submit(fn, args).add_done_callback(handler)
+
+    return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 
 # endregion
+
 
 # region: benchmark
 

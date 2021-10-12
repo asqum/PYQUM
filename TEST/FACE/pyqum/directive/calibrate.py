@@ -52,7 +52,7 @@ def Update_DAC(daca, ifreq, IQparams, IF_period, IF_scale, mixer_module, channel
         pulseq = pulser(dt=dt, clock_multiples=1, score=SCORE_DEFINED['CH%s'%channel])
         pulseq.song()
 
-        DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, marker) # ODD for PIN-SWITCH, EVEN for TRIGGER; RO-TRIGGER: 1: ALZDG, 2: MXA; XY-TRIGGER: 1: MXA, 2: SCOPE
+        DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, marker, dict(PINSW=True)) # ODD for PIN-SWITCH, EVEN for TRIGGER; RO-TRIGGER: 1: ALZDG, 2: MXA; XY-TRIGGER: 1: MXA, 2: SCOPE
     DAC.ready(daca)
     sleep(0.73) # wait for trigger to complete MXA measurement
 
@@ -100,7 +100,8 @@ class IQ_Cal:
         global SG, DAC, SA
         self.mode = mixer_module[:2].upper()
         # Wiring configurations:
-        iqcal_config.update(dict(XY={'marker':1, 'trigger':1}, RO={'marker':2, 'trigger':2})) # NOTE: marker only matters in DR-1 system.
+        if 'SDAWG' in iqcal_config['DA']: iqcal_config.update(dict(XY={'marker':7, 'trigger':1}, RO={'marker':7, 'trigger':2}))
+        else: iqcal_config.update(dict(XY={'marker':1, 'trigger':1}, RO={'marker':2, 'trigger':2}))
         self.iqcal_config = iqcal_config
         # Carrier LO:
         self.LO_freq = Conv_freq - IF_freq/1000
@@ -114,17 +115,17 @@ class IQ_Cal:
         # elif "ro" in mixer_module: self.channels_group = 1
 
         # 1. PSG (RO:PSGV_1 XY:PSGA_2)
-        LO_type, LO_label = iqcal_config['SG'].split("_")
+        LO_type, self.LO_label = iqcal_config['SG'].split("_")
         SG = im("pyqum.instrument.machine.%s" %LO_type)
-        self.saga = SG.Initiate(LO_label)
+        self.saga = SG.Initiate(which=self.LO_label)
         SG.rfoutput(self.saga, action=['Set', 1])
         SG.frequency(self.saga, action=['Set', "%sGHz" %self.LO_freq])
         SG.power(self.saga, action=['Set', "%sdBm" %LO_powa])
         
         # 2. DAC:
-        DA_type, DA_label = iqcal_config['DA'].split("_")
+        DA_type, self.DA_label = iqcal_config['DA'].split("_")
         DAC = im("pyqum.instrument.machine.%s" %DA_type)
-        self.daca = DAC.Initiate(which=DA_label)
+        self.daca = DAC.Initiate(which=self.DA_label)
         if "TKAWG" in DA_type: CLOCK_HZ = 2.5e9
         elif "SDAWG" in DA_type: CLOCK_HZ = 1e9
         else: pass
@@ -140,16 +141,16 @@ class IQ_Cal:
             DAC.prepare_DAC(self.daca, channel, pulseq.totalpoints, update_settings=dict(Master=True, trigbyPXI=2)) # First-in-line = Master)
         for ch in range(2):
             channel = int(ch + channels_group)
-            DAC.compose_DAC(self.daca, channel, pulseq.music) # we don't need marker yet initially
+            DAC.compose_DAC(self.daca, channel, pulseq.music, pulseq.envelope, self.iqcal_config[self.mode]['marker'], dict(PINSW=True)) # we don't need marker yet initially
         # Turn on all 4 channels:
         DAC.alloff(self.daca, action=['Set',0])
         DAC.ready(self.daca)
         DAC.play(self.daca)
         
         # 3. SA
-        SA_type, SA_label = iqcal_config['SA'].split("_")
+        SA_type, self.SA_label = iqcal_config['SA'].split("_")
         SA = im("pyqum.instrument.machine.%s" %SA_type)
-        self.mxa = SA.Initiate(which=SA_label)
+        self.mxa = SA.Initiate(which=self.SA_label, screenoff=False)
         fspan_MHz = abs(self.IF_freq)*7 # SPAN MUST INCLUDE ALL PEAKS
         BW_Hz = fspan_MHz*1e6 / 100
         points = 1000
@@ -409,10 +410,10 @@ class IQ_Cal:
         '''closing instruments:
         '''
         DAC.alloff(self.daca, action=['Set',1])
-        DAC.close(self.daca, which=1)
+        DAC.close(self.daca, which=self.DA_label)
         SG.rfoutput(self.saga, action=['Set', 0])
-        SG.close(self.saga, 1, False)
-        SA.close(self.mxa, False)
+        SG.close(self.saga, self.LO_label, False)
+        SA.close(self.mxa, False, which=self.SA_label)
 
 def test():
     s, t = clocker(agenda="IQ-CAL")
