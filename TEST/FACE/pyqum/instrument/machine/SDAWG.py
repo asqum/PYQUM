@@ -12,9 +12,10 @@ from pyqum.instrument.toolbox import normalize_dipeak
 # SD1 Libraries
 import sys
 # sys.path.append(r'C:\\Program Files (x86)\\Keysight\SD1\\Libraries\\Python')
-# from pyqum.API.KeySight import keysightSD1
-sys.path.append('C:\Program Files (x86)\Keysight\SD1\Libraries\Python')
 import keysightSD1
+# sys.path.append('C:\Program Files (x86)\Keysight\SD1\Libraries\Python')
+# import keysightSD1
+# print("INIT SDAWG...")
 
 # INITIALIZATION
 def Initiate(which, mode='DATABASE', current=False):
@@ -410,4 +411,4 @@ def test():
 
     return
 
-test()
+#test()

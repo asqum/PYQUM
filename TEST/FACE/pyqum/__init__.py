@@ -129,4 +129,10 @@ def create_app(test_config=None):
     # log.disabled = True
     # app.logger.disabled = True
 
+    # Test SD1 Libraries
+    # import sys
+    # sys.path.append('C:\Program Files (x86)\Keysight\SD1\Libraries\Python')
+    # import keysightSD1
+    # print("import keysightSD1>>")
+
     return app
