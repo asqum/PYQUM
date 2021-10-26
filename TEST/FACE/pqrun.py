@@ -1,6 +1,6 @@
 # from flask import g
 from pyqum import create_app
-from flaskext.noextref import NoExtRef
+#from flaskext.noextref import NoExtRef
 from pyqum.instrument.logger import set_status, get_status
 import sys
 
@@ -14,6 +14,7 @@ def server(mode, Port):
 	# g.servermode = mode # Working outside of application context.
 	set_status("WEB", dict(port=Port, mode=mode), 1)
 	app.secret_key = "bcsjfhksP_*$3#bcjahfqaOgvGFGhnNg"
+	print(mode)
 	if mode == "local":
 		# for local access
 		set_status("LOCAL",dict(mode=mode))

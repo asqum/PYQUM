@@ -2,30 +2,38 @@
 
 @echo off
 
-:: Initialize Anaconda Environment
-set root=C:\ProgramData\Anaconda3
-:: set root=C:\Users\Great\Anaconda3
-call %root%\Scripts\activate.bat %root%
 
+rem Define here the path to your conda installation
+set CONDAPATH=C:\Users\ASQUM\anaconda3
+rem Define here the name of the environment
+::set ENVNAME=base
+set ENVNAME=PYQUM-server-offline
+
+rem Activate the conda environment
+rem Using call is required here, see: https://stackoverflow.com/questions/24678144/conda-environments-and-bat-files
+ECHO Conda path: %CONDAPATH%\Scripts\activate.bat 
+ECHO Environment name: %ENVNAME%
+call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
+
+
+:: qspp (editable installation, files are in PYQUM)
+ECHO Installing qspp
+pip install -e ..\BETAsite\Signal_Processing
+
+:: resonator_tools (editable installation, files are in PYQUM)
+ECHO Installing resonator_tools
+pip install -e ..\BETAsite\resonator_tools
+
+:: atsapi (normal installation, files are in MEGA)
+ECHO Installing atsapi
+pip install ..\..\..\..\MEGAsync\MANUALS\DAC_ADC\AlazarTech\SDK\Library
+
+:: keysightSD1 (normal installation, files are in MEGA)
+ECHO Installing keysightSD1
+pip install ..\..\..\..\MEGAsync\MANUALS\DAC_ADC\KeySight\keysightSD1_3
+
+:: PYQUM (editable installation, files are in PYQUM)
 ECHO Installing PYQUM 101
 pip install -e .
-
-:: ATS-9371 SDK
-ECHO Installing ATS-API
-cd C:\AlazarTech\ATS-SDK\7.4.0\Samples_Python\Library
-pip install -e .
-
-:: Resonator tool
-ECHO Installing Resonator tool
-cd C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\BETAsite\resonator_tools
-pip install -e .
-
-:: qspp
-ECHO Installing QuData Post-Processing
-cd C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\BETAsite\Signal_Processing
-pip install -e .
-
-
-
 
 PAUSE

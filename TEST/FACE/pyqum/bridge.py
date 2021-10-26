@@ -15,7 +15,7 @@ from contextlib import suppress
 
 # Scientific
 from scipy import constants as cnst
-from si_prefix import si_format, si_parse
+#from si_prefix import si_format, si_parse # Not be used
 from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean
 
 # Load instruments

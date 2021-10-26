@@ -1,4 +1,4 @@
-Metadata-Version: 1.0
+Metadata-Version: 2.1
 Name: qspp
 Version: 1.0
 Summary: Qubit Signal Post-Processing
@@ -6,5 +6,7 @@ Home-page: UNKNOWN
 Author: shiau, LTH
 Author-email: shiau109@gmail.com, ufocrew@gmail.com
 License: BSD
-Description: 1. Digital Homodyne: Dual & Single port
 Platform: UNKNOWN
+
+1. Digital Homodyne: Dual & Single port
+

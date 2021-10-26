@@ -21,8 +21,10 @@ from contextlib import suppress
 # Scientific
 from scipy import constants as cnst
 from scipy.optimize import curve_fit
+from scipy.stats import linregress
+
 #from si_prefix import si_format, si_parse
-from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean
+from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mean, std, histogram
 
 # Load instruments
 # Please Delete this line in another branch (to: @Jackie)
@@ -609,6 +611,98 @@ class RabiOscillation():
 
 		# Set x-axis (frequency) of fit curve 
 		self.fitCurve["x"] = qObj.rawData["x"]
+
+class PopulationDistribution():
+
+	def __init__( self, quantificationObj, *args,**kwargs ):
+
+		self.quantificationObj = quantificationObj
+		# Key and index
+		self.resultKeys = ["excitedCenterI", "excitedCenterQ", "excitedDeviationI", "excitedDeviationQ", "groundCenterI", "groundCenterQ", "groundDeviationQ", "groundDeviationI"]
+		self.errorKeys = ["excitedCenterI_cov", "excitedCenterQ_cov", "excitedDeviationI_cov", "excitedDeviationQ_cov", "groundCenterI_cov", "groundCenterQ_cov", "groundDeviationQ_cov",  "groundDeviationI_cov"]
+		
+		# Fit
+		self.fitCurve = {}
+		self.fitResult = {}
+
+		self._fitParameters = None
+		self._init_fitResult()
+		
+		self._init_fitCurve()
+
+
+	def _init_fitResult( self, yAxisLen=0 ):
+		nanArray = empty([yAxisLen])
+		nanArray.fill( nan )
+
+		results ={}
+		errors ={}
+		for rk in self.resultKeys:
+			results[rk] = nanArray.copy()
+		for ek in self.errorKeys:
+			errors[ek] = nanArray.copy()
+
+
+		self.fitResult={
+			"results": results,
+			"errors": errors,
+		}
+
+	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
+		self.fitCurve = {
+			"x": empty([xAxisLen]),
+			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
+		}
+
+	@property
+	def fitParameters(self):
+		return self._fitParameters
+
+	@fitParameters.setter
+	def fitParameters(self, fitParameters=None):
+		if fitParameters == None:
+			fitParameters={
+				"interval": {
+					"start": 5,
+					"end": 8
+				},
+				"initial_value":{
+
+				}
+
+			}
+		else:
+			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
+			fitParameters["interval"]["start"] = fitRange[0]
+			fitParameters["interval"]["end"] = fitRange[1]
+		self._fitParameters = fitParameters
+
+	def do_analysis ( self ):
+
+		qObj = self.quantificationObj
+
+		xAxisLen = qObj.rawData["x"].shape[0]
+
+		meanAll = mean(qObj.rawData["iqSignal"])
+		ampIMeanAll = mean(qObj.rawData["iqSignal"].real)
+		AmpQMeanAll = mean(qObj.rawData["iqSignal"].imag)
+
+		slope, intercept, r, p, se = linregress(ampIMeanAll, AmpQMeanAll)
+		rotateAngle = arctan2(slope)
+		shiftedData = qObj.rawData["iqSignal"] - meanAll
+		rotatedData = shiftedData*exp(-1j*rotateAngle)
+
+
+		distributionData = histogram(rotatedData, bins='auto')
+		# Get 1D or 2D data to self.rawData
+		if qObj.yAxisKey == None:
+			yAxisLen = 1
+		else:
+			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
+
+		for i in range(yAxisLen):
+			shiftedData = qObj.rawData["iqSignal"][i] - meanAll
+			rotatedData = rotateAngle*exp(-1j*rotateAngle)
 
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
