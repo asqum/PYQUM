@@ -116,7 +116,7 @@ $(function () {
         let fitRange = document.getElementById("decoherence"+"-fitting_input-"+xAxisKey).value;
 
         let fitParameters = {
-            range: {
+            interval: {
                 input: fitRange,
             },
             baseline:{

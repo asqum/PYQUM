@@ -8,11 +8,12 @@ ECHO WELCOME TO PYQUM 101
 ::DIR
 
 :: Initialize Anaconda Environment
-set root=C:\ProgramData\Anaconda3
-::set root=C:\Users\Great\Anaconda3
-call %root%\Scripts\activate.bat %root%
+ECHO NO Environment
+::set root=C:\ProgramData\Anaconda3
+::call %root%\Scripts\activate.bat %root%
 ::call conda list flask
 SET FLASK_APP=pyqum
+
 
 ::Get Parent Directory
 for %%a in (%cd%) do set "p_dir=%%~dpa"
@@ -95,7 +96,29 @@ REM PAUSE
 
 :production_1
     ECHO STARTING APP as Production Web #1
+    @echo OFF
+    rem How to run a Python script in a given conda environment from a batch file.
+
+    rem It doesn't require:
+    rem - conda to be in the PATH
+    rem - cmd.exe to be initialized with conda init
+
+    rem Define here the path to your conda installation
+    set CONDAPATH=C:\Users\ASQUM\anaconda3
+    rem Define here the name of the environment
+    ::set ENVNAME=base
+    set ENVNAME=PYQUM-server-offline
+
+    rem Activate the conda environment
+    rem Using call is required here, see: https://stackoverflow.com/questions/24678144/conda-environments-and-bat-files
+    ECHO Conda path: %CONDAPATH%\Scripts\activate.bat 
+    ECHO Environment name: %ENVNAME%
+    call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
+
+
+    rem Run a python script in that environment
     python pqrun.py production 5301
+
     goto tq
 
 :production_2

@@ -164,7 +164,7 @@ $(function () {
         let gain = document.getElementById("qFactor-fit-gain").value;
 
         let fitParameters = {
-            range: {
+            interval: {
                 input: fitRange,
             },
             baseline:{
@@ -187,8 +187,8 @@ $(function () {
             console.log(data);
             let fitResultxAxisKey = "Single_plot";
 
-            if (analysisIndex.axisIndex.length == 2) { fitResultxAxisKey = htmlInfo[analysisIndex["axisIndex"][0]]["name"] }
-            if ( fitResultxAxisKey == "Power" ) { fitResultxAxisKey = "power_corr" }
+            if (analysisIndex.axisIndex.length == 2) { fitResultxAxisKey = htmlInfo[analysisIndex["axisIndex"][1]]["name"] }
+            // if ( fitResultxAxisKey == "Power" ) { fitResultxAxisKey = "power_corr" }
 
             console.log("xAxisKey: "+fitResultxAxisKey);
 
@@ -197,8 +197,8 @@ $(function () {
                 y: ["Qi_dia_corr","Qi_no_corr","absQc","Qc_dia_corr","Ql","fr","theta0","phi0","single_photon_limit", "photons_in_resonator"],
                 yErr: ["Qi_dia_corr_err", "Qi_no_corr_err", "absQc_err", "absQc_err", "Ql_err", "fr_err", "", "phi0_err","",""],
             }
-            let plotdata = Object.assign({}, data["extendResults"], data["results"], data["errors"]);
-
+            let plotdata = Object.assign({}, data["extendResults"], data["results"], data["errors"] );
+            plotdata[fitResultxAxisKey] = data[fitResultxAxisKey]
             plot1D( plotdata, axisKeys_fitResult, "qFactor-plot-fittingParameters");
 
         });

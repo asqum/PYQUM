@@ -4,7 +4,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
-from keyboard import press
+#from keyboard import press # Not be used
 import json, time, random, itertools, glob
 from flask import (
     Flask, Blueprint, flash, g, redirect, render_template, request, url_for, Response, jsonify,

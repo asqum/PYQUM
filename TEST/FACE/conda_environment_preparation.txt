@@ -1,0 +1,18 @@
+
+STEP 1. Open Anaconda Prompt
+
+STEP 2. Go to the location of environment.yml file (conda environment configuration file) by the command:
+
+cd YML_LOCATION
+
+	YML_LOCATION in DR1: C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE
+
+STEP 3. Create environment by the command:
+
+conda env create -f environment.yml
+
+	The environment name is "PYQUM-server-offline" which setted in .yml file
+
+STEP 4. Run Install10_DRA.bat
+
+STEP 5. Finished!!

@@ -191,7 +191,7 @@ def getJson_plot():
 
 	#print(plotData)
 	def plot_1D_show( originalArray ) :
-		fitRangeBoolean = logical_and(myExtendMeasurement.rawData["x"]>=float(myQuantification.fitParameters["range"]["from"]),myExtendMeasurement.rawData["x"]<=float(myQuantification.fitParameters["range"]["to"]) )
+		fitRangeBoolean = logical_and(myExtendMeasurement.rawData["x"]>=float(myQuantification.fitParameters["interval"]["start"]),myExtendMeasurement.rawData["x"]<=float(myQuantification.fitParameters["interval"]["end"]) )
 		return originalArray[fitRangeBoolean]
 
 	def plot_2D_amp () :
@@ -237,8 +237,6 @@ def getJson_plot():
 		plotData["raw"] = plotRaw
 		# plot fitted cerve
 		fitXaxis = myQuantification.fitCurve["x"]
-		baselineXaxis = myQuantification.baseline["x"]
-		corrXaxis = myQuantification.correctedIQData["x"]
 		if fitXaxis.shape[0] != 0:
 			complexFitData = myQuantification.fitCurve["iqSignal"][yAxisValInd]
 			plotFit = {
@@ -250,27 +248,35 @@ def getJson_plot():
 			}
 			plotData["fitted"] = plotFit
 
-		if baselineXaxis.shape[0] != 0:
-			complexBaselineData = myQuantification.baseline["iqSignal"][yAxisValInd]
-			plotBaseline = {
-				xAxisKey: plot_1D_show(baselineXaxis) ,
-				"I": complexBaselineData.real,
-				"Q": complexBaselineData.imag,
-				"Amplitude": abs(complexBaselineData),
-				"Phase": angle(complexBaselineData),
-			}
-			plotData["baseline"] = plotBaseline
+		try:
+			baselineXaxis = myQuantification.baseline["x"]
+			if baselineXaxis.shape[0] != 0:
+				complexBaselineData = myQuantification.baseline["iqSignal"][yAxisValInd]
+				plotBaseline = {
+					xAxisKey: plot_1D_show(baselineXaxis) ,
+					"I": complexBaselineData.real,
+					"Q": complexBaselineData.imag,
+					"Amplitude": abs(complexBaselineData),
+					"Phase": angle(complexBaselineData),
+				}
+				plotData["baseline"] = plotBaseline
+		except:
+			pass
 
-		if corrXaxis.shape[0] != 0:
-			complexcorrectedData = myQuantification.correctedIQData["iqSignal"][yAxisValInd]
-			plotCorrectedData = {
-				xAxisKey: plot_1D_show(corrXaxis) ,
-				"I": complexcorrectedData.real,
-				"Q": complexcorrectedData.imag,
-				"Amplitude": abs(complexcorrectedData),
-				"Phase": angle(complexcorrectedData),
-			}
-			plotData["corrected"] = plotCorrectedData
+		try:
+			corrXaxis = myQuantification.correctedIQData["x"]	
+			if corrXaxis.shape[0] != 0:
+				complexcorrectedData = myQuantification.correctedIQData["iqSignal"][yAxisValInd]
+				plotCorrectedData = {
+					xAxisKey: plot_1D_show(corrXaxis) ,
+					"I": complexcorrectedData.real,
+					"Q": complexcorrectedData.imag,
+					"Amplitude": abs(complexcorrectedData),
+					"Phase": angle(complexcorrectedData),
+				}
+				plotData["corrected"] = plotCorrectedData
+		except:
+			pass
 
 		return plotData
 	plotFunction = {
@@ -311,7 +317,7 @@ def getJson_fitParaPlot():
 	if dimension == 2:
 		axisInd = analysisIndex["axisIndex"][1]
 		yAxisKey = myExtendMeasurement.measurementObj.corder["C-Structure"][axisInd] 
-		plotData[yAxisKey] = myExtendMeasurement.independentVars[myExtendMeasurement.yAxisKey]
+		plotData["dependentVar"][yAxisKey] = myExtendMeasurement.independentVars[myExtendMeasurement.yAxisKey]
 
 	else:
 		yAxisKey = None
