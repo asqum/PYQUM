@@ -110,7 +110,6 @@ REM PAUSE
     set ENVNAME=PYQUM-server-offline
 
     rem Activate the conda environment
-    rem Using call is required here, see: https://stackoverflow.com/questions/24678144/conda-environments-and-bat-files
     ECHO Conda path: %CONDAPATH%\Scripts\activate.bat 
     ECHO Environment name: %ENVNAME%
     call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
