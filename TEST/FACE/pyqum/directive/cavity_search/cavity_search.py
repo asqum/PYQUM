@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 from keras.models import load_model
 
 
-AMP = load_model('LSTM_AMP_2.h5')
-PHA = load_model('LSTM_PHA_1.h5')
+AMP = load_model('C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\directive\cavity_search\LSTM_AMP_2.h5')
+PHA = load_model('C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\directive\cavity_search\LSTM_PHA_1.h5')
 # files = '/content/gdrive/MyDrive/Colab Notebooks/test/CPW-5-8.csv'
 
 #Generate input data(amp,pha), and comparison(to find the prediction frequency range)
