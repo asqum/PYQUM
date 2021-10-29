@@ -39,10 +39,10 @@ from collections import defaultdict
 from scipy.io import savemat
 
 # Cavuty searching
-from pyqum.directive.cavity_search.toolfunc import input_process,output_process,true_alt_info
+from pyqum.directive.cavity_search.cavity_search import search
 import pandas as pd
 import numpy as np
-from tensorflow.keras.models import load_model
+from keras.models import load_model
 
 class ExtendMeasurement ():
 	def __init__( self, measurementObj, *args,**kwargs ):
@@ -719,24 +719,7 @@ class CavitySearch():
 
 
 	def do_analysis ( self ):
-
-
-
-		AMP = load_model('LSTM_AMP_2.h5')
-		PHA = load_model('LSTM_PHA_1.h5')
-		# files = '/content/gdrive/MyDrive/Colab Notebooks/test/CPW-5-8.csv'
-
-		#Generate input data(amp,pha), and comparison(to find the prediction frequency range)
-		amp , pha , comparison = input_process(self.quantificationObj)      # comparison[no.][0] for freq start, end for comparison[no.][1]
-		comparison = np.array(comparison)
-
-		# prediction 
-		amp_pred = AMP.predict(amp)
-		pha_pred = PHA.predict(pha)
-		true ,alt = output_process(amp_pred,pha_pred,comparison)  
-		fig = pd.read_csv(files)
-		zone = true_alt_info(true,alt,fig)
-		print(zone)
+		search(self.quantificationObj)
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
 	

@@ -9,7 +9,6 @@ Original file is located at
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 # find the extreme value in 2D array
 def extreme_2d(x):
@@ -30,6 +29,15 @@ def normalize_2d(train):
 			train[i][j] = (train[i][j] - min)/(max - min)
 	return train
 
+# 1D array normalize method
+def normalize_1d(array):
+	max = np.max(array)
+	min = np.min(array)
+	normalized = []
+	for i in range(array.shape[0]):
+		normalized.append((array[i]-min)/(max-min))
+	return np.array(normalized)
+
 # define to simplfy freq obtaining
 def find_freq(freq):
 	freq_txt = []
@@ -37,7 +45,7 @@ def find_freq(freq):
 		freq_txt.append([float(freq[i][0]),float(freq[i][freq.shape[1]-1])])
 	freq_txt = np.array(freq_txt)
 	return freq_txt
-
+'''
 # define the method of input process
 def input_process(file):
 	dfs = []	
@@ -98,33 +106,51 @@ def input_process(file):
 	amp = np.vstack([amp_norm,amp_shifted_norm])
 	pha = np.vstack([pha,pha_shifted])
 	return amp.reshape(amp.shape[0],amp.shape[1],1), pha.reshape(pha.shape[0],pha.shape[1],1), ret
-
+'''
 # define the method of input process
 def input_process_ExtMeasurement( ExtMeasurement ):
-	dfs = []	
-	data_arrays = []
 
 	xAxisLen = ExtMeasurement.rawData["x"].shape[0]
 	rawData = ExtMeasurement.rawData["iqSignal"][0]
-	ampData = abs(rawData)
-	phaseData = angle(rawData)
+	freqData = ExtMeasurement.rawData["x"]
+	ampData = abs(rawData)       # 1D array -> 20 * log(amp)
+	phaseData = angle(rawData)   # 1D array -> np.diff(pha) -> tail append 0 -> normalize 
+
+	# ampData to log and *20 -> amp
+	ampLogged = np.log10(ampData)
+	array20 = []
+	for i in range(ampLogged.shape[0]):
+		array20.append(20)
+	amp = ampLogged * np.array(array20)
+
+	if (amp.shape[0]%50) != 0:
+		ampRelengthed = amp[0:amp.shape[0] - (amp.shape[0]%50)]    # -> make sure that the length %50 == 0
+
+	# pahes to differential and to normalize -> pha
+	phaseDiff = np.diff(phaseData)
+	phaseDiff = phaseDiff.reshape(phaseDiff.shape[0],1)
+	lengthDiff = ampRelengthed.shape[0]-phaseDiff.shape[0]
+	if lengthDiff > 0 :
+		zeros = []
+		for i in range(lengthDiff) :
+			zeros.append([0])
+		phaseRelengthed = np.vstack([phaseDiff,np.array(zeros)])
+	elif lengthDiff < 0 :
+		phaseRelengthed = phaseDiff[0:phaseDiff.shape[0]+lengthDiff]
+	else:
+		phaseRelengthed = phaseDiff
+	
+
+	phaseNormalized = normalize_1d(phaseRelengthed.reshape(phaseRelengthed.shape[0]))
+
+	# freqData length revise
+	lengthDiff = ampRelengthed.shape[0]-freqData.shape[0]   # this should be negative
+	freqRelengthed = freqData[0:freqData.shape[0]+lengthDiff]
 
 
-	for i in range(1):				 #There are only 1 file
-		#read = pd.read_csv(file)
-		if xAxisLen%50 != 0:							
-			dfs.append(pd.DataFrame(read[0:(read.shape[0]-(read.shape[0]%50))].drop(['exported by'], axis=1).values.astype(float))) #[0:(read.shape[0]-(read.shape[0]%len))] make the length be the 50 times
-		else:
-			dfs.append(pd.DataFrame(read[0:read.shape[0]].drop(['exported by'], axis=1).values.astype(float))) #freq,Amp,Uphase,I,Q
-								
-		temp = []					 # There are 3 arrays in the temp : [Freq, Amp, Pha]
-		for j in range(3):
-			temp.append(np.array(dfs[i][j]))
+	datas = np.column_stack((freqRelengthed,ampRelengthed,phaseNormalized))
+	datas = datas.reshape(1,datas.shape[1],datas.shape[0])
 
-
-		data_arrays.append(np.array(temp))			
-
-	datas = np.array(data_arrays)
 	# cut the file for len = 50
 	shift = [0,25]
 	shifted = []
@@ -135,7 +161,6 @@ def input_process_ExtMeasurement( ExtMeasurement ):
 			for j in range(datas.shape[1]):															 # with the label "freq,Amp,Pha" 
 				temp_ = []																	 
 				for k in range(0,datas.shape[2]-50-l,50):
-						
 					temp_.append(np.array(datas[i][j][k+l:k+l+50]))					# seperate with length = len 
 				temp.append(temp_)
 
@@ -164,7 +189,7 @@ def input_process_ExtMeasurement( ExtMeasurement ):
 	ret = pd.concat([table,table_shifted])
 	amp = np.vstack([amp_norm,amp_shifted_norm])
 	pha = np.vstack([pha,pha_shifted])
-	return amp.reshape(amp.shape[0],amp.shape[1],1), pha.reshape(pha.shape[0],pha.shape[1],1), ret
+	return amp.reshape(amp.shape[0],amp.shape[1],1), pha.reshape(pha.shape[0],pha.shape[1],1), np.array(ret)
 
 
 # define a function to sort according to the 'true' probability from the biggest to the smallest 

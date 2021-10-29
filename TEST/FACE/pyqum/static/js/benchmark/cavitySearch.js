@@ -77,7 +77,7 @@ $(function () {
 
 
 
-        $.getJSON( '/benchmark/qestimate/getJson_plot',
+        $.getJSON( '/benchmark/cavitySearch/getJson_plot',
         {   
             quantificationType: JSON.stringify("decoherence"), 
             analysisIndex: JSON.stringify(analysisIndex), 
