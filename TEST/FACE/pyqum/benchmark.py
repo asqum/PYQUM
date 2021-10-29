@@ -98,7 +98,7 @@ def benchmark_getMeasurement():
 	benchmarkDict[session['user_name']] = ExtendMeasurement( get_measurementObject(measurementType) )
 	return "Send Measurement Object"
 
-
+#AAA
 @bp.route('/get_user', methods=['POST', 'GET'])
 def get_user():
 	return jsonify(session['user_name'])
