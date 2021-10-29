@@ -20,7 +20,9 @@
     $("div#qEstimation").load("{{ url_for('benchmark.qestimate') }}");
     $("div#decoherence").load("{{ url_for('benchmark.decoherence') }}");
     $("div#rabiOscillation").load("{{ url_for('benchmark.rabiOscillation') }}");
+    $("div#cavitySearch").load("{{ url_for('benchmark.cavitySearch') }}");
 
+    
   });
 </script> 
 
@@ -38,6 +40,7 @@
   <button class="tablinks" id="qEstimation-tab" onclick="openTab(event, 'qEstimation')">qestimate</button>
   <button class="tablinks" id="decoherence-tab" onclick="openTab(event, 'decoherence')">decoherence</button>
   <button class="tablinks" id="rabiOscillation-tab" onclick="openTab(event, 'rabiOscillation')">rabiOscillation</button>
+  <button class="tablinks" id="cavitySearch-tab" onclick="openTab(event, 'cavitySearch')">cavitySearch</button>
 
 </div>
 <!-- <div id="all" class="tabcontent"></div> -->
@@ -45,6 +48,7 @@
 <div id="qEstimation" class="tabcontent"></div>
 <div id="decoherence" class="tabcontent"></div>
 <div id="rabiOscillation" class="tabcontent"></div>
+<div id="cavitySearch" class="tabcontent"></div>
 
 <!-- {% for qtype in quantificationType %}
 <div id="{{qtype}}" class="tabcontent"></div>

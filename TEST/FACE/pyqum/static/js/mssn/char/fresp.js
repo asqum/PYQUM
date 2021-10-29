@@ -731,6 +731,7 @@ $('#char-fresp-to-benchmark').click( function(){
     $.getJSON( '/benchmark/benchmark_getMeasurement', 
     { measurementType: "fresp", quantificationType: JSON.stringify(quantificationType) }, 
         function ( ) {
+            
     }); 
 
     setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
