@@ -121,7 +121,7 @@ def measurement_info():
 # Each user have own Quantification object
 benchmarkDict = {}
 QDict = {}
-
+# Test str
 
 @bp.route('/register_Quantification',methods=['POST','GET'])
 def register_Quantification():
