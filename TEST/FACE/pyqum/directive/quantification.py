@@ -618,12 +618,13 @@ class PopulationDistribution():
 
 		self.quantificationObj = quantificationObj
 		# Key and index
-		self.resultKeys = ["excitedCenterI", "excitedCenterQ", "excitedDeviationI", "excitedDeviationQ", "groundCenterI", "groundCenterQ", "groundDeviationQ", "groundDeviationI"]
-		self.errorKeys = ["excitedCenterI_cov", "excitedCenterQ_cov", "excitedDeviationI_cov", "excitedDeviationQ_cov", "groundCenterI_cov", "groundCenterQ_cov", "groundDeviationQ_cov",  "groundDeviationI_cov"]
+		self.resultKeys = ["ampExc", "meanExc", "sigmaExc", "ampGnd", "meanGnd", "sigmaGnd"]
+		self.errorKeys = ["ampExc_cov", "meanExc_cov", "sigmaExc_cov", "ampGnd_cov", "meanGnd_cov", "sigmaGnd_cov"]
 		
 		# Fit
 		self.fitCurve = {}
 		self.fitResult = {}
+		self.statisticData = {}
 
 		self._fitParameters = None
 		self._init_fitResult()
@@ -683,9 +684,15 @@ class PopulationDistribution():
 
 		xAxisLen = qObj.rawData["x"].shape[0]
 
+
+
+
+
 		meanAll = mean(qObj.rawData["iqSignal"])
 		ampIMeanAll = mean(qObj.rawData["iqSignal"].real)
 		AmpQMeanAll = mean(qObj.rawData["iqSignal"].imag)
+
+
 
 		slope, intercept, r, p, se = linregress(ampIMeanAll, AmpQMeanAll)
 		rotateAngle = arctan2(slope)
@@ -693,16 +700,38 @@ class PopulationDistribution():
 		rotatedData = shiftedData*exp(-1j*rotateAngle)
 
 
-		distributionData = histogram(rotatedData, bins='auto')
-		# Get 1D or 2D data to self.rawData
-		if qObj.yAxisKey == None:
-			yAxisLen = 1
-		else:
-			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
+		distributionData = histogram(rotatedData.real, bins='auto')
+		distributionXaxis = distributionData[1][1:] +(distributionData[1][1]-distributionData[1][0])/2
+		print("distributionData",distributionData)
 
-		for i in range(yAxisLen):
-			shiftedData = qObj.rawData["iqSignal"][i] - meanAll
-			rotatedData = rotateAngle*exp(-1j*rotateAngle)
+		self.statisticData["x"] = distributionXaxis
+		self.statisticData["iqSignal"] = distributionData[0]
+
+		def gaussianDist ( x, amp, mean, sigma):
+			return amp*exp( -1./2.*(x-mean/sigma)**2 )
+
+		def populationDist ( x, ampExc, meanExc, sigmaExc, ampGnd, meanGnd, sigmaGnd):
+			return gaussianDist( ampExc, meanExc, sigmaExc) +gaussianDist( ampGnd, meanGnd, sigmaGnd) 
+
+		guess = array([ 1, std(distributionData), std(distributionData), 1, -std(distributionData), std(distributionData)])
+		try:
+			popt,pcov=curve_fit(populationDist,distributionXaxis,distributionData[0],guess)
+			fitSuccess = True
+			print("Good fitting")
+		except:
+			fitSuccess = False
+			print("Bad fitting")
+
+		if fitSuccess:
+			self.fitCurve["xStatistic"] = distributionXaxis
+			self.fitCurve["iqSignalStatistic "] = populationDist( distributionXaxis,popt[0],popt[1],popt[2],popt[3],popt[4],popt[5]) 
+			perr = sqrt(diag(pcov))
+
+			for ki, k in enumerate(self.resultKeys):
+				self.fitResult["results"][k][0] = popt[ki]
+			for ki, k in enumerate(self.errorKeys):
+				self.fitResult["errors"][k][0] = perr[ki]
+
 
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
