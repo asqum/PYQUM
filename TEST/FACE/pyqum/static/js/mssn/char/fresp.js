@@ -16,7 +16,7 @@ window.selecteday = ''
 window.frespcryption = 'hfhajfjkafh'
 
 // Local variables:
-var fresp_Perimeters = ['dcsweepch', 'z-idle']
+var fresp_Perimeters = ['dcsweepch', 'z-idle', 'sweep-config']
 
 function listimes_fresp() {
     // $('input.char.data').removeClass("plotted");

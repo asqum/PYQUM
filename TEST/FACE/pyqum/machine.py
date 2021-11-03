@@ -921,7 +921,7 @@ def dc_yokogawa_vwave():
     vwave = request.args.get('vwave') #V-waveform command
     pwidth = float(request.args.get("pwidth")) #ms #PENDING: make it into the update_settings dict as optional parameter to accommodate all sort of DC sources.
     swprate = float(request.args.get("swprate")) #V/s
-    stat = YOKO.sweep(yokog, vwave, sweeprate=swprate)
+    stat = YOKO.sweep(yokog, vwave, update_settings=dict(sweeprate=swprate))
     return jsonify(SweepTime=stat[1])
 @bp.route('/dc/yokogawa/vpulse', methods=['GET'])
 def dc_yokogawa_vpulse():
@@ -929,7 +929,7 @@ def dc_yokogawa_vpulse():
     YOKO.output(yokog, 1)
     vset = float(request.args.get('vset'))
     pwidth = float(request.args.get("pwidth"))
-    stat = YOKO.sweep(yokog, "%sto0*1"%vset, sweeprate=abs(vset)*60)
+    stat = YOKO.sweep(yokog, "%sto0*1"%vset, update_settings=dict(sweeprate=abs(vset)*60))
     return jsonify(SweepTime=stat[1])
 @bp.route('/dc/yokogawa/onoff', methods=['GET'])
 def dc_yokogawa_onoff():

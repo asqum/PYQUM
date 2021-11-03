@@ -309,10 +309,11 @@ def output(module, state):
         stop(module, [1,2,3,4])
         print(Fore.CYAN + "STOPPING ALL 4 channels")
     return state
-def sweep(module, dcvalue, channel=1, sweeprate=0):
+def sweep(module, dcvalue, channel=1, update_settings={}):
     '''DC amplitude in volts (–1.5 V to 1.5 V)
     '''
     try:
+        # PENDING: includes sweeprate and pulsewidth, to be aligned with the YOKO.
         module.channelWaveShape(int(channel), keysightSD1.SD_Waveshapes.AOU_DC)
         status = module.channelAmplitude(int(channel), float(dcvalue))
         print(Fore.GREEN + "Sweeping DCZ Channel-%s at %s"%(channel,dcvalue))

@@ -62,13 +62,16 @@ def output(bench, state=0):
         status = 'Error'
     return status
 
-def sweep(bench, wave, sweeprate=0.0007, channel=''):
+def sweep(bench, wave, channel='', update_settings={}):
     '''
-    sweeprate in V/s or A/s (A-mode: 0.000713 A/s, V-mode: 1.37 V/s with 10kOhm-resistor)
     Voltage Range (AUTO): R2: 10mV; R3: 100mV; R4: 1V; R5: 10V; R6: 30V
     dummy channel to get along with SDAWG-DC improvisation.
+    sweeprate / rising-rate in V/s or A/s (A-mode: 0.000713 A/s, V-mode: 1.37 V/s with 10kOhm-resistor)
+    pulsewidth = waiting/staying/settling/stabilization time in sec
     '''
-    pulsewidth=77*1e-3 # waiting/staying/settling/stabilization time in sec
+    settings = dict(sweeprate=0.0007, pulsewidth=77*1e-3)
+    settings.update(update_settings)
+    sweeprate, pulsewidth = settings['sweeprate'], settings['pulsewidth']
     GPIBspeed = 62 #pts/s
     wave = str(wave)
     Vdata = waveform(wave).data
