@@ -883,7 +883,7 @@ def jobin(task,corder,perimeter,instr,comment,tag):
             # raise
             JOBID = None 
             print(Fore.RED + Back.WHITE + "Check all database input parameters")
-            print(Fore.BLUE + "Stop server and make sure queue's 'check'-constraint has included the new queue!")
+            print(Fore.BLUE + "Please make sure queue's 'check'-constraint inside job's table has already included the new queue!")
     else: JOBID = None
     return JOBID
 def jobstart(day,task_index,JOBID):
