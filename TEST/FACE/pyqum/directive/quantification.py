@@ -631,6 +631,24 @@ class PopulationDistribution():
 		
 		self._init_fitCurve()
 
+		qObj = self.quantificationObj
+
+		meanAll = mean(qObj.rawData["iqSignal"])
+		ampIMeanAll = mean(qObj.rawData["iqSignal"].real)
+		AmpQMeanAll = mean(qObj.rawData["iqSignal"].imag)
+
+		slope, intercept, r, p, se = linregress(ampIMeanAll, AmpQMeanAll)
+		rotateAngle = arctan2(slope)
+		shiftedData = qObj.rawData["iqSignal"] - meanAll
+		rotatedData = shiftedData*exp(-1j*rotateAngle)
+
+
+		distributionData = histogram(rotatedData.real, bins='auto')
+		distributionXaxis = distributionData[1][1:] +(distributionData[1][1]-distributionData[1][0])/2
+		print("distributionData",distributionData)
+
+		self.statisticData["x"] = distributionXaxis
+		self.statisticData["iqSignal"] = distributionData[0]
 
 	def _init_fitResult( self, yAxisLen=0 ):
 		nanArray = empty([yAxisLen])
@@ -687,35 +705,15 @@ class PopulationDistribution():
 
 
 
-
-		meanAll = mean(qObj.rawData["iqSignal"])
-		ampIMeanAll = mean(qObj.rawData["iqSignal"].real)
-		AmpQMeanAll = mean(qObj.rawData["iqSignal"].imag)
-
-
-
-		slope, intercept, r, p, se = linregress(ampIMeanAll, AmpQMeanAll)
-		rotateAngle = arctan2(slope)
-		shiftedData = qObj.rawData["iqSignal"] - meanAll
-		rotatedData = shiftedData*exp(-1j*rotateAngle)
-
-
-		distributionData = histogram(rotatedData.real, bins='auto')
-		distributionXaxis = distributionData[1][1:] +(distributionData[1][1]-distributionData[1][0])/2
-		print("distributionData",distributionData)
-
-		self.statisticData["x"] = distributionXaxis
-		self.statisticData["iqSignal"] = distributionData[0]
-
 		def gaussianDist ( x, amp, mean, sigma):
 			return amp*exp( -1./2.*(x-mean/sigma)**2 )
 
 		def populationDist ( x, ampExc, meanExc, sigmaExc, ampGnd, meanGnd, sigmaGnd):
 			return gaussianDist( ampExc, meanExc, sigmaExc) +gaussianDist( ampGnd, meanGnd, sigmaGnd) 
 
-		guess = array([ 1, std(distributionData), std(distributionData), 1, -std(distributionData), std(distributionData)])
+		guess = array([ 1, std(self.statisticData["iqSignal"]), std(self.statisticData["iqSignal"]), 1, -std(self.statisticData["iqSignal"]), std(self.statisticData["iqSignal"])])
 		try:
-			popt,pcov=curve_fit(populationDist,distributionXaxis,distributionData[0],guess)
+			popt,pcov=curve_fit(populationDist,self.statisticData["x"], self.statisticData["iqSignal"],guess)
 			fitSuccess = True
 			print("Good fitting")
 		except:
@@ -723,8 +721,8 @@ class PopulationDistribution():
 			print("Bad fitting")
 
 		if fitSuccess:
-			self.fitCurve["xStatistic"] = distributionXaxis
-			self.fitCurve["iqSignalStatistic "] = populationDist( distributionXaxis,popt[0],popt[1],popt[2],popt[3],popt[4],popt[5]) 
+			self.fitCurve["xStatistic"] = self.statisticData["x"]
+			self.fitCurve["iqSignalStatistic "] = populationDist( self.statisticData["x"],popt[0],popt[1],popt[2],popt[3],popt[4],popt[5]) 
 			perr = sqrt(diag(pcov))
 
 			for ki, k in enumerate(self.resultKeys):
