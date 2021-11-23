@@ -146,6 +146,10 @@ def register_Quantification():
 	except(KeyError): print("No such quantification type")
 	return json.dumps(quantificationType, cls=NumpyEncoder)
 
+
+
+### qestimate part
+
 @bp.route('/qestimate/getJson_plot',methods=['POST','GET'])
 def getJson_plot():
 
@@ -181,12 +185,13 @@ def getJson_plot():
 		yAxisKey = None
 		yAxisValInd = 0
 
-	preAxisInd = myExtendMeasurement.axisInd
-	preValueInd = myExtendMeasurement.varsInd
-	if preAxisInd != axisInd  or ( yAxisKey==None and preValueInd != valueInd) or aveInfo!=aveInfo:
-		print("Previous index",preValueInd,"New index",valueInd)
-		myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
-
+	## Block user click plot frequently
+	# preAxisInd = myExtendMeasurement.axisInd
+	# preValueInd = myExtendMeasurement.varsInd
+	# if preAxisInd != axisInd  or ( yAxisKey==None and preValueInd != valueInd) or aveInfo!=aveInfo:
+	# 	print("Previous index",preValueInd,"New index",valueInd)
+	# 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
 
 	print("Plot type: ", plotType)
 	print("Plot shape Raw: ",myExtendMeasurement.rawData["iqSignal"].shape)
@@ -344,6 +349,8 @@ def exportMat_fitPara():
 	except:
 		status = "Fail"
 	return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+
+### populationDistribution part
 
 @bp.route('/populationDistribution/getJson_plot',methods=['POST','GET'])
 def populationDistribution_getJson_plot():
