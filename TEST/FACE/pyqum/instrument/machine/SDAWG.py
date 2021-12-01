@@ -28,7 +28,7 @@ def Initiate(which, mode='DATABASE', current=False):
         if moduleID < 0: print(Fore.RED + "Module open error:", moduleID)
         else: print(Fore.GREEN + "%s-%s's connection Initialized >> ID: %s, Name: %s, Chassis: %s, Slot: %s" % (mdlname,which, moduleID, module.getProductName(), module.getChassis(), module.getSlot()))
         
-        if current: print(Fore.YELLOW + "DC-mode for DAC: ALL 4 channels") # to align with YOKO-DC
+        if current: print(Fore.YELLOW + "DC-mode for DAC: ALL 4 channels (Dummy selection)") # to align with YOKO-DC
         for i in range(4): module.channelWaveShape(i+1, keysightSD1.SD_Waveshapes.AOU_HIZ) # always HiZ ALL 4-channels
 
         set_status(mdlname, dict(state='connected'), which)

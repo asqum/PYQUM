@@ -106,11 +106,12 @@ def test():
     v_array = [1e-6, 3e-5, 6e-4, 7e-3, 8e-2, 2e-1, 1, 6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
     for v in v_array:
         s = Initiate(1, 'TEST')
-        print(set_voltage(s, v, 1))
-        print(get_voltage(s, 1))
-        # sleep(3)
+        channel = 3
+        print(set_voltage(s, v, channel))
+        print(get_voltage(s, channel))
+        sleep(3.71)
         s.close()
 
     return
 
-# test()
+test()
