@@ -21,7 +21,9 @@
     $("div#decoherence").load("{{ url_for('benchmark.decoherence') }}");
     $("div#rabiOscillation").load("{{ url_for('benchmark.rabiOscillation') }}");
     $("div#populationDistribution").load("{{ url_for('benchmark.populationDistribution') }}");
+    $("div#common_fitting").load("{{ url_for('benchmark.common_fitting') }}");
 
+    
   });
 </script> 
 
@@ -40,6 +42,7 @@
   <button class="tablinks" id="decoherence-tab" onclick="openTab(event, 'decoherence')">decoherence</button>
   <button class="tablinks" id="rabiOscillation-tab" onclick="openTab(event, 'rabiOscillation')">rabiOscillation</button>
   <button class="tablinks" id="populationDistribution-tab" onclick="openTab(event, 'populationDistribution')">populationDistribution</button>
+  <button class="tablinks" id="common_fitting-tab" onclick="openTab(event, 'common_fitting')">Common Fitting</button>
 
 </div>
 <!-- <div id="all" class="tabcontent"></div> -->
@@ -48,6 +51,7 @@
 <div id="decoherence" class="tabcontent"></div>
 <div id="rabiOscillation" class="tabcontent"></div>
 <div id="populationDistribution" class="tabcontent"></div>
+<div id="common_fitting" class="tabcontent"></div>
 
 <!-- {% for qtype in quantificationType %}
 <div id="{{qtype}}" class="tabcontent"></div>

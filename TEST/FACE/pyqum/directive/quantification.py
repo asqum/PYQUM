@@ -734,3 +734,176 @@ class PopulationDistribution():
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
 	
+class common_fitting():
+
+	def __init__( self, quantificationObj, *args,**kwargs ):
+
+		self.quantificationObj = quantificationObj
+		# Key and index
+		self.powerKey = "Power"
+		
+		# Fit
+		self.fitCurve = {}
+		self.baseline = {}
+		self.correctedIQData = {}
+		self.fitResult = {}
+
+		self._fitParameters = None
+		self._init_fitResult()
+		
+		self._init_fitCurve()
+		self._init_baselineCorrection()
+
+
+
+	def _init_fitResult( self, yAxisLen=0 ):
+		nanArray = empty([yAxisLen])
+		nanArray.fill( nan )
+
+		resultKeys = ["Qi_dia_corr","Qi_no_corr","absQc","Qc_dia_corr","Ql","fr","theta0","phi0"]
+		errorKeys = ["phi0_err", "Ql_err", "absQc_err", "fr_err","chi_square","Qi_no_corr_err","Qi_dia_corr_err"]
+		extendResultKeys = ["power_corr", "single_photon_limit", "photons_in_resonator"]
+		results ={}
+		errors ={}
+		extendResults ={}
+		for rk in resultKeys:
+			results[rk] = nanArray.copy()
+		for ek in errorKeys:
+			errors[ek] = nanArray.copy()
+		for erk in extendResultKeys:
+			extendResults[erk] = nanArray.copy()
+
+		self.fitResult={
+			"results": results,
+			"errors": errors,
+			"extendResults": extendResults,
+		}
+
+	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
+		self.fitCurve = {
+			"x": empty([xAxisLen]),
+			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
+		}
+	def _init_baselineCorrection( self, yAxisLen=0, xAxisLen=0  ):
+		self.baseline = {
+			"x": empty([xAxisLen]),
+			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
+		}
+		self.correctedIQData = {
+			"x": empty([xAxisLen]),
+			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
+		}
+	@property
+	def fitParameters(self):
+		return self._fitParameters
+
+	@fitParameters.setter
+	def fitParameters(self, fitParameters=None):
+		if fitParameters == None:
+			fitParameters={
+				"interval": {
+					"start": 5,
+					"end": 8
+				},
+				"baseline":{
+					"correction": False,
+					"smoothness": 1e9,
+					"asymmetry": 0.995,
+				},				
+				"gain":0,
+			}
+		else:
+			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
+			fitParameters["interval"]["start"] = fitRange[0]
+			fitParameters["interval"]["end"] = fitRange[1]
+			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
+			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
+			fitParameters["gain"] = float(fitParameters["gain"])
+		self._fitParameters = fitParameters
+
+
+
+
+
+	def do_analysis( self, freqUnit = "GHz" ):
+
+		qObj = self.quantificationObj
+		xAxisLen = qObj.rawData["x"].shape[0]
+
+
+		freqUnitConvertor = 1 # Convert to Hz
+		if freqUnit == "GHz":
+			freqUnitConvertor = 1e9
+
+		fitRange = ( self.fitParameters["interval"]["start"]*freqUnitConvertor, self.fitParameters["interval"]["end"]*freqUnitConvertor )
+
+		# Get 1D or 2D data to self.rawData
+		if qObj.yAxisKey == None:
+			yAxisLen = 1
+		else:
+			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
+
+		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
+		self._init_baselineCorrection(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
+		self._init_fitResult(yAxisLen=yAxisLen)
+
+
+
+		myResonator = notch_port()
+		# Creat notch port list
+		for i in range(yAxisLen):
+			# Fit baseline
+			if self.fitParameters["baseline"]["correction"] == True :
+				fittedBaseline = myResonator.fit_baseline_amp( qObj.rawData["iqSignal"][i], self.fitParameters["baseline"]["smoothness"], self.fitParameters["baseline"]["asymmetry"],niter=1)
+				correctedIQ = qObj.rawData["iqSignal"][i]/fittedBaseline
+				# Save Corrected IQ Data
+				self.correctedIQData["iqSignal"][i] = correctedIQ
+				# Save baseline
+				self.baseline["iqSignal"][i] = fittedBaseline
+			else: 
+				self._init_baselineCorrection()
+				correctedIQ = qObj.rawData["iqSignal"][i]
+			# Add data
+			myResonator.add_data(qObj.rawData["x"]*freqUnitConvertor, correctedIQ)
+			# Fit
+			try:
+				myResonator.autofit(fcrop=fitRange)
+				fitSuccess = True
+				print("Good fitting")
+
+			except:
+				fitSuccess = False
+				print("Bad fitting")
+
+
+			if fitSuccess:
+
+				for k in self.fitResult["results"].keys():
+					self.fitResult["results"][k][i] = myResonator.fitresults[k]
+
+				for k in self.fitResult["errors"].keys():
+					self.fitResult["errors"][k][i] = myResonator.fitresults[k]
+
+
+				self.fitResult["extendResults"]["single_photon_limit"][i] = myResonator.get_single_photon_limit(unit='dBm',diacorr=True)
+
+				if qObj.yAxisKey == self.powerKey:
+					powerIndex = i
+				else:
+					powerAxisIndex = qObj.measurementObj.corder["C-Structure"].index(self.powerKey)
+					powerIndex = qObj.varsInd[powerAxisIndex]
+
+				self.fitResult["extendResults"]["power_corr"][i] = qObj.independentVars["Power"][powerIndex]+self.fitParameters["gain"]
+				self.fitResult["extendResults"]["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.fitResult["extendResults"]["power_corr"][i],unit='dBm',diacorr=True)
+				
+				# Set x-axis (frequency) of fit curve 
+				
+				self.fitCurve["x"] = qObj.rawData["x"]
+				self.fitCurve["iqSignal"][i] = myResonator.z_data_sim
+				# Set x-axis (frequency) of baseline and corrected data 
+				if self.fitParameters["baseline"]["correction"] == True :
+					self.baseline["x"] = qObj.rawData["x"]
+					self.correctedIQData["x"] = qObj.rawData["x"]
+				else: 
+					self._init_baselineCorrection()
+

@@ -23,7 +23,7 @@ from si_prefix import si_format, si_parse
 from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, logical_and, nan, angle
 
 # Load instruments
-from pyqum.directive.quantification import ExtendMeasurement, QEstimation, Decoherence, RabiOscillation, PopulationDistribution
+from pyqum.directive.quantification import ExtendMeasurement, QEstimation, Decoherence, RabiOscillation, PopulationDistribution, common_fitting
 from pyqum.mission import get_measurementObject
 
 # Fitting
@@ -90,6 +90,10 @@ def rabiOscillation():
 def populationDistribution():
 	return render_template("blog/benchmark/populationDistribution.html")
 
+@bp.route('/common_fitting', methods=['POST', 'GET'])
+def common_fitting():
+	return render_template("blog/benchmark/common_fitting.html")
+
 @bp.route('/benchmark_getMeasurement', methods=['POST', 'GET'])
 def benchmark_getMeasurement():
 	'''
@@ -135,11 +139,14 @@ def register_Quantification():
 		return RabiOscillation(myExtendMeasurement)
 	def get_PopulationDistribution ( myExtendMeasurement ):
 		return PopulationDistribution(myExtendMeasurement)
+	def get_common_fitting ( myExtendMeasurement ):
+		return common_fitting(myExtendMeasurement)
 	quantification = {
 		'qEstimation': get_qEstimation,
 		'decoherence': get_decoherence,
 		'rabiOscillation': get_RabiOscillation,
 		'populationDistribution': get_PopulationDistribution,
+		'get_common_fitting': get_common_fitting,
 	}
 	print(quantificationType+" is registed!!")
 	try: QDict[session['user_name']] = quantification[quantificationType](myExtendMeasurement)
@@ -349,6 +356,209 @@ def exportMat_fitPara():
 	except:
 		status = "Fail"
 	return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+
+### common_fitting part
+
+@bp.route('/common_fitting/getJson_plot',methods=['POST','GET'])
+def ComFit_getJson_plot():
+
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
+	plotType = json.loads(request.args.get('plotType'))
+
+
+	valueInd = analysisIndex["valueIndex"]
+	axisInd = analysisIndex["axisIndex"]
+	dimension = len(axisInd)
+
+	# Get average information from JS
+	aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
+	aveRange = 0
+	# Construct average informaion to reshape
+	if len(aveAxisInd) !=0:
+		aveRange = [int(k) for k in analysisIndex["aveInfo"]["aveRange"].split(",")]
+	aveInfo = {
+		"axisIndex": aveAxisInd,
+		"aveRange": aveRange
+	}
+
+
+	xAxisKey = myExtendMeasurement.measurementObj.corder["C-Structure"][axisInd[0]]
+
+	if dimension == 2:
+		yAxisKey = myExtendMeasurement.measurementObj.corder["C-Structure"][axisInd[1]]
+		yAxisValInd = valueInd[axisInd[1]]
+	elif dimension == 1:
+		yAxisKey = None
+		yAxisValInd = 0
+
+	## Block user click plot frequently
+	# preAxisInd = myExtendMeasurement.axisInd
+	# preValueInd = myExtendMeasurement.varsInd
+	# if preAxisInd != axisInd  or ( yAxisKey==None and preValueInd != valueInd) or aveInfo!=aveInfo:
+	# 	print("Previous index",preValueInd,"New index",valueInd)
+	# 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+
+	print("Plot type: ", plotType)
+	print("Plot shape Raw: ",myExtendMeasurement.rawData["iqSignal"].shape)
+	print("Plot shape Fit:", myQuantification.fitCurve["iqSignal"].shape)
+	print("yAxisKey: ",yAxisKey)
+
+	plotData = {}
+
+	#print(plotData)
+	def plot_1D_show( originalArray ) :
+		fitRangeBoolean = logical_and(myExtendMeasurement.rawData["x"]>=float(myQuantification.fitParameters["interval"]["start"]),myExtendMeasurement.rawData["x"]<=float(myQuantification.fitParameters["interval"]["end"]) )
+		return originalArray[fitRangeBoolean]
+
+	def plot_2D_amp () :
+		plotData[yAxisKey]= myExtendMeasurement.independentVars[yAxisKey]
+		plotData[xAxisKey]= myExtendMeasurement.rawData["x"]
+		plotData["amplitude"]= abs(myExtendMeasurement.rawData["iqSignal"])
+		return plotData
+	def plot_1D_amp () :
+		plotData["Data_point_frequency"]= myExtendMeasurement.rawData["x"]
+		plotData["Data_point_amplitude"]= abs(myExtendMeasurement.rawData["iqSignal"][yAxisValInd])
+		if myQuantification.fitCurve["x"].shape[0] != 0:
+			plotData["Fitted_curve_frequency"]=plot_1D_show( myQuantification.fitCurve["x"] )
+			plotData["Fitted_curve_amplitude"]=plot_1D_show( abs(myQuantification.fitCurve["iqSignal"][yAxisValInd]) )
+		if myQuantification.baseline["x"].shape[0] != 0:
+			plotData["Fitted_baseline_frequency"]=myExtendMeasurement.rawData["x"]
+			plotData["Fitted_baseline_amplitude"]=abs(myQuantification.baseline["iqSignal"][yAxisValInd])
+		if myQuantification.correctedIQData["x"].shape[0] != 0:
+			plotData["Corr_Data_point_frequency"]=myExtendMeasurement.rawData["x"]
+			plotData["Corr_Data_point_amplitude"]=abs(myQuantification.correctedIQData["iqSignal"][yAxisValInd])
+		return plotData
+	def plot_1D_IQ () :
+		plotData["Data_point_I"]= myExtendMeasurement.rawData["iqSignal"][yAxisValInd].real
+		plotData["Data_point_Q"]= myExtendMeasurement.rawData["iqSignal"][yAxisValInd].imag
+		if myQuantification.fitCurve["x"].shape[0] != 0:
+			plotData["Fitted_curve_I"]= plot_1D_show( myQuantification.fitCurve["iqSignal"][yAxisValInd].real )
+			plotData["Fitted_curve_Q"]= plot_1D_show( myQuantification.fitCurve["iqSignal"][yAxisValInd].imag )
+		if myQuantification.correctedIQData["x"].shape[0] != 0:
+			plotData["Corr_Data_point_I"]= myQuantification.correctedIQData["iqSignal"][yAxisValInd].real
+			plotData["Corr_Data_point_Q"]= myQuantification.correctedIQData["iqSignal"][yAxisValInd].imag
+		return plotData
+	def plot_1D_all () :
+		rawDataComplex = myExtendMeasurement.rawData["iqSignal"][yAxisValInd]
+		RawDataXaxis = myExtendMeasurement.rawData["x"]
+		plotData = {}
+		plotRaw = {
+			xAxisKey: RawDataXaxis,
+			"I": rawDataComplex.real,
+			"Q": rawDataComplex.imag,
+			"Amplitude": abs(rawDataComplex),
+			"Phase": angle(rawDataComplex),
+		}
+
+		plotData["raw"] = plotRaw
+		# plot fitted cerve
+		fitXaxis = myQuantification.fitCurve["x"]
+		if fitXaxis.shape[0] != 0:
+			complexFitData = myQuantification.fitCurve["iqSignal"][yAxisValInd]
+			plotFit = {
+				xAxisKey: plot_1D_show(fitXaxis) ,
+				"I": complexFitData.real,
+				"Q": complexFitData.imag,
+				"Amplitude": abs(complexFitData),
+				"Phase": angle(complexFitData),
+			}
+			plotData["fitted"] = plotFit
+
+		try:
+			baselineXaxis = myQuantification.baseline["x"]
+			if baselineXaxis.shape[0] != 0:
+				complexBaselineData = myQuantification.baseline["iqSignal"][yAxisValInd]
+				plotBaseline = {
+					xAxisKey: plot_1D_show(baselineXaxis) ,
+					"I": complexBaselineData.real,
+					"Q": complexBaselineData.imag,
+					"Amplitude": abs(complexBaselineData),
+					"Phase": angle(complexBaselineData),
+				}
+				plotData["baseline"] = plotBaseline
+		except:
+			pass
+
+		try:
+			corrXaxis = myQuantification.correctedIQData["x"]	
+			if corrXaxis.shape[0] != 0:
+				complexcorrectedData = myQuantification.correctedIQData["iqSignal"][yAxisValInd]
+				plotCorrectedData = {
+					xAxisKey: plot_1D_show(corrXaxis) ,
+					"I": complexcorrectedData.real,
+					"Q": complexcorrectedData.imag,
+					"Amplitude": abs(complexcorrectedData),
+					"Phase": angle(complexcorrectedData),
+				}
+				plotData["corrected"] = plotCorrectedData
+		except:
+			pass
+
+		return plotData
+	plotFunction = {
+		'2D_amp': plot_2D_amp,
+		'1D_amp': plot_1D_amp,
+		'1D_IQ': plot_1D_IQ,
+		'1D_all': plot_1D_all,
+	}
+	return json.dumps(plotFunction[plotType](), cls=NumpyEncoder)
+
+
+
+@bp.route('/common_fitting/getJson_fitParaPlot',methods=['POST','GET'])
+def ComFit_getJson_fitParaPlot():
+
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	fitParameters = json.loads(request.args.get('fitParameters'))
+	
+	if fitParameters == "None":
+		myQuantification.fitParameters = None
+	else:
+		myQuantification.fitParameters = fitParameters
+	#print( "Fit parameters: ",fitParameters)
+	myQuantification.do_analysis()
+	plotData = myQuantification.fitResult
+	plotData["dependentVar"] = {}
+
+	# plotData = myQuantification.fitResult["results"]P1
+
+	# plotData.update(myQuantification.fitResult["errors"])
+	# plotData.update(myQuantification.fitResult["extendResults"])
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
+
+	dimension = len(analysisIndex["axisIndex"])
+
+	if dimension == 2:
+		axisInd = analysisIndex["axisIndex"][1]
+		yAxisKey = myExtendMeasurement.measurementObj.corder["C-Structure"][axisInd] 
+		plotData["dependentVar"][yAxisKey] = myExtendMeasurement.independentVars[myExtendMeasurement.yAxisKey]
+
+	else:
+		yAxisKey = None
+		plotData["Single_plot"] = array(1)
+		#plotData["Single_plot"] = myExtendMeasurement.fitResult["extendResults"]["power_corr"]
+	print("Fit plot results: ",json.dumps(plotData, cls=NumpyEncoder))
+	return json.dumps(plotData, cls=NumpyEncoder).replace('NaN','null')
+	#return json.dumps(plotData, cls=NumpyEncoder).replace('NaN','')
+
+
+@bp.route('/common_fitting/exportMat_fitPara',methods=['POST','GET'])
+def ComFit_exportMat_fitPara():
+	try:
+		myExtendMeasurement = benchmarkDict[session['user_name']]
+		set_mat_analysis( myExtendMeasurement.fitResult, 'ExtendMeasurement[%s]'%session['user_name'] )
+
+		status = "Success"
+	except:
+		status = "Fail"
+	return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+
 
 ### populationDistribution part
 
