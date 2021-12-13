@@ -145,6 +145,7 @@ class ExtendMeasurement ():
 		data = reshape( data, tuple(cShape) )
 		varsInd.append(1) # Temporary for connect with old data type
 
+		# Make array of key to move axis of data
 		if self.yAxisKey == None:
 			moveAxisKey = ["datadensity", self.xAxisKey]
 		else:
@@ -156,9 +157,10 @@ class ExtendMeasurement ():
 		selectValInd = []
 		includeAxisInd = []
 		for i, k in enumerate(self.measurementObj.corder["C-Structure"]):
-			if k not in moveAxisKey:	
+			if k not in moveAxisKey: # Get position for the axis only need one value
 				selectValInd.append(varsInd[i])
-			else:
+
+			else: # Get arranged indice of the axis for analysis
 				includeAxisInd.append(i)
 
 		includeAxisInd = []
@@ -166,7 +168,6 @@ class ExtendMeasurement ():
 		for i, k in enumerate(moveAxisKey):
 			includeAxisInd.append(self.measurementObj.corder["C-Structure"].index(k) )
 			newAxisPosition.append(-len(moveAxisKey)+i)
-
 		data = moveaxis( data, includeAxisInd, newAxisPosition )
 
 		# Remove one value dimension
@@ -734,14 +735,12 @@ class PopulationDistribution():
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
 	
-class common_fitting():
+class Common_fitting():
 
 	def __init__( self, quantificationObj, *args,**kwargs ):
 
 		self.quantificationObj = quantificationObj
-		# Key and index
-		self.powerKey = "Power"
-		
+
 		# Fit
 		self.fitCurve = {}
 		self.baseline = {}

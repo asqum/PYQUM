@@ -3,12 +3,125 @@
 
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
-    render_common_fitting("common_fitting");
-    console.log( "Load qEstimation" );
+    CF_render_input("common_fitting");
+    console.log( "Load common_fitting" );
 
+    let e_loadButton = document.getElementById("common_fitting-button-load");
+    e_loadButton.addEventListener("click", load_data);
+    let e_fitButton = document.getElementById("common_fitting-button-fit");
+    e_fitButton.addEventListener("click", fit_data);
+    let e_plot1DButton = document.getElementById("common_fitting-plot1D-button");
+    e_plot1DButton.addEventListener("click", get_plot1D);
+    let e_plot2DtButton = document.getElementById("common_fitting-plot2D-button");
+    e_plot2DtButton.addEventListener("click", get_plot2D);
 });
 
-function render_common_fitting ( quantificationType )
+function get_common_fitting_selectInfo( quantificationType ){
+
+    $.ajaxSettings.async = false;
+
+    let htmlInfo = get_htmlInfo_python();
+    let axisIndex=new Array(1);
+    let valueIndex=new Array(htmlInfo.length);
+
+    let aveAxisIndex=[];
+    let aveRange;
+
+    //let analysisIndex = {};
+
+    
+    console.log( "htmlInfo " );
+    console.log( htmlInfo.length );
+    // Get select parameter index
+    for (let i=0; i<htmlInfo.length; i++ ) {
+        htmlName = htmlInfo[i]["name"];
+        varLength = htmlInfo[i]["length"];
+        structurePosition = htmlInfo[i]["structurePosition"]
+        if ( varLength == 1 ){ valueIndex[i]=0 }
+        else{
+            let plotType = document.getElementById(quantificationType+"-plot_type-"+htmlName).value
+            console.log( "Plot type " +plotType );
+            switch(plotType){
+                case "y_value":
+                    console.log(htmlName +" for y-axis value");
+                    axisIndex[axisIndex.length] = structurePosition ;
+                    valueIndex[i]=document.getElementById(quantificationType+"-select_value-"+htmlName).selectedIndex;
+                    break;
+
+                case "y_count":
+                    console.log(htmlName +" for y-axis count");
+                    axisIndex[axisIndex.length] = structurePosition ;
+                    valueIndex[i]=document.getElementById(quantificationType+"-select_value-"+htmlName).selectedIndex;
+                    break;
+
+                case "x_value":
+                    console.log(htmlName +" for x-axis ");
+                    axisIndex[0] = structurePosition ;
+                    valueIndex[i]=0;
+                    break;
+
+                case "single_value":
+                    console.log(htmlName +" select single value ");
+                    valueIndex[i]=document.getElementById(quantificationType+"-select_value-"+htmlName).selectedIndex;
+                    break;
+
+                case "average":
+                    console.log(htmlName +" select average");
+                    valueIndex[i] = 0;
+                    aveAxisIndex.push(structurePosition);
+                    aveRange = document.getElementById(quantificationType+"-ave_value-"+htmlName).value;
+                    break;
+
+            }         
+        }
+
+
+
+    }
+    let analysisIndex={
+        valueIndex:valueIndex,
+        axisIndex:axisIndex,
+        aveInfo:{
+            axisIndex:aveAxisIndex,
+            aveRange:aveRange
+        }
+    }
+
+
+    console.log( "Selection " );
+    console.log( analysisIndex );
+    $.ajaxSettings.async = true;
+
+    return analysisIndex
+}
+
+function CF_get_2DplotInfo( quantificationType ){
+
+    $.ajaxSettings.async = false;
+
+    let measureParameters = document.getElementById( "common_fitting-plot2D-button" );
+
+    //let analysisIndex = {};
+
+    
+    let plotType={
+        valueIndex:valueIndex,
+        axisIndex:axisIndex,
+        aveInfo:{
+            axisIndex:aveAxisIndex,
+            aveRange:aveRange
+        }
+    }
+
+
+    console.log( "Selection " );
+    console.log( analysisIndex );
+    $.ajaxSettings.async = true;
+
+    return analysisIndex
+}
+
+function CF_render_input ( quantificationType )
 {
 
     $.ajaxSettings.async = false;
@@ -63,12 +176,12 @@ function render_common_fitting ( quantificationType )
             let DOM_parameterPlotTypeSelector = document.createElement("select");
             DOM_parameterPlotTypeSelector.id = quantificationType+"-plot_type-"+parameterName;
             DOM_parameterPlotTypeSelector.setAttribute("class", "measureParaSelect plotTypeSelect");
-            DOM_parameterPlotTypeSelector.setAttribute("onchange", "showAveInput(this)");
+            DOM_parameterPlotTypeSelector.setAttribute("onchange", "CF_showAveInput(this)");
             DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
 
             // Create plot selection
-            let plotType = ["single value","x axis - value","y axis - value","y axis - count","average"];
-            let plotTypeValue = ["single_value","x_value","y_value","y_count","average"];
+            let plotType = ["single value","x axis - value","y axis - value","average"];
+            let plotTypeValue = ["single_value","x_value","y_value","average"];
             for( ipt=0; ipt<plotType.length; ipt++)
             {
                 let DOM_parameterPlotType = document.createElement("option");
@@ -118,19 +231,343 @@ function render_common_fitting ( quantificationType )
 
 
             // Create x axis fitting input
-            let DOM_parameterFit = document.createElement("input");
-            DOM_parameterFit.id = quantificationType+"-fitting_input-"+parameterName;
-            DOM_parameterFit.setAttribute("class", "measureParaSelect fitting_input");
-            DOM_parameterFit.setAttribute("value", parameterValue[0]+","+parameterValue[parameterValue.length-1]);
-            DOM_parameterFit.style.display = "none";
-            DOM_parameterSetting.appendChild(DOM_parameterFit);
+            // let DOM_parameterFit = document.createElement("input");
+            // DOM_parameterFit.id = quantificationType+"-fitting_input-"+parameterName;
+            // DOM_parameterFit.setAttribute("class", "measureParaSelect fitting_input");
+            // DOM_parameterFit.setAttribute("value", parameterValue[0]+","+parameterValue[parameterValue.length-1]);
+            // DOM_parameterFit.style.display = "none";
+            // DOM_parameterSetting.appendChild(DOM_parameterFit);
             
         }
 
 
     }
+    // CF_creatDOM_FitDataType("all", "common_fitting-allParamater");
+    $.ajaxSettings.async = true;
+}
+function CF_showAveInput(selectObject) {
+    let DOM_parameterSetting=selectObject.parentElement;
+    console.log("showAveInput trigger by "+selectObject.id)
+    let DOM_parameterAve = DOM_parameterSetting.getElementsByClassName("ave_value")[0];
+    DOM_parameterAve.style.display = "none";
+
+    let DOM_parameterValueSelect = DOM_parameterSetting.getElementsByClassName("select_value")[0];
+    DOM_parameterValueSelect.style.display = "none";
+
+    let DOM_parameterValueInput = DOM_parameterSetting.getElementsByClassName("input_value")[0];
+    DOM_parameterValueInput.style.display = "none";
+
+
+    switch(selectObject.value){
+        case "average":
+            console.log("select "+selectObject.value)
+            DOM_parameterAve.style.display = "block";
+            break;
+        case "y_value":
+            console.log("select "+selectObject.value)
+            break;
+        case "single_value":
+            console.log("select "+selectObject.value)
+            DOM_parameterValueInput.style.display = "block";
+            DOM_parameterValueSelect.style.display = "block";
+            break;
+        case "x_value":
+            console.log("select "+selectObject.value)
+            break;
+
+    }
+}
+function CF_creatDOM_FitDataType( fitFunc, parentID ){
+    // Creat select for parameter plot type
+    console.log( "CF_creatDOM_FitDataType" );
+    let parentDOM = document.getElementById( parentID );
+
+    let DOM_dataTypeSelector = document.createElement("select");
+    DOM_dataTypeSelector.id = fitFunc+"-data_type";
+    DOM_dataTypeSelector.setAttribute("class", "measureParaSelect plotTypeSelect");
+    parentDOM.appendChild(DOM_dataTypeSelector);
+    // Create plot selection
+    let dataType = ["Amplitude","Phase","IQ plane"];
+    let dataTypeValue = ["amplitude","phase","iqPlane"];
+    for( ipt=0; ipt<dataType.length; ipt++)
+    {
+        let DOM_dataType = document.createElement("option");
+        DOM_dataType.innerHTML = dataType[ipt];
+        DOM_dataType.setAttribute("value", dataTypeValue[ipt]);
+        DOM_dataTypeSelector.appendChild(DOM_dataType);
+    }
+}
+
+function CF_render_fitPara ( fitFunc )
+{
+
+    $.ajaxSettings.async = false;
+
+    let measureParameters = document.getElementById( "common_fitting-parameters" );
+
+    let className = fitFunc;
+    let parameters=[];
+    switch (fitFunc) {
+        case "NTypeResonator":
+            break;
+        case "ExpDecay":
+
+            break;
+        case "DampOscillation":
+            break;
+        default:
+          text = "No value found";
+    }
+    $.ajaxSettings.async = true;
+}
+function show_defaultFitPara(selectObject) {
+    let DOM_parameterSetting=selectObject.parentElement;
+    console.log("showAveInput trigger by "+selectObject.id)
+    let DOM_parameterAve = DOM_parameterSetting.getElementsByClassName("ave_value")[0];
+    DOM_parameterAve.style.display = "none";
+
+    let DOM_parameterValueSelect = DOM_parameterSetting.getElementsByClassName("select_value")[0];
+    DOM_parameterValueSelect.style.display = "none";
+
+    let DOM_parameterValueInput = DOM_parameterSetting.getElementsByClassName("input_value")[0];
+    DOM_parameterValueInput.style.display = "none";
+
+    let DOM_parameterFit = DOM_parameterSetting.getElementsByClassName("fitting_input")[0];
+    DOM_parameterFit.style.display = "none";
+
+    if (selectObject.value == "average")
+    {
+        console.log("select "+selectObject.value)
+        DOM_parameterAve.style.display = "block";
+    }
+    if (selectObject.value == "single_value" || selectObject.value == "y_value" || selectObject.value == "y_count")
+    {
+        console.log("select "+selectObject.value)
+        DOM_parameterValueInput.style.display = "block";
+        DOM_parameterValueSelect.style.display = "block";
+
+    }
+    if (selectObject.value == "x_value" )
+    {
+        console.log("select "+selectObject.value)
+        DOM_parameterFit.style.display = "block";
+
+    }
+    // document.getElementById(parameterSetting).style.display = "none";
+    // let DOM_parameterAve = document.createElement("input");
+    // DOM_parameterAve.style.display = "block";
+}
+
+function load_data(){
+    console.log( "Get data" );
+
+    $.ajaxSettings.async = false;
+    let analysisIndex = get_common_fitting_selectInfo("common_fitting");
+
+    //Send information to python
+    $.getJSON( '/benchmark/common_fitting/load',
+        {   quantificationType: JSON.stringify("common_fitting"), 
+            analysisIndex: JSON.stringify(analysisIndex), 
+        },
+        function (data) {
+        console.log( "load data" );
+    });
+    if ( analysisIndex.axisIndex.length == 2 ){
+        get_plot2D();
+    }else{
+        get_plot1D();
+    }    
+    $.ajaxSettings.async = true;
+}
+
+function get_plot2D(){
+    console.log( "Plot data" );
+
+    let plotID_2D = "common_fitting-plot2D-rawOverview";
+    let plotID_1D_ampPhase = "common_fitting-plot1D-ampPhase";
+    let plotID_1D_IQ = "common_fitting-plot1D-IQ";
+    $.ajaxSettings.async = false;
+    let htmlInfo=get_htmlInfo_python();
+
+
+    let plot2D_signalType = document.getElementById("common_fitting-plot2D-zSelector").value;
+    let plot1D_yAxisType = document.getElementById("common_fitting-plot2D-ySelector").value;
+
+    console.log( "plot2D_signalType" );
+
+    console.log( plot2D_signalType );
+    let z_data;
+    let y_axis=[];
+    let x_axis=[];
+
+    //Get 2D data
+    $.getJSON( '/benchmark/common_fitting/getJson_plot2D',
+    {   plot2D_signalType: JSON.stringify(plot2D_signalType), },
+        function (data) {
+        console.log( "Get 2D data" );
+        console.log( data );
+        z_data= data;
+
+    });
+    //Get x axis
+    $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
+    {   plot1D_axisType: JSON.stringify('x_value'), },
+        function (data) {
+        console.log( "Get x axis" );
+        x_axis = data;
+    });
+    //Get y axis
+    $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
+    {   plot1D_axisType: JSON.stringify(plot1D_yAxisType), },
+        function (data) {
+        console.log( "Get y axis" );
+        y_axis = data;
+    });
+    let plotData = {
+        x:x_axis,
+        y:y_axis,
+        z:z_data,
+    };
+    let axisKeys = {
+        x: "x",
+        y: "y",
+        z: "z",
+    };
+    console.log( "plotData" );
+    console.log( plotData );
+
+    plot2D(plotData, axisKeys, plotID_2D);
+    document.getElementById(plotID_2D).style.display = "block";
+    document.getElementById(plotID_1D_ampPhase).style.display = "none";
+    document.getElementById(plotID_1D_IQ).style.display = "none";
 
     $.ajaxSettings.async = true;
+}
+
+function get_plot1D(){
+    console.log( "Plot data" );
+
+    let plotID_2D = "common_fitting-plot2D-rawOverview";
+    let plotID_1D_ampPhase = "common_fitting-plot1D-ampPhase";
+    let plotID_1D_IQ = "common_fitting-plot1D-IQ";
+    $.ajaxSettings.async = false;
+    let htmlInfo=get_htmlInfo_python();
+
+    let selectType = document.getElementById("common_fitting-plot2D-ySelector").value;
+    let selectValue = document.getElementById("common_fitting-plot1D-y_value").value;
+
+    let x_axis=[];
+    let plotInfo = {
+        selectType: selectType,
+        selectValue: selectValue,
+    };
+    console.log( "plotInfo" );
+    console.log( plotInfo );
+    let plotData_IQ = {
+        raw: {},
+    };
+    let iqKeys = {
+        x: ["I"],
+        y: ["Q"],
+        yErr: [],
+    }
+    let plotData_AmpPhase = {
+        raw: {},
+    };
+    let ampPhaseKeys = {
+        x: [ ["x"], ["x"] ] ,
+        y: [ ["Amplitude"],["Phase"] ],
+        yErr: [ [],[] ],
+    }
+    //Get x axis
+    $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
+    {   plot1D_axisType: JSON.stringify('x_value'), },
+        function (data) {
+        console.log( "Get x axis" );
+        plotData_AmpPhase["raw"]["x"]= data;
+    });
+
+    //Get signal
+    $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
+    {   quantificationType: JSON.stringify("common_fitting"), 
+        plotInfo: JSON.stringify(plotInfo), },
+        function (data) {
+        console.log( "Get signal data" );
+        plotData_IQ["I"]= data["I"];
+        plotData_IQ["Q"]= data["Q"];
+
+        plotData_AmpPhase["raw"]["Amplitude"]= data["Amplitude"];
+        plotData_AmpPhase["raw"]["Phase"]= data["Phase"];
+    });
+    
+    console.log( "Plot data" );
+
+    console.log( plotData_AmpPhase );
+    console.log( plotData_IQ );
+
+    plot1D_2subplot_shareX(plotData_AmpPhase, ampPhaseKeys, plotID_1D_ampPhase);
+    document.getElementById(plotID_1D_ampPhase).style.display = "block";
+
+
+    plot1D(plotData_IQ, iqKeys, plotID_1D_IQ);
+    document.getElementById(plotID_1D_IQ).style.display = "block";
+    
+    document.getElementById(plotID_2D).style.display = "none";
+
+    $.ajaxSettings.async = true;
+}
+
+function fit_data(){
+
+    $.ajaxSettings.async = false;
+    let htmlInfo=get_htmlInfo_python();
+
+    let analysisIndex = get_common_fitting_selectInfo("common_fitting");
+    let fitType = document.getElementById("common_fitting-signalSelector").value;
+
+
+    let fitRange = document.getElementById("common_fitting-fitRange").value;
+    let parameterNames = document.getElementById("common_fitting-parameterNames").value;
+    let initValue = document.getElementById("common_fitting-parameterInitValues").value;
+
+    console.log( "Fit plot" );
+    console.log( analysisIndex );
+    let fitParameters = {
+        fit_range: fitRange,
+        parameter_names:parameterNames, 
+        initial_value: initValue,
+    }
+    
+    console.log(fitParameters);
+
+    // Plot fit parameters
+    $.getJSON( '/benchmark/common_fitting/getJson_fitParaPlot',{  
+        fitParameters: JSON.stringify(fitParameters),
+        analysisIndex: JSON.stringify(analysisIndex), 
+    }, function (data) {
+        console.log("fitResult");
+        console.log(data);
+        let fitResultxAxisKey = "Single_plot";
+
+        if (analysisIndex.axisIndex.length == 2) { fitResultxAxisKey = htmlInfo[analysisIndex["axisIndex"][1]]["name"] }
+        // if ( fitResultxAxisKey == "Power" ) { fitResultxAxisKey = "power_corr" }
+
+        console.log("xAxisKey: "+fitResultxAxisKey);
+
+        let axisKeys_fitResult = {
+            x: [fitResultxAxisKey],
+            y: parameter_names,
+            yErr: ["Qi_dia_corr_err", "Qi_no_corr_err", "absQc_err", "absQc_err", "Ql_err", "fr_err", "", "phi0_err","",""],
+        }
+        let plotdata = Object.assign({}, data["extendResults"], data["results"], data["errors"] );
+        plotdata[fitResultxAxisKey] = data[fitResultxAxisKey]
+        plot1D( plotdata, axisKeys_fitResult, "qFactor-plot-fittingParameters");
+
+    });
+
+
+    $.ajaxSettings.async = true;
+
 }
 
 $(function () {
@@ -144,17 +581,17 @@ $(function () {
         }, function (data) {
             console.log("STATUS: " + data.status + ", PORT: " + data.qumport);
             $.ajax({
-                url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/ANALYSIS/QEstimation[' + data.user_name + '].mat',
+                url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/ANALYSIS/common_fitting[' + data.user_name + '].mat',
                 method: 'GET',
                 xhrFields: {
                     responseType: 'blob'
                 },
                 success: function (data) {
-                    console.log("USER HAS DOWNLOADED QEstimation DATA from " + String(window.URL));
+                    console.log("USER HAS DOWNLOADED common_fitting DATA from " + String(window.URL));
                     var a = document.createElement('a');
                     var url = window.URL.createObjectURL(data);
                     a.href = url;
-                    a.download = 'QEstimation.mat';
+                    a.download = 'common_fitting.mat';
                     document.body.append(a);
                     a.click();
                     a.remove();
@@ -167,123 +604,6 @@ $(function () {
     });
 
 
-    // plot
-    $('#qFactor-plot-button').on('click', function () {
-        let plotID_2D = "qFactor-plot2D-rawOverview";
-        let plotID_1D_ampPhase = "qFactor-plot1D-ampPhase";
-        let plotID_1D_IQ = "qFactor-plot1D-IQ";
-        console.log( "plot!!" );
-        $.ajaxSettings.async = false;
-        let htmlInfo=get_htmlInfo_python();
-        let analysisIndex = get_selectInfo("qEstimation");
-        if ( analysisIndex.axisIndex.length == 2 ){
-            $.getJSON( '/benchmark/common_fitting/getJson_plot',
-            {   quantificationType: JSON.stringify("qEstimation"), 
-                analysisIndex: JSON.stringify(analysisIndex), 
-                plotType: JSON.stringify("2D_amp"), },
-                function (data) {
-                console.log( "2D plot" );
-                console.log( data );
-                let axisKeys = {
-                    x: htmlInfo[analysisIndex.axisIndex[0]]["name"],
-                    y: htmlInfo[analysisIndex.axisIndex[1]]["name"],
-                    z: "amplitude",
-                }
-                console.log( data );
-                
-                document.getElementById(plotID_2D).style.display = "block";
-                plot2D(data, axisKeys, plotID_2D);
-            });
-        }else{
-            document.getElementById(plotID_2D).style.display = "none";
-        }
-
-
-        $.getJSON( '/benchmark/common_fitting/getJson_plot',
-        {   quantificationType: JSON.stringify("qEstimation"), 
-            analysisIndex: JSON.stringify(analysisIndex),
-            plotType: JSON.stringify("1D_all"), },
-            function (data) {
-            console.log( "1D plot test Q" );
-            console.log( data );
-            let ampPhaseKeys = {
-                x: [ [htmlInfo[analysisIndex.axisIndex[0]]["name"]], [htmlInfo[analysisIndex.axisIndex[0]]["name"]] ] ,
-                y: [ ["Amplitude"],["Phase"] ],
-                yErr: [ [],[] ],
-            }
-            plot1D_2subplot_shareX(data, ampPhaseKeys, plotID_1D_ampPhase);
-            let iqKeys = {
-                x: [["I"]],
-                y: [["Q"]],
-                yErr: [[]],
-            }
-            plot1D_2y(data, iqKeys, plotID_1D_IQ);
-        });
-        $.ajaxSettings.async = true;
-
-    });
-    //Test fit data
-    $('#qFactor-fit-button').on('click', function () {
-
-        $.ajaxSettings.async = false;
-        let htmlInfo=get_htmlInfo_python();
-        let analysisIndex = get_selectInfo("qEstimation");
-
-        console.log( "Fit plot" );
-        console.log( analysisIndex );
-
-        let xAxisKey = htmlInfo[analysisIndex["axisIndex"][0]]["name"];
-        let fitRange = document.getElementById("qEstimation"+"-fitting_input-"+xAxisKey).value;
-
-        let baseline_correction = document.getElementById("qFactor-fit-baseline-correct").checked;
-        let baseline_smoothness = document.getElementById("qFactor-fit-baseline-smoothness").value;
-        let baseline_asymmetry = document.getElementById("qFactor-fit-baseline-asymmetry").value;
-        let gain = document.getElementById("qFactor-fit-gain").value;
-
-        let fitParameters = {
-            interval: {
-                input: fitRange,
-            },
-            baseline:{
-                correction: baseline_correction,
-                smoothness: baseline_smoothness,
-                asymmetry: baseline_asymmetry,
-            },
-            gain:gain,
-            
-        }
-        
-        console.log(fitParameters);
-
-        // Plot fit parameters
-        $.getJSON( '/benchmark/common_fitting/getJson_fitParaPlot',{  
-            fitParameters: JSON.stringify(fitParameters),
-            analysisIndex: JSON.stringify(analysisIndex), 
-        }, function (data) {
-            console.log("fitResult");
-            console.log(data);
-            let fitResultxAxisKey = "Single_plot";
-
-            if (analysisIndex.axisIndex.length == 2) { fitResultxAxisKey = htmlInfo[analysisIndex["axisIndex"][1]]["name"] }
-            // if ( fitResultxAxisKey == "Power" ) { fitResultxAxisKey = "power_corr" }
-
-            console.log("xAxisKey: "+fitResultxAxisKey);
-
-            let axisKeys_fitResult = {
-                x: [fitResultxAxisKey],
-                y: ["Qi_dia_corr","Qi_no_corr","absQc","Qc_dia_corr","Ql","fr","theta0","phi0","single_photon_limit", "photons_in_resonator"],
-                yErr: ["Qi_dia_corr_err", "Qi_no_corr_err", "absQc_err", "absQc_err", "Ql_err", "fr_err", "", "phi0_err","",""],
-            }
-            let plotdata = Object.assign({}, data["extendResults"], data["results"], data["errors"] );
-            plotdata[fitResultxAxisKey] = data[fitResultxAxisKey]
-            plot1D( plotdata, axisKeys_fitResult, "qFactor-plot-fittingParameters");
-
-        });
-
-
-        $.ajaxSettings.async = true;
-
-    });
 
 });
 
