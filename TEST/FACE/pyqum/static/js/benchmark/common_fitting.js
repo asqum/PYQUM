@@ -456,23 +456,21 @@ function get_plot1D(){
     let selectType = document.getElementById("common_fitting-plot2D-ySelector").value;
     let selectValue = document.getElementById("common_fitting-plot1D-y_value").value;
 
-    let x_axis=[];
     let plotInfo = {
         selectType: selectType,
         selectValue: selectValue,
     };
     console.log( "plotInfo" );
     console.log( plotInfo );
-    let plotData_IQ = {
-        raw: {},
-    };
+    let plotData_IQ = {};
     let iqKeys = {
-        x: ["I"],
-        y: ["Q"],
+        x: ["rawI","fittedI"],
+        y: ["rawQ","fittedQ"],
         yErr: [],
     }
     let plotData_AmpPhase = {
         raw: {},
+        fitted: {},
     };
     let ampPhaseKeys = {
         x: [ ["x"], ["x"] ] ,
@@ -485,21 +483,34 @@ function get_plot1D(){
         function (data) {
         console.log( "Get x axis" );
         plotData_AmpPhase["raw"]["x"]= data;
+        plotData_AmpPhase["fitted"]["x"]= data;
     });
 
-    //Get signal
+    //Get raw signal
     $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
-    {   quantificationType: JSON.stringify("common_fitting"), 
+    {   process: JSON.stringify("raw"), 
         plotInfo: JSON.stringify(plotInfo), },
         function (data) {
-        console.log( "Get signal data" );
-        plotData_IQ["I"]= data["I"];
-        plotData_IQ["Q"]= data["Q"];
+        console.log( "Get raw data" );
+        plotData_IQ["rawI"]= data["I"];
+        plotData_IQ["rawQ"]= data["Q"];
 
         plotData_AmpPhase["raw"]["Amplitude"]= data["Amplitude"];
         plotData_AmpPhase["raw"]["Phase"]= data["Phase"];
     });
-    
+
+    //Get fitted signal
+    $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
+    {   process: JSON.stringify("fitted"), 
+        plotInfo: JSON.stringify(plotInfo), },
+        function (data) {
+        console.log( "Get fitted data" );
+        plotData_IQ["fittedI"]= data["I"];
+        plotData_IQ["fittedQ"]= data["Q"];
+
+        plotData_AmpPhase["fitted"]["Amplitude"]= data["Amplitude"];
+        plotData_AmpPhase["fitted"]["Phase"]= data["Phase"];
+    });    
     console.log( "Plot data" );
 
     console.log( plotData_AmpPhase );
@@ -508,10 +519,8 @@ function get_plot1D(){
     plot1D_2subplot_shareX(plotData_AmpPhase, ampPhaseKeys, plotID_1D_ampPhase);
     document.getElementById(plotID_1D_ampPhase).style.display = "block";
 
-
     plot1D(plotData_IQ, iqKeys, plotID_1D_IQ);
     document.getElementById(plotID_1D_IQ).style.display = "block";
-    
     document.getElementById(plotID_2D).style.display = "none";
 
     $.ajaxSettings.async = true;
@@ -519,51 +528,68 @@ function get_plot1D(){
 
 function fit_data(){
 
-    $.ajaxSettings.async = false;
+    
     let htmlInfo=get_htmlInfo_python();
-
+    let plot1D_yAxisType = document.getElementById("common_fitting-plot2D-ySelector").value;
     let analysisIndex = get_common_fitting_selectInfo("common_fitting");
-    let fitType = document.getElementById("common_fitting-signalSelector").value;
 
+    let fitFunc = document.getElementById("common_fitting-functionSelector").value;
+    let signalType = document.getElementById("common_fitting-signalSelector").value;
 
-    let fitRange = document.getElementById("common_fitting-fitRange").value;
-    let parameterNames = document.getElementById("common_fitting-parameterNames").value;
-    let initValue = document.getElementById("common_fitting-parameterInitValues").value;
+    // let fitRange = document.getElementById("common_fitting-fitRange").value;
+    // let initValue = document.getElementById("common_fitting-parameterInitValues").value;
 
+    switch (fitFunc){
+        case "NTypeResonator":
+            break;
+        case "ExpDecay":
+            break;
+        case "DampOscillation":
+            break;
+    }
+    
     console.log( "Fit plot" );
     console.log( analysisIndex );
     let fitParameters = {
-        fit_range: fitRange,
-        parameter_names:parameterNames, 
-        initial_value: initValue,
+        function: fitFunc,
+        signal_type: signalType,
+        range: "0,100000",
     }
     
     console.log(fitParameters);
+    $.ajaxSettings.async = false;
+    let plotdata= {};
 
+    $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
+    {   plot1D_axisType: JSON.stringify(plot1D_yAxisType), },
+        function (data) {
+        console.log( "Get y axis" );
+        plotdata["x"]= data;
+    });
+
+    let axisKeys_fitResult= {};
     // Plot fit parameters
     $.getJSON( '/benchmark/common_fitting/getJson_fitParaPlot',{  
         fitParameters: JSON.stringify(fitParameters),
         analysisIndex: JSON.stringify(analysisIndex), 
     }, function (data) {
         console.log("fitResult");
-        console.log(data);
         let fitResultxAxisKey = "Single_plot";
 
         if (analysisIndex.axisIndex.length == 2) { fitResultxAxisKey = htmlInfo[analysisIndex["axisIndex"][1]]["name"] }
-        // if ( fitResultxAxisKey == "Power" ) { fitResultxAxisKey = "power_corr" }
 
         console.log("xAxisKey: "+fitResultxAxisKey);
-
-        let axisKeys_fitResult = {
-            x: [fitResultxAxisKey],
-            y: parameter_names,
-            yErr: ["Qi_dia_corr_err", "Qi_no_corr_err", "absQc_err", "absQc_err", "Ql_err", "fr_err", "", "phi0_err","",""],
-        }
-        let plotdata = Object.assign({}, data["extendResults"], data["results"], data["errors"] );
-        plotdata[fitResultxAxisKey] = data[fitResultxAxisKey]
-        plot1D( plotdata, axisKeys_fitResult, "qFactor-plot-fittingParameters");
+        axisKeys_fitResult["x"]= "x";
+        axisKeys_fitResult["y"]= data["parKey"]["val"];
+        axisKeys_fitResult["yErr"]= data["parKey"]["err"];
+        plotdata = Object.assign({},data["data"], plotdata);
 
     });
+    console.log("fitResult plot");
+    console.log(axisKeys_fitResult);
+
+    console.log(plotdata);
+    plot1D( plotdata, axisKeys_fitResult, "common_fitting-plot-fittingParameters");
 
 
     $.ajaxSettings.async = true;

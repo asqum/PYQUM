@@ -396,15 +396,22 @@ def ComFit_getJson_plotAxis():
 	myExtendMeasurement = benchmarkDict[session['user_name']]
 	myQuantification = QDict[session['user_name']] 
 
+	
 	yAxisKey = myExtendMeasurement.yAxisKey
 
 	axisType = json.loads(request.args.get('plot1D_axisType'))
 	print("Axis type: ", axisType)
 	def plot_yAxis_index():
-		plotData= arange( myExtendMeasurement.independentVars[yAxisKey].shape[0] )
+		if yAxisKey != None:
+			plotData= arange( myExtendMeasurement.independentVars[yAxisKey].shape[0] )
+		else:
+			plotData=[0]
 		return plotData
 	def plot_yAxis_value():
-		plotData= myExtendMeasurement.independentVars[yAxisKey]
+		if yAxisKey != None:
+			plotData= myExtendMeasurement.independentVars[yAxisKey]
+		else:
+			plotData=[0]
 		return plotData
 	def plot_xAxis():
 		plotData= myExtendMeasurement.rawData["x"]
@@ -451,13 +458,16 @@ def ComFit_getJson_plot1D():
 	myQuantification = QDict[session['user_name']] 
 
 	plotInfo = json.loads(request.args.get('plotInfo'))
+	process = json.loads(request.args.get('process'))
+
 	yAxisValInd = 0
-	if plotInfo["selectType"] == "y_index":
-		yAxisValInd = int(plotInfo["selectValue"])
-	else:
-		yAxisKey = myExtendMeasurement.yAxisKey
-		yAxis = myExtendMeasurement.independentVars[yAxisKey]
-		yAxisValInd = find_nearestInd(yAxis,float(plotInfo["selectValue"]))
+	yAxisKey = myExtendMeasurement.yAxisKey
+	if yAxisKey != None:
+		if plotInfo["selectType"] == "y_index":
+			yAxisValInd = int(plotInfo["selectValue"])
+		else:
+			yAxis = myExtendMeasurement.independentVars[yAxisKey]
+			yAxisValInd = find_nearestInd(yAxis,float(plotInfo["selectValue"]))
 
 	xAxisKey = myExtendMeasurement.xAxisKey
 
@@ -471,24 +481,40 @@ def ComFit_getJson_plot1D():
 		fitRangeBoolean = logical_and(myExtendMeasurement.rawData["x"]>=float(myQuantification.fitParameters["interval"]["start"]),myExtendMeasurement.rawData["x"]<=float(myQuantification.fitParameters["interval"]["end"]) )
 		return originalArray[fitRangeBoolean]
 
-	def plot_1D_all () :
+	def plot_1D_raw () :
 		# plot raw data
 		rawDataComplex = myExtendMeasurement.rawData["iqSignal"][yAxisValInd]
-		plotData = {}
-		plotRaw = {
+		plotData = {
 			"I": rawDataComplex.real,
 			"Q": rawDataComplex.imag,
 			"Amplitude": abs(rawDataComplex),
 			"Phase": angle(rawDataComplex),
 		}
-		return plotRaw
-		#plotData["raw"] = plotRaw
-		# plot fitted cerve
+		return plotData
+	def plot_1D_fit () :
+		# plot raw data
+		try:
+			fittedDataComplex = myQuantification.fitCurve["iqSignal"][yAxisValInd]
+			plotData = {
+				"I": fittedDataComplex.real,
+				"Q": fittedDataComplex.imag,
+				"Amplitude": abs(fittedDataComplex),
+				"Phase": angle(fittedDataComplex),
+			}
+		except:
+			plotData = {
+				"I": [],
+				"Q": [],
+				"Amplitude": [],
+				"Phase": [],
+			}
+		return plotData
 
 	plotFunction = {
-		'1D_all': plot_1D_all,
+		'raw': plot_1D_raw,
+		'fitted': plot_1D_fit,
 	}
-	return json.dumps(plotFunction['1D_all'](), cls=NumpyEncoder)
+	return json.dumps(plotFunction[process](), cls=NumpyEncoder)
 
 
 @bp.route('/common_fitting/getJson_fitParaPlot',methods=['POST','GET'])
@@ -498,32 +524,26 @@ def ComFit_getJson_fitParaPlot():
 	myQuantification = QDict[session['user_name']] 
 
 	fitParameters = json.loads(request.args.get('fitParameters'))
-	
-	if fitParameters == "None":
-		myQuantification.fitParameters = None
-	else:
-		myQuantification.fitParameters = fitParameters
+
+	myQuantification.fitParameters = fitParameters
 	myQuantification.do_analysis()
-	plotData = myQuantification.fitResult
-	plotData["dependentVar"] = {}
 
+	plotData={
+		"parKey":{},
+		"data":{},
+	}
+	errorKeys=[]
+	for par in myQuantification.fitResult.keys():
+		plotData["data"][par]= myQuantification.fitResult[par]["value"]
+		errorKey = par+"_err"
+		errorKeys.append(errorKey)
+		plotData["data"][errorKey]= myQuantification.fitResult[par]["error"]
 
-	analysisIndex = json.loads(request.args.get('analysisIndex'))
+	plotData["parKey"]["val"]=list(myQuantification.fitResult.keys())
+	plotData["parKey"]["err"]=errorKeys
 
-	dimension = len(analysisIndex["axisIndex"])
-
-	if dimension == 2:
-		axisInd = analysisIndex["axisIndex"][1]
-		yAxisKey = myExtendMeasurement.measurementObj.corder["C-Structure"][axisInd] 
-		plotData["dependentVar"][yAxisKey] = myExtendMeasurement.independentVars[myExtendMeasurement.yAxisKey]
-
-	else:
-		yAxisKey = None
-		plotData["Single_plot"] = array(1)
-		#plotData["Single_plot"] = myExtendMeasurement.fitResult["extendResults"]["power_corr"]
 	print("Fit plot results: ",json.dumps(plotData, cls=NumpyEncoder))
 	return json.dumps(plotData, cls=NumpyEncoder).replace('NaN','null')
-	#return json.dumps(plotData, cls=NumpyEncoder).replace('NaN','')
 
 
 @bp.route('/common_fitting/exportMat_fitPara',methods=['POST','GET'])

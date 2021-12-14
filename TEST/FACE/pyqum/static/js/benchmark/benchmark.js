@@ -477,6 +477,7 @@ function plot1D_2subplot_shareX ( data, axisKeys, plotId ){
 function plot1D ( data, axisKeys, plotId ){
     console.log("Plotting 1D");
     let traceNumber = axisKeys.y.length;
+    console.log(axisKeys);
 
     let tracies = new Array(traceNumber);
     let ix;

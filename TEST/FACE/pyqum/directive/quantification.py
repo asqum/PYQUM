@@ -9,7 +9,7 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag, concatenate, append
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag, concatenate, append, angle
 
 
 # Json to Javascrpt
@@ -734,7 +734,52 @@ class PopulationDistribution():
 
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
-	
+
+def expDecay_func ( x, p ):
+	# p: amp, tau, offset
+	return p[0]*exp(-x/p[1])+p[2]
+def fit_ExpDecay_func ( x, *p ):
+	if len(p)==5:
+		# p: tau, IAmp, Ioffset, QAmp, Qoffset
+		parsI = (p[1], p[0], p[2])
+		parsQ = (p[3], p[0], p[4])
+		return concatenate( (expDecay_func( x, parsI), expDecay_func( x, parsQ )) )
+	elif len(p)==3:
+		return expDecay_func( x, p )
+def get_ExpDecay_fitCurve ( x, p, signalType ):
+	if signalType=="indpendent":
+		# p: tau, IAmp, Ioffset, QAmp, Qoffset
+		parsI = (p[1], p[0], p[2])
+		parsQ = (p[3], p[0], p[4])
+		return expDecay_func( x, parsI )+1j*expDecay_func( x, parsQ )
+	elif signalType=="phase":
+		return exp(1j*expDecay_func( x, p ))
+	elif signalType=="amp":
+		return expDecay_func( x, p )
+
+def RabiOscillation ( x, p):
+	# p: amp, tau, omega, phi, offset
+	return p[0]*exp(-x/p[1])*cos(p[2]*x+p[3])**2+p[4]
+def fit_RabiOscillation_func ( x, *p):
+	if len(p)==7:
+		# p: 0:tau, 1:omega, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
+		parsI = (p[3], p[0], p[1], p[2], p[4])
+		parsQ = (p[5], p[0], p[1], p[2], p[6])
+		return concatenate( (RabiOscillation( x, parsI), RabiOscillation( x, parsQ)) )
+	elif len(p)==5:	
+		# p: 0:amp, 1:tau, 2:omega, 3:phi, 4:offset
+		return RabiOscillation(x,p)
+def get_RabiOscillation_fitCurve ( x, p, signalType ):
+	if signalType=="indpendent":
+		# p: 0:tau, 1:omega, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
+		parsI = (p[3], p[0], p[1], p[2], p[4])
+		parsQ = (p[5], p[0], p[1], p[2], p[6])
+		return RabiOscillation( x, parsI )+1j*RabiOscillation( x, parsQ )
+	elif signalType=="phase":
+		return exp(1j*RabiOscillation( x, p ))
+	elif signalType=="amp":
+		return RabiOscillation( x, p )
+
 class Common_fitting():
 
 	def __init__( self, quantificationObj, *args,**kwargs ):
@@ -743,55 +788,47 @@ class Common_fitting():
 
 		# Fit
 		self.fitCurve = {}
-		self.baseline = {}
-		self.correctedIQData = {}
 		self.fitResult = {}
 
 		self._fitParameters = None
-		self._init_fitResult()
+		#self._init_fitResult()
 		
 		self._init_fitCurve()
-		self._init_baselineCorrection()
 
 
 
-	def _init_fitResult( self, yAxisLen=0 ):
+	def _init_fitResult( self, yAxisLen=0, paraNames=[] ):
 		nanArray = empty([yAxisLen])
 		nanArray.fill( nan )
+		fitParas = self.fitParameters
 
-		resultKeys = ["Qi_dia_corr","Qi_no_corr","absQc","Qc_dia_corr","Ql","fr","theta0","phi0"]
-		errorKeys = ["phi0_err", "Ql_err", "absQc_err", "fr_err","chi_square","Qi_no_corr_err","Qi_dia_corr_err"]
-		extendResultKeys = ["power_corr", "single_photon_limit", "photons_in_resonator"]
-		results ={}
-		errors ={}
-		extendResults ={}
-		for rk in resultKeys:
-			results[rk] = nanArray.copy()
-		for ek in errorKeys:
-			errors[ek] = nanArray.copy()
-		for erk in extendResultKeys:
-			extendResults[erk] = nanArray.copy()
+		if paraNames==[]:
+			if fitParas["function"]=="ExpDecay":
+				if fitParas["signal_type"]=="indpendent":
+					paraNames= ["tau","ampI","offsetI","ampQ","offsetQ"]
+				else:
+					paraNames= ["amp","tau","offset"]
 
-		self.fitResult={
-			"results": results,
-			"errors": errors,
-			"extendResults": extendResults,
-		}
+			elif fitParas["function"]=="RabiOscillation":
+				if fitParas["signal_type"]=="indpendent":
+					paraNames= ["tau", "omega", "phi", "ampI", "offsetI", "ampQ", "offsetQ"]
+				else:
+					paraNames= ["amp","tau", "omega", "phi", "offset"]
+		self.paraNames= paraNames
+		self.fitResult ={}
+		for rk in paraNames:
+			self.fitResult[rk]={}
+			self.fitResult[rk]["value"] = nanArray.copy()
+			self.fitResult[rk]["error"] = nanArray.copy()
+
+
 
 	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
 		self.fitCurve = {
 			"x": empty([xAxisLen]),
 			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
 		}
-	def _init_baselineCorrection( self, yAxisLen=0, xAxisLen=0  ):
-		self.baseline = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
-		self.correctedIQData = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
+
 	@property
 	def fitParameters(self):
 		return self._fitParameters
@@ -800,41 +837,80 @@ class Common_fitting():
 	def fitParameters(self, fitParameters=None):
 		if fitParameters == None:
 			fitParameters={
-				"interval": {
-					"start": 5,
-					"end": 8
-				},
-				"baseline":{
-					"correction": False,
-					"smoothness": 1e9,
-					"asymmetry": 0.995,
-				},				
-				"gain":0,
+				"function": "ExpDecay",
+				"signal_type": "indpendent",
+				"range": 0,
 			}
 		else:
-			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
-			fitParameters["interval"]["start"] = fitRange[0]
-			fitParameters["interval"]["end"] = fitRange[1]
-			fitParameters["baseline"]["smoothness"] = float(fitParameters["baseline"]["smoothness"])
-			fitParameters["baseline"]["asymmetry"] = float(fitParameters["baseline"]["asymmetry"])
-			fitParameters["gain"] = float(fitParameters["gain"])
+			# convert string to float list
+			fitRange = [float(k) for k in fitParameters["range"].split(",")]
+			fitParameters["range"] = fitRange
+
 		self._fitParameters = fitParameters
 
 
+	def amp_signal (self, yInd):
+		data = abs(self.quantificationObj.rawData["iqSignal"][yInd])
+		return data
+	def phase_signal (self, yInd):
+		data = angle(self.quantificationObj.rawData["iqSignal"][yInd])
+		return data
+	def indpendent_signal (self, yInd):
+		dataRe = self.quantificationObj.rawData["iqSignal"][yInd].real
+		dataIm = self.quantificationObj.rawData["iqSignal"][yInd].imag
+		data = append(dataRe,dataIm)
+		return data
 
 
-
-	def do_analysis( self, freqUnit = "GHz" ):
+	def do_analysis( self ):
 
 		qObj = self.quantificationObj
 		xAxisLen = qObj.rawData["x"].shape[0]
+		fitParas = self.fitParameters
+		signalType = {
+			'amp': self.amp_signal,
+			'phase': self.phase_signal,
+			'indpendent': self.indpendent_signal,
+		}
 
 
-		freqUnitConvertor = 1 # Convert to Hz
-		if freqUnit == "GHz":
-			freqUnitConvertor = 1e9
-
-		fitRange = ( self.fitParameters["interval"]["start"]*freqUnitConvertor, self.fitParameters["interval"]["end"]*freqUnitConvertor )
+				
+		def fit_ExpDecay ( yInd ) :
+			guess = array([])
+			data=signalType[fitParas["signal_type"]](yInd)
+			# Guess initial value
+			if fitParas["signal_type"] == "indpendent":
+				dataRe = qObj.rawData["iqSignal"][yInd].real
+				dataIm = qObj.rawData["iqSignal"][yInd].imag
+				guess = array([4000,dataRe[0]-dataRe[-1],dataRe[-1],dataIm[0],dataIm[-1]])
+			else:
+				# p: tau, IAmp, Ioffset, QAmp, Qoffset
+				guess = array([data[0]-data[-1],4000,data[-1]])
+			popt,pcov= curve_fit(fit_ExpDecay_func,qObj.rawData["x"],data,p0=guess)
+			return popt,pcov
+		def fit_Rabi ( yInd ) :
+			guess = array([])
+			data=signalType[fitParas["signal_type"]](yInd)
+			# Guess initial value
+			# p: 0:tau, 1:omega, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
+			if fitParas["signal_type"] == "indpendent":
+				dataRe = qObj.rawData["iqSignal"][yInd].real
+				dataIm = qObj.rawData["iqSignal"][yInd].imag
+				guess = array([2000,0.005,0,dataRe[0]-mean(dataRe),mean(dataRe),dataIm[0]-mean(dataIm),mean(dataIm)])
+			else:
+				# p: 0:amp, 1:tau, 2:omega, 3:phi, 4:offset
+				guess = array([data[0]-mean(data),2000,0.005,0,mean(data)])
+			popt,pcov= curve_fit(fit_RabiOscillation_func,qObj.rawData["x"],data,p0=guess)
+			return popt,pcov
+		fit = {
+			'ExpDecay': fit_ExpDecay,
+			'RabiOscillation': fit_Rabi,
+		}
+		getFitCurve = {
+			'ExpDecay': get_ExpDecay_fitCurve,
+			'RabiOscillation': get_RabiOscillation_fitCurve,
+		}		
+		
 
 		# Get 1D or 2D data to self.rawData
 		if qObj.yAxisKey == None:
@@ -843,66 +919,30 @@ class Common_fitting():
 			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
 
 		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
-		self._init_baselineCorrection(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
 		self._init_fitResult(yAxisLen=yAxisLen)
 
+		
 
-
-		myResonator = notch_port()
-		# Creat notch port list
 		for i in range(yAxisLen):
-			# Fit baseline
-			if self.fitParameters["baseline"]["correction"] == True :
-				fittedBaseline = myResonator.fit_baseline_amp( qObj.rawData["iqSignal"][i], self.fitParameters["baseline"]["smoothness"], self.fitParameters["baseline"]["asymmetry"],niter=1)
-				correctedIQ = qObj.rawData["iqSignal"][i]/fittedBaseline
-				# Save Corrected IQ Data
-				self.correctedIQData["iqSignal"][i] = correctedIQ
-				# Save baseline
-				self.baseline["iqSignal"][i] = fittedBaseline
-			else: 
-				self._init_baselineCorrection()
-				correctedIQ = qObj.rawData["iqSignal"][i]
-			# Add data
-			myResonator.add_data(qObj.rawData["x"]*freqUnitConvertor, correctedIQ)
-			# Fit
+			
 			try:
-				myResonator.autofit(fcrop=fitRange)
+			# 	# Fit
+				popt,pcov= fit[fitParas["function"]](i)
 				fitSuccess = True
 				print("Good fitting")
 
 			except:
 				fitSuccess = False
 				print("Bad fitting")
-
-
 			if fitSuccess:
+				self.fitCurve["iqSignal"][i] = getFitCurve[fitParas["function"]]( qObj.rawData["x"], popt, fitParas["signal_type"])
+				print(self.fitCurve["iqSignal"][i] )
+				perr = sqrt(diag(pcov))
 
-				for k in self.fitResult["results"].keys():
-					self.fitResult["results"][k][i] = myResonator.fitresults[k]
+				for ki, k in enumerate(self.paraNames):
+					if perr[ki] < abs(popt[ki])*10 :
+						self.fitResult[k]["value"][i] = popt[ki]
+						self.fitResult[k]["error"][i] = perr[ki]
 
-				for k in self.fitResult["errors"].keys():
-					self.fitResult["errors"][k][i] = myResonator.fitresults[k]
-
-
-				self.fitResult["extendResults"]["single_photon_limit"][i] = myResonator.get_single_photon_limit(unit='dBm',diacorr=True)
-
-				if qObj.yAxisKey == self.powerKey:
-					powerIndex = i
-				else:
-					powerAxisIndex = qObj.measurementObj.corder["C-Structure"].index(self.powerKey)
-					powerIndex = qObj.varsInd[powerAxisIndex]
-
-				self.fitResult["extendResults"]["power_corr"][i] = qObj.independentVars["Power"][powerIndex]+self.fitParameters["gain"]
-				self.fitResult["extendResults"]["photons_in_resonator"][i] = myResonator.get_photons_in_resonator(self.fitResult["extendResults"]["power_corr"][i],unit='dBm',diacorr=True)
-				
-				# Set x-axis (frequency) of fit curve 
-				
-				self.fitCurve["x"] = qObj.rawData["x"]
-				self.fitCurve["iqSignal"][i] = myResonator.z_data_sim
-				# Set x-axis (frequency) of baseline and corrected data 
-				if self.fitParameters["baseline"]["correction"] == True :
-					self.baseline["x"] = qObj.rawData["x"]
-					self.correctedIQData["x"] = qObj.rawData["x"]
-				else: 
-					self._init_baselineCorrection()
-
+		# Set x-axis (frequency) of fit curve 
+		self.fitCurve["x"] = qObj.rawData["x"]

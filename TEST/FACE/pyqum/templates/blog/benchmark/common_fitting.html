@@ -34,30 +34,27 @@
             <div class="allFitPara" id="common_fitting-allParamater">
                 <label>Fitting function:</label>
                 <select id="common_fitting-functionSelector">
-                    <option value="NTypeResonator">Notch Type Resonator</option>
                     <option value="ExpDecay">Exponential Decay</option>
-                    <option value="DampOscillation">Damping Oscillation</option>
+                    <option value="RabiOscillation">Rabi Oscillation</option>
                 </select>
 
                 <label>Signal type:</label>
                 <select id="common_fitting-signalSelector">
                     <option value="amp">Amplitude</option>
                     <option value="phase">Phase</option>
-                    <option value="iqPlane">IQ plane</option>
+                    <option value="indpendent">IQ plane</option>
                 </select>
 
                 <div class="fitPara" id="common_fitting-parameters">
 
                 </div> 
-                <label>x range:</label>
-                <input type="text" id="common_fitting-fitRange">
+                <!-- <label>x range:</label>
+                <input type="text" id="common_fitting-fitRange"> -->
 
-                <label>Name of parameters:</label>
-                <input type="text" id="common_fitting-parameterNames">
-                </select>
-                <label>Initial values:</label>
-                <input type="text" id="common_fitting-parameterInitValues">
-                </select>
+                <!-- <label>Name of parameters:</label>
+                <input type="text" id="common_fitting-parameterNames"> -->
+                <!-- <label>Initial values:</label>
+                <input type="text" id="common_fitting-parameterInitValues"> -->
                 <button id="common_fitting-button-fit" type="submit">Fit</button>
                 <button id="common_fitting-button-download" type="submit">Download</button>
 
