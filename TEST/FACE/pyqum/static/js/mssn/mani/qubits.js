@@ -1,4 +1,4 @@
-// QUBITS: 
+// QUBITS: (Updated on 2021-Nov-5)
 $(document).ready(function(){
     $('div.mani.qubits.confirm').hide();
     $('button.mani#qubits-savecsv').hide();

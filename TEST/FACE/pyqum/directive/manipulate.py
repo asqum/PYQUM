@@ -33,7 +33,7 @@ __status__ = "development"
 @settings(2) # data-density
 def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}):
     '''
-    Time-domain Square-wave measurement:\n
+    Time-domain Pulse measurement:\n
     SCORES (SCripted ORchestration of Entanglement & Superposition) is a scripted pulse instruction language for running Quantum Algorithm.\n
     perimeter.keys() = ['XY-LO-Power', 'RO-LO-Power', 'SCORE-NS', 'SCORE-JSON', 'R-JSON', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE']\n
     C-Structure = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'] + [...R-parameter(s)...]\n
@@ -58,10 +58,10 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
-    instr['DC']= inst_order(queue, 'DC')[0]
+    instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument allowed (via Global flux-coil)
     instr['SG']= inst_order(queue, 'SG')
     instr['DAC']= inst_order(queue, 'DAC')
-    instr['ADC']= inst_order(queue, 'ADC')[0]
+    instr['ADC']= inst_order(queue, 'ADC')[0] # only 1 instrument allowed (No multiplexing yet)
 
     # Packing instrument-specific perimeter from database:
     perimeter.update(dict(TIME_RESOLUTION_NS=loads(g.machspecs[instr['ADC']])['TIME_RESOLUTION_NS']))
@@ -339,12 +339,12 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
 # endregion
 
 
-# region: 2. Multiple-Qubits Control:
+# region: 2. Multiple-Qubits Control: (Updated on 2021-Nov-5)
 # **********************************************************************************************************************************************************
 @settings(2) # data-density
 def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}):
     '''
-    Time-domain Square-wave measurement:\n
+    Time-domain Pulse measurement:\n
     SCORES (SCripted ORchestration of Entanglement & Superposition) is a scripted pulse instruction language for running Quantum Algorithm.\n
     perimeter.keys() = ['XY-LO-Power', 'RO-LO-Power', 'SCORE-NS', 'SCORE-JSON', 'R-JSON', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE']\n
     C-Structure = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'] + [...R-parameter(s)...]\n
@@ -369,10 +369,10 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
-    instr['DC']= inst_order(queue, 'DC')[0]
+    instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument allowed (via Global flux-coil)
     instr['SG']= inst_order(queue, 'SG')
     instr['DAC']= inst_order(queue, 'DAC')
-    instr['ADC']= inst_order(queue, 'ADC')[0]
+    instr['ADC']= inst_order(queue, 'ADC')[0] # PENDING: NEXT: multiplexing
 
     # Packing instrument-specific perimeter from database:
     perimeter.update(dict(TIME_RESOLUTION_NS=loads(g.machspecs[instr['ADC']])['TIME_RESOLUTION_NS']))
@@ -517,7 +517,7 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     measure_loop = range(resumepoint//buffersize,datasize//buffersize) # saving chunck by chunck improves speed a lot!
     while True:
         for i in measure_loop:
-            print(Back.BLUE + Fore.WHITE + 'measure single-qubit %s/%s' %(i+1,datasize//buffersize))
+            print(Back.BLUE + Fore.WHITE + 'measure multiple-qubits %s/%s' %(i+1,datasize//buffersize))
             # determining the index-locations for each parameters, i.e. the address at any instance
             caddress = cdatasearch(i, cstructure)
             print(Fore.BLACK + Back.WHITE + "i: %s, cstructure: %s, caddress: %s" %(i,cstructure,caddress))

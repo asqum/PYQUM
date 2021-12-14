@@ -3,6 +3,7 @@
 <head>
     <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Updated on 2021-Nov-5 -->
     <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/mani/qubits.js') }}"></script>
 </head>
 
@@ -114,7 +115,7 @@
                 <option value='T1'>T1 DELAY</option>
                 <option value='T2'>T2 DELAY</option>
                 <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
-                <option value='QJUMPS'>QUANTUM JUMPS</option>
+                <option value='GENERAL'>GENERALIZED</option>
             </select></div>
             <div class="col-10" id='left'><input class="qubits perimeter-settings save" type="submit" value="SAVE"/></div>
             
@@ -193,7 +194,7 @@
                             <option value='T1'>T1 DELAY</option>
                             <option value='T2'>T2 DELAY</option>
                             <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
-                            <option value='QJUMPS'>QUANTUM JUMPS</option>
+                            <option value='GENERAL'>GENERALIZED</option>
                         </select></div>
                     </div>
                 </div>
@@ -228,8 +229,8 @@
                     <!-- 2. Instrument Settings -->
                     <div class="row perimeter">
                         <div class="col-16" id='left'><label>Bias Mode</label></div>
-                        <div class="col-16" id='left'><label>XY-LO-Power</label></div>
-                        <div class="col-16" id='left'><label>RO-LO-Power</label></div>
+                        <!-- <div class="col-16" id='left'><label>XY-LO-Power</label></div>
+                        <div class="col-16" id='left'><label>RO-LO-Power</label></div> -->
                         <div class="col-16" id='left'><label>Record-Sum</label></div>
                         <div class="col-16" id='left'><label>Record-Time(ns)</label></div>
                         <div class="col-16" id='left'><label>Readout TYPE</label></div>
@@ -239,8 +240,8 @@
                             <option value='0'>Voltage</option>
                             <option value='1' selected>Current</option>
                         </select></div>
-                        <div class="col-16" id='left'><input class='mani config qubits' id="XY-LO-Power" type="number" value="16" step=1 /></div>
-                        <div class="col-16" id='left'><input class='mani config qubits' id="RO-LO-Power" type="number" value="18" step=1 /></div>
+                        <!-- <div class="col-16" id='left'><input class='mani config qubits' id="XY-LO-Power" type="number" value="16" step=1 /></div>
+                        <div class="col-16" id='left'><input class='mani config qubits' id="RO-LO-Power" type="number" value="18" step=1 /></div> -->
                         <div class="col-16" id='left'><input class='mani config qubits' id="RECORD-SUM" type="number" value="1024" step=128 min=1024 max=102400/></div>
                         <div class="col-16" id='left'><input class='mani config qubits' id="RECORD_TIME_NS" type="number" value="1280" step=128 min=1280 max=128000/></div>
                         <div class="col-16" id='left'><select class='mani config qubits' id="READOUTYPE" type="text">
@@ -249,14 +250,21 @@
                         </select></div>
                     </div>
 
-                    <!-- 3. Pulse Settings (PENDING: ADJUSTABLE CHANNEL-MATRIX) -->
+                    <!-- 3.1. Flexible Pulse Settings -->
                     <div class="row perimeter">
                         <div class="col-16" id='left'><select class="channel-matrix zoomSelect"></select></div>
                         <div class="col-2" id='left'><button class="plusButton">+</button></div>
                         <div class="col-2" id='left'><button class="minusButton">-</button></div>
                     </div>
                     <div class="channel-matrix"></div>
+
+                    <!-- 3.2. LO-Drives -->
+                    <div class="row perimeter"><div class="col-97" id='left'><label>LO-Drives</label></div></div>
+                    <div class="row perimeter">
+                        <div class="col-97" id='left'><input class='mani config qubits' id='LO-Drives' type="text" value='{}' style="color:indigo;" /></div>
+                    </div>
                     
+                    <!-- 3.3. R-JSON (Flexible C-order / Rhythm / Ritual) -->
                     <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
                     <div class="row perimeter">
                         <div class="col-97" id='left'>
@@ -273,14 +281,14 @@
 
                         <div class="row">
                             <div class="col-16" id='left'><label>Flux-Bias (V/A)</label></div>
-                            <div class="col-16" id='left'><label>XY-Frequency (GHz)</label></div>
-                            <div class="col-16" id='left'><label>RO-Frequency (GHz)</label></div>
+                            <!-- <div class="col-16" id='left'><label>XY-Frequency (GHz)</label></div>
+                            <div class="col-16" id='left'><label>RO-Frequency (GHz)</label></div> -->
                             
                         </div>
                         <div class="row"> <!-- NOTE: The id should be aligned with the corresponding CORDER's key! --> 
                             <div class="col-16" id='left'><input class='mani qubits' id="Flux-Bias" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='mani qubits' id="XY-LO-Frequency" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='mani qubits' id="RO-LO-Frequency" type="text" value="6 to 7 * 3000"/></div>
+                            <!-- <div class="col-16" id='left'><input class='mani qubits' id="XY-LO-Frequency" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='mani qubits' id="RO-LO-Frequency" type="text" value="6 to 7 * 3000"/></div> -->
                             
                         </div>
 

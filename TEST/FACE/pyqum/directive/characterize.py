@@ -36,7 +36,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     queue = get_status("MSSN")[session['user_name']]['queue']
 
     # Queue-specific instrument-package:
-    instr['DC']= inst_order(queue, 'DC')[0]
+    instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument/card allowed (via Global flux-coil or multi-channel card: CH-3,4)
     instr['NA']= inst_order(queue, 'NA')[0]
 
     # pushing pre-measurement parameters to settings:
@@ -164,7 +164,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     queue = get_status("MSSN")[session['user_name']]['queue']
 
     # Queue-specific instrument-package:
-    instr['DC']= inst_order(queue, 'DC')[0]
+    instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument/card allowed (via Global flux-coil or multi-channel card: CH-3,4)
     instr['SG']= inst_order(queue, 'SG')[0]
     instr['NA']= inst_order(queue, 'NA')[0]
 
@@ -328,6 +328,11 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             NA.autoscal(nabench)
             # NA.selectrace(nabench, action=['Set', 'para 1 calc 1'])
             data = NA.sdata(nabench)
+
+            # NOTE: Debug anomaly in MXA output data:
+            # from pyqum.instrument.analyzer import curve
+            # curve(list(range(len(data[0::2]))), data[0::2], '', 'repeat#', 'power (dBm)')
+
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
             jobsinqueue(queue)
             if JOBID in g.jobidlist:

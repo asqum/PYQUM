@@ -31,9 +31,17 @@ Academia Sinica
   * The repeating measurement could only be performed once and should not be resumed. (Scrapped to accomodate Job queueing)
 
 ## Scripting:
-* 1. Parameter Settings
-  *
-  
-* 2. Pulse Sequencing:
+* 1. Parameter & Perimeter:
+  * Wiring
+
+
+  * Waveform / Rhythm:
+  <start> to <stop> * <steps> <' r ' or '^'> <repeat>
 
   
+* 2. Pulse Sequencing:
+  * SCORE & R-JSON
+  ns=<period>,mhz=<'i' or 'q'>/<IF-rotation>/<mixer-module>; 
+  <shape-1>/<parameter-i>/.../<parameter-f>,<pulse-width>,<pulse-height>;
+  ...
+  <shape-n>/<parameter-i>/.../<parameter-f>,<pulse-width>,<pulse-height>;
