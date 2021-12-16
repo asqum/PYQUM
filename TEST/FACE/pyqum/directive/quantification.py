@@ -9,8 +9,8 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag, concatenate, append, angle
-
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag, concatenate, append, angle, argmax
+from numpy.fft import fft, fftfreq
 
 # Json to Javascrpt
 import json
@@ -759,7 +759,7 @@ def get_ExpDecay_fitCurve ( x, p, signalType ):
 
 def RabiOscillation ( x, p):
 	# p: amp, tau, omega, phi, offset
-	return p[0]*exp(-x/p[1])*cos(p[2]*x+p[3])**2+p[4]
+	return p[0]*exp(-x/p[1])*cos(p[2]*x+p[3])+p[4]
 def fit_RabiOscillation_func ( x, *p):
 	if len(p)==7:
 		# p: 0:tau, 1:omega, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
@@ -898,15 +898,23 @@ class Common_fitting():
 
 			data=signalType[fitParas["signal_type"]](yInd, mask)
 			# Guess initial value
+			timeStep= qObj.rawData["x"][mask][1]-qObj.rawData["x"][mask][0]
+			freqAxis= fftfreq(qObj.rawData["iqSignal"][yInd].shape[-1],timeStep)
+			freqInd=1
 			# p: 0:tau, 1:omega, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
 			if fitParas["signal_type"] == "indpendent":
 				dataRe = qObj.rawData["iqSignal"][yInd].real
 				dataIm = qObj.rawData["iqSignal"][yInd].imag
-				guess = array([2000,0.005,0,dataRe[0]-mean(dataRe),mean(dataRe),dataIm[0]-mean(dataIm),mean(dataIm)])
+				if amax(fft(dataRe-mean(dataRe))) > amax(fft(dataIm-mean(dataIm))):
+					freqInd = argmax( fft(dataRe) )
+				else:
+					freqInd = argmax( fft(dataIm) )
+
+				guess = array([2000,abs(freqAxis[freqInd]),0,dataRe[0]-mean(dataRe),mean(dataRe),dataIm[0]-mean(dataIm),mean(dataIm)])
 			else:
 				# p: 0:amp, 1:tau, 2:omega, 3:phi, 4:offset
-				guess = array([data[0]-mean(data),2000,0.005,0,mean(data)])
-
+				freqInd = argmax(fft(data-mean(data)))
+				guess = array([data[0]-mean(data),2000,abs(freqAxis[freqInd]),0,mean(data)])
 			popt,pcov= curve_fit(fit_RabiOscillation_func,qObj.rawData["x"][mask],data,p0=guess)
 			return popt,pcov
 		fit = {
@@ -935,18 +943,17 @@ class Common_fitting():
 
 		for i in range(yAxisLen):
 			
-			#try:
+			try:
 			# 	# Fit
-			popt,pcov= fit[fitParas["function"]](i, fitRangeBoolean)
-			fitSuccess = True
+				popt,pcov= fit[fitParas["function"]](i, fitRangeBoolean)
+				fitSuccess = True
 			#print("Good fitting")
 
-			# except:
-			# 	fitSuccess = False
-			# 	print("Bad fitting")
+			except:
+				fitSuccess = False
+				print("Bad fitting")
 			if fitSuccess:
 				self.fitCurve["iqSignal"][i] = getFitCurve[fitParas["function"]]( qObj.rawData["x"], popt, fitParas["signal_type"])
-				print(self.fitCurve["iqSignal"][i] )
 				perr = sqrt(diag(pcov))
 
 				for ki, k in enumerate(self.paraNames):

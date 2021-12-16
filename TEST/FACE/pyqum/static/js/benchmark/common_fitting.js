@@ -484,7 +484,7 @@ function get_plot1D(){
         console.log( "Get x axis" );
         plotData_AmpPhase["raw"]["x"]= data;
     });
-    //Get x axis
+    //Get fitted x axis
     $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value_fit'), },
         function (data) {
@@ -579,24 +579,25 @@ function fit_data(){
         analysisIndex: JSON.stringify(analysisIndex), 
     }, function (data) {
         console.log("fitResult");
+        console.log(data);
         let fitResultxAxisKey = "Single_plot";
 
-        if (analysisIndex.axisIndex.length == 2) { fitResultxAxisKey = htmlInfo[analysisIndex["axisIndex"][1]]["name"] }
+        // if (analysisIndex.axisIndex.length == 2) { fitResultxAxisKey = htmlInfo[analysisIndex["axisIndex"][1]]["name"] }
 
-        console.log("xAxisKey: "+fitResultxAxisKey);
+        // console.log("xAxisKey: "+fitResultxAxisKey);
         axisKeys_fitResult["x"]= "x";
         axisKeys_fitResult["y"]= data["parKey"]["val"];
         axisKeys_fitResult["yErr"]= data["parKey"]["err"];
         plotdata = Object.assign({},data["data"], plotdata);
 
     });
+
     console.log("fitResult plot");
     console.log(axisKeys_fitResult);
 
     console.log(plotdata);
     plot1D( plotdata, axisKeys_fitResult, "common_fitting-plot-fittingParameters");
-
-
+    get_plot1D();
     $.ajaxSettings.async = true;
 
 }

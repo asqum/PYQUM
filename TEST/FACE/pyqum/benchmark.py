@@ -551,7 +551,7 @@ def ComFit_getJson_fitParaPlot():
 	plotData["parKey"]["val"]=list(myQuantification.fitResult.keys())
 	plotData["parKey"]["err"]=errorKeys
 
-	print("Fit plot results: ",json.dumps(plotData, cls=NumpyEncoder))
+	# print("Fit plot results: ",json.dumps(plotData, cls=NumpyEncoder))
 	return json.dumps(plotData, cls=NumpyEncoder).replace('NaN','null')
 
 
