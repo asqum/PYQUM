@@ -842,22 +842,26 @@ class Common_fitting():
 				"range": 0,
 			}
 		else:
+			try:
 			# convert string to float list
-			fitRange = [float(k) for k in fitParameters["range"].split(",")]
-			fitParameters["range"] = fitRange
-
+				fitRange = [float(k) for k in fitParameters["range"].split(",")]
+				fitParameters["range"] = fitRange
+			except:
+				xData= self.quantificationObj.rawData["x"]
+				fitParameters["range"] =[amin(xData),amax(xData)]
+				
 		self._fitParameters = fitParameters
 
 
-	def amp_signal (self, yInd):
-		data = abs(self.quantificationObj.rawData["iqSignal"][yInd])
+	def amp_signal (self, yInd, mask):
+		data = abs(self.quantificationObj.rawData["iqSignal"][yInd])[mask]
 		return data
-	def phase_signal (self, yInd):
-		data = angle(self.quantificationObj.rawData["iqSignal"][yInd])
+	def phase_signal (self, yInd, mask):
+		data = angle(self.quantificationObj.rawData["iqSignal"][yInd])[mask]
 		return data
-	def indpendent_signal (self, yInd):
-		dataRe = self.quantificationObj.rawData["iqSignal"][yInd].real
-		dataIm = self.quantificationObj.rawData["iqSignal"][yInd].imag
+	def indpendent_signal (self, yInd, mask):
+		dataRe = self.quantificationObj.rawData["iqSignal"][yInd].real[mask]
+		dataIm = self.quantificationObj.rawData["iqSignal"][yInd].imag[mask]
 		data = append(dataRe,dataIm)
 		return data
 
@@ -875,9 +879,9 @@ class Common_fitting():
 
 
 				
-		def fit_ExpDecay ( yInd ) :
+		def fit_ExpDecay ( yInd, mask ) :
 			guess = array([])
-			data=signalType[fitParas["signal_type"]](yInd)
+			data=signalType[fitParas["signal_type"]](yInd, mask)
 			# Guess initial value
 			if fitParas["signal_type"] == "indpendent":
 				dataRe = qObj.rawData["iqSignal"][yInd].real
@@ -886,11 +890,13 @@ class Common_fitting():
 			else:
 				# p: tau, IAmp, Ioffset, QAmp, Qoffset
 				guess = array([data[0]-data[-1],4000,data[-1]])
-			popt,pcov= curve_fit(fit_ExpDecay_func,qObj.rawData["x"],data,p0=guess)
+
+			popt,pcov= curve_fit(fit_ExpDecay_func,qObj.rawData["x"][mask],data,p0=guess)
 			return popt,pcov
-		def fit_Rabi ( yInd ) :
+		def fit_Rabi ( yInd, mask ) :
 			guess = array([])
-			data=signalType[fitParas["signal_type"]](yInd)
+
+			data=signalType[fitParas["signal_type"]](yInd, mask)
 			# Guess initial value
 			# p: 0:tau, 1:omega, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
 			if fitParas["signal_type"] == "indpendent":
@@ -900,7 +906,8 @@ class Common_fitting():
 			else:
 				# p: 0:amp, 1:tau, 2:omega, 3:phi, 4:offset
 				guess = array([data[0]-mean(data),2000,0.005,0,mean(data)])
-			popt,pcov= curve_fit(fit_RabiOscillation_func,qObj.rawData["x"],data,p0=guess)
+
+			popt,pcov= curve_fit(fit_RabiOscillation_func,qObj.rawData["x"][mask],data,p0=guess)
 			return popt,pcov
 		fit = {
 			'ExpDecay': fit_ExpDecay,
@@ -910,30 +917,33 @@ class Common_fitting():
 			'ExpDecay': get_ExpDecay_fitCurve,
 			'RabiOscillation': get_RabiOscillation_fitCurve,
 		}		
-		
+
+
 
 		# Get 1D or 2D data to self.rawData
 		if qObj.yAxisKey == None:
 			yAxisLen = 1
 		else:
 			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
-
+		
 		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
 		self._init_fitResult(yAxisLen=yAxisLen)
 
-		
+		# Set x-axis (frequency) of fit curve 
+		fitRangeBoolean = logical_and(qObj.rawData["x"]>=fitParas["range"][0],qObj.rawData["x"]<=fitParas["range"][1]) 
+		self.fitCurve["x"] = qObj.rawData["x"]
 
 		for i in range(yAxisLen):
 			
-			try:
+			#try:
 			# 	# Fit
-				popt,pcov= fit[fitParas["function"]](i)
-				fitSuccess = True
-				print("Good fitting")
+			popt,pcov= fit[fitParas["function"]](i, fitRangeBoolean)
+			fitSuccess = True
+			#print("Good fitting")
 
-			except:
-				fitSuccess = False
-				print("Bad fitting")
+			# except:
+			# 	fitSuccess = False
+			# 	print("Bad fitting")
 			if fitSuccess:
 				self.fitCurve["iqSignal"][i] = getFitCurve[fitParas["function"]]( qObj.rawData["x"], popt, fitParas["signal_type"])
 				print(self.fitCurve["iqSignal"][i] )
@@ -944,5 +954,4 @@ class Common_fitting():
 						self.fitResult[k]["value"][i] = popt[ki]
 						self.fitResult[k]["error"][i] = perr[ki]
 
-		# Set x-axis (frequency) of fit curve 
-		self.fitCurve["x"] = qObj.rawData["x"]
+

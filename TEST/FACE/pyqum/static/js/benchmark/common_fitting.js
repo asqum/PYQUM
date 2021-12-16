@@ -483,9 +483,14 @@ function get_plot1D(){
         function (data) {
         console.log( "Get x axis" );
         plotData_AmpPhase["raw"]["x"]= data;
+    });
+    //Get x axis
+    $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
+    {   plot1D_axisType: JSON.stringify('x_value_fit'), },
+        function (data) {
+        console.log( "Get x axis" );
         plotData_AmpPhase["fitted"]["x"]= data;
     });
-
     //Get raw signal
     $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
     {   process: JSON.stringify("raw"), 
@@ -536,7 +541,7 @@ function fit_data(){
     let fitFunc = document.getElementById("common_fitting-functionSelector").value;
     let signalType = document.getElementById("common_fitting-signalSelector").value;
 
-    // let fitRange = document.getElementById("common_fitting-fitRange").value;
+    let fitRange = document.getElementById("common_fitting-fitRange").value;
     // let initValue = document.getElementById("common_fitting-parameterInitValues").value;
 
     switch (fitFunc){
@@ -553,7 +558,7 @@ function fit_data(){
     let fitParameters = {
         function: fitFunc,
         signal_type: signalType,
-        range: "0,100000",
+        range: fitRange,
     }
     
     console.log(fitParameters);

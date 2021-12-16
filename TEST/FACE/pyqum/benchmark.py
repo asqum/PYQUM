@@ -390,6 +390,9 @@ def ComFit_load():
 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
 	return json.dumps("Data reshaped", cls=NumpyEncoder)
 
+def get_maskArray( refArray, maskRange ) :
+		fitRangeBoolean = logical_and(refArray>=maskRange[0],refArray<=maskRange[1] )
+		return fitRangeBoolean
 
 @bp.route('/common_fitting/getJson_plotAxis',methods=['POST','GET'])
 def ComFit_getJson_plotAxis():
@@ -407,20 +410,28 @@ def ComFit_getJson_plotAxis():
 		else:
 			plotData=[0]
 		return plotData
+
 	def plot_yAxis_value():
 		if yAxisKey != None:
 			plotData= myExtendMeasurement.independentVars[yAxisKey]
 		else:
 			plotData=[0]
 		return plotData
+
 	def plot_xAxis():
 		plotData= myExtendMeasurement.rawData["x"]
+		return plotData
+
+	def plot_xAxis_fit():
+		maskArray= get_maskArray(myExtendMeasurement.rawData["x"],myQuantification.fitParameters["range"])
+		plotData= myExtendMeasurement.rawData["x"][maskArray]
 		return plotData
 
 	plotFunction = {
 		'y_index': plot_yAxis_index,
 		'y_value': plot_yAxis_value,
 		'x_value': plot_xAxis,
+		'x_value_fit': plot_xAxis_fit,
 	}
 	return json.dumps(plotFunction[axisType](), cls=NumpyEncoder)
 
@@ -477,9 +488,7 @@ def ComFit_getJson_plot1D():
 	plotData = {}
 
 	#print(plotData)
-	def plot_1D_show( originalArray ) :
-		fitRangeBoolean = logical_and(myExtendMeasurement.rawData["x"]>=float(myQuantification.fitParameters["interval"]["start"]),myExtendMeasurement.rawData["x"]<=float(myQuantification.fitParameters["interval"]["end"]) )
-		return originalArray[fitRangeBoolean]
+
 
 	def plot_1D_raw () :
 		# plot raw data
