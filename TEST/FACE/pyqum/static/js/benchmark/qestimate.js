@@ -8,18 +8,14 @@ $(document).ready(function(){
 
 });
 
-
 $(function () {
 
     // saving exported mat-data to client's PC:
     $('#qFactor-Download-button').on('click', function () {
         console.log("SAVING CSV FILE");
     
-        // in order to trigger href send-file request: (PENDING: FIND OUT THE WEIRD LOGIC BEHIND THIS NECCESITY)
-        //$.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', { wmoment: wmoment }, function (data) {});
-    
+
         $.getJSON( '/benchmark/qestimate/exportMat_fitPara', {
-            //ifreq: $('select.char.fresp.parameter[name="c-freq"]').val()
         }, function (data) {
             console.log("STATUS: " + data.status + ", PORT: " + data.qumport);
             $.ajax({
@@ -88,39 +84,6 @@ $(function () {
             document.getElementById(plotID_2D).style.display = "none";
         }
 
-
-        // $.getJSON( '/benchmark/qestimate/getJson_plot',
-        // {   quantificationType: JSON.stringify("qEstimation"), 
-        //     analysisIndex: JSON.stringify(analysisIndex), 
-        //     plotType: JSON.stringify("1D_amp"), },
-        //     function (data) {
-        //     console.log( "1D amp plot" );
-        //     console.log( data );
-        //     let axisKeys = {
-        //         x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
-        //         y: ["Data_point_amplitude","Fitted_curve_amplitude","Fitted_baseline_amplitude","Corr_Data_point_amplitude"],
-        //         yErr: [],
-        //     }
-
-        //     plot1D(data, axisKeys, plotID_1D_ampPhase);
-        // });
-
-        // $.getJSON( '/benchmark/qestimate/getJson_plot',
-        // {   quantificationType: JSON.stringify("qEstimation"), 
-        //     analysisIndex: JSON.stringify(analysisIndex),
-        //     plotType: JSON.stringify("1D_IQ"), },
-        //     function (data) {
-        //     console.log( "1D IQ plot" );
-        //     console.log( data );
-        //     let axisKeys = {
-        //         x: ["Data_point_I","Fitted_curve_I","Fitted_baseline_I","Corr_Data_point_I"],
-        //         y: ["Data_point_Q","Fitted_curve_Q","Fitted_baseline_Q","Corr_Data_point_Q"],
-        //         yErr: [],
-        //     }
-        //     //console.log( data.Fitted_curve_amplitude );
-
-        //     plot1D(data, axisKeys, plotID_1D_IQ);
-        // });
 
         $.getJSON( '/benchmark/qestimate/getJson_plot',
         {   quantificationType: JSON.stringify("qEstimation"), 
@@ -204,21 +167,6 @@ $(function () {
         });
 
 
-        // Renew 1D plot
-        // $.getJSON( '/benchmark/qestimate/getJson_plot',
-        // {   analysisIndex: JSON.stringify(analysisIndex), plotDimension: JSON.stringify(1)}, 
-        //     function (data) {
-        //     console.log( "1D plot" );
-        //     console.log( data );
-        //     let axisKeys = {
-        //         x: ["Data_point_frequency","Fitted_curve_frequency","Fitted_baseline_frequency","Corr_Data_point_frequency"],
-        //         y: ["Data_point_amplitude","Fitted_curve_amplitude","Fitted_baseline_amplitude","Corr_Data_point_amplitude"],
-        //         yErr: [],
-        //     }
-        //     //console.log( data.Fitted_curve_amplitude );
-
-        //     plot1D(data, axisKeys, "qFactor-plot-fittingResult");
-        // });
         $.ajaxSettings.async = true;
 
     });

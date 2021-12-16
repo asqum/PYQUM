@@ -223,7 +223,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                         if "opt" not in fluxbias.data: # check if it is in optional-state
                             if biasmode: sweeprate = 0.000713  # A-mode A/s
                             else:  sweeprate = 1.37  # V-mode V/s (~10kOhm resistance)
-                            DC.sweep(dcbench, str(fluxbias.data[caddress[j]]), sweeprate=sweeprate)
+                            DC.sweep(dcbench, str(fluxbias.data[caddress[j]]), update_settings=dict(sweeprate=sweeprate) )
 
                     # SG
                     elif structure[j] == 'XY-LO-Frequency':
