@@ -48,12 +48,6 @@ function get_common_fitting_selectInfo( quantificationType ){
                     valueIndex[i]=document.getElementById(quantificationType+"-select_value-"+htmlName).selectedIndex;
                     break;
 
-                case "y_count":
-                    console.log(htmlName +" for y-axis count");
-                    axisIndex[axisIndex.length] = structurePosition ;
-                    valueIndex[i]=document.getElementById(quantificationType+"-select_value-"+htmlName).selectedIndex;
-                    break;
-
                 case "x_value":
                     console.log(htmlName +" for x-axis ");
                     axisIndex[0] = structurePosition ;
@@ -95,31 +89,6 @@ function get_common_fitting_selectInfo( quantificationType ){
     return analysisIndex
 }
 
-function CF_get_2DplotInfo( quantificationType ){
-
-    $.ajaxSettings.async = false;
-
-    let measureParameters = document.getElementById( "common_fitting-plot2D-button" );
-
-    //let analysisIndex = {};
-
-    
-    let plotType={
-        valueIndex:valueIndex,
-        axisIndex:axisIndex,
-        aveInfo:{
-            axisIndex:aveAxisIndex,
-            aveRange:aveRange
-        }
-    }
-
-
-    console.log( "Selection " );
-    console.log( analysisIndex );
-    $.ajaxSettings.async = true;
-
-    return analysisIndex
-}
 
 function CF_render_input ( quantificationType )
 {
@@ -245,6 +214,7 @@ function CF_render_input ( quantificationType )
     // CF_creatDOM_FitDataType("all", "common_fitting-allParamater");
     $.ajaxSettings.async = true;
 }
+
 function CF_showAveInput(selectObject) {
     let DOM_parameterSetting=selectObject.parentElement;
     console.log("showAveInput trigger by "+selectObject.id)
@@ -298,65 +268,6 @@ function CF_creatDOM_FitDataType( fitFunc, parentID ){
     }
 }
 
-function CF_render_fitPara ( fitFunc )
-{
-
-    $.ajaxSettings.async = false;
-
-    let measureParameters = document.getElementById( "common_fitting-parameters" );
-
-    let className = fitFunc;
-    let parameters=[];
-    switch (fitFunc) {
-        case "NTypeResonator":
-            break;
-        case "ExpDecay":
-
-            break;
-        case "DampOscillation":
-            break;
-        default:
-          text = "No value found";
-    }
-    $.ajaxSettings.async = true;
-}
-function show_defaultFitPara(selectObject) {
-    let DOM_parameterSetting=selectObject.parentElement;
-    console.log("showAveInput trigger by "+selectObject.id)
-    let DOM_parameterAve = DOM_parameterSetting.getElementsByClassName("ave_value")[0];
-    DOM_parameterAve.style.display = "none";
-
-    let DOM_parameterValueSelect = DOM_parameterSetting.getElementsByClassName("select_value")[0];
-    DOM_parameterValueSelect.style.display = "none";
-
-    let DOM_parameterValueInput = DOM_parameterSetting.getElementsByClassName("input_value")[0];
-    DOM_parameterValueInput.style.display = "none";
-
-    let DOM_parameterFit = DOM_parameterSetting.getElementsByClassName("fitting_input")[0];
-    DOM_parameterFit.style.display = "none";
-
-    if (selectObject.value == "average")
-    {
-        console.log("select "+selectObject.value)
-        DOM_parameterAve.style.display = "block";
-    }
-    if (selectObject.value == "single_value" || selectObject.value == "y_value" || selectObject.value == "y_count")
-    {
-        console.log("select "+selectObject.value)
-        DOM_parameterValueInput.style.display = "block";
-        DOM_parameterValueSelect.style.display = "block";
-
-    }
-    if (selectObject.value == "x_value" )
-    {
-        console.log("select "+selectObject.value)
-        DOM_parameterFit.style.display = "block";
-
-    }
-    // document.getElementById(parameterSetting).style.display = "none";
-    // let DOM_parameterAve = document.createElement("input");
-    // DOM_parameterAve.style.display = "block";
-}
 
 function load_data(){
     console.log( "Get data" );
@@ -533,8 +444,6 @@ function get_plot1D(){
 
 function fit_data(){
 
-    
-    let htmlInfo=get_htmlInfo_python();
     let plot1D_yAxisType = document.getElementById("common_fitting-plot2D-ySelector").value;
     let analysisIndex = get_common_fitting_selectInfo("common_fitting");
 

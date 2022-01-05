@@ -9,8 +9,9 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag, concatenate, append, angle, argmax
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag, concatenate, append, angle, argmax, linspace, arctan, tan
 from numpy.fft import fft, fftfreq
+from scipy.odr import *
 
 # Json to Javascrpt
 import json
@@ -47,6 +48,7 @@ class ExtendMeasurement ():
 		self.xAxisKey = None
 		self.yAxisKey = None
 		self.aveAxisKey = None
+		self.oneShotAxisKey = None
 
 		self.varsInd = []
 		self.axisInd = []
@@ -128,6 +130,13 @@ class ExtendMeasurement ():
 		else:
 			self.aveAxisKey = None
 
+		# Get one shot parameters	
+		if len(aveInfo["oneShotAxisIndex"]) != 0:
+			self.oneShotAxisKey = self.measurementObj.corder["C-Structure"][aveInfo["oneShotAxisIndex"][0]]
+		else:
+			self.oneShotAxisKey = None
+
+
 		cShape = self.measurementObj.corder["C_Shape"]
 		self.xAxisKey = self.measurementObj.corder["C-Structure"][axisInd[0]]
 		# Get axis key from C-order
@@ -150,10 +159,15 @@ class ExtendMeasurement ():
 			moveAxisKey = ["datadensity", self.xAxisKey]
 		else:
 			moveAxisKey = ["datadensity", self.yAxisKey, self.xAxisKey]
-		
+
+		# Add ave axis
 		if self.aveAxisKey != None:
 			moveAxisKey = moveAxisKey +[self.aveAxisKey]
-		
+
+		# Add one shot axis
+		if self.oneShotAxisKey != None:
+			moveAxisKey = moveAxisKey +[self.oneShotAxisKey]
+
 		selectValInd = []
 		includeAxisInd = []
 		for i, k in enumerate(self.measurementObj.corder["C-Structure"]):
@@ -381,237 +395,9 @@ class QEstimation():
 				else: 
 					self._init_baselineCorrection()
 
-
-
-
-class Decoherence():
-
-	def __init__( self, quantificationObj, *args,**kwargs ):
-
-		self.quantificationObj = quantificationObj
-		# Key and index
-		self.resultKeys = ["ampI", "offsetI", "ampQ", "offsetQ", "tau"]
-		self.errorKeys = ["ampI_cov", "offsetI_cov", "ampQ_cov", "offsetQ_cov", "tau_cov"]		
-		# Fit
-		self.fitCurve = {}
-		self.baseline = {}
-		self.fitResult = {}
-
-		self._fitParameters = None
-		self._init_fitResult()
-		self._init_fitCurve()
-
-
-
-
-	def _init_fitResult( self, yAxisLen=0 ):
-		nanArray = empty([yAxisLen])
-		nanArray.fill( nan )
-
-		results ={}
-		errors ={}
-		for rk in self.resultKeys:
-			results[rk] = nanArray.copy()
-		for ek in self.errorKeys:
-			errors[ek] = nanArray.copy()
-
-		self.fitResult={
-			"results": results,
-			"errors": errors,
-		}
-
-	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
-		self.fitCurve = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
-
-	@property
-	def fitParameters(self):
-		return self._fitParameters
-
-	@fitParameters.setter
-	def fitParameters(self, fitParameters=None):
-		if fitParameters == None:
-			
-			fitParameters={
-				"interval": {
-					"start": 5,
-					"end": 8
-				},
-				"initial_value":{
-				}
-			}
-
-		else:
-			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
-			fitParameters["interval"]["start"] = fitRange[0]
-			fitParameters["interval"]["end"] = fitRange[1]
-
-		self._fitParameters = fitParameters
-
-	def do_analysis ( self ):
-
-		qObj = self.quantificationObj
-
-		xAxisLen = qObj.rawData["x"].shape[0]
-
-		# Get 1D or 2D data to self.rawData
-		if qObj.yAxisKey == None:
-			yAxisLen = 1
-		else:
-			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
-
-		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
-		self._init_fitResult(yAxisLen=yAxisLen)
-
-		def expDecay ( x, amp, offset, tau):
-			return amp*exp(-x/tau)+offset
-
-		def iqExpDecay ( x, ampI, offsetI, ampQ, offsetQ, tau):
-			return concatenate( (expDecay( x, ampI, offsetI, tau), expDecay( x, ampQ, offsetQ, tau )) )
-
-		for i in range(yAxisLen):
-			# Find initial value
-			ampI = qObj.rawData["iqSignal"][i].real
-			ampIEndPoint = (ampI[0],ampI[ampI.shape[0]-1])
-			ampQ = qObj.rawData["iqSignal"][i].imag
-			ampQEndPoint = (ampQ[0],ampQ[ampQ.shape[0]-1])
-			guess = array([ampIEndPoint[0]-ampIEndPoint[1], ampIEndPoint[1], ampQEndPoint[0]-ampQEndPoint[1], ampQEndPoint[1],1000 ])
-			# start fitting
-			try:
-				popt,pcov=curve_fit(iqExpDecay,qObj.rawData["x"],append(ampI,ampQ),guess)
-				fitSuccess = True
-				print("Good fitting")
-			except:
-				fitSuccess = False
-				print("Bad fitting")
-
-			if fitSuccess:
-				self.fitCurve["iqSignal"][i] = expDecay( qObj.rawData["x"],popt[0],popt[1],popt[4]) +1j*expDecay( qObj.rawData["x"],popt[2],popt[3],popt[4])
-				perr = sqrt(diag(pcov))
-
-				for ki, k in enumerate(self.resultKeys):
-					self.fitResult["results"][k][i] = popt[ki]
-				for ki, k in enumerate(self.errorKeys):
-					self.fitResult["errors"][k][i] = perr[ki]
-
-		# Set x-axis (frequency) of fit curve 
-		self.fitCurve["x"] = qObj.rawData["x"]
-
-
-class RabiOscillation():
-
-	def __init__( self, quantificationObj, *args,**kwargs ):
-
-		self.quantificationObj = quantificationObj
-		# Key and index
-		self.resultKeys = ["ampI", "offsetI", "ampQ", "offsetQ", "tau", "omega", "phi"]
-		self.errorKeys = ["ampI_cov", "offsetI_cov", "ampQ_cov", "offsetQ_cov", "tau_cov", "omega_cov", "phi_cov"]
-		
-		# Fit
-		self.fitCurve = {}
-		self.fitResult = {}
-
-		self._fitParameters = None
-		self._init_fitResult()
-		
-		self._init_fitCurve()
-
-
-	def _init_fitResult( self, yAxisLen=0 ):
-		nanArray = empty([yAxisLen])
-		nanArray.fill( nan )
-
-		results ={}
-		errors ={}
-		for rk in self.resultKeys:
-			results[rk] = nanArray.copy()
-		for ek in self.errorKeys:
-			errors[ek] = nanArray.copy()
-
-
-		self.fitResult={
-			"results": results,
-			"errors": errors,
-		}
-
-	def _init_fitCurve( self, yAxisLen=0, xAxisLen=0 ):
-		self.fitCurve = {
-			"x": empty([xAxisLen]),
-			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
-		}
-
-	@property
-	def fitParameters(self):
-		return self._fitParameters
-
-	@fitParameters.setter
-	def fitParameters(self, fitParameters=None):
-		if fitParameters == None:
-			fitParameters={
-				"interval": {
-					"start": 5,
-					"end": 8
-				},
-				"initial_value":{
-
-				}
-
-			}
-		else:
-			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
-			fitParameters["interval"]["start"] = fitRange[0]
-			fitParameters["interval"]["end"] = fitRange[1]
-		self._fitParameters = fitParameters
-
-	def do_analysis ( self ):
-
-		qObj = self.quantificationObj
-
-		xAxisLen = qObj.rawData["x"].shape[0]
-
-		# Get 1D or 2D data to self.rawData
-		if qObj.yAxisKey == None:
-			yAxisLen = 1
-		else:
-			yAxisLen = qObj.independentVars[qObj.yAxisKey].shape[0]
-
-		self._init_fitCurve(yAxisLen=yAxisLen,xAxisLen=xAxisLen)
-		self._init_fitResult(yAxisLen=yAxisLen)
-
-		def dampingOscillation ( x, amp, offset, tau, omega, phi):
-			return amp*exp(-x/tau)*cos(omega*x+phi)+offset
-
-		def iqDampingOscillation ( x, ampI, offsetI, ampQ, offsetQ, tau, omega, phi):
-			return concatenate( (dampingOscillation( x, ampI, offsetI, tau, omega, phi), dampingOscillation( x, ampQ, offsetQ, tau, omega, phi )) )
-
-		# Creat notch port list
-		for i in range(yAxisLen):
-			ampI = qObj.rawData["iqSignal"][i].real
-			ampIEndPoint = (amax(ampI),amin(ampI))
-			ampQ = qObj.rawData["iqSignal"][i].imag
-			ampQEndPoint = (amax(ampQ),amin(ampQ))
-			guess = array([ (ampIEndPoint[0]-ampIEndPoint[1])/2, (ampIEndPoint[0]+ampIEndPoint[1])/2, (ampQEndPoint[0]-ampQEndPoint[1])/2, (ampQEndPoint[0]+ampQEndPoint[1])/2,1000, 0.01, 0])
-			try:
-				popt,pcov=curve_fit(iqDampingOscillation,qObj.rawData["x"],append(ampI,ampQ),guess)
-				fitSuccess = True
-				print("Good fitting")
-			except:
-				fitSuccess = False
-				print("Bad fitting")
-
-			if fitSuccess:
-				self.fitCurve["iqSignal"][i] = dampingOscillation( qObj.rawData["x"],popt[0],popt[1],popt[4],popt[5],popt[6]) +1j*dampingOscillation( qObj.rawData["x"],popt[2],popt[3],popt[4],popt[5],popt[6])
-				perr = sqrt(diag(pcov))
-
-				for ki, k in enumerate(self.resultKeys):
-					self.fitResult["results"][k][i] = popt[ki]
-				for ki, k in enumerate(self.errorKeys):
-					self.fitResult["errors"][k][i] = perr[ki]
-
-		# Set x-axis (frequency) of fit curve 
-		self.fitCurve["x"] = qObj.rawData["x"]
+def linear_func(p, x):
+   axisAngle = p
+   return tan(axisAngle)*x
 
 class PopulationDistribution():
 
@@ -619,37 +405,32 @@ class PopulationDistribution():
 
 		self.quantificationObj = quantificationObj
 		# Key and index
-		self.resultKeys = ["ampExc", "meanExc", "sigmaExc", "ampGnd", "meanGnd", "sigmaGnd"]
-		self.errorKeys = ["ampExc_cov", "meanExc_cov", "sigmaExc_cov", "ampGnd_cov", "meanGnd_cov", "sigmaGnd_cov"]
-		
-		# Fit
-		self.fitCurve = {}
-		self.fitResult = {}
-		self.statisticData = {}
+		# Accumulated data for fit straight line
+		self.accData={
+			"raw":[],
+			"shifted":[],
+			"projected":[],
+		}
+
+		# Projection line
+		self.projectionLine = {
+			"data":[],
+			"parameter":[],
+		}
+
+
+		# Histogram
+		self.distribution={
+			"x":[],
+			"count":[],
+			"fitted":[]
+		}
 
 		self._fitParameters = None
-		self._init_fitResult()
-		
-		self._init_fitCurve()
+
 
 		qObj = self.quantificationObj
 
-		meanAll = mean(qObj.rawData["iqSignal"])
-		ampIMeanAll = mean(qObj.rawData["iqSignal"].real)
-		AmpQMeanAll = mean(qObj.rawData["iqSignal"].imag)
-
-		slope, intercept, r, p, se = linregress(ampIMeanAll, AmpQMeanAll)
-		rotateAngle = arctan2(slope)
-		shiftedData = qObj.rawData["iqSignal"] - meanAll
-		rotatedData = shiftedData*exp(-1j*rotateAngle)
-
-
-		distributionData = histogram(rotatedData.real, bins='auto')
-		distributionXaxis = distributionData[1][1:] +(distributionData[1][1]-distributionData[1][0])/2
-		print("distributionData",distributionData)
-
-		self.statisticData["x"] = distributionXaxis
-		self.statisticData["iqSignal"] = distributionData[0]
 
 	def _init_fitResult( self, yAxisLen=0 ):
 		nanArray = empty([yAxisLen])
@@ -697,43 +478,103 @@ class PopulationDistribution():
 			fitParameters["interval"]["end"] = fitRange[1]
 		self._fitParameters = fitParameters
 
-	def do_analysis ( self ):
-
+	def accumulate_data( self, accumulationIndex ):
+		
 		qObj = self.quantificationObj
 
-		xAxisLen = qObj.rawData["x"].shape[0]
+		accData= array([])
+		for accInd in accumulationIndex:
+			accData= append(accData,qObj.rawData["iqSignal"][accInd])
 
+		meanPoint = mean(accData)
+		self.accData={
+			"mean_point":meanPoint,
+			"raw":accData,
+			"shifted":accData-meanPoint
+		}
+		return self.accData
+	def fit_projectionLine( self ):
 
+		accData= self.accData["shifted"]
+		# linregress method
+		xData = accData.real
+		yData = accData.imag
+		res = linregress( xData, yData)
 
+		demoRange = [amin(xData),amax(xData)]
 
-		def gaussianDist ( x, amp, mean, sigma):
-			return amp*exp( -1./2.*(x-mean/sigma)**2 )
+		linear_model = Model(linear_func)
+		mydata = RealData(xData, yData)
+		myodr = ODR(mydata, linear_model, beta0=[arctan(res.slope)])
+		myoutput = myodr.run()
+		myoutput.pprint()
+		print(myoutput.beta)
+		
+		self.projectionLine["parameter"]=myoutput.beta
+		xFitted = linspace(demoRange[0],demoRange[1],100)
 
-		def populationDist ( x, ampExc, meanExc, sigmaExc, ampGnd, meanGnd, sigmaGnd):
-			return gaussianDist( ampExc, meanExc, sigmaExc) +gaussianDist( ampGnd, meanGnd, sigmaGnd) 
+		yFitted = tan(myoutput.beta[0]) *xFitted
 
-		guess = array([ 1, std(self.statisticData["iqSignal"]), std(self.statisticData["iqSignal"]), 1, -std(self.statisticData["iqSignal"]), std(self.statisticData["iqSignal"])])
+		self.projectionLine["data"]=xFitted+1j*yFitted +self.accData["mean_point"]
+		
+			
+		return self.projectionLine
+
+	def cal_projectedData( self ):
+		
+		shiftedAccData= self.accData["shifted"]
+	
+		# Get rotate angle
+		angleProjectionLine = self.projectionLine["parameter"][0]
+
+		self.accData["projected"]=abs(shiftedAccData)*cos(angle(shiftedAccData)+angleProjectionLine)
+		return self.accData["projected"]
+
+	def cal_distribution( self ):
+
+		distributionData = histogram(self.accData["projected"], bins='auto')
+		devData = std(self.accData["projected"])
+		xAxis = distributionData[1][1:] +(distributionData[1][1]-distributionData[1][0])/2
+		distCount = distributionData[0]/float(len(distributionData[0]))
+		midPoint = (xAxis[0]+xAxis[-1])/2
+
+		guess = array([ 0.1, midPoint+devData*1.2, devData/2, 0.1, midPoint-devData*1.2, devData/2])
+		print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",guess)
+
+		self.distribution={
+			"x":xAxis,
+			"count":distCount,
+			"fitted":[],
+		}
 		try:
-			popt,pcov=curve_fit(populationDist,self.statisticData["x"], self.statisticData["iqSignal"],guess)
+			popt,pcov=curve_fit(twoGaussian_func,xAxis, distCount, p0=guess)
 			fitSuccess = True
-			print("Good fitting")
+			print("Good fitting", popt)
+			self.distribution["fitted"]=gaussian_func(xAxis,popt[0:3])+gaussian_func(xAxis,popt[3:6])
 		except:
 			fitSuccess = False
 			print("Bad fitting")
+			self.distribution["fitted"]=gaussian_func(xAxis,guess[0:3])+gaussian_func(xAxis,guess[3:6])
 
-		if fitSuccess:
-			self.fitCurve["xStatistic"] = self.statisticData["x"]
-			self.fitCurve["iqSignalStatistic "] = populationDist( self.statisticData["x"],popt[0],popt[1],popt[2],popt[3],popt[4],popt[5]) 
-			perr = sqrt(diag(pcov))
 
-			for ki, k in enumerate(self.resultKeys):
-				self.fitResult["results"][k][0] = popt[ki]
-			for ki, k in enumerate(self.errorKeys):
-				self.fitResult["errors"][k][0] = perr[ki]
+		return self.distribution
 
 
 # if __name__ == "__main__":
 # 	worker_fresp(int(sys.argv[1]),int(sys.argv[2]))
+
+def gaussian_func ( x, p):
+	# p: amp, mean, sigma
+	return p[0]/(p[2]*sqrt(2*pi))*exp( -1./2.*((x-p[1])/p[2])**2 )
+
+def twoGaussian_func (x, *p):
+	# p: ex_amp, ex_mean, ex_sigma, g_amp, g_mean, g_sigma
+	exPars = (p[0],p[1],p[2])
+	if p[1]-p[4]<amin([p[2],p[5]])/10:
+		p[4]=p[1]-amin([p[2],p[5]])/10
+	gndPars = (p[3],p[4],p[5])
+	return gaussian_func(x,exPars)+gaussian_func(x,gndPars)
+
 
 def expDecay_func ( x, p ):
 	# p: amp, tau, offset
