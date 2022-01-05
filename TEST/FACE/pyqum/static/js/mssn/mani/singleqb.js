@@ -24,6 +24,23 @@ window.VdBm_selector2 = 'select.mani.data.singleqb#singleqb-2d-VdBm'
 var singleqb_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
 var singleqb_Perimeters = ['DIGIHOME', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
 
+function Perimeter_Assembler() {
+    var PERIMETER = {};
+    // 1. Assemble Preset Perimeters into PERIMETER:
+    $.each(singleqb_Perimeters, function(i,perimeter) {
+        PERIMETER[perimeter] = $('.mani.config.singleqb#' + perimeter).val();
+        console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
+    });
+    // 2. Assemble Flexible SCORE-JSON into PERIMETER:
+    PERIMETER['SCORE-JSON'] = {}
+    $.each(DAC_CH_Matrix, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = String(i+1) + "-" + String(channel); 
+            PERIMETER['SCORE-JSON']["CH" + CH_Address] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(); 
+        });
+    });
+    return PERIMETER;
+};
 function transpose(a) {
     // Calculate the width and height of the Array
     var w = a.length || 0;
@@ -48,7 +65,6 @@ function transpose(a) {
     }
     return t;
   };
-
 function listimes_singleqb() {
     $('input.mani.data').removeClass("plotted");
     
@@ -160,7 +176,7 @@ function accessdata_singleqb() {
         $('select.mani.scheme.singleqb#SCHEME_LIST').show();
         $('input.singleqb.perimeter-settings.save').show();
 
-        // 7. PERIMETER Statement:
+        // 7.1. PERIMETER Statement:
         var singleqb_Channels = [];
         $.each(Object.keys(data.perimeter['SCORE-JSON']), function(i,val){ singleqb_Channels.push(val); });
         var sheet = '';
@@ -174,9 +190,15 @@ function accessdata_singleqb() {
         });
         $('textarea.mani.singleqb.PSTATEMENT').val(sheet).show();
 
-        // 8. Adjustment(s) based on perimeter:
+        // 7.2 Adjustment(s) based on PERIMETER:
         if (data.perimeter['BIASMODE']==1) { $('table th.mani.singleqb.Flux-Bias').text('Flux-Bias (A)') }
         else { $('table th.mani.singleqb.Flux-Bias').text('Flux-Bias (V)') };
+
+        // 8. Data Assemblies (Histories):
+        $('select.mani.data.singleqb#singleqb-data-assemblies').empty().append($('<option>', { text: "Re-Plot (" + data.histories.length + " saved set(s))", value: 0 }));
+        $.each(data.histories, function(i,history) {
+            $('select.mani.data.singleqb#singleqb-data-assemblies').append($('<option>', { text: history, value: history }));
+        });
 
     });
     return false;
@@ -491,19 +513,38 @@ function compareIQ_singleqb(x1,y1,x2,y2,mission="singleqb") {
     Plotly.react('mani-' + mission + '-chart', Trace, layout);
 
 };
+function plot_pulses(X,Y,xtitle='sample-point#',mode='lines') {
+    // Some kind of Multiplots:
+    Trace_num = Object.keys(Y).length;
+    console.log("Number of Traces: " + Trace_num);
+    
+    let Trace = [];
+    $.each(Object.keys(Y), function(i, dac_address) {
+        Trace.push( {name: dac_address, x: X, y: Y[dac_address], mode: mode, type: 'scatter', 
+        line: {width: 2.5}, marker: {symbol: 'square-dot', size: 3.7}, yaxis: 'y' } );
+    });
+    
+    let layout = {
+        legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis: { zeroline: false, title: '<b>Normalized DAC-Output</b>', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, },
+        title: '',
+        };
+
+    Plotly.newPlot('mani-singleqb-pulse-check', Trace, layout, {showSendToCloud: true});
+};
 
 // hiding parameter settings when click outside the modal box:
 $('.modal-toggle.new.singleqb').on('click', function(e) {
     e.preventDefault();
     $('.modal.new.singleqb').toggleClass('is-visible');
-    // revert back to previous option upon leaving dialogue box
-    $('select.mani.singleqb.wday').val(selecteday);
+    $('div#mani-singleqb-pulse-check').hide(); // hide pulse-preview which will intefere with the interfaces
+    $('select.mani.singleqb.wday').val(selecteday); // revert back to previous option upon leaving dialogue box
 });
 $('.modal-toggle.manage.singleqb').on('click', function(e) {
     e.preventDefault();
     $('.modal.manage.singleqb').toggleClass('is-visible');
-    // revert back to previous option upon leaving dialogue box
-    $('select.mani.singleqb.wday').val(selecteday);
+    $('select.mani.singleqb.wday').val(selecteday); // revert back to previous option upon leaving dialogue box
 });
 $('.modal-toggle.data-reset.singleqb').on('click', function(e) {
     e.preventDefault();
@@ -676,6 +717,27 @@ $('input.singleqb.perimeter-settings.load').on('touchend click', function(event)
     });
     return false;
 });
+// 4. Check Pulses:
+$('input.mani.singleqb.pulse-check#singleqb-pulse-check').bind('click', function() {
+    // Assemble PERIMETER:
+    var PERIMETER = Perimeter_Assembler();
+    // console.log("PERIMETER to CHECK PULSES: " + PERIMETER)
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/check/pulses', {
+        PERIMETER: JSON.stringify(PERIMETER),
+    }, function (data) {
+        // Preview Max-Pulses on Chart:
+        var Pulse_Preview = data.Pulse_Preview;
+        var T_samples = data.T_samples;
+        // console.log(Pulse_Preview);
+        plot_pulses(T_samples, Pulse_Preview)
+
+    });
+    return false;
+});
+$('input.mani.singleqb.toggle-pulses#singleqb-toggle-pulses').bind('click', function() {
+    $('div#mani-singleqb-pulse-check').fadeToggle();
+    return false;
+});
     
 // Click on TASK-TAB:
 // show Single-QB's daylist (also switch content-page to Single-QB)
@@ -755,20 +817,8 @@ $('input.mani#singleqb-run').on('touchend click', function(event) {
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 120);
     $('h3.all-mssn-warning').text(">> JOB STARTED >>");
     // Assemble PERIMETER:
-    var PERIMETER = {};
-    $.each(singleqb_Perimeters, function(i,perimeter) {
-        PERIMETER[perimeter] = $('.mani.config.singleqb#' + perimeter).val();
-        console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
-    });
-    // Assemble SCORE-JSON for PERIMETER:
-    PERIMETER['SCORE-JSON'] = {}
-    $.each(DAC_CH_Matrix, function(i,channel_set) {
-        $.each(channel_set, function(j,channel) {
-            let CH_Address = String(i+1) + "-" + String(channel); 
-            PERIMETER['SCORE-JSON']["CH" + CH_Address] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(); 
-        });
-    });
-    console.log("PERIMETER: " + PERIMETER)
+    var PERIMETER = Perimeter_Assembler();
+    console.log("PERIMETER to RUN: " + PERIMETER)
 
     // Assemble CORDER:
     var CORDER = {};
@@ -966,11 +1016,13 @@ $(function () {
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
         var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();
+        if ($('select.mani.data.singleqb#singleqb-data-assemblies').val()==0) { var call_histories=0; var chosen_matfile=0 }
+        else { var call_histories=1; var chosen_matfile=$('select.mani.data.singleqb#singleqb-data-assemblies').val(); };
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/2ddata', {
-            cselect: JSON.stringify(cselect), srange: srange, smode: smode
+            cselect: JSON.stringify(cselect), srange: srange, smode: smode, call_histories: call_histories, chosen_matfile: chosen_matfile
         }, function (data) {
-            window.X = data.x;
-            window.Y = data.y;
+            window.X = data.x.flat(); //2D artifact left by MATfile conversion: just flat it out into 1D!
+            window.Y = data.y.flat();
             console.log("check Y: " + Y);
             window.ZZA = data.ZZA;
             window.ZZUP = data.ZZUP;
@@ -1169,34 +1221,6 @@ $('input.mani.singleqb#search').change( function() {
     });
     return false;
 });
-
-// Event: Benchmark on click (Jacky)
-$('#mani-singleqb-to-benchmark').click( function(){
-
-    $.ajaxSettings.async = false;
-
-    listimes_singleqb();
-    accessdata_singleqb();
-    $.getJSON(mssnencrpytonian() + '/mssn/singleqb/access', 
-        { wmoment: wmoment },
-        //input/select value here:  
-        function (data) {
-            //console.log("JOBID: " + JSON.stringify(data.JOBID) );
-            console.log( data );  
-                    
-    });
-    let quantificationType = ["qfactor_estimation"];
-    $.getJSON( '/benchmark/benchmark_getMeasurement', 
-    { measurementType: "singleqb", quantificationType: JSON.stringify(quantificationType) }, 
-        function ( ) {
-    }); 
-
-    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
-    $.ajaxSettings.async = true;
-
-    return false;
-    }
-);
 
 // SAVE NOTE:
 $('textarea.mani.singleqb.note').change( function () {

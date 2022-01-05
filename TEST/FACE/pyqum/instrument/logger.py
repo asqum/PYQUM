@@ -40,8 +40,8 @@ USR_PATH = MAIN_PATH / "USRLOG"
 PORTAL_PATH = MAIN_PATH / "PORTAL"
 ADDRESS_PATH = MAIN_PATH / "Address"
 SPECS_PATH = MAIN_PATH / "SPECS"
-
 ANALYSIS_PATH = PORTAL_PATH / "ANALYSIS"
+HISTORY_PATH = PORTAL_PATH / "HISTORY"
 
 
 # Pending: extract MAC from IP?
@@ -162,7 +162,7 @@ def bdr_zip_log(zipname, log_location=Path(r'\\BLUEFORSAS2\dr_bob') / "21-06-06"
                 status = zipObj.write(filePath) # Add file to zip
     return status
 
-# save JSON(Jacky)
+# save JSON into ANALYSIS Folder:
 def set_json_measurementinfo(data_dict, filename):
     jsonFilename = filename+".JSON"
     totalPath = ANALYSIS_PATH/jsonFilename
@@ -178,12 +178,31 @@ def get_json_measurementinfo(filename):
         data = json.load(f)
     return data
 
-# save mat(Jacky)
+# save mat into ANALYSIS Folder:
 def set_mat_analysis(data_dict, filename):
     matFilename = filename+".mat"
     totalPath = ANALYSIS_PATH/matFilename
     savemat(Path(totalPath), data_dict)
     return None
+
+# save mat into HISTORY Folder:
+def set_mat_history(data_dict, samplename, jobid, filename):
+    matFilename = filename+".mat"
+    totalPath = HISTORY_PATH/Path(samplename)/Path(jobid)/matFilename
+    existence = exists(totalPath)# and stat(totalPath).st_size > 0
+    if existence == False:
+        totalPath.parent.mkdir(parents=True, exist_ok=True) #make directories
+    savemat(totalPath, data_dict, format='5', oned_as="column") #made for JS-array
+    return None
+def get_histories(samplename, jobid):
+    sample_job_dir = HISTORY_PATH/Path(samplename)/Path(jobid)
+    try: histories = listdir(sample_job_dir)
+    except: histories = []
+    return histories
+def get_mat_history(samplename, jobid, matfilename):
+    File_Path = HISTORY_PATH/Path(samplename)/Path(jobid)/matfilename
+    matdata = loadmat(File_Path)
+    return matdata
 
 class address:
     '''Use DATABASE by DEFAULT, TEST by CHOICE

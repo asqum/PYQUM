@@ -356,4 +356,4 @@ def test(detail=True):
     close(s, reset=state, mode="TEST")
     return
 
-test()
+# test()

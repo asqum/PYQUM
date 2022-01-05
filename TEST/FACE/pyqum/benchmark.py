@@ -62,7 +62,7 @@ def show():
 			abort(404)
 		#quantificationType = benchmarkDict[session['user_name']].quantificationType
 		return render_template("blog/benchmark/benchmark.html")
-	return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:5300/auth/login'>HoDoR</a></h3>")
+	return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 
 # Get Information for Render HTML
 @bp.route('/get_parametersID', methods=['POST', 'GET'])
