@@ -743,8 +743,9 @@ def bdr():
         owned_new_samples = [s['samplename'] for s in g.samples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
         # 2. SHARED co-samples:
         shared_new_samples = [s['samplename'] for s in g.cosamples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
-        recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + ['Sam', 'Same01', 'IDLE', 'DR-RFcable']
-        loaded = len(recent_samples) - 3
+        services = ['Sam', 'Same01', 'IDLE', 'DR-RFcable']
+        recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + services
+        loaded = len(recent_samples) - len(services)
 
         # 3. Wiring settings:
         machine_list = [x['codename'] for x in g.machlist]

@@ -120,10 +120,9 @@
             
         </div>
 
-        <!-- Analysis -->
+        <!-- Histories -->
         <div class="row">
-            <!-- Go to benchmark -->
-            <div class="col-15" id='left'><input class='char benchmark singleqb' name='singleqb-benchmark' type="submit" value="Benchmark" id="mani-singleqb-to-benchmark"/></div>
+            <div class="col-53" id='left'><select class='mani data singleqb' id="singleqb-data-assemblies" type="text"></select></div>
             <!-- Download for external analysis -->
             <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savecsv">CSV-1D</button></div>
             <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savemat">MAT-2D</button></div>
@@ -249,7 +248,7 @@
                         </select></div>
                     </div>
 
-                    <!-- 3. Pulse Settings (PENDING: ADJUSTABLE CHANNEL-MATRIX) -->
+                    <!-- 3. Pulse Settings (PENDING: ADJUSTABLE CHANNEL-MATRIX for LO) -->
                     <div class="row perimeter">
                         <div class="col-16" id='left'><select class="channel-matrix zoomSelect"></select></div>
                         <div class="col-2" id='left'><button class="plusButton">+</button></div>
@@ -264,6 +263,15 @@
                             <textarea class='mani config singleqb' id='R-JSON' type="text" rows="7" cols="13" style="color:blue;">{}</textarea>
                         </div>
                     </div>
+
+                    <div class="row perimeter">
+                        <div class="col-15" id='left'><input class="mani modal-toggle singleqb pulse-check" id="singleqb-pulse-check"  type="submit" value="PULSE-CHECK"/></div>
+                        <div class="col-15" id='left'><input class="mani modal-toggle singleqb toggle-pulses" id="singleqb-toggle-pulses"  type="submit" value="TOGGLE-PULSES"/></div>
+                    </div>
+                    <div class="row perimeter">
+                        <div class="mani modal-toggle" id="mani-singleqb-pulse-check"></div>
+                    </div>
+                    
 
                 </div>
                     
