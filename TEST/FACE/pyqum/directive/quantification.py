@@ -528,8 +528,7 @@ class PopulationDistribution():
 		midPoint = (xAxis[0]+xAxis[-1])/2
 
 		guess = array([ 0.1, midPoint+devData*1.2, devData/2, 0.1, midPoint-devData*1.2, devData/2])
-		print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",guess)
-
+                                                                                                                               
 		self.distribution={
 			"x":xAxis,
 			"count":distCount,
