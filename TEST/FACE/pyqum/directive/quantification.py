@@ -587,20 +587,20 @@ def get_ExpDecay_fitCurve ( x, p, signalType ):
 		return expDecay_func( x, p )
 
 def RabiOscillation ( x, p):
-	# p: amp, tau, omega, phi, offset
-	return p[0]*exp(-x/p[1])*cos(p[2]*x+p[3])+p[4]
+	# p: amp, tau, freq, phi, offset
+	return p[0]*exp(-x/p[1])*cos(2*pi*p[2]*x+p[3])+p[4]
 def fit_RabiOscillation_func ( x, *p):
 	if len(p)==7:
-		# p: 0:tau, 1:omega, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
+		# p: 0:tau, 1:freq, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
 		parsI = (p[3], p[0], p[1], p[2], p[4])
 		parsQ = (p[5], p[0], p[1], p[2], p[6])
 		return concatenate( (RabiOscillation( x, parsI), RabiOscillation( x, parsQ)) )
 	elif len(p)==5:	
-		# p: 0:amp, 1:tau, 2:omega, 3:phi, 4:offset
+		# p: 0:amp, 1:tau, 2:freq, 3:phi, 4:offset
 		return RabiOscillation(x,p)
 def get_RabiOscillation_fitCurve ( x, p, signalType ):
 	if signalType=="indpendent":
-		# p: 0:tau, 1:omega, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
+		# p: 0:tau, 1:freq, 2:phi, 3:IAmp, 4:Ioffset, 5:QAmp, 6:Qoffset
 		parsI = (p[3], p[0], p[1], p[2], p[4])
 		parsQ = (p[5], p[0], p[1], p[2], p[6])
 		return RabiOscillation( x, parsI )+1j*RabiOscillation( x, parsQ )
@@ -640,9 +640,9 @@ class Common_fitting():
 
 			elif fitParas["function"]=="RabiOscillation":
 				if fitParas["signal_type"]=="indpendent":
-					paraNames= ["tau", "omega", "phi", "ampI", "offsetI", "ampQ", "offsetQ"]
+					paraNames= ["tau", "frequency", "phi", "ampI", "offsetI", "ampQ", "offsetQ"]
 				else:
-					paraNames= ["amp","tau", "omega", "phi", "offset"]
+					paraNames= ["amp","tau", "frequency", "phi", "offset"]
 		self.paraNames= paraNames
 		self.fitResult ={}
 		for rk in paraNames:
