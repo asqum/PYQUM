@@ -68,7 +68,7 @@ class ExtendMeasurement ():
 			else: bufferkey = 'RECORD_TIME_NS'
 
 			# Extend C-Structure with R-Parameters & Buffer keys:
-			self.measurementObj.corder['C-Structure'] = self.measurementObj.corder['C-Structure'] + [k for k in RJSON.keys()] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
+			self.measurementObj.corder['C-Structure'] = self.measurementObj.corder['C-Structure'] + [k for k in RJSON.keys() if ">" not in k] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
 
 		C_Shape = []
 		for k in measurementObj.corder["C-Structure"] :
@@ -101,17 +101,6 @@ class ExtendMeasurement ():
 				self.optCStructure.remove(k)
 		'''
 
-	def _get_data_from_Measurement( self ):
-		writtensize = self.measurementObj.writtensize
-		pqfile = self.measurementObj.pqfile
-		datalocation = self.measurementObj.datalocation
-
-		with open(pqfile, 'rb') as datapie:
-			datapie.seek(datalocation+7)
-			pie = datapie.read(writtensize)
-			selectedata = list(struct.unpack('>' + 'd'*((writtensize)//8), pie))
-			
-		return array(selectedata)
 
 	def _init_rawData( self, yAxisLen=0, xAxisLen=0 ):
 		self.rawData = {
@@ -757,6 +746,8 @@ class Common_fitting():
 				freqInd = argmax(fft(data-mean(data)))
 				guess = array([data[0]-mean(data),2000,abs(freqAxis[freqInd]),0,mean(data)])
 			popt,pcov= curve_fit(fit_RabiOscillation_func,qObj.rawData["x"][mask],data,p0=guess)
+			print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGG",guess)
+			print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGG",popt)
 			return popt,pcov
 		fit = {
 			'ExpDecay': fit_ExpDecay,
