@@ -774,3 +774,14 @@ def Auflux_load():
 	# 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
 	return json.dumps("Data reshaped", cls=NumpyEncoder)
+
+@bp.route('/autoflux/getJson_fitParaPlot',methods=['POST','GET'])
+def Auflux_getJson_fitParaPlot():
+
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	# fitParameters = json.loads(request.args.get('fitParameters'))
+
+	# myQuantification.fitParameters = fitParameters
+	myQuantification.do_analysis()

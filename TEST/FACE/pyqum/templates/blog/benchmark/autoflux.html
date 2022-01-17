@@ -7,14 +7,14 @@
 
 <body class="benchmark">
     <div class="qestimatecontent">
-        <h3>Common Fitting Functions</h3>
+        <h3>Autoflux Functions</h3>
 
         <div class="flex-allPara">
 
             <div class="allMeasurePara" id="autoflux-input">
                 <button id="autoflux-button-load" type="submit">Load data</button>
             </div>
-            <div class="allFitPara" id="autoflux-plot">
+            <!-- <div class="allFitPara" id="autoflux-plot">
                 <button id="autoflux-plot2D-button" type="submit">2D Plot</button>
                 <label>Z signal type:</label>
                 <select id="autoflux-plot2D-zSelector">
@@ -51,17 +51,18 @@
                 <label>x range:</label>
                 <input type="text" id="autoflux-fitRange">
 
-                <!-- <label>Name of parameters:</label>
-                <input type="text" id="autoflux-parameterNames"> -->
-                <!-- <label>Initial values:</label>
-                <input type="text" id="autoflux-parameterInitValues"> -->
+                <label>Name of parameters:</label>
+                <input type="text" id="autoflux-parameterNames">
+                <label>Initial values:</label>
+                <input type="text" id="autoflux-parameterInitValues">
+
                 <button id="autoflux-button-fit" type="submit">Fit</button>
                 <button id="autoflux-button-download" type="submit">Download</button>
 
-            </div> 
+            </div>  -->
              
         </div>
-        <div class="result-plot-area">
+        <!-- <div class="result-plot-area">
             <div class="2D-plot-area">
                 <div id="autoflux-plot-fittingParameters"></div>
                 <div id="autoflux-plot2D-rawOverview"></div>
@@ -71,7 +72,7 @@
                 <div class="plotAmpPha" id="autoflux-plot1D-ampPhase"></div>
                 <div class="plotIQ" id="autoflux-plot1D-IQ"></div>
             </div>
-        </div>
+        </div> -->
 
     </div>
     <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
