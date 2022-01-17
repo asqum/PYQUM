@@ -794,3 +794,17 @@ class Common_fitting():
 						self.fitResult[k]["error"][i] = perr[ki]
 
 
+class Autoflux():
+
+	def __init__( self, quantificationObj, *args,**kwargs ):
+
+		self.quantificationObj = quantificationObj
+
+		# Fit
+		self.fitCurve = {}
+		self.fitResult = {}
+
+		self._fitParameters = None
+		#self._init_fitResult()
+		
+		# self._init_fitCurve()
