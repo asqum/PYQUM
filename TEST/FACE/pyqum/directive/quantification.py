@@ -824,17 +824,16 @@ class Autoflux():
 		self.quantificationObj = quantificationObj
 
 		# Fit
-		self.real = []
-		self.imag = []
-
+		self.real, self.imag = [],[]
+		self.flux,self.freq,self.I,self.Q= [],[],[],[]
 
 	def do_analysis( self ):
 		xAxisKey = self.quantificationObj.xAxisKey
 		yAxisKey = self.quantificationObj.yAxisKey
 		self.x = self.quantificationObj.independentVars[xAxisKey]
 		self.y = self.quantificationObj.independentVars[yAxisKey]
-		self.real = self.quantificationObj.rawData["iqSignal"].real
-		self.imag = self.quantificationObj.rawData["iqSignal"].imag
+		self.i = self.quantificationObj.rawData["iqSignal"].real
+		self.q = self.quantificationObj.rawData["iqSignal"].imag
 		
 		#---------------changeable variable---------------
 		# x(ki) = g*g/delta
@@ -845,7 +844,10 @@ class Autoflux():
 		#---------------prepare data ---------------
 		df1=pd.DataFrame()
 		for j in range(len(self.x)):
-			df =pd.DataFrame({"Frequency":self.y,"Flux-Bias":self.x,"i":self.real,"q":self.imag}).sort_values(["Frequency","Flux-Bias"],ascending=True)
+			for i in range(len(self.y)):
+				self.flux.append(self.x[j]);self.freq.append(self.y[i])
+				self.I.append(self.i[i][j]);self.Q.append(self.q[i][j])
+			df =pd.DataFrame({"Frequency":self.freq,"Flux-Bias":self.flux,"i":self.I,"q":self.Q}).sort_values(["Frequency","Flux-Bias"],ascending=True)
 			port1 = notch_port(f_data=df["Frequency"].values,z_data_raw=df["i"]+1j*df["q"])
 			# port1.plotrawdata()
 			port1.autofit()
