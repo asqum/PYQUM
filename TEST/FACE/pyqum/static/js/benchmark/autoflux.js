@@ -3,13 +3,13 @@
 
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
-    CF_render_input("autoflux");
+    AF_render_input("autoflux");
     console.log( "Load autoflux" );
 
     let e_loadButton = document.getElementById("autoflux-button-load");
-    e_loadButton.addEventListener("click", load_data);
+    e_loadButton.addEventListener("click", AF_load_data);
     let e_fitButton = document.getElementById("autoflux-button-fit");
-    e_fitButton.addEventListener("click", fit_data);
+    e_fitButton.addEventListener("click", AF_fit_data);
     let e_plot1DButton = document.getElementById("autoflux-plot1D-button");
     e_plot1DButton.addEventListener("click", get_plot1D);
     let e_plot2DtButton = document.getElementById("autoflux-plot2D-button");
@@ -90,7 +90,7 @@ function get_autoflux_selectInfo( quantificationType ){
 }
 
 
-function CF_render_input ( quantificationType )
+function AF_render_input ( quantificationType )
 {
 
     $.ajaxSettings.async = false;
@@ -145,7 +145,7 @@ function CF_render_input ( quantificationType )
             let DOM_parameterPlotTypeSelector = document.createElement("select");
             DOM_parameterPlotTypeSelector.id = quantificationType+"-plot_type-"+parameterName;
             DOM_parameterPlotTypeSelector.setAttribute("class", "measureParaSelect plotTypeSelect");
-            DOM_parameterPlotTypeSelector.setAttribute("onchange", "CF_showAveInput(this)");
+            DOM_parameterPlotTypeSelector.setAttribute("onchange", "AF_showAveInput(this)");
             DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
 
             // Create plot selection
@@ -199,23 +199,16 @@ function CF_render_input ( quantificationType )
             DOM_parameterSetting.appendChild(DOM_parameterAve);
 
 
-            // Create x axis fitting input
-            // let DOM_parameterFit = document.createElement("input");
-            // DOM_parameterFit.id = quantificationType+"-fitting_input-"+parameterName;
-            // DOM_parameterFit.setAttribute("class", "measureParaSelect fitting_input");
-            // DOM_parameterFit.setAttribute("value", parameterValue[0]+","+parameterValue[parameterValue.length-1]);
-            // DOM_parameterFit.style.display = "none";
-            // DOM_parameterSetting.appendChild(DOM_parameterFit);
-            
+
         }
 
 
     }
-    // CF_creatDOM_FitDataType("all", "autoflux-allParamater");
+    // AF_creatDOM_FitDataType("all", "autoflux-allParamater");
     $.ajaxSettings.async = true;
 }
 
-function CF_showAveInput(selectObject) {
+function AF_showAveInput(selectObject) {
     let DOM_parameterSetting=selectObject.parentElement;
     console.log("showAveInput trigger by "+selectObject.id)
     let DOM_parameterAve = DOM_parameterSetting.getElementsByClassName("ave_value")[0];
@@ -247,9 +240,9 @@ function CF_showAveInput(selectObject) {
 
     }
 }
-function CF_creatDOM_FitDataType( fitFunc, parentID ){
+function AF_creatDOM_FitDataType( fitFunc, parentID ){
     // Creat select for parameter plot type
-    console.log( "CF_creatDOM_FitDataType" );
+    console.log( "AF_creatDOM_FitDataType" );
     let parentDOM = document.getElementById( parentID );
 
     let DOM_dataTypeSelector = document.createElement("select");
@@ -269,7 +262,7 @@ function CF_creatDOM_FitDataType( fitFunc, parentID ){
 }
 
 
-function load_data(){
+function AF_load_data(){
     console.log( "Get data" );
 
     $.ajaxSettings.async = false;
@@ -442,7 +435,7 @@ function get_plot1D(){
     $.ajaxSettings.async = true;
 }
 
-function fit_data(){
+function AF_fit_data(){
 
     // Plot fit parameters
     $.getJSON( '/benchmark/autoflux/getJson_fitParaPlot',{ }, function (data) {});

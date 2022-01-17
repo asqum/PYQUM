@@ -829,10 +829,12 @@ class Autoflux():
 
 
 	def do_analysis( self ):
-		self.x = self.quantificationObj.rawdata["x"]
-		self.y =self.quantificationObj.independentVars["yAxisKey"]
-		self.real = self.quantificationObj.rawdata["iqSignal"].real
-		self.imag = self.quantificationObj.rawdata["iqSignal"].imag
+		xAxisKey = self.quantificationObj.xAxisKey
+		yAxisKey = self.quantificationObj.yAxisKey
+		self.x = self.quantificationObj.independentVars[xAxisKey]
+		self.y = self.quantificationObj.independentVars[yAxisKey]
+		self.real = self.quantificationObj.rawData["iqSignal"].real
+		self.imag = self.quantificationObj.rawData["iqSignal"].imag
 		
 		#---------------changeable variable---------------
 		# x(ki) = g*g/delta
