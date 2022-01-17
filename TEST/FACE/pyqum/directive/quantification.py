@@ -828,7 +828,6 @@ class Autoflux():
 		self.real, self.imag = [],[]
 		self.flux,self.freq,self.I,self.Q= [],[],[],[]
 
-
 	def do_analysis( self ):
 		xAxisKey = self.quantificationObj.xAxisKey
 		yAxisKey = self.quantificationObj.yAxisKey
