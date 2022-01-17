@@ -803,8 +803,8 @@ def fit_sin(tt, yy):
 	'''Fit sin to the input time sequence, and return fitting parameters "amp", "omega", "phase", "offset", "freq", "period" and "fitfunc"'''
 	tt = array(tt)
 	yy = array(yy)
-	ff = fft.fftfreq(len(tt), (tt[1]-tt[0]))   # assume uniform spacing
-	Fyy = abs(fft.fft(yy))
+	ff = fftfreq(len(tt), (tt[1]-tt[0]))   # assume uniform spacing
+	Fyy = abs(fft(yy))
 	guess_freq = abs(ff[argmax(Fyy[1:])+1])   # excluding the zero frequency "peak", which is related to offset
 	guess_amp = std(yy) * 2.**0.5
 	guess_offset = mean(yy)
@@ -815,7 +815,8 @@ def fit_sin(tt, yy):
 	A, w, p, c = popt
 	f = w/(2.*pi)
 	fitfunc = lambda t: A * sin(w*t + p) + c
-	return {"amp": A, "omega": w, "phase": p, "offset": c, "freq": f, "period": 1./f, "fitfunc": fitfunc, "maxcov": max(pcov), "rawres": (guess,popt,pcov)}
+	output = {"amp": A, "omega": w, "phase": p, "offset": c, "freq": f, "period": 1./f, "fitfunc": fitfunc, "maxcov": max(pcov), "rawres": (guess,popt,pcov)}
+	return output
 
 class Autoflux():
 
@@ -862,6 +863,8 @@ class Autoflux():
 		valid.reset_index(inplace=True)
 
 		#---------------determine the sin_wave or arcsin_wave
+		print("Var:",valid.diff(periods=1, axis=0)['fr'].var())
+		print("ki :",max(valid['fr'])-min(valid['fr']))
 		if valid.diff(periods=1, axis=0)['fr'].var() >2.5*10**-5 and max(valid['fr'])-min(valid['fr'])>0.002 :twokind=1
 		elif valid.diff(periods=1, axis=0)['fr'].var() <2.5*10**-5 and max(valid['fr'])-min(valid['fr'])<0.002:twokind=0
 		else:raise ValueError('I do not know how')
@@ -885,6 +888,8 @@ class Autoflux():
 			valid_u.append(valid[(valid['fr']>fdress)&(valid['index']>last)&(valid['index']<max(self.x)*10**6)])
 			wave.append(count)
 			for i in range(len(valid_u)):
+				print(valid_u[i]['flux'])
+				print(valid_u[i]['fr'])
 				coef_u.append(polyfit(valid_u[i]['flux'],valid_u[i]['fr'],2))
 				poly_u.append(poly1d(coef_u[i]))
 				fit_u.append(polyval(coef_u[i],valid_u[i]['flux']))
@@ -895,8 +900,8 @@ class Autoflux():
 					x0_u.append(round(-0.5*coef_u[i][1]/coef_u[i][0],2))
 				else:
 					raise ValueError('Fail to fit.')
-
-			#---------------using Squeeze Theorem find the only one downward function between the minimum points of two upward function---------------
+		
+			#using Squeeze Theorem find the only one downward function between the minimum points of two upward function---------------
 			if len(x0_u)<2 and len(wave)<2:
 				raise ValueError('The data does not have enough points to find wavelength. Please add more point')
 
@@ -916,6 +921,8 @@ class Autoflux():
 					else:
 						pass
 			# print("cavity_range = ",cavity_range)
+			print(cavity_range)
+			print(len(cavity_range))
 			for i in range(len(cavity_range)):
 				valid_ca.append(valid[(valid['fr']<average(fd)-ki)&(valid['flux']>cavity_range[i][0])&(valid['flux']<cavity_range[i][1])])
 				coef_ca.append(polyfit(valid_ca[i]['flux'],valid_ca[i]['fr'],2))
