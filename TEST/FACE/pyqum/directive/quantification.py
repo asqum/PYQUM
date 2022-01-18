@@ -25,7 +25,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import linregress
 
 #from si_prefix import si_format, si_parse
-from numpy import cos, sin, pi, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var
+from numpy import cos, sin, pi, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var, transpose
 
 # Load instruments
 # Please Delete this line in another branch (to: @Jackie)
@@ -836,7 +836,7 @@ class Autoflux():
 		self.y = self.quantificationObj.independentVars[yAxisKey]
 		self.i = self.quantificationObj.rawData["iqSignal"].real
 		self.q = self.quantificationObj.rawData["iqSignal"].imag
-		
+		self.iq = transpose(self.quantificationObj.rawData["iqSignal"])
 		#---------------changeable variable---------------
 		# x(ki) = g*g/delta
 		self.ki = 0.003
@@ -847,15 +847,12 @@ class Autoflux():
 		#---------------prepare data ---------------
 		self.df1=pd.DataFrame()
 		for j in range(len(self.x)):
-			for i in range(len(self.y)):
-				self.flux.append(self.x[j]);self.freq.append(self.y[i])
-				self.I.append(self.i[i][j]);self.Q.append(self.q[i][j])
-			self.df =pd.DataFrame({"Frequency":self.freq,"Flux-Bias":self.flux,"i":self.I,"q":self.Q}).sort_values(["Frequency","Flux-Bias"],ascending=True)
-			self.port1 = notch_port(f_data=self.df["Frequency"].values,z_data_raw=self.df["i"]+1j*self.df["q"])
+			self.port1 = notch_port(f_data=self.y,z_data_raw=self.iq[j])
 			# port1.plotrawdata()
 			self.port1.autofit()
 			#     port1.plotall()
 			#     display(pd.DataFrame([port1.fitresults]).applymap(lambda x: "{0:.2e}".format(x)))
+			print(self.port1.fitresults)
 			self.df1 = self.df1.append(pd.DataFrame([self.port1.fitresults]), ignore_index = True)
 		self.df1.insert(loc=0, column='flux', value=self.x*10**6)
 
