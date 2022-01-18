@@ -4,9 +4,9 @@ import scipy.optimize as spopt
 from scipy.constants import hbar
 from scipy.interpolate import splrep, splev
 
-from tools.utilities import plotting, save_load, Watt2dBm, dBm2Watt
-from tools.circlefit import circlefit
-from tools.calibration import calibration
+from pyqum.directive.tools.utilities import plotting, save_load, Watt2dBm, dBm2Watt
+from pyqum.directive.tools.circlefit import circlefit
+from pyqum.directive.tools.calibration import calibration
 
 ##
 ## z_data_raw denotes the raw data

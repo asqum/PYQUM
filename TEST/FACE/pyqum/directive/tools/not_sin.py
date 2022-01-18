@@ -59,9 +59,10 @@ def output_cal(x,valid,ki,fdress,plot):
     # print("cavity_range = ",cavity_range)
     for i in range(len(cavity_range)):
         valid_ca.append(valid[(valid['fr']<np.average(fd)-ki)&(valid['flux']>cavity_range[i][0])&(valid['flux']<cavity_range[i][1])])
-        # print(np.average(fd)-ki)
-        # print(valid['fr'])
-        # print(valid['fr']<np.average(fd)-ki)
+        print(np.average(fd)-ki)
+        print(valid['fr'])
+        print(valid['fr']<np.average(fd)-ki)
+        print(valid_ca[i])
         coef_ca.append(np.polyfit(valid_ca[i]['flux'],valid_ca[i]['fr'],2))
         poly_ca.append(np.poly1d(coef_ca[i]))
         fit_ca.append(np.polyval(coef_ca[i],valid_ca[i]['flux']))
