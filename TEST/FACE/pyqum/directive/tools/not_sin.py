@@ -104,7 +104,7 @@ def output_cal(x,valid,ki,fdress,plot):
         plt.xlabel("Flux : uV/A")
         plt.ylabel("Freq : GHz")
         # plt.legend()
-        plt.show()
+        plt.savefig('/static/images/fitness.png')
     return float("{:.6f}".format(np.average(fc))),float("{:.6f}".format(np.average(fd))),x0_ca[0]
 
 def fit_sin(tt, yy):
@@ -137,8 +137,6 @@ def output_cal_sin(valid,plot):
     print("{:^16}".format("offset")+" = "+ "{:>8.4f}".format(float(res['offset']))+" GHz")
     print("{:^16}".format("Max. Covariance")+" = "+ "{:>8.4f}".format(float(res['maxcov'])))
     x = np.linspace(0,200,200)
-    plt.plot(x, res["fitfunc"](x), "r-", label="y fit curve", linewidth=2)
-    plt.scatter(valid['flux'],valid['fr'],color='black', marker='o',label='real')
     if plot ==1:
         #---------------plot the calculation conclusion---------------
         plt.rcParams["figure.figsize"] = [20,10]
@@ -149,5 +147,5 @@ def output_cal_sin(valid,plot):
         plt.xlabel("Flux : uV/A")
         plt.ylabel("Freq : GHz")
         # plt.legend()
-        plt.show()
+        plt.savefig('/static/images/fitness.png')
     return float("{:.6f}".format(fc)),float("{:.6f}".format(fd)),offset

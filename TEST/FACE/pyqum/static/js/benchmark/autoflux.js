@@ -14,6 +14,8 @@ $(document).ready(function(){
     e_plot1DButton.addEventListener("click", get_plot1D);
     let e_plot2DtButton = document.getElementById("autoflux-plot2D-button");
     e_plot2DtButton.addEventListener("click", get_plot2D);
+    let e_plottButton = document.getElementById("autoflux-button-plot");
+    e_plottButton.addEventListener("click", AF_plot_data);
 });
 
 function get_autoflux_selectInfo( quantificationType ){
@@ -441,4 +443,8 @@ function AF_fit_data(){
     $.getJSON( '/benchmark/autoflux/getJson_fitParaPlot',{ }, function (data) {});
 }
 
+function AF_plot_data(){
 
+    // Plot fit parameters
+    $.getJSON( '/benchmark/plot',{ }, function (data) {});
+}
