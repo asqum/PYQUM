@@ -88,6 +88,20 @@ class pulser:
             # 7. Cosine
 
             # 8. Hyperbolic
+            # 9. DRAG up
+            elif beat.split(',')[0].split('/')[0] == 'dgaussup':
+                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
+                else: sfactor = float(beat.split(',')[0].split('/')[1])
+                sigma = pulsewidth / sfactor
+                timeSigment = linspace(self.dt, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth
+                self.music[duration] = pulseheight / sigma**2 *timeSigment *exp(-(timeSigment/sigma)**2 / 2 )
+
+            elif beat.split(',')[0].split('/')[0] == 'dgaussdn':
+                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
+                else: sfactor = float(beat.split(',')[0].split('/')[1])
+                sigma = pulsewidth / sfactor
+                timeSigment = linspace( self.dt, pulsewidth, round(pulsewidth/self.dt))
+                self.music[duration] = pulseheight / sigma**2 *timeSigment *exp(-(timeSigment/sigma)**2 / 2 )
 
             else: print(Fore.RED + "UNRECOGNIZED PULSE-SHAPE. PLEASE CONSULT HELP.")
         
