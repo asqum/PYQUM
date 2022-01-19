@@ -744,7 +744,7 @@ def bdr():
         # 2. SHARED co-samples:
         shared_new_samples = [s['samplename'] for s in g.cosamples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
 
-        services = ['Sam', 'Same01', 'IDLE', 'DR-RFcable']
+        services = ['Sam', 'Same01', 'IDLE', 'DR-RFcable', '3SXQ-Al-Si-19-1']
         recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + services
         loaded = len(recent_samples) - len(services)
 
