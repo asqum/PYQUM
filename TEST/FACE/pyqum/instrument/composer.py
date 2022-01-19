@@ -63,22 +63,57 @@ class pulser:
             # 1. Constant Flat Line:
             if beat.split(',')[0].split('/')[0] == 'flat':
                 self.music[duration] = pulseheight
-                
-            # 2. Gaussian Up from zero:
+
+            # Gaussian
+            # 2.0 complete:
+            elif beat.split(',')[0].split('/')[0] == 'gauss':
+                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
+                else: sfactor = float(beat.split(',')[0].split('/')[1])
+                sigma = pulsewidth / sfactor/2
+                timeSegment = linspace(self.dt -pulsewidth/2, pulsewidth/2, round(pulsewidth/self.dt))
+                self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2 / 2 )
+
+            # 2.1 raising from zero:
             elif beat.split(',')[0].split('/')[0] == 'gaussup':
                 if beat.split(',')[0].split('/')[1] == '': sfactor = 6
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor
-                self.music[duration] = pulseheight * exp(-power((linspace(self.dt, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth), 2) / 2 / (sigma**2))
+                timeSegment = linspace(self.dt, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth
+                self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2/2 )
 
-            # 3. Gaussian Down to zero:
+            # 2.2 falling to zero:
             elif beat.split(',')[0].split('/')[0] == 'gaussdn':
                 if beat.split(',')[0].split('/')[1] == '': sfactor = 6
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor
-                self.music[duration] = pulseheight * exp(-power((linspace(pulsewidth, self.dt, round(pulsewidth/self.dt)) - pulsewidth), 2) / 2 / (sigma**2))
+                timeSegment = linspace( self.dt, pulsewidth, round(pulsewidth/self.dt))
+                self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2/2 )
 
             # PENDING: BUILD CONNECTORS: require the knowledge of the last height
+
+            # 3 Derivative Gaussian
+            # 3.0
+            elif beat.split(',')[0].split('/')[0] == 'dgauss':
+                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
+                else: sfactor = float(beat.split(',')[0].split('/')[1])
+                sigma = pulsewidth / sfactor/2
+                timeSegment = linspace(self.dt -pulsewidth/2, pulsewidth/2, round(pulsewidth/self.dt))
+                self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
+            
+            # 3.1 DRAG up
+            elif beat.split(',')[0].split('/')[0] == 'dgaussup':
+                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
+                else: sfactor = float(beat.split(',')[0].split('/')[1])
+                sigma = pulsewidth / sfactor
+                timeSegment = linspace(self.dt, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth
+                self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
+            # 3.2 DRAG dn
+            elif beat.split(',')[0].split('/')[0] == 'dgaussdn':
+                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
+                else: sfactor = float(beat.split(',')[0].split('/')[1])
+                sigma = pulsewidth / sfactor
+                timeSegment = linspace( self.dt, pulsewidth, round(pulsewidth/self.dt))
+                self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
             # 4. Linear connector: 
 
             # 5. Gaussian connector:
@@ -88,21 +123,6 @@ class pulser:
             # 7. Cosine
 
             # 8. Hyperbolic
-            # 9. DRAG up
-            elif beat.split(',')[0].split('/')[0] == 'dgaussup':
-                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
-                else: sfactor = float(beat.split(',')[0].split('/')[1])
-                sigma = pulsewidth / sfactor
-                timeSigment = linspace(self.dt, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth
-                self.music[duration] = -pulseheight / sigma**2 *timeSigment *exp(-(timeSigment/sigma)**2 / 2 )
-            # 10. DRAG dn
-            elif beat.split(',')[0].split('/')[0] == 'dgaussdn':
-                if beat.split(',')[0].split('/')[1] == '': sfactor = 6
-                else: sfactor = float(beat.split(',')[0].split('/')[1])
-                sigma = pulsewidth / sfactor
-                timeSigment = linspace( self.dt, pulsewidth, round(pulsewidth/self.dt))
-                self.music[duration] = -pulseheight / sigma**2 *timeSigment *exp(-(timeSigment/sigma)**2 / 2 )
-
             else: print(Fore.RED + "UNRECOGNIZED PULSE-SHAPE. PLEASE CONSULT HELP.")
         
         # 2. Envelope before IF-Mixing:
