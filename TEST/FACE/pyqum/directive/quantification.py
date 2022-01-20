@@ -840,8 +840,8 @@ class Autoflux():
 		#---------------changeable variable---------------
 		# x(ki) = g*g/delta
 		self.ki = 0.003
-		self.fdress = 8.125
-		self.plot = 0
+		self.fdress = 8.1248
+		self.plot = 1
 		self.mat = 1
 
 		#---------------prepare data ---------------
@@ -852,7 +852,7 @@ class Autoflux():
 			self.port1.autofit()
 			#     port1.plotall()
 			#     display(pd.DataFrame([port1.fitresults]).applymap(lambda x: "{0:.2e}".format(x)))
-			print(self.port1.fitresults)
+			# print(self.port1.fitresults)
 			self.df1 = self.df1.append(pd.DataFrame([self.port1.fitresults]), ignore_index = True)
 		self.df1.insert(loc=0, column='flux', value=self.x*10**6)
 

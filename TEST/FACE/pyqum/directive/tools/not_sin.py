@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import r2_score
 from scipy import optimize
+from datetime import datetime
+import warnings  
+warnings.filterwarnings("ignore")  
 #---------------define function---------------
 def fit_plot(i,ax,coef):return coef[0]*ax*ax+coef[1]*ax+coef[2]
 
@@ -59,10 +62,10 @@ def output_cal(x,valid,ki,fdress,plot):
     # print("cavity_range = ",cavity_range)
     for i in range(len(cavity_range)):
         valid_ca.append(valid[(valid['fr']<np.average(fd)-ki)&(valid['flux']>cavity_range[i][0])&(valid['flux']<cavity_range[i][1])])
-        print(np.average(fd)-ki)
-        print(valid['fr'])
-        print(valid['fr']<np.average(fd)-ki)
-        print(valid_ca[i])
+        # print(np.average(fd)-ki)
+        # print(valid['fr'])
+        # print(valid['fr']<np.average(fd)-ki)
+        # print(valid_ca[i])
         coef_ca.append(np.polyfit(valid_ca[i]['flux'],valid_ca[i]['fr'],2))
         poly_ca.append(np.poly1d(coef_ca[i]))
         fit_ca.append(np.polyval(coef_ca[i],valid_ca[i]['flux']))
@@ -84,6 +87,7 @@ def output_cal(x,valid,ki,fdress,plot):
     print("-"*44)
     for i in range(len(cavity_range)):
         print("{:^14.2f}".format(x0_ca[i])+"|"+"{:^14.4f}".format(poly_ca[i](x0_ca[i]))+"|"+"{:^14.4f}".format(min(valid_ca[i]['fr'])))
+    
 
     if plot ==1:
         #---------------plot the calculation conclusion---------------
@@ -99,12 +103,12 @@ def output_cal(x,valid,ki,fdress,plot):
             plt.plot(ax_ca[i],fit_plot(i,ax_ca[i],coef_ca[i]),'g')
             plt.plot([x0_ca[i]]*5,np.linspace(min(valid_ca[i]['fr'])-.0125,max(valid_ca[i]['fr'])+.0125,5),'r--')
             
-        title2 = "avg_fc : "+ "{:.4f}".format(np.average(fc)) +" GHz ; avg_r2_score = "+"{:.2f}".format(np.average(r2_ca)*100)+"%"
+        title2 = "avg_fc : "+ "{:.4f}".format(np.average(fc)) +" GHz ; avg_r2_score = "+"{:.2f}".format(np.average(r2_ca)*100)+"%"+" ;   " +datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
         plt.title(title2)
         plt.xlabel("Flux : uV/A")
         plt.ylabel("Freq : GHz")
         # plt.legend()
-        plt.savefig('/static/images/fitness.png')
+        plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
     return float("{:.6f}".format(np.average(fc))),float("{:.6f}".format(np.average(fd))),x0_ca[0]
 
 def fit_sin(tt, yy):
@@ -137,15 +141,16 @@ def output_cal_sin(valid,plot):
     print("{:^16}".format("offset")+" = "+ "{:>8.4f}".format(float(res['offset']))+" GHz")
     print("{:^16}".format("Max. Covariance")+" = "+ "{:>8.4f}".format(float(res['maxcov'])))
     x = np.linspace(0,200,200)
+    
     if plot ==1:
         #---------------plot the calculation conclusion---------------
         plt.rcParams["figure.figsize"] = [20,10]
         plt.scatter(valid['flux'],valid['fr'],color='black', marker='o',label='real')
         plt.plot(x, res["fitfunc"](x), "r-", label="y fit curve", linewidth=2)
-        title2 = "fc : "+ "{:.4f}".format(fc) +" GHz ; max_convariance = "+"{:.4f}".format(float(res['maxcov']))
+        title2 = "fc : "+ "{:.4f}".format(fc) +" GHz ; max_convariance = "+"{:.4f}".format(float(res['maxcov']))+" ;  " +datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
         plt.title(title2)
         plt.xlabel("Flux : uV/A")
         plt.ylabel("Freq : GHz")
         # plt.legend()
-        plt.savefig('/static/images/fitness.png')
+        plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
     return float("{:.6f}".format(fc)),float("{:.6f}".format(fd)),offset

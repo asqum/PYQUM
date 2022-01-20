@@ -97,7 +97,7 @@ def autoflux():
 
 @bp.route('/plot', methods=['POST', 'GET'])
 def plot():
-	return render_template("blog/benchmark/plot.html", url ='/static/images/fitness.png')
+	return render_template("blog/benchmark/plot.html", url ='fitness.png')
 
 @bp.route('/benchmark_getMeasurement', methods=['POST', 'GET'])
 def benchmark_getMeasurement():
