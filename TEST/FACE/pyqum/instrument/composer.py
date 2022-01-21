@@ -71,7 +71,8 @@ class pulser:
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor/2
                 timeSegment = linspace(self.dt -pulsewidth/2, pulsewidth/2, round(pulsewidth/self.dt))
-                self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2 / 2 )
+                try: self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2 / 2 )
+                except(ZeroDivisionError): print(Fore.RED + "Skipping zero division")
 
             # 2.1 raising from zero:
             elif beat.split(',')[0].split('/')[0] == 'gaussup':
@@ -79,7 +80,8 @@ class pulser:
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor
                 timeSegment = linspace(self.dt, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth
-                self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2/2 )
+                try: self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2/2 )
+                except(ZeroDivisionError): print(Fore.RED + "Skipping zero division")
 
             # 2.2 falling to zero:
             elif beat.split(',')[0].split('/')[0] == 'gaussdn':
@@ -87,7 +89,8 @@ class pulser:
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor
                 timeSegment = linspace( self.dt, pulsewidth, round(pulsewidth/self.dt))
-                self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2/2 )
+                try: self.music[duration] = pulseheight * exp(-(timeSegment/sigma)**2/2 )
+                except(ZeroDivisionError): print(Fore.RED + "Skipping zero division")
 
             # PENDING: BUILD CONNECTORS: require the knowledge of the last height
 
@@ -98,7 +101,8 @@ class pulser:
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor/2
                 timeSegment = linspace(self.dt -pulsewidth/2, pulsewidth/2, round(pulsewidth/self.dt))
-                self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
+                try: self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
+                except(ZeroDivisionError): print(Fore.RED + "Skipping zero division")
             
             # 3.1 DRAG up
             elif beat.split(',')[0].split('/')[0] == 'dgaussup':
@@ -106,14 +110,16 @@ class pulser:
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor
                 timeSegment = linspace(self.dt, pulsewidth, round(pulsewidth/self.dt)) - pulsewidth
-                self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
+                try: self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
+                except(ZeroDivisionError): print(Fore.RED + "Skipping zero division")
             # 3.2 DRAG dn
             elif beat.split(',')[0].split('/')[0] == 'dgaussdn':
                 if beat.split(',')[0].split('/')[1] == '': sfactor = 6
                 else: sfactor = float(beat.split(',')[0].split('/')[1])
                 sigma = pulsewidth / sfactor
                 timeSegment = linspace( self.dt, pulsewidth, round(pulsewidth/self.dt))
-                self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
+                try: self.music[duration] = -pulseheight / sigma**2 *timeSegment *exp(-(timeSegment/sigma)**2 / 2 )
+                except(ZeroDivisionError): print(Fore.RED + "Skipping zero division")
             # 4. Linear connector: 
 
             # 5. Gaussian connector:

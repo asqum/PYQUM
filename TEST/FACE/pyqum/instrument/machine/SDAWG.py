@@ -299,7 +299,8 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
     return module
 
 # Dedicated for DC-sweep:
-def output(module, state):
+def output(module, state, channel=''):
+    '''dummy channel to get along with the SRSDC.'''
     if state:
         for i in range(4): offset(module, i+1, 0) # zero ALL 4 channels
         ready(module, [1,2,3,4]) # open ALL 4 channels
