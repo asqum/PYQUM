@@ -1,4 +1,3 @@
-
 # Numpy
 # 
 from numpy import linspace, arange
@@ -7,14 +6,8 @@ from numpy import exp
 # Numpy constant
 from numpy import pi
 
-class Qubit():
-    
-    def __init__ (self):
+from pyqum.directive.qubit_prop import Qubit
 
-        self.qubitFreq = 0
-        self.drivingPower = 0
-        self.couplingStrength = 10
-        self.anharmonicity = -100 #MHz w12 -w01
 def gaussianFunc (t, p):
     # p[0]: amp
     # p[1]: sigma
@@ -25,13 +18,56 @@ def derivativeGaussianFunc (t, p):
     # p[1]: sigma
     # p[2]: peak position
     return -p[0] / p[1]**2 *(t-p[2]) *exp( -( (t-p[2]) /p[1] )**2 /2)
-class Gate():
 
-    def __init__( self, qubit, startPt, operationPts, timeResolution =1.0):
+# class QuantumCircuit():
+#     def __init__( self, qubits, sample=None ):
+
+#         self.qubits = qubits
+
+#     def set_QubitRegister():
+def arbXYGate( p ):
+    theta, phi = p
+    pulseInfo = {
+        "envelope": {
+            "shape": 'gaussian',
+            "paras": [theta/pi,0.25],
+            },
+        "phase": phi,
+    }
+    return pulseInfo
+def xGate():
+    pulseInfo = {
+        "phase": 0,
+    }
+    return pulseInfo
+class OperationSequence():
+
+    def __init__( self, qubit, timeResolution =1.0):
+
+        self.qubit = qubit
+        self.gate = []
+        self.unitGateTime = 20
+        self.OperationSequenceTime = 0
+
+    def set_gates( self, gates ):
+
+        for op in gates:
+            pulseType = {
+                'x': (1,0),
+                'y': (1,pi/2),
+            } 
+            pulseInfo = arbXYGate(pulseType[op])
+            sqo = SingleQOperation(self.qubit, self.OperationSequenceTime, self.unitGateTime, pulseInfo)
+            self.OperationSequenceTime += self.unitGateTime
+
+
+class SingleQOperation():
+
+    def __init__( self, qubit, startTime, operationTime, pulseInfo):
 
         # pt = point
-        self.startPt = 0
-        self.operationPts = 20
+        self.startTime = startTime
+        self.operationTime = operationTime
 
         self.timeResolution = 0.5 #ns/sample
         self.pulseInfo = {
@@ -40,15 +76,16 @@ class Gate():
                 "shape": 'gaussian',
                 "paras": [1,0.25],
             },
-            "phase": pi/2 ,
+            "phase": 0,
         }
+        self.pulseInfo.update(pulseInfo)
 
     def cal_controlPulse( self ):
 
-        relativeTime = arange(self.operationPts) *self.timeResolution
-        absoluteTime = relativeTime +self.startPt *self.timeResolution
+        relativeTime = iinspace(0,self.operationTime,endpoint=False)
+        absoluteTime = relativeTime +self.startTime
 
-        operationTime = self.operationPts *self.timeResolution
+        operationTime = self.operationTime
         def get_gaussian():
             centerTime = operationTime /2
             amp = self.pulseInfo["envelope"]["paras"][0]/self.pulseInfo["qubit"].couplingStrength
@@ -80,9 +117,15 @@ class Gate():
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    Q=Qubit()
-    print("init")
-    A = Gate(Q,0,100)
+    print("init Q")
+    Q = Qubit()
+
+    print("init OS")
+    OP = OperationSequence(Q)
+
+    print("set gate")
+    OP.set_gates(['x','x'])
+
     print("cal_controlPulse")
     B= A.cal_controlPulse()
         
@@ -93,8 +136,5 @@ if __name__ == "__main__":
     plt.plot(B["y"].real, B["y"].imag)
 
     plt.show()
-
-
-
 
 
