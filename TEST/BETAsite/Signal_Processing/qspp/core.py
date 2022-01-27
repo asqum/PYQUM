@@ -58,7 +58,7 @@ class Signal_sampling(object):
         f_points = data_points//2
         faxis = spfft.fftfreq(data_points,self.dt)[0:f_points]
 
-        vector = spfft(self.signal[channel][region_index[0]:region_index[1]])[0:f_points]/self.row_number
+        vector = spfft.fft(self.signal[channel][region_index[0]:region_index[1]])[0:f_points]/self.row_number
         power = abs(vector)
         phase = np.angle(vector)
         return faxis, power, phase
@@ -85,7 +85,7 @@ class HybridCoupler90():
         self._quadrature_err_phase = phase     
 
 class Mixer():
-    def __init__( self, bias=(0,0), *args, **kwargs ):
+    def __init__( self, bias=0, *args, **kwargs ):
         super().__init__(  *args, **kwargs )
         # Mixer property
         self._bias_err = bias # I/Q bias error
@@ -100,7 +100,7 @@ class IQMixer():
     def __init__( self, err_amp=1, err_phase=0, bias=(0,0) ):
         # IQ mixer property
         super().__init__( )
-        self._mixer = Mixer(bias)
+        self._mixer = [Mixer(bias[0]),Mixer(bias[1])]
         self._hybridCoupler = HybridCoupler90(err_amp,err_phase)
 
     @property    
