@@ -11,9 +11,7 @@
     <form method="GET">
 
       <div class="row">
-        <div class="col-35 samples" id='left'>
-          <label for="sample" id='registered'></label>
-        </div>
+        <div class="col-35 samples" id='left'><label for="sample" id='registered'></label></div>
       </div>
         
       <div class="row">
@@ -29,7 +27,7 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-10" id='left'>
+        <div class="col-20" id='left'>
           <select class="samples" id="co-samples" name="shared">
             <option value=0> -shared- </option>
             {% for s in cosamples %}
@@ -42,33 +40,34 @@
           </select>
         </div>
 
+        <div class="col-10" id='left'>
+          <select class='user-samples' id="update" name='level' type="text">
+            <option value=1>Test</option>
+            <option value=2>Training</option>
+            <option value=3>Hero (QPU)</option>
+          </select>
+        </div>
         <div class="col-10" id='left'><button class="user-samples push_button w-95 green" id="samples-add">ADD NEW</button></div>
-        <!-- pending: auto-remove any sample-folder that is empty for >30 days -->
+        <div class="col-10" id='left'><button class="user-samples push_button w-95 blue" id="samples-forward">FORWARD</button></div>
+        <!-- PENDING: auto-remove any sample-folder that is empty for >30 days -->
 
       </div>
 
       <div class="row">
         <div class="row label">
-          <div class="col-15" id='left'><label>D.O.B</label></div>
-          <div class="col-43" id='left'><label>Location</label></div>
+          <div class="col-15" id='left'><label>Location / Place & Route</label></div>
         </div>
         <div class="row">
-          <div class="col-15" id='left'><input class='user-samples' id="update" name='dob' type="text" value=""/></div>
-          <div class="col-43" id='left'><input class='user-samples' id="update" name='loc' type="text" value=""/></div>
+          <div class="col-75" id='left'>
+            <textarea class="user-samples" id='update' name="loc" type="text" rows="3" cols="73"></textarea>
+          </div>
         </div>
 
         <div class="row label">
-          <div class="col-60" id='left'><label>Shared with</label></div>
+          <div class="col-75" id='left'><label>Shared with</label></div>
         </div>
         <div class="row">
-          <div class="col-60" id='left'><input class='user-samples' id="update" name='coauthors' type="text" value=""/></div>
-        </div>
-
-        <div class="row label">
-          <div class="col-75" id='left'><label>Previously:</label></div>
-        </div>
-        <div class="row">
-            <div class="col-75" id='left'><input class='user-samples' id="update" name='prev' type="text" value=""/></div>
+          <div class="col-75" id='left'><input class='user-samples' id="update" name='coauthors' type="text" value=""/></div>
         </div>
 
         <div class="row label">
@@ -88,6 +87,16 @@
               <textarea class='user-samples' id="update" name="history" type="text" rows="3" cols="73"></textarea>
           </div>
         </div>
+
+        <div class="row label">
+          <div class="col-15" id='left'><label>Specifications</label></div>
+        </div>
+        <div class="row">
+          <div class="col-75" id='left'>
+            <textarea class="user-samples" id='update' name="specs" type="text" rows="3" cols="73"></textarea>
+          </div>
+        </div>
+        
       </div>
 
       <div class="row">
@@ -111,20 +120,25 @@
                   <div class="modal-content">
                       <div class="row label">
                         <div class="col-22" id='left'><label>Name</label></div>
-                        <div class="col-15" id='left'><label>D.O.B</label></div>
-                        <div class="col-35" id='left'><label>Location</label></div>
                       </div>
                       <div class="row">
                         <div class="col-22" id='left'><input class='user-samples' id="register" name='sname' type="text" value=""/></div>
-                        <div class="col-15" id='left'><input class='user-samples' id="register" name='dob' type="text" value=""/></div>
-                        <div class="col-35" id='left'><input class='user-samples' id="register" name='loc' type="text" value=""/></div>
+                        <div class="col-10" id='left'>
+                          <select class='user-samples' id="register" name='level' type="text">
+                            <option value=1 selected>Test</option>
+                            <option value=2>Training</option>
+                            <option value=3>Hero (QPU)</option>
+                          </select>
+                        </div>
                       </div>
 
                       <div class="row label">
-                        <div class="col-75" id='left'><label>Previously:</label></div>
+                        <div class="col-75" id='left'><label>Location / Place & Route:</label></div>
                       </div>
                       <div class="row">
-                          <div class="col-75" id='left'><input class='user-samples' id="register" name='prev' type="text" value=""/></div>
+                        <div class="col-75" id='left'>
+                            <textarea class='user-samples' id="register" name="loc" type="text" rows="3" cols="73">--use Location Address Convention (LAC)--</textarea>
+                        </div>
                       </div>
 
                       <div class="row label">

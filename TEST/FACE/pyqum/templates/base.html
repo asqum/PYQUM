@@ -1,14 +1,17 @@
 <!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/util.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/button.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='fa/css/v4-shims.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui/jquery-ui.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/util.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/button.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='fa/css/v4-shims.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='ui/jquery-ui.min.css') }}" />
+
+<!-- For freezing table's columns and rows: -->
+<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/ScrollTabla.css') }}" media="screen" /> -->
 
 <head>
     <script type="text/x-mathjax-config">
@@ -37,6 +40,10 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/plotly-latest.min.js') }}"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_HTMLorMML-full"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/base.js') }}"></script>
+
+    <!-- For freezing table's columns and rows: -->
+    <!-- <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.CongelarFilaColumna.js') }}"></script> -->
+
     {% block head %}{% endblock %}
 </head>
 
