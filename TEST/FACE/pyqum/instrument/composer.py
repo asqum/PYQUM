@@ -150,7 +150,7 @@ class pulser:
                 sigma = pulsewidth /(sfactor*2)
                 p = [pulseheight, sigma, 0]
                 qosp = [pulseheight, -1/(sfactor*2)]
-                op.purePulse(qosp, shape='degaussian_half')
+                op.purePulse(qosp, shape='degaussian')
                 self.operationList.append(op)
                 return qos.derivativeGaussianFunc(timeSegment,p)
             
@@ -173,7 +173,7 @@ class pulser:
                 sigma = pulsewidth /sfactor
                 p = [pulseheight, sigma, 0]
                 qosp = [pulseheight, -1/sfactor]
-                op.purePulse(qosp, shape='degaussian')
+                op.purePulse(qosp, shape='degaussian_half')
                 self.operationList.append(op)
                 return qos.derivativeGaussianFunc(timeSegment,p)
             # PENDING: BUILD CONNECTORS: require the knowledge of the last height
@@ -243,8 +243,8 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    pr = pulser(dt=1.,score='ns=100,mhz=I/-0/; Flat/,10,0; dGaussup/,20,1; Flat/,10,0; dGauss/,20,; Flat/,10,0; dGaussdn/,20,0; ',clock_multiples=1)
-    #print(pr.score)
+    pr = pulser(dt=1.,score='ns=100,mhz=I/-0/; Flat/,10,0; dGaussup/,20,1; Flat/,10,0; dGauss/,20,1; Flat/,10,0; dGaussdn/,20,1; ',clock_multiples=1)
+    print(pr.score)
     IFsignal = pr.song()
     timeAxis = linspace(0,pr.dt*len(IFsignal),len(IFsignal), endpoint=False)
     #print(pr.operationSeq.sequencePts)
