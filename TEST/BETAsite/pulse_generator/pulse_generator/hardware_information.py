@@ -37,7 +37,10 @@ class Qubit():
 class IQMixerChannel():
 
     def __init__ (self):
-        self.ID = "CH1"
+        self.ID = {
+            "I":"CH1",
+            "Q":"CH2",
+            }
         self.ifFreq = 91. # MHz
         self.ampBalance = 1. # I/Q amp ratio compensation for SSB
         self.offset = (0.,0.)

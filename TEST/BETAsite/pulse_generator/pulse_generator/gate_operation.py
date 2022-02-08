@@ -29,8 +29,8 @@ def constFunc (t, p):
 #     def set_QubitRegister():
 
 class Operation():
-    def __init__( self, time, functionName):
-        self.functionName = functionName
+    def __init__( self, time ):
+        # self.functionName = functionName
         self.time = time
         self.operationPts = 0 # AWG length
         self.operationStartPt = 0 # Start Index
@@ -41,12 +41,17 @@ class Operation():
             },
             "phase": 0,
         }
-
-    def arbXYGate( self, p ):
+        self.timeResolution = 1.
+        self.waveform ={
+            "t0": 0.,
+            "dt": self.timeResolution,
+            "data": array([])            
+        }
+    def arbXYGate( self, p, shape='DRAG' ):
         theta, phi = p
         pulseInfo = {
             "envelope": {
-                "shape": 'DRAG',
+                "shape": shape,
                 "paras": [theta/pi,0.25],
                 },
             "phase": phi,
@@ -62,16 +67,114 @@ class Operation():
             "phase": 0,
             }
         return self.pulseInfo.update(pulseInfo)
-    def gaussPulse( self, p ):
-        amplitude, sfactor = p
+
+    def purePulse( self, p, shape='gaussian' ):
         pulseInfo = {
             "envelope": {
-                "shape": 'gaussian',
-                "paras": [amplitude, 1/sfactor],
+                "shape": shape,
+                "paras": p,
             },
             "phase": 0,
             }
-        return pulseInfo 
+        return self.pulseInfo.update(pulseInfo)
+
+    def generate_envelope( self, dt, startTime, hardwareInfo ):
+        self.timeResolution = dt
+        self.operationPts = int(self.time//self.timeResolution)
+        self.waveform["data"] = zeros( self.operationPts )
+        self.waveform["t0"] = startTime
+        self.waveform["dt"] = self.timeResolution
+        relativeTime = linspace(0,self.time,self.operationPts,endpoint=False)
+        
+        amp = self.pulseInfo["envelope"]["paras"][0]/hardwareInfo.InputPort.couplingStrength
+
+        def get_gaussian():
+            centerTime = self.time /2
+            sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
+            p = [amp, sigma, centerTime]
+            wfData = gaussianFunc( relativeTime, p )+ 0j
+            return wfData
+
+        def get_halfGaussian():
+            sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
+            centerTime = 0
+            
+            if sigma > 0:
+                centerTime = self.time
+            p = [amp, sigma, centerTime]
+            wfData = gaussianFunc( relativeTime, p )+ 0j
+            return wfData
+
+        def get_degaussian():
+            centerTime = self.time /2
+            sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
+            p = [amp, sigma, centerTime]
+            wfData = derivativeGaussianFunc( relativeTime, p )+ 0j
+            return wfData
+
+        def get_halfDeGaussian():
+            sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
+            centerTime = 0
+            
+            if sigma > 0:
+                centerTime = self.time
+            p = [amp, sigma, centerTime]
+            wfData = derivativeGaussianFunc( relativeTime, p )+ 0j
+            return wfData
+
+        def get_DRAG():
+            centerTime = self.operationPts *self.timeResolution /2
+            amp = self.pulseInfo["envelope"]["paras"][0] /hardwareInfo.InputPort.couplingStrength
+            sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
+
+            pGau = [ amp, sigma, centerTime ]
+
+            ampDGau = amp 
+            pDGau = [ ampDGau, sigma, centerTime ]
+            wfData = gaussianFunc(relativeTime, pGau )+ -1j/(hardwareInfo.Qubit.anharmonicity/1e3) *derivativeGaussianFunc(relativeTime, pDGau)
+
+            return wfData
+        def get_const():
+            amp = self.pulseInfo["envelope"]["paras"][0]/hardwareInfo.InputPort.couplingStrength
+            p = [ amp ]
+
+            wfData = constFunc( relativeTime, p )
+
+            return wfData
+        pulse = {
+            'gaussian': get_gaussian,
+            'gaussian_half': get_halfGaussian,
+            'degaussian': get_degaussian,
+            'degaussian_half': get_halfDeGaussian,
+            'gaussian_half': get_halfGaussian,
+            'DRAG': get_DRAG,
+            'const': get_const,
+        }
+        self.waveform["data"]= pulse[self.pulseInfo["envelope"]["shape"]]() *exp(1j*self.pulseInfo["phase"])
+        #print(self.waveform)
+        return self.waveform
+
+    def convert_XYtoIQ( self, hardwareInfo ):
+        
+        phaseBalance = hardwareInfo.IQMixerChannel.phaseBalance
+        ampBalance  = hardwareInfo.IQMixerChannel.ampBalance
+        (offsetI, offsetQ) = hardwareInfo.IQMixerChannel.offset
+        XYcontrol = self.waveform["data"]
+        absoluteTime = get_timeAxis(self.waveform)
+        if_freq = hardwareInfo.IQMixerChannel.ifFreq/1e3 # to GHz
+        #print(if_freq)
+        inverse = sign(sin(radians(phaseBalance)))
+        #print(phaseBalance, ampBalance, (offsetI, offsetQ), inverse, cos(radians(abs(phaseBalance)-90)))
+        A = abs( XYcontrol )
+        phi = arctan2( XYcontrol.imag, XYcontrol.real )
+        A1 = A / cos(radians(abs(phaseBalance)-90))
+        A2 = A1 / ampBalance
+        phiQ = -phi+inverse*pi/2.
+        sigI = A1 *cos( 2. *pi *if_freq *absoluteTime +phiQ +radians(phaseBalance) +pi) -offsetI
+        sigQ = A2 *cos( 2. *pi *if_freq *absoluteTime +phiQ) -offsetQ
+        self.waveform["data"] = sigI+ 1j*sigQ
+        return self.waveform
+
 class OperationSequence():
 
     def __init__( self, sequenceTime, hardwareInfo=phyCh.HardwareInfo ):
@@ -80,8 +183,10 @@ class OperationSequence():
         dt = self.hardwareInfo.timeResolution
         self.operation = []
         self.sequenceTime = sequenceTime # ns
+        self.sequencePts = int(-(sequenceTime//-dt))
+        print("sequenceTime",sequenceTime)
+        print("sequencePts",self.sequencePts)
 
-        self.sequencePts = int(sequenceTime//dt)
         self.xywaveform = {
             "t0": 0.,
             "dt": dt,
@@ -98,17 +203,19 @@ class OperationSequence():
         self.operation = operation
         endPt = int(0)
         for i, op in enumerate(self.operation) :
-            operationPts = int(op.time//dt)
-
+            operationPts = int(-(op.time//-dt))
             op.operationPts = operationPts
             op.operationStartPt = endPt
             # Reset operation time
             op.time = operationPts*dt
-            
+
+            print("start point",op.operationStartPt)
+            print("op point",operationPts)
+
             endPt += operationPts
 
         if endPt < self.sequencePts:
-            op = Operation(((self.sequencePts-endPt)*dt),"idle")
+            op = Operation(((self.sequencePts-endPt)*dt))
             op.idle([0])
             self.operation.append(op)
             print("Operation sequence haven't full")
@@ -125,22 +232,16 @@ class OperationSequence():
         allXYPulse = array([])
         allIQPulse = array([])
         dt = self.hardwareInfo.timeResolution
-        mPulse = IFPulse(hardwareInfo=self.hardwareInfo)
         t0 = self.operation[0].time
         for op in self.operation:
-            
-            mPulse.startTime = op.operationStartPt*dt-t0
-            mPulse.operationTime = op.time
-
-            mPulse.pulseInfo.update(op.pulseInfo)
-            newPulse = mPulse.generate_envelope()["data"]
+            newPulse = op.generate_envelope( dt, t0, self.hardwareInfo )["data"]
             allXYPulse = append(allXYPulse, newPulse)
 
-            newPulse = mPulse.convert_XYtoIQ()["data"]
+            newPulse = op.convert_XYtoIQ( self.hardwareInfo )["data"]
             allIQPulse = append(allIQPulse, newPulse)
 
             self.sequencePts += len(newPulse)
-            print(len(newPulse))
+            #print(len(newPulse))
 
         self.xywaveform.update({"data":allXYPulse})
         self.iqwaveform.update({"data":allIQPulse})
@@ -152,95 +253,11 @@ def get_timeAxis( waveform ):
     #print(waveform["t0"], waveform["dt"], dataPts)
     return linspace( waveform["t0"], waveform["t0"]+waveform["dt"]*dataPts, dataPts, endpoint=False)
 
-class IFPulse():
 
-    def __init__( self, startTime=None, operationTime=None, hardwareInfo=None, pulseInfo=None):
 
-        # pt = point 
-        self.startTime = startTime
-        self.operationTime = operationTime
-        self.timeResolution = hardwareInfo.timeResolution # ns/sample
-        self.operationPts = 0
-        self.hardwareInfo = hardwareInfo
-        if pulseInfo == None :
-            self.pulseInfo = {
-                "envelope": {
-                    "shape": 'gaussian',
-                    "paras": [1,0.25],
-                },
-                "phase": 0,
-            }
-        self.waveform = {
-            "t0": startTime,
-            "dt": hardwareInfo.timeResolution,
-            "data": array([])            
-        }
-        #self.pulseInfo.update(pulseInfo)
 
-    def generate_envelope( self ):
-        self.operationPts = int(self.operationTime//self.timeResolution)
-        self.waveform["data"] = zeros( self.operationPts )
-        self.waveform["t0"] = self.startTime 
-        self.waveform["dt"] = self.timeResolution
-        relativeTime = linspace(0,self.operationTime,self.operationPts,endpoint=False)
-
-        operationTime = self.operationTime
-        def get_gaussian():
-            centerTime = operationTime /2
-            amp = self.pulseInfo["envelope"]["paras"][0]/self.hardwareInfo.InputPort.couplingStrength
-            sigma = operationTime *self.pulseInfo["envelope"]["paras"][1]
-            p = [amp, sigma, centerTime]
-            wfData = gaussianFunc( relativeTime, p )+ 0j
-            return wfData
-
-        def get_DRAG():
-            centerTime = self.operationPts *self.timeResolution /2
-            amp = self.pulseInfo["envelope"]["paras"][0] /self.hardwareInfo.InputPort.couplingStrength
-            sigma = operationTime *self.pulseInfo["envelope"]["paras"][1]
-
-            pGau = [ amp, sigma, centerTime ]
-
-            ampDGau = amp 
-            pDGau = [ ampDGau, sigma, centerTime ]
-            wfData = gaussianFunc(relativeTime, pGau )+ -1j/(self.hardwareInfo.Qubit.anharmonicity/1e3) *derivativeGaussianFunc(relativeTime, pDGau)
-
-            return wfData
-        def get_const():
-            amp = self.pulseInfo["envelope"]["paras"][0]/self.hardwareInfo.InputPort.couplingStrength
-            p = [ amp ]
-
-            wfData = constFunc( relativeTime, p )
-
-            return wfData
-        pulse = {
-            'gaussian': get_gaussian,
-            'DRAG': get_DRAG,
-            'const': get_const,
-        }
-        self.waveform["data"]= pulse[self.pulseInfo["envelope"]["shape"]]() *exp(1j*self.pulseInfo["phase"])
-        #print(self.waveform)
-        return self.waveform
         
-    def convert_XYtoIQ( self ):
-        
-        phaseBalance = self.hardwareInfo.IQMixerChannel.phaseBalance
-        ampBalance  = self.hardwareInfo.IQMixerChannel.ampBalance
-        (offsetI, offsetQ) = self.hardwareInfo.IQMixerChannel.offset
-        XYcontrol = self.waveform["data"]
-        absoluteTime = get_timeAxis(self.waveform)
-        if_freq = self.hardwareInfo.IQMixerChannel.ifFreq/1e3 # to GHz
-        print(if_freq)
-        inverse = sign(sin(radians(phaseBalance)))
-        #print(phaseBalance, ampBalance, (offsetI, offsetQ), inverse, cos(radians(abs(phaseBalance)-90)))
-        A = abs( XYcontrol )
-        phi = arctan2( XYcontrol.imag, XYcontrol.real )
-        A1 = A / cos(radians(abs(phaseBalance)-90))
-        A2 = A1 / ampBalance
-        phiQ = -phi+inverse*pi/2.
-        sigI = A1 *cos( 2. *pi *if_freq *absoluteTime +phiQ +radians(phaseBalance) +pi) -offsetI
-        sigQ = A2 *cos( 2. *pi *if_freq *absoluteTime +phiQ) -offsetQ
-        self.waveform["data"] = sigI+ 1j*sigQ
-        return self.waveform
+
 
 
 
@@ -261,9 +278,13 @@ if __name__ == "__main__":
     OPS = OperationSequence(100,pch1)
 
     print("set new operation")
-    op1 = Operation(20,'x')
-    op2 = Operation(20,'y')
-    op3 = Operation(20,'i')
+    op1 = Operation(20)
+    op1.arbXYGate([pi,0])
+    op2 = Operation(20)
+    op2.arbXYGate([pi,pi])
+    op3 = Operation(20)
+    op3.idle([0])
+
     print("register operation to sequence")
     OPS.set_operation([op3, op1])
 
