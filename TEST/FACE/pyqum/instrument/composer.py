@@ -5,7 +5,7 @@ init(autoreset=True) #to convert termcolor to wins color
 
 from copy import copy
 from math import trunc, ceil
-from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians
+from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians, nan, isnan
 from pyqum.instrument.logger import get_status
 import pulse_generator.hardware_information as phyCh
 import pulse_generator.gate_operation as qos
@@ -24,14 +24,16 @@ class pulser:
     '''
     def __init__(self, dt=0.8, clock_multiples=8, 
                 score='Gaussup/6,100,1; Flat,100,1; Gaussdn/6,100,1; Pause,300,1; Gaussup/6,100,1; Flat,100,1; Gaussdn/6,100,1;'):
-        self.dt = dt
+        # Initialize score string type
         self.score = score.replace(" ","").replace("\n","").lower() # get rid of multiple spacings & new-lines and also lower the cases
-        try: self.mix_params = self.score.split(";")[0].split(",")[1].split('mhz=')[1]
-        except(IndexError): self.mix_params = "q/0" # default: unity = cos(zeros)
-        self.iffreq = float(self.mix_params.split("/")[1]) # pre-loading IF-frequency in MHz
+        
+        self.dt = dt
+        themeSetting = self.score.split(";")[0]
+        sequenceSetting = themeSetting.split(",")[0].split('ns=')[1]
+
         
         # modify user input time
-        originTotaltime = float(self.score.split(";")[0].split(",")[0].split('ns=')[1])
+        originTotaltime = float(sequenceSetting)
         originTotalPoint = int( -(originTotaltime //-dt) )
         
         self.totalpoints = int(clock_multiples) *int( -(originTotalPoint //-clock_multiples) )
@@ -40,11 +42,14 @@ class pulser:
         self.beatime, self.music = 0, zeros([self.totalpoints])
 
 
-        self.timeline = linspace( 0, self.totaltime, self.totalpoints)
+        self.timeline = linspace( 0, self.totaltime, self.totalpoints, endpoint=False)
         # mixing module:
+        try: self.mix_params = themeSetting.split(",")[1].split('mhz=')[1]
+        except(IndexError): self.mix_params = "i/0" # default: unity = cos(zeros)
+        
+        self.iffreq = float(self.mix_params.split("/")[1]) # pre-loading IF-frequency in MHz
         try: 
             self.mixer_module = self.mix_params.split("/")[2]
-            # while ' ' in self.mixer_module: self.mixer_module = self.mixer_module.replace(' ','') # omit spaces (already did from the very beginning.)
             if self.mixer_module=='' : self.mixer_module = "pure" # for the case where mhz=i/37/<empty>
         except(IndexError): 
             self.mixer_module = "pure" # "pure": "1/0/0" in json-configuration for MIXER
@@ -53,15 +58,15 @@ class pulser:
         # elif "q" in self.mixer_module.lower(): self.IF_MHz_rotation = float(self.mixer_module.split('q')[1])
         self.IF_MHz_rotation = self.iffreq # uncalibrated pure case, generalised to support baseband case where IF=0
         
-        ifChannel = self.mix_params.split("/")[0] # Get current IF Channel
+        self.ifChannel = self.mix_params.split("/")[0] # Get current IF Channel
 
         q1 = phyCh.Qubit() # Dump (register Qubit)
         p1 = phyCh.InputPort() # Dump (register InputPort)
         m1 = phyCh.IQMixerChannel() 
         # set IQ Mixer calibration parameters into IQMixerChannel object
         try:
-            mixerName = self.mixer_module.split(ifChannel.lower())[0]
-            lable_IF = self.mixer_module.split(ifChannel.lower())[1]
+            mixerName = self.mixer_module.split(self.ifChannel.lower())[0]
+            lable_IF = self.mixer_module.split(self.ifChannel.lower())[1]
             channel_I = mixerName+'i'+lable_IF
             channel_Q = mixerName+'q'+lable_IF
             amp_I, phase_I, offset_I = [float(x) for x in get_status("MIXER")[channel_I].split("/")]
@@ -92,91 +97,75 @@ class pulser:
 
             pulsewidth = float(beat.split(',')[1])
             pulseheight = float(beat.split(',')[2])
-            samples = int(pulsewidth//self.dt)
-            currentPoint = int(self.beatime//self.dt)
-            duration = range(currentPoint, currentPoint +samples)
             self.beatime += pulsewidth
             op = qos.Operation(pulsewidth)
+            paras = []
+            for p in beat.split('/')[1].split(','):
+                if p == '':
+                    paras.append( nan )
+                else:
+                    paras.append( float(p) )
+            print(paras)
             # Shapes of Tones:
             # 1. Constant Flat Line:
-            def get_flat():
-                
-                op.idle([pulseheight])
-                self.operationList.append(op)
-                # qos.IFPulse(startTime=None, operationTime=None)
-                return qos.constFunc(empty(samples) ,[pulseheight])
+            def get_flat(): 
+                print(self.ifChannel)
+   
+                op.idle([pulseheight], channel=self.ifChannel)
 
             # Gaussian
             # 2.0 complete:
             def get_gauss():
-                if beat.split(',')[0].split('/')[1] == '': sfactor = 2
-                else: sfactor = float(beat.split(',')[0].split('/')[1])
-                timeSegment = linspace(-pulsewidth/2, pulsewidth/2, samples,endpoint=False)
-                sigma = pulsewidth /(sfactor*2)
-                p = [pulseheight, sigma, 0]
+                if isnan(paras[0]): sfactor = 2
+                else: sfactor = paras[0]
                 qosp = [pulseheight, 1/(sfactor*2)]
-                op.purePulse(qosp, shape='gaussian')
-                self.operationList.append(op)
-                return qos.gaussianFunc(timeSegment, p)
+                op.purePulse(qosp, channel=self.ifChannel, shape='gaussian')
 
             # 2.1 raising from zero:
             def get_gaussup():
-                if beat.split(',')[0].split('/')[1] == '': sfactor = 2
-                else: sfactor = float(beat.split(',')[0].split('/')[1])
-                timeSegment = linspace( -pulsewidth, 0, samples, endpoint=False)
-                sigma = pulsewidth /sfactor
-                p = [pulseheight, sigma, 0]
+                if isnan(paras[0]): sfactor = 2
+                else: sfactor = paras[0]
                 qosp = [pulseheight, 1/sfactor]
-                op.purePulse(qosp, shape='gaussian_half')
-                self.operationList.append(op)
-                return qos.gaussianFunc(timeSegment,p)
+                op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
+
             # 2.2 falling to zero:
             def get_gaussdn():
-                if beat.split(',')[0].split('/')[1] == '': sfactor = 2
-                else: sfactor = float(beat.split(',')[0].split('/')[1])
-                timeSegment = linspace( 0, pulsewidth, samples, endpoint=False)
-                sigma = pulsewidth /sfactor
-                p = [pulseheight, sigma, 0]
+                if isnan(paras[0]): sfactor = 2
+                else: sfactor = paras[0]
                 qosp = [pulseheight, -1/sfactor]
-                op.purePulse(qosp, shape='gaussian_half')
-                self.operationList.append(op)
-                return qos.gaussianFunc(timeSegment,p)
+                op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
             # 3 Derivative Gaussian
             # 3.0
             def get_dgauss():
-                if beat.split(',')[0].split('/')[1] == '': sfactor = 2
-                else: sfactor = float(beat.split(',')[0].split('/')[1])
-                timeSegment = linspace( -pulsewidth/2, pulsewidth/2, samples, endpoint=False)
-                sigma = pulsewidth /(sfactor*2)
-                p = [pulseheight, sigma, 0]
+                if isnan(paras[0]): sfactor = 2
+                else: sfactor = paras[0]
                 qosp = [pulseheight, -1/(sfactor*2)]
-                op.purePulse(qosp, shape='degaussian')
-                self.operationList.append(op)
-                return qos.derivativeGaussianFunc(timeSegment,p)
+                op.purePulse(qosp, channel=self.ifChannel, shape='degaussian')
             
             # 3.1 DRAG up
             def get_dgaussup():
-                if beat.split(',')[0].split('/')[1] == '': sfactor = 2
-                else: sfactor = float(beat.split(',')[0].split('/')[1])
-                timeSegment = linspace( -pulsewidth, 0, samples, endpoint=False) 
-                sigma = pulsewidth /sfactor
-                p = [pulseheight, sigma, 0]
+                if isnan(paras[0]): sfactor = 2
+                else: sfactor = paras[0]
                 qosp = [pulseheight, 1/sfactor]
-                op.purePulse(qosp, shape='degaussian_half')
-                self.operationList.append(op)
-                return qos.derivativeGaussianFunc(timeSegment,p)
+                op.purePulse(qosp, channel=self.ifChannel, shape='degaussian_half')
             # 3.2 DRAG dn
             def get_dgaussdn():
-                if beat.split(',')[0].split('/')[1] == '': sfactor = 2
-                else: sfactor = float(beat.split(',')[0].split('/')[1])
-                timeSegment = linspace(0, pulsewidth, samples, endpoint=False)
-                sigma = pulsewidth /sfactor
-                p = [pulseheight, sigma, 0]
+                if isnan(paras[0]): sfactor = 2
+                else: sfactor = paras[0]
                 qosp = [pulseheight, -1/sfactor]
-                op.purePulse(qosp, shape='degaussian_half')
-                self.operationList.append(op)
-                return qos.derivativeGaussianFunc(timeSegment,p)
+                op.purePulse(qosp, channel=self.ifChannel, shape='degaussian_half')
+
             # PENDING: BUILD CONNECTORS: require the knowledge of the last height
+            def get_drag():
+                if isnan(paras[0]): sfactor = 2
+                else: sfactor = paras[0]
+                if isnan(paras[3]): dRatio = 1
+                else: dRatio = paras[3]
+                if isnan(paras[4]): rotAxis = 0
+                else: rotAxis = radians(paras[4])
+                qosp = [pulseheight, 1/(sfactor*2), dRatio, rotAxis]
+                print(paras,qosp)
+                op.rotXY(qosp, shape='fDRAG')
             # 4. Linear connector: 
 
             # 5. Gaussian connector:
@@ -195,41 +184,28 @@ class pulser:
                 'dgauss': get_dgauss,
                 'dgaussup': get_dgaussup,
                 'dgaussdn': get_dgaussdn,
+                'drag': get_drag,
             }
-            pulseType = beat.split(',')[0].split('/')[0]
+            pulseType = beat.split('/')[0]
+            pulse[pulseType]()
             print(pulseType)
-            self.music[duration] = pulse[pulseType]()
+            self.operationList.append(op)
 
         # 2. Envelope before IF-Mixing:
-        self.envelope = copy(self.music)
         self.operationSeq.set_operation(self.operationList)
+        self.operationSeq.cal_pulseSequence()
+        self.timeline = qos.get_timeAxis(self.operationSeq.iqwaveform)
+
+        if self.ifChannel == "i":
+            self.envelope = abs(self.operationSeq.xywaveform["data"])
+            self.music = self.operationSeq.iqwaveform["data"].real
+
+        elif self.ifChannel == "q":
+            self.envelope = abs(self.operationSeq.xywaveform["data"])
+            self.music = self.operationSeq.iqwaveform["data"].imag
+
         print("operation number",len(self.operationList))
-        #self.envelope = copy(self.operationSeq.cal_pulseSequence()["data"].real)
-        
-        # 3. Offsetting phase to the starting of the pulse (1. to lock readout-phase 2. ?):
-        try: 
-            pulse_starting_time = self.dt * where(ceil(abs(self.music-self.music[-1]))==1)[0][0]
-            #print(pulse_starting_time)
-            # print(Back.WHITE + Fore.BLUE + "Pulse starting from %s ns" %pulse_starting_time)
-        except(IndexError): 
-            pulse_starting_time = 0 # for PURE FLAT LINE!
-            # print(Back.WHITE + Fore.RED + "PURE FLAT LINE!")
 
-        # 4. IF Mixing:
-        '''
-        ns=<Pulse-period>,mhz=<I/Q>/<PENDING: relative-IF>/<Mixer-calibration>; <Pulse-shape>,<Pulse-width>,<Pulse-height>; ...
-        <Mixer-calibration> = <Mixer-module> + <i/q> + <IF-correction> (PENDING: + <LO> + <IF-amplitude>)
-        <Converted-RF> or <Target-RF> = <LO> + <IF-correction>
-        '''
-        if self.mix_params.split("/")[0] == 'i': ifphase = 0
-        elif self.mix_params.split("/")[0] == 'q': ifphase = 90
-        else: print(Fore.RED + "UNRECOGNIZED CW-TYPE. PLEASE CONSULT HELP.")
-
-        try:
-            ifamp, phaseBalance, ifoffset = [float(x) for x in get_status("MIXER")[self.mixer_module].split("/")]
-        except:
-            ifamp, phaseBalance, ifoffset = [1,0,0]
-        self.music = self.music * ifamp * cos((self.timeline-pulse_starting_time)*self.iffreq/1e3*2*pi + radians(phaseBalance +ifphase)) +ifoffset
 
         # Confine music between -1 and 1:
         self.music = clip(self.music, -1.0, 1.0, out=self.music)
@@ -243,16 +219,30 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    pr = pulser(dt=1.,score='ns=100,mhz=I/-0/; Flat/,10,0; dGaussup/,20,1; Flat/,10,0; dGauss/,20,1; Flat/,10,0; dGaussdn/,20,1; ',clock_multiples=1)
-    print(pr.score)
-    IFsignal = pr.song()
-    timeAxis = linspace(0,pr.dt*len(IFsignal),len(IFsignal), endpoint=False)
-    #print(pr.operationSeq.sequencePts)
-    pr.operationSeq.cal_pulseSequence()
-    IFsignalNew = pr.operationSeq.iqwaveform["data"].real
+    pr = pulser(dt=1.,score='ns=150,mhz=I/-91/; Flat/,10,0; Flat/,20,1; Flat/,5,0; Gauss/,20,1; Flat/,10,0; dGauss/,20,1; Flat/,10,0; drag/,20,1,5,; ',clock_multiples=1)
+    pr.song()
+    timeAxis = pr.timeline
+    envelope = pr.envelope
+    music = pr.music
+
+    pr2 = pulser(dt=1.,score='ns=150,mhz=Q/-91/; Flat/,10,0; Flat/,20,1; Flat/,5,0; Gauss/,20,1; Flat/,10,0; dGauss/,20,1; Flat/,10,0; drag/,20,1,5,; ',clock_multiples=1)
+    pr2.song()
+    timeAxis2 = pr2.timeline
+    envelope2 = pr2.envelope
+    music2 = pr2.music
+
     plot1 = plt.figure(1)
-    plt.plot(timeAxis, IFsignal)
-    #(len(IFsignalNew))
-    plt.plot(timeAxis, IFsignalNew)
+
+    plt.plot(timeAxis, envelope)
+    plt.plot(timeAxis2, envelope2)
+    plot2 = plt.figure(2)
+    plt.plot(timeAxis, envelope)
+    plt.plot(timeAxis, music)
+    plot2 = plt.figure(3)
+    plt.plot(timeAxis2, envelope2)
+    plt.plot(timeAxis2, music2)
+    plot2 = plt.figure(4)
+    plt.plot(timeAxis, music)
+    plt.plot(timeAxis2, music2)
     plt.show()
 

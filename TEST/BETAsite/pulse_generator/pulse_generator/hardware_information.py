@@ -32,7 +32,7 @@ class Qubit():
     def __init__ (self):
         self.fluxBias = 0
         self.qubitFreq = 4.0 # GHz
-        self.anharmonicity = -100 #MHz w12 -w01
+        self.anharmonicity = -200 #MHz w12 -w01
 
 class IQMixerChannel():
 
