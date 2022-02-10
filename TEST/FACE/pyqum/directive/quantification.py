@@ -25,7 +25,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import linregress
 
 #from si_prefix import si_format, si_parse
-from numpy import cos, sin, pi, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var, transpose
+from numpy import cos, sin, pi, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var, transpose, stack
 
 # Load instruments
 # Please Delete this line in another branch (to: @Jackie)
@@ -43,7 +43,10 @@ from sklearn.metrics import r2_score
 import pandas as pd
 # Save file
 from scipy.io import savemat
-
+# fidelity
+from sklearn.cluster import KMeans
+from sklearn.svm import SVC
+import pickle
 
 class ExtendMeasurement ():
 	def __init__( self, measurementObj, *args,**kwargs ):
@@ -878,4 +881,82 @@ class Autoflux():
 		print("{:<23}".format("Final_cavity frquency"), " : " , "{:.4f}".format(self.fc) ,"GHz")
 		print("{:<23}".format("Final_x(ki)"), " : " , "{:.4f}".format((self.fd-self.fc)*1000) ,"MHz")
 		print("{:<23}".format("Final_offset flux")," : ",self.offset,"uV/A")
+
+class Readout_fidelity():
+
+	def __init__( self, quantificationObj, *args,**kwargs ):
+
+		self.quantificationObj = quantificationObj
+
+		# Fit
+		self.real, self.imag = [],[]
+		self.label_list= ["gnd","exc"]
+
+	def plot_svm_decision_function(model, ax=None, plot_support=True):
+		"""Plot the decision function for a 2D SVC"""
+		if self.ax is None:
+			self.ax = plt.gca()
+		self.xlim = self.ax.get_xlim()
+		self.ylim = self.ax.get_ylim()
 		
+		# create grid to evaluate model
+		self.x = numpy.linspace(self.xlim[0], self.xlim[1], 30)
+		self.y = numpy.linspace(self.ylim[0], self.ylim[1], 30)
+		self.Y,self.X = numpy.meshgrid(self.y, self.x)
+		self.xy = numpy.stack([self.X.ravel(), self.Y.ravel()]).T
+		self.P = self.model.decision_function(self.xy).reshape(self.X.shape)
+		
+		# plot decision boundary and margins
+		self.ax.contour(self.X, self.Y, self.P, colors='k',
+				levels=[-1, 0, 1], alpha=0.5,
+				linestyles=['--', '-', '--'])
+		
+		# plot support vectors
+		if self.plot_support:
+			self.ax.scatter(self.model.support_vectors_[:, 0],
+					self.model.support_vectors_[:, 1],
+					s=300, linewidth=1, facecolors='none');
+		self.ax.set_xlim(self.xlim)
+		self.ax.set_ylim(self.ylim)
+		plt.axis('equal')
+
+	def text_report(label):
+		self.unique, self.counts = numpy.unique(self.label, return_counts=True)
+		print(dict(zip(self.label_list, self.counts)))
+		print("{:<31}".format("The percentage of ground state")+" : {:.2f}%".format(100*self.counts[1]/(self.counts[0]+self.counts[1])))
+		print("{:<31}".format("The percentage of excited state")+" : {:.2f}%".format(100*self.counts[0]/(self.counts[0]+self.counts[1])))
+		
+	def do_analysis( self ):
+		self.i = self.quantificationObj.rawData["iqSignal"].real
+		self.q = self.quantificationObj.rawData["iqSignal"].imag
+		self.data = numpy.stack((self.i, self.q), axis=1)
+		# load the model from disk
+		self.loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_model.sav', 'rb'))
+		self.label = self.loaded_model.predict(self.data)
+		text_report(self.label)
+		plt.rcParams["figure.figsize"] = (12, 9)
+		#Getting unique labels
+		self.u_labels = numpy.unique(self.label)
+		#plotting the results:
+		for i in self.u_labels:
+			plt.scatter(self.i[self.label == i] , self.q[self.label == i] , label = self.label_list[i])
+		# plt.scatter(csv2['I'],csv2['Q'],label='raw data')
+		plt.legend()
+		plot_svm_decision_function(self.model)
+		plt.title("readout_fidelity")
+		plt.axis('equal')
+		plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\readout_fidelity.png')
+		plt.show()
+		
+
+	def pre_analytic( self ):
+		self.i = self.quantificationObj.rawData["iqSignal"].real
+		self.q = self.quantificationObj.rawData["iqSignal"].imag
+		self.data = numpy.stack((self.i, self.q), axis=1)
+		self.kmeans = KMeans(n_clusters=2)
+		self.kmeans.fit(self.data)
+		self.label = kmeans.predict(self.data)
+		self.model = SVC(kernel='linear', C=1E10)
+		self.model.fit(data, label)
+		# save the model to disk
+		pickle.dump(self.model, open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_model.sav', 'wb'))
