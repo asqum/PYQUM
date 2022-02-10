@@ -25,7 +25,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import linregress
 
 #from si_prefix import si_format, si_parse
-from numpy import cos, sin, pi, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var
+from numpy import cos, sin, pi, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var, transpose, stack
 
 # Load instruments
 # Please Delete this line in another branch (to: @Jackie)
@@ -34,15 +34,19 @@ from pyqum.mission import get_measurementObject
 
 # Fitting
 from collections import defaultdict
-from resonator_tools.circuit import notch_port
-from resonator_tools.utilities import plotting, save_load, Watt2dBm, dBm2Watt
-from resonator_tools.circlefit import circlefit
-from resonator_tools.calibration import calibration
+from pyqum.directive.tools.circuit import notch_port
+from pyqum.directive.tools.utilities import plotting, save_load, Watt2dBm, dBm2Watt
+from pyqum.directive.tools.circlefit import circlefit
+from pyqum.directive.tools.calibration import calibration
+from pyqum.directive.tools.not_sin import *
 from sklearn.metrics import r2_score
 import pandas as pd
 # Save file
 from scipy.io import savemat
-
+# fidelity
+from sklearn.cluster import KMeans
+from sklearn.svm import SVC
+import pickle
 
 class ExtendMeasurement ():
 	def __init__( self, measurementObj, *args,**kwargs ):
@@ -835,140 +839,124 @@ class Autoflux():
 		self.y = self.quantificationObj.independentVars[yAxisKey]
 		self.i = self.quantificationObj.rawData["iqSignal"].real
 		self.q = self.quantificationObj.rawData["iqSignal"].imag
-		
+		self.iq = transpose(self.quantificationObj.rawData["iqSignal"])
 		#---------------changeable variable---------------
 		# x(ki) = g*g/delta
-		ki = 0.003
-		fdress = 8.125
-		
+		self.ki = 0.003
+		self.fdress = 8.1248
+		self.plot = 1
+		self.mat = 1
 
 		#---------------prepare data ---------------
-		df1=pd.DataFrame()
+		self.df1=pd.DataFrame()
 		for j in range(len(self.x)):
-			for i in range(len(self.y)):
-				self.flux.append(self.x[j]);self.freq.append(self.y[i])
-				self.I.append(self.i[i][j]);self.Q.append(self.q[i][j])
-			df =pd.DataFrame({"Frequency":self.freq,"Flux-Bias":self.flux,"i":self.I,"q":self.Q}).sort_values(["Frequency","Flux-Bias"],ascending=True)
-			port1 = notch_port(f_data=df["Frequency"].values,z_data_raw=df["i"]+1j*df["q"])
+			self.port1 = notch_port(f_data=self.y,z_data_raw=self.iq[j])
 			# port1.plotrawdata()
-			port1.autofit()
+			self.port1.autofit()
 			#     port1.plotall()
 			#     display(pd.DataFrame([port1.fitresults]).applymap(lambda x: "{0:.2e}".format(x)))
-			df1 = df1.append(pd.DataFrame([port1.fitresults]), ignore_index = True)
-		df1.insert(loc=0, column='flux', value=self.x*10**6)
+			# print(self.port1.fitresults)
+			self.df1 = self.df1.append(pd.DataFrame([self.port1.fitresults]), ignore_index = True)
+		self.df1.insert(loc=0, column='flux', value=self.x*10**6)
 
 		#---------------drop the outward data---------------
-		f_min,f_max = min(self.y),max(self.y)
-		valid = df1[(df1['fr']>= f_min)&(df1['fr']<= f_max)]
-		valid.reset_index(inplace=True)
-
+		self.f_min,self.f_max = min(self.y),max(self.y)
+		self.valid = self.df1[(self.df1['fr']>= self.f_min)&(self.df1['fr']<= self.f_max)]
+		self.valid.reset_index(inplace=True)
+		# print(valid)
 		#---------------determine the sin_wave or arcsin_wave
-		print("Var:",valid.diff(periods=1, axis=0)['fr'].var())
-		print("ki :",max(valid['fr'])-min(valid['fr']))
-		if valid.diff(periods=1, axis=0)['fr'].var() >2.5*10**-5 and max(valid['fr'])-min(valid['fr'])>0.002 :twokind=1
-		elif valid.diff(periods=1, axis=0)['fr'].var() <2.5*10**-5 and max(valid['fr'])-min(valid['fr'])<0.002:twokind=0
+		if self.valid.diff(periods=1, axis=0)['fr'].var() >2.5*10**-5 and max(self.valid['fr'])-min(self.valid['fr'])>0.002 :self.twokind=1
+		elif self.valid.diff(periods=1, axis=0)['fr'].var() <2.5*10**-5 and max(self.valid['fr'])-min(self.valid['fr'])<0.002:self.twokind=0
 		else:raise ValueError('I do not know how')
-		if twokind:
+		if self.twokind:
 		#     print('fr>fc and fr<fc')
-			#---------------using difference to find upward points---------------
-			dif=valid.diff(periods=1, axis=0)['fr']; dif[0] = 0
-			last,count = -1,-1
-			valid_u, coef_u, poly_u, fit_u, x0_u, r2_u,ax_u, wave,fd = [],[],[],[],[],[],[],[],[]
-			for i in valid[(dif>ki)]['index'].keys():
-				if last == -1:last = i
-				else:
-					if len(valid[(valid['fr']>fdress)&(valid['index']>last)&(valid['index']<i)])<3:
-						last = i
-						pass
-					else:
-						wave.append(count)
-						valid_u.append(valid[(valid['fr']>fdress)&(valid['index']>last-1)&(valid['index']<i)])
-						last = i
-				count+=1   
-			valid_u.append(valid[(valid['fr']>fdress)&(valid['index']>last)&(valid['index']<max(self.x)*10**6)])
-			wave.append(count)
-			for i in range(len(valid_u)):
-				print(valid_u[i]['flux'])
-				print(valid_u[i]['fr'])
-				coef_u.append(polyfit(valid_u[i]['flux'],valid_u[i]['fr'],2))
-				poly_u.append(poly1d(coef_u[i]))
-				fit_u.append(polyval(coef_u[i],valid_u[i]['flux']))
-				ax_u.append(range(int(valid_u[i]['flux'][valid_u[i]['flux'].keys()[0]])-5,int(valid_u[i]['flux'][valid_u[i]['flux'].keys()[-1]])+5))
-				fd.append(min(valid_u[i]['fr']))
-				r2_u.append(r2_score(valid_u[i]['fr'], fit_u[i]))
-				if coef_u[i][0]!=0:
-					x0_u.append(round(-0.5*coef_u[i][1]/coef_u[i][0],2))
-				else:
-					raise ValueError('Fail to fit.')
-		
-			#using Squeeze Theorem find the only one downward function between the minimum points of two upward function---------------
-			if len(x0_u)<2 and len(wave)<2:
-				raise ValueError('The data does not have enough points to find wavelength. Please add more point')
-
-			wavelength,cavity_range,valid_ca,coef_ca, poly_ca, fit_ca, x0_ca, r2_ca ,fc,ax_ca = [],[],[],[],[],[],[],[],[],[]
-			success =-1
-			for i in range(len(x0_u)-1):wavelength.append((x0_u[i+1]-x0_u[i])/(wave[i+1]-wave[i]))
-			avg_wavelength = average(wavelength)
-			for i in range(wave[-1]):
-				if wave[i] == i:
-					cavity_range.append([x0_u[i],x0_u[i]+avg_wavelength])
-					success = i
-				elif wave[i]!= i:
-					if wave[i]== i+1:
-						cavity_range.append([x0_u[i]-avg_wavelength,x0_u[i]])
-					elif success != -1:
-						cavity_range.append([x0_u[success]+(i-success)*avg_wavelength,x0_u[success]+(i-success+1)*avg_wavelength])
-					else:
-						pass
-			# print("cavity_range = ",cavity_range)
-			print(cavity_range)
-			print(len(cavity_range))
-			for i in range(len(cavity_range)):
-				valid_ca.append(valid[(valid['fr']<average(fd)-ki)&(valid['flux']>cavity_range[i][0])&(valid['flux']<cavity_range[i][1])])
-				coef_ca.append(polyfit(valid_ca[i]['flux'],valid_ca[i]['fr'],2))
-				poly_ca.append(poly1d(coef_ca[i]))
-				fit_ca.append(polyval(coef_ca[i],valid_ca[i]['flux']))
-				ax_ca.append(range(int(valid_ca[i]['flux'][valid_ca[i]['flux'].keys()[0]])-5,int(valid_ca[i]['flux'][valid_ca[i]['flux'].keys()[-1]])+5))
-				fc.append(max(valid_ca[i]['fr']))
-				r2_ca.append(r2_score(valid_ca[i]['fr'], fit_ca[i]))
-				if coef_ca[i][0]!=0:
-					x0_ca.append(round(-0.5*coef_ca[i][1]/coef_ca[i][0],2))
-				else:
-					raise ValueError('Fail to fit.')
-			#---------------print the conclusion---------------
-			print("R2_ERROR :\n\t","{:<18}".format("Avg_Dressed Cavity")," : ","{:.4f}".format(average(r2_u)*100),"%\n\t","{:<18}".format("Avg_Cavity")," : ","{:.4f}".format(average(r2_ca)*100),"%\n")
-			print("{:<11}".format("Avg_fdress")+" : "+ "{:.4f}".format(average(fd))+" GHz "+" ; "+"{:<11}".format("Var_fdress")+" : "+ "{:.4f}".format(var(fd)*10**6)+" kHz")
-			print("{:<11}".format("Avg_fcavity")+" : "+ "{:.4f}".format(average(fc))+" GHz "+" ; "+"{:<11}".format("Var_fcavity")+" : "+ "{:.4f}".format(var(fc)*10**6)+" kHz\n")
-			print("{:^29}".format("Expected")+"|"+"{:^14}".format("Actual")+"\n"+"-"*44)
-			print("{:^14}".format("flux(uV/A)")+"|"+"{:^14}".format("freq(GHz)")+"|"+"{:^14}".format("fc(GHz)")+"\n"+"-"*44)
-			for i in range(len(valid_u)):
-				print("{:^14.2f}".format(x0_u[i])+"|"+"{:^14.4f}".format(poly_u[i](x0_u[i]))+"|"+"{:^14.4f}".format(min(valid_u[i]['fr'])))
-			print("-"*44)
-			for i in range(len(cavity_range)):
-				print("{:^14.2f}".format(x0_ca[i])+"|"+"{:^14.4f}".format(poly_ca[i](x0_ca[i]))+"|"+"{:^14.4f}".format(min(valid_ca[i]['fr'])))
-			fc = float("{:.6f}".format(average(fc)))
-			fd = float("{:.6f}".format(average(fd)))
-			offset = x0_ca[0]
-
+			self.fc ,self.fd, self.offset = output_cal(self.x,self.valid,self.ki,self.fdress,self.plot)
 		else:
 		#     print('sin')
-			fc = float("{:.6f}".format(min(valid['fr'])))
-			fd = float("{:.6f}".format(max(valid['fr'])))
-			offset = valid[(valid['fr']==min(valid['fr']))]['flux'].values[0]
-			#https://stackoverflow.com/questions/16716302/how-do-i-fit-a-sine-curve-to-my-data-with-pylab-and-numpy
-			res = fit_sin(valid['flux'],valid['fr'])
-			print("{:^16}".format("Amplitude")+" = "+ "{:>8.4f}".format(float(res['amp']))+" GHz")
-			print("{:^16}".format("Angular freq.")+" = "+ "{:>8.4f}".format(float(res['omega']))+" uV/A")
-			print("{:^16}".format("phase")+" = "+ "{:>8.4f}".format(float(res['phase']))+" uV/A")
-			print("{:^16}".format("offset")+" = "+ "{:>8.4f}".format(float(res['offset']))+" GHz")
-			print("{:^16}".format("Max. Covariance")+" = "+ "{:>8.4f}".format(float(res['maxcov'])))
-			x = linspace(0,200,200)
-			fc = float("{:.6f}".format(fc))
-			fd = float("{:.6f}".format(fd))
+			self.fc ,self.fd, self.offset = output_cal_sin(self.valid,self.plot)
 			# print(type(offset))
 
 		print("")
-		print("{:<23}".format("Final_dressed frquency"), " : " , "{:.4f}".format(fd) ,"GHz")
-		print("{:<23}".format("Final_cavity frquency"), " : " , "{:.4f}".format(fc) ,"GHz")
-		print("{:<23}".format("Final_x(ki)"), " : " , "{:.4f}".format((fd-fc)*1000) ,"MHz")
-		print("{:<23}".format("Final_offset flux")," : ",offset,"uV/A")
+		print("{:<23}".format("Final_dressed frquency"), " : " , "{:.4f}".format(self.fd) ,"GHz")
+		print("{:<23}".format("Final_cavity frquency"), " : " , "{:.4f}".format(self.fc) ,"GHz")
+		print("{:<23}".format("Final_x(ki)"), " : " , "{:.4f}".format((self.fd-self.fc)*1000) ,"MHz")
+		print("{:<23}".format("Final_offset flux")," : ",self.offset,"uV/A")
+
+class Readout_fidelity():
+
+	def __init__( self, quantificationObj, *args,**kwargs ):
+
+		self.quantificationObj = quantificationObj
+
+		# Fit
+		self.real, self.imag = [],[]
+		self.label_list= ["gnd","exc"]
+
+	def plot_svm_decision_function(model, ax=None, plot_support=True):
+		"""Plot the decision function for a 2D SVC"""
+		if self.ax is None:
+			self.ax = plt.gca()
+		self.xlim = self.ax.get_xlim()
+		self.ylim = self.ax.get_ylim()
+		
+		# create grid to evaluate model
+		self.x = numpy.linspace(self.xlim[0], self.xlim[1], 30)
+		self.y = numpy.linspace(self.ylim[0], self.ylim[1], 30)
+		self.Y,self.X = numpy.meshgrid(self.y, self.x)
+		self.xy = numpy.stack([self.X.ravel(), self.Y.ravel()]).T
+		self.P = self.model.decision_function(self.xy).reshape(self.X.shape)
+		
+		# plot decision boundary and margins
+		self.ax.contour(self.X, self.Y, self.P, colors='k',
+				levels=[-1, 0, 1], alpha=0.5,
+				linestyles=['--', '-', '--'])
+		
+		# plot support vectors
+		if self.plot_support:
+			self.ax.scatter(self.model.support_vectors_[:, 0],
+					self.model.support_vectors_[:, 1],
+					s=300, linewidth=1, facecolors='none');
+		self.ax.set_xlim(self.xlim)
+		self.ax.set_ylim(self.ylim)
+		plt.axis('equal')
+
+	def text_report(label):
+		self.unique, self.counts = numpy.unique(self.label, return_counts=True)
+		print(dict(zip(self.label_list, self.counts)))
+		print("{:<31}".format("The percentage of ground state")+" : {:.2f}%".format(100*self.counts[1]/(self.counts[0]+self.counts[1])))
+		print("{:<31}".format("The percentage of excited state")+" : {:.2f}%".format(100*self.counts[0]/(self.counts[0]+self.counts[1])))
+		
+	def do_analysis( self ):
+		self.i = self.quantificationObj.rawData["iqSignal"].real
+		self.q = self.quantificationObj.rawData["iqSignal"].imag
+		self.data = numpy.stack((self.i, self.q), axis=1)
+		# load the model from disk
+		self.loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_model.sav', 'rb'))
+		self.label = self.loaded_model.predict(self.data)
+		text_report(self.label)
+		plt.rcParams["figure.figsize"] = (12, 9)
+		#Getting unique labels
+		self.u_labels = numpy.unique(self.label)
+		#plotting the results:
+		for i in self.u_labels:
+			plt.scatter(self.i[self.label == i] , self.q[self.label == i] , label = self.label_list[i])
+		# plt.scatter(csv2['I'],csv2['Q'],label='raw data')
+		plt.legend()
+		plot_svm_decision_function(self.model)
+		plt.title("readout_fidelity")
+		plt.axis('equal')
+		plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\readout_fidelity.png')
+		plt.show()
+		
+
+	def pre_analytic( self ):
+		self.i = self.quantificationObj.rawData["iqSignal"].real
+		self.q = self.quantificationObj.rawData["iqSignal"].imag
+		self.data = numpy.stack((self.i, self.q), axis=1)
+		self.kmeans = KMeans(n_clusters=2)
+		self.kmeans.fit(self.data)
+		self.label = kmeans.predict(self.data)
+		self.model = SVC(kernel='linear', C=1E10)
+		self.model.fit(data, label)
+		# save the model to disk
+		pickle.dump(self.model, open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_model.sav', 'wb'))

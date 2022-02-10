@@ -3,22 +3,24 @@
 
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
-    AF_render_input("autoflux");
-    console.log( "Load autoflux" );
+    AF_render_input("fidelity");
+    console.log( "Load readout_fidelity" );
 
-    let e_loadButton = document.getElementById("autoflux-button-load");
+    let e_loadButton = document.getElementById("fidelity-button-load");
     e_loadButton.addEventListener("click", AF_load_data);
-    let e_fitButton = document.getElementById("autoflux-button-fit");
+    let e_fitButton = document.getElementById("fidelity-button-fit");
     e_fitButton.addEventListener("click", AF_fit_data);
-    let e_plot1DButton = document.getElementById("autoflux-plot1D-button");
+    let e_fitButton = document.getElementById("fidelity-button-pretrain");
+    e_fitButton.addEventListener("click", AF_pretrain_data);
+    let e_plot1DButton = document.getElementById("fidelity-plot1D-button");
     e_plot1DButton.addEventListener("click", get_plot1D);
-    let e_plot2DtButton = document.getElementById("autoflux-plot2D-button");
+    let e_plot2DtButton = document.getElementById("fidelity-plot2D-button");
     e_plot2DtButton.addEventListener("click", get_plot2D);
-    let e_plottButton = document.getElementById("autoflux-button-plot");
+    let e_plottButton = document.getElementById("fidelity-button-plot");
     e_plottButton.addEventListener("click", AF_plot_data);
 });
 
-function get_autoflux_selectInfo( quantificationType ){
+function get_fidelity_selectInfo( quantificationType ){
 
     $.ajaxSettings.async = false;
 
@@ -206,7 +208,7 @@ function AF_render_input ( quantificationType )
 
 
     }
-    // AF_creatDOM_FitDataType("all", "autoflux-allParamater");
+    // AF_creatDOM_FitDataType("all", "fidelity-allParamater");
     $.ajaxSettings.async = true;
 }
 
@@ -268,11 +270,11 @@ function AF_load_data(){
     console.log( "Get data" );
 
     $.ajaxSettings.async = false;
-    let analysisIndex = get_autoflux_selectInfo("autoflux");
+    let analysisIndex = get_fidelity_selectInfo("fidelity");
 
     //Send information to python
-    $.getJSON( '/benchmark/autoflux/load',
-        {   quantificationType: JSON.stringify("autoflux"), 
+    $.getJSON( '/benchmark/fidelity/load',
+        {   quantificationType: JSON.stringify("fidelity"), 
             analysisIndex: JSON.stringify(analysisIndex), 
         },
         function (data) {
@@ -289,15 +291,15 @@ function AF_load_data(){
 function get_plot2D(){
     console.log( "Plot data" );
 
-    let plotID_2D = "autoflux-plot2D-rawOverview";
-    let plotID_1D_ampPhase = "autoflux-plot1D-ampPhase";
-    let plotID_1D_IQ = "autoflux-plot1D-IQ";
+    let plotID_2D = "fidelity-plot2D-rawOverview";
+    let plotID_1D_ampPhase = "fidelity-plot1D-ampPhase";
+    let plotID_1D_IQ = "fidelity-plot1D-IQ";
     $.ajaxSettings.async = false;
     let htmlInfo=get_htmlInfo_python();
 
 
-    let plot2D_signalType = document.getElementById("autoflux-plot2D-zSelector").value;
-    let plot1D_yAxisType = document.getElementById("autoflux-plot2D-ySelector").value;
+    let plot2D_signalType = document.getElementById("fidelity-plot2D-zSelector").value;
+    let plot1D_yAxisType = document.getElementById("fidelity-plot2D-ySelector").value;
 
     console.log( "plot2D_signalType" );
 
@@ -307,7 +309,7 @@ function get_plot2D(){
     let x_axis=[];
 
     //Get 2D data
-    $.getJSON( '/benchmark/autoflux/getJson_plot2D',
+    $.getJSON( '/benchmark/fidelity/getJson_plot2D',
     {   plot2D_signalType: JSON.stringify(plot2D_signalType), },
         function (data) {
         console.log( "Get 2D data" );
@@ -316,14 +318,14 @@ function get_plot2D(){
 
     });
     //Get x axis
-    $.getJSON( '/benchmark/autoflux/getJson_plotAxis',
+    $.getJSON( '/benchmark/fidelity/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value'), },
         function (data) {
         console.log( "Get x axis" );
         x_axis = data;
     });
     //Get y axis
-    $.getJSON( '/benchmark/autoflux/getJson_plotAxis',
+    $.getJSON( '/benchmark/fidelity/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify(plot1D_yAxisType), },
         function (data) {
         console.log( "Get y axis" );
@@ -353,14 +355,14 @@ function get_plot2D(){
 function get_plot1D(){
     console.log( "Plot data" );
 
-    let plotID_2D = "autoflux-plot2D-rawOverview";
-    let plotID_1D_ampPhase = "autoflux-plot1D-ampPhase";
-    let plotID_1D_IQ = "autoflux-plot1D-IQ";
+    let plotID_2D = "fidelity-plot2D-rawOverview";
+    let plotID_1D_ampPhase = "fidelity-plot1D-ampPhase";
+    let plotID_1D_IQ = "fidelity-plot1D-IQ";
     $.ajaxSettings.async = false;
     let htmlInfo=get_htmlInfo_python();
 
-    let selectType = document.getElementById("autoflux-plot2D-ySelector").value;
-    let selectValue = document.getElementById("autoflux-plot1D-y_value").value;
+    let selectType = document.getElementById("fidelity-plot2D-ySelector").value;
+    let selectValue = document.getElementById("fidelity-plot1D-y_value").value;
 
     let plotInfo = {
         selectType: selectType,
@@ -384,21 +386,21 @@ function get_plot1D(){
         yErr: [ [],[] ],
     }
     //Get x axis
-    $.getJSON( '/benchmark/autoflux/getJson_plotAxis',
+    $.getJSON( '/benchmark/fidelity/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value'), },
         function (data) {
         console.log( "Get x axis" );
         plotData_AmpPhase["raw"]["x"]= data;
     });
     //Get fitted x axis
-    $.getJSON( '/benchmark/autoflux/getJson_plotAxis',
+    $.getJSON( '/benchmark/fidelity/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value_fit'), },
         function (data) {
         console.log( "Get x axis" );
         plotData_AmpPhase["fitted"]["x"]= data;
     });
     //Get raw signal
-    $.getJSON( '/benchmark/autoflux/getJson_plot1D',
+    $.getJSON( '/benchmark/fidelity/getJson_plot1D',
     {   process: JSON.stringify("raw"), 
         plotInfo: JSON.stringify(plotInfo), },
         function (data) {
@@ -411,7 +413,7 @@ function get_plot1D(){
     });
 
     //Get fitted signal
-    $.getJSON( '/benchmark/autoflux/getJson_plot1D',
+    $.getJSON( '/benchmark/fidelity/getJson_plot1D',
     {   process: JSON.stringify("fitted"), 
         plotInfo: JSON.stringify(plotInfo), },
         function (data) {
@@ -440,7 +442,13 @@ function get_plot1D(){
 function AF_fit_data(){
 
     // Plot fit parameters
-    $.getJSON( '/benchmark/autoflux/getJson_fitParaPlot',{ }, function (data) {});
+    $.getJSON( '/benchmark/fidelity/getJson_fitParaPlot',{ }, function (data) {});
+}
+
+function AF_pretrain_data(){
+
+    // Plot fit parameters
+    $.getJSON( '/benchmark/fidelity/getJson_Pretrain',{ }, function (data) {});
 }
 
 function AF_plot_data(){
