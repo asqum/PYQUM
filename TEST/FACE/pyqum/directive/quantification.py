@@ -939,9 +939,9 @@ class Readout_fidelity():
 		self.i = self.quantificationObj.rawData["iqSignal"].real
 		self.q = self.quantificationObj.rawData["iqSignal"].imag
 		if len(self.i)==1:
-			self.i = self.i[0]
-			self.q = self.q[0]
-			self.data = stack((self.i, self.q), axis=1)
+			self.i1 = self.i[0]
+			self.q1 = self.q[0]
+			self.data = stack((self.i1, self.q1), axis=1)
 			self.label = self.loaded_model.predict(self.data)
 			text_report(self.label)
 			plt.figure()
@@ -950,7 +950,7 @@ class Readout_fidelity():
 			self.u_labels = unique(self.label)
 			#plotting the results:
 			for i in self.u_labels:
-				plt.scatter(self.i[self.label == i] , self.q[self.label == i] , label = self.label_list[i])
+				plt.scatter(self.i1[self.label == i] , self.q1[self.label == i] , label = self.label_list[i])
 			plot_svm_decision_function(self.loaded_model)
 			plt.title("readout_fidelity")
 			plt.axis('equal')
@@ -959,13 +959,18 @@ class Readout_fidelity():
 		else:
 			yAxisKey = self.quantificationObj.yAxisKey
 			self.y = self.quantificationObj.independentVars[yAxisKey]
+			self.probability = []
 			for self.times in range(len(self.i)):
-				self.i = self.i[self.times]
-				self.q = self.q[self.times]
-				self.data = stack((self.i, self.q), axis=1)
+				self.i2 = self.i[self.times]
+				self.q2 = self.q[self.times]
+				self.data = stack((self.i2, self.q2), axis=1)
 				self.label = self.loaded_model.predict(self.data)
 				self.u_unique, self.counts = unique(self.label, return_counts=True)
-				self.probability.append(100*self.counts[0]/(self.counts[0]+self.counts[1]))
+				self.probtmp = 100*self.counts[0]/(self.counts[0]+self.counts[1])
+				self.probability.append(self.probtmp)
+				print("{:d} times : ".format(self.times+1)+"{:<31}".format("The percentage of excited state")+" : {:.2f}%".format(self.probtmp))
+			plt.figure()
+			plt.rcParams["figure.figsize"] = (12, 9)
 			plt.plot(self.y, self.probability)
 			plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
 
