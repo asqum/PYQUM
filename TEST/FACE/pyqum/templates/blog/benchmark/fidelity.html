@@ -6,7 +6,7 @@
 </head>
 
 <body class="benchmark">
-    <div class="qestimatecontent">
+    <div class="fidelity">
         <h3>readout_fidelity</h3>
         <h4>k-Means + SVC </h4>
 
@@ -15,7 +15,7 @@
             <div class="allMeasurePara" id="fidelity-input">
                 <button id="fidelity-button-load" type="submit">Load data</button>
             </div>
-            <div class="allFitPara" id="fidelity-plot">
+            <!-- <div class="allFitPara" id="fidelity-plot">
                 <button id="fidelity-plot2D-button" type="submit">2D Plot</button>
                 <label>Z signal type:</label>
                 <select id="fidelity-plot2D-zSelector">
@@ -30,10 +30,10 @@
                 <button id="fidelity-plot1D-button" type="submit">1D Plot</button>
                 <label>y index or value:</label>
                 <input type="text" id="fidelity-plot1D-y_value">
-            </div>
+            </div> -->
 
             <div class="allFitPara" id="fidelity-allParamater">
-                <label>Fitting function:</label>
+                <!-- <label>Fitting function:</label>
                 <select id="fidelity-functionSelector">
                     <option value="ExpDecay">Exponential Decay</option>
                     <option value="RabiOscillation">Rabi Oscillation</option>
@@ -55,7 +55,7 @@
                 <label>Name of parameters:</label>
                 <input type="text" id="fidelity-parameterNames">
                 <label>Initial values:</label>
-                <input type="text" id="fidelity-parameterInitValues">
+                <input type="text" id="fidelity-parameterInitValues"> -->
                 <button id="fidelity-button-pretrain" type="submit">Pretrain</button>
                 <button id="fidelity-button-fit" type="submit">Fit</button>
                 <!-- <button id="fidelity-button-plot" type="submit">plot</button> -->
@@ -77,7 +77,7 @@
 
     </div>
     <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/readout_fidelity.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/fidelity.js') }}"></script>
 </body>
 
 </html>

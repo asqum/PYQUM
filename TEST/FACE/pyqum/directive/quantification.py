@@ -25,7 +25,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import linregress
 
 #from si_prefix import si_format, si_parse
-from numpy import cos, sin, pi, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var, transpose, stack
+from numpy import cos, sin, pi, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var, transpose
 
 # Load instruments
 # Please Delete this line in another branch (to: @Jackie)
@@ -46,6 +46,7 @@ from scipy.io import savemat
 # fidelity
 from sklearn.cluster import KMeans
 from sklearn.svm import SVC
+from numpy import stack, unique, meshgrid
 import pickle
 
 class ExtendMeasurement ():
@@ -882,6 +883,43 @@ class Autoflux():
 		print("{:<23}".format("Final_x(ki)"), " : " , "{:.4f}".format((self.fd-self.fc)*1000) ,"MHz")
 		print("{:<23}".format("Final_offset flux")," : ",self.offset,"uV/A")
 
+def plot_svm_decision_function(model, ax=None, plot_support=True):
+	"""Plot the decision function for a 2D SVC"""
+	if ax is None:
+		ax = plt.gca()
+	xlim = ax.get_xlim()
+	ylim = ax.get_ylim()
+	
+	# create grid to evaluate model
+	x = linspace(xlim[0], xlim[1], 30)
+	y = linspace(ylim[0], ylim[1], 30)
+	Y,X = meshgrid(y, x)
+	xy = stack([X.ravel(), Y.ravel()]).T
+	P = model.decision_function(xy).reshape(X.shape)
+	
+	# plot decision boundary and margins
+	ax.contour(X, Y, P, colors='k',
+			levels=[-1, 0, 1], alpha=0.5,
+			linestyles=['--', '-', '--'])
+	
+	# plot support vectors
+	if plot_support:
+		ax.scatter(model.support_vectors_[:, 0],
+				model.support_vectors_[:, 1],
+				s=300, linewidth=1, facecolors='none')
+	ax.set_xlim(xlim)
+	ax.set_ylim(ylim)
+	plt.axis('equal')
+	
+
+def text_report(label):
+	label_list= ["gnd","exc"]
+	u_unique, counts = unique(label, return_counts=True)
+	print(dict(zip(label_list, counts)))
+	print("{:<31}".format("The percentage of ground state")+" : {:.2f}%".format(100*counts[1]/(counts[0]+counts[1])))
+	print("{:<31}".format("The percentage of excited state")+" : {:.2f}%".format(100*counts[0]/(counts[0]+counts[1])))
+
+
 class Readout_fidelity():
 
 	def __init__( self, quantificationObj, *args,**kwargs ):
@@ -892,71 +930,46 @@ class Readout_fidelity():
 		self.real, self.imag = [],[]
 		self.label_list= ["gnd","exc"]
 
-	def plot_svm_decision_function(model, ax=None, plot_support=True):
-		"""Plot the decision function for a 2D SVC"""
-		if self.ax is None:
-			self.ax = plt.gca()
-		self.xlim = self.ax.get_xlim()
-		self.ylim = self.ax.get_ylim()
-		
-		# create grid to evaluate model
-		self.x = numpy.linspace(self.xlim[0], self.xlim[1], 30)
-		self.y = numpy.linspace(self.ylim[0], self.ylim[1], 30)
-		self.Y,self.X = numpy.meshgrid(self.y, self.x)
-		self.xy = numpy.stack([self.X.ravel(), self.Y.ravel()]).T
-		self.P = self.model.decision_function(self.xy).reshape(self.X.shape)
-		
-		# plot decision boundary and margins
-		self.ax.contour(self.X, self.Y, self.P, colors='k',
-				levels=[-1, 0, 1], alpha=0.5,
-				linestyles=['--', '-', '--'])
-		
-		# plot support vectors
-		if self.plot_support:
-			self.ax.scatter(self.model.support_vectors_[:, 0],
-					self.model.support_vectors_[:, 1],
-					s=300, linewidth=1, facecolors='none');
-		self.ax.set_xlim(self.xlim)
-		self.ax.set_ylim(self.ylim)
-		plt.axis('equal')
-
-	def text_report(label):
-		self.unique, self.counts = numpy.unique(self.label, return_counts=True)
-		print(dict(zip(self.label_list, self.counts)))
-		print("{:<31}".format("The percentage of ground state")+" : {:.2f}%".format(100*self.counts[1]/(self.counts[0]+self.counts[1])))
-		print("{:<31}".format("The percentage of excited state")+" : {:.2f}%".format(100*self.counts[0]/(self.counts[0]+self.counts[1])))
-		
 	def do_analysis( self ):
-		self.i = self.quantificationObj.rawData["iqSignal"].real
-		self.q = self.quantificationObj.rawData["iqSignal"].imag
-		self.data = numpy.stack((self.i, self.q), axis=1)
+		xAxisKey = self.quantificationObj.xAxisKey
+		self.x = self.quantificationObj.independentVars[xAxisKey]
+		self.i = self.quantificationObj.rawData["iqSignal"].real[0]
+		self.q = self.quantificationObj.rawData["iqSignal"].imag[0]
+		self.data = stack((self.i, self.q), axis=1)
 		# load the model from disk
-		self.loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_model.sav', 'rb'))
+		self.loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_svc_model.sav', 'rb'))
 		self.label = self.loaded_model.predict(self.data)
 		text_report(self.label)
+		plt.figure()
 		plt.rcParams["figure.figsize"] = (12, 9)
 		#Getting unique labels
-		self.u_labels = numpy.unique(self.label)
+		self.u_labels = unique(self.label)
 		#plotting the results:
 		for i in self.u_labels:
 			plt.scatter(self.i[self.label == i] , self.q[self.label == i] , label = self.label_list[i])
 		# plt.scatter(csv2['I'],csv2['Q'],label='raw data')
-		plt.legend()
-		plot_svm_decision_function(self.model)
+		# plt.legend()
+		plot_svm_decision_function(self.loaded_model)
 		plt.title("readout_fidelity")
 		plt.axis('equal')
-		plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\readout_fidelity.png')
-		plt.show()
+		plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
+		# plt.show()
 		
 
 	def pre_analytic( self ):
-		self.i = self.quantificationObj.rawData["iqSignal"].real
-		self.q = self.quantificationObj.rawData["iqSignal"].imag
-		self.data = numpy.stack((self.i, self.q), axis=1)
+		xAxisKey = self.quantificationObj.xAxisKey
+		self.x = self.quantificationObj.independentVars[xAxisKey]
+		self.i = self.quantificationObj.rawData["iqSignal"].real[0]
+		self.q = self.quantificationObj.rawData["iqSignal"].imag[0]
+		self.data = stack((self.i, self.q), axis=1)
+		print(self.data)
+		print(len(self.data))
+		print('--------')
 		self.kmeans = KMeans(n_clusters=2)
 		self.kmeans.fit(self.data)
-		self.label = kmeans.predict(self.data)
+		self.label = self.kmeans.predict(self.data)
 		self.model = SVC(kernel='linear', C=1E10)
-		self.model.fit(data, label)
+		self.model.fit(self.data, self.label)
 		# save the model to disk
-		pickle.dump(self.model, open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_model.sav', 'wb'))
+		pickle.dump(self.model, open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_svc_model.sav', 'wb'))
+		print("finished pretrain!")

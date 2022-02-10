@@ -3,21 +3,21 @@
 
 $(document).ready(function(){
     // $('div.qestimatecontent').show();
-    AF_render_input("fidelity");
+    FD_render_input("fidelity");
     console.log( "Load readout_fidelity" );
 
     let e_loadButton = document.getElementById("fidelity-button-load");
-    e_loadButton.addEventListener("click", AF_load_data);
+    e_loadButton.addEventListener("click", FD_load_data);
     let e_fitButton = document.getElementById("fidelity-button-fit");
-    e_fitButton.addEventListener("click", AF_fit_data);
-    let e_fitButton = document.getElementById("fidelity-button-pretrain");
-    e_fitButton.addEventListener("click", AF_pretrain_data);
-    let e_plot1DButton = document.getElementById("fidelity-plot1D-button");
-    e_plot1DButton.addEventListener("click", get_plot1D);
-    let e_plot2DtButton = document.getElementById("fidelity-plot2D-button");
-    e_plot2DtButton.addEventListener("click", get_plot2D);
+    e_fitButton.addEventListener("click", FD_fit_data);
+    let e_preButton = document.getElementById("fidelity-button-pretrain");
+    e_preButton.addEventListener("click", FD_pretrain_data);
+    // let e_plot1DButton = document.getElementById("fidelity-plot1D-button");
+    // e_plot1DButton.addEventListener("click", get_plot1D);
+    // let e_plot2DtButton = document.getElementById("fidelity-plot2D-button");
+    // e_plot2DtButton.addEventListener("click", get_plot2D);
     let e_plottButton = document.getElementById("fidelity-button-plot");
-    e_plottButton.addEventListener("click", AF_plot_data);
+    e_plottButton.addEventListener("click", FD_plot_data);
 });
 
 function get_fidelity_selectInfo( quantificationType ){
@@ -94,13 +94,13 @@ function get_fidelity_selectInfo( quantificationType ){
 }
 
 
-function AF_render_input ( quantificationType )
+function FD_render_input ( quantificationType )
 {
 
     $.ajaxSettings.async = false;
 
     let measureParameters = document.getElementById(quantificationType+"-input");
-
+    console.log(quantificationType+"-input");
 
 
     let htmlInfo = [];
@@ -149,7 +149,7 @@ function AF_render_input ( quantificationType )
             let DOM_parameterPlotTypeSelector = document.createElement("select");
             DOM_parameterPlotTypeSelector.id = quantificationType+"-plot_type-"+parameterName;
             DOM_parameterPlotTypeSelector.setAttribute("class", "measureParaSelect plotTypeSelect");
-            DOM_parameterPlotTypeSelector.setAttribute("onchange", "AF_showAveInput(this)");
+            DOM_parameterPlotTypeSelector.setAttribute("onchange", "FD_showAveInput(this)");
             DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
 
             // Create plot selection
@@ -208,11 +208,11 @@ function AF_render_input ( quantificationType )
 
 
     }
-    // AF_creatDOM_FitDataType("all", "fidelity-allParamater");
+    // FD_creatDOM_FitDataType("all", "fidelity-allParamater");
     $.ajaxSettings.async = true;
 }
 
-function AF_showAveInput(selectObject) {
+function FD_showAveInput(selectObject) {
     let DOM_parameterSetting=selectObject.parentElement;
     console.log("showAveInput trigger by "+selectObject.id)
     let DOM_parameterAve = DOM_parameterSetting.getElementsByClassName("ave_value")[0];
@@ -244,9 +244,9 @@ function AF_showAveInput(selectObject) {
 
     }
 }
-function AF_creatDOM_FitDataType( fitFunc, parentID ){
+function FD_creatDOM_FitDataType( fitFunc, parentID ){
     // Creat select for parameter plot type
-    console.log( "AF_creatDOM_FitDataType" );
+    console.log( "FD_creatDOM_FitDataType" );
     let parentDOM = document.getElementById( parentID );
 
     let DOM_dataTypeSelector = document.createElement("select");
@@ -266,7 +266,7 @@ function AF_creatDOM_FitDataType( fitFunc, parentID ){
 }
 
 
-function AF_load_data(){
+function FD_load_data(){
     console.log( "Get data" );
 
     $.ajaxSettings.async = false;
@@ -439,19 +439,19 @@ function get_plot1D(){
     $.ajaxSettings.async = true;
 }
 
-function AF_fit_data(){
+function FD_fit_data(){
 
     // Plot fit parameters
     $.getJSON( '/benchmark/fidelity/getJson_fitParaPlot',{ }, function (data) {});
 }
 
-function AF_pretrain_data(){
+function FD_pretrain_data(){
 
     // Plot fit parameters
     $.getJSON( '/benchmark/fidelity/getJson_Pretrain',{ }, function (data) {});
 }
 
-function AF_plot_data(){
+function FD_plot_data(){
 
     // Plot fit parameters
     $.getJSON( '/benchmark/plot',{ }, function (data) {});

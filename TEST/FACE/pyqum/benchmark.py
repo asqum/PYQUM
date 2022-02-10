@@ -20,7 +20,7 @@ from contextlib import suppress
 # Scientific
 from scipy import constants as cnst
 from si_prefix import si_format, si_parse
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, logical_and, nan, angle, arange
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, logical_and, nan, angle, arange, stack
 
 # Load instruments
 from pyqum.directive.quantification import ExtendMeasurement, QEstimation, PopulationDistribution, Common_fitting, Autoflux, Readout_fidelity
@@ -99,9 +99,9 @@ def autoflux():
 def plot():
 	return render_template("blog/benchmark/plot.html", url ='fitness.png')
 
-@bp.route('/readout_fidelity', methods=['POST', 'GET'])
-def readout_fidelity():
-	return render_template("blog/benchmark/readout_fidelity.html")
+@bp.route('/fidelity', methods=['POST', 'GET'])
+def fidelity():
+	return render_template("blog/benchmark/fidelity.html")
 
 @bp.route('/benchmark_getMeasurement', methods=['POST', 'GET'])
 def benchmark_getMeasurement():
@@ -148,7 +148,7 @@ def register_Quantification():
 		return Common_fitting(myExtendMeasurement)
 	def get_autoflux ( myExtendMeasurement ):
 		return Autoflux(myExtendMeasurement)
-	def get_readout_fidelity ( myExtendMeasurement ):
+	def get_fidelity ( myExtendMeasurement ):
 		return Readout_fidelity(myExtendMeasurement)
 	
 	quantification = {
@@ -156,7 +156,7 @@ def register_Quantification():
 		'populationDistribution': get_PopulationDistribution,
 		'common_fitting': get_common_fitting,
 		'autoflux': get_autoflux,
-		'readout_fidelity':get_readout_fidelity,
+		'fidelity':get_fidelity,
 	}
 	print(quantificationType+" is registed!!")
 	try: QDict[session['user_name']] = quantification[quantificationType](myExtendMeasurement)
@@ -797,11 +797,11 @@ def Auflux_getJson_fitParaPlot():
 
 	# myQuantification.fitParameters = fitParameters
 	myQuantification.do_analysis()
-
+	return json.dumps("finished", cls=NumpyEncoder)
 
 ### readout_fidelity part
 @bp.route('/fidelity/load',methods=['POST','GET'])
-def fidelity_load():
+def Readout_fidelity_load():
 	myExtendMeasurement = benchmarkDict[session['user_name']]
 	myQuantification = QDict[session['user_name']] 
 
@@ -834,7 +834,7 @@ def fidelity_load():
 	return json.dumps("Data reshaped", cls=NumpyEncoder)
 
 @bp.route('/fidelity/getJson_fitParaPlot',methods=['POST','GET'])
-def fidelity_getJson_fitParaPlot():
+def Readout_fidelity_getJson_fitParaPlot():
 
 	myExtendMeasurement = benchmarkDict[session['user_name']]
 	myQuantification = QDict[session['user_name']] 
@@ -843,9 +843,10 @@ def fidelity_getJson_fitParaPlot():
 
 	# myQuantification.fitParameters = fitParameters
 	myQuantification.do_analysis()
+	return json.dumps("AAAAAAA", cls=NumpyEncoder)
 
 @bp.route('/fidelity/getJson_Pretrain',methods=['POST','GET'])
-def fidelity_getJson_Pretrain():
+def Readout_fidelity_getJson_Pretrain():
 
 	myExtendMeasurement = benchmarkDict[session['user_name']]
 	myQuantification = QDict[session['user_name']] 
@@ -854,3 +855,4 @@ def fidelity_getJson_Pretrain():
 
 	# myQuantification.fitParameters = fitParameters
 	myQuantification.pre_analytic()
+	return json.dumps("A", cls=NumpyEncoder)
