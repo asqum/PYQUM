@@ -8,6 +8,7 @@ Created on Thu Dec 24 11:01:54 2020
 import qspp.core as sa_core
 from numpy import array, mean, sin, cos, pi, empty, linspace, argmax, cumsum, concatenate, zeros, ones
 import scipy.signal as sp_sig
+
 class DigitalHomodyne(sa_core.Signal_sampling):
 
     def __init__ ( self, t0, dt, processed_signal ):
@@ -75,7 +76,9 @@ class DualChannel(DigitalHomodyne):
         self._iq_mixer = iq_mixer
         bias = mean(self.signal,axis=1)
         #print("native signal offset by average: %s" %bias)
-        self.iq_mixer.mixer.bias = (bias[0],bias[1])
+        self.iq_mixer.mixer[0].bias = bias[0]
+        self.iq_mixer.mixer[1].bias = bias[1]
+
         IQ_vect = self.signal.transpose().reshape((len(self.time),2,1))
         # ROTATION BY VECTORIZATION:
         IQ_vect = self.get_RotationMatrix(self.time) @ ( IQ_vect - (bias.reshape((2,1))*ones(len(self.time))).transpose().reshape((len(self.time),2,1)) )

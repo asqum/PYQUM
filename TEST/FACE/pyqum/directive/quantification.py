@@ -644,7 +644,7 @@ class Common_fitting():
 					paraNames= ["tau", "frequency", "phi", "ampI", "offsetI", "ampQ", "offsetQ"]
 				else:
 					paraNames= ["amp","tau", "frequency", "phi", "offset"]
-		self.paraNames= paraNames
+		self.paraNames =paraNames
 		self.fitResult ={}
 		for rk in paraNames:
 			self.fitResult[rk]={}

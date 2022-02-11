@@ -5,6 +5,8 @@
 
 rem Define here the path to your conda installation
 set CONDAPATH=C:\Users\ASQUM\anaconda3
+::C:\Users\ASQUM\anaconda3
+::C:\ProgramData\Anaconda3
 rem Define here the name of the environment
 ::set ENVNAME=base
 set ENVNAME=PYQUM-server-offline
@@ -19,6 +21,10 @@ call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
 :: qspp (editable installation, files are in PYQUM)
 ECHO Installing qspp
 pip install -e ..\BETAsite\Signal_Processing
+
+:: qspp (editable installation, files are in PYQUM)
+ECHO Installing pulse_generator
+pip install -e ..\BETAsite\pulse_generator
 
 :: resonator_tools (editable installation, files are in PYQUM)
 ECHO Installing resonator_tools
