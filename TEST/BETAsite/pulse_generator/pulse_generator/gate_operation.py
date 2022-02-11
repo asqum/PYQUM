@@ -211,7 +211,7 @@ class PulseBuilder():
         elif self.pulseInfo["mode"] == "i":
             self.waveform["data"] = envelope*cos( 2. *pi *if_freq *absoluteTime +radians(phaseBalance) +pi) -offsetI
         elif self.pulseInfo["mode"] == "q":
-            self.waveform["data"] = envelope/ampBalance*cos( 2. *pi *if_freq *absoluteTime) -offsetQ
+            self.waveform["data"] = envelope/ampBalance*cos( 2. *pi *if_freq *absoluteTime) -1j*offsetQ
 
         return self.waveform
 
