@@ -168,6 +168,7 @@ class pulser:
                 else: rotAxis = radians(paras[4])
                 qosp = [pulseheight, 1/(sfactor*2), dRatio, rotAxis]
                 op.rotXY(qosp, shape='fDRAG')
+
             # 4. Linear connector: 
 
             # 5. Gaussian connector:

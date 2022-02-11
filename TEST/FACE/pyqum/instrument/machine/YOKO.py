@@ -53,7 +53,8 @@ def previous(bench, log=False):
         set_status(mdlname, dict(previous=float(prev)))
     return prev
 
-def output(bench, state=0):
+def output(bench, state=0, channel=''):
+    '''dummy channel to get along with SRSDC improvisation.'''
     try:
         bench.write('O%dE' %int(state)) #OUTPUT ON/OFF #Apparently this will return value to zero!
         status = 'Success'

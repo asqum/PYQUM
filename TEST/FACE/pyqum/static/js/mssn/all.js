@@ -11,6 +11,9 @@ $(document).ready(function(){
 
     // Sequencing asynchronous events:
     $.when( qumqueue() ).then(function () { qumjob(); });
+
+    // Freezing certain column(s) and row(s):
+    // $("#pruebatabla").CongelarFilaColumna({Columnas:2});
     
 });
 
@@ -98,6 +101,12 @@ function qumjob() {
                 } else if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Note') {
                     if (val.note==null) { var Comment_Note = "";
                     } else { var Comment_Note = new String(val.note); };
+                } else if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Both') {
+                    if (val.note==null) { 
+                        var Comment_Note = String(val.comment).replaceAll("\\n", "; ") + "";
+                    } else { 
+                        var Comment_Note = String(val.comment).replaceAll("\\n", "; ") + "<br>&nbsp;</br>" + "<b style='color:red'>" + String(val.note) + "</b>"; 
+                    };
                 };
 
                 // Alternate row-background-color with each days:
@@ -243,7 +252,16 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-reopen.green',
     return false;
 });
 
-
+// Block the first row of an HTML table with JQuery:
+$(function() {
+$('#fixed-headers').scroll(function(ev) {
+    /**
+     * where the table scroll, change the position of header and first column
+     */
+    $('thead th').css('transform', 'translateY(' + this.scrollTop + 'px)');
+    $('tbody th').css('transform', 'translateX(' + this.scrollLeft + 'px)');
+});
+});
 
 
 

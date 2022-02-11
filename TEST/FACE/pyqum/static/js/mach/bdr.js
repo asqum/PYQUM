@@ -324,6 +324,13 @@ $(function() {
                 $('table.BDR-QUEUE thead.samples.bdr-queue-update tr').append('<th>' + val.system + '</th>');
                 $('table.BDR-QUEUE tbody.samples.bdr-queue-update tr').append('<td>' + val.samplename + '</td>');
             });
+
+            // paint service-sample a certain color:
+            $('select.bdr.samples-allocation option').each( function() {
+                if (data.services.includes($(this).val())) {
+                    $(this).css('color', 'red');
+                };
+            });
             
         });
         

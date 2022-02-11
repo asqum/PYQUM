@@ -14,28 +14,20 @@ $('input.mani.loaded#sample-name').on('click', function() {
 $('button.mani.access.singleqb').on('click', function() { mani_TASK = 'singleqb' });
 $('button.mani.access.qubits').on('click', function() { mani_TASK = 'qubits' });
 
-// Event: Benchmark on click (Jacky)
+// Benchmark on click > Loading measurement data into Benchmark:
 $('#mani-to-benchmark').click( function(){
-    
     $.ajaxSettings.async = false;
 
-    // listimes_singleqb();
-    // accessdata_singleqb();
-    // $.getJSON(mssnencrpytonian() + '/mssn/singleqb/access', 
-    //     { wmoment: wmoment },
-    //     //input/select value here:  
-    //     function (data) {
-    //         //console.log("JOBID: " + JSON.stringify(data.JOBID) );
-    //         console.log( data );  
-                    
-    // });
+    // listimes_singleqb(); accessdata_singleqb();
+    // $.getJSON(mssnencrpytonian() + '/mssn/singleqb/access', { wmoment: wmoment }, function (data) { console.log("JOBID: " + JSON.stringify(data.JOBID) ); console.log(data); });
+
     let quantificationType = ["qfactor_estimation"];
     $.getJSON( '/benchmark/benchmark_getMeasurement', 
     { measurementType: mani_TASK, quantificationType: JSON.stringify(quantificationType) }, 
-        function ( ) {
+        function () {
     }); 
 
-    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 101);
+    window.open("/benchmark");
     $.ajaxSettings.async = true;
 
     return false;
