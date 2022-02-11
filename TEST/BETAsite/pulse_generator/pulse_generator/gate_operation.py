@@ -2,9 +2,9 @@
 # 
 from numpy import linspace, arange
 # Numpy array
-from numpy import array, append, zeros, ones
+from numpy import array, append, zeros, ones, where
 # Numpy common math function
-from numpy import exp, sqrt, arctan2, cos, sin, angle, radians, sign, log
+from numpy import exp, sqrt, arctan2, cos, sin, angle, radians, sign, log, ceil
 # Numpy constant
 from numpy import pi
 from pandas import infer_freq
@@ -28,12 +28,12 @@ def constFunc (t, p):
 
 #     def set_QubitRegister():
 
-class Operation():
-    def __init__( self, time ):
+class PulseBuilder():
+    def __init__( self, pts, dt ):
         # self.functionName = functionName
-        self.time = time
-        self.operationPts = 0 # AWG length
-        self.operationStartPt = 0 # Start Index
+        self.time = pts *dt
+        self.timeResolution = dt
+        self.operationPts = pts
         self.pulseInfo = {
             "mode": "XY",
             "envelope": {
@@ -42,7 +42,6 @@ class Operation():
             },
             "phase": 0,
         }
-        self.timeResolution = 1.
         self.waveform ={
             "t0": 0.,
             "dt": self.timeResolution,
@@ -94,16 +93,14 @@ class Operation():
             }
         return self.pulseInfo.update(pulseInfo)
 
-    def generate_envelope( self, dt, startTime, hardwareInfo ):
-        self.timeResolution = dt
-        self.operationPts = int(self.time//self.timeResolution)
+    def generate_envelope( self, startTime=None ):
         self.waveform["data"] = zeros( self.operationPts )
-        self.waveform["t0"] = startTime
+        if startTime != None: self.waveform["t0"] = startTime
         self.waveform["dt"] = self.timeResolution
         relativeTime = linspace(0,self.time,self.operationPts,endpoint=False)
         
-        amp = self.pulseInfo["envelope"]["paras"][0]/hardwareInfo.InputPort.couplingStrength
-
+        amp = self.pulseInfo["envelope"]["paras"][0]
+        
         def get_gaussian():
             centerTime = self.time /2
             sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
@@ -139,20 +136,21 @@ class Operation():
             return wfData
 
         def get_DRAG():
-            centerTime = self.operationPts *self.timeResolution /2
-            amp = self.pulseInfo["envelope"]["paras"][0] /hardwareInfo.InputPort.couplingStrength
+            centerTime = self.time /2
+            amp = self.pulseInfo["envelope"]["paras"][0]
             sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
 
             pGau = [ amp, sigma, centerTime ]
 
             ampDGau = amp 
             pDGau = [ ampDGau, sigma, centerTime ]
-            wfData = gaussianFunc(relativeTime, pGau )+ -1j/(hardwareInfo.Qubit.anharmonicity/1e3) *derivativeGaussianFunc(relativeTime, pDGau)
+            #wfData = gaussianFunc(relativeTime, pGau )+ -1j/(hardwareInfo.Qubit.anharmonicity/1e3) *derivativeGaussianFunc(relativeTime, pDGau)
+            wfData = gaussianFunc(relativeTime, pGau )+ -1j *derivativeGaussianFunc(relativeTime, pDGau)
 
             return wfData
 
         def get_flexDRAG():
-            centerTime = self.operationPts *self.timeResolution /2
+            centerTime = self.time /2
             amp = self.pulseInfo["envelope"]["paras"][0]
             sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
 
@@ -160,7 +158,6 @@ class Operation():
 
             ampDGau = amp *self.pulseInfo["envelope"]["paras"][2] 
             pDGau = [ ampDGau, sigma, centerTime ]
-            print(pDGau)
             wfData = gaussianFunc(relativeTime, pGau )+ -1j*derivativeGaussianFunc(relativeTime, pDGau)
 
             return wfData
@@ -188,19 +185,20 @@ class Operation():
         #print(self.waveform)
         return self.waveform
 
-    def convert_XYtoIQ( self, hardwareInfo ):
+    def convert_XYtoIQ( self, IQMixerChannel ):
         
-        phaseBalance = hardwareInfo.IQMixerChannel.phaseBalance
-        ampBalance  = hardwareInfo.IQMixerChannel.ampBalance
-        (offsetI, offsetQ) = hardwareInfo.IQMixerChannel.offset
+        phaseBalance = IQMixerChannel.phaseBalance
+        ampBalance  = IQMixerChannel.ampBalance
+        (offsetI, offsetQ) = IQMixerChannel.offset
 
         absoluteTime = get_timeAxis(self.waveform)
         
-        if_freq = hardwareInfo.IQMixerChannel.ifFreq/1e3 # to GHz
+        if_freq = IQMixerChannel.ifFreq/1e3 # to GHz
         envelope = self.waveform["data"]
 
         inverse = sign(sin(radians(phaseBalance)))
-        print(self.pulseInfo["mode"])
+        #print(self.pulseInfo["mode"])
+
         if self.pulseInfo["mode"] == "XY":
             envelopeIQ = abs( envelope )
             envelopeI = envelopeIQ /cos(radians(abs(phaseBalance)-90))
@@ -217,15 +215,15 @@ class Operation():
 
         return self.waveform
 
-class OperationSequence():
+class QubitOperationSequence():
 
-    def __init__( self, sequenceTime, hardwareInfo=phyCh.HardwareInfo ):
+    def __init__( self, sequencePts, PhysicalChannel=phyCh.PhysicalChannel ):
         
-        self.hardwareInfo = hardwareInfo
-        dt = self.hardwareInfo.timeResolution
+        self.PhysicalChannel = PhysicalChannel
+        dt = self.PhysicalChannel.AWGChannel.timeResolution
         self.operation = []
-        self.sequenceTime = sequenceTime # ns
-        self.sequencePts = int(-(sequenceTime//-dt))
+        self.sequenceTime = sequencePts*dt # ns
+        self.sequencePts = sequencePts
         # print("sequenceTime",sequenceTime)
         # print("sequencePts",self.sequencePts)
 
@@ -239,51 +237,63 @@ class OperationSequence():
             "dt": dt,
             "data": array([])
             }
-    def set_operation( self, operation ):
+    def set_operation( self, operation  ):
 
-        dt = self.hardwareInfo.timeResolution
+        dt = self.PhysicalChannel.AWGChannel.timeResolution
         self.operation = operation
         endPt = int(0)
         for i, op in enumerate(self.operation) :
-            operationPts = int(-(op.time//-dt))
-            op.operationPts = operationPts
-            op.operationStartPt = endPt
-            # Reset operation time
-            op.time = operationPts*dt
-
-            print("start point",op.operationStartPt)
-            print("op point",operationPts)
-
+            operationPts = op.operationPts
+            op.waveform["t0"] = endPt*dt
+            #print("start point",endPt)
+            #print("op point",operationPts)
             endPt += operationPts
 
         if endPt < self.sequencePts:
-            op = Operation(((self.sequencePts-endPt)*dt))
+            op = PulseBuilder(self.sequencePts-endPt,dt)
             op.idle([0])
             self.operation.append(op)
             print("Operation sequence haven't full")
         elif endPt == self.sequencePts:
             print("Total operations match operation sequence")
         else:
-            self.operation = []
-            print("Too much operation")
+            op = PulseBuilder(self.sequencePts,dt)
+            op.idle([0])
+            self.operation = [op]
+            print("Too much operation, clean all sequense")
             
 
     
-    def cal_pulseSequence( self ):
+    def generate_sequenceWaveform( self, firstOperationIdx=None ):
 
         allXYPulse = array([])
         allIQPulse = array([])
-        dt = self.hardwareInfo.timeResolution
-        t0 = self.operation[0].time
+        dt = self.PhysicalChannel.AWGChannel.timeResolution
+        t0 = 0
+        if len(self.operation) == 0 : # For the case with only one operation
+            firstOperationIdx = 0
+        # Convert XY to IQ language
         for op in self.operation:
-            newPulse = op.generate_envelope( dt, t0, self.hardwareInfo )["data"]
+            newPulse = op.generate_envelope()["data"]
             allXYPulse = append(allXYPulse, newPulse)
 
-            newPulse = op.convert_XYtoIQ( self.hardwareInfo )["data"]
+        if firstOperationIdx != None :
+            t0 = self.operation[firstOperationIdx].waveform["t0"]
+        elif len(self.operation) == 0 :
+            t0 = 0
+        else:
+            try: # Old method to get t0
+                t0 = dt * where(ceil(abs(allXYPulse))==1)[0][0]
+                # print(Back.WHITE + Fore.BLUE + "Pulse starting from %s ns" %pulse_starting_time)
+            except(IndexError): 
+                t0 = 0
+
+        # Convert XY to IQ language        
+        for op in self.operation:
+            op.waveform["t0"]-=t0
+            newPulse = op.convert_XYtoIQ( self.PhysicalChannel.IQMixerChannel )["data"]
             allIQPulse = append(allIQPulse, newPulse)
 
-            self.sequencePts += len(newPulse)
-            t0 += op.time
             #print(len(newPulse))
 
         self.xywaveform.update({"data":allXYPulse})
@@ -308,32 +318,31 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import scipy.fft as spfft
     print("register Qubit")
-    q1 = phyCh.Qubit()
+    awgInfo = phyCh.AWGChannel()
+    awgInfo.timeResolution=0.01
     print("register IQMixerChannel")
-    m1 = phyCh.IQMixerChannel()    
-    print("register InputPort")
-    p1 = phyCh.InputPort()
+    mixerInfo = phyCh.IQMixerChannel()    
 
-    print("register HardwareInfo")
-    pch1 = phyCh.HardwareInfo(q1,p1,m1) 
-
+    print("register one channel for a Qubit")
+    pch = phyCh.PhysicalChannel( awgInfo, mixerInfo ) 
+    phyQ = phyCh.PhyQubit( pch )
     print("init OS")
-    OPS = OperationSequence(100,pch1)
+    OPS = QubitOperationSequence(100,phyQ.PhysicalChannel)
 
     print("set new operation")
-    op1 = Operation(20)
+    op1 = PulseBuilder(2000,awgInfo.timeResolution)
     op1.arbXYGate([pi,0])
-    op2 = Operation(20)
-    op2.arbXYGate([pi,pi])
-    op3 = Operation(20)
+    op2 = PulseBuilder(5000,awgInfo.timeResolution)
+    op2.rotXY([1,0.25,5,0])
+    op3 = PulseBuilder(2000,awgInfo.timeResolution)
     op3.idle([0])
 
     print("register operation to sequence")
-    OPS.set_operation([op3, op1])
+    OPS.set_operation([op3, op2])
 
     print("calculate XY waveform of the sequence")
-    xyWf = OPS.cal_pulseSequence()
-
+    OPS.generate_sequenceWaveform()
+    xyWf = OPS.xywaveform
     print("calculate IQ waveform of the sequence")
     iqWf = OPS.iqwaveform
 
@@ -347,9 +356,9 @@ if __name__ == "__main__":
     plt.plot(xyWf["data"].real, xyWf["data"].imag)
     plt.plot(iqWf["data"].real, iqWf["data"].imag)
     plot3 = plt.figure(3)
-    fq = q1.qubitFreq
-    pmixer = m1.phaseBalance
-    fIF = m1.ifFreq/1e3
+    fq = phyQ.qubitFreq
+    pmixer = mixerInfo.phaseBalance
+    fIF = mixerInfo.ifFreq/1e3
     # plt.plot(timeAxis, cos(2*pi*fq*timeAxis) )
 
     # xymix = xyWf["data"].real*cos(2*pi*fq*timeAxis) +xyWf["data"].imag*cos(2*pi*fq*timeAxis +abs(radians(pmixer)) )
