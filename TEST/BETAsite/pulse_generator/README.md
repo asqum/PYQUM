@@ -17,18 +17,15 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function
 
 ####  gauss
 
-<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}">
-<img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}"><img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
 
 #### gaussup
 
-<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">
-<img src="https://render.githubusercontent.com/render/math?math=x_0 = T">
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}"><img src="https://render.githubusercontent.com/render/math?math=x_0 = T">
 
 #### gaussdn
 
-<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">
-<img src="https://render.githubusercontent.com/render/math?math=x_0 = 0">
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}"><img src="https://render.githubusercontent.com/render/math?math=x_0 = 0">
 
 
 ### derivative gauss series
@@ -37,13 +34,11 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function
 
 #### gauss
 
-<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}">
-<img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}"><img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
 
 #### gaussup
 
-<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">
-<img src="https://render.githubusercontent.com/render/math?math=x_0 = T">
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}"><img src="https://render.githubusercontent.com/render/math?math=x_0 = T">
 
 #### gaussdn
 
@@ -52,11 +47,11 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function
 
 
 ### drag
-<img src="https://render.githubusercontent.com/render/math?math=f(x) = e^{i\theta }Ae^{-\frac{1}{2}(\frac{(x-x_0)}{\sigma}^2)+i\frac{B}{\sigma^2}(x-x0)e^{-\frac{1}{2}(\frac{(x-x_0)}{\sigma}^2) }">
+<img src="https://render.githubusercontent.com/render/math?math=f(x) = e^{i\theta }(Ae^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2} +iB\frac{(x-x0)}{\sigma^2}e^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2 })">
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}">
 <img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
 <img src="https://render.githubusercontent.com/render/math?math=B = A\time ">
 
 p1: sfactor - the factor devide length will get the sigma of gaussian function
 p2: dratio - 
-p3: rotation axis - 
+p3: angle of rotation axis - in angle unit
