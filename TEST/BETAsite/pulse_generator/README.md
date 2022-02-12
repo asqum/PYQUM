@@ -4,17 +4,17 @@ The operation setting in script:
 
 function/parameter1,parameter2...
 ## functions
-p2: amplitude - the prefactor used to scale function 
-p3: length - the duration of this function
+p2: A - the prefactor used to scale function 
+p3: T - the duration of this function
 ### flat
-<img src="https://render.githubusercontent.com/render/math?math=f(x)=p2">
+<img src="https://render.githubusercontent.com/render/math?math=f(x)=p_2">
 p1: dummy - keep empty
 
 ### gauss
-f(x) = amplitude * exp( -1/2*((x-x0)/sigma)^2 )
+<img src="https://render.githubusercontent.com/render/math?math=f(x) = A* exp( -1/2*((x-T/2)/sigma)^2 )">
+
 p1: sfactor - the factor devide length will get the sigma of gaussian function
-p2: amplitude - the value of constant output voltage 
-p3: length - the duration of this function
+
 ### gaussup, gaussdn
 p1: sfactor - the factor/2 devide length will get the sigma of gaussian function
 p2: amplitude - the value of constant output voltage 
