@@ -33,8 +33,24 @@ command: gaussdn
 <img src="https://render.githubusercontent.com/render/math?math=x_0 = 0">
 
 
-### dgauss
-p1: sfactor - the factor/2 devide length will get the sigma of gaussian function
+### derivative gauss series
+<img src="https://render.githubusercontent.com/render/math?math=f(x) = \frac{A}{\sigma^2}(x-x0)e^{-\frac{1}{2}(\frac{(x-x_0)}{\sigma}^2) }">
+p1: sfactor - the factor devide length will get the sigma of gaussian function
+
+command: gauss
+
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}">
+<img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
+
+command: gaussup
+
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">
+<img src="https://render.githubusercontent.com/render/math?math=x_0 = T">
+
+command: gaussdn
+
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">
+<img src="https://render.githubusercontent.com/render/math?math=x_0 = 0">
 
 ### dgaussup, dgaussdn
 p1: sfactor - the factor/2 devide length will get the sigma of gaussian function
