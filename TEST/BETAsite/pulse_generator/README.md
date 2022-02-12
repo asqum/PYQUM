@@ -51,6 +51,6 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function
 
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}">, <img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">, <img src="https://render.githubusercontent.com/render/math?math=B = A\times dratio">
 
-p1: sfactor - the factor devide length will get the sigma of gaussian function
-p2: dratio - 
-p3: angle of rotation axis - in angle unit
+p1: sfactor - the factor devide length will get the sigma of gaussian function\n
+p2: dratio - \n
+p3: angle of rotation axis - in angle unit\n
