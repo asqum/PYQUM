@@ -79,7 +79,7 @@ class pulser:
             mixerInfo.offset = ( offset_I, offset_Q )
         except:
             mixerInfo.ampBalance = 1
-            mixerInfo.phaseBalance = 90
+            mixerInfo.phaseBalance = -90
             mixerInfo.offset = ( 0, 0 )
         mixerInfo.ifFreq = self.iffreq
         
@@ -99,15 +99,24 @@ class pulser:
         for beat in self.score.split(";")[1:]:
             if beat == '': break # for the last semicolon
 
-
-            paras = []
-            for p in beat.split('/')[1].split(','):
-                if p == '':
-                    paras.append( nan )
+            basicParas=[]
+            for p in beat.split(',')[1:]:
+                if p == '' :
+                    basicParas.append( nan )
                 else:
-                    paras.append( float(p) )
-            pulsewidth = float(paras[1])
-            pulseheight = float(paras[2])
+                    basicParas.append( float(p) )            
+            print("BBB",basicParas)
+
+            pulsewidth = float(basicParas[0])
+            pulseheight = float(basicParas[1])
+            waveformParas = []
+            for p in beat.split(',')[0].split('/')[1:]:
+
+                if p == '':
+                    waveformParas.append( nan )
+                else:
+                    waveformParas.append( float(p) )
+            print("WWW",waveformParas)
             pulsePts = int(-(pulsewidth//-self.dt))
             self.beatime += pulsePts*self.dt
             op = qos.PulseBuilder(pulsePts,self.dt)
@@ -119,53 +128,58 @@ class pulser:
             # Gaussian
             # 2.0 complete:
             def get_gauss():
-                if isnan(paras[0]): sfactor = 4
-                else: sfactor = paras[0]
+                if isnan(waveformParas[0]): sfactor = 4
+                else: sfactor = waveformParas[0]
                 qosp = [pulseheight, 1/(sfactor)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian')
 
             # 2.1 raising from zero:
             def get_gaussup():
-                if isnan(paras[0]): sfactor = 4
-                else: sfactor = paras[0]
+                if isnan(waveformParas[0]): sfactor = 4
+                else: sfactor = waveformParas[0]
                 qosp = [pulseheight, 1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
 
             # 2.2 falling to zero:
             def get_gaussdn():
-                if isnan(paras[0]): sfactor = 4
-                else: sfactor = paras[0]
+                if isnan(waveformParas[0]): sfactor = 4
+                else: sfactor = waveformParas[0]
                 qosp = [pulseheight, -1/sfactor(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
             # 3 Derivative Gaussian
             # 3.0
             def get_dgauss():
-                if isnan(paras[0]): sfactor = 4
-                else: sfactor = paras[0]
+                if isnan(waveformParas[0]): sfactor = 4
+                else: sfactor = waveformParas[0]
                 qosp = [pulseheight, -1/(sfactor)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian')
             
             # 3.1 DRAG up
             def get_dgaussup():
-                if isnan(paras[0]): sfactor = 4
-                else: sfactor = paras[0]
+                if isnan(waveformParas[0]): sfactor = 4
+                else: sfactor = waveformParas[0]
                 qosp = [pulseheight, 1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian_half')
             # 3.2 DRAG dn
             def get_dgaussdn():
-                if isnan(paras[0]): sfactor = 4
-                else: sfactor = paras[0]
+                if isnan(waveformParas[0]): sfactor = 4
+                else: sfactor = waveformParas[0]
                 qosp = [pulseheight, -1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian_half')
 
             # PENDING: BUILD CONNECTORS: require the knowledge of the last height
             def get_drag():
-                if isnan(paras[0]): sfactor = 4
-                else: sfactor = paras[0]
-                if isnan(paras[3]): dRatio = 1
-                else: dRatio = paras[3]
-                if isnan(paras[4]): rotAxis = 0
-                else: rotAxis = radians(paras[4])
+                if len(waveformParas)==1:
+                    sfactor = 4
+                    dRatio = 1
+                    rotAxis = 0
+                else:
+                    if isnan(waveformParas[0]): sfactor = 4
+                    else: sfactor = waveformParas[0]
+                    if isnan(waveformParas[1]): dRatio = 1
+                    else: dRatio = waveformParas[1]
+                    if isnan(waveformParas[2]): rotAxis = 0
+                    else: rotAxis = radians(waveformParas[2])
                 qosp = [pulseheight, 1/(sfactor), dRatio, rotAxis]
                 op.rotXY(qosp, shape='fDRAG')
 
@@ -221,13 +235,13 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    pr = pulser(dt=.5,score='ns=200/3,mhz=I/-91/; Flat/,50,0; Flat/,20,1; Flat/,5,0; Gauss/,20,1; Flat/,10,0; dGauss/,20,1; Flat/,10,0; drag/,20,1,5,; ',clock_multiples=1)
+    pr = pulser(dt=.5,score='ns=100/3,mhz=I/-100/; Flat/,10,0; drag/,20,1; Flat/,10,0; drag///90,20,1; ',clock_multiples=1)
     pr.song()
     timeAxis = pr.timeline
     envelope = pr.envelope
     music = pr.music
 
-    pr2 = pulser(dt=.5,score='ns=200/3,mhz=Q/-91/; Flat/,50,0; Flat/,20,1; Flat/,5,0; Gauss/,20,1; Flat/,10,0; dGauss/,20,1; Flat/,10,0; drag/,20,1,5,; ',clock_multiples=1)
+    pr2 = pulser(dt=.5,score='ns=100/3,mhz=Q/-100/; Flat/,10,0; drag/,20,1; Flat/,10,0; drag///90,20,1; ',clock_multiples=1)
     pr2.song()
     timeAxis2 = pr2.timeline
     envelope2 = pr2.envelope
@@ -238,11 +252,11 @@ if __name__ == "__main__":
     plt.plot(timeAxis, envelope)
     plt.plot(timeAxis2, envelope2)
     plot2 = plt.figure(2)
-    plt.plot(timeAxis, envelope)
+    #plt.plot(timeAxis, envelope)
     plt.plot(timeAxis, music)
     plt.title("I")
     plot2 = plt.figure(3)
-    plt.plot(timeAxis2, envelope2)
+    #plt.plot(timeAxis2, envelope2)
     plt.plot(timeAxis2, music2)
     plt.title("Q")
     plot2 = plt.figure(4)
