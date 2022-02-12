@@ -24,12 +24,12 @@ command: gauss
 
 command: gaussup
 
-<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{2*sfactor}">
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">
 <img src="https://render.githubusercontent.com/render/math?math=x_0 = T">
 
 command: gaussdn
 
-<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{2*sfactor}">
+<img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">
 <img src="https://render.githubusercontent.com/render/math?math=x_0 = 0">
 
 
