@@ -29,7 +29,7 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function
 
 
 ### derivative gauss series
-<img src="https://render.githubusercontent.com/render/math?math=f(x) = iB\frac{(x-x0)}{\sigma^2}e^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2 })">
+<img src="https://render.githubusercontent.com/render/math?math=f(x) = A\frac{(x-x0)}{\sigma^2}e^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2 })">
 p1: sfactor - the factor devide length will get the sigma of gaussian function
 
 #### dgauss
@@ -47,7 +47,7 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function
 
 ### DRAG
 
-<img src="https://render.githubusercontent.com/render/math?math=f(x) = e^{i\theta }(Ae^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2} + iB\frac{(x-x0)}{\sigma^2}e^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2 })">
+<img src="https://render.githubusercontent.com/render/math?math=f(x) = e^{i\theta }(Ae^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2} + i B\frac{(x-x0)}{\sigma^2}e^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2 })">
 
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}">, <img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">, <img src="https://render.githubusercontent.com/render/math?math=B = A\times dratio">
 
