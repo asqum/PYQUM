@@ -12,6 +12,7 @@ class PhyQubit():
         self.PhysicalChannel = PhysicalChannel
         self.fluxBias = 0
         self.qubitFreq = 4.0 # GHz
+        self.resonatorFreq = 4.0 # GHz
         self.anharmonicity = -200 #MHz w12 -w01
 
 class PhysicalChannel():
