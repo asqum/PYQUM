@@ -11,8 +11,9 @@ p3: T - the duration of this function
 p1: dummy - keep empty
 
 ### gauss
-<img src="https://render.githubusercontent.com/render/math?math=f(x) = A* exp{ -\frac{1 }{2} *(\frac{(x-T/2)}{\sigma}^2) }">
+<img src="https://render.githubusercontent.com/render/math?math=f(x) = Ae^{-\frac{1}{2}(\frac{(x-x_0)}{\sigma}^2) }">
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}">
+<img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
 p1: sfactor - the factor devide length will get the sigma of gaussian function
 
 ### gaussup, gaussdn
