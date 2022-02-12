@@ -119,54 +119,54 @@ class pulser:
             # Gaussian
             # 2.0 complete:
             def get_gauss():
-                if isnan(paras[0]): sfactor = 2
+                if isnan(paras[0]): sfactor = 4
                 else: sfactor = paras[0]
-                qosp = [pulseheight, 1/(sfactor*2)]
+                qosp = [pulseheight, 1/(sfactor)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian')
 
             # 2.1 raising from zero:
             def get_gaussup():
-                if isnan(paras[0]): sfactor = 2
+                if isnan(paras[0]): sfactor = 4
                 else: sfactor = paras[0]
-                qosp = [pulseheight, 1/sfactor]
+                qosp = [pulseheight, 1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
 
             # 2.2 falling to zero:
             def get_gaussdn():
-                if isnan(paras[0]): sfactor = 2
+                if isnan(paras[0]): sfactor = 4
                 else: sfactor = paras[0]
-                qosp = [pulseheight, -1/sfactor]
+                qosp = [pulseheight, -1/sfactor(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
             # 3 Derivative Gaussian
             # 3.0
             def get_dgauss():
-                if isnan(paras[0]): sfactor = 2
+                if isnan(paras[0]): sfactor = 4
                 else: sfactor = paras[0]
-                qosp = [pulseheight, -1/(sfactor*2)]
+                qosp = [pulseheight, -1/(sfactor)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian')
             
             # 3.1 DRAG up
             def get_dgaussup():
-                if isnan(paras[0]): sfactor = 2
+                if isnan(paras[0]): sfactor = 4
                 else: sfactor = paras[0]
-                qosp = [pulseheight, 1/sfactor]
+                qosp = [pulseheight, 1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian_half')
             # 3.2 DRAG dn
             def get_dgaussdn():
-                if isnan(paras[0]): sfactor = 2
+                if isnan(paras[0]): sfactor = 4
                 else: sfactor = paras[0]
-                qosp = [pulseheight, -1/sfactor]
+                qosp = [pulseheight, -1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian_half')
 
             # PENDING: BUILD CONNECTORS: require the knowledge of the last height
             def get_drag():
-                if isnan(paras[0]): sfactor = 2
+                if isnan(paras[0]): sfactor = 4
                 else: sfactor = paras[0]
                 if isnan(paras[3]): dRatio = 1
                 else: dRatio = paras[3]
                 if isnan(paras[4]): rotAxis = 0
                 else: rotAxis = radians(paras[4])
-                qosp = [pulseheight, 1/(sfactor*2), dRatio, rotAxis]
+                qosp = [pulseheight, 1/(sfactor), dRatio, rotAxis]
                 op.rotXY(qosp, shape='fDRAG')
 
             # 4. Linear connector: 
