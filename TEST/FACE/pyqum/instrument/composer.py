@@ -105,7 +105,6 @@ class pulser:
                     basicParas.append( nan )
                 else:
                     basicParas.append( float(p) )            
-            print("BBB",basicParas)
 
             pulsewidth = float(basicParas[0])
             pulseheight = float(basicParas[1])
@@ -116,7 +115,6 @@ class pulser:
                     waveformParas.append( nan )
                 else:
                     waveformParas.append( float(p) )
-            print("WWW",waveformParas)
             pulsePts = int(-(pulsewidth//-self.dt))
             self.beatime += pulsePts*self.dt
             op = qos.PulseBuilder(pulsePts,self.dt)
