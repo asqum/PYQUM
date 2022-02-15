@@ -16,7 +16,7 @@ class PhyQubit():
         self.anharmonicity = -200 #MHz w12 -w01
 
 class PhysicalChannel():
-    def __init__( self ,AWGChannel ,iQMixerChannel):
+    def __init__( self, AWGChannel, iQMixerChannel):
         self.name = "XY_I"
         self.timeResolution = .1 # ns/sample
         self.IQMixerChannel = iQMixerChannel

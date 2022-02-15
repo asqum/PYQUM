@@ -24,7 +24,10 @@ def derivativeGaussianFunc (t, p):
 def constFunc (t, p):
     # p[0]: amp
     return p[0]*ones(len(t))
-
+def linearFunc (t, p):
+    # p[0]: amp
+    # p[1]: intersection
+    return p[0]*t+p[1]
 
 #     def set_QubitRegister():
 
@@ -105,7 +108,7 @@ class PulseBuilder():
             centerTime = self.time /2
             sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
             p = [amp, sigma, centerTime]
-            wfData = gaussianFunc( relativeTime, p )+ 0j
+            wfData = gaussianFunc( relativeTime, p )
             return wfData
 
         def get_halfGaussian():
@@ -115,14 +118,14 @@ class PulseBuilder():
             if sigma > 0:
                 centerTime = self.time
             p = [amp, sigma, centerTime]
-            wfData = gaussianFunc( relativeTime, p )+ 0j
+            wfData = gaussianFunc( relativeTime, p )
             return wfData
 
         def get_degaussian():
             centerTime = self.time /2
             sigma = self.time *self.pulseInfo["envelope"]["paras"][1]
             p = [amp, sigma, centerTime]
-            wfData = derivativeGaussianFunc( relativeTime, p )+ 0j
+            wfData = derivativeGaussianFunc( relativeTime, p )
             return wfData
 
         def get_halfDeGaussian():
@@ -132,7 +135,7 @@ class PulseBuilder():
             if sigma > 0:
                 centerTime = self.time
             p = [amp, sigma, centerTime]
-            wfData = derivativeGaussianFunc( relativeTime, p )+ 0j
+            wfData = derivativeGaussianFunc( relativeTime, p )
             return wfData
 
         def get_DRAG():
@@ -169,49 +172,83 @@ class PulseBuilder():
             wfData = constFunc( relativeTime, p )
 
             return wfData
+        def get_linear():
+            slope = self.pulseInfo["envelope"]["paras"][0]
+            intercept = self.pulseInfo["envelope"]["paras"][1]
+            p = [ slope, intercept ]
+
+            wfData = linearFunc( relativeTime, p )
+
+            return wfData
+        def get_ringUp():
+            flatHieght = self.pulseInfo["envelope"]["paras"][0]
+            sigmaRatio = self.pulseInfo["envelope"]["paras"][1]
+            edgeLength = self.pulseInfo["envelope"]["paras"][2]
+
+            peakLength = edgeLength*2
+            flatLength = self.time -peakLength
+            peakMultiplier = self.pulseInfo["envelope"]["paras"][3]
+            peakSigma = peakLength *sigmaRatio
+
+            startPos = peakLength/2
+
+            ringPeak = flatHieght *(peakMultiplier)
+            endPos = startPos +flatLength
+
+            ringGauss = [ ringPeak, peakSigma, startPos ]
+
+            highPowerGauss = gaussianFunc(relativeTime, ringGauss)
+            startEdge = [ flatHieght, peakSigma, startPos ]
+            gaussUp = where( relativeTime<startPos, gaussianFunc(relativeTime, startEdge),0. )
+            endEdge = [ flatHieght, peakSigma, endPos ]
+            gaussDn = where( relativeTime>endPos, gaussianFunc(relativeTime, endEdge),0. )
+            step = where( (relativeTime>=startPos) & (relativeTime<=endPos), constFunc(relativeTime, [flatHieght]),0. )
+            wfData = highPowerGauss +gaussUp +step +gaussDn
+
+            return wfData
         pulse = {
             'gaussian': get_gaussian,
             'gaussian_half': get_halfGaussian,
             'degaussian': get_degaussian,
             'degaussian_half': get_halfDeGaussian,
-            'gaussian_half': get_halfGaussian,
             'DRAG': get_DRAG,
             'fDRAG': get_flexDRAG,
             'const': get_const,
+            'linear': get_linear,
+            'ringup': get_ringUp,
         }
         phaseShift = exp(1j*self.pulseInfo["phase"])
-        if self.pulseInfo["mode"] == "q": phaseShift = 1j
         self.waveform["data"]= pulse[self.pulseInfo["envelope"]["shape"]]() *phaseShift
         #print(self.waveform)
         return self.waveform
 
-    def convert_XYtoIQ( self, IQMixerChannel ):
-        
-        phaseBalance = IQMixerChannel.phaseBalance
-        ampBalance  = IQMixerChannel.ampBalance
-        (offsetI, offsetQ) = IQMixerChannel.offset
-
+    def convert_XYtoIQ( self, IQMixerChannel=None ):
+        envelope = self.waveform["data"] 
         absoluteTime = get_timeAxis(self.waveform)
-        
-        if_freq = IQMixerChannel.ifFreq/1e3 # to GHz
-        envelope = self.waveform["data"]
 
-        inverse = sign(sin(radians(phaseBalance)))
-        #print(self.pulseInfo["mode"])
+        if IQMixerChannel != None:
+            phaseBalance = IQMixerChannel.phaseBalance
+            ampBalance  = IQMixerChannel.ampBalance
+            (offsetI, offsetQ) = IQMixerChannel.offset
+            if_freq = IQMixerChannel.ifFreq/1e3 # to GHz
+            inverse = sign(sin(radians(phaseBalance)))
+            #print(self.pulseInfo["mode"])
 
-        if self.pulseInfo["mode"] == "XY":
-            envelopeIQ = abs( envelope )
-            envelopeI = envelopeIQ /cos(radians(abs(phaseBalance)-90))
-            envelopeQ = envelopeI /ampBalance
-            phi = arctan2( envelope.imag, envelope.real )
-            phiQ = -phi+inverse*pi/2.
-            sigI = envelopeI *cos( 2. *pi *if_freq *absoluteTime +phiQ +radians(phaseBalance) +pi) -offsetI
-            sigQ = envelopeQ *cos( 2. *pi *if_freq *absoluteTime +phiQ) -offsetQ
-            self.waveform["data"] = sigI+ 1j*sigQ
-        elif self.pulseInfo["mode"] == "i":
-            self.waveform["data"] = envelope*cos( 2. *pi *if_freq *absoluteTime +radians(phaseBalance) +pi) -offsetI
-        elif self.pulseInfo["mode"] == "q":
-            self.waveform["data"] = envelope/ampBalance*cos( 2. *pi *if_freq *absoluteTime) -1j*offsetQ
+            if self.pulseInfo["mode"] == "XY":
+                envelopeIQ = abs( envelope )
+                envelopeI = envelopeIQ /cos(radians(abs(phaseBalance)-90))
+                envelopeQ = envelopeI /ampBalance
+                phi = arctan2( envelope.imag, envelope.real )
+                phiQ = -phi+inverse*pi/2.
+                sigI = envelopeI *cos( 2. *pi *if_freq *absoluteTime +phiQ +radians(phaseBalance) +pi) -offsetI
+                sigQ = envelopeQ *cos( 2. *pi *if_freq *absoluteTime +phiQ) -offsetQ
+                self.waveform["data"] = sigI+ 1j*sigQ
+            elif self.pulseInfo["mode"] == "i":
+                self.waveform["data"] = envelope*cos( 2. *pi *if_freq *absoluteTime +radians(phaseBalance) +pi) -offsetI
+            elif self.pulseInfo["mode"] == "q":
+                self.waveform["data"] = 1j*(envelope/ampBalance*cos( 2. *pi *if_freq *absoluteTime) -offsetQ)
+        else:
+            self.waveform["data"] = envelope
 
         return self.waveform
 
