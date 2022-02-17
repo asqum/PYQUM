@@ -15,15 +15,15 @@ amplitude: A - the prefactor used to scale function
 <img src="https://render.githubusercontent.com/render/math?math=f(x) = Ae^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2}">
 p1: sfactor - the factor devide length will get the sigma of gaussian function
 
-####  gauss
+#### cmd: gauss
 
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}"><img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
 
-#### gaussup
+#### cmd: gaussup
 
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}"><img src="https://render.githubusercontent.com/render/math?math=x_0 = T">
 
-#### gaussdn
+#### cmd: gaussdn
 
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}"><img src="https://render.githubusercontent.com/render/math?math=x_0 = 0">
 
@@ -32,20 +32,20 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function
 <img src="https://render.githubusercontent.com/render/math?math=f(x) = A\frac{(x-x0)}{\sigma^2}e^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2 })">
 p1: sfactor - the factor devide length will get the sigma of gaussian function
 
-#### dgauss
+#### cmd: dgauss
 
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{T}{sfactor}">, <img src="https://render.githubusercontent.com/render/math?math=x_0 = \frac{T}{2}">
 
-#### dgaussup
+#### cmd: dgaussup
 
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">, <img src="https://render.githubusercontent.com/render/math?math=x_0 = T">
 
-#### dgaussdn
+#### cmd: dgaussdn
 
 <img src="https://render.githubusercontent.com/render/math?math=\sigma = \frac{2T}{sfactor}">, <img src="https://render.githubusercontent.com/render/math?math=x_0 = 0">
 
 
-### DRAG
+### cmd: DRAG
 
 <img src="https://render.githubusercontent.com/render/math?math=f(x) = e^{i\theta }(Ae^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2} {+} i B\frac{(x-x0)}{\sigma^2}e^{-\frac{1}{2}(\frac{x-x_0}{\sigma})^2 })">
 
@@ -54,3 +54,6 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function
 p1: sfactor - the factor devide length will get the sigma of gaussian function<br />
 p2: dratio  <br />
 p3: angle of rotation axis - in angle unit<br />
+
+###
+gestep

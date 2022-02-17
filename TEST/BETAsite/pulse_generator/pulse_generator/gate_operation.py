@@ -190,7 +190,7 @@ class PulseBuilder():
             peakMultiplier = self.pulseInfo["envelope"]["paras"][3]
             peakSigma = peakLength *sigmaRatio
 
-            startPos = peakLength/2
+            startPos = edgeLength
 
             ringPeak = flatHieght *(peakMultiplier)
             endPos = startPos +flatLength

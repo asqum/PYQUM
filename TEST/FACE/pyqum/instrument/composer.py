@@ -225,7 +225,7 @@ class pulser:
                 'dgaussdn': get_dgaussdn,
                 'drag': get_drag,
                 'lin': get_linear,
-                'ringup': get_ringup,
+                'gestep': get_ringup,
             }
             pulseType = beat.split('/')[0]
             pulse[pulseType]()
@@ -261,32 +261,29 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    pr = pulser(dt=.5,score='ns=500/1,mhz=I/-91/; Flat/,10,0; ringup//30/1,400,0.5; Flat/,10,0; ',clock_multiples=1)
-    pr.song()
-    timeAxis = pr.timeline
-    envelope = pr.envelope
-    music = pr.music
+    xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-91/; Flat/,10,0; drag/,30,0.5;',clock_multiples=1)
+    xyi.song()
+    xyq = pulser(dt=.5,score='ns=500,mhz=Q/-91/; Flat/,10,0; drag/,30,0.5;',clock_multiples=1)
+    xyq.song()
 
-    pr2 = pulser(dt=.5,score='ns=500; ',clock_multiples=1)
-    pr2.song()
-    timeAxis2 = pr2.timeline
-    envelope2 = pr2.envelope
-    music2 = pr2.music
+    cz = pulser(dt=.5,score='ns=500;',clock_multiples=1)
+    cz.song()
+
+    roi = pulser(dt=.5,score='ns=500/1,mhz=I/-29/; Flat/,40,0; gestep///1,200,0.2;',clock_multiples=1)
+    roi.song()
+    roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-29/; Flat/,40,0; gestep///1,200,0.2;',clock_multiples=1)
+    roq.song()
 
     plot1 = plt.figure(1)
-
-    plt.plot(timeAxis, envelope)
-    plt.plot(timeAxis2, envelope2)
+    plt.plot(xyi.timeline, xyi.envelope)
+    plt.plot(xyq.timeline, xyq.envelope)
+    plt.title("XY envelope")
     plot2 = plt.figure(2)
-    #plt.plot(timeAxis, envelope)
-    plt.plot(timeAxis, music)
-    plt.title("I")
-    plot2 = plt.figure(3)
-    #plt.plot(timeAxis2, envelope2)
-    plt.plot(timeAxis2, music2)
-    plt.title("Q")
-    plot2 = plt.figure(4)
-    plt.plot(timeAxis, music)
-    plt.plot(timeAxis2, music2)
+    plt.plot(xyi.timeline, xyi.music)
+    plt.plot(xyq.timeline, xyq.music)
+    plt.plot(cz.timeline, cz.music)
+    plt.plot(roi.timeline, roi.music)
+    plt.plot(roq.timeline, roq.music)
+    plt.title("AWG real output")
     plt.show()
 
