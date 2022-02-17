@@ -84,8 +84,9 @@ class pulser:
         elif self.ifChannel == "z":
             mixerInfo = None
         #print("register one channel for a Qubit")
-        pch = phyCh.PhysicalChannel( awgInfo, mixerInfo ) 
-        #print("init OS")
+        pch = phyCh.PhysicalChannel() 
+        pch.add_device(awgInfo)
+        pch.add_device(mixerInfo)
         self.operationSeq = qos.QubitOperationSequence( originTotalPoint, pch )
         self.operationList = []
     def song(self):
@@ -95,6 +96,7 @@ class pulser:
             <pulse-shape>/[<unique factor(s): default (to pulse-library) database) if blank], <pulse-period>, <pulse-height: between -1 & +1>;
             stack a variety of pulse-instruction(s) according to the format illustrated above.
         '''
+
         # 1. BB Shaping:
         for beat in self.score.split(";")[1:]:
             if beat == '': break # for the last semicolon
@@ -230,6 +232,13 @@ class pulser:
             pulseType = beat.split('/')[0]
             pulse[pulseType]()
             #print(pulseType,paras)
+            self.operationList.append(op)
+
+        # Fill remain pts with idle gate
+        remainPts = int( -(self.beatime-self.totaltime) // self.dt)
+        if remainPts > 0:
+            op = qos.PulseBuilder(remainPts,self.dt)
+            op.idle([0], channel=self.ifChannel)
             self.operationList.append(op)
 
         # 2. Envelope before IF-Mixing:

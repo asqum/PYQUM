@@ -55,18 +55,23 @@ class PhyQubit():
                 "qubit_frequency":0, #GHz
                 "readout_frequency": 0, #GHz
                 "readout_power": -40, # dBm
+                "state_determination": {},
             }
             opc.update(paras)
             self.operationCondition.append(opc)
 
 
 class PhysicalChannel():
-    def __init__( self, AWGChannel, iQMixerChannel):
+    def __init__( self ):
         self.name = "XY"
+        self.device = {}
 
-        self.IQMixerChannel = iQMixerChannel
-        self.AWGChannel = AWGChannel
+    def add_device( self, device ):
+        deviceType = type(device).__name__
+        self.device[deviceType] = device
 
+    def get_timeResolution( self ):
+        return self.device["AWGChannel"].timeResolution
 
 class DRChannel():
         def __init__ ( self ):

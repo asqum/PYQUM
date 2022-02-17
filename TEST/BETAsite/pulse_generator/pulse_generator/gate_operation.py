@@ -257,7 +257,7 @@ class QubitOperationSequence():
     def __init__( self, sequencePts, PhysicalChannel=phyCh.PhysicalChannel ):
         
         self.PhysicalChannel = PhysicalChannel
-        dt = self.PhysicalChannel.AWGChannel.timeResolution
+        dt = self.PhysicalChannel.get_timeResolution()
         self.operation = []
         self.sequenceTime = sequencePts*dt # ns
         self.sequencePts = sequencePts
@@ -276,7 +276,7 @@ class QubitOperationSequence():
             }
     def set_operation( self, operation  ):
 
-        dt = self.PhysicalChannel.AWGChannel.timeResolution
+        dt = self.PhysicalChannel.get_timeResolution()
         self.operation = operation
         endPt = int(0)
         for i, op in enumerate(self.operation) :
@@ -305,7 +305,7 @@ class QubitOperationSequence():
 
         allXYPulse = array([])
         allIQPulse = array([])
-        dt = self.PhysicalChannel.AWGChannel.timeResolution
+        dt = self.PhysicalChannel.get_timeResolution()
         t0 = 0
         if len(self.operation) == 0 : # For the case with only one operation
             firstOperationIdx = 0
@@ -328,7 +328,9 @@ class QubitOperationSequence():
         # Convert XY to IQ language        
         for op in self.operation:
             op.waveform["t0"]-=t0
-            newPulse = op.convert_XYtoIQ( self.PhysicalChannel.IQMixerChannel )["data"]
+            try: mixerInfo = self.PhysicalChannel.device["IQMixerChannel"]
+            except(KeyError): mixerInfo = None
+            newPulse = op.convert_XYtoIQ( mixerInfo )["data"]
             allIQPulse = append(allIQPulse, newPulse)
 
             #print(len(newPulse))
