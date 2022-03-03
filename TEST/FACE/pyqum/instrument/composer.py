@@ -144,7 +144,7 @@ class pulser:
             def get_gaussdn():
                 if isnan(waveformParas[0]): sfactor = 4
                 else: sfactor = waveformParas[0]
-                qosp = [pulseheight, -1/sfactor(sfactor/2)]
+                qosp = [pulseheight, -1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
             # 3 Derivative Gaussian
             # 3.0
