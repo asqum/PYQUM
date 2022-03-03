@@ -6,6 +6,12 @@ from numpy import exp
 # Numpy constant
 from numpy import pi
 
+class QuantumProcessUnit:
+    def __init__ ( self ):
+        self.name = ""
+        self.QubitSet = []
+        
+
 
 
 
@@ -103,4 +109,18 @@ class IQMixerChannel():
 class AWGChannel():
     def __init__ ( self ):
         self.instrmentID = ["1-1","1-2"]
+        self.channelID = "1"
         self.timeResolution = 1. # ns/sample
+
+class LOChannel():
+    def __init__ ( self ):
+        self.instrmentID = ["1-1","1-2"]
+        self.timeResolution = 1. # ns/sample
+
+
+class ADCChannel():
+    def __init__ ( self ):
+        self.instrmentID = ["1-1","1-2"]
+        self.timeResolution = 1. # ns/sample
+
+
