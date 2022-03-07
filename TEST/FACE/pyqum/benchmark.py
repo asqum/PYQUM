@@ -335,7 +335,7 @@ def getJson_fitParaPlot():
 	plotData = myQuantification.fitResult
 	plotData["dependentVar"] = {}
 
-	# plotData = myQuantification.fitResult["results"]P1
+	# plotData = myQuantification.fitResult["results"]
 
 	# plotData.update(myQuantification.fitResult["errors"])
 	# plotData.update(myQuantification.fitResult["extendResults"])

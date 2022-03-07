@@ -743,10 +743,13 @@ def bdr():
         owned_new_samples = [s['samplename'] for s in g.samples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
         # 2. SHARED co-samples:
         shared_new_samples = [s['samplename'] for s in g.cosamples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
+        # 3. SERVICE samples: (Training & Hero samples are to be categorized as SERVICE type of sample)
+        global service_samples
+        service_samples = [s['samplename'] for s in g.samples if int(s['level'])>1]
 
-        services = ['Sam', 'Same01', 'IDLE', 'DR-RFcable']
-        recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + services
-        loaded = len(recent_samples) - len(services)
+        # service_samples = ['Sam', 'Same01', 'IDLE', 'DR-RFcable', '3SXQ-Al-Si-19-1']
+        recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + service_samples
+        loaded = len(recent_samples) - len(service_samples)
 
         # 3. Wiring settings:
         machine_list = [x['codename'] for x in g.machlist]
@@ -832,7 +835,7 @@ def bdrsamplesqueues():
     bdrqlist = db.execute("SELECT system, samplename FROM queue ORDER BY id ASC").fetchall()
     close_db()
     bdrqlist = [dict(x) for x in bdrqlist]
-    return jsonify(bdrqlist=bdrqlist)
+    return jsonify(bdrqlist=bdrqlist, services=service_samples)
 @bp.route('/bdr/samples/allocate', methods=['GET'])
 def bdrsamplesallocate():
     set_system = request.args.get('set_system')

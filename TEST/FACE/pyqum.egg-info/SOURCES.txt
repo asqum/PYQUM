@@ -1679,8 +1679,10 @@ pyqum/static/js/auth/profile.js
 pyqum/static/js/auth/samples.js
 pyqum/static/js/auth/user.js
 pyqum/static/js/benchmark/benchmark.js
+pyqum/static/js/benchmark/common_fitting.js
 pyqum/static/js/benchmark/decoherence.js
 pyqum/static/js/benchmark/measurement_info.js
+pyqum/static/js/benchmark/populationDistribution.js
 pyqum/static/js/benchmark/qestimate.js
 pyqum/static/js/benchmark/rabiOscillation.js
 pyqum/static/js/brdg/bridge.js
@@ -1731,8 +1733,10 @@ pyqum/templates/blog/create.html
 pyqum/templates/blog/index.html
 pyqum/templates/blog/update.html
 pyqum/templates/blog/benchmark/benchmark.html
+pyqum/templates/blog/benchmark/common_fitting.html
 pyqum/templates/blog/benchmark/decoherence.html
 pyqum/templates/blog/benchmark/measurement_info.html
+pyqum/templates/blog/benchmark/populationDistribution.html
 pyqum/templates/blog/benchmark/qestimate.html
 pyqum/templates/blog/benchmark/rabiOscillation.html
 pyqum/templates/blog/bridg/bridge.html
