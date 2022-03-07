@@ -20,7 +20,10 @@ def derivativeGaussianFunc (t, p):
     # p[0]: amp
     # p[1]: sigma
     # p[2]: peak position
-    return -p[0] / p[1]**2 *(t-p[2]) *exp( -( (t-p[2]) /p[1] )**2 /2)
+    if p[1] != 0. :
+        return -p[0] / p[1]**2 *(t-p[2]) *exp( -( (t-p[2]) /p[1] )**2 /2)
+    else :
+        return zeros(len(t))
 def constFunc (t, p):
     # p[0]: amp
     return p[0]*ones(len(t))
