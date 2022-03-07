@@ -10,19 +10,24 @@
         <h3>Qubit frequency Prediction</h3>
         
         <div class="row">
-            <div class="col-12" id='left'><label>Flux-fraction</label></div>
+            <div class="col-10" id='left'><label>Qubit-name</label></div>
+            <div class="col-12" id='left'><label>Filling-factor</label></div>
             <div class="col-12" id='left'><label>Flux-Offset (V/A)</label></div>
             <div class="col-12" id='left'><label>Flux-0.5Phi (V/A)</label></div>
             <div class="col-20" id='left'><label>Max-Tunable-Frequency (GHz)</label></div> 
         </div>
         <div class="row">
-            <div class="col-12" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-flux-fraction" type="number" value="8" step="0.001" min="2"/></div>
+            <div class="col-10" id='left'><input class='guid' id="guid-calc-qubit-name" type="text" value="Q1"/></div>
+            <div class="col-12" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-filling-factor" type="text" value="-0.3 to 0.3 * 600"/></div>
             <div class="col-12" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-flux-offset" type="number" value="0.055"/></div>
             <div class="col-12" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-flux-halfill" type="number" value="-0.028"/></div>
-            <div class="col-20" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-MT-frequency" type="number" value="4.84"/></div>
+            <div class="col-12" id='left'><input class='guid calc-qfreq-predict' id="guid-calc-MT-frequency" type="number" value="4.84"/></div>
+        </div>
+        <h4 id="guid-calc-freq-range"></h4>
+        <div class="row">
+            <div class="guid calc-qfreq-predict" id="guide-flux-fq-modulation"></div>
         </div>
         
-        <h4 id="guid-calc-freq-range"></h4>
 
         
 

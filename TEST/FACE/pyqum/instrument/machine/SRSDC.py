@@ -38,9 +38,7 @@ def get_voltage(inst, channel=1):
     inst.send(b'VOLT?\n')
     voltage = float(inst.recv(1024).decode())
     inst.send(b'!\n')
-
     return voltage
-
 def get_range(inst, channel=1):
     '''
     channel: 1-4
@@ -51,9 +49,7 @@ def get_range(inst, channel=1):
     inst.send(b'RNGE?\n')
     vrange = inst.recv(1024).decode().split('RANGE')[1]
     inst.send(b'!\n')
-
     return vrange
-
 def set_voltage(inst, voltage, channel=1):
     '''
     voltage in V (type: float)
@@ -63,7 +59,6 @@ def set_voltage(inst, voltage, channel=1):
     inst.send(('LINK %s\n' %channel).encode())
     inst.send(b'*OPC?\n')
     inst.recv(1024).decode()
-
     # 1. select range:
     try: range_order = int((ceil(log10(voltage)) + abs(ceil(log10(voltage)))) / 2)
     except(ValueError): range_order = 0 # to accommodate zero-voltage
@@ -72,14 +67,16 @@ def set_voltage(inst, voltage, channel=1):
         inst.send(b'!\n')
         return 0
     inst.send(('RNGE %s\n' %(range_order)).encode())
-
     # 2. set voltage:
     inst.send(('VOLT %s\n' %voltage).encode())
     inst.send(b'*OPC?\n')
     ready = inst.recv(1024).decode()
     inst.send(b'!\n')
-    
     return ready
+
+def sweep(inst, wave, channel='', update_settings={}):
+
+    return
 
 def output(inst, state, channel=1):
     '''
@@ -105,8 +102,8 @@ def close(inst):
 def test():
     v_array = [1e-6, 3e-5, 6e-4, 7e-3, 8e-2, 2e-1, 1, 6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
     for v in v_array:
-        s = Initiate(1, 'TEST')
-        channel = 3
+        s = Initiate(2, 'TEST')
+        channel = 2
         print(set_voltage(s, v, channel))
         print(get_voltage(s, channel))
         sleep(3.71)

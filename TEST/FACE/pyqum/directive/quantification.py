@@ -537,8 +537,7 @@ class PopulationDistribution():
 		midPoint = (xAxis[0]+xAxis[-1])/2
 
 		guess = array([ 0.1, midPoint+devData*1.2, devData/2, 0.1, midPoint-devData*1.2, devData/2])
-		print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",guess)
-
+                                                                                                                               
 		self.distribution={
 			"x":xAxis,
 			"count":distCount,
@@ -641,6 +640,7 @@ class Common_fitting():
 		nanArray.fill( nan )
 		fitParas = self.fitParameters
 
+		# set names of fitting parameters
 		if paraNames==[]:
 			if fitParas["function"]=="ExpDecay":
 				if fitParas["signal_type"]=="indpendent":
@@ -653,7 +653,7 @@ class Common_fitting():
 					paraNames= ["tau", "frequency", "phi", "ampI", "offsetI", "ampQ", "offsetQ"]
 				else:
 					paraNames= ["amp","tau", "frequency", "phi", "offset"]
-		self.paraNames= paraNames
+		self.paraNames =paraNames
 		self.fitResult ={}
 		for rk in paraNames:
 			self.fitResult[rk]={}
@@ -755,8 +755,7 @@ class Common_fitting():
 				freqInd = argmax(fft(data-mean(data)))
 				guess = array([data[0]-mean(data),2000,abs(freqAxis[freqInd]),0,mean(data)])
 			popt,pcov= curve_fit(fit_RabiOscillation_func,qObj.rawData["x"][mask],data,p0=guess)
-			print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGG",guess)
-			print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGG",popt)
+
 			return popt,pcov
 		fit = {
 			'ExpDecay': fit_ExpDecay,

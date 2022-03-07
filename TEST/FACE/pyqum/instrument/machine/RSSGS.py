@@ -87,9 +87,9 @@ def test(detail=True):
             # s.write("*SAV 00,1")
             model(s)
             
-            power(s, action=['Set', '17.3dbm'])
+            power(s, action=['Set_', '17.3dbm'])
             power(s)
-            frequency(s, action=['Set', '4.175GHz'])
+            frequency(s, action=['Set_', '4.175GHz'])
             frequency(s)
             rfoutput(s, action=['Set', 'ON'])
             rfoutput(s)
@@ -101,3 +101,4 @@ def test(detail=True):
     close(s, 1, reset=state, mode='TEST')
     return
 
+# test()

@@ -62,7 +62,7 @@ def load_logged_in_user():
         
         # 3. logged-in user's samples' details:
         g.samples = get_db().execute(
-            'SELECT s.id, author_id, samplename, fabricated, location, previously, description, registered'
+            'SELECT s.id, author_id, samplename, specifications, location, level, description, registered'
             ' FROM sample s JOIN user u ON s.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
             ' WHERE u.id = ?'
             ' ORDER BY registered DESC',
@@ -73,7 +73,7 @@ def load_logged_in_user():
 
         # 4. logged-in user's co-authored samples' details:
         g.cosamples = get_db().execute(
-            'SELECT s.id, author_id, samplename, fabricated, location, previously, description, registered'
+            'SELECT s.id, author_id, samplename, specifications, location, level, description, registered'
             ' FROM sample s JOIN user u ON s.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
             ' WHERE s.co_authors LIKE ?'
             ' ORDER BY registered DESC',
@@ -245,21 +245,20 @@ def usersamples():
 @bp.route('/user/samples/register')
 def usersamples_register():
     sname = request.args.get('sname')
-    dob = request.args.get('dob')
     loc = request.args.get('loc')
-    prev = request.args.get('prev')
+    level = request.args.get('level')
     description = request.args.get('description')
     db = get_db()
     try:
         db.execute(
-            'INSERT INTO sample (author_id, samplename, fabricated, location, previously, description)'
-            ' VALUES (?, ?, ?, ?, ?, ?)',
-            (g.user['id'], sname, dob, loc, prev, description,)
+            'INSERT INTO sample (author_id, samplename, location, level, description)'
+            ' VALUES (?, ?, ?, ?, ?)',
+            (g.user['id'], sname, loc, level, description,)
         )
         db.commit()
         message = "Sample %s added to the database!" %(sname)
-    except:
-        message = "Check sample registration"
+    except Exception as e:
+        message = "Abort: %s" %e
     close_db()
     return jsonify(message=message)
 @bp.route('/user/samples/access')
@@ -270,7 +269,7 @@ def usersamples_access():
     db = get_db()
     try:
         sample_cv = db.execute(
-            'SELECT s.id, author_id, samplename, fabricated, location, previously, description, registered, co_authors, history'
+            'SELECT s.id, author_id, samplename, specifications, location, level, description, registered, co_authors, history'
             ' FROM sample s JOIN user u ON s.author_id = u.id'
             ' WHERE s.samplename = ?',
             (sname,)
@@ -295,10 +294,10 @@ def usersamples_access():
 def usersamples_update():
     sname = request.args.get('sname')
     loc = request.args.get('loc')
-    dob = request.args.get('dob')
+    specs = request.args.get('specs')
     description = request.args.get('description')
     coauthors = request.args.get('coauthors')
-    prev = request.args.get('prev')
+    level = request.args.get('level')
     history = request.args.get('history')
     ownerpassword = request.args.get('ownerpassword')
     db = get_db()
@@ -307,8 +306,8 @@ def usersamples_update():
         people = db.execute('SELECT password FROM user WHERE username = ?', (sample_owner,)).fetchone()
         if check_password_hash(people['password'], ownerpassword):
             db.execute(
-                'UPDATE sample SET location = ?, fabricated = ?, description = ?, co_authors = ?, previously = ?, history = ? WHERE samplename = ?',
-                (loc, dob, description, coauthors, prev, history, sname,)
+                'UPDATE sample SET location = ?, specifications = ?, description = ?, co_authors = ?, level = ?, history = ? WHERE samplename = ?',
+                (loc, specs, description, coauthors, level, history, sname,)
             )
             db.commit()
             message = "Sample %s has been successfully updated!" %(sname)
