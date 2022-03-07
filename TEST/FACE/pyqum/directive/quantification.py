@@ -516,7 +516,7 @@ class PopulationDistribution():
 		# Get rotate angle
 		angleProjectionLine = self.projectionLine["parameter"][0]
 
-		self.accData["projected"]=abs(shiftedAccData)*cos(angle(shiftedAccData)+angleProjectionLine)
+		self.accData["projected"]=abs(shiftedAccData)*cos(angle(shiftedAccData)-angleProjectionLine)
 		return self.accData["projected"]
 
 	def cal_distribution( self ):

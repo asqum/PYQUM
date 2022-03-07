@@ -55,5 +55,5 @@ p1: sfactor - the factor devide length will get the sigma of gaussian function<b
 p2: dratio  <br />
 p3: angle of rotation axis - in angle unit<br />
 
-###
-gestep
+### cmd: gestep
+Gaussian step edge function

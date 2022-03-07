@@ -9,7 +9,6 @@ from numpy import exp, sqrt, arctan2, cos, sin, angle, radians, sign, log, ceil
 from numpy import pi
 from pandas import infer_freq
 
-import pulse_generator.hardware_information as phyCh
 
 def gaussianFunc (t, p):
     # p[0]: amp
@@ -257,10 +256,8 @@ class PulseBuilder():
 
 class QubitOperationSequence():
 
-    def __init__( self, sequencePts, PhysicalChannel=phyCh.PhysicalChannel ):
-        
-        self.PhysicalChannel = PhysicalChannel
-        dt = self.PhysicalChannel.get_timeResolution()
+    def __init__( self, sequencePts, dt ):
+        self.dt = dt
         self.operation = []
         self.sequenceTime = sequencePts*dt # ns
         self.sequencePts = sequencePts
@@ -279,36 +276,34 @@ class QubitOperationSequence():
             }
     def set_operation( self, operation  ):
 
-        dt = self.PhysicalChannel.get_timeResolution()
         self.operation = operation
         endPt = int(0)
         for i, op in enumerate(self.operation) :
             operationPts = op.operationPts
-            op.waveform["t0"] = endPt*dt
+            op.waveform["t0"] = endPt*self.dt
             #print("start point",endPt)
             #print("op point",operationPts)
             endPt += operationPts
 
         if endPt < self.sequencePts:
-            op = PulseBuilder(self.sequencePts-endPt,dt)
+            op = PulseBuilder(self.sequencePts-endPt,self.dt)
             op.idle([0])
             self.operation.append(op)
             print("Operation sequence haven't full")
         elif endPt == self.sequencePts:
             print("Total operations match operation sequence")
         else:
-            op = PulseBuilder(self.sequencePts,dt)
+            op = PulseBuilder(self.sequencePts,self.dt)
             op.idle([0])
             self.operation = [op]
             print("Too much operation, clean all sequense")
             
 
     
-    def generate_sequenceWaveform( self, firstOperationIdx=None ):
+    def generate_sequenceWaveform( self, mixerInfo=None, firstOperationIdx=None ):
 
         allXYPulse = array([])
         allIQPulse = array([])
-        dt = self.PhysicalChannel.get_timeResolution()
         t0 = 0
         if len(self.operation) == 0 : # For the case with only one operation
             firstOperationIdx = 0
@@ -323,7 +318,7 @@ class QubitOperationSequence():
             t0 = 0
         else:
             try: # Old method to get t0
-                t0 = dt * where(ceil(abs(allXYPulse))==1)[0][0]
+                t0 = self.dt * where(ceil(abs(allXYPulse))==1)[0][0]
                 # print(Back.WHITE + Fore.BLUE + "Pulse starting from %s ns" %pulse_starting_time)
             except(IndexError): 
                 t0 = 0
@@ -331,8 +326,6 @@ class QubitOperationSequence():
         # Convert XY to IQ language        
         for op in self.operation:
             op.waveform["t0"]-=t0
-            try: mixerInfo = self.PhysicalChannel.device["IQMixerChannel"]
-            except(KeyError): mixerInfo = None
             newPulse = op.convert_XYtoIQ( mixerInfo )["data"]
             allIQPulse = append(allIQPulse, newPulse)
 
@@ -348,7 +341,12 @@ def get_timeAxis( waveform ):
     #print(waveform["t0"], waveform["dt"], dataPts)
     return linspace( waveform["t0"], waveform["t0"]+waveform["dt"]*dataPts, dataPts, endpoint=False)
 
-
+class IQMixerChannel():
+    def __init__ ( self ):
+        self.ifFreq = 91. # MHz
+        self.ampBalance = 1. # I/Q amp ratio compensation for SSB
+        self.offset = (0.,0.)
+        self.phaseBalance = -90 # I/Q Quadrature phase difference compensation for SSB
 
 
         
@@ -359,31 +357,25 @@ def get_timeAxis( waveform ):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import scipy.fft as spfft
-    print("register Qubit")
-    awgInfo = phyCh.AWGChannel()
-    awgInfo.timeResolution=0.01
+    dt = 1.
     print("register IQMixerChannel")
-    mixerInfo = phyCh.IQMixerChannel()    
+    mixerInfo = IQMixerChannel()    
 
-    print("register one channel for a Qubit")
-    pch = phyCh.PhysicalChannel( awgInfo, mixerInfo ) 
-    phyQ = phyCh.PhyQubit( pch )
-    print("init OS")
-    OPS = QubitOperationSequence(100,phyQ.PhysicalChannel)
+    OPS = QubitOperationSequence(100, 1.)
 
-    print("set new operation")
-    op1 = PulseBuilder(2000,awgInfo.timeResolution)
+    print(f"set new operation")
+    op1 = PulseBuilder(20,dt)
     op1.arbXYGate([pi,0])
-    op2 = PulseBuilder(5000,awgInfo.timeResolution)
+    op2 = PulseBuilder(50,dt)
     op2.rotXY([1,0.25,5,0])
-    op3 = PulseBuilder(2000,awgInfo.timeResolution)
+    op3 = PulseBuilder(20,dt)
     op3.idle([0])
 
     print("register operation to sequence")
     OPS.set_operation([op3, op2])
 
     print("calculate XY waveform of the sequence")
-    OPS.generate_sequenceWaveform()
+    OPS.generate_sequenceWaveform(mixerInfo=mixerInfo)
     xyWf = OPS.xywaveform
     print("calculate IQ waveform of the sequence")
     iqWf = OPS.iqwaveform
@@ -397,25 +389,26 @@ if __name__ == "__main__":
     plot2 = plt.figure(2)
     plt.plot(xyWf["data"].real, xyWf["data"].imag)
     plt.plot(iqWf["data"].real, iqWf["data"].imag)
-    plot3 = plt.figure(3)
-    fq = phyQ.qubitFreq
+    #plot3 = plt.figure(3)
+
+    fq = 5e9
     pmixer = mixerInfo.phaseBalance
     fIF = mixerInfo.ifFreq/1e3
     # plt.plot(timeAxis, cos(2*pi*fq*timeAxis) )
 
     # xymix = xyWf["data"].real*cos(2*pi*fq*timeAxis) +xyWf["data"].imag*cos(2*pi*fq*timeAxis +abs(radians(pmixer)) )
     # plt.plot(timeAxis, xymix)
-    iqmix = iqWf["data"].real*cos(2*pi*(fq+fIF)*timeAxis) +iqWf["data"].imag*cos(2*pi*(fq+fIF)*timeAxis +radians(pmixer) )
-    plt.plot(timeAxis, iqmix)
+    # iqmix = iqWf["data"].real*cos(2*pi*(fq+fIF)*timeAxis) +iqWf["data"].imag*cos(2*pi*(fq+fIF)*timeAxis +radians(pmixer) )
+    # plt.plot(timeAxis, iqmix)
 
-    data_points = len(timeAxis)
-    f_points = data_points//2
-    faxis = spfft.fftfreq(data_points,iqWf["dt"])[0:f_points]
-    plot4 = plt.figure(4)
+    # data_points = len(timeAxis)
+    # f_points = data_points//2
+    # faxis = spfft.fftfreq(data_points,iqWf["dt"])[0:f_points]
+    # plot4 = plt.figure(4)
     # xyvector = spfft.fft(xymix)[0:f_points]/len(timeAxis)
     # plt.plot(faxis, abs(xyvector))
-    iqvector = spfft.fft(iqmix)[0:f_points]/len(timeAxis)
-    plt.plot(faxis, 10*log(abs(iqvector)))
+    # iqvector = spfft.fft(iqmix)[0:f_points]/len(timeAxis)
+    # plt.plot(faxis, 10*log(abs(iqvector)))
 
     plt.show()
 

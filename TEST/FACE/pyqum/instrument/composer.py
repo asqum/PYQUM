@@ -7,7 +7,6 @@ from copy import copy
 from math import trunc, ceil
 from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians, nan, isnan
 from pyqum.instrument.logger import get_status
-import pulse_generator.hardware_information as phyCh
 import pulse_generator.gate_operation as qos
 class pulser:
     '''
@@ -60,11 +59,9 @@ class pulser:
         
         self.ifChannel = self.mix_params.split("/")[0] # Get current IF Channel
 
-        awgInfo = phyCh.AWGChannel()
-        awgInfo.timeResolution=dt
-        mixerInfo = None
+        self.mixerInfo = None
         if self.ifChannel == "i" or self.ifChannel == "q":
-            mixerInfo = phyCh.IQMixerChannel() 
+            self.mixerInfo = qos.IQMixerChannel() 
         # set IQ Mixer calibration parameters into IQMixerChannel object
             try:
                 mixerName = self.mixer_module.split(self.ifChannel.lower())[0]
@@ -73,21 +70,19 @@ class pulser:
                 channel_Q = mixerName+'q'+lable_IF
                 amp_I, phase_I, offset_I = [float(x) for x in get_status("MIXER")[channel_I].split("/")]
                 amp_Q, phase_Q, offset_Q = [float(x) for x in get_status("MIXER")[channel_Q].split("/")]
-                mixerInfo.ampBalance = amp_I/amp_Q
-                mixerInfo.phaseBalance = phase_I-phase_Q
-                mixerInfo.offset = ( offset_I, offset_Q )
+                self.mixerInfo.ampBalance = amp_I/amp_Q
+                self.mixerInfo.phaseBalance = phase_I-phase_Q
+                self.mixerInfo.offset = ( offset_I, offset_Q )
             except:
-                mixerInfo.ampBalance = 1
-                mixerInfo.phaseBalance = -90
-                mixerInfo.offset = ( 0, 0 )
-            mixerInfo.ifFreq = self.iffreq
+                self.mixerInfo.ampBalance = 1
+                self.mixerInfo.phaseBalance = -90
+                self.mixerInfo.offset = ( 0, 0 )
+            self.mixerInfo.ifFreq = self.iffreq
         elif self.ifChannel == "z":
-            mixerInfo = None
+            self.mixerInfo = None
         #print("register one channel for a Qubit")
-        pch = phyCh.PhysicalChannel() 
-        pch.add_device(awgInfo)
-        pch.add_device(mixerInfo)
-        self.operationSeq = qos.QubitOperationSequence( originTotalPoint, pch )
+ 
+        self.operationSeq = qos.QubitOperationSequence( originTotalPoint, dt )
         self.operationList = []
     def song(self):
         '''
@@ -155,13 +150,13 @@ class pulser:
                 qosp = [pulseheight, -1/(sfactor)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian')
             
-            # 3.1 DRAG up
+            # 3.1 dgauss up
             def get_dgaussup():
                 if isnan(waveformParas[0]): sfactor = 4
                 else: sfactor = waveformParas[0]
                 qosp = [pulseheight, 1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian_half')
-            # 3.2 DRAG dn
+            # 3.2 dgauss dn
             def get_dgaussdn():
                 if isnan(waveformParas[0]): sfactor = 4
                 else: sfactor = waveformParas[0]
@@ -243,7 +238,7 @@ class pulser:
 
         # 2. Envelope before IF-Mixing:
         self.operationSeq.set_operation(self.operationList)
-        self.operationSeq.generate_sequenceWaveform(firstOperationIdx=self.firstOperationIdx)
+        self.operationSeq.generate_sequenceWaveform(mixerInfo=self.mixerInfo,firstOperationIdx=self.firstOperationIdx)
         self.timeline = qos.get_timeAxis(self.operationSeq.iqwaveform)
 
         if self.ifChannel == "i":
@@ -272,15 +267,15 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-91/; Flat/,10,0; drag/,30,0.5;',clock_multiples=1)
     xyi.song()
-    xyq = pulser(dt=.5,score='ns=500,mhz=Q/-91/; Flat/,10,0; drag/,30,0.5;',clock_multiples=1)
+    xyq = pulser(dt=.5,score='ns=500/1,mhz=Q/-91/; Flat/,10,0; drag/,30,0.5;',clock_multiples=1)
     xyq.song()
 
-    cz = pulser(dt=.5,score='ns=500;',clock_multiples=1)
+    cz = pulser(dt=.5,score='ns=500;Flat/,10,0.5;',clock_multiples=1)
     cz.song()
 
-    roi = pulser(dt=.5,score='ns=500/1,mhz=I/-29/; Flat/,40,0; gestep///1,200,0.2;',clock_multiples=1)
+    roi = pulser(dt=.5,score='ns=500/1,mhz=I/-29/; Flat/,40,0; gestep///1,400,0.2;',clock_multiples=1)
     roi.song()
-    roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-29/; Flat/,40,0; gestep///1,200,0.2;',clock_multiples=1)
+    roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-29/; Flat/,40,0; gestep///1,400,0.2;',clock_multiples=1)
     roq.song()
 
     plot1 = plt.figure(1)
