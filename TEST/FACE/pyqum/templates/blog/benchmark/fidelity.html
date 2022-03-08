@@ -1,0 +1,83 @@
+<!doctype html> <!--extended from parent: bridge.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+</head>
+
+<body class="benchmark">
+    <div class="fidelity">
+        <h3>readout_fidelity</h3>
+        <h4>k-Means + SVC </h4>
+
+        <div class="flex-allPara">
+
+            <div class="allMeasurePara" id="fidelity-input">
+                <button id="fidelity-button-load" type="submit">Load data</button>
+            </div>
+            <!-- <div class="allFitPara" id="fidelity-plot">
+                <button id="fidelity-plot2D-button" type="submit">2D Plot</button>
+                <label>Z signal type:</label>
+                <select id="fidelity-plot2D-zSelector">
+                    <option value="amp">Amplitude</option>
+                    <option value="phase">Phase</option>
+                </select>
+                <label>y unit:</label>
+                <select id="fidelity-plot2D-ySelector">
+                    <option value="y_index">Index</option>
+                    <option value="y_value">Value</option>
+                </select>
+                <button id="fidelity-plot1D-button" type="submit">1D Plot</button>
+                <label>y index or value:</label>
+                <input type="text" id="fidelity-plot1D-y_value">
+            </div> -->
+
+            <div class="allFitPara" id="fidelity-allParamater">
+                <!-- <label>Fitting function:</label>
+                <select id="fidelity-functionSelector">
+                    <option value="ExpDecay">Exponential Decay</option>
+                    <option value="RabiOscillation">Rabi Oscillation</option>
+                </select>
+
+                <label>Signal type:</label>
+                <select id="fidelity-signalSelector">
+                    <option value="amp">Amplitude</option>
+                    <option value="phase">Phase</option>
+                    <option value="indpendent">IQ plane</option>
+                </select>
+
+                <div class="fitPara" id="fidelity-parameters">
+
+                </div> 
+                <label>x range:</label>
+                <input type="text" id="fidelity-fitRange">
+
+                <label>Name of parameters:</label>
+                <input type="text" id="fidelity-parameterNames">
+                <label>Initial values:</label>
+                <input type="text" id="fidelity-parameterInitValues"> -->
+                <button id="fidelity-button-pretrain" type="submit">Pretrain</button>
+                <button id="fidelity-button-fit" type="submit">Fit</button>
+                <!-- <button id="fidelity-button-plot" type="submit">plot</button> -->
+                <button id="fidelity-button-plot" type="submit" onclick=" window.open('plot','_blank')">plot</button>
+            </div> 
+             
+        </div>
+        <!-- <div class="result-plot-area">
+            <div class="2D-plot-area">
+                <div id="fidelity-plot-fittingParameters"></div>
+                <div id="fidelity-plot2D-rawOverview"></div>
+                <div id="fidelity-plot2D-fitOverview"></div>
+            </div>
+            <div class="plot1D-area">
+                <div class="plotAmpPha" id="fidelity-plot1D-ampPhase"></div>
+                <div class="plotIQ" id="fidelity-plot1D-IQ"></div>
+            </div>
+        </div> -->
+
+    </div>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/fidelity.js') }}"></script>
+</body>
+
+</html>
