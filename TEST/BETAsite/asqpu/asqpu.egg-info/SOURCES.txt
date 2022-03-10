@@ -1,0 +1,6 @@
+README.md
+setup.py
+asqpu.egg-info/PKG-INFO
+asqpu.egg-info/SOURCES.txt
+asqpu.egg-info/dependency_links.txt
+asqpu.egg-info/top_level.txt

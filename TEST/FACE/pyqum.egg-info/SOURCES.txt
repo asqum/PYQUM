@@ -1659,6 +1659,8 @@ pyqum/static/fa/webfonts/fa-solid-900.svg
 pyqum/static/fa/webfonts/fa-solid-900.ttf
 pyqum/static/fa/webfonts/fa-solid-900.woff
 pyqum/static/fa/webfonts/fa-solid-900.woff2
+pyqum/static/img/finalized_svc_model.sav
+pyqum/static/img/fitness.png
 pyqum/static/img/dso/DSOwaveform(CH1).png
 pyqum/static/img/dso/DSOwaveform(CH1).svg
 pyqum/static/img/dso/DSOwaveform(CH2).png
@@ -1680,9 +1682,11 @@ pyqum/static/js/auth/posts.js
 pyqum/static/js/auth/profile.js
 pyqum/static/js/auth/samples.js
 pyqum/static/js/auth/user.js
+pyqum/static/js/benchmark/autoflux.js
 pyqum/static/js/benchmark/benchmark.js
 pyqum/static/js/benchmark/common_fitting.js
 pyqum/static/js/benchmark/decoherence.js
+pyqum/static/js/benchmark/fidelity.js
 pyqum/static/js/benchmark/measurement_info.js
 pyqum/static/js/benchmark/populationDistribution.js
 pyqum/static/js/benchmark/qestimate.js
@@ -1734,10 +1738,13 @@ pyqum/templates/auth/user.html
 pyqum/templates/blog/create.html
 pyqum/templates/blog/index.html
 pyqum/templates/blog/update.html
+pyqum/templates/blog/benchmark/autoflux.html
 pyqum/templates/blog/benchmark/benchmark.html
 pyqum/templates/blog/benchmark/common_fitting.html
 pyqum/templates/blog/benchmark/decoherence.html
+pyqum/templates/blog/benchmark/fidelity.html
 pyqum/templates/blog/benchmark/measurement_info.html
+pyqum/templates/blog/benchmark/plot.html
 pyqum/templates/blog/benchmark/populationDistribution.html
 pyqum/templates/blog/benchmark/qestimate.html
 pyqum/templates/blog/benchmark/rabiOscillation.html
