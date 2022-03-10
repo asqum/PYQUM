@@ -388,9 +388,9 @@ function plot_projectionLine(){
         plotData_IQ["fittedQ"]= data["Q"];
 
     }).done(function(data) {
-        DOM_printCenter.innerHTML(data["I"].toString());
+        DOM_printCenter.innerHTML = data["I"].toString();
     }).fail(function(jqxhr, textStatus, error){
-        DOM_printCenter.innerHTML("Oops.. Something went wrong!");
+        DOM_printCenter.innerHTML = "Oops.. Something went wrong!";
     });
 
     let iqKeys = {
