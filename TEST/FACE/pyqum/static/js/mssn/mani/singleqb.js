@@ -13,6 +13,7 @@ $(document).ready(function(){
     $('input.singleqb.setchannels.check').hide();
     $('select.mani.scheme.singleqb#SCHEME_LIST').hide();
     $('input.singleqb.perimeter-settings.save').hide();
+    $('input.mani.singleqb.toggle-pulses#singleqb-toggle-pulses').hide();
 });
 
 // Global variables:
@@ -562,6 +563,7 @@ function compareIQ_singleqb(x1,y1,x2,y2,mission="singleqb") {
 
 };
 function plot_pulses(X,Y,xtitle='sample-point#',mode='lines') {
+    $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("PLOTTING PULSES..."));
     // Some kind of Multiplots:
     Trace_num = Object.keys(Y).length;
     console.log("Number of Traces: " + Trace_num);
@@ -767,6 +769,7 @@ $('input.singleqb.perimeter-settings.load').on('touchend click', function(event)
 });
 // 4. Check Pulses:
 $('input.mani.singleqb.pulse-check#singleqb-pulse-check').bind('click', function() {
+    $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPOSING PULSES..."));
     // Assemble PERIMETER:
     var PERIMETER = Perimeter_Assembler();
     // console.log("PERIMETER to CHECK PULSES: " + PERIMETER)
@@ -778,7 +781,13 @@ $('input.mani.singleqb.pulse-check#singleqb-pulse-check').bind('click', function
         var T_samples = data.T_samples;
         // console.log(Pulse_Preview);
         plot_pulses(T_samples, Pulse_Preview)
-
+    })
+    .done(function(data) {
+        $('input.mani.singleqb.toggle-pulses#singleqb-toggle-pulses').show();
+        $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("PULSE-PLOT(s) COMPLETE"));
+    })
+    .fail(function(jqxhr, textStatus, error){
+        $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: red;"></h4>').text("Make sure SCORE & R-JSON SYNTAX is correct"));
     });
     return false;
 });
@@ -981,7 +990,7 @@ $(function () {
 });
 // INSERT 1D-data for comparison
 $(function () {
-    $('button.mani#singleqb-insert-1D').on('click', function () {
+    $('input.mani#singleqb-insert-1D').on('click', function () {
         $('div#mani-singleqb-announcement').empty();
         $( "i.singleqb1d" ).remove(); //clear previous
         $('button.mani.access.singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");

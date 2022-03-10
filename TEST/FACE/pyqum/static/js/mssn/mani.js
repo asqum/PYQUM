@@ -11,6 +11,7 @@ $('input.mani.loaded#sample-name').on('click', function() {
     return false;
 });
 
+// Get TASK name:
 $('button.mani.access.singleqb').on('click', function() { mani_TASK = 'singleqb' });
 $('button.mani.access.qubits').on('click', function() { mani_TASK = 'qubits' });
 
@@ -29,7 +30,6 @@ $('#mani-to-benchmark').click( function(){
 
     window.open("/benchmark");
     $.ajaxSettings.async = true;
-
     return false;
     }
 );

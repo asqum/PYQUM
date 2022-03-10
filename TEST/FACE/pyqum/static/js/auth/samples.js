@@ -141,11 +141,11 @@ $('button.user-samples#samples-forward').on('click', function(e) {
     if (fwd_sname==0 || sample_level>1) {
         $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("ONLY the main sample can be carried FORWARD!"));
     } else {
-        if (typeof(fwd_sname.split('(>')[1])=="undefined") { 
-            fwd_sname = fwd_sname + "(>1)";
+        if (typeof(fwd_sname.split('(v')[1])=="undefined") { 
+            fwd_sname = fwd_sname + "(v1)";
         } else {
-            var fwd_count = parseInt(fwd_sname.split('(>')[1].split(')')[0]) + 1;
-            fwd_sname = fwd_sname.split('(>')[0] + '(>' + fwd_count + ')';
+            var fwd_count = parseInt(fwd_sname.split('(v')[1].split(')')[0]) + 1;
+            fwd_sname = fwd_sname.split('(v')[0] + '(v' + fwd_count + ')';
         };
         // console.log("Forwarded Sample-name: " + fwd_sname)
 

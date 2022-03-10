@@ -20,8 +20,8 @@
     $("div#qEstimation").load("{{ url_for('benchmark.qestimate') }}");
     $("div#populationDistribution").load("{{ url_for('benchmark.populationDistribution') }}");
     $("div#common_fitting").load("{{ url_for('benchmark.common_fitting') }}");
-
-    
+    $("div#autoflux").load("{{ url_for('benchmark.autoflux') }}");
+    $("div#fidelity").load("{{ url_for('benchmark.fidelity') }}");
   });
 </script> 
 
@@ -41,7 +41,9 @@
   <button class="tablinks" id="rabiOscillation-tab" onclick="openTab(event, 'rabiOscillation')">rabiOscillation</button> -->
   <button class="tablinks" id="populationDistribution-tab" onclick="openTab(event, 'populationDistribution')">populationDistribution</button>
   <button class="tablinks" id="common_fitting-tab" onclick="openTab(event, 'common_fitting')">Common Fitting</button>
-
+  <button class="tablinks" id="autoflux-tab" onclick="openTab(event, 'autoflux')">autoflux</button>
+  <button class="tablinks" id="fidelity-tab" onclick="openTab(event, 'fidelity')">readout_fidelity</button>
+  
 </div>
 <!-- <div id="all" class="tabcontent"></div> -->
 <div id="measurement_info" class="tabcontent"></div>
@@ -50,7 +52,8 @@
 <div id="rabiOscillation" class="tabcontent"></div> -->
 <div id="populationDistribution" class="tabcontent"></div>
 <div id="common_fitting" class="tabcontent"></div>
-
+<div id="autoflux" class="tabcontent"></div>
+<div id="fidelity" class="tabcontent"></div>
 <!-- {% for qtype in quantificationType %}
 <div id="{{qtype}}" class="tabcontent"></div>
 {% endfor %} -->
