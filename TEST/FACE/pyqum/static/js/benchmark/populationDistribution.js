@@ -387,9 +387,9 @@ function plot_projectionLine(){
         plotData_IQ["fittedQ"]= data["Q"];
 
     }).done(function(data) {
-        PD_creatDOM_pString("-data","populationDistribution-clusterCenter",data["I"].toString());
+        document.getElementById("populationDistribution-clusterCenter-data" ).innerHTML(data["I"].toString());
     }).fail(function(jqxhr, textStatus, error){
-        PD_creatDOM_pString("-data","populationDistribution-clusterCenter","Oops.. Something went wrong!");
+        ocument.getElementById("populationDistribution-clusterCenter-data" ).innerHTML("Oops.. Something went wrong!");
     });
 
     let iqKeys = {
