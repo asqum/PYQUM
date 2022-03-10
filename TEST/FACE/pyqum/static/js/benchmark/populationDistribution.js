@@ -252,6 +252,16 @@ function PD_showAveInput(selectObject) {
     }
 }
 
+function PD_creatDOM_pString( newID, parentID, string  ){
+    // Creat select for parameter plot type
+    console.log( "CF_creatDOM_FitDataType" );
+    let parentDOM = document.getElementById( parentID );
+
+    let DOM_p = document.createElement("p");
+    DOM_p.id = parentID+newID;
+    DOM_p.innerHTML = string;
+    parentDOM.appendChild(DOM_p);
+}
 
 function PD_load_data(){
     console.log( "Get data" );
@@ -365,9 +375,6 @@ function plot_projectionLine(){
         plotData_IQ["rawI"]= data["I"];
         plotData_IQ["rawQ"]= data["Q"];
 
-        plotData_AmpPhase["raw"]["Amplitude"]= data["Amplitude"];
-        plotData_AmpPhase["raw"]["Phase"]= data["Phase"]
-
     });
     // get projection line data and parameters
     $.getJSON( '/benchmark/populationDistribution/getJson_plotProjection',
@@ -379,9 +386,10 @@ function plot_projectionLine(){
         plotData_IQ["fittedI"]= data["I"];
         plotData_IQ["fittedQ"]= data["Q"];
 
-        plotData_AmpPhase["fitted"]["Amplitude"]= data["Amplitude"];
-        plotData_AmpPhase["fitted"]["Phase"]= data["Phase"];
-
+    }).done(function(data) {
+        PD_creatDOM_pString("-data","populationDistribution-clusterCenter",data["I"].toString());
+    }).fail(function(jqxhr, textStatus, error){
+        PD_creatDOM_pString("-data","populationDistribution-clusterCenter","Oops.. Something went wrong!");
     });
 
     let iqKeys = {

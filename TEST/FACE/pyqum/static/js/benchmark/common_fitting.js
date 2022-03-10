@@ -199,13 +199,6 @@ function CF_render_input ( quantificationType )
             DOM_parameterSetting.appendChild(DOM_parameterAve);
 
 
-            // Create x axis fitting input
-            // let DOM_parameterFit = document.createElement("input");
-            // DOM_parameterFit.id = quantificationType+"-fitting_input-"+parameterName;
-            // DOM_parameterFit.setAttribute("class", "measureParaSelect fitting_input");
-            // DOM_parameterFit.setAttribute("value", parameterValue[0]+","+parameterValue[parameterValue.length-1]);
-            // DOM_parameterFit.style.display = "none";
-            // DOM_parameterSetting.appendChild(DOM_parameterFit);
             
         }
 
@@ -245,26 +238,6 @@ function CF_showAveInput(selectObject) {
             console.log("select "+selectObject.value)
             break;
 
-    }
-}
-function CF_creatDOM_FitDataType( fitFunc, parentID ){
-    // Creat select for parameter plot type
-    console.log( "CF_creatDOM_FitDataType" );
-    let parentDOM = document.getElementById( parentID );
-
-    let DOM_dataTypeSelector = document.createElement("select");
-    DOM_dataTypeSelector.id = fitFunc+"-data_type";
-    DOM_dataTypeSelector.setAttribute("class", "measureParaSelect plotTypeSelect");
-    parentDOM.appendChild(DOM_dataTypeSelector);
-    // Create plot selection
-    let dataType = ["Amplitude","Phase","IQ plane"];
-    let dataTypeValue = ["amplitude","phase","iqPlane"];
-    for( ipt=0; ipt<dataType.length; ipt++)
-    {
-        let DOM_dataType = document.createElement("option");
-        DOM_dataType.innerHTML = dataType[ipt];
-        DOM_dataType.setAttribute("value", dataTypeValue[ipt]);
-        DOM_dataTypeSelector.appendChild(DOM_dataType);
     }
 }
 
