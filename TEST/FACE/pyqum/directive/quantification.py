@@ -48,6 +48,7 @@ from sklearn.cluster import KMeans
 from sklearn.svm import SVC
 from numpy import stack, unique, meshgrid
 import pickle
+from state_distinguishability.iq_kmean import *
 
 class ExtendMeasurement ():
 	def __init__( self, measurementObj, *args,**kwargs ):
@@ -493,39 +494,15 @@ class PopulationDistribution():
 		return self.accData
 	def fit_projectionLine( self ):
 
-		accData= self.accData["shifted"]
+		accData= self.accData["raw"]
 		# linregress method
-		xData = accData.real
-		yData = accData.imag
-		res = linregress( xData, yData)
-
-		demoRange = [amin(xData),amax(xData)]
-
-		linear_model = Model(linear_func)
-		mydata = RealData(xData, yData)
-		myodr = ODR(mydata, linear_model, beta0=[arctan(res.slope)])
-		myoutput = myodr.run()
-		myoutput.pprint()
-		print(myoutput.beta)
-		
-		self.projectionLine["parameter"]=myoutput.beta
-		xFitted = linspace(demoRange[0],demoRange[1],100)
-
-		yFitted = tan(myoutput.beta[0]) *xFitted
-
-		self.projectionLine["data"]=xFitted+1j*yFitted +self.accData["mean_point"]
-		
-			
+		kmeanObj = get_KmeansSklearn( 2, accData )
+		self.projectionLine["data"]=vector_to_complex(kmeanObj.cluster_centers_)	
 		return self.projectionLine
 
 	def cal_projectedData( self ):
 		
-		shiftedAccData= self.accData["shifted"]
-	
-		# Get rotate angle
-		angleProjectionLine = self.projectionLine["parameter"][0]
-
-		self.accData["projected"]=abs(shiftedAccData)*cos(angle(shiftedAccData)-angleProjectionLine)
+		self.accData["projected"]=get_projectedIQDistance_byTwoPt(self.projectionLine["data"],self.accData["raw"])
 		return self.accData["projected"]
 
 	def cal_distribution( self ):

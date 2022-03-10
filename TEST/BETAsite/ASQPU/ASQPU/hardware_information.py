@@ -45,7 +45,7 @@ class QuantumProcessUnit:
         self.ChannelSet = {}
         self.OperationCondition = []
 
-    def get_IDList_PhysicalChannel( self ):
+    def get_IDList_PhysicalChannel( self ) -> list:
         return list(self.ChannelSet.keys())
 
     def get_PhysicalChannel_byID( self, channelID ) -> PhysicalChannel:
@@ -54,17 +54,17 @@ class QuantumProcessUnit:
         else:
             return None
 
-    def isExist_PhysicalChannel( self, channelID ):
+    def isExist_PhysicalChannel( self, channelID ) -> bool:
         if channelID in self.get_IDList_PhysicalChannel():
             return True
         else:
             #print(f"Warning: The channel {channelID} didn't register in QPU {self.id}.")
             return False
 
-    def get_IDList_PhysicalQubit( self ):
+    def get_IDList_PhysicalQubit( self ) -> list:
         return list(self.QubitSet.keys())
 
-    def isExist_PhysicalQubit( self, QubitID ):
+    def isExist_PhysicalQubit( self, QubitID ) -> bool:
         if QubitID in self.get_IDList_PhysicalQubit():
             return True
         else:

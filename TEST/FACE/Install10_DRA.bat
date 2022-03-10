@@ -30,6 +30,10 @@ pip install -e ..\BETAsite\pulse_generator
 ECHO Installing asqpu
 pip install -e ..\BETAsite\asqpu
 
+:: state_distinguishability (editable installation, files are in PYQUM)
+ECHO Installing state_distinguishability
+pip install -e ..\BETAsite\state_distinguishability
+
 :: resonator_tools (editable installation, files are in PYQUM)
 ECHO Installing resonator_tools
 pip install -e ..\BETAsite\resonator_tools

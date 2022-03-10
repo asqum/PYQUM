@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 
 
 
-def get_KmeansSklearn( n_clusters, iqComplex ):
+def get_KmeansSklearn( n_clusters, iqComplex )->KMeans:
     data = complex_to_vector(iqComplex, vectorShape="H")
     kmeans = KMeans(n_clusters=n_clusters,tol=1e-4).fit(data)
     return kmeans
@@ -16,6 +16,11 @@ def complex_to_vector( complexArray, vectorShape="V" ):
         return transArr
     elif "H":
         return transArr.transpose()
+
+def vector_to_complex( vectorArray ):
+    vectorArray = vectorArray.transpose()
+    complexArray = vectorArray[0]+1j*vectorArray[1]
+    return complexArray
 
 def get_projectedIQVector_byTwoPt( projComplex, iqComplex ):
     refPoint = mean(projComplex)
@@ -59,8 +64,7 @@ def get_oneShot_kmeanDistance(iqdata):
 
 def get_oneshot_plot(iqdata,simIQCenter=None):
     km = get_KmeansSklearn(2,iqdata)
-    clusterCenter = km.cluster_centers_.transpose()
-    clusterCenter = clusterCenter[0]+1j*clusterCenter[1]
+    clusterCenter = vector_to_complex(km.cluster_centers_.transpose())
     a = get_projectedIQDistance_byTwoPt(clusterCenter,iqdata)
     plt.figure(1)
     plt.plot( iqdata.real, iqdata.imag, "o", label="Data" )
@@ -78,8 +82,8 @@ if __name__ == "__main__":
 
     simCenter = array([0,1])
     measurementPts = 10000
-    sigma = 0.2
-    #get_oneshot_plot(get_simulationData(measurementPts,0.5,simCenter,0.25),simIQCenter=simCenter)
+    sigma = 0.25
+    #get_oneshot_plot(get_simulationData(measurementPts,0.5,simCenter,sigma),simIQCenter=simCenter)
     statisticTest = int(20)
     ProbabilityRange = np.linspace(0.1,0.9,9)
     errorDistanceMean = np.empty(ProbabilityRange.shape[-1])
