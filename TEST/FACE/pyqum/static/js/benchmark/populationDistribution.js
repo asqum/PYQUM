@@ -377,6 +377,7 @@ function plot_projectionLine(){
 
     });
     // get projection line data and parameters
+    let DOM_printCenter = document.getElementById("populationDistribution-clusterCenter-data" )
     $.getJSON( '/benchmark/populationDistribution/getJson_plotProjection',
     {   process: JSON.stringify("fitted"),
         projectionLine: JSON.stringify(projectionLine),
@@ -387,9 +388,9 @@ function plot_projectionLine(){
         plotData_IQ["fittedQ"]= data["Q"];
 
     }).done(function(data) {
-        document.getElementById("populationDistribution-clusterCenter-data" ).innerHTML(data["I"].toString());
+        DOM_printCenter.innerHTML(data["I"].toString());
     }).fail(function(jqxhr, textStatus, error){
-        ocument.getElementById("populationDistribution-clusterCenter-data" ).innerHTML("Oops.. Something went wrong!");
+        DOM_printCenter.innerHTML("Oops.. Something went wrong!");
     });
 
     let iqKeys = {
