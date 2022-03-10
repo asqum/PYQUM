@@ -9,6 +9,7 @@
 <body class="benchmark">
     <div class="qestimatecontent">
         <h3>Q Estimation</h3>
+        <div class="qestimate" id="qestimate-fitting-progress"></div>
 
         <div class="flex-allPara">
 
@@ -32,14 +33,21 @@
             </div> 
              
         </div>
-        <div class="result-plot-area">
+        <!-- <div class="result-plot-area"> -->
+        <div class="row">
             <div class="2D-plot-area">
                 <div id="qFactor-plot-fittingParameters"></div>
                 <div id="qFactor-plot2D-rawOverview"></div>
                 <div id="qFactor-plot2D-fitOverview"></div>
             </div>
-            <div class="plot1D-area">
+        </div>
+
+        <div class="row">
+            <!-- <div class="plot1D-area"> -->
+            <div class="col-40" id='left'>
                 <div class="plotAmpPha" id="qFactor-plot1D-ampPhase"></div>
+            </div>
+            <div class="col-40" id='left'>
                 <div class="plotIQ" id="qFactor-plot1D-IQ"></div>
             </div>
         </div>

@@ -19,6 +19,7 @@ pyqum.egg-info/dependency_links.txt
 pyqum.egg-info/not-zip-safe
 pyqum.egg-info/requires.txt
 pyqum.egg-info/top_level.txt
+pyqum/static/css/ScrollTabla.css
 pyqum/static/css/anime.css
 pyqum/static/css/benchmark.css
 pyqum/static/css/brdg.css
@@ -1670,6 +1671,7 @@ pyqum/static/js/angular.min.js
 pyqum/static/js/base.js
 pyqum/static/js/gauge.min.js
 pyqum/static/js/jquery-3.5.1.min.js
+pyqum/static/js/jquery.CongelarFilaColumna.js
 pyqum/static/js/jquery.min.js
 pyqum/static/js/jquerysession.js
 pyqum/static/js/plotly-latest.min.js

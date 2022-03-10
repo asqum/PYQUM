@@ -512,11 +512,8 @@ function plot1D ( data, axisKeys, plotId ){
     }
     var layout = {
         showlegend: true,
-        legend: {
-          x: 1,
-          xanchor: 'right',
-          y: 1
-        }
+        // legend: { x: 1, xanchor: 'right', y: 1}
+        legend: {x: 1.08}
       };
     Plotly.newPlot(plotId, tracies, layout, {showSendToCloud: true});
 }

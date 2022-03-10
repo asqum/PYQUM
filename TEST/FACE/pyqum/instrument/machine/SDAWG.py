@@ -208,7 +208,10 @@ def prepare_DAC(module, channel, datasize, maxlevel=1.5, update_settings={}):
 
     NOTE:
     1. Slave cannot produce marker output on either PXI or Trigger-I/O port without having some serious trigger instabilities!
-    2. For perfect inter-Pulse alignment, Master-Card can only play 3-channels at most, while Slave-Card can play up to ALL-channels as long as clearQ is set to be True.
+    2. For inter-Slot alignment:\n
+        a. Within 100ns: BOTH Master & Slave can play ALL 4 channels as long as clearQ is set to be True in Compose. (Not needed in Pre-Compose though.)
+        b. Within 0ns (PERFECTO): Master can ONLY play up to 3 channels while Slave can play ALL 4 channels as long as clearQ is set to be True in Compose. (Not needed in Pre-Compose though.)
+        c. If clearQ not used in Compose, resend-error might require the DAC be restarted.
     '''
     # 1. Loading the settings:
     settings=dict(trigbyPXI=2, mode=1, sync=1, markeroption=0, Master=True, markerdelay=0) # default settings for SDAWG
@@ -284,7 +287,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
         if clearQ: 
             module.AWGstop(channel)
             module.AWGflush(channel) # Clear queue TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT
-            print(Fore.CYAN + "Clearing CH%s's queue..." %(channel))
+            print(Fore.CYAN + "Clearing CH%s's queue for good alignment of ALL 4 channels" %(channel))
         
         resendWaveform(module, waveform_id, pulsedata)
         
@@ -345,8 +348,9 @@ def close(module, which, reset=True, mode='DATABASE'):
 
 # Test Zone
 def test():
-    DAC_MATRIX = [[1,2,3,4],[1,2,3,4]]
-    DAC_LABEL = [3, 1]
+    DAC_MATRIX = [[1,2,3,4],[1,2,3,4]] # WITHIN 100ns ALIGNMENT
+    # DAC_MATRIX = [[1,2,3],[1,2,3,4]] # PERFECTO ALIGNMENT
+    DAC_LABEL = [4, 5]
     Master = [True, False]
     M = [None]*len(DAC_MATRIX)
 
@@ -372,6 +376,7 @@ def test():
             prepare_DAC(M[i], int(ch), pulseq.totalpoints, update_settings=dict(Master=Master[i], trigbyPXI=2))
         # PRE-COMPOSITION:
         for ch in channel_set:
+            # clearQ not needed at pre-compose:
             compose_DAC(M[i], int(ch), pulseq.music)#, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
         alloff(M[i], action=['Set',0])
         ready(M[i])
@@ -413,4 +418,4 @@ def test():
 
     return
 
-#test()
+# test()

@@ -96,16 +96,18 @@ function qumjob() {
                 // Startime = date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
                 
                 // Showing COMMENT or NOTE:
+                var comment = String(val.comment).replaceAll("\\n", "; ").replaceAll(">", "&gt;").replaceAll("<", "&lt;");
+                var note = String(val.note);
                 if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Comment') {
-                    var Comment_Note = new String(val.comment).replaceAll("\\n", "; ");
+                    var Comment_Note = comment;
                 } else if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Note') {
                     if (val.note==null) { var Comment_Note = "";
-                    } else { var Comment_Note = new String(val.note); };
+                    } else { var Comment_Note = note; };
                 } else if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Both') {
                     if (val.note==null) { 
-                        var Comment_Note = String(val.comment).replaceAll("\\n", "; ") + "";
+                        var Comment_Note = comment + "";
                     } else { 
-                        var Comment_Note = String(val.comment).replaceAll("\\n", "; ") + "<br>&nbsp;</br>" + "<b style='color:red'>" + String(val.note) + "</b>"; 
+                        var Comment_Note = comment + "<br>&nbsp;</br>" + "<b style='color:red'>" + note + "</b>"; 
                     };
                 };
 
