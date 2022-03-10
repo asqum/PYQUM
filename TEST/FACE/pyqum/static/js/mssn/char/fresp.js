@@ -712,34 +712,6 @@ $('input.fresp.notification').click( function(){
     return false;
 });
 
-// Event: Benchmark on click (Jacky)
-$('#char-fresp-to-benchmark').click( function(){
-
-    $.ajaxSettings.async = false;
-
-    listimes_fresp();
-    accessdata_fresp();
-    $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/access', 
-        { wmoment: wmoment },
-        //input/select value here:  
-        function (data) {
-            //console.log("JOBID: " + JSON.stringify(data.JOBID) );
-            console.log( data );  
-                    
-    });
-    let quantificationType = ["qfactor_estimation"];
-    $.getJSON( '/benchmark/benchmark_getMeasurement', 
-    { measurementType: "fresp", quantificationType: JSON.stringify(quantificationType) }, 
-        function ( ) {
-    }); 
-
-    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
-    $.ajaxSettings.async = true;
-
-    return false;
-    }
-);
-
 // SAVE NOTE:
 $('textarea.char.fresp[name="note"]').change( function () {
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/save/jobnote', {
