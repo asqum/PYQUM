@@ -286,25 +286,13 @@ function get_PD_plot2D(){
     let htmlInfo=get_htmlInfo_python();
 
 
-    let plot2D_signalType = document.getElementById("populationDistribution-plot2D-zSelector").value;
     let plot1D_yAxisType = document.getElementById("populationDistribution-plot2D-ySelector").value;
 
-    console.log( "plot2D_signalType" );
 
-    console.log( plot2D_signalType );
     let z_data;
     let y_axis=[];
     let x_axis=[];
 
-    //Get 2D data
-    $.getJSON( '/benchmark/populationDistribution/getJson_plot2D',
-    {   plot2D_signalType: JSON.stringify(plot2D_signalType), },
-        function (data) {
-        console.log( "Get 2D data" );
-        console.log( data );
-        z_data= data;
-
-    });
     //Get x axis
     $.getJSON( '/benchmark/populationDistribution/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value'), },

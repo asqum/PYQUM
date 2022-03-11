@@ -25,6 +25,8 @@ function get_common_fitting_selectInfo( quantificationType ){
     let valueIndex=new Array(htmlInfo.length);
 
     let aveAxisIndex=[];
+    let oneShotAxisIndex=[];
+
     let aveRange;
 
     //let analysisIndex = {};
@@ -233,6 +235,10 @@ function CF_showAveInput(selectObject) {
 
     switch(selectObject.value){
         case "average":
+            console.log("select "+selectObject.value)
+            DOM_parameterAve.style.display = "block";
+            break;
+        case "oneshot":
             console.log("select "+selectObject.value)
             DOM_parameterAve.style.display = "block";
             break;
