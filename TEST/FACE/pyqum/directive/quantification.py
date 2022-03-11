@@ -134,6 +134,7 @@ class ExtendMeasurement ():
 		if len(aveInfo["oneShotAxisIndex"]) != 0:
 			self.oneShotAxisKey = self.measurementObj.corder["C-Structure"][aveInfo["oneShotAxisIndex"][0]]
 			self.oneShotClusterCenters = vector_to_complex(array(aveInfo["oneShotCenters"]))
+			print(f"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA{self.oneShotClusterCenters}")
 		else:
 			self.oneShotAxisKey = None
 
@@ -195,7 +196,7 @@ class ExtendMeasurement ():
 
 		if self.oneShotAxisKey != None: #Get population from given center
 			data = get_population(self.oneShotClusterCenters, data)
-
+			print(data)
 		# To 3 dimension
 		if data.ndim == 2:
 			data = expand_dims(data,axis=1)
