@@ -207,7 +207,6 @@ class ExtendMeasurement ():
 		# To 3 dimension
 		if self.rawData["iqSignal"].ndim == 1:
 			self.rawData["iqSignal"] = expand_dims(self.rawData["iqSignal"],axis=0)
-			print(f'PPPPPPPPPPPPPPPPPPPPPPPPPPPPP{self.rawData["iqSignal"]}')
 
 	def array_mask( self ) :
 		indexArray = arange(len(self.independentVars[self.aveAxisKey]))
@@ -401,10 +400,6 @@ class QEstimation():
 					self.correctedIQData["x"] = qObj.rawData["x"]
 				else: 
 					self._init_baselineCorrection()
-
-def linear_func(p, x):
-   axisAngle = p
-   return tan(axisAngle)*x
 
 class PopulationDistribution():
 
