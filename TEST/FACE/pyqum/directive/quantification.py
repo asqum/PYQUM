@@ -195,6 +195,7 @@ class ExtendMeasurement ():
 			data = mean(data, axis=len(data.shape)-1, where=self.array_mask())
 
 		if self.oneShotAxisKey != None: #Get population from given center
+			print(f"Send to package {data}")
 			data = get_population(array(self.oneShotClusterCenters), data)
 		# To 3 dimension
 		if data.ndim == 2:
