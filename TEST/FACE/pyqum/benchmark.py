@@ -390,8 +390,10 @@ def ComFit_load():
 		aveRange = [int(k) for k in analysisIndex["aveInfo"]["aveRange"].split(",")]
 	# Construct oneshot informaion to reshape
 	if len(oneShotAxisInd) !=0:
-		centerString = analysisIndex["oneShot_Info"]["centers"].replace(" ","").replace("\n","")
+		centerString = analysisIndex["oneShot_Info"]["centers"].replace("\n","").replace(" ","")
+		print(centerString)
 		oneShotCenters = [complex(k) for k in centerString.split(",")]
+		print(oneShotCenters)
 	aveInfo = {
 		"axisIndex": aveAxisInd,
 		"aveRange": aveRange,

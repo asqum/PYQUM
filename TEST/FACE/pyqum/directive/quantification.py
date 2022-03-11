@@ -133,7 +133,7 @@ class ExtendMeasurement ():
 		# Get one shot parameters	
 		if len(aveInfo["oneShotAxisIndex"]) != 0:
 			self.oneShotAxisKey = self.measurementObj.corder["C-Structure"][aveInfo["oneShotAxisIndex"][0]]
-			self.oneShotClusterCenters = vector_to_complex(array(aveInfo["oneShotCenters"]))
+			self.oneShotClusterCenters = aveInfo["oneShotCenters"]
 			print(f"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA{self.oneShotClusterCenters}")
 		else:
 			self.oneShotAxisKey = None
