@@ -195,9 +195,6 @@ class ExtendMeasurement ():
 			data = mean(data, axis=len(data.shape)-1, where=self.array_mask())
 
 
-		# To 3 dimension
-		if data.ndim == 2:
-			data = expand_dims(data,axis=1)
 
 		
 		# Get data to analysis
@@ -206,9 +203,11 @@ class ExtendMeasurement ():
 			"iqSignal": data[0]+1j*data[1],
 		}
 		if self.oneShotAxisKey != None: #Get population from given center
-			print(f"Send to package {self.rawData['iqSignal']}")
 			self.rawData["iqSignal"] = get_population(array(self.oneShotClusterCenters), self.rawData["iqSignal"])
-			print(f"Send to package {self.rawData['iqSignal']}")
+			print(f'PPPPPPPPPPPPPPPPPPPPPPPPPPPPP{self.rawData["iqSignal"]}')
+		# To 3 dimension
+		if data.ndim == 2:
+			self.rawData["iqSignal"] = expand_dims(self.rawData["iqSignal"],axis=1)
 
 	def array_mask( self ) :
 		indexArray = arange(len(self.independentVars[self.aveAxisKey]))
