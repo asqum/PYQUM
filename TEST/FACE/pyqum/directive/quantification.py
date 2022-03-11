@@ -204,10 +204,10 @@ class ExtendMeasurement ():
 		}
 		if self.oneShotAxisKey != None: #Get population from given center
 			self.rawData["iqSignal"] = get_population(array(self.oneShotClusterCenters), self.rawData["iqSignal"])
-			print(f'PPPPPPPPPPPPPPPPPPPPPPPPPPPPP{self.rawData["iqSignal"]}')
 		# To 3 dimension
 		if self.rawData["iqSignal"].ndim == 1:
-			self.rawData["iqSignal"] = expand_dims(self.rawData["iqSignal"],axis=1)
+			self.rawData["iqSignal"] = expand_dims(self.rawData["iqSignal"],axis=0)
+			print(f'PPPPPPPPPPPPPPPPPPPPPPPPPPPPP{self.rawData["iqSignal"]}')
 
 	def array_mask( self ) :
 		indexArray = arange(len(self.independentVars[self.aveAxisKey]))
