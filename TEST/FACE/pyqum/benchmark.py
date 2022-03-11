@@ -596,20 +596,20 @@ def PopDis_load():
 	dimension = len(axisInd)
 
 	# Get average information from JS
-	aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
-	aveRange = 0
+	# aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
+	# aveRange = 0
 
 
 	# Construct accumulate informaion to reshape
-	oneShotAxisInd = analysisIndex["oneShot_Info"]["axisIndex"]
-	if len(oneShotAxisInd) ==0:
-		print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
+	# oneShotAxisInd = analysisIndex["oneShot_Info"]["axisIndex"]
+	# if len(oneShotAxisInd) ==0:
+	# 	print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
 
-	aveInfo = {
-		"axisIndex": aveAxisInd,
-		"aveRange": aveRange,
-		"oneShotAxisIndex": oneShotAxisInd,
-	}
+	# aveInfo = {
+	# 	"axisIndex": aveAxisInd,
+	# 	"aveRange": aveRange,
+	# 	"oneShotAxisIndex": oneShotAxisInd,
+	# }
 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=None )
 	return json.dumps("Data reshaped", cls=NumpyEncoder)
 
