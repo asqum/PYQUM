@@ -605,12 +605,11 @@ def PopDis_load():
 	# if len(oneShotAxisInd) ==0:
 	# 	print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
 
-	# aveInfo = {
-	# 	"axisIndex": aveAxisInd,
-	# 	"aveRange": aveRange,
-	# 	"oneShotAxisIndex": oneShotAxisInd,
-	# }
-	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=None )
+	aveInfo = {
+		"axisIndex": [],
+		"oneShotAxisIndex": [],
+	}
+	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
 	return json.dumps("Data reshaped", cls=NumpyEncoder)
 
 
