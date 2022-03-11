@@ -11,7 +11,7 @@ $(document).ready(function(){
     let e_fitButton = document.getElementById("autoflux-button-fit");
     e_fitButton.addEventListener("click", AF_fit_data);
     let e_plot1DButton = document.getElementById("autoflux-plot1D-button");
-    e_plot1DButton.addEventListener("click", get_plot1D);
+    e_plot1DButton.addEventListener("click", AF_get_plot1D);
     let e_plot2DtButton = document.getElementById("autoflux-plot2D-button");
     e_plot2DtButton.addEventListener("click", get_plot2D);
     let e_plottButton = document.getElementById("autoflux-button-plot");
@@ -281,7 +281,7 @@ function AF_load_data(){
     if ( analysisIndex.axisIndex.length == 2 ){
         get_plot2D();
     }else{
-        get_plot1D();
+        AF_get_plot1D();
     }    
     $.ajaxSettings.async = true;
 }
@@ -350,7 +350,7 @@ function get_plot2D(){
     $.ajaxSettings.async = true;
 }
 
-function get_plot1D(){
+function AF_get_plot1D(){
     console.log( "Plot data" );
 
     let plotID_2D = "autoflux-plot2D-rawOverview";

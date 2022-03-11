@@ -283,7 +283,7 @@ function FD_load_data(){
     if ( analysisIndex.axisIndex.length == 2 ){
         get_plot2D();
     }else{
-        get_plot1D();
+        FD_get_plot1D();
     }    
     $.ajaxSettings.async = true;
 }
@@ -352,7 +352,7 @@ function get_plot2D(){
     $.ajaxSettings.async = true;
 }
 
-function get_plot1D(){
+function FD_get_plot1D(){
     console.log( "Plot data" );
 
     let plotID_2D = "fidelity-plot2D-rawOverview";
