@@ -206,7 +206,7 @@ class ExtendMeasurement ():
 			self.rawData["iqSignal"] = get_population(array(self.oneShotClusterCenters), self.rawData["iqSignal"])
 			print(f'PPPPPPPPPPPPPPPPPPPPPPPPPPPPP{self.rawData["iqSignal"]}')
 		# To 3 dimension
-		if data.ndim == 2:
+		if self.rawData["iqSignal"].ndim == 1:
 			self.rawData["iqSignal"] = expand_dims(self.rawData["iqSignal"],axis=1)
 
 	def array_mask( self ) :
