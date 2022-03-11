@@ -206,8 +206,9 @@ class ExtendMeasurement ():
 			"iqSignal": data[0]+1j*data[1],
 		}
 		if self.oneShotAxisKey != None: #Get population from given center
-			#print(f"Send to package {data}")
+			print(f"Send to package {self.rawData['iqSignal']}")
 			self.rawData["iqSignal"] = get_population(array(self.oneShotClusterCenters), self.rawData["iqSignal"])
+			print(f"Send to package {self.rawData['iqSignal']}")
 
 	def array_mask( self ) :
 		indexArray = arange(len(self.independentVars[self.aveAxisKey]))
