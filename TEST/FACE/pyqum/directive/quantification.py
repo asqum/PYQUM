@@ -134,7 +134,7 @@ class ExtendMeasurement ():
 		if len(aveInfo["oneShotAxisIndex"]) != 0:
 			self.oneShotAxisKey = self.measurementObj.corder["C-Structure"][aveInfo["oneShotAxisIndex"][0]]
 			self.oneShotClusterCenters = aveInfo["oneShotCenters"]
-			print(f"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA{self.oneShotClusterCenters}")
+			print(f"Set center point {self.oneShotClusterCenters}")
 		else:
 			self.oneShotAxisKey = None
 
@@ -195,8 +195,7 @@ class ExtendMeasurement ():
 			data = mean(data, axis=len(data.shape)-1, where=self.array_mask())
 
 		if self.oneShotAxisKey != None: #Get population from given center
-			data = get_population(self.oneShotClusterCenters, data)
-			print(data)
+			data = get_population(array(self.oneShotClusterCenters), data)
 		# To 3 dimension
 		if data.ndim == 2:
 			data = expand_dims(data,axis=1)

@@ -1,6 +1,6 @@
 
 from cProfile import label
-from numpy import array, reshape, mean, transpose
+from numpy import array, reshape, mean, transpose, ndarray
 from sklearn.cluster import KMeans
 
 
@@ -10,7 +10,7 @@ def get_KmeansSklearn( n_clusters, iqComplex )->KMeans:
     kmeans = KMeans(n_clusters=n_clusters,tol=1e-4).fit(data)
     return kmeans
 
-def get_population( iqCenter, iqComplex ):
+def get_population( iqCenter:ndarray, iqComplex:ndarray ):
     #print(iqCenter, iqComplex)
     myKmean = get_KmeansSklearn(2,iqCenter)
     iqVectData = complex_to_vector(iqComplex,vectorShape="H")
@@ -18,7 +18,7 @@ def get_population( iqCenter, iqComplex ):
 
     return mean(clusterData.reshape(iqComplex.shape),axis=iqComplex.ndim-1)
 
-def complex_to_vector( complexArray, vectorShape="V" ):
+def complex_to_vector( complexArray:ndarray, vectorShape="V" ):
     transArr = array([complexArray.real,complexArray.imag])
     if vectorShape == "V":
         return transArr
