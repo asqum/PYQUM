@@ -66,12 +66,6 @@ function get_PD_selectInfo( quantificationType ){
                     aveRange = document.getElementById(quantificationType+"-ave_value-"+htmlName).value;
                     break;
 
-                case "one_shot":
-                    console.log(htmlName +" select one_shot");
-                    valueIndex[i] = 0;
-                    oneShotAxisIndex.push(structurePosition);
-                    break;
-
             }         
         }
 
@@ -85,9 +79,6 @@ function get_PD_selectInfo( quantificationType ){
             axisIndex:aveAxisIndex,
             aveRange:aveRange
         },
-        oneShot_Info:{
-            axisIndex:oneShotAxisIndex,
-        }
     }
 
 
@@ -158,8 +149,8 @@ function PD_render_input ( quantificationType )
             DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
 
             // Create plot selection
-            let plotType = ["single value","x axis - value","average","one shot"];
-            let plotTypeValue = ["single_value","x_value","average","one_shot"];
+            let plotType = ["single value","x axis - value","y axis - value"];
+            let plotTypeValue = ["single_value","x_value","y_value"];
             for( ipt=0; ipt<plotType.length; ipt++)
             {
                 let DOM_parameterPlotType = document.createElement("option");
