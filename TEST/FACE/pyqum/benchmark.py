@@ -382,14 +382,21 @@ def ComFit_load():
 
 	# Get average information from JS
 	aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
+	oneShotAxisInd = analysisIndex["oneShot_Info"]["axisIndex"]
 	aveRange = 0
+	oneShotCenters = 0
 	# Construct average informaion to reshape
 	if len(aveAxisInd) !=0:
 		aveRange = [int(k) for k in analysisIndex["aveInfo"]["aveRange"].split(",")]
+	# Construct oneshot informaion to reshape
+	if len(oneShotAxisInd) !=0:
+		centerString = analysisIndex["oneShot_Info"]["centers"].replace(" ","").replace("\n","")
+		oneShotCenters = [complex(k) for k in centerString.split(",")]
 	aveInfo = {
 		"axisIndex": aveAxisInd,
 		"aveRange": aveRange,
-		"oneShotAxisIndex": [],
+		"oneShotAxisIndex": oneShotAxisInd,
+		"oneShotCenters": oneShotCenters,
 	}
 
 

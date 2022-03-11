@@ -66,6 +66,12 @@ function get_common_fitting_selectInfo( quantificationType ){
                     aveRange = document.getElementById(quantificationType+"-ave_value-"+htmlName).value;
                     break;
 
+                case "oneshot":
+                    console.log(htmlName +" select oneshot");
+                    valueIndex[i] = 0;
+                    oneShotAxisIndex.push(structurePosition);
+                    oneShotCenters = document.getElementById(quantificationType+"-ave_value-"+htmlName).value;
+                    break;
             }         
         }
 
@@ -78,6 +84,10 @@ function get_common_fitting_selectInfo( quantificationType ){
         aveInfo:{
             axisIndex:aveAxisIndex,
             aveRange:aveRange
+        },
+        oneShot_Info:{
+            axisIndex:oneShotAxisIndex,
+            centers:oneShotCenters,
         }
     }
 

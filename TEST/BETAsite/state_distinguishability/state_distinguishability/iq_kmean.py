@@ -10,16 +10,28 @@ def get_KmeansSklearn( n_clusters, iqComplex )->KMeans:
     kmeans = KMeans(n_clusters=n_clusters,tol=1e-4).fit(data)
     return kmeans
 
+def get_population( iqCenter, iqComplex ):
+    #print(iqCenter, iqComplex)
+    myKmean = get_KmeansSklearn(2,iqCenter)
+    iqVectData = complex_to_vector(iqComplex,vectorShape="H")
+    clusterData = myKmean.predict(iqVectData.reshape((iqComplex.size,2)))
+
+    return mean(clusterData.reshape(iqComplex.shape),axis=iqComplex.ndim-1)
+
 def complex_to_vector( complexArray, vectorShape="V" ):
     transArr = array([complexArray.real,complexArray.imag])
     if vectorShape == "V":
         return transArr
     elif "H":
-        return transArr.transpose()
+        if complexArray.ndim == 2:
+            return transArr.transpose((1,2,0))
+        if complexArray.ndim == 1:
+            return transArr.transpose((1,0))
 
 def vector_to_complex( vectorArray ):
-    vectorArray = vectorArray.transpose()
-    complexArray = vectorArray[0]+1j*vectorArray[1]
+    newVectorArray = vectorArray.transpose()
+    print(newVectorArray)
+    complexArray = newVectorArray[0]+1j*newVectorArray[1]
     return complexArray
 
 def get_projectedIQVector_byTwoPt( projComplex, iqComplex ):
@@ -75,17 +87,8 @@ def get_oneshot_plot(iqdata,simIQCenter=None):
     plt.figure(2)
     count, bins, ignored = plt.hist(a, 60, density=True)
     plt.show()
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-
-    simCenter = array([0,1])
-    measurementPts = 10000
-    sigma = 0.2
-    get_oneshot_plot(get_simulationData(measurementPts,0.5,simCenter,sigma),simIQCenter=simCenter)
-    statisticTest = int(20)
-    ProbabilityRange = np.linspace(0.1,0.9,9)
+def population_test(simCenter,measurementPts,ProbabilityRange,statisticTest=20):
+    statisticTest = int(statisticTest)
     errorDistanceMean = np.empty(ProbabilityRange.shape[-1])
     errorDistanceSTD = np.empty(ProbabilityRange.shape[-1])
     for i,excitedProbability in enumerate(ProbabilityRange):
@@ -103,17 +106,38 @@ if __name__ == "__main__":
             ed[j] = np.min([errorDistanceP1,errorDistanceP2])
         errorDistanceMean[i] = np.mean(ed)
         errorDistanceSTD[i] = np.std(ed)
-        #print(simCenter.transpose(),clusterCenter,clusterCenterP2,errorDistance)
-    #b = get_projectedIQVector_byTwoPt(clusterCenter,iqdata)
-
     plt.figure(1)
     plt.errorbar( ProbabilityRange, errorDistanceMean, yerr=errorDistanceSTD, fmt="ro" )
-
-    # plt.plot( clusterCenter.real, clusterCenter.imag, "o", label="KMeans" )
-    # simCenter = array(iqPosition).transpose()
-    # plt.plot( simCenter[0], simCenter[1],"o", label="Simulation" )
-    # #plt.plot( b[0]+mean(clusterCenter).real, b[1]+mean(clusterCenter).imag, "o" )
-    # plt.figure(2)
-    # count, bins, ignored = plt.hist(a, 60, density=True)
     plt.show()
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+
+    simQICenter = array([1+1j,1+2j])
+    #print(simQICenter)
+    measurementPts = 1000
+    sigma = 0.2
+    #get_oneshot_plot(get_simulationData(measurementPts,0.5,simQICenter,sigma),simIQCenter=simQICenter)
+    statisticTest = int(20)
+    ProbabilityRange = np.linspace(0.1,0.9,9)
+    # testComplex = array([[0+1j,1+1j],[2+2j,3+3j],[4+4j,5+5j]])
+    # print(testComplex)
+    # print(complex_to_vector(testComplex))
+    # print(complex_to_vector(testComplex, vectorShape="H"))
+
+
+    # testComplex = array([0+1j,2+3j])
+    # print(testComplex)
+    # print(complex_to_vector(testComplex))
+    # print(complex_to_vector(testComplex, vectorShape="H"))
+    # testComplex = array([[1,2],[3,4]])
+    # print(vector_to_complex(testComplex))
+    data = array([get_simulationData(measurementPts,0.5,simQICenter,sigma),get_simulationData(measurementPts,0.25,simQICenter,sigma)])
+    #data = get_simulationData(measurementPts,0.7,simQICenter,sigma)
+
+    #print(data)
+    print(get_population(simQICenter,data))
+    #population_test(simCenter,measurementPts,ProbabilityRange,statisticTest=20)
+    
     

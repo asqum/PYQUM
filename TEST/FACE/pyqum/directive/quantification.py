@@ -57,12 +57,13 @@ class ExtendMeasurement ():
 		# Key and index
 		self.xAxisKey = None
 		self.yAxisKey = None
-		self.aveAxisKey = None
-		self.oneShotAxisKey = None
 
 		self.varsInd = []
 		self.axisInd = []
+		self.aveAxisKey = None
 		self.averageInd = []
+		self.oneShotAxisKey = None
+		self.oneShotClusterCenters = []
 		self.innerRepeatKeys = []
 		# Selected Data
 		self.rawData = {}
@@ -132,6 +133,7 @@ class ExtendMeasurement ():
 		# Get one shot parameters	
 		if len(aveInfo["oneShotAxisIndex"]) != 0:
 			self.oneShotAxisKey = self.measurementObj.corder["C-Structure"][aveInfo["oneShotAxisIndex"][0]]
+			self.oneShotClusterCenters = vector_to_complex(array(aveInfo["oneShotCenters"]))
 		else:
 			self.oneShotAxisKey = None
 
@@ -187,9 +189,12 @@ class ExtendMeasurement ():
 		for vi in selectValInd:
 			data = data[vi]
 
-		# Get average from independentVars aveAxisKey
-		if self.aveAxisKey != None:
+		
+		if self.aveAxisKey != None: # Get average from independentVars aveAxisKey
 			data = mean(data, axis=len(data.shape)-1, where=self.array_mask())
+
+		if self.oneShotAxisKey != None: #Get population from given center
+			data = get_population(self.oneShotClusterCenters, data)
 
 		# To 3 dimension
 		if data.ndim == 2:
@@ -206,6 +211,7 @@ class ExtendMeasurement ():
 		indexArray = arange(len(self.independentVars[self.aveAxisKey]))
 		mask = logical_and(indexArray>=self.averageInd[0], indexArray<=self.averageInd[1]) 
 		return mask
+
 
 	def get_htmlInfo( self ):
 		hiddenKeys = ["datadensity"]
@@ -428,9 +434,6 @@ class PopulationDistribution():
 		self._fitParameters = None
 
 
-		qObj = self.quantificationObj
-
-
 	def _init_fitResult( self, yAxisLen=0 ):
 		nanArray = empty([yAxisLen])
 		nanArray.fill( nan )
@@ -453,29 +456,6 @@ class PopulationDistribution():
 			"x": empty([xAxisLen]),
 			"iqSignal": empty([yAxisLen,xAxisLen], dtype=complex),
 		}
-
-	@property
-	def fitParameters(self):
-		return self._fitParameters
-
-	@fitParameters.setter
-	def fitParameters(self, fitParameters=None):
-		if fitParameters == None:
-			fitParameters={
-				"interval": {
-					"start": 5,
-					"end": 8
-				},
-				"initial_value":{
-
-				}
-
-			}
-		else:
-			fitRange = [float(k) for k in fitParameters["interval"]["input"].split(",")]
-			fitParameters["interval"]["start"] = fitRange[0]
-			fitParameters["interval"]["end"] = fitRange[1]
-		self._fitParameters = fitParameters
 
 	def accumulate_data( self, accumulationIndex ):
 		
