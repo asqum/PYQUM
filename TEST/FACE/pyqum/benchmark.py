@@ -20,10 +20,10 @@ from contextlib import suppress
 # Scientific
 from scipy import constants as cnst
 from si_prefix import si_format, si_parse
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, logical_and, nan, angle, arange
+from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, ndarray, moveaxis, reshape, logical_and, nan, angle, arange, stack
 
 # Load instruments
-from pyqum.directive.quantification import ExtendMeasurement, QEstimation, PopulationDistribution, Common_fitting
+from pyqum.directive.quantification import ExtendMeasurement, QEstimation, PopulationDistribution, Common_fitting, Autoflux, Readout_fidelity
 from pyqum.mission import get_measurementObject
 
 # Fitting
@@ -91,6 +91,18 @@ def populationDistribution():
 def common_fitting():
 	return render_template("blog/benchmark/common_fitting.html")
 
+@bp.route('/autoflux', methods=['POST', 'GET'])
+def autoflux():
+	return render_template("blog/benchmark/autoflux.html")
+
+@bp.route('/plot', methods=['POST', 'GET'])
+def plot():
+	return render_template("blog/benchmark/plot.html", url ='fitness.png')
+
+@bp.route('/fidelity', methods=['POST', 'GET'])
+def fidelity():
+	return render_template("blog/benchmark/fidelity.html")
+
 @bp.route('/benchmark_getMeasurement', methods=['POST', 'GET'])
 def benchmark_getMeasurement():
 	'''
@@ -134,10 +146,17 @@ def register_Quantification():
 		return PopulationDistribution(myExtendMeasurement)
 	def get_common_fitting ( myExtendMeasurement ):
 		return Common_fitting(myExtendMeasurement)
+	def get_autoflux ( myExtendMeasurement ):
+		return Autoflux(myExtendMeasurement)
+	def get_fidelity ( myExtendMeasurement ):
+		return Readout_fidelity(myExtendMeasurement)
+	
 	quantification = {
 		'qEstimation': get_qEstimation,
 		'populationDistribution': get_PopulationDistribution,
 		'common_fitting': get_common_fitting,
+		'autoflux': get_autoflux,
+		'fidelity':get_fidelity,
 	}
 	print(quantificationType+" is registed!!")
 	try: QDict[session['user_name']] = quantification[quantificationType](myExtendMeasurement)
@@ -363,14 +382,23 @@ def ComFit_load():
 
 	# Get average information from JS
 	aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
+	oneShotAxisInd = analysisIndex["oneShot_Info"]["axisIndex"]
 	aveRange = 0
+	oneShotCenters = 0
 	# Construct average informaion to reshape
 	if len(aveAxisInd) !=0:
 		aveRange = [int(k) for k in analysisIndex["aveInfo"]["aveRange"].split(",")]
+	# Construct oneshot informaion to reshape
+	if len(oneShotAxisInd) !=0:
+		centerString = analysisIndex["oneShot_Info"]["centers"].replace("\n","").replace(" ","")
+		print(centerString)
+		oneShotCenters = [complex(k) for k in centerString.split(",")]
+		print(oneShotCenters)
 	aveInfo = {
 		"axisIndex": aveAxisInd,
 		"aveRange": aveRange,
-		"oneShotAxisIndex": [],
+		"oneShotAxisIndex": oneShotAxisInd,
+		"oneShotCenters": oneShotCenters,
 	}
 
 
@@ -570,22 +598,18 @@ def PopDis_load():
 	dimension = len(axisInd)
 
 	# Get average information from JS
-	aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
-	aveRange = 0
-	# Construct average informaion to reshape
-	if len(aveAxisInd) !=0:
-		aveRange = [int(k) for k in analysisIndex["aveInfo"]["aveRange"].split(",")]
+	# aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
+	# aveRange = 0
 
 
 	# Construct accumulate informaion to reshape
-	oneShotAxisInd = analysisIndex["oneShot_Info"]["axisIndex"]
-	if len(oneShotAxisInd) ==0:
-		print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
+	# oneShotAxisInd = analysisIndex["oneShot_Info"]["axisIndex"]
+	# if len(oneShotAxisInd) ==0:
+	# 	print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
 
 	aveInfo = {
-		"axisIndex": aveAxisInd,
-		"aveRange": aveRange,
-		"oneShotAxisIndex": oneShotAxisInd,
+		"axisIndex": [],
+		"oneShotAxisIndex": [],
 	}
 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
 	return json.dumps("Data reshaped", cls=NumpyEncoder)
@@ -733,3 +757,107 @@ print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank 
 
 		#stage, prev = clocker(0, agenda="2D Fresp")
 		#stage, prev = clocker(stage, prev, agenda="2D Fresp") # Marking time
+
+### autoflux part
+@bp.route('/autoflux/load',methods=['POST','GET'])
+def Auflux_load():
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
+
+	valueInd = analysisIndex["valueIndex"]
+	axisInd = analysisIndex["axisIndex"]
+	dimension = len(axisInd)
+
+	# Get average information from JS
+	aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
+	aveRange = 0
+	# Construct average informaion to reshape
+	if len(aveAxisInd) !=0:
+		aveRange = [int(k) for k in analysisIndex["aveInfo"]["aveRange"].split(",")]
+	aveInfo = {
+		"axisIndex": aveAxisInd,
+		"aveRange": aveRange,
+		"oneShotAxisIndex": [],
+	}
+
+
+	## Block user click plot frequently
+	# preAxisInd = myExtendMeasurement.axisInd
+	# preValueInd = myExtendMeasurement.varsInd
+	# if preAxisInd != axisInd  or ( yAxisKey==None and preValueInd != valueInd) or aveInfo!=aveInfo:
+	# 	print("Previous index",preValueInd,"New index",valueInd)
+	# 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+	return json.dumps("Data reshaped", cls=NumpyEncoder)
+
+@bp.route('/autoflux/getJson_fitParaPlot',methods=['POST','GET'])
+def Auflux_getJson_fitParaPlot():
+
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	# fitParameters = json.loads(request.args.get('fitParameters'))
+
+	# myQuantification.fitParameters = fitParameters
+	myQuantification.do_analysis()
+	return json.dumps("finished", cls=NumpyEncoder)
+
+### readout_fidelity part
+@bp.route('/fidelity/load',methods=['POST','GET'])
+def Readout_fidelity_load():
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
+
+	valueInd = analysisIndex["valueIndex"]
+	axisInd = analysisIndex["axisIndex"]
+	dimension = len(axisInd)
+
+	# Get average information from JS
+	aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
+	aveRange = 0
+	# Construct average informaion to reshape
+	if len(aveAxisInd) !=0:
+		aveRange = [int(k) for k in analysisIndex["aveInfo"]["aveRange"].split(",")]
+	aveInfo = {
+		"axisIndex": aveAxisInd,
+		"aveRange": aveRange,
+		"oneShotAxisIndex": [],
+	}
+
+
+	## Block user click plot frequently
+	# preAxisInd = myExtendMeasurement.axisInd
+	# preValueInd = myExtendMeasurement.varsInd
+	# if preAxisInd != axisInd  or ( yAxisKey==None and preValueInd != valueInd) or aveInfo!=aveInfo:
+	# 	print("Previous index",preValueInd,"New index",valueInd)
+	# 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+	return json.dumps("Data reshaped", cls=NumpyEncoder)
+
+@bp.route('/fidelity/getJson_fitParaPlot',methods=['POST','GET'])
+def Readout_fidelity_getJson_fitParaPlot():
+
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	# fitParameters = json.loads(request.args.get('fitParameters'))
+
+	# myQuantification.fitParameters = fitParameters
+	myQuantification.do_analysis()
+	return json.dumps("AAAAAAA", cls=NumpyEncoder)
+
+@bp.route('/fidelity/getJson_Pretrain',methods=['POST','GET'])
+def Readout_fidelity_getJson_Pretrain():
+
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	# fitParameters = json.loads(request.args.get('fitParameters'))
+
+	# myQuantification.fitParameters = fitParameters
+	myQuantification.pre_analytic()
+	return json.dumps("A", cls=NumpyEncoder)

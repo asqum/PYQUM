@@ -17,17 +17,20 @@
             </div>
             <div class="allMeasurePara" id="populationDistribution-parameters">
                 <div class="allFitPara" id="populationDistribution-plot">
-                    <label>signal type:</label>
+                    <!-- <label>signal type:</label>
                     <select id="populationDistribution-plot1D-selector">
                         <option value="amp">Amplitude</option>
                         <option value="phase">Phase</option>
-                        <option value="iqPlane">IQ plane</option>
+                        <option value="iqPlane">IQ plane</option> -->
                     </select>
                     <label>Accumulate index or value:</label>
-                    <input type="text" id="populationDistribution-plot1D-accumulate">
+                    <input type="text" id="populationDistribution-plot1D-accumulate" value="0">
 
                     <button id="populationDistribution-projection-button" type="submit">Projection line</button>
-                    <label>Projection line:</label>
+                    <div id="populationDistribution-clusterCenter">
+                        <label>Cluster Center:</label>
+                        <p id="populationDistribution-clusterCenter-data" ></p>
+                    </div>
 
                 </div>
             </div>

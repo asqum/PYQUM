@@ -25,6 +25,8 @@ function get_common_fitting_selectInfo( quantificationType ){
     let valueIndex=new Array(htmlInfo.length);
 
     let aveAxisIndex=[];
+    let oneShotAxisIndex=[];
+
     let aveRange;
 
     //let analysisIndex = {};
@@ -66,6 +68,12 @@ function get_common_fitting_selectInfo( quantificationType ){
                     aveRange = document.getElementById(quantificationType+"-ave_value-"+htmlName).value;
                     break;
 
+                case "oneshot":
+                    console.log(htmlName +" select oneshot");
+                    valueIndex[i] = 0;
+                    oneShotAxisIndex.push(structurePosition);
+                    oneShotCenters = document.getElementById(quantificationType+"-ave_value-"+htmlName).value;
+                    break;
             }         
         }
 
@@ -78,6 +86,10 @@ function get_common_fitting_selectInfo( quantificationType ){
         aveInfo:{
             axisIndex:aveAxisIndex,
             aveRange:aveRange
+        },
+        oneShot_Info:{
+            axisIndex:oneShotAxisIndex,
+            centers:oneShotCenters,
         }
     }
 
@@ -149,8 +161,8 @@ function CF_render_input ( quantificationType )
             DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
 
             // Create plot selection
-            let plotType = ["single value","x axis - value","y axis - value","average"];
-            let plotTypeValue = ["single_value","x_value","y_value","average"];
+            let plotType = ["single value","x axis - value","y axis - value","average","oneshot"];
+            let plotTypeValue = ["single_value","x_value","y_value","average","oneshot"];
             for( ipt=0; ipt<plotType.length; ipt++)
             {
                 let DOM_parameterPlotType = document.createElement("option");
@@ -199,13 +211,6 @@ function CF_render_input ( quantificationType )
             DOM_parameterSetting.appendChild(DOM_parameterAve);
 
 
-            // Create x axis fitting input
-            // let DOM_parameterFit = document.createElement("input");
-            // DOM_parameterFit.id = quantificationType+"-fitting_input-"+parameterName;
-            // DOM_parameterFit.setAttribute("class", "measureParaSelect fitting_input");
-            // DOM_parameterFit.setAttribute("value", parameterValue[0]+","+parameterValue[parameterValue.length-1]);
-            // DOM_parameterFit.style.display = "none";
-            // DOM_parameterSetting.appendChild(DOM_parameterFit);
             
         }
 
@@ -233,6 +238,10 @@ function CF_showAveInput(selectObject) {
             console.log("select "+selectObject.value)
             DOM_parameterAve.style.display = "block";
             break;
+        case "oneshot":
+            console.log("select "+selectObject.value)
+            DOM_parameterAve.style.display = "block";
+            break;
         case "y_value":
             console.log("select "+selectObject.value)
             break;
@@ -245,26 +254,6 @@ function CF_showAveInput(selectObject) {
             console.log("select "+selectObject.value)
             break;
 
-    }
-}
-function CF_creatDOM_FitDataType( fitFunc, parentID ){
-    // Creat select for parameter plot type
-    console.log( "CF_creatDOM_FitDataType" );
-    let parentDOM = document.getElementById( parentID );
-
-    let DOM_dataTypeSelector = document.createElement("select");
-    DOM_dataTypeSelector.id = fitFunc+"-data_type";
-    DOM_dataTypeSelector.setAttribute("class", "measureParaSelect plotTypeSelect");
-    parentDOM.appendChild(DOM_dataTypeSelector);
-    // Create plot selection
-    let dataType = ["Amplitude","Phase","IQ plane"];
-    let dataTypeValue = ["amplitude","phase","iqPlane"];
-    for( ipt=0; ipt<dataType.length; ipt++)
-    {
-        let DOM_dataType = document.createElement("option");
-        DOM_dataType.innerHTML = dataType[ipt];
-        DOM_dataType.setAttribute("value", dataTypeValue[ipt]);
-        DOM_dataTypeSelector.appendChild(DOM_dataType);
     }
 }
 

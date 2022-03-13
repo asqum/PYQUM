@@ -66,12 +66,6 @@ function get_PD_selectInfo( quantificationType ){
                     aveRange = document.getElementById(quantificationType+"-ave_value-"+htmlName).value;
                     break;
 
-                case "one_shot":
-                    console.log(htmlName +" select one_shot");
-                    valueIndex[i] = 0;
-                    oneShotAxisIndex.push(structurePosition);
-                    break;
-
             }         
         }
 
@@ -85,9 +79,6 @@ function get_PD_selectInfo( quantificationType ){
             axisIndex:aveAxisIndex,
             aveRange:aveRange
         },
-        oneShot_Info:{
-            axisIndex:oneShotAxisIndex,
-        }
     }
 
 
@@ -158,8 +149,8 @@ function PD_render_input ( quantificationType )
             DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
 
             // Create plot selection
-            let plotType = ["single value","x axis - value","average","one shot"];
-            let plotTypeValue = ["single_value","x_value","average","one_shot"];
+            let plotType = ["single value","x axis - value","y axis - value"];
+            let plotTypeValue = ["single_value","x_value","y_value"];
             for( ipt=0; ipt<plotType.length; ipt++)
             {
                 let DOM_parameterPlotType = document.createElement("option");
@@ -252,6 +243,16 @@ function PD_showAveInput(selectObject) {
     }
 }
 
+function PD_creatDOM_pString( newID, parentID, string  ){
+    // Creat select for parameter plot type
+    console.log( "CF_creatDOM_FitDataType" );
+    let parentDOM = document.getElementById( parentID );
+
+    let DOM_p = document.createElement("p");
+    DOM_p.id = parentID+newID;
+    DOM_p.innerHTML = string;
+    parentDOM.appendChild(DOM_p);
+}
 
 function PD_load_data(){
     console.log( "Get data" );
@@ -285,25 +286,13 @@ function get_PD_plot2D(){
     let htmlInfo=get_htmlInfo_python();
 
 
-    let plot2D_signalType = document.getElementById("populationDistribution-plot2D-zSelector").value;
     let plot1D_yAxisType = document.getElementById("populationDistribution-plot2D-ySelector").value;
 
-    console.log( "plot2D_signalType" );
 
-    console.log( plot2D_signalType );
     let z_data;
     let y_axis=[];
     let x_axis=[];
 
-    //Get 2D data
-    $.getJSON( '/benchmark/populationDistribution/getJson_plot2D',
-    {   plot2D_signalType: JSON.stringify(plot2D_signalType), },
-        function (data) {
-        console.log( "Get 2D data" );
-        console.log( data );
-        z_data= data;
-
-    });
     //Get x axis
     $.getJSON( '/benchmark/populationDistribution/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value'), },
@@ -365,11 +354,9 @@ function plot_projectionLine(){
         plotData_IQ["rawI"]= data["I"];
         plotData_IQ["rawQ"]= data["Q"];
 
-        plotData_AmpPhase["raw"]["Amplitude"]= data["Amplitude"];
-        plotData_AmpPhase["raw"]["Phase"]= data["Phase"]
-
     });
     // get projection line data and parameters
+    let DOM_printCenter = document.getElementById("populationDistribution-clusterCenter-data" )
     $.getJSON( '/benchmark/populationDistribution/getJson_plotProjection',
     {   process: JSON.stringify("fitted"),
         projectionLine: JSON.stringify(projectionLine),
@@ -379,9 +366,10 @@ function plot_projectionLine(){
         plotData_IQ["fittedI"]= data["I"];
         plotData_IQ["fittedQ"]= data["Q"];
 
-        plotData_AmpPhase["fitted"]["Amplitude"]= data["Amplitude"];
-        plotData_AmpPhase["fitted"]["Phase"]= data["Phase"];
-
+    }).done(function(data) {
+        DOM_printCenter.innerHTML = data["I"][0].toString()+"+"+data["Q"][0].toString()+"j,\n"+data["I"][1].toString()+"+"+data["Q"][1].toString()+"j";
+    }).fail(function(jqxhr, textStatus, error){
+        DOM_printCenter.innerHTML = "Oops.. Something went wrong!";
     });
 
     let iqKeys = {
