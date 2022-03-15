@@ -28,7 +28,7 @@ function get_common_fitting_selectInfo( quantificationType ){
     let oneShotAxisIndex=[];
 
     let aveRange;
-
+    let oneShotCenters;
     //let analysisIndex = {};
 
     
