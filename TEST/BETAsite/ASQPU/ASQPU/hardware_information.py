@@ -2,12 +2,18 @@
 # 
 from calendar import c
 from sys import modules
+from tokenize import String
 from numpy import linspace, arange, shape
 # Numpy common math function
 from numpy import exp
 # Numpy constant
 from numpy import pi
+"""
+Hardware levels:
 
+instrument > device
+
+"""
 
 
 class PhysicalChannel():
@@ -77,8 +83,10 @@ class QuantumProcessUnit:
                 self.ChannelSet.update({phyCh.id:phyCh})
             else:
                 print(f"Physical channel {phyCh.id} is already in QPU {self.id}.")
+        
 
-    def register_PhysicalQubit( self, qubitID, channelIDList=None ):
+
+    def register_PhysicalQubit( self, qubitID:str, channelIDList=None ):
 
         if not self.isExist_PhysicalQubit(qubitID):
             #print(f"Create Qubit {qubitID}.")
@@ -92,7 +100,7 @@ class QuantumProcessUnit:
         else:
             print(f"Qubit {qubitID} is registered.")
 
-    def assign_channelToQubit( self, qubitID, channelIDList ):
+    def assign_channelToQubit( self, qubitID:str, channelIDList:list ):
         qubitChannel = {}
         if self.isExist_PhysicalQubit(qubitID):
             for channelID in channelIDList:
@@ -110,17 +118,17 @@ class QuantumProcessUnit:
 
 
 class PhyQubit():
-    def __init__ ( self, qid ):
+    def __init__ ( self, qid:str):
 
         self.id = qid
         self.phyCh = {}
         self.init_intrinsicProperties()
-        self.operationCondition = []
+        self.operationCondition = {}
 
     def get_IDList_PhysicalChannel( self ):
         return list(self.phyCh.keys())
 
-    def isExist_PhysicalChannel( self, channelID ):
+    def isExist_PhysicalChannel( self, channelID:str ):
         if channelID in self.get_IDList_PhysicalChannel():
             return True
         else:
@@ -142,8 +150,9 @@ class PhyQubit():
         self.intrinsicProperties = {
             "qubit":{
                 "flux_period": None,
-                "frequency": None, # GHz
+                "max_frequency": None, # GHz
                 "anharmonicity": None, #MHz w12 -w01
+                "max_T1": None,
             },
             "dressed_resonator":{
                 "RT_power":None,
@@ -163,32 +172,41 @@ class PhyQubit():
 
     def set_operationCondition( self, conditionName, paras ):
         notExist = True
-        for opc in self.operationCondition:
-            if conditionName == opc.name:
+        for opcKey in self.operationCondition.keys():
+            if conditionName == opcKey:
                 notExist = False
-                opc.update(paras)
+                self.operationCondition["opcKey"].update(paras)
                 break
         if notExist:
-            opc = {
-                "fluxBias": 0,
-                "qubit_frequency":0, #GHz
-                "readout_frequency": 0, #GHz
-                "readout_power": -40, #dBm
-                "state_determination": {},
+            opcTemp = {
+                "fluxBias": None,
+                "qubit_frequency": None, #GHz
+                "readout_frequency": None, #GHz
+                "state_determination": None,
+                "pulse_string": {
+                    "readout":None,
+                    "control_x":None,
+                    "control_y":None,
+                    "control_+x/2":None,
+                    "control_+y/2":None,
+                    "control_-x/2":None,
+                    "control_-y/2":None,
+                    "control_I":None,
+                }
             }
-            opc.update(paras)
-            self.operationCondition.append(opc)
+            opcTemp.update(paras)
+            self.operationCondition["opcKey"]=opcTemp
 
 
 
 
 # API
-def delete_char_in_string( string, delChar ):
+def delete_char_in_string( string:str, delChar:list ):
     for c in delChar:
         string.replace(c, "")
     return string
 
-def create_QPU_by_route( qpuid, routeString ):
+def create_QPU_by_route( qpuid:str, routeString:str ):
     routeString=delete_char_in_string(routeString, [" ","\n"])
     newQPU = QuantumProcessUnit(qpuid)
     phyChannels = []
@@ -236,8 +254,6 @@ def get_QPUinstrument( qpu:QuantumProcessUnit ):
                     moduleID=did.split("-")[0]
                     if moduleID not in devicesList: 
                         devicesList.append(moduleID)
-
-
         instrumentDict[devicesType] = devicesList
 
     return instrumentDict
