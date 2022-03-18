@@ -62,6 +62,7 @@ function bdr_plot() {
                 zerolinecolor: 'rgb(74, 134, 232)',
             },
             yaxis: {
+                type: $('select.bdr.history.axes-type-y1').val(),
                 zeroline: false,
                 title: "<b>P(mbar)</b><br>",
                 titlefont: {size: 18},
@@ -73,6 +74,7 @@ function bdr_plot() {
                 zerolinecolor: 'rgb(74, 134, 232)',
             },
             yaxis2: {
+                type: $('select.bdr.history.axes-type-y2').val(),
                 zeroline: false,
                 title: '<b>T(K)</b>', 
                 titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
@@ -215,19 +217,19 @@ $(function() {
             designation: designation
         }, function (data) {
             // Select Day:
-            $('select.bdr#history[name="wday"]').empty();
-            $('select.bdr#history[name="wday"]').append($('<option>', { text: 'Currently:', value: '' }));
+            $('select.bdr.history[name="wday"]').empty();
+            $('select.bdr.history[name="wday"]').append($('<option>', { text: 'Currently:', value: '' }));
             $.each(data.Days.reverse(), function(i,v){
-                $('select.bdr#history[name="wday"]').append($('<option>', {
+                $('select.bdr.history[name="wday"]').append($('<option>', {
                     text: v,
                     value: data.Days.length - 1 - i
                 }));
             });
             // Compare Day:
-            $('select.bdr#history[name="compareday"]').empty();
-            $('select.bdr#history[name="compareday"]').append($('<option>', { text: 'Compared:', value: '' }));
+            $('select.bdr.history[name="compareday"]').empty();
+            $('select.bdr.history[name="compareday"]').append($('<option>', { text: 'Compared:', value: '' }));
             $.each(data.Days.reverse(), function(i,v){
-                $('select.bdr#history[name="compareday"]').append($('<option>', {
+                $('select.bdr.history[name="compareday"]').append($('<option>', {
                     text: v,
                     value: data.Days.length - 1 - i
                 }));
@@ -238,7 +240,7 @@ $(function() {
 });
 // manual update
 $(function () {
-    $('select.bdr#history').on('change', function () {
+    $('select.bdr.history').on('change', function () {
         bdr_plot();
     });
 });
@@ -264,7 +266,7 @@ $(function () {
 // Forecast P
 $("a.new#bdr-forecast-P").bind('click', function() {
     $.getJSON('/mach/bdr/history/forecast', {
-        target: $('input.bdr#history[name="forecast"]').val(),
+        target: $('input.bdr.history[name="forecast"]').val(),
         predicting: "P"
     }, function (data) {
         $("a.new#bdr-forecast-P").text('ETA in >' + String(data.eta_time) + ' hours');
@@ -273,7 +275,7 @@ $("a.new#bdr-forecast-P").bind('click', function() {
 // Forecast T
 $("a.new#bdr-forecast-T").bind('click', function() {
     $.getJSON('/mach/bdr/history/forecast', {
-        target: $('input.bdr#history[name="forecast"]').val(),
+        target: $('input.bdr.history[name="forecast"]').val(),
         predicting: "T"
     }, function (data) {
         $("a.new#bdr-forecast-T").text('ETA in >' + String(data.eta_time) + ' hours');

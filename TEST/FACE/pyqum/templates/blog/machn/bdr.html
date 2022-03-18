@@ -22,16 +22,16 @@
 
             <!-- Pressure row -->
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-10" id='left'><select class='bdr' id="history" name="wday" type="text"></select></div>
+                <div class="col-10" id='left'><select class='bdr history' name="wday" type="text"></select></div>
 
-                <div class="col-8" id='left'><select class='bdr' id="history" name="P_Ch" type="text">
+                <div class="col-8" id='left'><select class='bdr history' name="P_Ch" type="text">
                     {% for i in range(6) %}
                     <option value={{i+1}} {% if i+1 == 3 %} selected {% endif %}>P{{i+1}}</option>
                     {% endfor %}</select>
                 </div> 
                 <div class="col-8" id='left'><div class='bdr' id='P_recent'></div></div>
 
-                <div class="col-8" id='left'><select class='bdr' id="history" name="P_Ch2" type="text" value="5">
+                <div class="col-8" id='left'><select class='bdr history' name="P_Ch2" type="text" value="5">
                     <option value=0 selected>add P</option>
                     {% for i in range(6) %}
                     <option value={{i+1}}>P{{i+1}}</option>
@@ -39,7 +39,7 @@
                 </div>
                 <div class="col-8" id='left'><div class='bdr' id='P_recent2'></div></div>
 
-                <div class="col-12" id='left'><select class='bdr' id="history" name="OptS" type="text" value="0">
+                <div class="col-12" id='left'><select class='bdr history' name="OptS" type="text" value="0">
                     <option value='opts' selected>OPT-S</option>
                     <option value='flow'>Flow</option>
                     <option value='cpatempwi'>HeComp-WaterIn</option>
@@ -81,14 +81,14 @@
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                 <div class="col-10" id='left'></div>
 
-                <div class="col-8" id='left'><select class='bdr' id="history" name="T_Ch" type="text" value="5">
+                <div class="col-8" id='left'><select class='bdr history' name="T_Ch" type="text" value="5">
                     {% for i in [1,2,3,4,5,6,7] %}
                     <option value={{i}} {% if i == 2 %} selected {% endif %}>T{{i}}</option>
                     {% endfor %}</select>
                 </div>
                 <div class="col-8" id='left'><div class='bdr' id='T_recent'></div></div>
 
-                <div class="col-8" id='left'><select class='bdr' id="history" name="T_Ch2" type="text" value="5">
+                <div class="col-8" id='left'><select class='bdr history' name="T_Ch2" type="text" value="5">
                     <option value=0 selected>add T</option>
                     {% for i in [1,2,3,4,5,6,7] %}
                     <option value={{i}}>T{{i}}</option>
@@ -96,7 +96,7 @@
                 </div>
                 <div class="col-8" id='left'><div class='bdr' id='T_recent2'></div></div>
 
-                <div class="col-12" id='left'><select class='bdr' id="history" name="OptV" type="text" value="0">
+                <div class="col-12" id='left'><select class='bdr history' name="OptV" type="text" value="0">
                     <option value='optv' selected>OPT-V</option>
                     {% for i in range(21) %}
                     <option value='v{{i+1}}'>V{{i+1}}</option>
@@ -113,17 +113,17 @@
                 </div>
                 <div class="col-8" id='left'><div class='bdr' id='OptV_recent'></div></div>
 
-                <div class="col-12" id='right'><input class='bdr' id="history" name="forecast" type="text" value="15"/></div>
+                <div class="col-12" id='right'><input class='bdr history' name="forecast" type="text" value="15"/></div>
                 <div class="col-12" id='right'><div class="buttons"><a class="bdr new btn blue" id="bdr-forecast-T"></a></div></div>
                 <div class="col-12" id='right'><button class="bdr download push_button w-95 blue" id="bdr-saveziplog">GET ZIPLOG</button></div>
             </div>
 
             <!-- Comparison row -->
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-10" id='left'><select class='bdr' id="history" name="compareday" type="text"></select></div>
+                <div class="col-10" id='left'><select class='bdr history' name="compareday" type="text"></select></div>
                 
                 <div class="col-8" id='left'>
-                    <select class='bdr' id="history" name="P_Ch" type="text">
+                    <select class='bdr history' name="P_Ch" type="text">
                         {% for i in range(6) %}
                         <option value={{i+1}} {% if i+1 == 3 %} selected {% endif %}>P{{i+1}}</option>
                         {% endfor %}
@@ -132,7 +132,7 @@
                 <div class="col-8" id='left'><div class='bdr' id='P_recent'></div></div> 
 
                 <div class="col-8" id='left'>
-                    <select class='bdr' id="history" name="T_Ch" type="text" value="5">
+                    <select class='bdr history' name="T_Ch" type="text" value="5">
                         {% for i in [1,2,3,4,5,6,7] %}
                         <option value={{i}} {% if i == 2 %} selected {% endif %}>T{{i}}</option>
                         {% endfor %}
@@ -140,6 +140,18 @@
                 </div>
                 <div class="col-8" id='left'><div class='bdr' id='T_recent'></div></div>
                 
+                <div class="col-12" id='right'>
+                    <select class='bdr history axes-type-y2'>
+                        <option value='linear' selected>Y2:Linear</option>
+                        <option value='log'>Y2:Log</option>
+                    </select>
+                </div>
+                <div class="col-12" id='right'>
+                    <select class='bdr history axes-type-y1'>
+                        <option value='linear' selected>Y1:Linear</option>
+                        <option value='log'>Y1:Log</option>
+                    </select>
+                </div>
             </div>
             
             <div id="bdr-chart-01"></div>
