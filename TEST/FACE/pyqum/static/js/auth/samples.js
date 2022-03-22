@@ -24,7 +24,7 @@ function AccesSample(sname) {
         sname: sname, 
     }, function(data){
         console.log(data.message);
-        $('input.user-samples#update[name="specs"]').val(data.sample_cv['specifications']);
+        $('textarea.user-samples#update[name="specs"]').val(data.sample_cv['specifications']);
         $('textarea.user-samples#update[name="loc"]').val(data.sample_cv['location']);
         $('input.user-samples#update[name="coauthors"]').val(data.sample_cv['co_authors']);
         $('select.user-samples#update[name="level"]').val(data.sample_cv['level']);
@@ -119,7 +119,7 @@ $('input.user.samples.confirm-update#samples-confirm').on('click', function(e) {
     console.log($('select.samples').val());
     $.getJSON('/auth/user/samples/update', {
         sname: $('select.samples#samples').val(), // only main user can update!
-        specs: $('input.user-samples#update[name="specs"]').val(),
+        specs: $('textarea.user-samples#update[name="specs"]').val(),
         loc: $('textarea.user-samples#update[name="loc"]').val(),
         coauthors: $('input.user-samples#update[name="coauthors"]').val(),
         level: $('select.user-samples#update[name="level"]').val(),
@@ -153,7 +153,6 @@ $('button.user-samples#samples-forward').on('click', function(e) {
             // Register the forwarded extension of the sample:
             $.getJSON('/auth/user/samples/register', {
                 sname: fwd_sname,
-                // specs: $('input.user-samples#update[name="specs"]').val(),
                 loc: $('textarea.user-samples#update[name="loc"]').val(),
                 level: sample_level,
                 description: $('textarea.user-samples#update[name="description"]').val(),
