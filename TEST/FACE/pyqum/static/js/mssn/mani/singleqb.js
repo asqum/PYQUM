@@ -787,7 +787,7 @@ $('input.mani.singleqb.pulse-check#singleqb-pulse-check').bind('click', function
         $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("PULSE-PLOT(s) COMPLETE"));
     })
     .fail(function(jqxhr, textStatus, error){
-        $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: red;"></h4>').text("Make sure SCORE & R-JSON SYNTAX is correct"));
+        $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: red;"></h4>').text("Make sure SCORE & R-JSON SYNTAX & Numpy-supported MATH-EXPRESSION are ALL correct"));
     });
     return false;
 });
