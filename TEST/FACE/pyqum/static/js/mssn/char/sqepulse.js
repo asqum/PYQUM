@@ -20,6 +20,30 @@ var SQEPulse_Parameters = ['repeat', 'Flux-Bias', 'XY-Frequency', 'XY-Power', 'R
 'LO-Frequency', 'LO-Power', 'ADC-delay', 'Average', 'Sampling-Time'];
 var SQEPulse_Peripherals = ['data-option','lock-period'];
 
+// Pull the file from server and send it to user end:
+function pull_n_send(server_URL, qumport, user_name, filename='1Dsqepulse.csv') {
+    $.ajax({
+        url: 'http://' + server_URL + ':' + qumport + '/mach/uploads/' + filename.split('.')[0] + '[' + user_name + '].' + filename.split('.')[1],
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = filename;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            $('button.char#sqepulse-save' + filename.split('.')[1]).hide();
+            $('div#char-sqepulse-announcement').empty().append($('<h4 style="color: red;"></h4>').text(a.download + ' has been downloaded'));
+        }
+    });
+    return false;
+};
+
 // *functions are shared across all missions!
 function transpose(a) {
     // Calculate the width and height of the Array
@@ -784,26 +808,8 @@ $('button.char#sqepulse-savecsv').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.char.sqepulse#RO-Frequency').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        console.log('User ' + data.user_name + ' is downloading 1D-Data');
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dsqepulse[' + data.user_name + '].csv',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '1Dsqepulse.csv';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.char#sqepulse-savecsv').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='1Dsqepulse.csv');
     });
     return false;
 });
@@ -818,26 +824,8 @@ $('button.char#sqepulse-savemat').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.char.sqepulse#RO-Frequency').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        console.log('User ' + data.user_name + ' is downloading 2D-Data');
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dsqepulse[' + data.user_name + '].mat',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '2Dsqepulse.mat';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.char#sqepulse-savemat').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='2Dsqepulse.mat');
     });
     return false;
 });

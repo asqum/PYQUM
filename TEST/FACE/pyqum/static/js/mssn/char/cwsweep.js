@@ -10,10 +10,34 @@ $(document).ready(function(){
 });
 
 // Global variables:
-window.selecteday = ''
+window.selecteday = '';
 
 // Local variables:
 var cwsweep_Perimeters = ['dcsweepch', 'z-idle', 'sg-locked', 'sweep-config']
+
+// Pull the file from server and send it to user end:
+function pull_n_send(server_URL, qumport, user_name, filename='1Dcwsweep.csv') {
+    $.ajax({
+        url: 'http://' + server_URL + ':' + qumport + '/mach/uploads/' + filename.split('.')[0] + '[' + user_name + '].' + filename.split('.')[1],
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = filename;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            $('button.char#cwsweep-save' + filename.split('.')[1]).hide();
+            $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text(a.download + ' has been downloaded'));
+        }
+    });
+    return false;
+};
 
 // *functions are shared across all missions!
 function transpose(a) {
@@ -737,25 +761,8 @@ $('button.char#cwsweep-savecsv').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.char.cwsweep.parameter#c-freq').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dcwsweep[' + data.user_name + '].csv',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '1Dcwsweep.csv';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.char#cwsweep-savecsv').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='1Dcwsweep.csv');
     });
     return false;
 });
@@ -770,25 +777,8 @@ $('button.char#cwsweep-savemat').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.char.cwsweep.parameter#c-freq').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dcwsweep[' + data.user_name + '].mat',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '2Dcwsweep.mat';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.char#cwsweep-savemat').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='2Dcwsweep.mat');
     });
     return false;
 });
