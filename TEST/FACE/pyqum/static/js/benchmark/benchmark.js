@@ -306,7 +306,9 @@ function showAveInput(selectObject) {
     // let DOM_parameterAve = document.createElement("input");
     // DOM_parameterAve.style.display = "block";
 }
-
+/** 
+ * 不要用
+*/
 function plot1D_2y ( data, axisKeys, plotId ){
     console.log("Plotting 1D test");
     let groupNumber = axisKeys.x.length;
@@ -391,7 +393,16 @@ function plot1D_2y ( data, axisKeys, plotId ){
       };
     Plotly.newPlot(plotId, tracies, layout, {showSendToCloud: true});
 }
-
+/** 
+ * 用plotly畫兩張一維數據( fig1:(x,f(x)), fig2:(x,g(x)) )    
+ * at benchmark.js 
+ * @param {dict} data dict:{'rawdata':{'freq':[num],'amp':[num],'phase':[num]...},
+ * 'fittingCurve':{'freq':[num],'amp':[num]...},
+ * 'theoriticalCurve':{'freq':[num],'amp':[num]...},
+ * ...}
+ * @param {dict} axisKeys dict:{x:[['freq'],['freq']],y:[['amp',...],['phase',...]]}
+ * @param {string} plotId 圖片出現在 html div ID
+*/
 function plot1D_2subplot_shareX ( data, axisKeys, plotId ){
         console.log("Plotting 1D test");
         let groupNumber = axisKeys.x.length;
@@ -410,9 +421,7 @@ function plot1D_2subplot_shareX ( data, axisKeys, plotId ){
             console.log("yNumberInGroup is "+yNumberInGroup);
     
             for (let i = 0; i < yNumberInGroup; i++){
-                
                 for ( let dataSetKey of Object.keys(data) ) {
-    
                     if ( xKeysInGroup.length != 1 ){
                         ix = i
                     }else{
@@ -473,8 +482,15 @@ function plot1D_2subplot_shareX ( data, axisKeys, plotId ){
           };
         Plotly.newPlot(plotId, tracies, layout, {showSendToCloud: true});
     }
-
+/** 
+ * 用plotly畫一維數據(x,f(x))    
+ * at benchmark.js 
+ * @param {dict} data dict:{'key1':[num],'key2':[num],'key3':[num]...}
+ * @param {dict} axisKeys dict:{x:['key1'],y:['key2','key3',...]}
+ * @param {string} plotId 圖片出現在 html div ID
+*/
 function plot1D ( data, axisKeys, plotId ){
+
     console.log("Plotting 1D");
     let traceNumber = axisKeys.y.length;
     console.log(axisKeys);
@@ -519,7 +535,13 @@ function plot1D ( data, axisKeys, plotId ){
 }
 
 
-
+/** 
+ * 用plotly畫二維數據(x,y,f(x,y))    
+ * at benchmark.js 
+ * @param {dict} data dict:{'key1':[num],'key2':[num],'key3':[num]}
+ * @param {dict} axisKeys dict:{x:['key1'],y:['key2'],z:['key3']}
+ * @param {string} plotId 圖片出現在 html div ID
+*/
 function plot2D( data, axisKeys, plotId ) {
     console.log("Plotting 2D");
     console.log( "x axis: " +axisKeys.x );

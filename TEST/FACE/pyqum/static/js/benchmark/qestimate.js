@@ -101,6 +101,7 @@ $('#qFactor-plot-button').on('click', function () {
             yErr: [ [],[] ],
         }
         plot1D_2subplot_shareX(data, ampPhaseKeys, plotID_1D_ampPhase);
+        
         let iqKeys = {
             x: [["I"]],
             y: [["Q"]],

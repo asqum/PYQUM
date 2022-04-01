@@ -161,8 +161,8 @@ function CF_render_input ( quantificationType )
             DOM_parameterSetting.appendChild(DOM_parameterPlotTypeSelector);
 
             // Create plot selection
-            let plotType = ["single value","x axis - value","y axis - value","average","oneshot"];
-            let plotTypeValue = ["single_value","x_value","y_value","average","oneshot"];
+            let plotType = ["x axis - value","y axis - value","single value","average","oneshot"];
+            let plotTypeValue = ["x_value","y_value","single_value","average","oneshot"];
             for( ipt=0; ipt<plotType.length; ipt++)
             {
                 let DOM_parameterPlotType = document.createElement("option");

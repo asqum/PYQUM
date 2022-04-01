@@ -13,7 +13,7 @@ $(document).ready(function(){
     let e_plot1DButton = document.getElementById("autoflux-plot1D-button");
     e_plot1DButton.addEventListener("click", AF_get_plot1D);
     let e_plot2DtButton = document.getElementById("autoflux-plot2D-button");
-    e_plot2DtButton.addEventListener("click", get_plot2D);
+    e_plot2DtButton.addEventListener("click", AF_get_plot2D);
     let e_plottButton = document.getElementById("autoflux-button-plot");
     e_plottButton.addEventListener("click", AF_plot_data);
 });
@@ -279,14 +279,14 @@ function AF_load_data(){
         console.log( "load data" );
     });
     if ( analysisIndex.axisIndex.length == 2 ){
-        get_plot2D();
+        AF_get_plot2D();
     }else{
         AF_get_plot1D();
     }    
     $.ajaxSettings.async = true;
 }
 
-function get_plot2D(){
+function AF_get_plot2D(){
     console.log( "Plot data" );
 
     let plotID_2D = "autoflux-plot2D-rawOverview";

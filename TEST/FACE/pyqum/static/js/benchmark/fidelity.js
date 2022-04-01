@@ -281,14 +281,14 @@ function FD_load_data(){
         console.log( "load data" );
     });
     if ( analysisIndex.axisIndex.length == 2 ){
-        get_plot2D();
+        FD_get_plot2D();
     }else{
         FD_get_plot1D();
     }    
     $.ajaxSettings.async = true;
 }
 
-function get_plot2D(){
+function FD_get_plot2D(){
     console.log( "Plot data" );
 
     let plotID_2D = "fidelity-plot2D-rawOverview";
