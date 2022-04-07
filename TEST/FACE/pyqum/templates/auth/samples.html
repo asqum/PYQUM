@@ -55,11 +55,21 @@
 
       <div class="row">
         <div class="row label">
-          <div class="col-15" id='left'><label>Location / Place & Route</label></div>
+          <div class="col-35" id='left'><label>Location / Physical-CHannels (PeaCH)</label></div>
         </div>
         <div class="row">
           <div class="col-75" id='left'>
             <textarea class="user-samples" id='update' name="loc" type="text" rows="3" cols="73"></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-10" id='left'><button class="user-samples push_button w-95 green" id="sampleloc-update-QPC">UPDATE QPC</button></div>
+          <div class="col-10" id='left'>
+            <select class="qpc" id="qpc-list">
+              {% for q in qpclist %}
+                <option value={{q}}>{{q}}</option>
+              {% endfor %}
+            </select>
           </div>
         </div>
 

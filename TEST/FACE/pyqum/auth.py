@@ -6,6 +6,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
+# from json import loads
 import functools
 # from datetime import timedelta
 # from keyboard import press
@@ -17,6 +18,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from pyqum import get_db, close_db
 from pyqum.instrument.logger import lisample, set_status, get_status, which_queue_system
+from pyqum.instrument.reader import inst_designate
 
 bp = Blueprint(myname, __name__, url_prefix='/auth')
 
@@ -241,7 +243,9 @@ def usersamples():
     # Current sample:
     try: selected_sample = get_status("MSSN")[session['user_name']]['sample']
     except: selected_sample = 0 # For first-time user to pick a sample to begin with
-    return render_template('auth/samples.html', samples=samples, cosamples=cosamples, selected_sample=selected_sample)
+    # QPC list:
+    qpclist = [x['system'] for x in get_db().execute('SELECT system FROM queue').fetchall() if "QPC" in str(x['system']).upper()]
+    return render_template('auth/samples.html', samples=samples, cosamples=cosamples, selected_sample=selected_sample, qpclist=qpclist)
 @bp.route('/user/samples/register')
 def usersamples_register():
     sname = request.args.get('sname')
@@ -332,13 +336,33 @@ def usersamples_meal():
         print(Fore.YELLOW + "%s is managed by %s" %(sname, session['people']))
     except: 
         session['people'] = None
-    # LOGGED INTO JSON:
-    try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'])})
-    except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='')})
+    # LOGGED INTO JSON: (PENDING: Align the other MSSN set_status as well with time-stamp)
+    try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'], time=0)})
+    except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='', time=0)})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
+@bp.route('/user/samplesloc/update/qpc_wiring', methods=['GET'])
+def usersamplesloc_update_qpc_wiring():
+    peach = request.args.get('peach')
+    qpc_selected = request.args.get('qpc_selected')
 
-# Experiment Database Handling:
+    # Translate Peach to QPC:
+
+
+    # Update QPC-wiring database:
+    instr_organized = {"category": "designation"}
+    try:
+        if int(g.user['management'])>=3:
+            for key, val in instr_organized.items(): 
+                inst_designate(qpc_selected, key, val)
+            message = "%s's instrument assignment has been set successfully" %qpc_selected
+        else: message = "Clearance not enough"
+    except:
+        message = "database error"
+
+    return jsonify(message=message)
+
+# Sample Job-History:
 
 
 

@@ -5,10 +5,6 @@ from pyqum.instrument.logger import set_status, get_status
 import sys
 
 app = create_app()
-# Pending: Hiding certain URLs with noext below?
-# noext = NoExtRef(app, safe_domains=['http://qum.phys.sinica.edu.tw:5300/'])
-
-# Port, DeBuG, RLD = 5300, False, False
 
 def server(mode, Port):
 	# g.servermode = mode # Working outside of application context.
