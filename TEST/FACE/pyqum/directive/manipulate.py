@@ -20,6 +20,7 @@ from pyqum.instrument.analyzer import pulse_baseband
 from pyqum.instrument.reader import inst_order
 
 from asqpu.hardware_information import *
+from pyqum import get_db, close_db
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
@@ -653,7 +654,7 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 # region: 3. QPU Control: (Updated on 2022/03/09, Not online)
 # **********************************************************************************************************************************************************
 @settings(2) # data-density
-def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}):
+def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, perimeter={}):
     '''
     Time-domain Pulse measurement:\n
     SCORES (SCripted ORchestration of Entanglement & Superposition) is a scripted pulse instruction language for running Quantum Algorithm.\n
@@ -670,8 +671,12 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     sample = get_status("MSSN")[session['user_name']]['sample']
     queue = get_status("MSSN")[session['user_name']]['queue']
 
+    # Get route string from database sample/location
+    qpuRoute = get_db().execute('SELECT * FROM sample WHERE samplename = ?', (sample,)).fetchone()["location"]
+    testQPU = create_QPU_by_route( sample, qpuRoute )
+    QPCdict = get_QPUwiring(testQPU)
+
     # Loading Channel-Settings:
-    
     CH_Wiring = inst_order(queue, 'CH')
     DACH_Matrix = CH_Wiring['DAC']
     ROLE_Wiring = inst_order(queue, 'ROLE')
@@ -681,6 +686,7 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
+    instr = {}
     instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument allowed (via Global flux-coil)
     instr['SG']= inst_order(queue, 'SG')
     instr['DAC']= inst_order(queue, 'DAC')
@@ -962,5 +968,37 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
 # endregion
 
 if __name__ == "__main__":
-    
-    testQPU = create_QPU_by_route("testQPU","Q1,Q2/RO1/I+Q:DAC=SDAWG_6-1+SDAWG_6-2,SG=DDSLO_4,ADC=SDDIG_2;Q1/XY1/I+Q:DAC=SDAWG_4-1+SDAWG_4-2,SG=DDSLO_3;Q1/Z1:DAC=SDAWG_4-3;")
+    import os, sqlite3
+    #testQPU = create_QPU_by_route("testQPU","Q1,Q2/RO1/I+Q:DAC=SDAWG_6-1+SDAWG_6-2,SG=DDSLO_4,ADC=SDDIG_2;Q1/XY1/I+Q:DAC=SDAWG_4-1+SDAWG_4-2,SG=DDSLO_3;Q1/Z1:DAC=SDAWG_4-3;")
+    dbpath = r"C:\Users\ASQUM\HODOR\CONFIG\pyqum.sqlite"
+    db = sqlite3.connect(dbpath,detect_types=sqlite3.PARSE_DECLTYPES,timeout=1000)
+    db.row_factory = sqlite3.Row
+    #cur = db.cursor()
+    #a = db.execute('SELECT * FROM user WHERE id = ?', ("shiau109",) ).fetchone()
+    #for row in 
+    #a = db.execute('SELECT * FROM user WHERE id = ?', ("15",)).fetchone()
+    qpuName = "NNCNB3-01-Ta-C8"
+    qpuRoute = db.execute('SELECT * FROM sample WHERE samplename = ?', (qpuName,)).fetchone()["location"]
+    #print(f"qpuRoute {qpuRoute}")
+    qpuSpec = db.execute('SELECT * FROM sample WHERE samplename = ?', (qpuName,)).fetchone()["specifications"]
+    #print(f"qpuSpec {qpuSpec}")
+
+    testQPU = create_QPU_by_route( qpuName, qpuRoute )
+
+    QPCdict = get_QPUwiring(testQPU)
+
+    opdict = convert_spec_to_QubitOperation(qpuSpec)
+
+    db.close()
+
+    #print(opdict)
+    testQPU.set_qubitSpec(opdict)
+
+    print(f"QPC output formation (json) {get_QPUwiring(testQPU)}")
+
+    for qid in testQPU.get_IDList_PhysicalQubit():
+        print(f"Qubit ID: {qid}")
+        print(f"Spec: {testQPU.QubitSet[qid].operationCondition}")
+        for pchid in list(testQPU.QubitSet[qid].phyCh):
+            pch = testQPU.QubitSet[qid].phyCh[pchid]
+            print(f"channel ID: {pch.id} coupled: {pch.coupled} devices: {pch.device}")

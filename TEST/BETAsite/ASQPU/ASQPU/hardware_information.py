@@ -44,79 +44,6 @@ class PhysicalChannel():
         else: 
             print(f"Can't recognize device type {deviceType}.")
 
-class QuantumProcessUnit:
-    def __init__ ( self, id ):
-        self.id = id
-        self.QubitSet = {}
-        self.ChannelSet = {}
-        self.OperationCondition = []
-
-    def get_IDList_PhysicalChannel( self ) -> list:
-        return list(self.ChannelSet.keys())
-
-    def get_PhysicalChannel_byID( self, channelID ) -> PhysicalChannel:
-        if self.isExist_PhysicalChannel( channelID ):
-            return self.ChannelSet[channelID]
-        else:
-            return None
-
-    def isExist_PhysicalChannel( self, channelID ) -> bool:
-        if channelID in self.get_IDList_PhysicalChannel():
-            return True
-        else:
-            #print(f"Warning: The channel {channelID} didn't register in QPU {self.id}.")
-            return False
-
-    def get_IDList_PhysicalQubit( self ) -> list:
-        return list(self.QubitSet.keys())
-
-    def isExist_PhysicalQubit( self, QubitID ) -> bool:
-        if QubitID in self.get_IDList_PhysicalQubit():
-            return True
-        else:
-            #print(f"Warning: The Qubit {QubitID} didn't register in QPU {self.id}.")
-            return False
-    def register_PhysicalChannel( self, phyChList ):
-        for phyCh in phyChList:
-            if not self.isExist_PhysicalChannel(phyCh.id):
-                print(f"Register physical channel {phyCh.id} in QPU {self.id} successfully.")
-                self.ChannelSet.update({phyCh.id:phyCh})
-            else:
-                print(f"Physical channel {phyCh.id} is already in QPU {self.id}.")
-        
-
-
-    def register_PhysicalQubit( self, qubitID:str, channelIDList=None ):
-
-        if not self.isExist_PhysicalQubit(qubitID):
-            #print(f"Create Qubit {qubitID}.")
-            newQubit = PhyQubit(qubitID)
-            self.QubitSet[qubitID] = newQubit
-
-            print(f"Register Qubit {qubitID} in QPU {self.id}.")
-            if channelIDList != None:
-                self.assign_channelToQubit(qubitID,channelIDList)
-
-        else:
-            print(f"Qubit {qubitID} is registered.")
-
-    def assign_channelToQubit( self, qubitID:str, channelIDList:list ):
-        qubitChannel = {}
-        if self.isExist_PhysicalQubit(qubitID):
-            for channelID in channelIDList:
-                #print(f"Assigning {channelID}...")
-                if self.isExist_PhysicalChannel(channelID):
-                    qubitChannel[channelID]=self.ChannelSet[channelID]
-                else:
-                    print(f"Warning: The channel {channelID} didn't register in QPU {self.id}.")
-
-            self.QubitSet[qubitID].register_PhysicalChannel(qubitChannel)
-        else:
-            print(f"Warning: The Qubit {qubitID} didn't register in QPU {self.id}, can't assign.")
-
-
-
-
 class PhyQubit():
     def __init__ ( self, qid:str):
 
@@ -170,33 +97,118 @@ class PhyQubit():
             },
         }
 
-    def set_operationCondition( self, conditionName, paras ):
+    def set_operationCondition( self, paras:dict ):
         notExist = True
-        for opcKey in self.operationCondition.keys():
-            if conditionName == opcKey:
-                notExist = False
-                self.operationCondition["opcKey"].update(paras)
-                break
-        if notExist:
-            opcTemp = {
-                "fluxBias": None,
-                "qubit_frequency": None, #GHz
-                "readout_frequency": None, #GHz
-                "state_determination": None,
-                "pulse_string": {
-                    "readout":None,
-                    "control_x":None,
-                    "control_y":None,
-                    "control_+x/2":None,
-                    "control_+y/2":None,
-                    "control_-x/2":None,
-                    "control_-y/2":None,
-                    "control_I":None,
-                }
-            }
-            opcTemp.update(paras)
-            self.operationCondition["opcKey"]=opcTemp
 
+        opcTemp = {
+            "fluxBias": None,
+            "qubit_frequency": None, #GHz
+            "readout_frequency": None, #GHz
+            "state_determination": None,
+            "pulse_string": {
+                "readout":None,
+                "x":None,
+                "y":None,
+                "+x/2":None,
+                "+y/2":None,
+                "-x/2":None,
+                "-y/2":None,
+                "I":None,
+            }
+        }
+        opcTemp.update(paras)
+        self.operationCondition=opcTemp
+
+
+
+
+class QuantumProcessUnit:
+    def __init__ ( self, id ):
+        self.id = id
+        self.QubitSet = {}
+        self.ChannelSet = {}
+        self.OperationCondition = []
+
+    def get_IDList_PhysicalChannel( self ) -> list:
+        return list(self.ChannelSet.keys())
+
+    def get_PhysicalChannel_byID( self, channelID ) -> PhysicalChannel:
+        if self.isExist_PhysicalChannel( channelID ):
+            return self.ChannelSet[channelID]
+        else:
+            return None
+
+    def isExist_PhysicalChannel( self, channelID ) -> bool:
+        if channelID in self.get_IDList_PhysicalChannel():
+            return True
+        else:
+            #print(f"Warning: The channel {channelID} didn't register in QPU {self.id}.")
+            return False
+
+    def get_IDList_PhysicalQubit( self ) -> list:
+        return list(self.QubitSet.keys())
+
+    def isExist_PhysicalQubit( self, QubitID ) -> bool:
+        if QubitID in self.get_IDList_PhysicalQubit():
+            return True
+        else:
+            #print(f"Warning: The Qubit {QubitID} didn't register in QPU {self.id}.")
+            return False
+    def get_PhysicalQubit_byID( self, QubitID ) -> PhyQubit:
+        if self.isExist_PhysicalQubit( QubitID ):
+            return self.QubitSet[QubitID]
+        else:
+            return None
+
+    def register_PhysicalChannel( self, phyChList ):
+        for phyCh in phyChList:
+            if not self.isExist_PhysicalChannel(phyCh.id):
+                print(f"Register physical channel {phyCh.id} in QPU {self.id} successfully.")
+                self.ChannelSet.update({phyCh.id:phyCh})
+            else:
+                print(f"Physical channel {phyCh.id} is already in QPU {self.id}.")
+        
+
+
+    def register_PhysicalQubit( self, qubitID:str, channelIDList=None ):
+
+        if not self.isExist_PhysicalQubit(qubitID):
+            #print(f"Create Qubit {qubitID}.")
+            newQubit = PhyQubit(qubitID)
+            self.QubitSet[qubitID] = newQubit
+
+            print(f"Register Qubit {qubitID} in QPU {self.id}.")
+            if channelIDList != None:
+                self.assign_channelToQubit(qubitID,channelIDList)
+
+        else:
+            print(f"Qubit {qubitID} is registered.")
+
+    def assign_channelToQubit( self, qubitID:str, channelIDList:list ):
+        qubitChannel = {}
+        if self.isExist_PhysicalQubit(qubitID):
+            for channelID in channelIDList:
+                #print(f"Assigning {channelID}...")
+                if self.isExist_PhysicalChannel(channelID):
+                    qubitChannel[channelID]=self.ChannelSet[channelID]
+                else:
+                    print(f"Warning: The channel {channelID} didn't register in QPU {self.id}.")
+
+            self.QubitSet[qubitID].register_PhysicalChannel(qubitChannel)
+        else:
+            print(f"Warning: The Qubit {qubitID} didn't register in QPU {self.id}, can't assign.")
+
+    def set_qubitSpec( self, spec:dict ):
+        """
+        Set qubit specification from dictionary structure
+        """
+
+        qubitChannel = {}
+        for qubitID in spec.keys():
+            if self.isExist_PhysicalQubit(qubitID):
+                    self.QubitSet[qubitID].set_operationCondition(spec[qubitID])
+            else:
+                print(f"Warning: The Qubit {qubitID} didn't register in QPU {self.id}, can't assign.")
 
 
 
@@ -237,6 +249,91 @@ def create_QPU_by_route( qpuid:str, routeString:str ):
             
 
     return newQPU
+
+
+def convert_spec_to_QubitOperation( specString:str ):
+    """
+    Convert string to dictionary that can send to PhysicalQubit class
+    """
+    # oi = operation information
+    def set_fluxbias ( bias:str ):
+        biasValue = float(bias)
+        infoDict ={"fluxBias":biasValue}
+        return "fluxBias", infoDict
+    def set_qubitFrequency ( freq:str ):
+        freqValue = float(freq)
+        infoDict = {"qubit_frequency":freqValue}
+        return "qubit_frequency", infoDict
+    def set_readoutFrequency ( freq:str ):
+        freqValue = float(freq)
+        infoDict = {"readout_frequency":freqValue}
+        return "readout_frequency", infoDict
+    def set_stateDetermination ( clusterCenter:str ):
+        IQComplex = [complex(k) for k in centerString.split(",")]
+        state = {
+            "g":IQComplex[0],
+            "e":IQComplex[1],
+        }
+        infoDict = {"state_determination":state}
+        return "state_determination", infoDict
+    def set_roPulseString ( waveformString:str ):
+        infoDict = {
+            "pulse_string":{"readout":waveformString}
+            }
+        return "pulse_string", infoDict
+    def set_ctrlPulseString ( waveformString:str  ):
+        waveformType = waveformString.split('/')[0]
+        basicParas = []
+        for p in waveformString.split(',')[1:]:
+            if p == '' :
+                basicParas.append( nan )
+            else:
+                basicParas.append( float(p) )  
+        pulsewidth = float(basicParas[0])
+        pulseheight = float(basicParas[1])
+        waveformParas = []
+        for p in waveformString.split(',')[0].split('/')[1:]:
+            if p == '':
+                waveformParas.append( nan )
+            else:
+                waveformParas.append( float(p) )
+        infoDict = {
+            "pulse_string":{
+                "I":f"FLAT/,{pulsewidth},{pulseheight}",
+                "x":f"{waveformType}/{p}/{p}/0,{pulsewidth},{pulseheight}",
+                "y":f"{waveformType}/{p}/{p}/90,{pulsewidth},{pulseheight}",
+                "+x/2":f"{waveformType}/{p}/{p}/0,{pulsewidth},{pulseheight/2}",
+                "+y/2":f"{waveformType}/{p}/{p}/90,{pulsewidth},{pulseheight/2}",
+                "-x/2":f"{waveformType}/{p}/{p}/-180,{pulsewidth},{pulseheight/2}",
+                "-y/2":f"{waveformType}/{p}/{p}/-90,{pulsewidth},{pulseheight/2}",
+            }
+        }
+        return "pulse_string", infoDict
+    specString=delete_char_in_string(specString, [" ","\n"])
+    oiDict = {}
+    oiType = {
+        'bias': set_fluxbias,
+        'fq': set_qubitFrequency,
+        'fro': set_readoutFrequency,
+        'ctrl': set_ctrlPulseString,
+        'ro':set_roPulseString,
+        'state': set_stateDetermination,
+    }
+    for singleString in specString.split(";"):
+        qubitName = specString.split(":")[0]
+        oiDict[qubitName] = {}
+        operationInfoList = specString.split(":")[1].split("&")
+        for oi in operationInfoList:
+            keywordStr = oi.split("=")[0]
+            ioKey, partialOI = oiType[keywordStr](oi.split("=")[1])
+            print(ioKey, partialOI, oiDict[qubitName].keys())
+
+            if ioKey not in oiDict[qubitName].keys():
+                oiDict[qubitName].update(partialOI)
+            else:
+                oiDict[qubitName][ioKey].update(partialOI[ioKey])
+    return oiDict
+
 
 def get_QPUinstrument( qpu:QuantumProcessUnit ):
     QPC_list = ["DAC","ADC","SG","DC"]
@@ -301,6 +398,7 @@ def get_QPUwiring( qpu:QuantumProcessUnit ):
     return instr_organized
 
 
+
 if __name__ == "__main__":
 
 
@@ -312,16 +410,21 @@ if __name__ == "__main__":
     # print(f"Register Qubit in QPU {testQPU.id}: {availableQ}")
     # q1 = testQPU.QubitSet[availableQ[0]]
     # print(f"Qubit {availableQ[0]}")
+
+    
+
+    opdict = convert_spec_to_QubitOperation("Q1:bias=0.1&fq=4.0&fro=6.0&ctrl=drag/4/-0.8/0,30,0.2&ro=drag/4/-0.8/0,100,0.2")
+    #print(opdict)
+    testQPU.set_qubitSpec(opdict)
+
+    print(get_QPUwiring(testQPU))
+
     for qid in testQPU.get_IDList_PhysicalQubit():
         print(f"Qubit ID: {qid}")
+        print(f"Spec: {testQPU.QubitSet[qid].operationCondition}")
         for pchid in list(testQPU.QubitSet[qid].phyCh):
             pch = testQPU.QubitSet[qid].phyCh[pchid]
             print(f"channel ID: {pch.id} coupled: {pch.coupled} devices: {pch.device}")
-    
-    print(get_QPUwiring(testQPU))
-
-
-
 
 
 
