@@ -4,7 +4,7 @@
 
 
 rem Define here the path to your conda installation
-set CONDAPATH=C:\ProgramData\Anaconda3
+set CONDAPATH=C:\Users\ASQUM_2\anaconda3
 ::C:\Users\ASQUM\anaconda3
 ::C:\ProgramData\Anaconda3
 rem Define here the name of the environment

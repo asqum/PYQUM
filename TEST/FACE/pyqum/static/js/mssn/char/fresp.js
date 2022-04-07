@@ -14,9 +14,34 @@ $(document).ready(function(){
 // Global variables:
 window.selecteday = ''
 window.frespcryption = 'hfhajfjkafh'
+window.server_URL = 'http://192.168.1.15:'; //'http://qum.phys.sinica.edu.tw:'
 
 // Local variables:
 var fresp_Perimeters = ['dcsweepch', 'z-idle', 'sweep-config']
+
+// Pull the file from server and send it to user end:
+function pull_n_send(server_URL, qumport, user_name, filename='1Dfresp.csv') {
+    $.ajax({
+        url: 'http://' + server_URL + ':' + qumport + '/mach/uploads/' + filename.split('.')[0] + '[' + user_name + '].' + filename.split('.')[1],
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = filename;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            $('button.char#fresp-save' + filename.split('.')[1]).hide();
+            $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text(a.download + ' has been downloaded'));
+        }
+    });
+    return false;
+};
 
 function listimes_fresp() {
     // $('input.char.data').removeClass("plotted");
@@ -604,26 +629,8 @@ $('button.char#fresp-savecsv').on('click', function () {
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/export/1dcsv', {
         ifreq: $('select.char.fresp.parameter[name="c-freq"]').val()
     }, function (data) {
-        console.log("STATUS: " + data.status + ", PORT: " + data.qumport);
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dfresp[' + data.user_name + '].csv',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                console.log("USER HAS DOWNLOADED 1Dfresp DATA from " + String(window.URL));
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '1Dfresp.csv';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.char#fresp-savecsv').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='1Dfresp.csv');
     });
     return false;
 });
@@ -637,26 +644,8 @@ $('button.char#fresp-savemat').on('click', function () {
     $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/export/2dmat', {
         ifreq: $('select.char.fresp.parameter[name="c-freq"]').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dfresp[' + data.user_name + '].mat',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                console.log("USER HAS DOWNLOADED 2Dfresp DATA from " + String(window.URL));
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '2Dfresp.mat';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.char#fresp-savemat').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='2Dfresp.mat');
     });
     return false;
 });

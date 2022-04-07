@@ -8,6 +8,8 @@ $(document).ready(function(){
     const sselection = [mainsample, sharedsample];
     window.selectedsname = sselection.find(s => s != 0); // return the first element that satisfies the predicate
     console.log("Loading:" + selectedsname);
+
+    $('#sampleloc-update-QPC').hide();
     AccesSample(selectedsname);
 
     // Hide Forward button if not the main-sample:
@@ -24,10 +26,11 @@ function AccesSample(sname) {
         sname: sname, 
     }, function(data){
         console.log(data.message);
-        $('input.user-samples#update[name="specs"]').val(data.sample_cv['specifications']);
+        $('textarea.user-samples#update[name="specs"]').val(data.sample_cv['specifications']);
         $('textarea.user-samples#update[name="loc"]').val(data.sample_cv['location']);
         $('input.user-samples#update[name="coauthors"]').val(data.sample_cv['co_authors']);
         $('select.user-samples#update[name="level"]').val(data.sample_cv['level']);
+        if (parseInt(data.sample_cv['level'])>1) { $('#sampleloc-update-QPC').show(); };
         $('textarea.user-samples#update[name="description"]').val(data.sample_cv['description']);
         $('textarea.user-samples#update[name="history"]').val(data.sample_cv['history']);
         $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("Current sample: Since " + data.sample_cv['registered'].replace('\n',' ')));
@@ -119,7 +122,7 @@ $('input.user.samples.confirm-update#samples-confirm').on('click', function(e) {
     console.log($('select.samples').val());
     $.getJSON('/auth/user/samples/update', {
         sname: $('select.samples#samples').val(), // only main user can update!
-        specs: $('input.user-samples#update[name="specs"]').val(),
+        specs: $('textarea.user-samples#update[name="specs"]').val(),
         loc: $('textarea.user-samples#update[name="loc"]').val(),
         coauthors: $('input.user-samples#update[name="coauthors"]').val(),
         level: $('select.user-samples#update[name="level"]').val(),
@@ -129,7 +132,7 @@ $('input.user.samples.confirm-update#samples-confirm').on('click', function(e) {
     }, function (data) {
         $('.samples > label#registered').empty().append($('<h4 style="color: blue;"></h4>').text(data.message));
     });
-    
+    return false;
 });
 
 // Carry Forward Samples:
@@ -153,7 +156,6 @@ $('button.user-samples#samples-forward').on('click', function(e) {
             // Register the forwarded extension of the sample:
             $.getJSON('/auth/user/samples/register', {
                 sname: fwd_sname,
-                // specs: $('input.user-samples#update[name="specs"]').val(),
                 loc: $('textarea.user-samples#update[name="loc"]').val(),
                 level: sample_level,
                 description: $('textarea.user-samples#update[name="description"]').val(),
@@ -166,5 +168,24 @@ $('button.user-samples#samples-forward').on('click', function(e) {
         }
 
     };
-    
+    return false;
+});
+
+// Update QPC-wiring Configuration:
+$('#sampleloc-update-QPC').on('click', function(e) {
+    e.preventDefault();
+    $.getJSON('/auth/user/samplesloc/update/qpc_wiring', {
+        peach: $('textarea.user-samples#update[name="loc"]').val(),
+        qpc_selected:$('select.samples#qpc-list').val(),
+    }, function (data) {
+        $('.samples > label#registered').empty().append($('<h4 style="color: blue;"></h4>').text(data.message));
+    })
+    .done(function(data) {
+        console.log(data);
+
+    })
+    .fail(function(jqxhr, textStatus, error){
+        $('.samples > label#registered').empty().append($('<h4 style="color: blue;"></h4>').text(error));
+    });
+    return false;
 });

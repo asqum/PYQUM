@@ -20,10 +20,35 @@ $(document).ready(function(){
 window.selecteday = ''
 window.VdBm_selector = 'select.mani.data.singleqb#singleqb-1d-VdBm'
 window.VdBm_selector2 = 'select.mani.data.singleqb#singleqb-2d-VdBm'
+window.server_URL = 'http://10.10.90.14:'; //'http://qum.phys.sinica.edu.tw:'
 
 // Parameter, Perimeter & Channel LIST for INITIATING NEW RUN:
 var singleqb_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
 var singleqb_Perimeters = ['DIGIHOME', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
+
+// Pull the file from server and send it to user end:
+function pull_n_send(server_URL, qumport, user_name, filename='1Dsingleqb.csv') {
+    $.ajax({
+        url: 'http://' + server_URL + ':' + qumport + '/mach/uploads/' + filename.split('.')[0] + '[' + user_name + '].' + filename.split('.')[1],
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = filename;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            $('button.mani#singleqb-save' + filename.split('.')[1]).hide();
+            $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(a.download + ' has been downloaded'));
+        }
+    });
+    return false;
+};
 
 function Perimeter_Assembler() {
     var PERIMETER = {};
@@ -787,7 +812,7 @@ $('input.mani.singleqb.pulse-check#singleqb-pulse-check').bind('click', function
         $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("PULSE-PLOT(s) COMPLETE"));
     })
     .fail(function(jqxhr, textStatus, error){
-        $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: red;"></h4>').text("Make sure SCORE & R-JSON SYNTAX is correct"));
+        $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: red;"></h4>').text("Make sure SCORE & R-JSON SYNTAX & Numpy-supported MATH-EXPRESSION are ALL correct"));
     });
     return false;
 });
@@ -1225,26 +1250,8 @@ $('button.mani#singleqb-savecsv').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.mani.singleqb#RO-LO-Frequency').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        console.log('User ' + data.user_name + ' is downloading 1D-Data');
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dsingleqb[' + data.user_name + '].csv',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '1Dsingleqb.csv';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.mani#singleqb-savecsv').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='1Dsingleqb.csv');
     });
     return false;
 });
@@ -1259,26 +1266,8 @@ $('button.mani#singleqb-savemat').on('click', function() {
         // merely for security screening purposes
         interaction: $('select.mani.singleqb#RO-LO-Frequency').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        console.log('User ' + data.user_name + ' is downloading 2D-Data');
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dsingleqb[' + data.user_name + '].mat',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '2Dsingleqb.mat';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.mani#singleqb-savemat').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='2Dsingleqb.mat');
     });
     return false;
 });

@@ -24,6 +24,30 @@ window.VdBm_selector2 = 'select.mani.data.qubits#qubits-2d-VdBm'
 var qubits_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
 var qubits_Perimeters = ['DIGIHOME', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
 
+// Pull the file from server and send it to user end:
+function pull_n_send(server_URL, qumport, user_name, filename='1Dqubits.csv') {
+    $.ajax({
+        url: 'http://' + server_URL + ':' + qumport + '/mach/uploads/' + filename.split('.')[0] + '[' + user_name + '].' + filename.split('.')[1],
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = filename;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            $('button.mani#qubits-save' + filename.split('.')[1]).hide();
+            $('div#mani-qubits-announcement').empty().append($('<h4 style="color: red;"></h4>').text(a.download + ' has been downloaded'));
+        }
+    });
+    return false;
+};
+
 function transpose(a) {
     // Calculate the width and height of the Array
     var w = a.length || 0;
@@ -1046,26 +1070,8 @@ $('button.mani#qubits-savecsv').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.mani.qubits#RO-LO-Frequency').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        console.log('User ' + data.user_name + ' is downloading 1D-Data');
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dqubits[' + data.user_name + '].csv',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '1Dqubits.csv';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.mani#qubits-savecsv').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='1Dqubits.csv');
     });
     return false;
 });
@@ -1080,26 +1086,8 @@ $('button.mani#qubits-savemat').on('click', function() {
         // merely for security screening purposes
         interaction: $('select.mani.qubits#RO-LO-Frequency').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        console.log('User ' + data.user_name + ' is downloading 2D-Data');
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dqubits[' + data.user_name + '].mat',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '2Dqubits.mat';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.mani#qubits-savemat').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='2Dqubits.mat');
     });
     return false;
 });

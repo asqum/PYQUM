@@ -25,7 +25,7 @@ from pyqum.instrument.logger import get_histories, get_mat_history, get_status, 
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.instrument.composer import pulser
-from pyqum.instrument.reader import inst_order
+from pyqum.instrument.reader import inst_order, device_port
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
 from pyqum.directive.manipulate import Single_Qubit, Qubits
 
@@ -309,7 +309,7 @@ def char_fresp_export_2dmat():
         set_mat(fresp_2Ddata[session['user_name']], '2Dfresp[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/char/' + frespcryption + '/export/1dcsv', methods=['GET'])
 def char_fresp_export_1dcsv():
@@ -320,7 +320,7 @@ def char_fresp_export_1dcsv():
         set_csv(fresp_1Ddata[session['user_name']], '1Dfresp[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # list set-parameters based on selected task-entry
 @bp.route('/char/' + frespcryption + '/access', methods=['GET'])
 def char_fresp_access():
@@ -589,7 +589,7 @@ def char_cwsweep_export_2dmat():
         set_mat(cwsweep_2Ddata[session['user_name']], '2Dcwsweep[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/char/cwsweep/export/1dcsv', methods=['GET'])
 def char_cwsweep_export_1dcsv():
@@ -600,7 +600,7 @@ def char_cwsweep_export_1dcsv():
         set_csv(cwsweep_1Ddata[session['user_name']], '1Dcwsweep[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # list set-parameters based on selected task-entry
 @bp.route('/char/cwsweep/access', methods=['GET'])
 def char_cwsweep_access():
@@ -1069,7 +1069,7 @@ def char_sqepulse_export_2dmat():
         set_mat(sqepulse_2Ddata[session['user_name']], '2Dsqepulse[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/char/sqepulse/export/1dcsv', methods=['GET'])
 def char_sqepulse_export_1dcsv():
@@ -1080,7 +1080,7 @@ def char_sqepulse_export_1dcsv():
         set_csv(sqepulse_1Ddata[session['user_name']], '1Dsqepulse[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # list set-parameters based on selected task-entry
 @bp.route('/char/sqepulse/access', methods=['GET'])
 def char_sqepulse_access():
@@ -1497,7 +1497,7 @@ def char_singleqb_export_2dmat():
         set_mat(singleqb_2Ddata[session['user_name']], '2Dsingleqb[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/mani/singleqb/export/1dcsv', methods=['GET'])
 def mani_singleqb_export_1dcsv():
@@ -1508,7 +1508,7 @@ def mani_singleqb_export_1dcsv():
         set_csv(singleqb_1Ddata[session['user_name']], '1Dsingleqb[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 
 # DATA ACCESS
 # list set-parameters based on selected task-entry
@@ -1904,7 +1904,7 @@ def char_qubits_export_2dmat():
         set_mat(qubits_2Ddata[session['user_name']], '2Dqubits[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/mani/qubits/export/1dcsv', methods=['GET'])
 def mani_qubits_export_1dcsv():
@@ -1915,7 +1915,7 @@ def mani_qubits_export_1dcsv():
         set_csv(qubits_1Ddata[session['user_name']], '1Dqubits[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 
 # DATA ACCESS
 # list set-parameters based on selected task-entry

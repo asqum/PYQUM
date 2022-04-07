@@ -24,7 +24,7 @@ __status__ = "development"
 # **********************************************************************************************************************************************************
 # 1. FREQUENCY RESPONSE MEASUREMENT:
 @settings(2) # data-density
-def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, queue=''):
+def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, queue='', renamed_task=''):
     '''Characterizing Frequency Response:
     C-Order: Flux-Bias, S-Parameter, IF-Bandwidth, Power, Frequency
     '''
@@ -40,7 +40,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     instr['NA']= inst_order(queue, 'NA')[0]
 
     # pushing pre-measurement parameters to settings:
-    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
+    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task
 
     # User-defined Controlling-PARAMETER(s) & -PERIMETER(s) ======================================================================================
     # 1. PERIMETER:
@@ -152,7 +152,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
 # **********************************************************************************************************************************************************
 # 2. CONTINUOUS-WAVE SWEEPING:
 @settings(2) # data-density
-def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, queue=''):
+def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, queue='', renamed_task=''):
     '''Continuous Wave Sweeping:
     C-Order: Flux-Bias, XY-Frequency, XY-Power, S-Parameter, IF-Bandwidth, Frequency, Power
     '''
@@ -169,7 +169,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     instr['NA']= inst_order(queue, 'NA')[0]
 
     # pushing pre-measurement parameters to settings:
-    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
+    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task
 
     # User-defined Controlling-PARAMETER(s) & -PERIMETER(s) ======================================================================================
     # 1. PERIMETER:

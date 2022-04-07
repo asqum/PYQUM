@@ -682,9 +682,10 @@ def settings(datadensity=1):
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
-        owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue = next(Generator)
+        owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
-        task = Name.__name__
+        if renamed_task=="": task = Name.__name__
+        else: task = renamed_task
         # print("task: %s" %task)
         M = measurement(mission, task, owner, sample) #M-Initialization
         if type(dayindex) is str: # for later access
