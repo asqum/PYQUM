@@ -44,6 +44,8 @@ import pandas as pd
 # Save file
 from scipy.io import savemat
 # fidelity
+from matplotlib.patches import Ellipse
+from matplotlib import transforms
 from sklearn.cluster import KMeans
 from sklearn.svm import SVC
 from numpy import stack, unique, meshgrid
@@ -872,6 +874,57 @@ def text_report(label):
 	print("{:<31}".format("The percentage of ground state")+" : {:.2f}%".format(100*counts[1]/(counts[0]+counts[1])))
 	print("{:<31}".format("The percentage of excited state")+" : {:.2f}%".format(100*counts[0]/(counts[0]+counts[1])))
 
+def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
+	"""
+	Create a plot of the covariance confidence ellipse of *x* and *y*.
+
+	Parameters
+	----------
+	x, y : array-like, shape (n, )
+		Input data.
+
+	ax : matplotlib.axes.Axes
+		The axes object to draw the ellipse into.
+
+	n_std : float
+		The number of standard deviations to determine the ellipse's radiuses.
+
+	**kwargs
+		Forwarded to `~matplotlib.patches.Ellipse`
+
+	Returns
+	-------
+	matplotlib.patches.Ellipse
+	"""
+	if x.size != y.size:
+		raise ValueError("x and y must be the same size")
+
+	cov = np.cov(x, y)
+	pearson = cov[0, 1]/np.sqrt(cov[0, 0] * cov[1, 1])
+	# Using a special case to obtain the eigenvalues of this
+	# two-dimensionl dataset.
+	ell_radius_x = np.sqrt(1 + pearson)
+	ell_radius_y = np.sqrt(1 - pearson)
+	ellipse = Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
+					facecolor=facecolor, **kwargs)
+
+	# Calculating the stdandard deviation of x from
+	# the squareroot of the variance and multiplying
+	# with the given number of standard deviations.
+	scale_x = np.sqrt(cov[0, 0]) * n_std
+	mean_x = np.mean(x)
+
+	# calculating the stdandard deviation of y ...
+	scale_y = np.sqrt(cov[1, 1]) * n_std
+	mean_y = np.mean(y)
+
+	transf = transforms.Affine2D() \
+		.rotate_deg(45) \
+		.scale(scale_x, scale_y) \
+		.translate(mean_x, mean_y)
+
+	ellipse.set_transform(transf + ax.transData)
+	return ax.add_patch(ellipse)
 
 class Readout_fidelity():
 
@@ -883,12 +936,15 @@ class Readout_fidelity():
 		self.real, self.imag = [],[]
 		self.label_list= ["gnd","exc"]
 		self.probability = []
+		self.bleed = 10**-3
 
+	
+	
 	def do_analysis( self ):
 		xAxisKey = self.quantificationObj.xAxisKey
 		self.x = self.quantificationObj.independentVars[xAxisKey]
 		# load the model from disk
-		self.loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_svc_model.sav', 'rb'))
+		self.loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_kmeans_model.sav', 'rb'))
 		self.i = self.quantificationObj.rawData["iqSignal"].real
 		self.q = self.quantificationObj.rawData["iqSignal"].imag
 		if len(self.i)==1:
@@ -897,14 +953,44 @@ class Readout_fidelity():
 			self.data = stack((self.i1, self.q1), axis=1)
 			self.label = self.loaded_model.predict(self.data)
 			text_report(self.label)
-			plt.figure()
-			plt.rcParams["figure.figsize"] = (12, 9)
+			self.fig, self.ax = plt.subplots(figsize=(12, 9))
+			self.ax.axis('equal')
+			plt.xlim(self.i1.min()-self.bleed, self.i1.max()+self.bleed)
+			plt.ylim(self.q1.min()-self.bleed, self.q1.max()+self.bleed)
 			#Getting unique labels
 			self.u_labels = unique(self.label)
 			#plotting the results:
 			for i in self.u_labels:
 				plt.scatter(self.i1[self.label == i] , self.q1[self.label == i] , label = self.label_list[i])
-			plot_svm_decision_function(self.loaded_model)
+				confidence_ellipse(self.data.T[0][self.label == i], self.data.T[1][self.label == i], self.ax, n_std=1,label=r'$1\sigma$', facecolor='pink', edgecolor='firebrick',alpha= 0.3)
+				confidence_ellipse(self.data.T[0][self.label == i], self.data.T[1][self.label == i], self.ax, n_std=2,label=r'$2\sigma$', edgecolor='fuchsia', linestyle='--')
+				confidence_ellipse(self.data.T[0][self.label == i], self.data.T[1][self.label == i], self.ax, n_std=3,label=r'$3\sigma$', edgecolor='blue', linestyle=':')
+			self.diff = self.loaded_model.cluster_centers_[1]-self.loaded_model.cluster_centers_[0]
+			self.k = self.diff[1]/self.diff[0]
+			self.b = self.loaded_model.cluster_centers_[0][1]-self.k*self.loaded_model.cluster_centers_[0][0]
+			self.b1 = self.loaded_model.cluster_centers_[0][1]+1/self.k*self.loaded_model.cluster_centers_[0][0]
+			self.b2 = self.loaded_model.cluster_centers_[1][1]+1/self.k*self.loaded_model.cluster_centers_[1][0]
+			self.line = np.linspace(self.i1.min(), self.i1.max(), 1000)
+			self.ax.plot(self.line, self.k*self.line+self.b,color = "k")
+			self.ax.plot(self.line, -1/self.k*self.line+self.b1,color = "r")
+			self.ax.plot(self.line, -1/self.k*self.line+self.b2,color = "r")
+			text_report(self.label)
+
+			#plotting the results:
+			for i in self.u_labels:
+				self.ax.scatter(self.data.T[0][self.label == i] , self.data.T[1][self.label == i] , label = self.label_list[i])
+
+
+			# plot_svm_decision_function(kmeans)
+			for i in range(len(self.loaded_model.cluster_centers_)):
+				self.ax.scatter(self.loaded_model.cluster_centers_[i][0],self.loaded_model.cluster_centers_[i][1],color = "r")
+
+			for i in self.u_labels:
+				self.cov = np.cov(self.data.T[0][self.label == i], self.data.T[1][self.label == i])
+				print("{:<10}".format("The I-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(np.sqrt(self.cov[0][0])))
+				print("{:<10}".format("The Q-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(np.sqrt(self.cov[1][1])))
+
+			self.ax.legend()
 			plt.title("readout_fidelity")
 			plt.axis('equal')
 			plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
@@ -938,9 +1024,7 @@ class Readout_fidelity():
 		print('--------')
 		self.kmeans = KMeans(n_clusters=2)
 		self.kmeans.fit(self.data)
-		self.label = self.kmeans.predict(self.data)
-		self.model = SVC(kernel='linear', C=1E10)
-		self.model.fit(self.data, self.label)
 		# save the model to disk
-		pickle.dump(self.model, open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_svc_model.sav', 'wb'))
+		pickle.dump(self.kmeans, open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_kmeans_model.sav', 'wb'))
 		print("finished pretrain!")
+

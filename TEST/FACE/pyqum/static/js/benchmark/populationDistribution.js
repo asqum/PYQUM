@@ -14,6 +14,14 @@ $(document).ready(function(){
     e_plot1DButton.addEventListener("click", plot_distribution);
     // let e_plot2DtButton = document.getElementById("populationDistribution-plot2D-button");
     // e_plot2DtButton.addEventListener("click", get_PD_plot2D);
+    
+    //fidelity pack
+    let e_fitButton_fidelity = document.getElementById("fidelity-button-fit");
+    e_fitButton_fidelity.addEventListener("click", FD_fit_data);
+    let e_preButton_fidelity = document.getElementById("fidelity-button-pretrain");
+    e_preButton_fidelity.addEventListener("click", FD_pretrain_data);
+    let e_plottButton_fidelity = document.getElementById("fidelity-button-plot");
+    e_plottButton_fidelity.addEventListener("click", FD_plot_data);
 });
 
 function get_PD_selectInfo( quantificationType ){
@@ -428,3 +436,20 @@ function plot_distribution(){
 
 }
 
+function FD_fit_data(){
+
+    // Plot fit parameters
+    $.getJSON( '/benchmark/fidelity/getJson_fitParaPlot',{ }, function (data) {});
+}
+
+function FD_pretrain_data(){
+
+    // Plot fit parameters
+    $.getJSON( '/benchmark/fidelity/getJson_Pretrain',{ }, function (data) {});
+}
+
+function FD_plot_data(){
+
+    // Plot fit parameters
+    $.getJSON( '/benchmark/plot',{ }, function (data) {});
+}
