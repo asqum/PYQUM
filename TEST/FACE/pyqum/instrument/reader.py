@@ -5,6 +5,7 @@ from operator import itemgetter
 from contextlib import suppress
 from copy import deepcopy, copy
 from sqlite3 import connect, Row, PARSE_DECLTYPES
+from json import loads
 
 from pathlib import Path
 pyfilename = Path(__file__).resolve() # current pyscript filename (usually with path)
@@ -116,11 +117,20 @@ def inst_order(queue, category='ALL', tabulate=True):
             inst_list = db.execute("SELECT q.designation FROM %s q WHERE q.category = ? ORDER BY q.id ASC"%queue,(category,)).fetchone()[0]
             
             if tabulate:
-                if category=='CH' or category=='ROLE': # output: dict
-                    inst_list = inst_list.split('>>')
-                    inst_list = [{x.split(':')[0]:x.split(':')[1].split(',')} for x in inst_list]
-                    inst_list = {k:[x.split('/') for x in v] for d in inst_list for k,v in d.items()} # {<inst>: <slot-channel> ...}
-                else: inst_list = inst_list.split(',') # output: list
+                if category=='CH' or category=='ROLE': # virtual-instrument's output: dict
+
+                    # Auto-detect which version:
+                    # 1st version: uses rare character to imply wiring-hierarchy: e.g. DAC:I1/Q1,X1/Y1/Z1/P1,Z2>>SG:XY1/XY2,RO1/PA1>>DC:ZPA,ZC
+                    if '{' not in inst_list:
+                        inst_list = inst_list.replace(' ','') # allow spaces for this version as well
+                        inst_list = inst_list.split('>>')
+                        inst_list = [{x.split(':')[0]:x.split(':')[1].split(',')} for x in inst_list]
+                        inst_list = {instr_type:[instr_chs.split('/') for instr_chs in instr_modules] for instr_config in inst_list for instr_type,instr_modules in instr_config.items()} # {<inst>: <slot-channel> ...}
+
+                    # 2nd version: directly build JSON to save wiring-configuration: e.g. {"DAC": [["I1", "Q1"], ["X1", "Y1", "Z1", "P1"], ["Z2"]], "SG": [["XY1", "XY2"], ["RO1", "PA1"]], "DC": [["ZPA"], ["ZC"]]}
+                    else: inst_list = loads(inst_list)
+
+                else: inst_list = inst_list.split(',') # real-instrument's output: list
             else: 
                 inst_list = str(inst_list) # for editting on WIRING-page
 
@@ -198,15 +208,16 @@ def test():
     printTree(DATA01)
 
     # SQL Database:
-    from json import loads, dumps
     inst_list = inst_order("CHAR0")
     print("inst_list: %s" %inst_list)
-    print(inst_order("CHAR0", 'DC'))
-    print(inst_order("QPC0", 'DAC'))
-    print(inst_order("QPC0", 'DC'))
-    print(inst_order("QPC0", 'CH'))
-    print(inst_order("QPC0", 'ROLE'))
+    print("CHAR0's DC: %s" %inst_order("CHAR0", 'DC'))
+    print("QPC0's DAC: %s" %inst_order("QPC0", 'DAC'))
+    print("QPC0's DC: %s" %inst_order("QPC0", 'DC'))
+    print("QPC0's CH: %s" %inst_order("QPC0", 'CH'))
+    print("QPC0's ROLE: %s" %inst_order("QPC0", 'ROLE'))
     print("DAC's Channel-Matrix: %s" %(inst_order("QPC0", 'CH')['DAC']))
+    print("QPC1's CH: %s" %inst_order("QPC1", 'CH'))
+    print("QPC1's ROLE: %s" %inst_order("QPC1", 'ROLE'))
     # inst_designate("CHAR0","DC","SDAWG_3")
     from pyqum.instrument.toolbox import find_in_list
     DACH_Role = inst_order("QPC0", 'ROLE')['DAC']

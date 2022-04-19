@@ -9,7 +9,7 @@ $(document).ready(function(){
     window.selectedsname = sselection.find(s => s != 0); // return the first element that satisfies the predicate
     console.log("Loading:" + selectedsname);
 
-    $('#sampleloc-update-QPC').hide();
+    $('.update-QPC').hide();
     AccesSample(selectedsname);
 
     // Hide Forward button if not the main-sample:
@@ -30,7 +30,7 @@ function AccesSample(sname) {
         $('textarea.user-samples#update[name="loc"]').val(data.sample_cv['location']);
         $('input.user-samples#update[name="coauthors"]').val(data.sample_cv['co_authors']);
         $('select.user-samples#update[name="level"]').val(data.sample_cv['level']);
-        if (parseInt(data.sample_cv['level'])>1) { $('#sampleloc-update-QPC').show(); };
+        if (parseInt(data.sample_cv['level'])>1) { $('.update-QPC').show(); } else { $('.update-QPC').hide(); };
         $('textarea.user-samples#update[name="description"]').val(data.sample_cv['description']);
         $('textarea.user-samples#update[name="history"]').val(data.sample_cv['history']);
         $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("Current sample: Since " + data.sample_cv['registered'].replace('\n',' ')));

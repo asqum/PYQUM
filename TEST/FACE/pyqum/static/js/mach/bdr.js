@@ -359,7 +359,7 @@ $(function() {
 function wiring_designation_update() {
     $('table.BDR-WIRING thead.wiring.designation-update tr').empty();
     $('table.BDR-WIRING tbody.wiring.designation-update tr').empty();
-    var header = ['Order', 'Category', 'Designation']
+    var header = ['Order', 'Category', 'Designation'];
     $.each(header, function (i,val) { $('table.BDR-WIRING thead.wiring.designation-update tr').append('<th>' + val + '</th>'); });
     $.getJSON('/mach/bdr/wiring/instruments', {
         qsystem: $('select.bdr.wiring.queue-system').val(),
@@ -371,9 +371,11 @@ function wiring_designation_update() {
         $.each(data.category, function (i,cat) {
             console.log("Category [" + cat + "] has enlisted: " + data.instr_organized[cat]);
             if (data.instr_organized[cat].includes("DUMMY_1")==false) { var enlisted_instr = data.instr_organized[cat]; };
-            $('input.bdr.wiring-designation.'+cat).val(enlisted_instr); // undefined=blank: leave the input blank if it contain DUMMY_1!
+            $('.bdr.wiring-designation.'+cat).val(enlisted_instr); // undefined=blank: leave the input blank if it contain DUMMY_1! // support both input and texarea
         });
+        $('div#wiring-designation-status').append($('<h4 style="color: red;"></h4>').text("modules-mismatch: " + data.modules_mismatch + "\n, channels-mismatch: " + data.channels_mismatch));
     });
+    return false;
 };
 $(function() {
     $('button.bdr#wiring').bind('click', function() {
@@ -398,9 +400,10 @@ $(function() {
         $('div#wiring-designation-status').empty();
         var instr_organized = {};
         $.each(category, function (i,cat) {
-            instr_organized[cat] = $('input.bdr.wiring-designation.'+cat).val();
+            instr_organized[cat] = $('.bdr.wiring-designation.'+cat).val();
         });
         console.log('instr_organized: ' + JSON.stringify(instr_organized));
+
         $.getJSON('/mach/bdr/wiring/set/instruments', {
             instr_organized: JSON.stringify(instr_organized),
             qsystem: $('select.bdr.wiring.queue-system').val(),
@@ -414,14 +417,14 @@ $(function() {
     return false;
 });
 $(function () {
-    $(document).on('change', 'input.bdr.wiring-designation', function() {
+    $(document).on('change', '.bdr.wiring-designation', function() {
         $('div#wiring-designation-status').empty();
         var cat = $(this).parent().parent().attr('id').split('-')[2];
         $.getJSON('/mach/bdr/wiring/check/instruments', {
             cat: cat,
-            instr_set: $('input.bdr.wiring-designation.'+cat).val(),
+            instr_set: $('.bdr.wiring-designation.'+cat).val(),
         }, function (data) {
-            $('input.bdr.wiring-designation.'+cat).val(data.checked_instr_set);
+            $('.bdr.wiring-designation.'+cat).val(data.checked_instr_set);
             $('div#wiring-designation-status').append($('<h4 style="color: red;"></h4>').text(data.message));
         });
     });

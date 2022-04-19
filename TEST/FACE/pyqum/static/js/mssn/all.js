@@ -75,10 +75,10 @@ function qumjob() {
                 // progress segregation:
                 if (parseInt(val.progress)===100) {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn green" id="jid_' + val.id + '">' + val.progress + '</a></div>';
-                } else if (parseInt(val.progress)===0) {
-                    var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn red" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 } else if (val.tag!='') {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn blue" id="jid_' + val.id + '">' + val.tag + ': ' + parseInt(val.progress) + '</a></div>';
+                } else if (parseFloat(val.progress)===0) {
+                    var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn red" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 } else {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn orange" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 };
@@ -230,6 +230,26 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-close.red', fu
     }, function(data) {
         console.log(data.message);
         $('a.all-mssn-progress.orange#jid_'+jobid).removeClass('orange').addClass('rred').text('Press F5');
+    });
+    return false;
+});
+// IF TO-BE-REQUEUED / WIPED-CLEAN JOB PROGRESS IS CLICK: (Providing Options to cancel it / close the case)
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-progress.red', function() {
+    var progressing = parseFloat($(this).text());
+    var progress_box = '<div class="buttons"><a class="all-mssn-progress btn red" id="' + $(this).attr('id') + '">' + progressing + '</a></div>';
+    var action = '<div class="buttons"><a class="all-mssn-cancel btn red" id="' + $(this).attr('id') + '">' + "CANCEL" + '</a></div>';
+    $(this).parent().parent().empty().append(progress_box + action);
+    return false;
+});
+// IF CANCEL BUTTON IS CLICK:
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-cancel.red', function() {
+    $(this).remove();
+    var jobid = $(this).attr('id').split('_')[1];
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/close/job', {
+        jobid: jobid, tag: "CANCELLED"
+    }, function(data) {
+        console.log(data.message);
+        $('a.all-mssn-progress.red#jid_'+jobid).removeClass('red').addClass('rred').text('Press F5');
     });
     return false;
 });

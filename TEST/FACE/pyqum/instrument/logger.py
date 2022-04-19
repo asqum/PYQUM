@@ -719,11 +719,11 @@ def settings(datadensity=1):
                 while True:
                     jobsinqueue(queue)
                     # 2.1. Get out in the middle of waiting:
-                    if JOBID not in g.jobidlist:
+                    if JOBID not in g.queue_jobid_list:
                         M.status = "M-JOB CANCELLED OR NOT QUEUED IN PROPERLY"
                         return M
                     # 2.2. It's your turn AND all relevant instruments are free:
-                    elif g.jobidlist.index(JOBID)==0 and not address().macantouch(list(instr.values())):
+                    elif g.queue_jobid_list.index(JOBID)==0 and not address().macantouch(list(instr.values())):
                         '''All of the following should be fulfilled before taking turn to run:
                             1. ONLY FIRST-IN-LINE get to break the waiting loop
                             2. ALL instruments required are disconnected
@@ -731,7 +731,7 @@ def settings(datadensity=1):
                         break
                     # 2.3. Keep waiting behind:
                     else:
-                        queue_behind = g.jobidlist.index(JOBID) + 1 # "extra +1" just in case of machine still being occupied
+                        queue_behind = g.queue_jobid_list.index(JOBID) + 1 # "extra +1" just in case of machine still being occupied
                         waiting_interval = 3.17*queue_behind # adjust waiting time based on how far behind in queue
                         sleep(waiting_interval)
                         print(Fore.YELLOW + "JOBID #%s is waiting every %s seconds" %(JOBID,waiting_interval))
@@ -813,9 +813,9 @@ def lisqueue(queue):
 def jobsinqueue(queue):
     if int(g.user['measurement']) > 0:
         db = get_db()
-        g.jobidlist = db.execute("SELECT job_id FROM %s ORDER BY id"%queue).fetchall()
+        g.queue_jobid_list = db.execute("SELECT job_id FROM %s ORDER BY id"%queue).fetchall()
         close_db()
-        g.jobidlist = [dict(x)['job_id'] for x in g.jobidlist] # use to scheduling tasks in queue
+        g.queue_jobid_list = [dict(x)['job_id'] for x in g.queue_jobid_list] # use to scheduling tasks in queue
         status = "JOBID-LIST in QUEUE has been extracted"
     else: status = "Measurement clearance was not found"
     return status

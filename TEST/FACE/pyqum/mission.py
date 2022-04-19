@@ -135,7 +135,8 @@ def all_job():
     for j in joblist:
         # print("Progress: %s" %j['progress'])
         # print("j.tag: %s" %j['tag'])
-        if (j['tag'] == "") and (j['id'] not in g.jobidlist) and (j['progress'] is None or j['progress'] < 100): # not allowing queued-job to be accessed to avoid database locks
+        # "bottleneck" of job-listing speed on ALL-page:
+        if (j['tag'] == "") and (j['id'] not in g.queue_jobid_list) and (j['progress'] is None or j['progress'] < 100): # not allowing queued-job to be accessed to avoid database locks
             try:
                 meas = measurement(mission=missioname, task=j['task'], owner=owner, sample=samplename) # but data is stored according to the owner of the sample
                 meas.selectday(meas.daylist.index(j['dateday']))
@@ -540,7 +541,17 @@ def char_cwsweep_init():
     try: print(Fore.CYAN + "Connected M-USER(s) holding CW-Sweep's RUN: %s" %Run_cwsweep.keys())
     except: Run_cwsweep = {}
 
-    return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'])
+    # Loading Channel-Matrix & Channel-Role based on WIRING-settings:
+    # 1. DC:
+    DC_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DC']
+    DC_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['DC']
+    DC_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'DC')
+    # 2. SG:
+    SG_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['SG']
+    SG_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['SG']
+    SG_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'SG')
+
+    return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'], DC_CH_Matrix=DC_CH_Matrix, DC_Role=DC_Role, DC_Which=DC_Which, SG_CH_Matrix=SG_CH_Matrix, SG_Role=SG_Role, SG_Which=SG_Which)
 # list task entries based on day picked
 @bp.route('/char/cwsweep/time', methods=['GET'])
 def char_cwsweep_time():

@@ -861,10 +861,24 @@ def bdrsamplesallocate():
 def bdr_wiring_instruments():
     qsystem = request.args.get('qsystem')
     inst_list = inst_order(qsystem)
-    instr_organized = {}
+    instr_organized, instr_tabulated = {}, {}
     for cat in category: instr_organized[cat] = inst_order(qsystem,cat,False)
     print(Fore.CYAN + "Organized instruments: %s"%instr_organized)
-    return jsonify(category=category, inst_list=inst_list, instr_organized=instr_organized)
+    
+    modules_mismatch, channels_mismatch = 0, 0
+    if 'DUMMY_1' in instr_organized['ROLE']: pass
+    else:
+        # Check CH & ROLE structure alignment:
+        for cat in category: instr_tabulated[cat] = inst_order(qsystem,cat)
+        for key, value in instr_tabulated['ROLE'].items():
+            modules_mismatch += len(value) - len(instr_tabulated['CH'][key])
+            # print(Fore.YELLOW + "%s's ROLE: %s, %s's CH: %s" %(key, len(value), key, len(loads(instr_tabulated['CH'])[key])))
+            
+            for idx, channel_composition in enumerate(value):
+                channels_mismatch += len(channel_composition) - len(instr_tabulated['CH'][key][idx])
+                # print(Fore.YELLOW + "%s's ROLE's module-%s: %s, %s's CH's module-%s: %s" %(key, idx, len(channel_composition), key, idx, len(loads(instr_tabulated['CH'])[key][idx])))
+        
+    return jsonify(category=category, inst_list=inst_list, instr_organized=instr_organized, modules_mismatch=modules_mismatch, channels_mismatch=channels_mismatch)
 @bp.route('/bdr/wiring/set/instruments', methods=['GET'])
 def bdr_wiring_set_instruments():
     qsystem = request.args.get('qsystem')
@@ -879,19 +893,20 @@ def bdr_wiring_set_instruments():
     return jsonify(message=message)
 @bp.route('/bdr/wiring/check/instruments', methods=['GET'])
 def bdr_wiring_check_instruments():
-    instr_set = request.args.get('instr_set').replace(" ","").upper() # CSV-string
+    instr_set = request.args.get('instr_set').upper() # CSV-string
     CAT = request.args.get('cat')
     message = "working on %s" %CAT
 
-    if CAT=="CH" or CAT=="ROLE": pass
+    if CAT=="CH" or CAT=="ROLE": pass # virtual-instruments
     else:
+        instr_set = instr_set.replace(" ","") # omit spaces (only for real-instrument's list)
         for instr in instr_set.split(','):
             if instr.replace('_','-') not in g.instlist: # All registered machines 
                 instr_set = instr_set.replace(instr,'')
                 message = "Make sure %s is in ALL-MACHINE-LIST" %(instr)
 
-    while ',,' in instr_set: instr_set = instr_set.replace(',,',',') # omit extra commas
-    while ' ' in instr_set: instr_set = instr_set.replace(' ','') # omit spaces
+    while ',,' in instr_set: instr_set = instr_set.replace(',,',',') # omit extra commas if any
+    if instr_set[-1]==',': instr_set = instr_set[:-1] # omit last comma if any
     return jsonify(checked_instr_set=instr_set, message=message)
 
 # endregion
