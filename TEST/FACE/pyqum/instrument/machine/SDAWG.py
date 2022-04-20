@@ -347,11 +347,15 @@ def close(module, which, reset=True, mode='DATABASE'):
 
 
 # Test Zone
-def test():
-    DAC_MATRIX = [[1,2,3,4],[1,2,3,4]] # WITHIN 100ns ALIGNMENT
-    # DAC_MATRIX = [[1,2,3],[1,2,3,4]] # PERFECTO ALIGNMENT
-    DAC_LABEL = [4, 5]
+#def test():
+if __name__ == "__main__":
+    # DAC_MATRIX = [[1,2,3,4],[1,2,3,4]] # WITHIN 100ns ALIGNMENT
+    DAC_MATRIX = [[1,2],[1,2,3]] # PERFECTO ALIGNMENT
+    DAC_LABEL = [3, 1]
     Master = [True, False]
+    markeroption = [7, 0]
+    Prep_settings = [dict(Master=True, trigbyPXI=2, markeroption=7), dict(Master=False, trigbyPXI=2)]
+    marker = [7, 2]
     M = [None]*len(DAC_MATRIX)
 
     for i, channel_set in enumerate(DAC_MATRIX):
@@ -366,24 +370,25 @@ def test():
         # Initiate PulseQ:
         dt = round(1/float(clock(M[i])[1]['SRATe'])/1e-9, 2)
         # print("Source: %s, Sampling rate: %s, dt: %s"%(clock(M[i])[1]['SOURce'], clock(M[i])[1]['SRATe'], dt))
-        pulseq = pulser(dt, clock_multiples=1, score="ns=30000;")
+        pulseq = pulser(dt, clock_multiples=1, score="ns=50000;")
         pulseq.song()
-        pulseq = pulser(dt, clock_multiples=1, score="ns=%s"%pulseq.totaltime)
-        pulseq.song()
+        # pulseq = pulser(dt, clock_multiples=1, score="ns=%s"%pulseq.totaltime)
+        # pulseq.song()
 
         # PREPARATION:
         for ch in channel_set:
-            prepare_DAC(M[i], int(ch), pulseq.totalpoints, update_settings=dict(Master=Master[i], trigbyPXI=2))
+            prepare_DAC(M[i], int(ch), pulseq.totalpoints, update_settings=Prep_settings[i])
         # PRE-COMPOSITION:
         for ch in channel_set:
             # clearQ not needed at pre-compose:
-            compose_DAC(M[i], int(ch), pulseq.music)#, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+            compose_DAC(M[i], int(ch), pulseq.music, [], markeroption[i])#, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+            print(Fore.BLUE + "Preparing %s data-points" %pulseq.totalpoints)
         alloff(M[i], action=['Set',0])
         ready(M[i])
         play(M[i])
     
     # Multiple WAVEs:
-    for waveth,pulse_width in enumerate([1000,1100,1200,1300,1400,1500,1600,1700]):
+    for waveth,pulse_width in enumerate([1000,1700]):
         # stop(M[0]) # suggested by NCHU (YuHan)
         # stop(M[1]) # suggested by NCHU (YuHan)
         input("Any key to RUN %sth WAVE: "%(waveth+1))
@@ -391,9 +396,9 @@ def test():
             print("Playing CH-%s for slot-%s" %(channel_set,i+1))
             for ch in channel_set:
                 # RE-COMPOSITION:
-                pulseq = pulser(dt, clock_multiples=1, score="ns=30000;FLAT/,%s,0.01;" %pulse_width)
+                pulseq = pulser(dt, clock_multiples=1, score="ns=50000,mhz=I/-17/ro1i-17;FLAT/,%s,0.1;" %pulse_width)
                 pulseq.song()
-                compose_DAC(M[i], int(ch), pulseq.music, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+                compose_DAC(M[i], int(ch), pulseq.music, pulseq.envelope, marker[i], update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
             ready(M[i])
 
     # print(Fore.CYAN + "Waveform-list: %s" %m2.waveformListLoad())
@@ -416,6 +421,6 @@ def test():
     # output(m3, 0)
     # close(m3, 3, True, 'TEST')
 
-    return
+    #return
 
-# test()
+#test()

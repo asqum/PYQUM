@@ -56,8 +56,8 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     ROLE_Wiring = inst_order(queue, 'ROLE')
     DACH_Role = ROLE_Wiring['DAC']
     RO_addr = find_in_list(DACH_Role, 'I1')
-    XY_addr = find_in_list(DACH_Role, 'X1')
-    print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
+    # XY_addr = find_in_list(DACH_Role, 'X1')
+    # print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
     instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument allowed (via Global flux-coil)
@@ -94,9 +94,13 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     SCORE_TEMPLATE = perimeter['SCORE-JSON'] # already a DICT
     RJSON = loads(perimeter['R-JSON'].replace("'",'"'))
     # 1e. Derived perimeter(s) from above:
-    ifperiod = pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).totaltime
+    ifperiod = pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr], dt=1).totaltime
+    ##JACKY 
+    print(Fore.BLUE +f"totaltime(ifperiod) {ifperiod}")
+    print(Fore.BLUE +f"SCORE_TEMPLATE {SCORE_TEMPLATE['CH%s'%RO_addr]}")
+
     RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).IF_MHz_rotation # working with RO-MOD (up or down)
-    XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
+    XY_Compensate_MHz = 0#-pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
     print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
     skipoints = 0
     try: 
@@ -169,8 +173,12 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
         pulseq.song()
         for channel in channel_set:
             DAC[i].prepare_DAC(DAC_instance[i], int(channel), pulseq.totalpoints, update_settings=update_settings)
+            ##JACKY
+            print(Fore.BLUE +f"pulseq.totalpoints {pulseq.totalpoints}")
         for channel in channel_set:
             DAC[i].compose_DAC(DAC_instance[i], int(channel), pulseq.music, [], markeroption) # we don't need marker yet initially
+            print(Fore.BLUE +f"len(pulseq.music) {len(pulseq.music)}")
+
         # Turn on all 4 channels:
         DAC[i].alloff(DAC_instance[i], action=['Set',0])
         DAC[i].ready(DAC_instance[i])
@@ -277,6 +285,9 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                     if (i_slot_order==0) and ("SDAWG" in DAC_type[i_slot_order]): marker = 7
                     else: marker = 2 # for compatibility with TKAWG
                     DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), pulseq.music, pulseq.envelope, marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
+                    ## JACKY
+                    print(Fore.BLUE +f"RUN len(pulseq.music) {len(pulseq.music)}")
+
                 DAC[i_slot_order].ready(DAC_instance[i_slot_order])
                 print('Waveform from Slot-%s is Ready!'%(i_slot_order+1))
                 
