@@ -276,7 +276,11 @@
                 {% for cat in category %}
                     <div class="row" id='wiring-designation-{{cat}}'>
                             <div class="col-10" id='left'><label class='bdr wiring-designation'>{{cat}}</label></div>
-                            <div class="col-60" id='left'><input class='bdr wiring-designation {{cat}}' type="text"/></div>
+                            {% if cat.upper() in ["ROLE","CH"] %}
+                                <div class="col-60" id='left'><textarea class='bdr wiring-designation {{cat}}' type="text" style="color:blue;"></textarea></div>
+                            {% else %}
+                                <div class="col-60" id='left'><input class='bdr wiring-designation {{cat}}' type="text"/></div>
+                            {% endif %}
                     </div>
                 {% endfor %}
                 <div class="row">

@@ -145,6 +145,10 @@ textarea#R-JSON {
     height: 137px;
     margin-top: -5px;
 }
+textarea.wiring-designation {
+    height: 73px;
+    margin-top: -5px;
+}
 label.parameter {
     word-wrap: break-word;
     /* y-up x-right y-down x-left -> Clock-wise! */

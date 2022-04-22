@@ -14,7 +14,8 @@ class pulser:
     All time-units in ns\n
     dt: time-resolution of AWG in ns\n
     clock_multiples: depends on AWG model, waveform must consist of certain multiple of points\n
-    score: analogous to music score, basically a set of syntatical instructions to build the "music": \n
+    score:  SCORES (SCripted ORchestration of Entanglement & Superposition) is a scripted pulse instruction language for running Quantum Algorithm at pulse-level.\n
+            analogous to music score, basically a set of syntatical instructions to build the "music": \n
             "ns=<totaltime: pulse-period> , [mhz=<i/q>/<IF>[/<mixer-module>]] (-> mix_params); 
             <shape>/[<param#1>/.../<param#n>], <pulse-width>, <pulse-height>; 
             ... ... "
