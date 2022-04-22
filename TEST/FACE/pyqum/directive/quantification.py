@@ -520,8 +520,8 @@ class PopulationDistribution():
 		xAxisKey = self.quantificationObj.xAxisKey
 		self.x = self.quantificationObj.independentVars[xAxisKey]
 		# load the model from disk
-		sav_file = "finalized_kmeans_model.sav"
-		self.loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\'+sav_file, 'rb'))
+		sav_file = ".sav"
+		self.loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_kmeans_model'+sav_file, 'rb'))
 		self.i = self.quantificationObj.rawData["iqSignal"].real
 		self.q = self.quantificationObj.rawData["iqSignal"].imag
 		if len(self.i)==1:
@@ -568,7 +568,7 @@ class PopulationDistribution():
 				print("{:<10}".format("The Q-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(np.sqrt(self.cov[1][1])))
 
 			self.ax.legend()
-			plt.title("readout_fidelity"+)
+			plt.title("readout_fidelity")
 			plt.axis('equal')
 			plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
 			# plt.show()
