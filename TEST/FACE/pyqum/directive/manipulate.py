@@ -57,8 +57,8 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     ROLE_Wiring = inst_order(queue, 'ROLE')
     DACH_Role = ROLE_Wiring['DAC']
     RO_addr = find_in_list(DACH_Role, 'I1')
-    # XY_addr = find_in_list(DACH_Role, 'X1')
-    # print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
+    XY_addr = find_in_list(DACH_Role, 'X1')
+    print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
     instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument allowed (via Global flux-coil)
@@ -101,7 +101,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     print(Fore.BLUE +f"SCORE_TEMPLATE {SCORE_TEMPLATE['CH%s'%RO_addr]}")
 
     RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).IF_MHz_rotation # working with RO-MOD (up or down)
-    XY_Compensate_MHz = 0#-pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
+    XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
     print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
     skipoints = 0
     try: 
