@@ -53,7 +53,10 @@ import pickle
 from state_distinguishability.iq_kmean import *
 
 class ExtendMeasurement ():
-	def __init__( self, measurementObj, *args,**kwargs ):
+	def __init__( self, measurementObj:measurement, *args,**kwargs ):
+		"""
+		Can get data to analysis from "measurement" class object
+		"""
 		self.measurementObj = measurementObj
 		self.independentVars = {}
 		# Key and index
@@ -232,7 +235,7 @@ class ExtendMeasurement ():
 
 class QEstimation():
 
-	def __init__( self, quantificationObj, *args,**kwargs ):
+	def __init__( self, quantificationObj:ExtendMeasurement, *args,**kwargs ):
 
 		self.quantificationObj = quantificationObj
 		# Key and index
@@ -668,7 +671,7 @@ def get_RabiOscillation_fitCurve ( x, p, signalType ):
 
 class Common_fitting():
 
-	def __init__( self, quantificationObj, *args,**kwargs ):
+	def __init__( self, quantificationObj:ExtendMeasurement, *args,**kwargs ):
 
 		self.quantificationObj = quantificationObj
 
