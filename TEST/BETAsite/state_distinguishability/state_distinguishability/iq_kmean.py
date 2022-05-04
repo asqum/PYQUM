@@ -35,9 +35,9 @@ def vector_to_complex( vectorArray ):
     return complexArray
 
 def get_projectedIQVector_byTwoPt( projComplex, iqComplex ):
-    refPoint = mean(projComplex)
+    refPoint = projComplex[0]
     shiftedIQComplex = iqComplex-refPoint
-    relativeProjComplex = projComplex[0]-refPoint
+    relativeProjComplex = projComplex[1]-refPoint
     projectionVector = complex_to_vector(array([relativeProjComplex]),"H")
     shiftedIQVector = complex_to_vector(shiftedIQComplex,"V")
     projectionMatrix = projectionVector.transpose()@projectionVector/abs(relativeProjComplex)**2
@@ -45,7 +45,7 @@ def get_projectedIQVector_byTwoPt( projComplex, iqComplex ):
     return projectedVector
 
 def get_projectedIQDistance_byTwoPt( projComplex, iqComplex ):
-    refPoint = mean(projComplex)
+    refPoint = projComplex[1]
     shiftedIQComplex = iqComplex-refPoint
     relativeProjComplex = projComplex[0]-refPoint
     projectionVector = complex_to_vector(array([relativeProjComplex]),"H")
