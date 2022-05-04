@@ -281,6 +281,7 @@ function load_data(){
 }
 
 function get_plot2D(){
+
     console.log( "Plot data" );
 
     let plotID_2D = "common_fitting-plot2D-rawOverview";
@@ -290,7 +291,9 @@ function get_plot2D(){
     let htmlInfo=get_htmlInfo_python();
 
 
-    let plot2D_signalType = document.getElementById("common_fitting-plot2D-zSelector").value;
+    let plot2D_signalType = document.getElementById("common_fitting-plot2D-signalSelector").value;
+    let plot2D_newOrigin = document.getElementById("common_fitting-newOrigin").value;
+
     let plot1D_yAxisType = document.getElementById("common_fitting-plot2D-ySelector").value;
 
     console.log( "plot2D_signalType" );
@@ -302,11 +305,12 @@ function get_plot2D(){
 
     //Get 2D data
     $.getJSON( '/benchmark/common_fitting/getJson_plot2D',
-    {   plot2D_signalType: JSON.stringify(plot2D_signalType), },
+    {   signalType: JSON.stringify(plot2D_signalType),
+        newOrigin:JSON.stringify(plot2D_newOrigin) },
         function (data) {
         console.log( "Get 2D data" );
         console.log( data );
-        z_data= data;
+        z_data = data;
 
     });
     //Get x axis
@@ -348,48 +352,52 @@ function get_plot1D(){
     console.log( "Plot data" );
 
     let plotID_2D = "common_fitting-plot2D-rawOverview";
-    let plotID_1D_ampPhase = "common_fitting-plot1D-ampPhase";
+    // let plotID_1D_ampPhase = "common_fitting-plot1D-ampPhase";
     let plotID_1D_IQ = "common_fitting-plot1D-IQ";
     $.ajaxSettings.async = false;
     let htmlInfo=get_htmlInfo_python();
 
-    let selectType = document.getElementById("common_fitting-plot2D-ySelector").value;
-    let selectValue = document.getElementById("common_fitting-plot1D-y_value").value;
+    let yUnit = document.getElementById("common_fitting-plot2D-ySelector").value;
+    let ySelection = document.getElementById("common_fitting-plot1D-y_value").value;
+    let signalType = document.getElementById("common_fitting-plot2D-signalSelector").value;
+    let newOrigin = document.getElementById("common_fitting-newOrigin").value;
 
     let plotInfo = {
-        selectType: selectType,
-        selectValue: selectValue,
+        yUnit: yUnit,
+        ySelection: ySelection,
+        signalType:signalType,
+        newOrigin:newOrigin,
     };
     console.log( "plotInfo" );
     console.log( plotInfo );
-    let plotData_IQ = {};
-    let iqKeys = {
-        x: ["rawI","fittedI"],
-        y: ["rawQ","fittedQ"],
-        yErr: [],
+    let plotKey = {
+        x:["xData_raw","xData_fit"],
+        y:["yData_raw","yData_fit"]
     }
-    let plotData_AmpPhase = {
-        raw: {},
-        fitted: {},
-    };
-    let ampPhaseKeys = {
-        x: [ ["x"], ["x"] ] ,
-        y: [ ["Amplitude"],["Phase"] ],
-        yErr: [ [],[] ],
-    }
+    let plotData = {};
     //Get x axis
     $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value'), },
         function (data) {
         console.log( "Get x axis" );
-        plotData_AmpPhase["raw"]["x"]= data;
+        plotData["xData_raw"] = data;
+    }).done(function(data) {
+        // $('#qFactor-fit-button').show();
+        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+    }).fail(function(jqxhr, textStatus, error){
+        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
     });
+
     //Get fitted x axis
     $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value_fit'), },
         function (data) {
-        console.log( "Get x axis" );
-        plotData_AmpPhase["fitted"]["x"]= data;
+        plotData["xData_fit"] = data;
+    }).done(function(data) {
+        // $('#qFactor-fit-button').show();
+        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+    }).fail(function(jqxhr, textStatus, error){
+        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
     });
     //Get raw signal
     $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
@@ -397,11 +405,12 @@ function get_plot1D(){
         plotInfo: JSON.stringify(plotInfo), },
         function (data) {
         console.log( "Get raw data" );
-        plotData_IQ["rawI"]= data["I"];
-        plotData_IQ["rawQ"]= data["Q"];
-
-        plotData_AmpPhase["raw"]["Amplitude"]= data["Amplitude"];
-        plotData_AmpPhase["raw"]["Phase"]= data["Phase"];
+        plotData["yData_raw"] = data;
+    }).done(function(data) {
+        // $('#qFactor-fit-button').show();
+        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+    }).fail(function(jqxhr, textStatus, error){
+        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
     });
 
     //Get fitted signal
@@ -410,21 +419,19 @@ function get_plot1D(){
         plotInfo: JSON.stringify(plotInfo), },
         function (data) {
         console.log( "Get fitted data" );
-        plotData_IQ["fittedI"]= data["I"];
-        plotData_IQ["fittedQ"]= data["Q"];
-
-        plotData_AmpPhase["fitted"]["Amplitude"]= data["Amplitude"];
-        plotData_AmpPhase["fitted"]["Phase"]= data["Phase"];
+        plotData["yData_fit"] = data;
+    }).done(function(data) {
+        // $('#qFactor-fit-button').show();
+        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+    }).fail(function(jqxhr, textStatus, error){
+        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
     });    
     console.log( "Plot data" );
 
-    console.log( plotData_AmpPhase );
-    console.log( plotData_IQ );
+    // console.log( plotData_AmpPhase );
+    // console.log( plotData_IQ );
 
-    plot1D_2subplot_shareX(plotData_AmpPhase, ampPhaseKeys, plotID_1D_ampPhase);
-    document.getElementById(plotID_1D_ampPhase).style.display = "block";
-
-    plot1D(plotData_IQ, iqKeys, plotID_1D_IQ);
+    plot1D(plotData, plotKey, plotID_1D_IQ);
     document.getElementById(plotID_1D_IQ).style.display = "block";
     document.getElementById(plotID_2D).style.display = "none";
 
@@ -461,12 +468,15 @@ function fit_data(){
     
     console.log(fitParameters);
     $.ajaxSettings.async = false;
+
+    // Store the data to plot
     let plotdata= {};
 
     $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify(plot1D_yAxisType), },
         function (data) {
         console.log( "Get y axis" );
+        // Store x axis data
         plotdata["x"]= data;
     });
 

@@ -59,7 +59,7 @@ import pickle
 from state_distinguishability.iq_kmean import *
 
 class ExtendMeasurement ():
-	def __init__( self, measurementObj:measurement, *args,**kwargs ):
+	def __init__( self, measurementObj:measurement=None, *args,**kwargs ):
 		"""
 		Can get data to analysis from "measurement" class object
 		"""
@@ -751,9 +751,6 @@ class Common_fitting():
 		signalType = fitParas["signal_type"]
 		newOrigin = fitParas["new_origin"]
 		
-
-
-			
 
 		rawIQData = qObj.rawData["iqSignal"]
 		xDataLen = qObj.rawData["x"].shape[0]

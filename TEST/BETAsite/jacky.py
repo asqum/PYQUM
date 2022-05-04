@@ -180,3 +180,6 @@ class Common_fitting():
 					if perr[ki] < abs(popt[ki])*10 :
 						self.fitResult[k]["value"][i] = popt[ki]
 						self.fitResult[k]["error"][i] = perr[ki]
+
+
+

@@ -24,7 +24,9 @@ from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2,
 
 # Load instruments
 from pyqum.directive.quantification import ExtendMeasurement, QEstimation, PopulationDistribution, Common_fitting, Autoflux, Readout_fidelity
+from pyqum.directive.quantification import convert_IQtoFittedValue
 from pyqum.mission import get_measurementObject
+from state_distinguishability.iq_kmean import *
 
 # Fitting
 from resonator_tools.circuit import notch_port
@@ -165,7 +167,7 @@ def register_Quantification():
 
 
 
-### qestimate part
+# region: Q estimation:
 
 @bp.route('/qestimate/getJson_plot',methods=['POST','GET'])
 def getJson_plot():
@@ -367,10 +369,15 @@ def exportMat_fitPara():
 	except:
 		status = "Fail"
 	return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+# endregion
 
-### common_fitting part
+# region: common_fitting:
 @bp.route('/common_fitting/load',methods=['POST','GET'])
 def ComFit_load():
+	"""
+	When load button is trigger, this function is excute
+	Recive fitting information from JS and send to quantification
+	"""
 	myExtendMeasurement = benchmarkDict[session['user_name']]
 	myQuantification = QDict[session['user_name']] 
 
@@ -462,22 +469,14 @@ def ComFit_getJson_plot2D():
 	myExtendMeasurement = benchmarkDict[session['user_name']]
 	myQuantification = QDict[session['user_name']] 
 
-	xAxisKey = myExtendMeasurement.xAxisKey
-	yAxisKey = myExtendMeasurement.yAxisKey
-	signalType = json.loads(request.args.get('plot2D_signalType'))
-	print("Z Data type: ", signalType)
-	def plot_2DAmp ():
-		plotData= abs(myExtendMeasurement.rawData["iqSignal"])
-		return plotData
-	def plot_2DPhase ():
-		plotData= angle(myExtendMeasurement.rawData["iqSignal"])
-		return plotData
+	signalType = json.loads(request.args.get('signalType'))
+	newOriginStr = json.loads(request.args.get('newOrigin'))
+	newOrigin = complex(newOriginStr.replace(" ",""))
+	#print("Z Data type: ", signalType)
+	iqData = myExtendMeasurement.rawData["iqSignal"]
+	plotData = convert_IQtoFittedValue(iqData,signalType,newOrigin)
 
-	plotFunction = {
-		'amp': plot_2DAmp,
-		'phase': plot_2DPhase,
-	}
-	return json.dumps(plotFunction[signalType](), cls=NumpyEncoder)
+	return json.dumps(plotData, cls=NumpyEncoder)
 
 
 @bp.route('/common_fitting/getJson_plot1D',methods=['POST','GET'])
@@ -487,60 +486,25 @@ def ComFit_getJson_plot1D():
 
 	plotInfo = json.loads(request.args.get('plotInfo'))
 	process = json.loads(request.args.get('process'))
-
+	extractType = plotInfo["signalType"]
+	newOrigin = plotInfo["newOrigin"]
 	yAxisValInd = 0
 	yAxisKey = myExtendMeasurement.yAxisKey
 	if yAxisKey != None:
-		if plotInfo["selectType"] == "y_index":
-			yAxisValInd = int(plotInfo["selectValue"])
+		if plotInfo["yUnit"] == "y_index":
+			yAxisValInd = int(plotInfo["ySelection"])
 		else:
 			yAxis = myExtendMeasurement.independentVars[yAxisKey]
-			yAxisValInd = find_nearestInd(yAxis,float(plotInfo["selectValue"]))
-
-	xAxisKey = myExtendMeasurement.xAxisKey
+			yAxisValInd = find_nearestInd(yAxis,float(plotInfo["ySelection"]))
 
 	print("yAxis value Index: ", yAxisValInd)
-
-
-	plotData = {}
-
-	#print(plotData)
-
-
-	def plot_1D_raw () :
-		# plot raw data
-		rawDataComplex = myExtendMeasurement.rawData["iqSignal"][yAxisValInd]
-		plotData = {
-			"I": rawDataComplex.real,
-			"Q": rawDataComplex.imag,
-			"Amplitude": abs(rawDataComplex),
-			"Phase": angle(rawDataComplex),
-		}
-		return plotData
-	def plot_1D_fit () :
-		# plot raw data
-		try:
-			fittedDataComplex = myQuantification.fitCurve["iqSignal"][yAxisValInd]
-			plotData = {
-				"I": fittedDataComplex.real,
-				"Q": fittedDataComplex.imag,
-				"Amplitude": abs(fittedDataComplex),
-				"Phase": angle(fittedDataComplex),
-			}
-		except:
-			plotData = {
-				"I": [],
-				"Q": [],
-				"Amplitude": [],
-				"Phase": [],
-			}
-		return plotData
-
-	plotFunction = {
-		'raw': plot_1D_raw,
-		'fitted': plot_1D_fit,
-	}
-	return json.dumps(plotFunction[process](), cls=NumpyEncoder)
+	iqData = array([])
+	if process == "raw":
+		iqData = myExtendMeasurement.rawData["iqSignal"][yAxisValInd]
+	elif process =="fitted":
+		iqData = myQuantification.fitCurve["iqSignal"][yAxisValInd]
+	newData = convert_IQtoFittedValue(iqData,extractType,newOrigin)
+	return json.dumps(newData, cls=NumpyEncoder)
 
 
 @bp.route('/common_fitting/getJson_fitParaPlot',methods=['POST','GET'])
@@ -583,8 +547,9 @@ def ComFit_exportMat_fitPara():
 		status = "Fail"
 	return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
 
+# endregion
 
-### populationDistribution part
+# region: populationDistribution:
 
 @bp.route('/populationDistribution/load',methods=['POST','GET'])
 def PopDis_load():
@@ -752,13 +717,11 @@ def PopDis_exportMat_fitPara():
 	except:
 		status = "Fail"
 	return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
-
-print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
-
 		#stage, prev = clocker(0, agenda="2D Fresp")
 		#stage, prev = clocker(stage, prev, agenda="2D Fresp") # Marking time
+# endregion
 
-### autoflux part
+# region autoflux
 @bp.route('/autoflux/load',methods=['POST','GET'])
 def Auflux_load():
 	myExtendMeasurement = benchmarkDict[session['user_name']]
@@ -804,7 +767,9 @@ def Auflux_getJson_fitParaPlot():
 	myQuantification.do_analysis()
 	return json.dumps("finished", cls=NumpyEncoder)
 
-### readout_fidelity part
+# endregion
+
+# region: readout_fidelity
 @bp.route('/fidelity/load',methods=['POST','GET'])
 def Readout_fidelity_load():
 	myExtendMeasurement = benchmarkDict[session['user_name']]
@@ -861,3 +826,7 @@ def Readout_fidelity_getJson_Pretrain():
 	# myQuantification.fitParameters = fitParameters
 	myQuantification.pre_analytic()
 	return json.dumps("A", cls=NumpyEncoder)
+
+# endregion
+
+print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

@@ -8,6 +8,7 @@
 <body class="benchmark">
     <div class="qestimatecontent">
         <h3>Common Fitting Functions</h3>
+        <div id="common_fitting-fitting-progress"></div>
 
         <div class="flex-allPara">
 
@@ -18,10 +19,14 @@
             <div class="allFitPara" id="common_fitting-plot">
                 <button id="common_fitting-plot2D-button" type="submit">2D Plot</button>
                 <label>Z signal type:</label>
-                <select id="common_fitting-plot2D-zSelector">
+                <select id="common_fitting-plot2D-signalSelector">
                     <option value="amp">Amplitude</option>
                     <option value="phase">Phase</option>
+                    <option value="projected">Projected distance</option>
                 </select>
+                <label>new origin:</label>
+                <input type="text" id="common_fitting-newOrigin">
+
                 <label>y unit:</label>
                 <select id="common_fitting-plot2D-ySelector">
                     <option value="y_index">Index</option>
@@ -39,16 +44,10 @@
                     <option value="RabiOscillation">Rabi Oscillation</option>
                 </select>
 
-                <label>Signal type:</label>
-                <select id="common_fitting-signalSelector">
-                    <option value="amp">Amplitude</option>
-                    <option value="phase">Phase</option>
-                    <option value="indpendent">IQ plane</option>
-                </select>
-
                 <div class="fitPara" id="common_fitting-parameters">
 
                 </div> 
+
                 <label>x range:</label>
                 <input type="text" id="common_fitting-fitRange">
 
