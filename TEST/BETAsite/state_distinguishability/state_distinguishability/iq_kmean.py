@@ -19,13 +19,30 @@ def get_population( iqCenter:ndarray, iqComplex:ndarray ):
     return mean(clusterData.reshape(iqComplex.shape),axis=iqComplex.ndim-1)
 
 def complex_to_vector( complexArray:ndarray, vectorShape="V" ):
+    """
+    complexArray is array of complex number which dimension is N, 
+    the real and image part will becom two element in new dimension k.
+    The dimension of the return array is N+1.
+    Maximum dimension of 'complexArray' is 2 (i,j)
+    i is the first dimension axis, j is the second.
+
+    vectorShape define the index of new dimension k
+    "V" k put at N th dimention
+    "H" k put at N-1 th dimention
+
+    """
     transArr = array([complexArray.real,complexArray.imag])
+    arrayDim = complexArray.ndim
     if vectorShape == "V":
+        if arrayDim == 2:
+            return transArr.transpose((1,0,2))
+        if arrayDim == 1:
+            return transArr.transpose((0,1))
         return transArr
     elif "H":
-        if complexArray.ndim == 2:
+        if arrayDim == 2:
             return transArr.transpose((1,2,0))
-        if complexArray.ndim == 1:
+        if arrayDim == 1:
             return transArr.transpose((1,0))
 
 def vector_to_complex( vectorArray ):
@@ -44,16 +61,17 @@ def get_projectedIQVector_byTwoPt( projComplex, iqComplex ):
     projectedVector = projectionMatrix@shiftedIQVector
     return projectedVector
 
-def get_projectedIQDistance_byTwoPt( projComplex, iqComplex ):
+def get_projectedIQDistance_byTwoPt( projComplex:ndarray, iqComplex:ndarray ):
     refPoint = projComplex[1]
     shiftedIQComplex = iqComplex-refPoint
     relativeProjComplex = projComplex[0]-refPoint
     projectionVector = complex_to_vector(array([relativeProjComplex]),"H")
     shiftedIQVector = complex_to_vector(shiftedIQComplex,"V")
+    #print(projectionVector.shape,shiftedIQVector.shape)
     projectedDistance = projectionVector@shiftedIQVector/abs(relativeProjComplex)
     return projectedDistance[0]
 
-def get_simulationData(measurementPts, excitedProbability, iqPosition, sigma):
+def get_simulationData(measurementPts, excitedProbability, iqPosition, sigma)->ndarray:
     excPts = int(measurementPts*excitedProbability)
     groundProbability = 1-excitedProbability
     groundPts = int(measurementPts*groundProbability)
@@ -126,18 +144,19 @@ if __name__ == "__main__":
     # print(complex_to_vector(testComplex))
     # print(complex_to_vector(testComplex, vectorShape="H"))
 
-
     # testComplex = array([0+1j,2+3j])
     # print(testComplex)
     # print(complex_to_vector(testComplex))
     # print(complex_to_vector(testComplex, vectorShape="H"))
     # testComplex = array([[1,2],[3,4]])
     # print(vector_to_complex(testComplex))
-    data = array([get_simulationData(measurementPts,0.5,simQICenter,sigma),get_simulationData(measurementPts,0.25,simQICenter,sigma)])
-    #data = get_simulationData(measurementPts,0.7,simQICenter,sigma)
-
+    data = array([get_simulationData(measurementPts,0.5,simQICenter,sigma),get_simulationData(measurementPts,0.25,simQICenter,sigma),get_simulationData(measurementPts,0.5,simQICenter,sigma)])
+    #data = get_simulationData(measurementPts,0.5,simQICenter,sigma)
+    print(simQICenter.shape, data.shape)
+    nData = get_projectedIQDistance_byTwoPt(simQICenter,data)
+    print(nData.shape)
     #print(data)
-    print(get_population(simQICenter,data))
+    #print(get_population(simQICenter,data))
     #population_test(simCenter,measurementPts,ProbabilityRange,statisticTest=20)
     
     

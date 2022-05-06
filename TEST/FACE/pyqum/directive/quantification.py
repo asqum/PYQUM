@@ -627,12 +627,17 @@ def twoGaussian_func (x, *p):
 	return gaussian_func(x,exPars)+gaussian_func(x,gndPars)
 
 
-def func_ExpDecay ( x, p ):
-	# p: amp, tau, offset
+def func_ExpDecay ( x, *p ):
+	"""
+	p: 0:amp, 1:tau, 2:offset
+	"""
 	return p[0]*exp(-x/p[1])+p[2]
 
-def func_DampingOscillation ( x, p):
-	# p: amp, tau, freq, phi, offset
+def func_DampingOscillation ( x, *p ):
+	"""
+	p: 0:amp, 1:tau, 2:freq, 3:phi, 4:offset
+	"""
+	
 	return p[0]*exp(-x/p[1])*cos(2*pi*p[2]*x+p[3])+p[4]
 
 def generate_percentage(iqData):
@@ -645,14 +650,20 @@ def generate_percentage(iqData):
 	return percentage
 
 def convert_IQtoFittedValue ( iqData:ndarray, fittedSignalType:str, newOrigin:complex=0) -> dict:
+
 	if fittedSignalType =="amp":
 		return abs(iqData)
 	elif fittedSignalType =="phase":
 		return angle(iqData)
+	elif fittedSignalType =="i":
+		return iqData.real
+	elif fittedSignalType =="q":
+		return iqData.imag
 	elif fittedSignalType =="projected":
-		return get_projectedIQDistance_byTwoPt(iqData,array([newOrigin,mean(iqData)]))
+		return get_projectedIQDistance_byTwoPt(array([complex(newOrigin),mean(iqData)]),iqData)
 	elif fittedSignalType =="percentage":
 		return generate_percentage(iqData)
+
 
 def guess_ExpDecay ( xdata:ndarray, ydata:ndarray ) ->ndarray :
 	# Guess initial value
@@ -663,7 +674,7 @@ def guess_DampingOscillation ( xdata:ndarray, ydata:ndarray ) ->ndarray :
 	# Guess initial value
 	timeStep= xdata[1]-xdata[0]
 	freqAxis= fftfreq(ydata.shape[-1],timeStep)		
-	# p: 0:amp, 1:tau, 2:omega, 3:phi, 4:offset
+	# p: 0:amp, 1:tau, 2:frequency, 3:phi, 4:offset
 	freqInd = argmax(fft(ydata-mean(ydata)))
 	guess = array([ydata[0]-mean(ydata),xdata[-1]/3.,abs(freqAxis[freqInd]),0,mean(ydata)])
 	return guess
@@ -686,7 +697,7 @@ class Common_fitting():
 
 
 
-	def _init_fitResult( self, setNumber:int, paraNames=[] ):
+	def _init_fitResult( self, setNumber:int=0, paraNames=[] ):
 		"""
 		Initialized the memory for fitting result
 		"""
@@ -713,13 +724,13 @@ class Common_fitting():
 			self.fitResult[rk]["error"] = nanArray.copy()
 
 
-	def _init_fitCurve( self, setNumber:int, xDataLen:int ):
+	def _init_fitCurve( self, setNumber:int=0, xDataLen:int=0 ):
 		self.fitCurve = {
 			"x": empty([xDataLen]),
 			"iqSignal": empty([setNumber,xDataLen], dtype=complex),
 		}
 
-	def _init_convertedData( self, setNumber:int, xDataLen:int ):
+	def _init_convertedData( self, setNumber:int=0, xDataLen:int=0 ):
 		self.convertedData = {
 			"x": empty([xDataLen]),
 			"iqSignal": empty([setNumber,xDataLen], dtype=complex),
@@ -741,11 +752,11 @@ class Common_fitting():
 		else:
 			try:
 			# convert string to float list
-				fitRange = [float(k) for k in fitParameters["range"].split(",")]
-				fitParameters["range"] = fitRange
+				fitRange = [float(k) for k in fitParameters["x_range"].split(",")]
+				fitParameters["x_range"] = fitRange
 			except:
 				xData= self.quantificationObj.rawData["x"]
-				fitParameters["range"] =[amin(xData),amax(xData)]
+				fitParameters["x_range"] =[amin(xData),amax(xData)]
 				
 		self._fitParameters = fitParameters
 
@@ -753,32 +764,35 @@ class Common_fitting():
 
 
 	def do_analysis( self ):
-
+		"""
+		rawXData directly get from Extendmeasurement
+		xdata for fitting (after mask)
+		"""
 		qObj = self.quantificationObj
 		# Include fitting section Info
-		fitParas = self.fitParameters
+		fitParas = self._fitParameters
 		funcName = fitParas["function"]
 		fRange = fitParas["x_range"]
 		signalType = fitParas["signal_type"]
 		newOrigin = fitParas["new_origin"]
-		
-
+		# Get raw data
 		rawIQData = qObj.rawData["iqSignal"]
-		xDataLen = qObj.rawData["x"].shape[0]
+		rawXData = qObj.rawData["x"]
 		# Get 1D or 2D data to self.rawData
 		if qObj.yAxisKey == None:
 			setNumber = 1
 		else:
-			setNumber = qObj.independentVars[qObj.yAxisKey].shape[0]
-		
-		self._init_fitCurve(setNumber,xDataLen)
-		self._init_fitResult(setNumber)
+			setNumber = qObj.independentVars[qObj.yAxisKey].shape[-1]
 
 		# Create boolean array for mask the IQ data by fitting range
-		fitRangeBoolean = logical_and(xdata>=fRange[0],xdata<=fRange[1]) 
+		fitRangeBoolean = logical_and(rawXData>=fRange[0],rawXData<=fRange[1]) 
 		# Get xdata for fit function f(x)
 		xdata = qObj.rawData["x"][fitRangeBoolean]
+		xDataLen = xdata.shape[-1]
 
+		self._init_fitCurve(setNumber,xDataLen)
+		self._init_convertedData(setNumber,xDataLen)
+		self._init_fitResult(setNumber)
 		# store xdata for plot
 		self.fitCurve["x"] = xdata
 		self.convertedData["x"] = xdata
@@ -799,7 +813,7 @@ class Common_fitting():
 
 
 			# Convert raw data from complex number to real number and mask data by selected range for fitting
-			yData=convert_IQtoFittedValue(rawIQData[i][fitRangeBoolean], signalType, newOrigin=newOrigin )
+			yData = convert_IQtoFittedValue(rawIQData[i][fitRangeBoolean], signalType, newOrigin=newOrigin )
 			
 			# Store converted data
 			self.convertedData["iqSignal"][i] = yData
@@ -811,7 +825,7 @@ class Common_fitting():
 			# Fit
 				popt,pcov=curve_fit(fitFunc[funcName],xdata,yData,p0=guess)
 				fitSuccess = True
-			#print("Good fitting")
+				print("Good fitting")
 
 			except:
 				fitSuccess = False
@@ -819,7 +833,7 @@ class Common_fitting():
 
 			if fitSuccess:
 				# Store fittng curve
-				self.fitCurve["iqSignal"][i] = fitFunc[funcName]( xdata, popt )
+				self.fitCurve["iqSignal"][i] = fitFunc[funcName]( xdata, *popt )
 				perr = sqrt(diag(pcov))
 
 				for ki, k in enumerate(self.paraNames):

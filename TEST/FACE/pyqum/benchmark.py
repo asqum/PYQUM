@@ -431,7 +431,6 @@ def ComFit_getJson_plotAxis():
 	yAxisKey = myExtendMeasurement.yAxisKey
 
 	axisType = json.loads(request.args.get('plot1D_axisType'))
-	print("Axis type: ", axisType)
 	def plot_yAxis_index():
 		if yAxisKey != None:
 			plotData= arange( myExtendMeasurement.independentVars[yAxisKey].shape[0] )
@@ -451,9 +450,11 @@ def ComFit_getJson_plotAxis():
 		return plotData
 
 	def plot_xAxis_fit():
-		maskArray= get_maskArray(myExtendMeasurement.rawData["x"],myQuantification.fitParameters["range"])
-		plotData= myExtendMeasurement.rawData["x"][maskArray]
-		return plotData
+		try:
+			maskArray= get_maskArray(myExtendMeasurement.rawData["x"],myQuantification.fitParameters["range"])
+			return myExtendMeasurement.rawData["x"][maskArray]
+		except:
+			return array([])
 
 	plotFunction = {
 		'y_index': plot_yAxis_index,
@@ -483,11 +484,13 @@ def ComFit_getJson_plot2D():
 def ComFit_getJson_plot1D():
 	myExtendMeasurement = benchmarkDict[session['user_name']]
 	myQuantification = QDict[session['user_name']] 
-
+	# Get argument from JS
 	plotInfo = json.loads(request.args.get('plotInfo'))
 	process = json.loads(request.args.get('process'))
 	extractType = plotInfo["signalType"]
-	newOrigin = plotInfo["newOrigin"]
+	newOrigin = complex(plotInfo["newOrigin"].replace(" ",""))
+
+	# Get index of N-2th dimension
 	yAxisValInd = 0
 	yAxisKey = myExtendMeasurement.yAxisKey
 	if yAxisKey != None:
@@ -497,12 +500,16 @@ def ComFit_getJson_plot1D():
 			yAxis = myExtendMeasurement.independentVars[yAxisKey]
 			yAxisValInd = find_nearestInd(yAxis,float(plotInfo["ySelection"]))
 
-	print("yAxis value Index: ", yAxisValInd)
+	#print("yAxis value Index: ", yAxisValInd)
 	iqData = array([])
 	if process == "raw":
 		iqData = myExtendMeasurement.rawData["iqSignal"][yAxisValInd]
 	elif process =="fitted":
-		iqData = myQuantification.fitCurve["iqSignal"][yAxisValInd]
+		try:
+			iqData = myQuantification.fitCurve["iqSignal"][yAxisValInd]
+		except:
+			iqData = array([])
+	#print(iqData.shape,extractType,newOrigin)
 	newData = convert_IQtoFittedValue(iqData,extractType,newOrigin)
 	return json.dumps(newData, cls=NumpyEncoder)
 
@@ -610,9 +617,11 @@ def PopDis_getJson_plotAxis():
 		return plotData
 
 	def plot_xAxis_fit():
-		maskArray= get_maskArray(myExtendMeasurement.rawData["x"],myQuantification.fitParameters["range"])
-		plotData= myExtendMeasurement.rawData["x"][maskArray]
-		return plotData
+		try:
+			maskArray= get_maskArray(myExtendMeasurement.rawData["x"],myQuantification.fitParameters["range"])
+			return myExtendMeasurement.rawData["x"][maskArray]
+		except:
+			return array([])
 
 	plotFunction = {
 		'y_index': plot_yAxis_index,

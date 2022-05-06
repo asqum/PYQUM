@@ -23,9 +23,12 @@
                     <option value="amp">Amplitude</option>
                     <option value="phase">Phase</option>
                     <option value="projected">Projected distance</option>
+                    <option value="i">I</option>
+                    <option value="q">Q</option>
+
                 </select>
                 <label>new origin:</label>
-                <input type="text" id="common_fitting-newOrigin">
+                <input type="text" id="common_fitting-newOrigin" value="0">
 
                 <label>y unit:</label>
                 <select id="common_fitting-plot2D-ySelector">
@@ -34,7 +37,7 @@
                 </select>
                 <button id="common_fitting-plot1D-button" type="submit">1D Plot</button>
                 <label>y index or value:</label>
-                <input type="text" id="common_fitting-plot1D-y_value">
+                <input type="text" id="common_fitting-plot1D-y_value" value="0">
             </div>
 
             <div class="allFitPara" id="common_fitting-allParamater">
@@ -69,8 +72,8 @@
                 <div id="common_fitting-plot2D-fitOverview"></div>
             </div>
             <div class="plot1D-area">
-                <div class="plotAmpPha" id="common_fitting-plot1D-ampPhase"></div>
-                <div class="plotIQ" id="common_fitting-plot1D-IQ"></div>
+                <div id="common_fitting-plot1D-costumX"></div>
+                <div id="common_fitting-plot1D-IQ"></div>
             </div>
         </div>
 

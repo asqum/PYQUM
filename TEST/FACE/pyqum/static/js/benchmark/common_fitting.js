@@ -285,7 +285,7 @@ function get_plot2D(){
     console.log( "Plot data" );
 
     let plotID_2D = "common_fitting-plot2D-rawOverview";
-    let plotID_1D_ampPhase = "common_fitting-plot1D-ampPhase";
+    let plotID_1D_costumX = "common_fitting-plot1D-costumX";
     let plotID_1D_IQ = "common_fitting-plot1D-IQ";
     $.ajaxSettings.async = false;
     let htmlInfo=get_htmlInfo_python();
@@ -342,18 +342,17 @@ function get_plot2D(){
 
     plot2D(plotData, axisKeys, plotID_2D);
     document.getElementById(plotID_2D).style.display = "block";
-    document.getElementById(plotID_1D_ampPhase).style.display = "none";
+    document.getElementById(plotID_1D_costumX).style.display = "none";
     document.getElementById(plotID_1D_IQ).style.display = "none";
 
     $.ajaxSettings.async = true;
 }
 
 function get_plot1D(){
-    console.log( "Plot data" );
 
     let plotID_2D = "common_fitting-plot2D-rawOverview";
-    // let plotID_1D_ampPhase = "common_fitting-plot1D-ampPhase";
     let plotID_1D_IQ = "common_fitting-plot1D-IQ";
+    let plotID_1D_costumX = "common_fitting-plot1D-costumX";
     $.ajaxSettings.async = false;
     let htmlInfo=get_htmlInfo_python();
 
@@ -368,71 +367,101 @@ function get_plot1D(){
         signalType:signalType,
         newOrigin:newOrigin,
     };
-    console.log( "plotInfo" );
-    console.log( plotInfo );
-    let plotKey = {
+
+    let plotKeyCostumX = {
         x:["xData_raw","xData_fit"],
-        y:["yData_raw","yData_fit"]
+        y:["yData_raw","yData_fit"],
+        yErr:[]
     }
-    let plotData = {};
+    let plotDataCostumX = {};
     //Get x axis
     $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value'), },
         function (data) {
-        console.log( "Get x axis" );
-        plotData["xData_raw"] = data;
+        plotDataCostumX["xData_raw"] = data;
     }).done(function(data) {
         // $('#qFactor-fit-button').show();
-        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
     }).fail(function(jqxhr, textStatus, error){
-        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
     });
 
     //Get fitted x axis
     $.getJSON( '/benchmark/common_fitting/getJson_plotAxis',
     {   plot1D_axisType: JSON.stringify('x_value_fit'), },
         function (data) {
-        plotData["xData_fit"] = data;
+        plotDataCostumX["xData_fit"] = data;
     }).done(function(data) {
         // $('#qFactor-fit-button').show();
-        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
     }).fail(function(jqxhr, textStatus, error){
-        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
     });
-    //Get raw signal
+    //Get raw extract x data
     $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
     {   process: JSON.stringify("raw"), 
         plotInfo: JSON.stringify(plotInfo), },
         function (data) {
-        console.log( "Get raw data" );
-        plotData["yData_raw"] = data;
+        plotDataCostumX["yData_raw"] = data;
     }).done(function(data) {
-        // $('#qFactor-fit-button').show();
-        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
     }).fail(function(jqxhr, textStatus, error){
-        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
     });
 
-    //Get fitted signal
+    //Get fitted extract x data
     $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
     {   process: JSON.stringify("fitted"), 
         plotInfo: JSON.stringify(plotInfo), },
         function (data) {
-        console.log( "Get fitted data" );
-        plotData["yData_fit"] = data;
+        plotDataCostumX["yData_fit"] = data;
     }).done(function(data) {
-        // $('#qFactor-fit-button').show();
-        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
     }).fail(function(jqxhr, textStatus, error){
-        $('common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
     });    
     console.log( "Plot data" );
+    console.log( plotKeyCostumX );
+    console.log( plotDataCostumX );
+    plot1D(plotDataCostumX, plotKeyCostumX, plotID_1D_costumX);
+    document.getElementById(plotID_1D_costumX).style.display = "block";
 
-    // console.log( plotData_AmpPhase );
-    // console.log( plotData_IQ );
 
-    plot1D(plotData, plotKey, plotID_1D_IQ);
+    // Get data for plot IQ plane
+    let plotKeyIQ = {
+        x:["iData_raw"],
+        y:["qData_raw"],
+        yErr:[]
+    };
+    let plotDataIQ = {};
+    //Get raw extract i 
+    plotInfo["signalType"] = 'i';
+    $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
+    {   process: JSON.stringify("raw"), 
+        plotInfo: JSON.stringify(plotInfo), },
+        function (data) {
+        plotDataIQ["iData_raw"] = data;
+    }).done(function(data) {
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+    }).fail(function(jqxhr, textStatus, error){
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
+    });
+
+    //Get raw extract q 
+    plotInfo["signalType"] = 'q';
+    $.getJSON( '/benchmark/common_fitting/getJson_plot1D',
+    {   process: JSON.stringify("raw"), 
+        plotInfo: JSON.stringify(plotInfo), },
+        function (data) {
+        plotDataIQ["qData_raw"] = data;
+    }).done(function(data) {
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPLETE"));
+    }).fail(function(jqxhr, textStatus, error){
+        $('#common_fitting-fitting-progress').empty().append($('<h4 style="color: red;"></h4>').text("Oops.. Something wrong (getJson_plotAxis)!"));
+    });   
+    plot1D(plotDataIQ, plotKeyIQ, plotID_1D_IQ);
     document.getElementById(plotID_1D_IQ).style.display = "block";
+
     document.getElementById(plotID_2D).style.display = "none";
 
     $.ajaxSettings.async = true;
@@ -444,9 +473,11 @@ function fit_data(){
     let analysisIndex = get_common_fitting_selectInfo("common_fitting");
 
     let fitFunc = document.getElementById("common_fitting-functionSelector").value;
-    let signalType = document.getElementById("common_fitting-signalSelector").value;
+    let signalType = document.getElementById("common_fitting-plot2D-signalSelector").value;
 
     let fitRange = document.getElementById("common_fitting-fitRange").value;
+    let newOrigin = document.getElementById("common_fitting-newOrigin").value;
+
     // let initValue = document.getElementById("common_fitting-parameterInitValues").value;
 
     switch (fitFunc){
@@ -463,7 +494,8 @@ function fit_data(){
     let fitParameters = {
         function: fitFunc,
         signal_type: signalType,
-        range: fitRange,
+        x_range: fitRange,
+        new_origin:newOrigin,
     }
     
     console.log(fitParameters);
