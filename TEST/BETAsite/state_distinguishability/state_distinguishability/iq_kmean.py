@@ -127,6 +127,7 @@ def population_test(simCenter,measurementPts,ProbabilityRange,statisticTest=20):
     plt.figure(1)
     plt.errorbar( ProbabilityRange, errorDistanceMean, yerr=errorDistanceSTD, fmt="ro" )
     plt.show()
+    
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import numpy as np

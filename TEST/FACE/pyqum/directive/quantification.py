@@ -16,7 +16,7 @@ from numpy import cdouble, ndarray, int64, float64
 # Constant
 from numpy import pi, nan
 # Math function
-from numpy import mean, average, arctan2, sqrt, abs, exp, angle, arctan, tan, diag, cos, sin, std, var
+from numpy import mean, average, arctan2, sqrt, abs, exp, angle, arctan, tan, diag, cos, sin, std, var, cov
 # Logic
 from numpy import logical_and
 # Statistic
@@ -561,7 +561,7 @@ class PopulationDistribution():
 			self.b = self.loaded_model.cluster_centers_[0][1]-self.k*self.loaded_model.cluster_centers_[0][0]
 			self.b1 = self.loaded_model.cluster_centers_[0][1]+1/self.k*self.loaded_model.cluster_centers_[0][0]
 			self.b2 = self.loaded_model.cluster_centers_[1][1]+1/self.k*self.loaded_model.cluster_centers_[1][0]
-			self.line = np.linspace(self.i1.min(), self.i1.max(), 1000)
+			self.line = linspace(self.i1.min(), self.i1.max(), 1000)
 			self.ax.plot(self.line, self.k*self.line+self.b,color = "k")
 			self.ax.plot(self.line, -1/self.k*self.line+self.b1,color = "r")
 			self.ax.plot(self.line, -1/self.k*self.line+self.b2,color = "r")
@@ -577,9 +577,9 @@ class PopulationDistribution():
 				self.ax.scatter(self.loaded_model.cluster_centers_[i][0],self.loaded_model.cluster_centers_[i][1],color = "r")
 
 			for i in self.u_labels:
-				self.cov = np.cov(self.data.T[0][self.label == i], self.data.T[1][self.label == i])
-				print("{:<10}".format("The I-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(np.sqrt(self.cov[0][0])))
-				print("{:<10}".format("The Q-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(np.sqrt(self.cov[1][1])))
+				self.cov = cov(self.data.T[0][self.label == i], self.data.T[1][self.label == i])
+				print("{:<10}".format("The I-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(sqrt(self.cov[0][0])))
+				print("{:<10}".format("The Q-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(sqrt(self.cov[1][1])))
 
 			self.ax.legend()
 			plt.title("readout_fidelity")
@@ -648,9 +648,9 @@ def func_DampingOscillation ( x, *p ):
 def generate_percentage(iqData):
 	sav_file = ".sav"
 	loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_kmeans_model'+sav_file, 'rb'))
-	data = np.stack((iqData.real,iqData.imag), axis=1)
+	data = stack((iqData.real,iqData.imag), axis=1)
 	label = loaded_model.predict(data)
-	unique, counts = np.unique(label, return_counts=True)
+	unique, counts = unique(label, return_counts=True)
 	percentage = counts[0]/(counts[0]+counts[1])
 	return percentage
 
@@ -992,24 +992,24 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
 	if x.size != y.size:
 		raise ValueError("x and y must be the same size")
 
-	cov = np.cov(x, y)
-	pearson = cov[0, 1]/np.sqrt(cov[0, 0] * cov[1, 1])
+	cov = cov(x, y)
+	pearson = cov[0, 1]/sqrt(cov[0, 0] * cov[1, 1])
 	# Using a special case to obtain the eigenvalues of this
 	# two-dimensionl dataset.
-	ell_radius_x = np.sqrt(1 + pearson)
-	ell_radius_y = np.sqrt(1 - pearson)
+	ell_radius_x = sqrt(1 + pearson)
+	ell_radius_y = sqrt(1 - pearson)
 	ellipse = Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
 					facecolor=facecolor, **kwargs)
 
 	# Calculating the stdandard deviation of x from
 	# the squareroot of the variance and multiplying
 	# with the given number of standard deviations.
-	scale_x = np.sqrt(cov[0, 0]) * n_std
-	mean_x = np.mean(x)
+	scale_x = sqrt(cov[0, 0]) * n_std
+	mean_x = mean(x)
 
 	# calculating the stdandard deviation of y ...
-	scale_y = np.sqrt(cov[1, 1]) * n_std
-	mean_y = np.mean(y)
+	scale_y = sqrt(cov[1, 1]) * n_std
+	mean_y = mean(y)
 
 	transf = transforms.Affine2D() \
 		.rotate_deg(45) \
@@ -1063,7 +1063,7 @@ class Readout_fidelity():
 			self.b = self.loaded_model.cluster_centers_[0][1]-self.k*self.loaded_model.cluster_centers_[0][0]
 			self.b1 = self.loaded_model.cluster_centers_[0][1]+1/self.k*self.loaded_model.cluster_centers_[0][0]
 			self.b2 = self.loaded_model.cluster_centers_[1][1]+1/self.k*self.loaded_model.cluster_centers_[1][0]
-			self.line = np.linspace(self.i1.min(), self.i1.max(), 1000)
+			self.line = linspace(self.i1.min(), self.i1.max(), 1000)
 			self.ax.plot(self.line, self.k*self.line+self.b,color = "k")
 			self.ax.plot(self.line, -1/self.k*self.line+self.b1,color = "r")
 			self.ax.plot(self.line, -1/self.k*self.line+self.b2,color = "r")
@@ -1079,9 +1079,9 @@ class Readout_fidelity():
 				self.ax.scatter(self.loaded_model.cluster_centers_[i][0],self.loaded_model.cluster_centers_[i][1],color = "r")
 
 			for i in self.u_labels:
-				self.cov = np.cov(self.data.T[0][self.label == i], self.data.T[1][self.label == i])
-				print("{:<10}".format("The I-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(np.sqrt(self.cov[0][0])))
-				print("{:<10}".format("The Q-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(np.sqrt(self.cov[1][1])))
+				self.cov = cov(self.data.T[0][self.label == i], self.data.T[1][self.label == i])
+				print("{:<10}".format("The I-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(sqrt(self.cov[0][0])))
+				print("{:<10}".format("The Q-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(sqrt(self.cov[1][1])))
 
 			self.ax.legend()
 			plt.title("readout_fidelity")
