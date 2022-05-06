@@ -635,6 +635,15 @@ def func_DampingOscillation ( x, p):
 	# p: amp, tau, freq, phi, offset
 	return p[0]*exp(-x/p[1])*cos(2*pi*p[2]*x+p[3])+p[4]
 
+def generate_percentage(iqData):
+	sav_file = ".sav"
+	loaded_model = pickle.load(open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_kmeans_model'+sav_file, 'rb'))
+	data = np.stack((iqData.real,iqData.imag), axis=1)
+	label = loaded_model.predict(data)
+	unique, counts = np.unique(label, return_counts=True)
+	percentage = counts[0]/(counts[0]+counts[1])
+	return percentage
+
 def convert_IQtoFittedValue ( iqData:ndarray, fittedSignalType:str, newOrigin:complex=0) -> dict:
 	if fittedSignalType =="amp":
 		return abs(iqData)
@@ -642,6 +651,8 @@ def convert_IQtoFittedValue ( iqData:ndarray, fittedSignalType:str, newOrigin:co
 		return angle(iqData)
 	elif fittedSignalType =="projected":
 		return get_projectedIQDistance_byTwoPt(iqData,array([newOrigin,mean(iqData)]))
+	elif fittedSignalType =="percentage":
+		return generate_percentage(iqData)
 
 def guess_ExpDecay ( xdata:ndarray, ydata:ndarray ) ->ndarray :
 	# Guess initial value
