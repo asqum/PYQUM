@@ -9,15 +9,23 @@ from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
 from pyqum.instrument.logger import address, get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, measurement, qout, jobsearch, get_json_measurementinfo, set_mat_analysis
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, isnan, abs, empty, moveaxis, reshape, expand_dims, logical_and, nan, arange, exp, amax, amin, diag, concatenate, append, angle, argmax, linspace, arctan, tan
-from numpy.fft import fft, fftfreq
-from scipy.odr import *
-# Numpy series
-# Class
-from numpy import cdouble, ndarray
-# Constant
-from numpy import pi
 
+# Numpy series
+# Type
+from numpy import cdouble, ndarray, int64, float64
+# Constant
+from numpy import pi, nan
+# Math function
+from numpy import mean, average, arctan2, sqrt, abs, exp, angle, arctan, tan, diag, cos, sin, std, var
+# Logic
+from numpy import logical_and
+# Statistic
+from numpy import amax, amin, argmax, isnan, histogram, unique
+# Array
+from numpy import array, linspace, arange, zeros, ones, empty, append, concatenate, stack, meshgrid
+from numpy import shape, reshape, moveaxis, expand_dims, newaxis, transpose
+
+from numpy.fft import fft, fftfreq
 
 # Json to Javascrpt
 import json
@@ -25,13 +33,11 @@ import json
 # Error handling
 from contextlib import suppress
 
-# Scientific
-from scipy import constants as cnst
+# scipy
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
-
-#from si_prefix import si_format, si_parse
-from numpy import cos, sin, polyfit, poly1d, polyval, array, roots, isreal, sqrt, mean, std, histogram, average, newaxis, float64, any, var, transpose
+from scipy.odr import *
+from scipy.io import savemat
 
 # Load instruments
 # Please Delete this line in another branch (to: @Jackie)
@@ -45,17 +51,16 @@ from pyqum.directive.tools.utilities import plotting, save_load, Watt2dBm, dBm2W
 from pyqum.directive.tools.circlefit import circlefit
 from pyqum.directive.tools.calibration import calibration
 from pyqum.directive.tools.not_sin import *
-from sklearn.metrics import r2_score
+
 import pandas as pd
-# Save file
-from scipy.io import savemat
+
 # fidelity
 from matplotlib.patches import Ellipse
 from matplotlib import transforms
 from sklearn.cluster import KMeans
 from sklearn.svm import SVC
-from numpy import stack, unique, meshgrid
 import pickle
+
 from state_distinguishability.iq_kmean import *
 
 class ExtendMeasurement ():
