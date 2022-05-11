@@ -655,7 +655,16 @@ def generate_percentage(iqData):
 	return percentage
 
 def convert_IQtoFittedValue ( iqData:ndarray, fittedSignalType:str, newOrigin:complex=0) -> dict:
-
+	"""
+	Extract real number from complex number array (1D or 2D).
+	fittedSignalType arg:
+	amp : absolute value
+	phase : angle
+	i : real part
+	q : image part
+	projected: Projected distance to the line of mean value and new origin point.
+	percentage: Probability.
+	"""
 	if fittedSignalType =="amp":
 		return abs(iqData)
 	elif fittedSignalType =="phase":
