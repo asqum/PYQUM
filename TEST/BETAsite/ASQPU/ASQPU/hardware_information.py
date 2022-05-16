@@ -8,6 +8,8 @@ from numpy import linspace, arange, shape
 from numpy import exp
 # Numpy constant
 from numpy import pi
+
+from hardware_information import PhysicalChannel
 """
 Hardware level:
 instrument > device
@@ -16,7 +18,7 @@ Software level:
 QPU > { PhysicalChannel, PhysicalQubit }
 
 """
-
+PhysicalCHList = List[PhysicalChannel]
 
 class PhysicalChannel():
     
@@ -35,7 +37,7 @@ class PhysicalChannel():
         Register the devise 'deviceIDs' with type 'deviceType' in to this physicalChannel\n
         'deviceType' arg = "DAC","ADC","SG","DC","VNA","SA","IQMixer","DRWiring"
         """
-        print(f"Add devices {deviceIDs} with type {deviceType} to physical channel {self.id}.")
+        #print(f"Add devices {deviceIDs} with type {deviceType} to physical channel {self.id}.")
         if deviceType in PhysicalChannel.deviceTypes:
             if deviceType not in self.device.keys():
                 self.device[deviceType]=[]
@@ -50,11 +52,16 @@ class PhysicalChannel():
         else: 
             print(f"Can't recognize device type {deviceType}.")
 
-class PhysicalQubit():
+class PhysicalSingleTransmon():
+    """
+    This class is used for record information of a Qubit-Cavity coupling system.
+    """
     def __init__ ( self, qid:str):
 
         self.id = qid
         self.phyChIDList = []
+        self.control = PhysicalChannel()
+        self.control_IF = PhysicalChannel()
         self.operationCondition = {}
 
         self.init_intrinsicProperties()
@@ -112,6 +119,10 @@ class PhysicalQubit():
         }
         opcTemp.update(paras)
         self.operationCondition = opcTemp
+
+
+
+
 
 
 
