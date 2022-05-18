@@ -11,9 +11,9 @@ from numpy import pi
 
 
 
-class IsolatedTransmon():
+class TransmonModel():
     """
-    Properties of ideal two level system
+    Properties of ideal Transmon
     Dictionary like structure
     """
     def __init__( self ):
@@ -52,8 +52,24 @@ class IsolatedTransmon():
         """
         return -self._anharmonicity
 
+class SQUIDTransmonModel(TransmonModel):
+    """
+    Properties of ideal tunable Transmon 
+    Dictionary like structure
+    """
+    def __init__( self ):
+        super().__init__()
+        self.flux = None
 
-class IsolatedResonator():
+    @property
+    def flux ( self )->float:
+        """Magnetic flux in SQUID, unit in magnetic flux quantum, Dimensionless"""
+        return self._flux
+    @flux.setter
+    def flux ( self, value:float):
+        self._flux = value
+
+class Resonator():
     """
     Properties of resonator
     Dictionary like structure
@@ -63,8 +79,11 @@ class IsolatedResonator():
         print(f"init IsolatedResonator")
         self._f_r = None
         self._Q_internal = None
+        self._Q_coupling = None
+        self._Q_load = None
+
     @property
-    def f_r ( self ) -> float:
+    def f_r ( self )->float:
         """ The resonant frequency of the resonator, unit in GHz """
         return self._f_r
     @f_r.setter
@@ -72,14 +91,29 @@ class IsolatedResonator():
         self._f_r = value
 
     @property
-    def Q_internal ( self ) -> float:
+    def Q_internal ( self )->float:
         """ The resonant frequency of the resonator, unit in GHz """
-        return self.f_r
+        return self._Q_internal
+
     @Q_internal.setter
     def Q_internal ( self, value:float ):
         self.Q_internal = value
 
+    @property
+    def Q_coupling ( self )->float:
+        """Coupling quality factor between cavity and transmission line. Dimensionless"""
+        return self._Q_coupling
+    @Q_coupling.setter
+    def Q_coupling ( self, value:float ):
+        self._Q_coupling = value
 
+    @property
+    def Q_load ( self )->float:
+        """Loaded quality factor of cavity. Dimensionless"""
+        return self._Q_load
+    @Q_load.setter
+    def Q_coupling ( self, value:float ):
+        self._Q_load = value
 class TransmissionLine():
     """
     Properties of Transmission Line
@@ -88,5 +122,5 @@ class TransmissionLine():
         self.s21 = None
 
 if __name__ == '__main__':
-    a = IsolatedTransmon()
+    a = SQUIDTransmonModel()
     print(a.anharmonicity)

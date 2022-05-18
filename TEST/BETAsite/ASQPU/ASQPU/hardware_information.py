@@ -9,7 +9,9 @@ from numpy import exp
 # Numpy constant
 from numpy import pi
 
+from typing import List
 from hardware_information import PhysicalChannel
+from physics_model.coupled_system import SingleTransmon
 """
 Hardware level:
 instrument > device
@@ -56,16 +58,32 @@ class PhysicalSingleTransmon():
     """
     This class is used for record information of a Qubit-Cavity coupling system.
     """
-    def __init__ ( self, qid:str):
+    def __init__ ( self, qid:str ):
 
         self.id = qid
         self.phyChIDList = []
-        self.control = PhysicalChannel()
-        self.control_IF = PhysicalChannel()
-        self.operationCondition = {}
+        self.operationLib = None
+        self._sensitivity_flux = None
+        self._sensitivity_RF = None
+        self.transmonProperties = SingleTransmon()
+        self.T1 = None
 
-        self.init_intrinsicProperties()
+    @property
+    def sensitivity_flux ( self )->float:
+        """Unit in magnetic flux quantum per mA"""
+        return self._sensitivity_flux
+    @sensitivity_flux.setter
+    def sensitivity_flux ( self, value:float ):
+        self._sensitivity_flux = value
 
+    @property
+    def sensitivity_RF ( self )->float:
+        """Intergation of V(t) per pi pulse, unit in V/ns"""
+        return self.sensitivity_RF
+    @sensitivity_RF.setter
+    def sensitivity_RF ( self, value:float ):
+        self.sensitivity_RF = value
+        
     def isExist_PhysicalChannel( self, channelID:str ):
         if channelID in self.phyChIDList:
             return True
@@ -81,32 +99,11 @@ class PhysicalSingleTransmon():
             else:
                 print(f"Physical channel {phyCh} is already in Qubit {self.id}.")
 
+    
     def set_intrinsicProperties( self, properties ):
         self.intrinsicProperties.update(properties)
 
-    def init_intrinsicProperties( self ):
-        self.intrinsicProperties = {
-            "qubit":{
-                "flux_period": None,
-                "max_frequency": None, # GHz
-                "anharmonicity": None, #MHz w12 -w01
-                "max_T1": None,
-            },
-            "dressed_resonator":{
-                "RT_power":None,
-                "frequency": (None,None), # GHz
-                "Q_load": (None,None),
-                "Q_couple": (None,None),
-                "phase": (None,None),
-            },
-            "bare_resonator":{
-                "RT_power": None,
-                "frequency": (None,None), # GHz
-                "Q_load": (None,None),
-                "Q_couple": (None,None),
-                "phase": (None,None),
-            },
-        }
+    
 
     def set_operationCondition( self, paras:dict ):
         opcTemp = {
@@ -266,6 +263,28 @@ if __name__ == "__main__":
     # print(f"Qubit {availableQ[0]}")
 
 
-
+# def init_intrinsicProperties( self ):
+#         self.intrinsicProperties = {
+#             "qubit":{
+#                 "flux_period": None,
+#                 "max_frequency": None, # GHz
+#                 "anharmonicity": None, #MHz w12 -w01
+#                 "max_T1": None,
+#             },
+#             "dressed_resonator":{
+#                 "RT_power":None,
+#                 "frequency": (None,None), # GHz
+#                 "Q_load": (None,None),
+#                 "Q_couple": (None,None),
+#                 "phase": (None,None),
+#             },
+#             "bare_resonator":{
+#                 "RT_power": None,
+#                 "frequency": (None,None), # GHz
+#                 "Q_load": (None,None),
+#                 "Q_couple": (None,None),
+#                 "phase": (None,None),
+#             },
+#         }
 
 
