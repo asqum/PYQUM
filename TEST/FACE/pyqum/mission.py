@@ -133,10 +133,17 @@ def all_job():
     # LOG Calculated Progress interactively into SQL-Database for fast retrieval
     update_count = 0
     for j in joblist:
-        # print("Progress: %s" %j['progress'])
-        # print("j.tag: %s" %j['tag'])
-        # "bottleneck" of job-listing speed on ALL-page:
-        if (j['tag'] == "") and (j['id'] not in g.queue_jobid_list) and (j['progress'] is None or j['progress'] < 100): # not allowing queued-job to be accessed to avoid database locks
+        '''
+        Alleviating "bottleneck" of job-listing speed on ALL-page:
+        1. Ignore job(s) with tag
+        2. Ignore queued-job(s) to avoid database locks
+        3. Ignore 100% completed job(s)
+        4. Ignore Re-queued job(s) (usually characterized by the absence of date-day and its "bag")
+        '''
+        if (j['tag'] == "") \
+            and (j['id'] not in g.queue_jobid_list) \
+                and (j['progress'] is None or j['progress'] < 100) \
+                    and (j['dateday'] is not None): 
             try:
                 meas = measurement(mission=missioname, task=j['task'], owner=owner, sample=samplename) # but data is stored according to the owner of the sample
                 meas.selectday(meas.daylist.index(j['dateday']))
@@ -148,8 +155,9 @@ def all_job():
                 db.commit()
                 close_db()
                 update_count += 1
-            except(ValueError): j['progress'] = 0 # for job w/o its bag yet
             except(TypeError): return("<h3>RE-LOGIN DETECTED</h3><h3>Please press <USERNAME> on TOP-RIGHT to proceed.</h3><h3 style='color:blue;'>Courtesy from HoDoR</h3>")
+        elif (j['dateday'] is None): j['progress'] = -1 # for job w/o its bag yet
+        else: pass
 
     # Security:
     try: print(Fore.GREEN + "User %s is accessing the jobs" %g.user['username'])
@@ -543,15 +551,15 @@ def char_cwsweep_init():
 
     # Loading Channel-Matrix & Channel-Role based on WIRING-settings:
     # 1. DC:
-    DC_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DC']
+    DC_PATH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DC']
     DC_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['DC']
     DC_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'DC')
     # 2. SG:
-    SG_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['SG']
+    SG_PATH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['SG']
     SG_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['SG']
     SG_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'SG')
 
-    return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'], DC_CH_Matrix=DC_CH_Matrix, DC_Role=DC_Role, DC_Which=DC_Which, SG_CH_Matrix=SG_CH_Matrix, SG_Role=SG_Role, SG_Which=SG_Which)
+    return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'], DC_PATH_Matrix=DC_PATH_Matrix, DC_Role=DC_Role, DC_Which=DC_Which, SG_PATH_Matrix=SG_PATH_Matrix, SG_Role=SG_Role, SG_Which=SG_Which)
 # list task entries based on day picked
 @bp.route('/char/cwsweep/time', methods=['GET'])
 def char_cwsweep_time():
