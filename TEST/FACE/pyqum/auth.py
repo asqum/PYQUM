@@ -90,8 +90,10 @@ def load_logged_in_user():
             SELECT m.codename, connected, category, sequence, system, note, u.username
             FROM machine m
             INNER JOIN user u ON m.user_id = u.id
+            WHERE m.BDR = ?
             ORDER BY m.id DESC
-            '''
+            ''',
+            (g.DR_platform,)
         ).fetchall()
         close_db()
         g.machlist = [dict(x) for x in g.machlist]
@@ -191,19 +193,20 @@ def login():
             session['bdr_clearance'] = False
             session['people'] = None
             print("%s has logged-in Successfully!" %session['user_name'] )
-            return redirect(url_for('index'))
 
-            g.userlist = None
+            g.approved_user_list = None
             if user['management'] == "oversee":
                 # ALL approved users' credentials:
-                g.userlist = db.execute(
+                g.approved_user_list = db.execute(
                     'SELECT u.id, username, measurement, instrument, analysis'
                     ' FROM user u WHERE u.status = ?'
                     ' ORDER BY id DESC',
                     ('approved',)
                 ).fetchall()
-                g.userlist = [dict(x) for x in g.userlist]
-            print(Fore.RED + Back.WHITE + "USER CREDENTIALS: %s" %g.userlist)
+                g.approved_user_list = [dict(x) for x in g.approved_user_list]
+            print(Fore.RED + Back.WHITE + "ALL APPROVED USER CREDENTIALS: %s" %g.approved_user_list)
+
+            return redirect(url_for('index'))
 
         close_db()
         print(error)
