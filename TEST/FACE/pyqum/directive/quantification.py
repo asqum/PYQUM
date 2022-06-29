@@ -50,15 +50,13 @@ from pyqum.directive.tools.circuit import notch_port
 from pyqum.directive.tools.utilities import plotting, save_load, Watt2dBm, dBm2Watt
 from pyqum.directive.tools.circlefit import circlefit
 from pyqum.directive.tools.calibration import calibration
-from pyqum.directive.tools.not_sin import *
 
-import pandas as pd
+from pandas import DataFrame
 
 # fidelity
 from matplotlib.patches import Ellipse
 from matplotlib import transforms
 from sklearn.cluster import KMeans
-from sklearn.svm import SVC
 import pickle
 
 from state_distinguishability.iq_kmean import *
@@ -859,26 +857,51 @@ class Common_fitting():
 
 
 
-def fit_plot(i,ax,coef):return coef[0]*ax*ax+coef[1]*ax+coef[2]
-
 def fit_sin(tt, yy):
-	'''Fit sin to the input time sequence, and return fitting parameters "amp", "omega", "phase", "offset", "freq", "period" and "fitfunc"'''
-	tt = array(tt)
-	yy = array(yy)
-	ff = fftfreq(len(tt), (tt[1]-tt[0]))   # assume uniform spacing
-	Fyy = abs(fft(yy))
-	guess_freq = abs(ff[argmax(Fyy[1:])+1])   # excluding the zero frequency "peak", which is related to offset
-	guess_amp = std(yy) * 2.**0.5
-	guess_offset = mean(yy)
-	guess = array([guess_amp, 2.*pi*guess_freq, 0., guess_offset])
+    '''Fit sin to the input time sequence, and return fitting parameters "amp", "omega", "phase", "offset", "freq", "period" and "fitfunc"'''
+    tt,yy = array(tt),array(yy)
+    ff = fftfreq(len(tt), (tt[1]-tt[0]))   # assume uniform spacing
+    Fyy = abs(fft(yy))
+    guess_freq = abs(ff[argmax(Fyy[1:])+1])   # excluding the zero frequency "peak", which is related to offset
+    guess_amp, guess_offset = std(yy) * 2.**0.5, mean(yy)
+    guess = array([guess_amp, 2.*pi*guess_freq, 0., guess_offset])
+    def sinfunc(t, A, w, p, c):  return A * sin(w*t + p) + c
+    popt, pcov = curve_fit(sinfunc, tt, yy, p0=guess)
+    A, w, p, c = popt
+    f = w/(2.*pi)
+    fitfunc = lambda t: A * sin(w*t + p) + c
+    return {"amp": A, "omega": w, "phase": p,"mean" :c, "offset": max(yy), "freq": f, "period": 1./f, "fitfunc": fitfunc, "maxcov": max(pcov), "rawres": (guess,popt,pcov)}
 
-	def sinfunc(t, A, w, p, c):  return A * sin(w*t + p) + c
-	popt, pcov = curve_fit(sinfunc, tt, yy, p0=guess)
-	A, w, p, c = popt
-	f = w/(2.*pi)
-	fitfunc = lambda t: A * sin(w*t + p) + c
-	output = {"amp": A, "omega": w, "phase": p, "offset": c, "freq": f, "period": 1./f, "fitfunc": fitfunc, "maxcov": max(pcov), "rawres": (guess,popt,pcov)}
-	return output
+def autoflux_show(valid,f_bare,plot):
+    valid = valid.drop(valid[(valid['fr']<f_bare+tol) & (valid['fr']>f_bare-tol)].index)
+    ki = valid['fr']-f_bare
+    f_qubit = f_bare-1/ki
+    offset = valid['flux'][f_qubit ==f_qubit.max()]
+    f_dress = valid['fr'][offset.index]
+    res = fit_sin(valid['flux'],f_qubit)
+    period = float(res['period'])
+    print("{:<36}".format("Final_dressed cavity frquency"), " : " , "{:>8.2f}".format(float(f_dress)) ,"MHz")
+    print("{:<36}".format("Final_bare cavity frquency"), " : " , "{:>8.2f}".format(float(f_bare)) ,"MHz")
+    print("{:<36}".format("Final_dressed cavity frquency diff."), " : " , "{:>8.2f}".format(float(f_dress-f_bare)) ,"MHz")
+    print("{:<36}".format("Final_offset")," : ","{:>8.2f}".format(float(offset)),"uA")
+    print("{:<36}".format("Final_period")," : ","{:>8.2f}".format(float(period)),"uA")
+    if plot:
+        import matplotlib.pyplot as plt
+        from numpy import linspace
+        plt.rcParams["figure.figsize"] = [20,10]
+        plt.subplot(211)
+        plt.scatter(valid['flux'],valid['fr'],color='black', marker='o',label='real data')
+        plt.subplot(212)
+        plt.scatter(valid['flux'],f_qubit,color='r', marker='*',label='f_qubit')
+        x = linspace(valid['flux'].min(),valid['flux'].max(),200)
+        plt.plot(x, res["fitfunc"](x), "r-", label="fit curve", linewidth=2)
+        plt.xlabel("Flux : uA")
+        plt.ylabel("Freq : MHz")
+        # plt.ylim(valid['fr'].min()-.20,valid['fr'].max()+.20)
+        plt.legend()
+        plt.show()
+    return {"f_dress":float(f_dress),"f_bare":float(f_bare),"f_diff":float(f_dress-f_bare),"offset":float(offset),"period":float(period)}
+
 
 class Autoflux():
 
@@ -889,6 +912,8 @@ class Autoflux():
 		# Fit
 		self.real, self.imag = [],[]
 		self.flux,self.freq,self.I,self.Q= [],[],[],[]
+		self.tol = 0.1
+		self.plot = 0
 
 	def do_analysis( self ):
 		xAxisKey = self.quantificationObj.xAxisKey
@@ -898,47 +923,31 @@ class Autoflux():
 		self.i = self.quantificationObj.rawData["iqSignal"].real
 		self.q = self.quantificationObj.rawData["iqSignal"].imag
 		self.iq = transpose(self.quantificationObj.rawData["iqSignal"])
-		#---------------changeable variable---------------
-		# x(ki) = g*g/delta
-		self.ki = 0.003
-		self.fdress = 8.1248
-		self.plot = 1
-		self.mat = 1
 
 		#---------------prepare data ---------------
-		self.df1=pd.DataFrame()
+		self.df1=DataFrame()
+		self.fr=[]
 		for j in range(len(self.x)):
 			self.port1 = notch_port(f_data=self.y,z_data_raw=self.iq[j])
-			# port1.plotrawdata()
 			self.port1.autofit()
-			#     port1.plotall()
-			#     display(pd.DataFrame([port1.fitresults]).applymap(lambda x: "{0:.2e}".format(x)))
-			# print(self.port1.fitresults)
-			self.df1 = self.df1.append(pd.DataFrame([self.port1.fitresults]), ignore_index = True)
+			self.fr.append(self.port1.fitresults['fr'])
+		self.df1.insert(loc=0, column='fr', value=array(self.fr)*10**3)
 		self.df1.insert(loc=0, column='flux', value=self.x*10**6)
 
 		#---------------drop the outward data---------------
-		self.f_min,self.f_max = min(self.y),max(self.y)
+		self.f_min,self.f_max = min(self.y)*10**3,max(self.y)*10**3
 		self.valid = self.df1[(self.df1['fr']>= self.f_min)&(self.df1['fr']<= self.f_max)]
 		self.valid.reset_index(inplace=True)
+		self.valid = self.valid.drop(labels=['index'], axis="columns")
 		# print(valid)
-		#---------------determine the sin_wave or arcsin_wave
-		if self.valid.diff(periods=1, axis=0)['fr'].var() >2.5*10**-5 and max(self.valid['fr'])-min(self.valid['fr'])>0.002 :self.twokind=1
-		elif self.valid.diff(periods=1, axis=0)['fr'].var() <2.5*10**-5 and max(self.valid['fr'])-min(self.valid['fr'])<0.002:self.twokind=0
-		else:raise ValueError('I do not know how')
-		if self.twokind:
-		#     print('fr>fc and fr<fc')
-			self.fc ,self.fd, self.offset = output_cal(self.x,self.valid,self.ki,self.fdress,self.plot)
+		if self.valid.diff(periods=1, axis=0)['fr'].var() >1 :
+			self.f_bare = float(input())
+    		self.out = autoflux_show(self.valid,self.f_bare,self.plot)
+		elif self.valid.diff(periods=1, axis=0)['fr'].var() <1 :
+			self.f_bare = self.valid['fr'].min()
+    		self.out = autoflux_show(self.valid,self.f_bare,self.plot)
 		else:
-		#     print('sin')
-			self.fc ,self.fd, self.offset = output_cal_sin(self.valid,self.plot)
-			# print(type(offset))
-
-		print("")
-		print("{:<23}".format("Final_dressed frquency"), " : " , "{:.4f}".format(self.fd) ,"GHz")
-		print("{:<23}".format("Final_cavity frquency"), " : " , "{:.4f}".format(self.fc) ,"GHz")
-		print("{:<23}".format("Final_x(ki)"), " : " , "{:.4f}".format((self.fd-self.fc)*1000) ,"MHz")
-		print("{:<23}".format("Final_offset flux")," : ",self.offset,"uV/A")
+			raise ValueError('I do not know how')
 
 def plot_svm_decision_function(model, ax=None, plot_support=True):
 	"""Plot the decision function for a 2D SVC"""
