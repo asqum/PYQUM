@@ -36,8 +36,7 @@ IF EXIST "%p2_dir%HODOR\CONFIG\pyqum.sqlite" (
         flask init-db
         ECHO New Database Created)
     if /i "%answer:~,1%" EQU "N" (
-        echo Think about it
-        goto tq)
+        echo Think about it )
     echo Please type Y or N
     goto dboption
 
@@ -65,37 +64,36 @@ REM PAUSE
     set /p answer=WEB Production (P1/P2), Development (D) or LOCAL (L)?
     if /i "%answer:~,2%" EQU "P1" (
         SET FLASK_ENV=production
-        echo Running WEB Production #1
+        echo Running WEB Production on DR-1
         goto production_1)
     if /i "%answer:~,2%" EQU "P2" (
         SET FLASK_ENV=production
-        echo Running WEB Production #2
+        echo Running WEB Production on DR-2
         goto production_2)
     if /i "%answer:~,1%" EQU "D" (
         SET FLASK_ENV=development
         echo Running WEB Development
         goto development)
-    if /i "%answer:~,1%" EQU "L" (
+    if /i "%answer:~,2%" EQU "L1" (
         SET FLASK_ENV=development
-        echo Running WEB Local
-        goto local)
+        echo Running Local on DR-1
+        goto local_1)
+    if /i "%answer:~,2%" EQU "L2" (
+        SET FLASK_ENV=development
+        echo Running Local on DR-2
+        goto local_2)
     echo Please type P (Production), D (Development) or L (Local)
     goto pyqum
 
-:local
-    ECHO STARTING APP as Local Web
-    python pqrun.py local 5301
-    goto tq
 
 :development
     ECHO STARTING APP as Development Web
-    python pqrun.py development 5301
+    python pqrun.py development 5300
     ::start server using batch command:
     ::flask run --host=127.0.0.1 --port=5200 
-    goto tq
 
 :production_1
-    ECHO STARTING APP as Production Web #1
+    ECHO STARTING APP as Production Web on DR-1
     @echo OFF
     rem How to run a Python script in a given conda environment from a batch file.
 
@@ -114,20 +112,36 @@ REM PAUSE
     ECHO Environment name: %ENVNAME%
     call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
 
-
     rem Run a python script in that environment
     python pqrun.py production 5301
 
-    goto tq
-
 :production_2
-    ECHO STARTING APP as Production Web #2
+    ECHO STARTING APP as Production Web on DR-2
+    set CONDAPATH=C:\Users\ASQUM_2\anaconda3
+    set ENVNAME=PYQUM-server-offline
+    ECHO Conda path: %CONDAPATH%\Scripts\activate.bat 
+    ECHO Environment name: %ENVNAME%
+    call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
     python pqrun.py production 5302
-    goto tq
 
-:tq
-    ECHO Thank you :)
+:local_2
+    ECHO STARTING APP as Local DMS on DR-2
+    set CONDAPATH=C:\Users\ASQUM_2\anaconda3
+    set ENVNAME=PYQUM-server-offline
+    ECHO Conda path: %CONDAPATH%\Scripts\activate.bat 
+    ECHO Environment name: %ENVNAME%
+    call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
+    python pqrun.py local 5302
+
+:local_1
+    ECHO STARTING APP as Local DMS on DR-1
+    set CONDAPATH=C:\Users\ASQUM\anaconda3
+    set ENVNAME=PYQUM-server-offline
+    ECHO Conda path: %CONDAPATH%\Scripts\activate.bat 
+    ECHO Environment name: %ENVNAME%
+    call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
+    python pqrun.py local 5301
+
 
 PAUSE
-
 

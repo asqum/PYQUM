@@ -62,6 +62,7 @@ function bdr_plot() {
                 zerolinecolor: 'rgb(74, 134, 232)',
             },
             yaxis: {
+                type: $('select.bdr.history.axes-type-y1').val(),
                 zeroline: false,
                 title: "<b>P(mbar)</b><br>",
                 titlefont: {size: 18},
@@ -73,6 +74,7 @@ function bdr_plot() {
                 zerolinecolor: 'rgb(74, 134, 232)',
             },
             yaxis2: {
+                type: $('select.bdr.history.axes-type-y2').val(),
                 zeroline: false,
                 title: '<b>T(K)</b>', 
                 titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
@@ -215,19 +217,19 @@ $(function() {
             designation: designation
         }, function (data) {
             // Select Day:
-            $('select.bdr#history[name="wday"]').empty();
-            $('select.bdr#history[name="wday"]').append($('<option>', { text: 'Currently:', value: '' }));
+            $('select.bdr.history[name="wday"]').empty();
+            $('select.bdr.history[name="wday"]').append($('<option>', { text: 'Currently:', value: '' }));
             $.each(data.Days.reverse(), function(i,v){
-                $('select.bdr#history[name="wday"]').append($('<option>', {
+                $('select.bdr.history[name="wday"]').append($('<option>', {
                     text: v,
                     value: data.Days.length - 1 - i
                 }));
             });
             // Compare Day:
-            $('select.bdr#history[name="compareday"]').empty();
-            $('select.bdr#history[name="compareday"]').append($('<option>', { text: 'Compared:', value: '' }));
+            $('select.bdr.history[name="compareday"]').empty();
+            $('select.bdr.history[name="compareday"]').append($('<option>', { text: 'Compared:', value: '' }));
             $.each(data.Days.reverse(), function(i,v){
-                $('select.bdr#history[name="compareday"]').append($('<option>', {
+                $('select.bdr.history[name="compareday"]').append($('<option>', {
                     text: v,
                     value: data.Days.length - 1 - i
                 }));
@@ -238,7 +240,7 @@ $(function() {
 });
 // manual update
 $(function () {
-    $('select.bdr#history').on('change', function () {
+    $('select.bdr.history').on('change', function () {
         bdr_plot();
     });
 });
@@ -264,7 +266,7 @@ $(function () {
 // Forecast P
 $("a.new#bdr-forecast-P").bind('click', function() {
     $.getJSON('/mach/bdr/history/forecast', {
-        target: $('input.bdr#history[name="forecast"]').val(),
+        target: $('input.bdr.history[name="forecast"]').val(),
         predicting: "P"
     }, function (data) {
         $("a.new#bdr-forecast-P").text('ETA in >' + String(data.eta_time) + ' hours');
@@ -273,7 +275,7 @@ $("a.new#bdr-forecast-P").bind('click', function() {
 // Forecast T
 $("a.new#bdr-forecast-T").bind('click', function() {
     $.getJSON('/mach/bdr/history/forecast', {
-        target: $('input.bdr#history[name="forecast"]').val(),
+        target: $('input.bdr.history[name="forecast"]').val(),
         predicting: "T"
     }, function (data) {
         $("a.new#bdr-forecast-T").text('ETA in >' + String(data.eta_time) + ' hours');
@@ -324,6 +326,13 @@ $(function() {
                 $('table.BDR-QUEUE thead.samples.bdr-queue-update tr').append('<th>' + val.system + '</th>');
                 $('table.BDR-QUEUE tbody.samples.bdr-queue-update tr').append('<td>' + val.samplename + '</td>');
             });
+
+            // paint service-sample a certain color:
+            $('select.bdr.samples-allocation option').each( function() {
+                if (data.services.includes($(this).val())) {
+                    $(this).css('color', 'red');
+                };
+            });
             
         });
         
@@ -350,7 +359,7 @@ $(function() {
 function wiring_designation_update() {
     $('table.BDR-WIRING thead.wiring.designation-update tr').empty();
     $('table.BDR-WIRING tbody.wiring.designation-update tr').empty();
-    var header = ['Order', 'Category', 'Designation']
+    var header = ['Order', 'Category', 'Designation'];
     $.each(header, function (i,val) { $('table.BDR-WIRING thead.wiring.designation-update tr').append('<th>' + val + '</th>'); });
     $.getJSON('/mach/bdr/wiring/instruments', {
         qsystem: $('select.bdr.wiring.queue-system').val(),
@@ -362,9 +371,11 @@ function wiring_designation_update() {
         $.each(data.category, function (i,cat) {
             console.log("Category [" + cat + "] has enlisted: " + data.instr_organized[cat]);
             if (data.instr_organized[cat].includes("DUMMY_1")==false) { var enlisted_instr = data.instr_organized[cat]; };
-            $('input.bdr.wiring-designation.'+cat).val(enlisted_instr); // undefined=blank: leave the input blank if it contain DUMMY_1!
+            $('.bdr.wiring-designation.'+cat).val(enlisted_instr); // undefined=blank: leave the input blank if it contain DUMMY_1! // support both input and texarea
         });
+        $('div#wiring-designation-status').append($('<h4 style="color: red;"></h4>').text("modules-mismatch: " + data.modules_mismatch + "\n, channels-mismatch: " + data.channels_mismatch));
     });
+    return false;
 };
 $(function() {
     $('button.bdr#wiring').bind('click', function() {
@@ -389,9 +400,10 @@ $(function() {
         $('div#wiring-designation-status').empty();
         var instr_organized = {};
         $.each(category, function (i,cat) {
-            instr_organized[cat] = $('input.bdr.wiring-designation.'+cat).val();
+            instr_organized[cat] = $('.bdr.wiring-designation.'+cat).val();
         });
         console.log('instr_organized: ' + JSON.stringify(instr_organized));
+
         $.getJSON('/mach/bdr/wiring/set/instruments', {
             instr_organized: JSON.stringify(instr_organized),
             qsystem: $('select.bdr.wiring.queue-system').val(),
@@ -405,14 +417,14 @@ $(function() {
     return false;
 });
 $(function () {
-    $(document).on('change', 'input.bdr.wiring-designation', function() {
+    $(document).on('change', '.bdr.wiring-designation', function() {
         $('div#wiring-designation-status').empty();
         var cat = $(this).parent().parent().attr('id').split('-')[2];
         $.getJSON('/mach/bdr/wiring/check/instruments', {
             cat: cat,
-            instr_set: $('input.bdr.wiring-designation.'+cat).val(),
+            instr_set: $('.bdr.wiring-designation.'+cat).val(),
         }, function (data) {
-            $('input.bdr.wiring-designation.'+cat).val(data.checked_instr_set);
+            $('.bdr.wiring-designation.'+cat).val(data.checked_instr_set);
             $('div#wiring-designation-status').append($('<h4 style="color: red;"></h4>').text(data.message));
         });
     });

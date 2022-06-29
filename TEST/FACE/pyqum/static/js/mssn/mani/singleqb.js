@@ -13,17 +13,60 @@ $(document).ready(function(){
     $('input.singleqb.setchannels.check').hide();
     $('select.mani.scheme.singleqb#SCHEME_LIST').hide();
     $('input.singleqb.perimeter-settings.save').hide();
+    $('input.mani.singleqb.toggle-pulses#singleqb-toggle-pulses').hide();
 });
 
 // Global variables:
 window.selecteday = ''
 window.VdBm_selector = 'select.mani.data.singleqb#singleqb-1d-VdBm'
 window.VdBm_selector2 = 'select.mani.data.singleqb#singleqb-2d-VdBm'
+window.server_URL = 'http://10.10.90.14:'; //'http://qum.phys.sinica.edu.tw:'
 
 // Parameter, Perimeter & Channel LIST for INITIATING NEW RUN:
 var singleqb_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
 var singleqb_Perimeters = ['DIGIHOME', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
 
+// Pull the file from server and send it to user end:
+function pull_n_send(server_URL, qumport, user_name, filename='1Dsingleqb.csv') {
+    $.ajax({
+        url: 'http://' + server_URL + ':' + qumport + '/mach/uploads/' + filename.split('.')[0] + '[' + user_name + '].' + filename.split('.')[1],
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = filename;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            $('button.mani#singleqb-save' + filename.split('.')[1]).hide();
+            $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(a.download + ' has been downloaded'));
+        }
+    });
+    return false;
+};
+
+function Perimeter_Assembler() {
+    var PERIMETER = {};
+    // 1. Assemble Preset Perimeters into PERIMETER:
+    $.each(singleqb_Perimeters, function(i,perimeter) {
+        PERIMETER[perimeter] = $('.mani.config.singleqb#' + perimeter).val();
+        console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
+    });
+    // 2. Assemble Flexible SCORE-JSON into PERIMETER:
+    PERIMETER['SCORE-JSON'] = {}
+    $.each(DAC_CH_Matrix, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = String(i+1) + "-" + String(channel); 
+            PERIMETER['SCORE-JSON']["CH" + CH_Address] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(); 
+        });
+    });
+    return PERIMETER;
+};
 function transpose(a) {
     // Calculate the width and height of the Array
     var w = a.length || 0;
@@ -48,7 +91,6 @@ function transpose(a) {
     }
     return t;
   };
-
 function listimes_singleqb() {
     $('input.mani.data').removeClass("plotted");
     
@@ -160,7 +202,7 @@ function accessdata_singleqb() {
         $('select.mani.scheme.singleqb#SCHEME_LIST').show();
         $('input.singleqb.perimeter-settings.save').show();
 
-        // 7. PERIMETER Statement:
+        // 7.1. PERIMETER Statement:
         var singleqb_Channels = [];
         $.each(Object.keys(data.perimeter['SCORE-JSON']), function(i,val){ singleqb_Channels.push(val); });
         var sheet = '';
@@ -174,9 +216,15 @@ function accessdata_singleqb() {
         });
         $('textarea.mani.singleqb.PSTATEMENT').val(sheet).show();
 
-        // 8. Adjustment(s) based on perimeter:
+        // 7.2 Adjustment(s) based on PERIMETER:
         if (data.perimeter['BIASMODE']==1) { $('table th.mani.singleqb.Flux-Bias').text('Flux-Bias (A)') }
         else { $('table th.mani.singleqb.Flux-Bias').text('Flux-Bias (V)') };
+
+        // 8. Data Assemblies (Histories):
+        $('select.mani.data.singleqb#singleqb-data-assemblies').empty().append($('<option>', { text: "Re-Plot (" + data.histories.length + " saved set(s))", value: 0 }));
+        $.each(data.histories, function(i,history) {
+            $('select.mani.data.singleqb#singleqb-data-assemblies').append($('<option>', { text: history, value: history }));
+        });
 
     });
     return false;
@@ -319,40 +367,25 @@ function plot2D_singleqb(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,VdBm_sel
     YConv = VdBm_Conversion(y, VdBm_selector); 
     y = YConv['y'];
     yunit = YConv['yunit'];
-
-    console.log("Plotting 2D");    
+    
     // Frame assembly:
     let trace = {
-        z: [], x: [], y: [], zsmooth: 'best',
-        mode: 'lines', type: 'heatmap', colorscale: colorscal,
-        name: 'L (' + wday + ', ' + wmoment + ')',
-        line: {color: 'rgb(23, 151, 6)', width: 2.5}, yaxis: 'y' };
+        z: [], x: [], y: [], zsmooth: 'best', mode: 'lines', type: 'heatmap', colorscale: colorscal,
+        name: 'L (' + wday + ', ' + wmoment + ')', line: {color: 'rgb(23, 151, 6)', width: 2.5}, yaxis: 'y' };
     
     let layout = {
-        legend: {x: 1.08},
-        height: $(window).height()*0.8,
-        width: $(window).width()*0.7,
-        xaxis: {
-            zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
-        yaxis: {
-            zeroline: false, title: ytitle + '{' + yunit + '}',
-            titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
-        title: '',
-        annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom',
-            text: "", font: {size: 18}, showarrow: false, textangle: 0 }] };
+        legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        yaxis: { zeroline: false, title: ytitle + '{' + yunit + '}', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        title: '', annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom', text: "", font: {size: 18}, showarrow: false, textangle: 0 }] };
 
     // Data GROOMING:
     // 1. Normalization along x-axis (dip)
     if (plotype == 'normalXdip') {
         var ZZNML = [];
         $.each(ZZ, function(i, Z) {
-            var Zrow = []
-            var zmin = Math.min.apply(Math, Z);
-            var zmax = Math.max.apply(Math, Z);
-            $.each(Z, function(i, z) {
-                var znml = (z-zmax)/(zmax-zmin);
-                Zrow.push(znml);
-            });
+            var Zrow = []; var zmin = Math.min.apply(Math, Z); var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) { var znml = (z-zmax)/(zmax-zmin); Zrow.push(znml); });
             ZZNML.push(Zrow);
         });
         ZZ = ZZNML;
@@ -377,13 +410,8 @@ function plot2D_singleqb(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,VdBm_sel
         ZZ = transpose(ZZ);
         var ZZNML = [];
         $.each(ZZ, function(i, Z) {
-            var Zrow = []
-            var zmin = Math.min.apply(Math, Z);
-            var zmax = Math.max.apply(Math, Z);
-            $.each(Z, function(i, z) {
-                var znml = (z-zmax)/(zmax-zmin);
-                Zrow.push(znml);
-            });
+            var Zrow = []; var zmin = Math.min.apply(Math, Z); var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) { var znml = (z-zmax)/(zmax-zmin); Zrow.push(znml); });
             ZZNML.push(Zrow);
         });
         ZZ = transpose(ZZNML);
@@ -406,17 +434,85 @@ function plot2D_singleqb(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,VdBm_sel
     };
 
     // Pushing Data into TRACE:
-    $.each(x, function(i, val) {trace.x.push(val);});
-    $.each(y, function(i, val) {trace.y.push(val);});
-    $.each(ZZ, function(i, Z) {
-        var Zrow = []
-        $.each(Z, function(i, val) { Zrow.push(val); });
-        trace.z.push(Zrow);
-    });
+    $.each(x, function(i, val) {trace.x.push(val);}); $.each(y, function(i, val) {trace.y.push(val);});
+    $.each(ZZ, function(i, Z) { var Zrow = []; $.each(Z, function(i, val) { Zrow.push(val); }); trace.z.push(Zrow); });
     console.log("1st z-trace: " + trace.z[0][0]);
 
     // Plotting the Chart using assembled TRACE:
-    var Trace = [trace]
+    var Trace = [trace];
+    Plotly.newPlot('mani-' + mission + '-chart', Trace, layout, {showSendToCloud: true});
+};
+function Compare2D_singleqb(x,y,ZZ,ZZ2,xtitle,ytitle,plotype,mission,colorscal,VdBm_selector) {
+    // V or dBm
+    YConv = VdBm_Conversion(y, VdBm_selector); 
+    y = YConv['y'];
+    yunit = YConv['yunit'];
+    
+    // Frame assembly:
+    let trace = {
+        z: [], x: [], y: [], zsmooth: 'best', mode: 'lines', type: 'heatmap', colorscale: colorscal,
+        name: 'L (' + wday + ', ' + wmoment + ')', line: {color: 'rgb(23, 151, 6)', width: 2.5}, yaxis: 'y' };
+    
+    let layout = {
+        legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        yaxis: { zeroline: false, title: ytitle + '{' + yunit + '}', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        title: '', annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom', text: "", font: {size: 18}, showarrow: false, textangle: 0 }] };
+
+    // Data GROOMING:
+    // 1. Normalization along x-axis (dip)
+    if (plotype == 'normalXdip') {
+        // 1st ZZ:
+        var ZZNML = [];
+        $.each(ZZ, function(i, Z) {
+            var Zrow = []; var zmin = Math.min.apply(Math, Z); var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) { var znml = (z-zmax)/(zmax-zmin); Zrow.push(znml); });
+            ZZNML.push(Zrow);
+        });
+        ZZ = ZZNML;
+        // 2nd ZZ:
+        var ZZNML = [];
+        $.each(ZZ2, function(i, Z) {
+            var Zrow = []; var zmin = Math.min.apply(Math, Z); var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) { var znml = (z-zmax)/(zmax-zmin); Zrow.push(znml); });
+            ZZNML.push(Zrow);
+        });
+        ZZ2 = ZZNML;
+
+    // 3. Normalization along y-axis (dip)
+    } else if (plotype == 'normalYdip') {
+        // 1st ZZ:
+        ZZ = transpose(ZZ);
+        var ZZNML = [];
+        $.each(ZZ, function(i, Z) {
+            var Zrow = []; var zmin = Math.min.apply(Math, Z); var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) { var znml = (z-zmax)/(zmax-zmin); Zrow.push(znml); });
+            ZZNML.push(Zrow);
+        });
+        ZZ = transpose(ZZNML);
+        // 1st ZZ:
+        ZZ2 = transpose(ZZ2);
+        var ZZNML = [];
+        $.each(ZZ2, function(i, Z) {
+            var Zrow = []; var zmin = Math.min.apply(Math, Z); var zmax = Math.max.apply(Math, Z);
+            $.each(Z, function(i, z) { var znml = (z-zmax)/(zmax-zmin); Zrow.push(znml); });
+            ZZNML.push(Zrow);
+        });
+        ZZ2 = transpose(ZZNML);
+
+    };
+        
+    // Compare 1st & 2nd ZZ:
+    var ZZC = [];
+    $.each(ZZ, function(i, Z) { var Zrow = []; $.each(Z, function(j, z) { var zc = z - ZZ2[i][j]; Zrow.push(zc); }); ZZC.push(Zrow); });
+
+    // Pushing Data into TRACE:
+    $.each(x, function(i, val) {trace.x.push(val);}); $.each(y, function(i, val) {trace.y.push(val);});
+    $.each(ZZC, function(i, Z) { var Zrow = []; $.each(Z, function(i, val) { Zrow.push(val); }); trace.z.push(Zrow); });
+    console.log("1st z-trace: " + trace.z[0][0]);
+
+    // Plotting the Chart using assembled TRACE:
+    var Trace = [trace];
     Plotly.newPlot('mani-' + mission + '-chart', Trace, layout, {showSendToCloud: true});
 };
 function compareIQ_singleqb(x1,y1,x2,y2,mission="singleqb") {
@@ -491,19 +587,39 @@ function compareIQ_singleqb(x1,y1,x2,y2,mission="singleqb") {
     Plotly.react('mani-' + mission + '-chart', Trace, layout);
 
 };
+function plot_pulses(X,Y,xtitle='sample-point#',mode='lines') {
+    $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("PLOTTING PULSES..."));
+    // Some kind of Multiplots:
+    Trace_num = Object.keys(Y).length;
+    console.log("Number of Traces: " + Trace_num);
+    
+    let Trace = [];
+    $.each(Object.keys(Y), function(i, dac_address) {
+        Trace.push( {name: dac_address, x: X, y: Y[dac_address], mode: mode, type: 'scatter', 
+        line: {width: 2.5}, marker: {symbol: 'square-dot', size: 3.7}, yaxis: 'y' } );
+    });
+    
+    let layout = {
+        legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis: { zeroline: false, title: '<b>Normalized DAC-Output</b>', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, },
+        title: '',
+        };
+
+    Plotly.newPlot('mani-singleqb-pulse-check', Trace, layout, {showSendToCloud: true});
+};
 
 // hiding parameter settings when click outside the modal box:
 $('.modal-toggle.new.singleqb').on('click', function(e) {
     e.preventDefault();
     $('.modal.new.singleqb').toggleClass('is-visible');
-    // revert back to previous option upon leaving dialogue box
-    $('select.mani.singleqb.wday').val(selecteday);
+    $('div#mani-singleqb-pulse-check').hide(); // hide pulse-preview which will intefere with the interfaces
+    $('select.mani.singleqb.wday').val(selecteday); // revert back to previous option upon leaving dialogue box
 });
 $('.modal-toggle.manage.singleqb').on('click', function(e) {
     e.preventDefault();
     $('.modal.manage.singleqb').toggleClass('is-visible');
-    // revert back to previous option upon leaving dialogue box
-    $('select.mani.singleqb.wday').val(selecteday);
+    $('select.mani.singleqb.wday').val(selecteday); // revert back to previous option upon leaving dialogue box
 });
 $('.modal-toggle.data-reset.singleqb').on('click', function(e) {
     e.preventDefault();
@@ -676,6 +792,34 @@ $('input.singleqb.perimeter-settings.load').on('touchend click', function(event)
     });
     return false;
 });
+// 4. Check Pulses:
+$('input.mani.singleqb.pulse-check#singleqb-pulse-check').bind('click', function() {
+    $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPOSING PULSES..."));
+    // Assemble PERIMETER:
+    var PERIMETER = Perimeter_Assembler();
+    // console.log("PERIMETER to CHECK PULSES: " + PERIMETER)
+    $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/check/pulses', {
+        PERIMETER: JSON.stringify(PERIMETER),
+    }, function (data) {
+        // Preview Max-Pulses on Chart:
+        var Pulse_Preview = data.Pulse_Preview;
+        var T_samples = data.T_samples;
+        // console.log(Pulse_Preview);
+        plot_pulses(T_samples, Pulse_Preview)
+    })
+    .done(function(data) {
+        $('input.mani.singleqb.toggle-pulses#singleqb-toggle-pulses').show();
+        $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("PULSE-PLOT(s) COMPLETE"));
+    })
+    .fail(function(jqxhr, textStatus, error){
+        $('div.singleqb#singleqb-check-pulse-progress').empty().append($('<h4 style="color: red;"></h4>').text("Make sure SCORE & R-JSON SYNTAX & Numpy-supported MATH-EXPRESSION are ALL correct"));
+    });
+    return false;
+});
+$('input.mani.singleqb.toggle-pulses#singleqb-toggle-pulses').bind('click', function() {
+    $('div#mani-singleqb-pulse-check').fadeToggle();
+    return false;
+});
     
 // Click on TASK-TAB:
 // show Single-QB's daylist (also switch content-page to Single-QB)
@@ -755,20 +899,8 @@ $('input.mani#singleqb-run').on('touchend click', function(event) {
     setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 120);
     $('h3.all-mssn-warning').text(">> JOB STARTED >>");
     // Assemble PERIMETER:
-    var PERIMETER = {};
-    $.each(singleqb_Perimeters, function(i,perimeter) {
-        PERIMETER[perimeter] = $('.mani.config.singleqb#' + perimeter).val();
-        console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
-    });
-    // Assemble SCORE-JSON for PERIMETER:
-    PERIMETER['SCORE-JSON'] = {}
-    $.each(DAC_CH_Matrix, function(i,channel_set) {
-        $.each(channel_set, function(j,channel) {
-            let CH_Address = String(i+1) + "-" + String(channel); 
-            PERIMETER['SCORE-JSON']["CH" + CH_Address] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(); 
-        });
-    });
-    console.log("PERIMETER: " + PERIMETER)
+    var PERIMETER = Perimeter_Assembler();
+    console.log("PERIMETER to RUN: " + PERIMETER)
 
     // Assemble CORDER:
     var CORDER = {};
@@ -883,7 +1015,7 @@ $(function () {
 });
 // INSERT 1D-data for comparison
 $(function () {
-    $('button.mani#singleqb-insert-1D').on('click', function () {
+    $('input.mani#singleqb-insert-1D').on('click', function () {
         $('div#mani-singleqb-announcement').empty();
         $( "i.singleqb1d" ).remove(); //clear previous
         $('button.mani.access.singleqb').prepend("<i class='singleqb1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
@@ -953,6 +1085,7 @@ $('select.mani.data.singleqb#singleqb-1d-mode').on('change', function() {
 // assemble 2D-data based on c-parameters picked
 $(function () {
     $('input.mani.singleqb#singleqb-2d-data').on('click', function () {
+        window.scan_compare = 0;
         $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Plotting 2D might takes some time. Please wait... "));
         $( "i.singleqb2d" ).remove(); //clear previous
         $('button.mani.access.singleqb').prepend("<i class='singleqb2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
@@ -966,11 +1099,13 @@ $(function () {
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
         var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();
+        if ($('select.mani.data.singleqb#singleqb-data-assemblies').val()==0) { var call_histories=0; var chosen_matfile=0 }
+        else { var call_histories=1; var chosen_matfile=$('select.mani.data.singleqb#singleqb-data-assemblies').val(); };
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/2ddata', {
-            cselect: JSON.stringify(cselect), srange: srange, smode: smode
+            cselect: JSON.stringify(cselect), srange: srange, smode: smode, call_histories: call_histories, chosen_matfile: chosen_matfile
         }, function (data) {
-            window.X = data.x;
-            window.Y = data.y;
+            window.X = data.x.flat(); //2D artifact left by MATfile conversion: just flat it out into 1D!
+            window.Y = data.y.flat();
             console.log("check Y: " + Y);
             window.ZZA = data.ZZA;
             window.ZZUP = data.ZZUP;
@@ -1015,23 +1150,92 @@ $(function () {
     return false;
 });
 $('div.2D select.mani.data.singleqb').on('change', function() {
+    if (scan_compare==0) {
+        if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Amp") {var ZZ = ZZA; }
+        else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Pha") {var ZZ = ZZUP; }
+        else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "I") {var ZZ = ZZI; }
+        else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Q") {var ZZ = ZZQ; };
 
-    if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Amp") {var ZZ = ZZA; }
-    else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Pha") {var ZZ = ZZUP; }
-    else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "I") {var ZZ = ZZI; }
-    else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Q") {var ZZ = ZZQ; };
-    
-    if ($('select.mani.data.singleqb#singleqb-2d-direction').val() == "rotate") {
-        plot2D_singleqb(Y, X, transpose(ZZ), ytitle, xtitle, 
-            $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
-            $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
-            VdBm_selector2);
+        if ($('select.mani.data.singleqb#singleqb-2d-direction').val() == "rotate") {
+            plot2D_singleqb(Y, X, transpose(ZZ), ytitle, xtitle, 
+                $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
+                $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
+                VdBm_selector2);
+        } else {
+            plot2D_singleqb(X, Y, ZZ, xtitle, ytitle, 
+                $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
+                $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
+                VdBm_selector2);
+        };
     } else {
-        plot2D_singleqb(X, Y, ZZ, xtitle, ytitle, 
-            $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
-            $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
-            VdBm_selector2);
-    };
+        if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Amp") {var ZZ = ZZA; var ZZ2 = ZZA2; }
+        else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Pha") {var ZZ = ZZUP; var ZZ2 = ZZUP2; }
+        else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "I") {var ZZ = ZZI; var ZZ2 = ZZI2; }
+        else if ($('select.mani.data.singleqb#singleqb-2d-iqamphase').val() == "Q") {var ZZ = ZZQ; var ZZ2 = ZZQ2; };
+
+        if ($('select.mani.data.singleqb#singleqb-2d-direction').val() == "rotate") {
+            Compare2D_singleqb(Y, X, transpose(ZZ), transpose(ZZ2), ytitle, xtitle, 
+                $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
+                $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
+                VdBm_selector2);
+        } else {
+            Compare2D_singleqb(X, Y, ZZ, ZZ2, xtitle, ytitle, 
+                $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
+                $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
+                VdBm_selector2);
+        };
+    }
+    
+    return false;
+});
+// Compare 2D-datas:
+$(function () {
+    $('input.mani.singleqb#singleqb-2d-2d').on('click', function () {
+        window.scan_compare = 1;
+        $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("Plotting 2D might takes some time. Please wait... "));
+        $( "i.singleqb2d" ).remove(); //clear previous
+        $('button.mani.access.singleqb').prepend("<i class='singleqb2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
+        // var irepeat = $('select.mani.singleqb#repeat').val();
+        var cselect = {};
+        $.each(SQ_CParameters, function(i,cparam){ 
+            // to avoid ">" from messing with HTML syntax
+            if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
+            } else { cselect[cparam] = $('select.mani.singleqb#' + cparam).val(); };
+        });
+        console.log("Picked Flux: " + cselect['Flux-Bias']);
+        var srange = $('input.mani.data.singleqb#singleqb-sample-range').val();
+        var smode = $('select.mani.data.singleqb#singleqb-sample-mode').val();
+        if ($('select.mani.data.singleqb#singleqb-data-assemblies').val()==0) { var call_histories=0; var chosen_matfile=0 }
+        else { var call_histories=1; var chosen_matfile=$('select.mani.data.singleqb#singleqb-data-assemblies').val(); };
+        $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/2ddata', {
+            cselect: JSON.stringify(cselect), srange: srange, smode: smode, call_histories: call_histories, chosen_matfile: chosen_matfile
+        }, function (data) {
+            window.X = data.x.flat(); //2D artifact left by MATfile conversion: just flat it out into 1D!
+            window.Y = data.y.flat();
+            console.log("check Y: " + Y);
+            window.ZZA2 = data.ZZA;
+            window.ZZUP2 = data.ZZUP;
+            window.ZZI2 = data.ZZI;
+            window.ZZQ2 = data.ZZQ;
+            window.xtitle = data.xtitle;
+            window.ytitle = data.ytitle;
+            
+            Compare2D_singleqb(X, Y, ZZA, ZZA2, xtitle, ytitle, 
+                $('select.mani.data.singleqb#singleqb-2d-type').val(),'singleqb',
+                $('select.mani.data.singleqb#singleqb-2d-colorscale').val(),
+                VdBm_selector2);
+            $( "i.singleqb2d" ).remove(); //clear previous
+        })
+            .fail(function(jqxhr, textStatus, error){
+                $('div#mani-singleqb-announcement').append($('<h4 style="color: red;"></h4>').text("Oops: " + error + "(" + textStatus + ")"));
+                $( "i.singleqb2d" ).remove(); //clear the status
+            })
+            .always(function(){
+                $('button.mani#singleqb-savemat').show();
+                $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text("2D Plot Completed"));
+                $( "i.singleqb2d" ).remove(); //clear the status
+            });
+    });
     return false;
 });
 
@@ -1046,26 +1250,8 @@ $('button.mani#singleqb-savecsv').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.mani.singleqb#RO-LO-Frequency').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        console.log('User ' + data.user_name + ' is downloading 1D-Data');
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dsingleqb[' + data.user_name + '].csv',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '1Dsingleqb.csv';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.mani#singleqb-savecsv').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='1Dsingleqb.csv');
     });
     return false;
 });
@@ -1080,26 +1266,8 @@ $('button.mani#singleqb-savemat').on('click', function() {
         // merely for security screening purposes
         interaction: $('select.mani.singleqb#RO-LO-Frequency').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        console.log('User ' + data.user_name + ' is downloading 2D-Data');
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dsingleqb[' + data.user_name + '].mat',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '2Dsingleqb.mat';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.mani#singleqb-savemat').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='2Dsingleqb.mat');
     });
     return false;
 });
@@ -1169,34 +1337,6 @@ $('input.mani.singleqb#search').change( function() {
     });
     return false;
 });
-
-// Event: Benchmark on click (Jacky)
-$('#mani-singleqb-to-benchmark').click( function(){
-
-    $.ajaxSettings.async = false;
-
-    listimes_singleqb();
-    accessdata_singleqb();
-    $.getJSON(mssnencrpytonian() + '/mssn/singleqb/access', 
-        { wmoment: wmoment },
-        //input/select value here:  
-        function (data) {
-            //console.log("JOBID: " + JSON.stringify(data.JOBID) );
-            console.log( data );  
-                    
-    });
-    let quantificationType = ["qfactor_estimation"];
-    $.getJSON( '/benchmark/benchmark_getMeasurement', 
-    { measurementType: "singleqb", quantificationType: JSON.stringify(quantificationType) }, 
-        function ( ) {
-    }); 
-
-    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
-    $.ajaxSettings.async = true;
-
-    return false;
-    }
-);
 
 // SAVE NOTE:
 $('textarea.mani.singleqb.note').change( function () {

@@ -59,3 +59,19 @@
     text-decoration: line-through;
   }
   
+/* For Freezing table header */
+/* block the table height and display the scrollbar */
+.content-table#fixed-headers {
+  display: block;
+}
+#fixed-headers tbody {
+  height: 700px;
+  overflow: auto;
+  display: block;
+}
+#fixed-headers thead {
+  transform: translateZ(0);
+}
+#fixed-headers tbody th {
+  transform: translateZ(0);
+}

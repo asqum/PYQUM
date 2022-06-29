@@ -477,6 +477,7 @@ function plot1D_2subplot_shareX ( data, axisKeys, plotId ){
 function plot1D ( data, axisKeys, plotId ){
     console.log("Plotting 1D");
     let traceNumber = axisKeys.y.length;
+    console.log(axisKeys);
 
     let tracies = new Array(traceNumber);
     let ix;
@@ -511,11 +512,8 @@ function plot1D ( data, axisKeys, plotId ){
     }
     var layout = {
         showlegend: true,
-        legend: {
-          x: 1,
-          xanchor: 'right',
-          y: 1
-        }
+        // legend: { x: 1, xanchor: 'right', y: 1}
+        legend: {x: 1.08}
       };
     Plotly.newPlot(plotId, tracies, layout, {showSendToCloud: true});
 }

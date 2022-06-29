@@ -19,7 +19,7 @@ from pyqum.instrument.logger import translate_scpi as Attribute
 debugger = debug(mdlname)
 
 # INITIALIZATION
-def Initiate(reset=True, which=1, mode='DATABASE', screenoff=1): # PENDING INCLUSION INTO THE DATABASE
+def Initiate(reset=True, which=1, mode='DATABASE', screenoff=0): # PENDING INCLUSION INTO THE DATABASE
     ad = address(mode)
     rs = ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
@@ -262,6 +262,7 @@ def sweep(nabench, action=['Get','','']): #Default from NA
     if len(action)==3: action = [ action[0], action[2] ] # omit "TIME:AUTO ON"
     if len(action)==2: pass
     sweepSA(nabench, action)
+    return [0, {"TIME":0, "POINTS":0}]
 
 def ifbw(nabench, action=['Get', '']):
     rbw(nabench, action=action)
@@ -288,7 +289,7 @@ def test(detail=True):
                 npoints = 371
                 sweepSA(s)
                 sweepSA(s, action=['Set','%s'%npoints])
-                freq = 7
+                freq = 6
                 fcenter(s)
                 fcenter(s, action=['Set','%sGHz'%freq])
                 span = 60
@@ -313,19 +314,23 @@ def test(detail=True):
             elif int(input("Press 1 (others) to proceed (skip) PHASE-2 (Linear frequency for adapting NA architecture): "))==1:
                 # dataform, sweep, ...(rbw,linfreq), measure, autoscal, sdata
                 dataform(s, action=['Set', 'REAL'])
-                npoints = 371
-                sweepSA(s, action=['Set','%s'%npoints])
-                fstart, fstop = 5, 9
+                npoints = 173
+                sweep(s, action=['Set','ON', '%s'%npoints])
+                setrace(s, ['S21'])
+                ifbw(s, action=['Set', '100kHz'])
+                # fstart, fstop = 5, 9
                 # linfreq(s, action=['Set', '%sGHz'%fstart, '%sGHz'%fstop]) # F-sweep
                 cwfreq(s, ['Set','6.4GHz'])
-                rbw(s, action=['Set','1MHz'])
-                vbw(s, action=['Set','100kHz'])
+                power(s, action=['Set', '', -10, -10])
+                sweep(s)
                 
                 measure(s)
-                autoscal(s, 1)
-                x = waveform('%s to %s * %s' %(fstart, fstop, npoints-1)).data
-                y = sdata(s, mode="")
-                curve(x, y, 'power spectrum-2', 'frequency (GHz)', 'power (dBm)')
+                autoscal(s)
+                # x = waveform('%s to %s * %s' %(fstart, fstop, npoints-1)).data
+                # x = waveform('%s to %s * %s' %(1, npoints, npoints-1)).data
+                y = sdata(s)[0::2]
+                # curve(x, y, 'power spectrum-2', 'frequency (GHz)', 'power (dBm)')
+                curve(list(range(len(y))), y, '', 'repeat#', 'power (dBm)')
 
             elif int(input("Press 1 (others) to proceed (skip) PHASE-3 (Zero-span power for IQ-Calibration): "))==1:
                 preamp(s, action=['Set','OFF'])

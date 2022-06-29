@@ -141,6 +141,7 @@ class IQ_Cal:
             DAC.prepare_DAC(self.daca, channel, pulseq.totalpoints, update_settings=dict(Master=True, trigbyPXI=2)) # First-in-line = Master)
         for ch in range(2):
             channel = int(ch + channels_group)
+            # PENDING: AVOID HAVING "MARKER=7" TWICE: IT WILL HAVE RESEND ERROR POPPING UP!
             DAC.compose_DAC(self.daca, channel, pulseq.music, pulseq.envelope, self.iqcal_config[self.mode]['marker'], dict(PINSW=True)) # we don't need marker yet initially
         # Turn on all 4 channels:
         DAC.alloff(self.daca, action=['Set',0])

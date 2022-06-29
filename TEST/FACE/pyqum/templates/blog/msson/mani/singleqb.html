@@ -47,17 +47,11 @@
             
             <div class="col" id='left' style="width:49%">
                 <div class="row">
-                    <!-- Read-only SCORE Statement -->
+                    <!-- Read-only Peripheral (perimeter, SCORE etc.) Statement -->
                     <textarea class='mani singleqb PSTATEMENT' type="text" rows="15" cols="73" readonly>--P-STATEMENT(s)--</textarea>
                 </div>
                 
             </div>
-            
-            
-            <!-- Read-only Peripheral Statement -->
-            <!-- <div class="col" id='left' style="width:49%">
-                <textarea class='mani singleqb Peripheral-STATEMENT' type="text" rows="15" cols="73" readonly>--PERIPHERAL(s)--</textarea>
-            </div> -->
             
         </div>
 
@@ -69,7 +63,7 @@
         <!-- 2. Parameters -->
         <div class="row parameter"></div>
 
-        <!-- Check, Plot & Download 1D-Data -->
+        <!-- Check, Plot 1D-Data -->
         <div class="row 1D">
             <div class="col-10" id='left'><input class='mani data singleqb' id="singleqb-1d-data" type="submit" value="1D-Data"/></div>
             <div class="col-5" id='left'><select class='mani data singleqb' id="singleqb-1d-VdBm" type="text">
@@ -87,11 +81,16 @@
                 <option value='lines'>Line</option>
                 <option value='markers'>Marker</option>
             </select></div>
-            <div class="col-10" id='left'><button class="mani push_button w-95 green" id="singleqb-insert-1D">COMPARE-1D</button></div>
+            <div class="col-12" id='left'><input class='mani data singleqb multiplot' id="plot-name" type="text" value=""/></div>
+            <div class="col-10" id='left'><h4>:curve-name</h4></div>
+        </div>
+        <!-- Compare 1D-Data -->
+        <div class="row 1D">
+            <div class="col-10" id='left'><input class='mani data singleqb' id="singleqb-insert-1D" style="background-color:navy;" type="submit" value="1D-1D"/></div>
             <div class="col-10" id='left'><select class='mani data singleqb compare' id="singleqb-compare-nml" type="text"></select></div>
             <div class="col-10" id='left'><select class='mani data singleqb compare' id="singleqb-compare-iqap" type="text"></select></div>
             <div class="col-10" id='left'><input class='mani data singleqb compare' id="singleqb-shot-range" type="text" value="1,4300"/></div>
-            <div class="col-5" id='left'><h4>shots</h4></div>
+            <div class="col-10" id='left'><h4>:shot-range</h4></div>
         </div>
 
         <!-- 2D-Data Assembly and Grooming -->
@@ -114,17 +113,19 @@
                 <option value='T1'>T1 DELAY</option>
                 <option value='T2'>T2 DELAY</option>
                 <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
-                <option value='QJUMPS'>QUANTUM JUMPS</option>
+                <option value='GENERAL'>GENERALIZED</option>
             </select></div>
             <div class="col-10" id='left'><input class="singleqb perimeter-settings save" type="submit" value="SAVE"/></div>
             
         </div>
 
-        <!-- Analysis -->
+        <!-- 2D Histories -->
         <div class="row">
-            <!-- Go to benchmark -->
-            <div class="col-15" id='left'><input class='char benchmark singleqb' name='singleqb-benchmark' type="submit" value="Benchmark" id="mani-singleqb-to-benchmark"/></div>
-            <!-- Download for external analysis -->
+            <div class="col-10" id='left'><input class='mani data singleqb' id="singleqb-2d-2d" style="background-color:navy;" type="submit" value="2D-2D"/></div>
+            <div class="col-84" id='left'><select class='mani data singleqb' id="singleqb-data-assemblies" type="text"></select></div>
+        </div>
+        <!-- Download 1D & 2D data for external analysis -->
+        <div class="row">
             <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savecsv">CSV-1D</button></div>
             <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savemat">MAT-2D</button></div>
         </div>
@@ -193,7 +194,7 @@
                             <option value='T1'>T1 DELAY</option>
                             <option value='T2'>T2 DELAY</option>
                             <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
-                            <option value='QJUMPS'>QUANTUM JUMPS</option>
+                            <option value='GENERAL'>GENERALIZED</option>
                         </select></div>
                     </div>
                 </div>
@@ -249,21 +250,37 @@
                         </select></div>
                     </div>
 
-                    <!-- 3. Pulse Settings (PENDING: ADJUSTABLE CHANNEL-MATRIX) -->
-                    <div class="row perimeter">
-                        <div class="col-16" id='left'><select class="channel-matrix zoomSelect"></select></div>
-                        <div class="col-2" id='left'><button class="plusButton">+</button></div>
-                        <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                    <!-- 3. Pulse Settings (PENDING: ADJUSTABLE CHANNEL-MATRIX for LO) -->
+                    <div class="row">
+                            <!-- DAC Channel Matrix (listified) -->
+                            <div class="row perimeter">
+                                <div class="col-16" id='left'><select class="channel-matrix zoomSelect"></select></div>
+                                <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                                <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                            </div>
+                            <div class="channel-matrix"></div>
+                        
+                            <!-- Where Flexible-Parameters 'LEGO' happens: R-JSON -->
+                            <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
+                            <div class="row perimeter">
+                                <div class="col-97" id='left'>
+                                    <!-- Change the dimension in style.css -->
+                                    <textarea class='mani config singleqb' id='R-JSON' type="text" rows="7" cols="13" style="color:blue;">{}</textarea>
+                                </div>
+                            </div>
+                        
                     </div>
-                    <div class="channel-matrix"></div>
                     
-                    <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
+                    <!-- Pulse Check -->
                     <div class="row perimeter">
-                        <div class="col-97" id='left'>
-                            <!-- Change the dimension in style.css -->
-                            <textarea class='mani config singleqb' id='R-JSON' type="text" rows="7" cols="13" style="color:blue;">{}</textarea>
-                        </div>
+                        <div class="col-15" id='left'><input class="mani modal-toggle singleqb pulse-check" id="singleqb-pulse-check"  type="submit" value="PULSE-CHECK"/></div>
+                        <div class="col-15" id='left'><input class="mani modal-toggle singleqb toggle-pulses" id="singleqb-toggle-pulses"  type="submit" value="TOGGLE-PULSES"/></div>
                     </div>
+                    <div class="singleqb" id="singleqb-check-pulse-progress"></div>
+                    <div class="row perimeter">
+                        <div class="mani modal-toggle" id="mani-singleqb-pulse-check"></div>
+                    </div>
+                    
 
                 </div>
                     

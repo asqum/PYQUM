@@ -10,11 +10,34 @@ $(document).ready(function(){
 });
 
 // Global variables:
-window.selecteday = ''
+window.selecteday = '';
 
 // Local variables:
-var cwsweep_Perimeters = ['dcsweepch', 'z-idle', 'sg-locked']
+var cwsweep_Perimeters = ['dcsweepch', 'z-idle', 'sg-locked',  'sweep-config', 'R-JSON']
 
+// Pull the file from server and send it to user end:
+function pull_n_send(server_URL, qumport, user_name, filename='1Dcwsweep.csv') {
+    $.ajax({
+        url: 'http://' + server_URL + ':' + qumport + '/mach/uploads/' + filename.split('.')[0] + '[' + user_name + '].' + filename.split('.')[1],
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = filename;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            $('button.char#cwsweep-save' + filename.split('.')[1]).hide();
+            $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text(a.download + ' has been downloaded'));
+        }
+    });
+    return false;
+};
 // *functions are shared across all missions!
 function transpose(a) {
     // Calculate the width and height of the Array
@@ -40,7 +63,6 @@ function transpose(a) {
     }
     return t;
   };
-
 function listimes_cwsweep() {
     // console.log("test_var: " + test_var);
     
@@ -264,13 +286,12 @@ function plot1D_cwsweep(x1,y1,y2,y3,y4,xtitle,phasetype) {
     Plotly.newPlot('char-cwsweep-chart', Trace, layout, {showSendToCloud: true});
     $( "i.cwsweep1d" ).remove(); //clear previous
 };
-
-function plot2D_cwsweep(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
+function plot2D_cwsweep(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,zsmooth) {
     console.log("Plotting 2D");
          
     // Frame assembly:
     let trace = {
-        z: [], x: [], y: [], zsmooth: 'best',
+        z: [], x: [], y: [], zsmooth: zsmooth,
         mode: 'lines', type: 'heatmap', colorscale: colorscal,
         name: 'L (' + wday + ', ' + wmoment + ')',
         line: {color: 'rgb(23, 151, 6)', width: 2.5}, yaxis: 'y' };
@@ -365,6 +386,23 @@ function plot2D_cwsweep(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
     // Plotting the Chart using assembled TRACE:
     var Trace = [trace]
     Plotly.newPlot('char-' + mission + '-chart', Trace, layout, {showSendToCloud: true});
+};
+function Perimeter_Assembler_cwsweep() {
+    var PERIMETER = {};
+    // 1. Assemble Preset Perimeters into PERIMETER:
+    $.each(singleqb_Perimeters, function(i,perimeter) {
+        PERIMETER[perimeter] = $('.char.cwsweep.perimeter#cwsweep-' + perimeter).val();
+        console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
+    });
+    // 2. Assemble Flexible SCORE-JSON into PERIMETER:
+    PERIMETER['SCORE-JSON'] = {}
+    $.each(DAC_CH_Matrix, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = String(i+1) + "-" + String(channel); 
+            PERIMETER['SCORE-JSON']["CH" + CH_Address] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(); 
+        });
+    });
+    return PERIMETER;
 };
 
 // hiding parameter settings when click outside the modal box:
@@ -695,9 +733,12 @@ $(function () {
                 .append($('<option>', { text: 'Blues', value: 'Blues' })).append($('<option>', { text: 'Viridis', value: 'Viridis' }));
             // Transpose or not
             $('select.char.data.cwsweep[name="2d-direction"]').empty().append($('<option>', { text: 'stay', value: 'stay' })).append($('<option>', { text: 'rotate', value: 'rotate' }));
+            // Z-Smooth options:
+            $('select.char.data.cwsweep[name="2d-zsmooth"]').empty().append($('<option>', { text: 'Best', value: 'best' })).append($('<option>', { text: 'Fast', value: 'fast' })).append($('<option>', { text: 'False', value: 'false' }));
             plot2D_cwsweep(x, y, ZZA, xtitle, ytitle, 
                 $('select.char.data.cwsweep[name="2d-type"]').val(),'cwsweep',
-                $('select.char.data.cwsweep[name="2d-colorscale"]').val());
+                $('select.char.data.cwsweep[name="2d-colorscale"]').val(),
+                $('select.char.data.cwsweep[name="2d-zsmooth"]').val());
         })
         .done(function(){
             $('button.char#cwsweep-savemat').show();
@@ -717,11 +758,13 @@ $('select.char.data.cwsweep.2d').on('change', function() {
     if ($('select.char.data.cwsweep[name="2d-direction"]').val() == "rotate") {
         plot2D_cwsweep(y, x, transpose(ZZ), ytitle, xtitle, 
             $('select.char.data.cwsweep[name="2d-type"]').val(),'cwsweep',
-            $('select.char.data.cwsweep[name="2d-colorscale"]').val());
+            $('select.char.data.cwsweep[name="2d-colorscale"]').val(),
+            $('select.char.data.cwsweep[name="2d-zsmooth"]').val());
     } else {
         plot2D_cwsweep(x, y, ZZ, xtitle, ytitle, 
             $('select.char.data.cwsweep[name="2d-type"]').val(),'cwsweep',
-            $('select.char.data.cwsweep[name="2d-colorscale"]').val());
+            $('select.char.data.cwsweep[name="2d-colorscale"]').val(),
+            $('select.char.data.cwsweep[name="2d-zsmooth"]').val());
     };
     return false;
 });
@@ -737,25 +780,8 @@ $('button.char#cwsweep-savecsv').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.char.cwsweep.parameter#c-freq').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/1Dcwsweep[' + data.user_name + '].csv',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '1Dcwsweep.csv';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.char#cwsweep-savecsv').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='1Dcwsweep.csv');
     });
     return false;
 });
@@ -770,25 +796,8 @@ $('button.char#cwsweep-savemat').on('click', function() {
         // merely for security screening purposes
         ifreq: $('select.char.cwsweep.parameter#c-freq').val()
     }, function (data) {
-        console.log("STATUS: " + data.status);
-        $.ajax({
-            url: 'http://qum.phys.sinica.edu.tw:' + data.qumport + '/mach/uploads/2Dcwsweep[' + data.user_name + '].mat',
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
-            success: function (data) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = '2Dcwsweep.mat';
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                $('button.char#cwsweep-savemat').hide();
-            }
-        });
+        console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
+        pull_n_send(data.server_URL, data.qumport, data.user_name, filename='2Dcwsweep.mat');
     });
     return false;
 });
@@ -836,35 +845,6 @@ $('input.cwsweep.notification').click( function(){
 
     return false;
 });
-
-
-// Event: Benchmark on click (Jacky)
-$('#char-cwsweep-to-benchmark').click( function(){
-
-    $.ajaxSettings.async = false;
-
-    listimes_cwsweep();
-    accessdata_cwsweep();
-    $.getJSON(mssnencrpytonian() + '/mssn/cwsweep/access', 
-        { wmoment: wmoment },
-        //input/select value here:  
-        function (data) {
-            //console.log("JOBID: " + JSON.stringify(data.JOBID) );
-            console.log( data );  
-                    
-    });
-    let quantificationType = ["qfactor_estimation"];
-    $.getJSON( '/benchmark/benchmark_getMeasurement', 
-    { measurementType: "cwsweep", quantificationType: JSON.stringify(quantificationType) }, 
-        function ( ) {
-    }); 
-
-    setTimeout(() => { $('div.navbar button.benchmark').trigger('click'); }, 500);
-    $.ajaxSettings.async = true;
-
-    return false;
-    }
-);
 
 // SAVE NOTE:
 $('textarea.char.cwsweep[name="note"]').change( function () {

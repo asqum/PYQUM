@@ -1,4 +1,5 @@
 # region: Loading Modules
+from pathlib import Path
 from colorama import init, Back, Fore
 init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
@@ -10,19 +11,21 @@ from numpy.lib.npyio import loads
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
-from numpy import array, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, concatenate, transpose, arange, ndindex
+from numpy import array, ndarray, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, concatenate, transpose, arange, ndindex
 from time import sleep, strptime, mktime 
 from datetime import timedelta, datetime
 from random import random
 import numba as nb
 from importlib import import_module as im
+from copy import deepcopy
 
 from pyqum import get_db, close_db
-from pyqum.instrument.logger import get_status, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
+from pyqum.instrument.logger import get_histories, get_mat_history, get_status, set_mat_history, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
                                         measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobnote, jobsinqueue, check_sample_alignment
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
-from pyqum.instrument.reader import inst_order
+from pyqum.instrument.composer import pulser
+from pyqum.instrument.reader import inst_order, device_port
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
 from pyqum.directive.manipulate import Single_Qubit, Qubits
 
@@ -53,6 +56,14 @@ __status__ = "development"
 
 encryp = '/' + 'ghhgjad'
 bp = Blueprint(myname, __name__, url_prefix=encryp+'/mssn')
+
+class JSEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, ndarray):
+            return obj.tolist()
+        elif isinstance(obj, bytes):
+            return str(obj, encoding='utf-8');
+        return json.JSONEncoder.default(self, obj)
 
 # region: PENDING: Some Tools for Fast Parallel Calculations:
 def scanner(a, b):
@@ -122,9 +133,17 @@ def all_job():
     # LOG Calculated Progress interactively into SQL-Database for fast retrieval
     update_count = 0
     for j in joblist:
-        # print("Progress: %s" %j['progress'])
-        # print("j.tag: %s" %j['tag'])
-        if (j['tag'] == "") and (j['id'] not in g.jobidlist) and (j['progress'] is None or j['progress'] < 100): # not allowing queued-job to be accessed to avoid database locks
+        '''
+        Alleviating "bottleneck" of job-listing speed on ALL-page:
+        1. Ignore job(s) with tag
+        2. Ignore queued-job(s) to avoid database locks
+        3. Ignore 100% completed job(s)
+        4. Ignore Re-queued job(s) (usually characterized by the absence of date-day and its "bag")
+        '''
+        if (j['tag'] == "") \
+            and (j['id'] not in g.queue_jobid_list) \
+                and (j['progress'] is None or j['progress'] < 100) \
+                    and (j['dateday'] is not None): 
             try:
                 meas = measurement(mission=missioname, task=j['task'], owner=owner, sample=samplename) # but data is stored according to the owner of the sample
                 meas.selectday(meas.daylist.index(j['dateday']))
@@ -136,8 +155,9 @@ def all_job():
                 db.commit()
                 close_db()
                 update_count += 1
-            except(ValueError): j['progress'] = 0 # for job w/o its bag yet
             except(TypeError): return("<h3>RE-LOGIN DETECTED</h3><h3>Please press <USERNAME> on TOP-RIGHT to proceed.</h3><h3 style='color:blue;'>Courtesy from HoDoR</h3>")
+        elif (j['dateday'] is None): j['progress'] = -1 # for job w/o its bag yet
+        else: pass
 
     # Security:
     try: print(Fore.GREEN + "User %s is accessing the jobs" %g.user['username'])
@@ -298,7 +318,7 @@ def char_fresp_export_2dmat():
         set_mat(fresp_2Ddata[session['user_name']], '2Dfresp[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/char/' + frespcryption + '/export/1dcsv', methods=['GET'])
 def char_fresp_export_1dcsv():
@@ -309,7 +329,7 @@ def char_fresp_export_1dcsv():
         set_csv(fresp_1Ddata[session['user_name']], '1Dfresp[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # list set-parameters based on selected task-entry
 @bp.route('/char/' + frespcryption + '/access', methods=['GET'])
 def char_fresp_access():
@@ -529,7 +549,17 @@ def char_cwsweep_init():
     try: print(Fore.CYAN + "Connected M-USER(s) holding CW-Sweep's RUN: %s" %Run_cwsweep.keys())
     except: Run_cwsweep = {}
 
-    return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'])
+    # Loading Channel-Matrix & Channel-Role based on WIRING-settings:
+    # 1. DC:
+    DC_PATH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DC']
+    DC_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['DC']
+    DC_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'DC')
+    # 2. SG:
+    SG_PATH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['SG']
+    SG_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['SG']
+    SG_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'SG')
+
+    return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'], DC_PATH_Matrix=DC_PATH_Matrix, DC_Role=DC_Role, DC_Which=DC_Which, SG_PATH_Matrix=SG_PATH_Matrix, SG_Role=SG_Role, SG_Which=SG_Which)
 # list task entries based on day picked
 @bp.route('/char/cwsweep/time', methods=['GET'])
 def char_cwsweep_time():
@@ -578,7 +608,7 @@ def char_cwsweep_export_2dmat():
         set_mat(cwsweep_2Ddata[session['user_name']], '2Dcwsweep[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/char/cwsweep/export/1dcsv', methods=['GET'])
 def char_cwsweep_export_1dcsv():
@@ -589,7 +619,7 @@ def char_cwsweep_export_1dcsv():
         set_csv(cwsweep_1Ddata[session['user_name']], '1Dcwsweep[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # list set-parameters based on selected task-entry
 @bp.route('/char/cwsweep/access', methods=['GET'])
 def char_cwsweep_access():
@@ -1058,7 +1088,7 @@ def char_sqepulse_export_2dmat():
         set_mat(sqepulse_2Ddata[session['user_name']], '2Dsqepulse[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/char/sqepulse/export/1dcsv', methods=['GET'])
 def char_sqepulse_export_1dcsv():
@@ -1069,7 +1099,7 @@ def char_sqepulse_export_1dcsv():
         set_csv(sqepulse_1Ddata[session['user_name']], '1Dsqepulse[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # list set-parameters based on selected task-entry
 @bp.route('/char/sqepulse/access', methods=['GET'])
 def char_sqepulse_access():
@@ -1357,7 +1387,7 @@ def mani_singleqb():
 # Initialize and list days specific to task
 @bp.route('/mani/singleqb/init', methods=['GET'])
 def mani_singleqb_init():
-    global Run_singleqb, M_singleqb, SQ_CParameters, singleqb_1Ddata, singleqb_2Ddata, c_singleqb_structure, c_singleqb_progress
+    global Run_singleqb, M_singleqb, SQ_CParameters, singleqb_1Ddata, singleqb_2Ddata, c_singleqb_structure, c_singleqb_progress, singleqb_jobid
 
     # Managing / Initialize token-specific Measurement M:
     try: print(Fore.GREEN + "Connected M-TOKEN(s) for Single-Qubit: %s" %Run_singleqb.keys())
@@ -1382,12 +1412,16 @@ def mani_singleqb_init():
     except: singleqb_2Ddata = {}
 
     # Managing / Initialize user-specific SQ Structure SQS:
-    try: print(Fore.CYAN + "Connected SQS-USER(s) for Single-Qubit: %s" %c_singleqb_structure.keys())
+    try: print(Fore.CYAN + "Connected USER(s) for Single-Qubit's Structure: %s" %c_singleqb_structure.keys())
     except: c_singleqb_structure = {}
 
     # Managing / Initialize user-specific SQ Progress SQP:
-    try: print(Fore.CYAN + "Connected SQP-USER(s) for Single-Qubit: %s" %c_singleqb_progress.keys())
+    try: print(Fore.CYAN + "Connected USER(s) for Single-Qubit's Progress: %s" %c_singleqb_progress.keys())
     except: c_singleqb_progress = {}
+
+     # Managing / Initialize user-specific SQ Jobid:
+    try: print(Fore.GREEN + "Connected USER(s) for Single-Qubit's Jobid: %s" %singleqb_jobid.keys())
+    except: singleqb_jobid = {}
 
     # Loading Channel-Matrix & Channel-Role based on WIRING-settings
     DAC_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DAC']
@@ -1410,6 +1444,50 @@ def mani_singleqb_check_timsum():
     ADC = im("pyqum.instrument.machine.%s" %ADC_type)
     record_time_ns, record_sum = ADC.check_timsum(record_time_ns,record_sum)
     return jsonify(record_time_ns=record_time_ns, record_sum=record_sum)
+# Check PULSES:
+@bp.route('/mani/singleqb/check/pulses', methods=['GET'])
+def mani_singleqb_check_pulses():
+    perimeter = json.loads(request.args.get('PERIMETER'))
+    # Extract Pulse-settings ONLY:
+    SCORE_TEMPLATE = perimeter['SCORE-JSON'] # already a DICT
+    RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
+    rjson_struct = [k for k in RJSON.keys()]
+
+    # Prepare R-waveform object for pulse-instructions
+    R_waveform = {}
+    for k in RJSON.keys(): R_waveform[k] = waveform(RJSON[k])
+
+    # Loading Channel-Matrix & Channel-Role based on WIRING-settings
+    DACH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DAC']
+
+    # DAC's SCORE-UPDATE:
+    Pulse_Preview = dict()
+    SCORE_DEFINED = deepcopy(SCORE_TEMPLATE)
+    for j in range(len(rjson_struct)):
+        for i_slot_order, channel_set in enumerate(DACH_Matrix):
+            for ch in channel_set:
+                dach_address = "%s-%s" %(i_slot_order+1,ch)
+                if ">" in rjson_struct[j]: # for locked variables with customized math expression:
+                    math_expression = rjson_struct[j].split(">")[1] # Algebraic initially
+                    for R_KEY in rjson_struct[j].split(">")[0].replace(" ","").split(","):
+                        math_expression = math_expression.replace( R_KEY, str( max(R_waveform[R_KEY].data, key=abs) ) )
+                    if not channel_set.index(ch): print(Fore.LIGHTBLUE_EX + "CH-%s: STRUCTURE LOCKED AT IDX-%s: %s -> %s" %(ch, j, rjson_struct[j], math_expression))
+                    Score_Var_Update = eval(math_expression) # evaluate pure Arithmetic in the end
+                else: # for usual variables
+                    Score_Var_Update = max(R_waveform[rjson_struct[j]].data)
+                SCORE_DEFINED['CH%s'%dach_address] = SCORE_DEFINED['CH%s'%dach_address].replace("{%s}"%rjson_struct[j], str(Score_Var_Update))
+                
+    # Convert into wave-data:
+    for i_slot_order, channel_set in enumerate(DACH_Matrix):
+        for ch in channel_set:
+            dach_address = "%s-%s" %(i_slot_order+1,ch)
+            pulseq = pulser(dt=1, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address]) # take dt as a unit-sample (1ns)
+            if not i_slot_order: T_samples = pulseq.totaltime
+            pulseq.song()
+            Pulse_Preview['CH%s'%dach_address] = list(pulseq.music)
+            # print("%s: %s" %(dach_address, SCORE_DEFINED['CH%s'%dach_address]))
+
+    return jsonify(T_samples=T_samples, Pulse_Preview=Pulse_Preview)
 # run NEW measurement:
 @bp.route('/mani/singleqb/new', methods=['GET'])
 def mani_singleqb_new():
@@ -1438,7 +1516,7 @@ def char_singleqb_export_2dmat():
         set_mat(singleqb_2Ddata[session['user_name']], '2Dsingleqb[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/mani/singleqb/export/1dcsv', methods=['GET'])
 def mani_singleqb_export_1dcsv():
@@ -1449,7 +1527,7 @@ def mani_singleqb_export_1dcsv():
         set_csv(singleqb_1Ddata[session['user_name']], '1Dsingleqb[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 
 # DATA ACCESS
 # list set-parameters based on selected task-entry
@@ -1457,8 +1535,10 @@ def mani_singleqb_export_1dcsv():
 def mani_singleqb_access():
     # Measurement details:
     wmoment = int(request.args.get('wmoment'))
-    try: JOBID = jobsearch(dict(samplename=get_status("MSSN")[session['user_name']]['sample'], task="Single_Qubit", dateday=M_singleqb[session['user_name']].day, wmoment=wmoment))
+    samplename=get_status("MSSN")[session['user_name']]['sample']
+    try: JOBID = jobsearch(dict(samplename=samplename, task="Single_Qubit", dateday=M_singleqb[session['user_name']].day, wmoment=wmoment))
     except: JOBID = 0 # Old version of data before job-queue implementation
+    singleqb_jobid[session['user_name']] = JOBID
     M_singleqb[session['user_name']].selectmoment(wmoment)
     M_singleqb[session['user_name']].accesstructure()
     corder = M_singleqb[session['user_name']].corder
@@ -1499,9 +1579,11 @@ def mani_singleqb_access():
     # print("RECORD_TIME_NS's parameter-data: %s" %pdata['RECORD_TIME_NS'])
 
     note = jobsearch(JOBID, mode="note")
+
+    histories = get_histories(samplename, str(JOBID))
     return jsonify(JOBID=JOBID, note=note,
         data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, comment=comment, 
-        pdata=pdata, SQ_CParameters=SQ_CParameters[session['user_name']])
+        pdata=pdata, SQ_CParameters=SQ_CParameters[session['user_name']], histories=histories)
 # save perimeter settings for different measurements (Fresp, Cwsweep, Rabi, T1, T2, Wigner, Fidelity, QST etc)
 @bp.route('/mani/singleqb/perisettings/save', methods=['GET'])
 def mani_singleqb_perisettings_save():
@@ -1652,88 +1734,103 @@ def mani_singleqb_1ddata():
 
 @bp.route('/mani/singleqb/2ddata', methods=['GET'])
 def mani_singleqb_2ddata():
-    print(Fore.GREEN + "User %s is plotting SINGLEQB 2D-Data using vectorization" %session['user_name'])
-    M_singleqb[session['user_name']].loadata()
-    selectedata = M_singleqb[session['user_name']].selectedata
-    print("Data length: %s" %len(selectedata))
-    
+    samplename = get_status("MSSN")[session['user_name']]['sample']
+    JOBID = singleqb_jobid[session['user_name']]
     # load parameter indexes from json call:
     cselect = json.loads(request.args.get('cselect'))
+    call_histories = int(request.args.get('call_histories'))
+    chosen_matfile = request.args.get('chosen_matfile')
 
-    try:
-        x_loc = [k for k in cselect.values()].index('x')
-        selected_x = [c for c in cselect.keys()][x_loc]
-        y_loc = [k for k in cselect.values()].index('y')
-        selected_y = [c for c in cselect.keys()][y_loc]
-        xtitle = "<b>" + selected_x + "</b>"
-        ytitle = "<b>" + selected_y + "</b>"
-        selected_caddress = [s for s in cselect.values()]
-    except: 
-        print("x and y parameters not selected or not valid")
-        
-    # Adjusting c-parameters range for data analysis based on progress:
-    parent_address = selected_caddress[:SQ_CParameters[session['user_name']].index(selected_x)] # address's part before x (higher-level data)
-    if [int(s) for s in parent_address] < c_singleqb_progress[session['user_name']][0:len(parent_address)]: # must be matched with the parameter-select-range on the front-page
-        print(Fore.YELLOW + "selection is well within progress")
-        sweepables = [c_singleqb_structure[session['user_name']][SQ_CParameters[session['user_name']].index(selected_x)], c_singleqb_structure[session['user_name']][SQ_CParameters[session['user_name']].index(selected_y)]]
-    else: 
-        sweepables = [c_singleqb_progress[session['user_name']][SQ_CParameters[session['user_name']].index(selected_x)]+1, c_singleqb_progress[session['user_name']][SQ_CParameters[session['user_name']].index(selected_y)]+1]
+    # Plot 2D from scratch if the data not assembled previously:
+    if not call_histories:
+        print(Fore.GREEN + "User %s is plotting SINGLEQB 2D-Data using vectorization" %session['user_name'])
+        M_singleqb[session['user_name']].loadata()
+        selectedata = M_singleqb[session['user_name']].selectedata
+        print("Data length: %s" %len(selectedata))
 
+        try:
+            x_loc = [k for k in cselect.values()].index('x')
+            selected_x = [c for c in cselect.keys()][x_loc]
+            y_loc = [k for k in cselect.values()].index('y')
+            selected_y = [c for c in cselect.keys()][y_loc]
+            xtitle = "<b>" + selected_x + "</b>"
+            ytitle = "<b>" + selected_y + "</b>"
+            selected_caddress = [s for s in cselect.values()]
+        except: 
+            print("x and y parameters not selected or not valid")
             
-    # flexible access until progress resume-point
-    xsweep = range(sweepables[0])
-    if SQ_CParameters[session['user_name']].index(selected_y) == len(SQ_CParameters[session['user_name']])-1 :
-        # Special treatment on the last 'buffer' parameter to factor out the data-density first:
-        ysweep = range(sweepables[1]//M_singleqb[session['user_name']].datadensity)
+        # Adjusting c-parameters range for data analysis based on progress:
+        parent_address = selected_caddress[:SQ_CParameters[session['user_name']].index(selected_x)] # address's part before x (higher-level data)
+        if [int(s) for s in parent_address] < c_singleqb_progress[session['user_name']][0:len(parent_address)]: # must be matched with the parameter-select-range on the front-page
+            print(Fore.YELLOW + "selection is well within progress")
+            sweepables = [c_singleqb_structure[session['user_name']][SQ_CParameters[session['user_name']].index(selected_x)], c_singleqb_structure[session['user_name']][SQ_CParameters[session['user_name']].index(selected_y)]]
+        else: 
+            sweepables = [c_singleqb_progress[session['user_name']][SQ_CParameters[session['user_name']].index(selected_x)]+1, c_singleqb_progress[session['user_name']][SQ_CParameters[session['user_name']].index(selected_y)]+1]
+
+                
+        # flexible access until progress resume-point
+        xsweep = range(sweepables[0])
+        if SQ_CParameters[session['user_name']].index(selected_y) == len(SQ_CParameters[session['user_name']])-1 :
+            # Special treatment on the last 'buffer' parameter to factor out the data-density first:
+            ysweep = range(sweepables[1]//M_singleqb[session['user_name']].datadensity)
+        else:
+            ysweep = range(sweepables[1]) 
+        print(Back.WHITE + Fore.BLACK + "Sweeping %s x-points" %len(xsweep))
+        print(Back.WHITE + Fore.BLACK + "Sweeping %s y-points" %len(ysweep))
+
+        Idata = zeros([len(ysweep), len(xsweep)])
+        Qdata = zeros([len(ysweep), len(xsweep)])
+        Adata = zeros([len(ysweep), len(xsweep)])
+        Pdata = zeros([len(ysweep), len(xsweep)])
+        for j in ysweep:
+            if not (j+1)%600: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
+            selected_caddress[SQ_CParameters[session['user_name']].index(selected_y)] = j # register y-th position
+            for i in xsweep:
+                selected_caddress[SQ_CParameters[session['user_name']].index(selected_x)] = i # register x-th position
+                if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
+                    srange = request.args.get('srange').split(",") # sample range
+                    smode = request.args.get('smode') # sampling mode
+                    Idata[j,i], Qdata[j,i], Adata[j,i], Pdata[j,i] = \
+                        pulseresp_sampler(srange, selected_caddress, selectedata, c_singleqb_structure[session['user_name']], M_singleqb[session['user_name']].datadensity, mode=smode)
+
+                else:
+                    # Ground level Pulse shape response:
+                    selected_caddress = [int(s) for s in selected_caddress]
+                    Basic = selected_caddress[-1]
+                    # Extracting I & Q:
+                    Idata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], c_singleqb_structure[session['user_name']])]
+                    Qdata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], c_singleqb_structure[session['user_name']])]  
+
+        print("Mapping complete. Structure: %s" %c_singleqb_structure[session['user_name']])
+        
+        # x-data:
+        selected_xsweep = M_singleqb[session['user_name']].corder[selected_x]
+        x = waveform(selected_xsweep).data[0:len(xsweep)]
+
+        # y-data:
+        selected_ysweep = M_singleqb[session['user_name']].corder[selected_y]
+        y = waveform(selected_ysweep).data[0:len(ysweep)]
+        
+        # IQ-data:
+        Adata = sqrt(Idata**2 + Qdata**2)
+        UPdata = unwrap(arctan2(Qdata, Idata)) # -pi < phase < pi -> Unwrapped
+
+        # Packing data into dictionary:
+        ZZI, ZZQ, ZZA, ZZUP = Idata.tolist(), Qdata.tolist(), Adata.tolist(), UPdata.tolist()
+        singleqb_2Ddata[session['user_name']] = dict(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
+
+        # Automatically backup 2D-data into HISTORY:
+        caddress = ','.join([str(s) for s in selected_caddress])
+        set_mat_history(singleqb_2Ddata[session['user_name']], samplename, str(JOBID), "X(%s)_Y(%s)_caddress(%s)"%(selected_x,selected_y,caddress))
+
+        # executor.submit(fn, args).add_done_callback(handler)
+
     else:
-        ysweep = range(sweepables[1]) 
-    print(Back.WHITE + Fore.BLACK + "Sweeping %s x-points" %len(xsweep))
-    print(Back.WHITE + Fore.BLACK + "Sweeping %s y-points" %len(ysweep))
+        singleqb_2Ddata[session['user_name']] = get_mat_history(samplename, str(JOBID), chosen_matfile)
+        print(Fore.YELLOW + "%s is plotting 2D-data from the HISTORY: %s" %(session['user_name'], chosen_matfile))
 
-    Idata = zeros([len(ysweep), len(xsweep)])
-    Qdata = zeros([len(ysweep), len(xsweep)])
-    Adata = zeros([len(ysweep), len(xsweep)])
-    Pdata = zeros([len(ysweep), len(xsweep)])
-    for j in ysweep:
-        if not (j+1)%600: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
-        selected_caddress[SQ_CParameters[session['user_name']].index(selected_y)] = j # register y-th position
-        for i in xsweep:
-            selected_caddress[SQ_CParameters[session['user_name']].index(selected_x)] = i # register x-th position
-            if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
-                srange = request.args.get('srange').split(",") # sample range
-                smode = request.args.get('smode') # sampling mode
-                Idata[j,i], Qdata[j,i], Adata[j,i], Pdata[j,i] = \
-                    pulseresp_sampler(srange, selected_caddress, selectedata, c_singleqb_structure[session['user_name']], M_singleqb[session['user_name']].datadensity, mode=smode)
-
-            else:
-                # Ground level Pulse shape response:
-                selected_caddress = [int(s) for s in selected_caddress]
-                Basic = selected_caddress[-1]
-                # Extracting I & Q:
-                Idata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], c_singleqb_structure[session['user_name']])]
-                Qdata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], c_singleqb_structure[session['user_name']])]  
-
-    print("Mapping complete. Structure: %s" %c_singleqb_structure[session['user_name']])
-    
-    # x-data:
-    selected_xsweep = M_singleqb[session['user_name']].corder[selected_x]
-    x = waveform(selected_xsweep).data[0:len(xsweep)]
-
-    # y-data:
-    selected_ysweep = M_singleqb[session['user_name']].corder[selected_y]
-    y = waveform(selected_ysweep).data[0:len(ysweep)]
-    
-    # IQ-data:
-    Adata = sqrt(Idata**2 + Qdata**2)
-    UPdata = unwrap(arctan2(Qdata, Idata)) # -pi < phase < pi -> Unwrapped
-
-    # Packing data into dictionary:
-    ZZI, ZZQ, ZZA, ZZUP = Idata.tolist(), Qdata.tolist(), Adata.tolist(), UPdata.tolist()
-    singleqb_2Ddata[session['user_name']] = dict(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
-
-    # executor.submit(fn, args).add_done_callback(handler)
-
-    return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
+    return json.dumps(singleqb_2Ddata[session['user_name']], cls=JSEncoder)
+    # return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 
 # endregion
 
@@ -1826,7 +1923,7 @@ def char_qubits_export_2dmat():
         set_mat(qubits_2Ddata[session['user_name']], '2Dqubits[%s].mat'%session['user_name'])
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 # export to csv
 @bp.route('/mani/qubits/export/1dcsv', methods=['GET'])
 def mani_qubits_export_1dcsv():
@@ -1837,7 +1934,7 @@ def mani_qubits_export_1dcsv():
         set_csv(qubits_1Ddata[session['user_name']], '1Dqubits[%s].csv'%session['user_name'])
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
-    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']))
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
 
 # DATA ACCESS
 # list set-parameters based on selected task-entry
@@ -2127,8 +2224,8 @@ def mani_qubits_2ddata():
 
 
 # region: benchmark
-
 def get_measurementObject( measurementType ):
+    print(Fore.GREEN + "TASK to BENCHMARK: %s" %(measurementType))
 
     def frequency_response ():
         mObj = M_fresp[session['user_name']]

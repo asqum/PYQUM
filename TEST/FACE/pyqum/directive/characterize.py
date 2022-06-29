@@ -24,7 +24,7 @@ __status__ = "development"
 # **********************************************************************************************************************************************************
 # 1. FREQUENCY RESPONSE MEASUREMENT:
 @settings(2) # data-density
-def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, queue=''):
+def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, queue='', renamed_task=''):
     '''Characterizing Frequency Response:
     C-Order: Flux-Bias, S-Parameter, IF-Bandwidth, Power, Frequency
     '''
@@ -36,16 +36,18 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     queue = get_status("MSSN")[session['user_name']]['queue']
 
     # Queue-specific instrument-package:
-    instr['DC']= inst_order(queue, 'DC')[0]
+    instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument/card allowed (via Global flux-coil or multi-channel card: CH-3,4)
     instr['NA']= inst_order(queue, 'NA')[0]
 
     # pushing pre-measurement parameters to settings:
-    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
+    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task
 
     # User-defined Controlling-PARAMETER(s) & -PERIMETER(s) ======================================================================================
     # 1. PERIMETER:
     dcsweepch = perimeter['dcsweepch']
     z_idle = literal_eval(perimeter['z-idle']) # Idle Z-JSON: {<Channel>: <DC Value>, ... }
+    dc_sweep_config = literal_eval(perimeter['sweep-config']) # DC sweep configurations
+    current = dc_sweep_config['current']
     # 2. PARAMETER:
     fluxbias_lock = dict()
     fluxbias = waveform(corder['Flux-Bias'])
@@ -69,11 +71,11 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     [DC_type, DC_label] = instr['DC'].split('_')
     if "DUMMY" not in DC_type.upper(): DC = im("pyqum.instrument.machine.%s" %DC_type)
     if "opt" not in fluxbias.data: # check if it is in optional-state
-        dcbench = DC.Initiate(current=True, which=DC_label) # PENDING option: choose between Voltage / Current output
+        dcbench = DC.Initiate(current=current, which=DC_label) # PENDING option: choose between Voltage / Current output
         DC.output(dcbench, 1)
         # Pre-setting Z-Idle-Channels:
         for key in z_idle: 
-            if "lock" not in str(z_idle[key]).lower(): DC.sweep(dcbench, z_idle[key], channel=key) # locked to itself
+            if "lock" not in str(z_idle[key]).lower(): DC.sweep(dcbench, z_idle[key], channel=key, update_settings=dc_sweep_config) # locked to itself
             else: fluxbias_lock[key] = waveform(z_idle[key].lower().replace("lock",str(fluxbias.count-1))) # locked to fluxbias
 
     # Buffer setting(s) for certain loop(s):
@@ -89,7 +91,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
         caddress = cdatasearch(resumepoint//buffersize_1, cstructure)
         # Only those involved in virtual for-loop need to be pre-set here:
         if "opt" not in fluxbias.data: # check if it is in optional-state
-            DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
+            DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch, update_settings=dc_sweep_config) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
         NA.setrace(nabench, Mparam=[Sparam.data[caddress[1]]])
         NA.ifbw(nabench, action=['Set', ifb.data[caddress[2]]])
 
@@ -105,10 +107,10 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
             # setting each c-order (From High to Low level of execution):
             if not i%prod(cstructure[1::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in fluxbias.data: # check if it is in optional-state
-                    DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
+                    DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch, update_settings=dc_sweep_config) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
                     # Locking Z-Idle-Channels to Sweeping-Master-Channel:
                     for key in z_idle: 
-                        if "lock" in str(z_idle[key]).lower(): DC.sweep(dcbench, str(fluxbias_lock[key].data[caddress[0]]), channel=key)
+                        if "lock" in str(z_idle[key]).lower(): DC.sweep(dcbench, str(fluxbias_lock[key].data[caddress[0]]), channel=key, update_settings=dc_sweep_config)
                     
             if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
                 NA.setrace(nabench, Mparam=[Sparam.data[caddress[1]]])
@@ -150,7 +152,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
 # **********************************************************************************************************************************************************
 # 2. CONTINUOUS-WAVE SWEEPING:
 @settings(2) # data-density
-def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, queue=''):
+def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, queue='', renamed_task=''):
     '''Continuous Wave Sweeping:
     C-Order: Flux-Bias, XY-Frequency, XY-Power, S-Parameter, IF-Bandwidth, Frequency, Power
     '''
@@ -162,18 +164,20 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     queue = get_status("MSSN")[session['user_name']]['queue']
 
     # Queue-specific instrument-package:
-    instr['DC']= inst_order(queue, 'DC')[0]
+    instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument/card allowed (via Global flux-coil or multi-channel card: CH-3,4)
     instr['SG']= inst_order(queue, 'SG')[0]
     instr['NA']= inst_order(queue, 'NA')[0]
 
     # pushing pre-measurement parameters to settings:
-    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
+    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task
 
     # User-defined Controlling-PARAMETER(s) & -PERIMETER(s) ======================================================================================
     # 1. PERIMETER:
     dcsweepch = perimeter['dcsweepch']
     z_idle = literal_eval(perimeter['z-idle']) # Idle Z-JSON: {<Channel>: <DC Value>, ... }
     sg_locked = literal_eval(perimeter['sg-locked']) # Locked SG-JSON: {<INSTR>/<ATTR>: <Set LOCK-Waveform>, ... }
+    dc_sweep_config = literal_eval(perimeter['sweep-config']) # DC sweep configurations
+    current = dc_sweep_config['current']
     # 2. PARAMETER:
     fluxbias, fluxbias_lock = waveform(corder['Flux-Bias']), dict()
     SG_LOCKED, sglocked_bench = dict(), dict()
@@ -212,11 +216,11 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     [DC_type, DC_label] = instr['DC'].split('_')
     if "DUMMY" not in DC_type.upper(): DC = im("pyqum.instrument.machine.%s" %DC_type)
     if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
-        dcbench = DC.Initiate(current=True, which=DC_label) # pending option
+        dcbench = DC.Initiate(current=current, which=DC_label) # pending option
         DC.output(dcbench, 1)
         # Pre-setting Z-Idle-Channels:
         for key in z_idle: 
-            if "lock" not in str(z_idle[key]).lower(): DC.sweep(dcbench, z_idle[key], channel=key) # locked to itself: constant peri-flux output
+            if "lock" not in str(z_idle[key]).lower(): DC.sweep(dcbench, z_idle[key], channel=key, update_settings=dc_sweep_config) # locked to itself: constant peri-flux output
             else: fluxbias_lock[key] = waveform(z_idle[key].lower().replace("lock",str(fluxbias.count-1))) # locked to fluxbias
 
     # SG:
@@ -256,7 +260,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
         # Only those involved in virtual for-loop need to be pre-set here:
         # Optionals:
         if "opt" not in fluxbias.data: # check if it is in optional-state / serious-state
-            DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s 
+            DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch, update_settings=dc_sweep_config) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s 
         if "opt" not in xyfreq.data: # check if it is in optional-state / serious-state
             SG.frequency(sgbench, action=['Set', str(xyfreq.data[caddress[1]]) + "GHz"])
             SG.power(sgbench, action=['Set', str(xypowa.data[caddress[2]]) + "dBm"])
@@ -279,10 +283,10 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             # Optionals:
             if not i%prod(cstructure[1::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in fluxbias.data: # check if it is in optional-state
-                    DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
+                    DC.sweep(dcbench, str(fluxbias.data[caddress[0]]), channel=dcsweepch, update_settings=dc_sweep_config) # A-mode: sweeprate=0.0007 A/s ; V-mode: sweeprate=0.07 V/s
                     # Locking Z-Idle-Channels to Sweeping-Master-Channel:
                     for key in z_idle: 
-                        if "lock" in str(z_idle[key]).lower(): DC.sweep(dcbench, str(fluxbias_lock[key].data[caddress[0]]), channel=key)
+                        if "lock" in str(z_idle[key]).lower(): DC.sweep(dcbench, str(fluxbias_lock[key].data[caddress[0]]), channel=key, update_settings=dc_sweep_config)
             
             if not i%prod(cstructure[2::]): # virtual for-loop using exact-multiples condition
                 if "opt" not in xyfreq.data: # check if it is in optional-state
@@ -324,6 +328,11 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
             NA.autoscal(nabench)
             # NA.selectrace(nabench, action=['Set', 'para 1 calc 1'])
             data = NA.sdata(nabench)
+
+            # NOTE: Debug anomaly in MXA output data:
+            # from pyqum.instrument.analyzer import curve
+            # curve(list(range(len(data[0::2]))), data[0::2], '', 'repeat#', 'power (dBm)')
+
             print(Fore.YELLOW + "\rProgress: %.3f%%" %((i+1)/datasize*buffersize_1*100), end='\r', flush=True)
             jobsinqueue(queue)
             if JOBID in g.jobidlist:

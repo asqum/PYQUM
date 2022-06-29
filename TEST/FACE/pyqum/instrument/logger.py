@@ -40,8 +40,8 @@ USR_PATH = MAIN_PATH / "USRLOG"
 PORTAL_PATH = MAIN_PATH / "PORTAL"
 ADDRESS_PATH = MAIN_PATH / "Address"
 SPECS_PATH = MAIN_PATH / "SPECS"
-
 ANALYSIS_PATH = PORTAL_PATH / "ANALYSIS"
+HISTORY_PATH = PORTAL_PATH / "HISTORY"
 
 
 # Pending: extract MAC from IP?
@@ -162,7 +162,7 @@ def bdr_zip_log(zipname, log_location=Path(r'\\BLUEFORSAS2\dr_bob') / "21-06-06"
                 status = zipObj.write(filePath) # Add file to zip
     return status
 
-# save JSON(Jacky)
+# save JSON into ANALYSIS Folder:
 def set_json_measurementinfo(data_dict, filename):
     jsonFilename = filename+".JSON"
     totalPath = ANALYSIS_PATH/jsonFilename
@@ -178,12 +178,31 @@ def get_json_measurementinfo(filename):
         data = json.load(f)
     return data
 
-# save mat(Jacky)
+# save mat into ANALYSIS Folder:
 def set_mat_analysis(data_dict, filename):
     matFilename = filename+".mat"
     totalPath = ANALYSIS_PATH/matFilename
     savemat(Path(totalPath), data_dict)
     return None
+
+# save mat into HISTORY Folder:
+def set_mat_history(data_dict, samplename, jobid, filename):
+    matFilename = filename+".mat"
+    totalPath = HISTORY_PATH/Path(samplename)/Path(jobid)/matFilename
+    existence = exists(totalPath)# and stat(totalPath).st_size > 0
+    if existence == False:
+        totalPath.parent.mkdir(parents=True, exist_ok=True) #make directories
+    savemat(totalPath, data_dict, format='5', oned_as="column") #made for JS-array
+    return None
+def get_histories(samplename, jobid):
+    sample_job_dir = HISTORY_PATH/Path(samplename)/Path(jobid)
+    try: histories = listdir(sample_job_dir)
+    except: histories = []
+    return histories
+def get_mat_history(samplename, jobid, matfilename):
+    File_Path = HISTORY_PATH/Path(samplename)/Path(jobid)/matfilename
+    matdata = loadmat(File_Path)
+    return matdata
 
 class address:
     '''Use DATABASE by DEFAULT, TEST by CHOICE
@@ -663,9 +682,10 @@ def settings(datadensity=1):
     @wrapt.decorator
     def wrapper(Name, instance, a, b):
         Generator = Name(*a, **b)
-        owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue = next(Generator)
+        owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task = next(Generator)
         mission = Path(inspect.getfile(Name)).parts[-1].replace('.py','') #Path(inspect.stack()[1][1]).name.replace('.py','')
-        task = Name.__name__
+        if renamed_task=="": task = Name.__name__
+        else: task = renamed_task
         # print("task: %s" %task)
         M = measurement(mission, task, owner, sample) #M-Initialization
         if type(dayindex) is str: # for later access
@@ -700,11 +720,11 @@ def settings(datadensity=1):
                 while True:
                     jobsinqueue(queue)
                     # 2.1. Get out in the middle of waiting:
-                    if JOBID not in g.jobidlist:
+                    if JOBID not in g.queue_jobid_list:
                         M.status = "M-JOB CANCELLED OR NOT QUEUED IN PROPERLY"
                         return M
                     # 2.2. It's your turn AND all relevant instruments are free:
-                    elif g.jobidlist.index(JOBID)==0 and not address().macantouch(list(instr.values())):
+                    elif g.queue_jobid_list.index(JOBID)==0 and not address().macantouch(list(instr.values())):
                         '''All of the following should be fulfilled before taking turn to run:
                             1. ONLY FIRST-IN-LINE get to break the waiting loop
                             2. ALL instruments required are disconnected
@@ -713,7 +733,7 @@ def settings(datadensity=1):
                         break
                     # 2.3. Keep waiting behind:
                     else:
-                        queue_behind = g.jobidlist.index(JOBID) + 1 # "extra +1" just in case of machine still being occupied
+                        queue_behind = g.queue_jobid_list.index(JOBID) + 1 # "extra +1" just in case of machine still being occupied
                         waiting_interval = 3.17*queue_behind # adjust waiting time based on how far behind in queue
                         sleep(waiting_interval)
                         print(Fore.YELLOW + "JOBID #%s is waiting every %s seconds" %(JOBID,waiting_interval))
@@ -795,9 +815,9 @@ def lisqueue(queue):
 def jobsinqueue(queue):
     if int(g.user['measurement']) > 0:
         db = get_db()
-        g.jobidlist = db.execute("SELECT job_id FROM %s ORDER BY id"%queue).fetchall()
+        g.queue_jobid_list = db.execute("SELECT job_id FROM %s ORDER BY id"%queue).fetchall()
         close_db()
-        g.jobidlist = [dict(x)['job_id'] for x in g.jobidlist] # use to scheduling tasks in queue
+        g.queue_jobid_list = [dict(x)['job_id'] for x in g.queue_jobid_list] # use to scheduling tasks in queue
         status = "JOBID-LIST in QUEUE has been extracted"
     else: status = "Measurement clearance was not found"
     return status
@@ -885,7 +905,7 @@ def jobin(task,corder,perimeter,instr,comment,tag):
             # raise
             JOBID = None 
             print(Fore.RED + Back.WHITE + "Check all database input parameters")
-            print(Fore.BLUE + "Stop server and make sure queue's 'check'-constraint has included the new queue!")
+            print(Fore.BLUE + "Please make sure queue's 'check'-constraint inside job's table has already included the new queue!")
     else: JOBID = None
     return JOBID
 def jobstart(day,task_index,JOBID):

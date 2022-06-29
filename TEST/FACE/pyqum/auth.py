@@ -6,6 +6,7 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 
+# from json import loads
 import functools
 # from datetime import timedelta
 # from keyboard import press
@@ -17,6 +18,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from pyqum import get_db, close_db
 from pyqum.instrument.logger import lisample, set_status, get_status, which_queue_system
+from pyqum.instrument.reader import inst_designate
 
 bp = Blueprint(myname, __name__, url_prefix='/auth')
 
@@ -62,7 +64,7 @@ def load_logged_in_user():
         
         # 3. logged-in user's samples' details:
         g.samples = get_db().execute(
-            'SELECT s.id, author_id, samplename, fabricated, location, previously, description, registered'
+            'SELECT s.id, author_id, samplename, specifications, location, level, description, registered'
             ' FROM sample s JOIN user u ON s.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
             ' WHERE u.id = ?'
             ' ORDER BY registered DESC',
@@ -73,7 +75,7 @@ def load_logged_in_user():
 
         # 4. logged-in user's co-authored samples' details:
         g.cosamples = get_db().execute(
-            'SELECT s.id, author_id, samplename, fabricated, location, previously, description, registered'
+            'SELECT s.id, author_id, samplename, specifications, location, level, description, registered'
             ' FROM sample s JOIN user u ON s.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
             ' WHERE s.co_authors LIKE ?'
             ' ORDER BY registered DESC',
@@ -88,8 +90,10 @@ def load_logged_in_user():
             SELECT m.codename, connected, category, sequence, system, note, u.username
             FROM machine m
             INNER JOIN user u ON m.user_id = u.id
+            WHERE m.BDR = ?
             ORDER BY m.id DESC
-            '''
+            ''',
+            (g.DR_platform,)
         ).fetchall()
         close_db()
         g.machlist = [dict(x) for x in g.machlist]
@@ -189,19 +193,20 @@ def login():
             session['bdr_clearance'] = False
             session['people'] = None
             print("%s has logged-in Successfully!" %session['user_name'] )
-            return redirect(url_for('index'))
 
-            g.userlist = None
+            g.approved_user_list = None
             if user['management'] == "oversee":
                 # ALL approved users' credentials:
-                g.userlist = db.execute(
+                g.approved_user_list = db.execute(
                     'SELECT u.id, username, measurement, instrument, analysis'
                     ' FROM user u WHERE u.status = ?'
                     ' ORDER BY id DESC',
                     ('approved',)
                 ).fetchall()
-                g.userlist = [dict(x) for x in g.userlist]
-            print(Fore.RED + Back.WHITE + "USER CREDENTIALS: %s" %g.userlist)
+                g.approved_user_list = [dict(x) for x in g.approved_user_list]
+            print(Fore.RED + Back.WHITE + "ALL APPROVED USER CREDENTIALS: %s" %g.approved_user_list)
+
+            return redirect(url_for('index'))
 
         close_db()
         print(error)
@@ -241,25 +246,26 @@ def usersamples():
     # Current sample:
     try: selected_sample = get_status("MSSN")[session['user_name']]['sample']
     except: selected_sample = 0 # For first-time user to pick a sample to begin with
-    return render_template('auth/samples.html', samples=samples, cosamples=cosamples, selected_sample=selected_sample)
+    # QPC list:
+    qpclist = [x['system'] for x in get_db().execute('SELECT system FROM queue').fetchall() if "QPC" in str(x['system']).upper()]
+    return render_template('auth/samples.html', samples=samples, cosamples=cosamples, selected_sample=selected_sample, qpclist=qpclist)
 @bp.route('/user/samples/register')
 def usersamples_register():
     sname = request.args.get('sname')
-    dob = request.args.get('dob')
     loc = request.args.get('loc')
-    prev = request.args.get('prev')
+    level = request.args.get('level')
     description = request.args.get('description')
     db = get_db()
     try:
         db.execute(
-            'INSERT INTO sample (author_id, samplename, fabricated, location, previously, description)'
-            ' VALUES (?, ?, ?, ?, ?, ?)',
-            (g.user['id'], sname, dob, loc, prev, description,)
+            'INSERT INTO sample (author_id, samplename, location, level, description)'
+            ' VALUES (?, ?, ?, ?, ?)',
+            (g.user['id'], sname, loc, level, description,)
         )
         db.commit()
         message = "Sample %s added to the database!" %(sname)
-    except:
-        message = "Check sample registration"
+    except Exception as e:
+        message = "Abort: %s" %e
     close_db()
     return jsonify(message=message)
 @bp.route('/user/samples/access')
@@ -270,7 +276,7 @@ def usersamples_access():
     db = get_db()
     try:
         sample_cv = db.execute(
-            'SELECT s.id, author_id, samplename, fabricated, location, previously, description, registered, co_authors, history'
+            'SELECT s.id, author_id, samplename, specifications, location, level, description, registered, co_authors, history'
             ' FROM sample s JOIN user u ON s.author_id = u.id'
             ' WHERE s.samplename = ?',
             (sname,)
@@ -295,10 +301,10 @@ def usersamples_access():
 def usersamples_update():
     sname = request.args.get('sname')
     loc = request.args.get('loc')
-    dob = request.args.get('dob')
+    specs = request.args.get('specs')
     description = request.args.get('description')
     coauthors = request.args.get('coauthors')
-    prev = request.args.get('prev')
+    level = request.args.get('level')
     history = request.args.get('history')
     ownerpassword = request.args.get('ownerpassword')
     db = get_db()
@@ -307,8 +313,8 @@ def usersamples_update():
         people = db.execute('SELECT password FROM user WHERE username = ?', (sample_owner,)).fetchone()
         if check_password_hash(people['password'], ownerpassword):
             db.execute(
-                'UPDATE sample SET location = ?, fabricated = ?, description = ?, co_authors = ?, previously = ?, history = ? WHERE samplename = ?',
-                (loc, dob, description, coauthors, prev, history, sname,)
+                'UPDATE sample SET location = ?, specifications = ?, description = ?, co_authors = ?, level = ?, history = ? WHERE samplename = ?',
+                (loc, specs, description, coauthors, level, history, sname,)
             )
             db.commit()
             message = "Sample %s has been successfully updated!" %(sname)
@@ -333,13 +339,33 @@ def usersamples_meal():
         print(Fore.YELLOW + "%s is managed by %s" %(sname, session['people']))
     except: 
         session['people'] = None
-    # LOGGED INTO JSON:
-    try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'])})
-    except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='')})
+    # LOGGED INTO JSON: (PENDING: Align the other MSSN set_status as well with time-stamp)
+    try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'], time=0)})
+    except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='', time=0)})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
+@bp.route('/user/samplesloc/update/qpc_wiring', methods=['GET'])
+def usersamplesloc_update_qpc_wiring():
+    peach = request.args.get('peach')
+    qpc_selected = request.args.get('qpc_selected')
 
-# Experiment Database Handling:
+    # Translate Peach to QPC:
+
+
+    # Update QPC-wiring database:
+    instr_organized = {"category": "designation"}
+    try:
+        if int(g.user['management'])>=3:
+            for key, val in instr_organized.items(): 
+                inst_designate(qpc_selected, key, val)
+            message = "%s's instrument assignment has been set successfully" %qpc_selected
+        else: message = "Clearance not enough"
+    except:
+        message = "database error"
+
+    return jsonify(message=message)
+
+# Sample Job-History:
 
 
 

@@ -10,6 +10,7 @@ from time import time, sleep
 from copy import copy, deepcopy
 from json import loads, dumps
 from numpy import prod, array, mean, ceil, floor, sin, cos
+from numexpr import evaluate as eval
 from flask import session, g
 
 from importlib import import_module as im
@@ -19,6 +20,7 @@ from pyqum.instrument.composer import pulser
 from pyqum.instrument.analyzer import pulse_baseband
 from pyqum.instrument.reader import inst_order
 
+from asqpu.hardware_information import *
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
@@ -31,9 +33,9 @@ __status__ = "development"
 # region: 1. Single-Qubit Control:
 # **********************************************************************************************************************************************************
 @settings(2) # data-density
-def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}):
+def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, renamed_task=''):
     '''
-    Time-domain Square-wave measurement:\n
+    Time-domain Pulse measurement:\n
     SCORES (SCripted ORchestration of Entanglement & Superposition) is a scripted pulse instruction language for running Quantum Algorithm.\n
     perimeter.keys() = ['XY-LO-Power', 'RO-LO-Power', 'SCORE-NS', 'SCORE-JSON', 'R-JSON', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE']\n
     C-Structure = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'] + [...R-parameter(s)...]\n
@@ -54,14 +56,14 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     ROLE_Wiring = inst_order(queue, 'ROLE')
     DACH_Role = ROLE_Wiring['DAC']
     RO_addr = find_in_list(DACH_Role, 'I1')
-    XY_addr = find_in_list(DACH_Role, 'X1')
-    print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
+    # XY_addr = find_in_list(DACH_Role, 'X1')
+    # print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
-    instr['DC']= inst_order(queue, 'DC')[0]
+    instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument allowed (via Global flux-coil)
     instr['SG']= inst_order(queue, 'SG')
     instr['DAC']= inst_order(queue, 'DAC')
-    instr['ADC']= inst_order(queue, 'ADC')[0]
+    instr['ADC']= inst_order(queue, 'ADC')[0] # only 1 instrument allowed (No multiplexing yet)
 
     # Packing instrument-specific perimeter from database:
     perimeter.update(dict(TIME_RESOLUTION_NS=loads(g.machspecs[instr['ADC']])['TIME_RESOLUTION_NS']))
@@ -71,7 +73,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     perimeter.update(dict(ROLE_Wiring=dumps(ROLE_Wiring)))
 
     # pushing pre-measurement parameters to settings:
-    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue
+    yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task
 
     # ***USER_DEFINED*** Controlling-PARAMETER(s) ======================================================================================
     # 1a. Instruments' specs:
@@ -92,9 +94,13 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     SCORE_TEMPLATE = perimeter['SCORE-JSON'] # already a DICT
     RJSON = loads(perimeter['R-JSON'].replace("'",'"'))
     # 1e. Derived perimeter(s) from above:
-    ifperiod = pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).totaltime
+    ifperiod = pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr], dt=1).totaltime
+    ##JACKY 
+    print(Fore.BLUE +f"totaltime(ifperiod) {ifperiod}")
+    print(Fore.BLUE +f"SCORE_TEMPLATE {SCORE_TEMPLATE['CH%s'%RO_addr]}")
+
     RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).IF_MHz_rotation # working with RO-MOD (up or down)
-    XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
+    XY_Compensate_MHz = 0#-pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
     print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
     skipoints = 0
     try: 
@@ -167,8 +173,12 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
         pulseq.song()
         for channel in channel_set:
             DAC[i].prepare_DAC(DAC_instance[i], int(channel), pulseq.totalpoints, update_settings=update_settings)
+            ##JACKY
+            print(Fore.BLUE +f"pulseq.totalpoints {pulseq.totalpoints}")
         for channel in channel_set:
             DAC[i].compose_DAC(DAC_instance[i], int(channel), pulseq.music, [], markeroption) # we don't need marker yet initially
+            print(Fore.BLUE +f"len(pulseq.music) {len(pulseq.music)}")
+
         # Turn on all 4 channels:
         DAC[i].alloff(DAC_instance[i], action=['Set',0])
         DAC[i].ready(DAC_instance[i])
@@ -201,7 +211,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     cstructure = [waveform(corder[param]).count for param in structure] # new version: separation between structure & buffer
 
     # 2. Start measuring:
-    JOBID = g.jobidlist[0]
+    JOBID = g.queue_jobid_list[0]
     job_update_perimeter(JOBID, perimeter)
     measure_loop = range(resumepoint//buffersize,datasize//buffersize) # saving chunck by chunck improves speed a lot!
     while True:
@@ -223,7 +233,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                         if "opt" not in fluxbias.data: # check if it is in optional-state
                             if biasmode: sweeprate = 0.000713  # A-mode A/s
                             else:  sweeprate = 1.37  # V-mode V/s (~10kOhm resistance)
-                            DC.sweep(dcbench, str(fluxbias.data[caddress[j]]), sweeprate=sweeprate)
+                            DC.sweep(dcbench, str(fluxbias.data[caddress[j]]), update_settings=dict(sweeprate=sweeprate) )
 
                     # SG
                     elif structure[j] == 'XY-LO-Frequency':
@@ -245,7 +255,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                                 for R_KEY in structure[j].split(">")[0].replace(" ","").split(","):
                                     math_expression = math_expression.replace( R_KEY, str(R_waveform[R_KEY].data[caddress[structure.index(R_KEY)]]) )
                                 if not channel_set.index(ch): print(Fore.LIGHTBLUE_EX + "CH-%s: STRUCTURE LOCKED AT IDX-%s: %s -> %s" %(ch, j, structure[j], math_expression))
-                                Score_Var_Update = eval(math_expression) # evaluate pure Arithmetic in the end
+                                Score_Var_Update = eval(math_expression) # evaluate numpy-supported expression
                             else: # for usual variables
                                 Score_Var_Update = R_waveform[structure[j]].data[caddress[j]]
                             SCORE_DEFINED['CH%s'%dach_address] = SCORE_DEFINED['CH%s'%dach_address].replace("{%s}"%structure[j], str(Score_Var_Update))
@@ -275,6 +285,9 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                     if (i_slot_order==0) and ("SDAWG" in DAC_type[i_slot_order]): marker = 7
                     else: marker = 2 # for compatibility with TKAWG
                     DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), pulseq.music, pulseq.envelope, marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
+                    ## JACKY
+                    print(Fore.BLUE +f"RUN len(pulseq.music) {len(pulseq.music)}")
+
                 DAC[i_slot_order].ready(DAC_instance[i_slot_order])
                 print('Waveform from Slot-%s is Ready!'%(i_slot_order+1))
                 
@@ -310,7 +323,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
             print(Fore.YELLOW + "\rProgress-(%s): %.3f%%" %((i+1), (i+1)/datasize*buffersize*100), end='\r', flush=True)			
             
             jobsinqueue(queue)
-            if JOBID in g.jobidlist:
+            if JOBID in g.queue_jobid_list:
                 # print(Fore.YELLOW + "Pushing Data into file...")
                 yield list(DATA)
             else: break # proceed to close all & queue out
@@ -330,8 +343,8 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.output(dcbench, 0)
             DC.close(dcbench, True, DC_label, sweeprate=sweeprate)
-        if JOBID in g.jobidlist:
-            qout(queue, g.jobidlist[0],g.user['username'])
+        if JOBID in g.queue_jobid_list:
+            qout(queue, g.queue_jobid_list[0],g.user['username'])
         break
 
     return
@@ -339,12 +352,26 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
 # endregion
 
 
-# region: 2. Multiple-Qubits Control:
+# region: 2. Multiple-Qubits Control: (Updated on 2021-Nov-5)
 # **********************************************************************************************************************************************************
 @settings(2) # data-density
-def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}):
+def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, renamed_task='Qubits'):
     '''
-    Time-domain Square-wave measurement:\n
+    For Multiple Qubits:
+    '''
+
+    Single_Qubit(owner, tag, corder, comment, dayindex, taskentry, resumepoint, instr, perimeter, renamed_task)
+
+    return
+
+# endregion
+
+# region: 3. QPU Control: (Updated on 2022/03/09, Not online)
+# **********************************************************************************************************************************************************
+@settings(2) # data-density
+def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}):
+    '''
+    Time-domain Pulse measurement:\n
     SCORES (SCripted ORchestration of Entanglement & Superposition) is a scripted pulse instruction language for running Quantum Algorithm.\n
     perimeter.keys() = ['XY-LO-Power', 'RO-LO-Power', 'SCORE-NS', 'SCORE-JSON', 'R-JSON', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE']\n
     C-Structure = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'] + [...R-parameter(s)...]\n
@@ -369,10 +396,10 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
-    instr['DC']= inst_order(queue, 'DC')[0]
+    instr['DC']= inst_order(queue, 'DC')[0] # only 1 instrument allowed (via Global flux-coil)
     instr['SG']= inst_order(queue, 'SG')
     instr['DAC']= inst_order(queue, 'DAC')
-    instr['ADC']= inst_order(queue, 'ADC')[0]
+    instr['ADC']= inst_order(queue, 'ADC')[0] # PENDING: NEXT: multiplexing
 
     # Packing instrument-specific perimeter from database:
     perimeter.update(dict(TIME_RESOLUTION_NS=loads(g.machspecs[instr['ADC']])['TIME_RESOLUTION_NS']))
@@ -512,12 +539,12 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     cstructure = [waveform(corder[param]).count for param in structure] # new version: separation between structure & buffer
 
     # 2. Start measuring:
-    JOBID = g.jobidlist[0]
+    JOBID = g.queue_jobid_list[0]
     job_update_perimeter(JOBID, perimeter)
     measure_loop = range(resumepoint//buffersize,datasize//buffersize) # saving chunck by chunck improves speed a lot!
     while True:
         for i in measure_loop:
-            print(Back.BLUE + Fore.WHITE + 'measure single-qubit %s/%s' %(i+1,datasize//buffersize))
+            print(Back.BLUE + Fore.WHITE + 'measure multiple-qubits %s/%s' %(i+1,datasize//buffersize))
             # determining the index-locations for each parameters, i.e. the address at any instance
             caddress = cdatasearch(i, cstructure)
             print(Fore.BLACK + Back.WHITE + "i: %s, cstructure: %s, caddress: %s" %(i,cstructure,caddress))
@@ -621,7 +648,7 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             print(Fore.YELLOW + "\rProgress-(%s): %.3f%%" %((i+1), (i+1)/datasize*buffersize*100), end='\r', flush=True)			
             
             jobsinqueue(queue)
-            if JOBID in g.jobidlist:
+            if JOBID in g.queue_jobid_list:
                 # print(Fore.YELLOW + "Pushing Data into file...")
                 yield list(DATA)
             else: break # proceed to close all & queue out
@@ -641,12 +668,19 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.output(dcbench, 0)
             DC.close(dcbench, True, DC_label, sweeprate=sweeprate)
-        if JOBID in g.jobidlist:
-            qout(queue, g.jobidlist[0],g.user['username'])
+        if JOBID in g.queue_jobid_list:
+            qout(queue, g.queue_jobid_list[0],g.user['username'])
         break
 
     return
 
 # endregion
 
-
+if __name__ == "__main__":
+    
+    testQPU = create_QPU_by_route("testQPU","Q1,Q2/RO1/I+Q:DAC=SDAWG_6-1+SDAWG_6-2,SG=DDSLO_4,ADC=SDDIG_2;Q1/XY1/I+Q:DAC=SDAWG_4-1+SDAWG_4-2,SG=DDSLO_3;Q1/Z1:DAC=SDAWG_4-3;")
+    for qid in testQPU.get_IDList_PhysicalQubit():
+        print(f"Qubit ID: {qid}")
+        for pchid in list(testQPU.QubitSet[qid].phyCh):
+            pch = testQPU.QubitSet[qid].phyCh[pchid]
+            print(f"channel ID: {pch.id} coupled: {pch.coupled} devices: {pch.device}")

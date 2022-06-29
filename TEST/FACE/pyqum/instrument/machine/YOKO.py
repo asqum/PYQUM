@@ -53,7 +53,8 @@ def previous(bench, log=False):
         set_status(mdlname, dict(previous=float(prev)))
     return prev
 
-def output(bench, state=0):
+def output(bench, state=0, channel=''):
+    '''dummy channel to get along with SRSDC improvisation.'''
     try:
         bench.write('O%dE' %int(state)) #OUTPUT ON/OFF #Apparently this will return value to zero!
         status = 'Success'
@@ -62,13 +63,16 @@ def output(bench, state=0):
         status = 'Error'
     return status
 
-def sweep(bench, wave, sweeprate=0.0007, channel=''):
+def sweep(bench, wave, channel='', update_settings={}):
     '''
-    sweeprate in V/s or A/s (A-mode: 0.000713 A/s, V-mode: 1.37 V/s with 10kOhm-resistor)
     Voltage Range (AUTO): R2: 10mV; R3: 100mV; R4: 1V; R5: 10V; R6: 30V
     dummy channel to get along with SDAWG-DC improvisation.
+    sweeprate / rising-rate in V/s or A/s (A-mode: 0.000713 A/s, V-mode: 1.37 V/s with 10kOhm-resistor)
+    pulsewidth = waiting/staying/settling/stabilization time in sec
     '''
-    pulsewidth=77*1e-3 # waiting/staying/settling/stabilization time in sec
+    settings = dict(sweeprate=0.0007, pulsewidth=77*1e-3)
+    settings.update(update_settings)
+    sweeprate, pulsewidth = settings['sweeprate'], settings['pulsewidth']
     GPIBspeed = 62 #pts/s
     wave = str(wave)
     Vdata = waveform(wave).data
@@ -92,10 +96,10 @@ def sweep(bench, wave, sweeprate=0.0007, channel=''):
             print("Error setting V")
     return Vdata, SweepTime
 
-def close(bench, reset=False, which=1, sweeprate=0.0007):
+def close(bench, reset=False, which=1, sweeprate=0.07):
     if reset:
         previous(bench, True) # log last-applied voltage
-        sweep(bench, "0to0*0", sweeprate=sweeprate) # return to zero
+        sweep(bench, "0to0*0", update_settings=dict(sweeprate=sweeprate) ) # return to zero
         output(bench, 0) # off output
         set_status(mdlname, dict(config='return to zero-off'))
     else: set_status(mdlname, dict(config='previous'))

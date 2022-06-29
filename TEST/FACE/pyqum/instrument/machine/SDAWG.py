@@ -28,7 +28,7 @@ def Initiate(which, mode='DATABASE', current=False):
         if moduleID < 0: print(Fore.RED + "Module open error:", moduleID)
         else: print(Fore.GREEN + "%s-%s's connection Initialized >> ID: %s, Name: %s, Chassis: %s, Slot: %s" % (mdlname,which, moduleID, module.getProductName(), module.getChassis(), module.getSlot()))
         
-        if current: print(Fore.YELLOW + "DC-mode for DAC: ALL 4 channels") # to align with YOKO-DC
+        if current: print(Fore.YELLOW + "DC-mode for DAC: ALL 4 channels (Dummy selection)") # to align with YOKO-DC
         for i in range(4): module.channelWaveShape(i+1, keysightSD1.SD_Waveshapes.AOU_HIZ) # always HiZ ALL 4-channels
 
         set_status(mdlname, dict(state='connected'), which)
@@ -208,7 +208,10 @@ def prepare_DAC(module, channel, datasize, maxlevel=1.5, update_settings={}):
 
     NOTE:
     1. Slave cannot produce marker output on either PXI or Trigger-I/O port without having some serious trigger instabilities!
-    2. For perfect inter-Pulse alignment, Master-Card can only play 3-channels at most, while Slave-Card can play up to ALL-channels as long as clearQ is set to be True.
+    2. For inter-Slot alignment:\n
+        a. Within 100ns: BOTH Master & Slave can play ALL 4 channels as long as clearQ is set to be True in Compose. (Not needed in Pre-Compose though.)
+        b. Within 0ns (PERFECTO): Master can ONLY play up to 3 channels while Slave can play ALL 4 channels as long as clearQ is set to be True in Compose. (Not needed in Pre-Compose though.)
+        c. If clearQ not used in Compose, resend-error might require the DAC be restarted.
     '''
     # 1. Loading the settings:
     settings=dict(trigbyPXI=2, mode=1, sync=1, markeroption=0, Master=True, markerdelay=0) # default settings for SDAWG
@@ -284,7 +287,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
         if clearQ: 
             module.AWGstop(channel)
             module.AWGflush(channel) # Clear queue TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT
-            print(Fore.CYAN + "Clearing CH%s's queue..." %(channel))
+            print(Fore.CYAN + "Clearing CH%s's queue for good alignment of ALL 4 channels" %(channel))
         
         resendWaveform(module, waveform_id, pulsedata)
         
@@ -299,7 +302,8 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
     return module
 
 # Dedicated for DC-sweep:
-def output(module, state):
+def output(module, state, channel=''):
+    '''dummy channel to get along with the SRSDC.'''
     if state:
         for i in range(4): offset(module, i+1, 0) # zero ALL 4 channels
         ready(module, [1,2,3,4]) # open ALL 4 channels
@@ -309,10 +313,11 @@ def output(module, state):
         stop(module, [1,2,3,4])
         print(Fore.CYAN + "STOPPING ALL 4 channels")
     return state
-def sweep(module, dcvalue, channel=1, sweeprate=0):
+def sweep(module, dcvalue, channel=1, update_settings={}):
     '''DC amplitude in volts (–1.5 V to 1.5 V)
     '''
     try:
+        # PENDING: includes sweeprate and pulsewidth, to be aligned with the YOKO.
         module.channelWaveShape(int(channel), keysightSD1.SD_Waveshapes.AOU_DC)
         status = module.channelAmplitude(int(channel), float(dcvalue))
         print(Fore.GREEN + "Sweeping DCZ Channel-%s at %s"%(channel,dcvalue))
@@ -342,10 +347,15 @@ def close(module, which, reset=True, mode='DATABASE'):
 
 
 # Test Zone
-def test():
-    DAC_MATRIX = [[1,2,3,4],[1,2,3,4]]
+#def test():
+if __name__ == "__main__":
+    # DAC_MATRIX = [[1,2,3,4],[1,2,3,4]] # WITHIN 100ns ALIGNMENT
+    DAC_MATRIX = [[1,2],[1,2,3]] # PERFECTO ALIGNMENT
     DAC_LABEL = [3, 1]
     Master = [True, False]
+    markeroption = [7, 0]
+    Prep_settings = [dict(Master=True, trigbyPXI=2, markeroption=7), dict(Master=False, trigbyPXI=2)]
+    marker = [7, 2]
     M = [None]*len(DAC_MATRIX)
 
     for i, channel_set in enumerate(DAC_MATRIX):
@@ -360,23 +370,25 @@ def test():
         # Initiate PulseQ:
         dt = round(1/float(clock(M[i])[1]['SRATe'])/1e-9, 2)
         # print("Source: %s, Sampling rate: %s, dt: %s"%(clock(M[i])[1]['SOURce'], clock(M[i])[1]['SRATe'], dt))
-        pulseq = pulser(dt, clock_multiples=1, score="ns=30000;")
+        pulseq = pulser(dt, clock_multiples=1, score="ns=50000;")
         pulseq.song()
-        pulseq = pulser(dt, clock_multiples=1, score="ns=%s"%pulseq.totaltime)
-        pulseq.song()
+        # pulseq = pulser(dt, clock_multiples=1, score="ns=%s"%pulseq.totaltime)
+        # pulseq.song()
 
         # PREPARATION:
         for ch in channel_set:
-            prepare_DAC(M[i], int(ch), pulseq.totalpoints, update_settings=dict(Master=Master[i], trigbyPXI=2))
+            prepare_DAC(M[i], int(ch), pulseq.totalpoints, update_settings=Prep_settings[i])
         # PRE-COMPOSITION:
         for ch in channel_set:
-            compose_DAC(M[i], int(ch), pulseq.music)#, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+            # clearQ not needed at pre-compose:
+            compose_DAC(M[i], int(ch), pulseq.music, [], markeroption[i])#, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+            print(Fore.BLUE + "Preparing %s data-points" %pulseq.totalpoints)
         alloff(M[i], action=['Set',0])
         ready(M[i])
         play(M[i])
     
     # Multiple WAVEs:
-    for waveth,pulse_width in enumerate([1000,1100,1200,1300,1400,1500,1600,1700]):
+    for waveth,pulse_width in enumerate([1000,1700]):
         # stop(M[0]) # suggested by NCHU (YuHan)
         # stop(M[1]) # suggested by NCHU (YuHan)
         input("Any key to RUN %sth WAVE: "%(waveth+1))
@@ -384,9 +396,9 @@ def test():
             print("Playing CH-%s for slot-%s" %(channel_set,i+1))
             for ch in channel_set:
                 # RE-COMPOSITION:
-                pulseq = pulser(dt, clock_multiples=1, score="ns=30000;FLAT/,%s,0.01;" %pulse_width)
+                pulseq = pulser(dt, clock_multiples=1, score="ns=50000,mhz=I/-17/ro1i-17;FLAT/,%s,0.1;" %pulse_width)
                 pulseq.song()
-                compose_DAC(M[i], int(ch), pulseq.music, pulseq.envelope, 0, update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+                compose_DAC(M[i], int(ch), pulseq.music, pulseq.envelope, marker[i], update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
             ready(M[i])
 
     # print(Fore.CYAN + "Waveform-list: %s" %m2.waveformListLoad())
@@ -409,6 +421,6 @@ def test():
     # output(m3, 0)
     # close(m3, 3, True, 'TEST')
 
-    return
+    #return
 
 #test()

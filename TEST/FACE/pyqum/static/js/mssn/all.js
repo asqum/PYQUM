@@ -11,6 +11,9 @@ $(document).ready(function(){
 
     // Sequencing asynchronous events:
     $.when( qumqueue() ).then(function () { qumjob(); });
+
+    // Freezing certain column(s) and row(s):
+    // $("#pruebatabla").CongelarFilaColumna({Columnas:2});
     
 });
 
@@ -72,10 +75,10 @@ function qumjob() {
                 // progress segregation:
                 if (parseInt(val.progress)===100) {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn green" id="jid_' + val.id + '">' + val.progress + '</a></div>';
-                } else if (parseInt(val.progress)===0) {
-                    var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn red" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 } else if (val.tag!='') {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn blue" id="jid_' + val.id + '">' + val.tag + ': ' + parseInt(val.progress) + '</a></div>';
+                } else if (parseFloat(val.progress)===0) {
+                    var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn red" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 } else {
                     var actionbutton = '</td><td><div class="buttons"><a class="all-mssn-progress btn orange" id="jid_' + val.id + '">' + val.progress + '</a></div>';
                 };
@@ -93,11 +96,19 @@ function qumjob() {
                 // Startime = date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
                 
                 // Showing COMMENT or NOTE:
+                var comment = String(val.comment).replaceAll("\\n", "; ").replaceAll(">", "&gt;").replaceAll("<", "&lt;");
+                var note = String(val.note);
                 if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Comment') {
-                    var Comment_Note = new String(val.comment).replaceAll("\\n", "; ");
+                    var Comment_Note = comment;
                 } else if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Note') {
                     if (val.note==null) { var Comment_Note = "";
-                    } else { var Comment_Note = new String(val.note); };
+                    } else { var Comment_Note = note; };
+                } else if ($('table.mssn-JOB tr th select.all_comment_note').val()=='Both') {
+                    if (val.note==null) { 
+                        var Comment_Note = comment + "";
+                    } else { 
+                        var Comment_Note = comment + "<br>&nbsp;</br>" + "<b style='color:red'>" + note + "</b>"; 
+                    };
                 };
 
                 // Alternate row-background-color with each days:
@@ -222,6 +233,26 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-close.red', fu
     });
     return false;
 });
+// IF TO-BE-REQUEUED / WIPED-CLEAN JOB PROGRESS IS CLICK: (Providing Options to cancel it / close the case)
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-progress.red', function() {
+    var progressing = parseFloat($(this).text());
+    var progress_box = '<div class="buttons"><a class="all-mssn-progress btn red" id="' + $(this).attr('id') + '">' + progressing + '</a></div>';
+    var action = '<div class="buttons"><a class="all-mssn-cancel btn red" id="' + $(this).attr('id') + '">' + "CANCEL" + '</a></div>';
+    $(this).parent().parent().empty().append(progress_box + action);
+    return false;
+});
+// IF CANCEL BUTTON IS CLICK:
+$(document).on('click', 'table tbody tr td div.buttons a.all-mssn-cancel.red', function() {
+    $(this).remove();
+    var jobid = $(this).attr('id').split('_')[1];
+    $.getJSON(mssnencrpytonian() + '/mssn'+'/all/close/job', {
+        jobid: jobid, tag: "CANCELLED"
+    }, function(data) {
+        console.log(data.message);
+        $('a.all-mssn-progress.red#jid_'+jobid).removeClass('red').addClass('rred').text('Press F5');
+    });
+    return false;
+});
 // IF TAGGED JOB PROGRESS IS CLICK: (Providing Options to recover it / reopen the case)
 $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-progress.blue', function() {
     var tag = $(this).text();
@@ -243,7 +274,16 @@ $(document).on('click', 'table tbody tr td div.buttons a.all-mssn-reopen.green',
     return false;
 });
 
-
+// Block the first row of an HTML table with JQuery:
+$(function() {
+$('#fixed-headers').scroll(function(ev) {
+    /**
+     * where the table scroll, change the position of header and first column
+     */
+    $('thead th').css('transform', 'translateY(' + this.scrollTop + 'px)');
+    $('tbody th').css('transform', 'translateX(' + this.scrollLeft + 'px)');
+});
+});
 
 
 

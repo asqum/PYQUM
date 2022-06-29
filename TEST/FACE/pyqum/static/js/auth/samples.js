@@ -8,7 +8,12 @@ $(document).ready(function(){
     const sselection = [mainsample, sharedsample];
     window.selectedsname = sselection.find(s => s != 0); // return the first element that satisfies the predicate
     console.log("Loading:" + selectedsname);
+
+    $('.update-QPC').hide();
     AccesSample(selectedsname);
+
+    // Hide Forward button if not the main-sample:
+    if (mainsample==0) { $('button.user-samples#samples-forward').hide(); };
 });
 
 // Accessing Sample's Details:
@@ -21,13 +26,14 @@ function AccesSample(sname) {
         sname: sname, 
     }, function(data){
         console.log(data.message);
-        $('input.user-samples#update[name="dob"]').val(data.sample_cv['fabricated']);
-        $('input.user-samples#update[name="loc"]').val(data.sample_cv['location']);
+        $('textarea.user-samples#update[name="specs"]').val(data.sample_cv['specifications']);
+        $('textarea.user-samples#update[name="loc"]').val(data.sample_cv['location']);
         $('input.user-samples#update[name="coauthors"]').val(data.sample_cv['co_authors']);
-        $('input.user-samples#update[name="prev"]').val(data.sample_cv['previously']);
+        $('select.user-samples#update[name="level"]').val(data.sample_cv['level']);
+        if (parseInt(data.sample_cv['level'])>1) { $('.update-QPC').show(); } else { $('.update-QPC').hide(); };
         $('textarea.user-samples#update[name="description"]').val(data.sample_cv['description']);
         $('textarea.user-samples#update[name="history"]').val(data.sample_cv['history']);
-        $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("Since " + data.sample_cv['registered'].replace('\n',' ')));
+        $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("Current sample: Since " + data.sample_cv['registered'].replace('\n',' ')));
         if (data.system=="NULL") { $('div#which_queue_system').empty().append($('<h4 style="color: red;"></h4>').text("Please assign the queue-system via MACHINE/BDR/SAMPLES")); }
         else { $('div#which_queue_system').empty().append($('<h4 style="color: blue;"></h4>').text("Assigned to: " + data.system)); };
     });
@@ -73,19 +79,19 @@ $('button.user-samples#samples-meal').on('click', function(e) {
 $('input.user.samples.add-details#samples-register').on('click', function(e) {
     e.preventDefault();
     if( $("input.user-samples#register[name='sname']").val().length === 0 ||
-        $("input.user-samples#register[name='loc']").val().length === 0 ||
+        $("textarea.user-samples#register[name='loc']").val().length === 0 ||
         $("textarea.user-samples#register[name='description']").val().length === 0 ) {
             alert('Check name, location and description!');
             console.log('Check name, location and description!');
     } else {
         $.getJSON('/auth/user/samples/register', {
             sname: $('input.user-samples#register[name="sname"]').val(),
-            dob: $("input.user-samples#register[name='dob']").val(),
-            loc: $("input.user-samples#register[name='loc']").val(),
-            prev: $("input.user-samples#register[name='prev']").val(),
+            // specs: $("input.user-samples#register[name='specs']").val(),
+            loc: $("textarea.user-samples#register[name='loc']").val(),
+            level: $("select.user-samples#register[name='level']").val(),
             description: $("textarea.user-samples#register[name='description']").val()
         }, function (data) {
-            console.log(data.message);
+            window.alert("Registration status: " + data.message);
             window.location.href='/auth/user';
         });
     };
@@ -96,6 +102,16 @@ $('select.samples').on('change', function(){
     console.log("Selected: " + $('select.samples').val());
     console.log('User-type: ' + this.name);
     selectedsname = $('select.samples[name="' + this.name + '"]').val();
+
+    // Hide Forward button if not the main-sample, and Make the appeared selection be either Main or Shared to avoid confusion:
+    if (this.name=="main") { 
+        $('button.user-samples#samples-forward').show();
+        $('select.samples[name="shared"]').val(0);
+    } else { 
+        $('button.user-samples#samples-forward').hide(); 
+        $('select.samples[name="main"]').val(0);
+    };
+
     AccesSample(selectedsname); 
     return false;
 })
@@ -106,17 +122,70 @@ $('input.user.samples.confirm-update#samples-confirm').on('click', function(e) {
     console.log($('select.samples').val());
     $.getJSON('/auth/user/samples/update', {
         sname: $('select.samples#samples').val(), // only main user can update!
-        dob: $('input.user-samples#update[name="dob"]').val(),
-        loc: $('input.user-samples#update[name="loc"]').val(),
+        specs: $('textarea.user-samples#update[name="specs"]').val(),
+        loc: $('textarea.user-samples#update[name="loc"]').val(),
         coauthors: $('input.user-samples#update[name="coauthors"]').val(),
-        prev: $('input.user-samples#update[name="prev"]').val(),
+        level: $('select.user-samples#update[name="level"]').val(),
         description: $('textarea.user-samples#update[name="description"]').val(),
         history: $('textarea.user-samples#update[name="history"]').val(),
         ownerpassword: $('input.user-samples#ownerpassword').val(),
     }, function (data) {
-        $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text(data.message));
+        $('.samples > label#registered').empty().append($('<h4 style="color: blue;"></h4>').text(data.message));
     });
-    
+    return false;
 });
 
+// Carry Forward Samples:
+$('button.user-samples#samples-forward').on('click', function(e) {
+    e.preventDefault();
+    var fwd_sname = $('select.samples#samples').val(); // only main user can carry forward!
+    var sample_level = parseInt($('select.user-samples#update[name="level"]').val()); // only level-1 (Test) can be carried forward!
 
+    if (fwd_sname==0 || sample_level>1) {
+        $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("ONLY the main sample can be carried FORWARD!"));
+    } else {
+        if (typeof(fwd_sname.split('(v')[1])=="undefined") { 
+            fwd_sname = fwd_sname + "(v1)";
+        } else {
+            var fwd_count = parseInt(fwd_sname.split('(v')[1].split(')')[0]) + 1;
+            fwd_sname = fwd_sname.split('(v')[0] + '(v' + fwd_count + ')';
+        };
+        // console.log("Forwarded Sample-name: " + fwd_sname)
+
+        if (confirm("Proceed with the Registration of " + fwd_sname + "?")) {
+            // Register the forwarded extension of the sample:
+            $.getJSON('/auth/user/samples/register', {
+                sname: fwd_sname,
+                loc: $('textarea.user-samples#update[name="loc"]').val(),
+                level: sample_level,
+                description: $('textarea.user-samples#update[name="description"]').val(),
+            }, function (data) {
+                window.alert("Registration status: " + data.message);
+                window.location.href='/auth/user';
+            });
+        } else {
+        $('.samples > label#registered').empty().append($('<h4 style="color: red;"></h4>').text("SAMPLE FORWARDING CANCELLED"));
+        }
+
+    };
+    return false;
+});
+
+// Update QPC-wiring Configuration:
+$('#sampleloc-update-QPC').on('click', function(e) {
+    e.preventDefault();
+    $.getJSON('/auth/user/samplesloc/update/qpc_wiring', {
+        peach: $('textarea.user-samples#update[name="loc"]').val(),
+        qpc_selected:$('select.samples#qpc-list').val(),
+    }, function (data) {
+        $('.samples > label#registered').empty().append($('<h4 style="color: blue;"></h4>').text(data.message));
+    })
+    .done(function(data) {
+        console.log(data);
+
+    })
+    .fail(function(jqxhr, textStatus, error){
+        $('.samples > label#registered').empty().append($('<h4 style="color: blue;"></h4>').text(error));
+    });
+    return false;
+});

@@ -1,0 +1,59 @@
+<!doctype html> <!--extended from parent: bridge.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/populationDistribution.js') }}"></script>
+
+</head>
+
+<body class="benchmark">
+    <div class="qestimatecontent">
+        <h3>Population Distribution</h3>
+
+        <div class="flex-allPara">
+            <div class="allMeasurePara" id="populationDistribution-input">
+                <button id="populationDistribution-button-load" type="submit">Load data</button>
+            </div>
+            <div class="allMeasurePara" id="populationDistribution-parameters">
+                <div class="allFitPara" id="populationDistribution-plot">
+                    <!-- <label>signal type:</label>
+                    <select id="populationDistribution-plot1D-selector">
+                        <option value="amp">Amplitude</option>
+                        <option value="phase">Phase</option>
+                        <option value="iqPlane">IQ plane</option> -->
+                    </select>
+                    <label>Accumulate index or value:</label>
+                    <input type="text" id="populationDistribution-plot1D-accumulate" value="0">
+
+                    <button id="populationDistribution-projection-button" type="submit">Projection line</button>
+                    <div id="populationDistribution-clusterCenter">
+                        <label>Cluster Center:</label>
+                        <p id="populationDistribution-clusterCenter-data" ></p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="allFitPara">
+                <label>Bin size:</label>
+                <input type="text" id="populationDistribution-plot1D-binSize">
+                <button id="populationDistribution-analysis-button" type="submit">Distribution</button>
+
+            </div> 
+             
+        </div>
+        <div id="populationDistribution-plot-fittingParameters"></div>
+        
+        <div class="result-plot-area">
+            <div class="2D-plot-area">
+                <div id="populationDistribution-plot1D-statistic"></div>
+            </div>
+            <div class="plot1D-area">
+                <div id="populationDistribution-plot1D-distribution"></div>
+                <div id="populationDistribution-plot1D-IQ"></div>
+            </div>
+        </div>
+</body>
+
+</html>

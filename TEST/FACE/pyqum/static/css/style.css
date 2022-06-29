@@ -138,11 +138,15 @@ textarea.PSTATEMENT {
     margin-top: -5px;
 }
 textarea.SCORE-JSON {
-    height: 88px;
+    height: 101px;
     margin-top: -5px;
 }
 textarea#R-JSON {
-    height: 88px;
+    height: 137px;
+    margin-top: -5px;
+}
+textarea.wiring-designation {
+    height: 73px;
     margin-top: -5px;
 }
 label.parameter {
@@ -408,6 +412,9 @@ select:focus option:checked {
 .col-35 {
     padding: inherit; width: 35%;
 }
+.col-37 {
+    padding: inherit; width: 37%;
+}
 .col-40 {
     padding: inherit; width: 40%;
 }
@@ -420,17 +427,26 @@ select:focus option:checked {
 .col-49 {
     padding: inherit; width: 49%;
 }
+.col-53 {
+    padding: inherit; width: 53%;
+}
 .col-60 {
     padding: inherit; width: 60%;
 }
 .col-66 {
     padding: inherit; width: 66%;
 }
+.col-73 {
+    padding: inherit; width: 73%;
+}
 .col-75 {
     padding: inherit; width: 75%;
 }
 .col-80 {
     padding: inherit; width: 80%;
+}
+.col-84 {
+    padding: inherit; width: 84%;
 }
 .col-88 {
     padding: inherit; width: 88%;
