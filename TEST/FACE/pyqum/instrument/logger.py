@@ -716,6 +716,7 @@ def settings(datadensity=1):
 
                 # 2. Queue-IN and Wait for your turn:
                 M.status = qin(queue, JOBID)
+                print(Fore.YELLOW + "Queueing IN")
                 while True:
                     jobsinqueue(queue)
                     # 2.1. Get out in the middle of waiting:
@@ -728,6 +729,7 @@ def settings(datadensity=1):
                             1. ONLY FIRST-IN-LINE get to break the waiting loop
                             2. ALL instruments required are disconnected
                         '''
+                        print(Fore.GREEN + "All Instruments are available for measurement.")
                         break
                     # 2.3. Keep waiting behind:
                     else:
