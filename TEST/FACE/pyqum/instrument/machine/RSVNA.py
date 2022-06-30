@@ -1,8 +1,13 @@
-'''Communicating with Benchtop ENA E5080B, modified from E5071C version
+"""
+-----------------------------------------------------------------------------
+2022/06/08, lai
+Modified code to R&S VNA, ZNB Model, from the version of ENA E5080B
+-----------------------------------------------------------------------------
+
 NOTE: 
 1. Simultaneous measurement is not possible, since Trigger is under Channel hierarchically. Period.
 2. Byte-order is the opposite of that of E5071C.
-'''
+"""
 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
@@ -26,15 +31,13 @@ def Initiate(reset=False, which=1, MaxChannel=2, mode='DATABASE'):
 	rm = visa.ResourceManager()
 	try:
 		bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
-		if reset:
-			stat = bench.write('*RST;*CLS') #Clear buffer memory;
-		else:
-			bench.write(':ABORt;:INIT:CONT OFF;') # hold the trigger
-			stat = bench.write('*CLS') # Clear buffer memory;
-			bench.write('OUTPut:STATE ON') # Power ON
-		# Allocating Channels:
-		# bench.write(':DISPlay:SPLit %s' %MaxChannel)
+		if reset: stat = bench.write('*RST;*CLS') #Clear buffer memory;
+		else: stat = bench.write('*CLS') # Clear buffer memory;
+		bench.write(':ABORt;:INIT:CONT OFF;') # hold the trigger
+		bench.write('OUTPut:STATE ON') # Power ON
+		bench.write('SOURce:POWER:LEVEL -73') # PENDING: ZNB need to set generator (power) level first!!! 
 		# bench.write("SENS:CORR:EXT:AUTO:RESet") #clear port-extension auto-correction
+
 		bench.read_termination = '\n' #omit termination tag from output 
 		bench.timeout = 80000000 #set timeout in ms
 		set_status(mdlname, dict(state='connected'))
@@ -75,17 +78,12 @@ def sweep(bench, action=['Get'] + 10 * ['']):
 		SCPIcore = 'SENSe:SWEep:TIME;POINTS'
 	else: print(Fore.RED + "Parameter NOT VALID!")
 	return mdlname, bench, SCPIcore, action
-@Attribute
-def sweepmode(bench, action=['Get'] + 10 * ['']):
-	'''action=['Get/Set', <mode>]
-	HOLD - channel will not trigger
-	CONTinuous - channel triggers indefinitely
-	SINGle - channel accepts ONE trigger, then goes to HOLD.
-	GROups - channel accepts the number of triggers specified with the last SENS:SWE:GRO:COUN <num>. This is one of the VNA overlapped commands. Learn more.
-	NOTE: To perform simple, single-triggering, use SINGle which requires that TRIG:SOURce remain in the default (internal) setting.
+
+def sweepmode():
+	'''NOTE: Not applicable for ZNB!
 	'''
-	SCPIcore = 'SENSe:SWEep:MODE'
-	return mdlname, bench, SCPIcore, action
+	return None
+
 @Attribute
 def linfreq(bench, action=['Get'] + 10 * ['']):
 	'''action=['Get/Set', <start(Hz)>, <stop(Hz)>]'''
@@ -126,22 +124,17 @@ def averag(bench, action=['Get'] + 10 * ['']):
 	return mdlname, bench, SCPIcore, action
 @Attribute
 def dataform(bench, action=['Get'] + 10 * ['']):
-	'''action=['Get/Set', <format: REAL,32/REAL,64/ASCii,0>]
+	'''action=['Get/Set', <format: REAL,32/ASCII,0>]
+		<return: REAL,32/ASC,0>
 	'''
-	if action[1] == 'REAL': action[1] = 'REAL,64' # Redefine ENAB's REAL (32-Bit) into 64-Bit to align with ENA's REAL (64-Bit).
-	bench.write('FORMat:BORDer NORMal')
+	if action[1] == 'REAL': action[1] = 'REAL,32' # lai, for R&S VNA-ZNB, ZNB only has 'Real,32' format
+
+	# bench.write('FORMat:BORDer NORMal')
 	SCPIcore = 'FORMat:DATA'
 	return mdlname, bench, SCPIcore, action
-@Attribute
-def selectrace(bench, action=['Set'] + ['CH1_S21_1']):
-	'''
-	This command sets/gets the selected trace (Tr) of selected channel (Ch) to the active trace.
-	You can set only a trace displayed to the active trace. 
-	If this object is used to set a trace not displayed to the active trace, an error occurs when executed and the object is ignored. (No read)
-	'''
-	SCPIcore = 'CALCulate:PARameter:SELECT'
-	action += 10 * ['']
-	return mdlname, bench, SCPIcore, action
+
+def selectrace(): return "Not compatible with ZNB"
+
 @Attribute
 def tracenum(bench, action=['Get'] + 10 * ['']):
 	'''Sets or gets the number of traces of selected channel.
@@ -150,63 +143,64 @@ def tracenum(bench, action=['Get'] + 10 * ['']):
 	return mdlname, bench, SCPIcore, action
 
 # Clear ALL measurement(s)
-def clearallmeas(bench): return bench.write(":CALCulate:MEASure:DELete:ALL")
+def clearallmeas(bench): return bench.write("CALCulate:PARameter:DELete:ALL") # bench.write(":CALCulate:MEASure:DELete:ALL")
 
 # Setting Trace
 def setrace(bench, Mparam=['S11','S21','S12','S22']):
 	clearallmeas(bench)
-	for iTrace, S in enumerate(Mparam):
-		S = S.upper() # ENAB only recognize capitalized parameter-names
-		# bench.write('CALCulate:MEASure%s:DEFine "%s"' %(iTrace+1, S)) # Creates a measurement but does NOT display it, on an existing or new channel: CH<n>_<param>_<trace#>
-		bench.write('CALCulate:PARameter:DEFine:EXTended %s,%s' %(S,S)) # Creates a measurement but does NOT display it.
-		bench.write('DISPlay:WINDow:TRACe%s:FEED "%s"' %(iTrace+1, S)) # Feed trace for the measurement
-		bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(iTrace+1)) #pre-auto-scale
-		selectrace(bench, action=['Set', '%s,fast'%S]) # improve measurement speed (fast)
+	for iTrace, S in enumerate(Mparam):		
+		bench.write("CALCulate1:PARameter:SDEFine 'Trc%s','%s'" %(iTrace+1,S)) # lai, for R&S VNA-ZNB, set s-parameter from trace1; hasn't shown to screen
+		bench.write("DISPlay:WINDow1:TRACe%s:FEED 'Trc%s'" %(iTrace+1,iTrace+1)) # Feed trace for the measurement
+		bench.write("DISPlay:TRACe:Y:SCALe:AUTO ONCE,'Trc%s'" %(iTrace+1)) # lai, for R&S VNA-ZNB, y-axis auto scale
+	
 	return Mparam
 
 # Getting Trace
 def getrace(bench):
 	'''getting traces displayed on the screen
-	'''
-	catalog = bench.query("CALCulate:PARameter:CATalog:EXTended?").replace('"','')
+	'''	
+	catalog = bench.query("CONFigure:TRACe:CATalog?") # lai, for R&S VNA-ZNB
 	Mreturn = catalog.split(',')[1::2]
 	return Mreturn
 
 def autoscal(bench):
-	tracenum = int(bench.query("CALC:PAR:COUN?"))
-	for i in range(tracenum):
-		lastatus = bench.write(":DISP:WIND:TRAC%d:Y:AUTO"%(i+1))
+	tracenum = int( bench.query("CONFigure:TRACe:CATalog?").count(',') ) # lai, for R&S VNA-ZNB, count the numbers of ',' symbols to have trace count
+	tracenum = int( (tracenum+1)/2 ) # lai, for R&S VNA-ZNB, two ',' for one trace
+	
+	for i in range(tracenum):			
+		bench.write("DISPlay:TRACe:Y:SCALe:AUTO ONCE,'Trc%s'" %(i+1)) # lai, for R&S VNA-ZNB, y-axis auto scale		
+		lastatus = 1
 	return lastatus
 
 def measure(bench):
-	bench.write(':ABOR;:TRIG:SOUR MAN;:INIT:IMM;') # manually trigger with bus (likened to pressing "Manual Trigger" on the panel)
+	bench.write(":TRIG:SOUR IMM;")
+	bench.write(":ABOR;INITiate1:IMMediate") # lai, for R&S VNA-ZNB
 	ready = bench.query("*OPC?") # when opc return, the sweep is done
 	return ready
 
 def scanning(bench, scan=1):
 	if scan:
-		stat = bench.write(':ABOR;:TRIG:SOUR IMM;:INIT:CONT ON;')
-		sweepmode(bench, action=['Set', 'CONT']) # likened to pressing "Continuous" on the panel
+		bench.write(":TRIG:SOUR IMM;")
+		stat = bench.write(':ABOR;:INIT:CONT ON;') # likened to pressing "Continuous" on the panel
 	else:
-		stat = bench.write(':ABOR;:TRIG:SOUR MAN;:INIT:CONT OFF;')
-		sweepmode(bench, action=['Set', 'HOLD']) # likened to pressing "Hold" on the panel
+		bench.write(":TRIG:SOUR MAN;")
+		stat = bench.write(':ABOR;:INIT:CONT OFF;') # likened to pressing "Hold" on the panel
 	return stat
 
 def sdata(bench):
 	'''Collect data from ENAB
 	This returns the data from the FIRST TRACE.
 	'''
-	try:
-		sdatacore = ":CALCulate:MEASure:DATA:SDATa?"
+	try:		
+		sdatacore = "CALCulate1:DATA? SDATa"		
 		datatype = dataform(bench)
 		# databorder = str(bench.query("FORMat:BORDer?"))
-		# print(Fore.CYAN + "Endian (Byte-order): %s" %databorder)
+		# print(Fore.CYAN + "Endian (Byte-order): %s" %databorder) # DEFAULT: SWAP
 		if datatype[1]['DATA'] == 'REAL,32':
-			datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
-		elif datatype[1]['DATA'] == 'REAL,64':
-			datas = bench.query_binary_values(sdatacore, datatype='d', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 64-bit)
-		elif datatype[1]['DATA'] == 'ASC,0':
+			datas = bench.query_binary_values(sdatacore, datatype='f', is_big_endian=False) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)		
+		elif datatype[1]['DATA'] == 'ASC':
 			datas = bench.query_ascii_values(sdatacore) # convert the transferred ascii-encoded binaries into list (slower)
+		
 	except Exception as err:
 		datas = [0]
 		print(err)
@@ -238,66 +232,122 @@ def test(detail=True):
 	from pyqum.instrument.analyzer import curve, IQAParray, UnwraPhase
 	from pyqum.instrument.toolbox import waveform
 
-	bench = Initiate(False, mode="TEST")
+	bench = Initiate(True, mode="TEST")
 	if bench == "disconnected": pass
 	else:
 		if debug(mdlname, detail):
 			model(bench)
-			print(setrace(bench, ['s43','s21']))
-			# sweep(bench, action=['Set', 'ON', 1001])
-			# ifbw(bench, action=['Set', 1000])
-			# ifbw(bench)
+			print(setrace(bench, ['s43','s11','S31','s21']))
+			dataform(bench, action=['Set', 'REAL'])
+			sweep(bench, action=['Set', 'ON', 1001])
+			ifbw(bench, action=['Set', 1000])
+			ifbw(bench)
 
-			# for i in range(1):
-				# if not i:
-				# 	input("Press any key to sweep frequency: ")
-				# 	f_start, f_stop = 5e9, 7e9
-				# 	linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
-				# 	stat = linfreq(bench)
-				# 	fstart, fstop = stat[1]['START'], stat[1]['STOP']
-				# 	# Building X-axis
-				# 	# fstart, fstop = float(fstart), float(fstop)
-				# 	power(bench, action=['Set', -31.7])
-				# 	power(bench)
+			for i in range(2):
+				if not i:
+					input("Press any key to sweep frequency: ")
+					f_start, f_stop = 5e9, 7e9
+					linfreq(bench, action=['Set', f_start, f_stop]) #F-sweep
+					# stat = linfreq(bench)
+					# fstart, fstop = stat[1]['START'], stat[1]['STOP']
+					# Building X-axis
+					# fstart, fstop = float(fstart), float(fstop)
+					power(bench, action=['Set', -31.7])
 					
-				# else:
-				# 	input('Press any key to sweep power: ')
-				# 	cwfreq(bench, action=['Set', 5.257e9])
-				# 	cwfreq(bench)
-				# 	power(bench, action=['Set', '', -73, -35]) #power sweep
-				# 	power(bench)
+				else:
+					input('Press any key to sweep power: ')
+					cwfreq(bench, action=['Set', 5.257e9])
+					# cwfreq(bench)
+					power(bench, action=['Set', '', -73, -35]) #power sweep
+					# power(bench)
 
-				# # start sweeping
-				# stat = sweep(bench)
-				# print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
-				# print("Ready: %s" %bool(measure(bench)))
-				# autoscal(bench)
+				# start sweeping
+				stat = sweep(bench)
+				print("Time-taken would be: %s (%spts)" %(stat[1]['TIME'], stat[1]['POINTS']))
+				print("Ready: %s" %bool(measure(bench)))
+				autoscal(bench)
 
-				# dataform(bench, action=['Set', 'REAL'])
-				# data = sdata(bench)
-				# print("Data [Type: %s, Length: %s]" %(type(data), len(data)))
+				data = sdata(bench)
+				print("Data [Type: %s, Length: %s]" %(type(data), len(data)))
 
-				# # Plotting trace:
-				# yI, yQ, Amp, Pha = IQAParray(array(data))
-				# curve([range(len(data)//2),range(len(data)//2)], [yI,yQ], 'In-Plane', 'Count', 'I(dB)', style=['-b','r'])
-				# curve(range(len(data)//2), Amp, 'Amplitude', 'Count', 'Amp(dB)')
-				# curve(range(len(data)//2), UnwraPhase(range(len(data)//2), Pha), 'UPhase', 'Count', 'UPha(dB)')
+				# Plotting trace:
+				yI, yQ, Amp, Pha = IQAParray(array(data))
+				curve([range(len(data)//2),range(len(data)//2)], [yI,yQ], 'In-Plane', 'Count', 'I(dB)', style=['-b','r'])
+				curve(range(len(data)//2), Amp, 'Amplitude', 'Count', 'Amp(dB)')
+				curve(range(len(data)//2), UnwraPhase(range(len(data)//2), Pha), 'UPhase', 'Count', 'UPha(dB)')
 
 			# TEST SCPI ZONE:
-			# print("There is/are %s trace(s)" %str(tracenum(bench)))
-			# print("%s trace(s): %s"%(len(getrace(bench)), getrace(bench)))
-			# averag(bench, action=['Set', 1]) #optional
-			# averag(bench)
-			# rfports(bench, action=['Set', 'OFF'])
-			# rfports(bench)
 			# bench.write(':SYSTem:PRESet')
-			# print("Endian (Byte-order): %s" %str(bench.query("FORMat:BORDer?")))
-			# scanning(bench) #continuous scan
+			"""
+			# // delete all trace
+			bench.write('CALCulate:PARameter:DELete:ALL')
+
+			# // set 4 traces as S11, S22, S33, S44 separately
+			bench.write("CALCulate1:PARameter:SDEFine 'Trc1','S11'")
+			bench.write("DISPlay:TRACe:Y:SCALe:AUTO ONCE,'Trc1'")
+			bench.write("CALCulate1:PARameter:SDEFine 'Trc2','S22'")
+			bench.write("DISPlay:TRACe:Y:SCALe:AUTO ONCE,'Trc2'")
+			bench.write("CALCulate1:PARameter:SDEFine 'Trc3','S33'")
+			bench.write("DISPlay:TRACe:Y:SCALe:AUTO ONCE,'Trc3'")
+			bench.write("CALCulate1:PARameter:SDEFine 'Trc4','S44'")
+			bench.write("DISPlay:TRACe:Y:SCALe:AUTO ONCE,'Trc4'")
+		
+
+			# // show the 4 traces
+			bench.write("DISPlay:WINDow1:TRACe1:FEED 'Trc1'")
+			bench.write("DISPlay:WINDow1:TRACe2:FEED 'Trc2'")
+			bench.write("DISPlay:WINDow1:TRACe3:FEED 'Trc3'")
+			bench.write("DISPlay:WINDow1:TRACe4:FEED 'Trc4'")
+
+			# // list the avalible trace(s)
+			#bench.write("CONFigure:TRACe:CATalog?")
+			# -> 1,Trc1,2,Trc2,3,Trc3,4,Trc4
+
+			#// data format of the trace data (Ascii or Real,32)
+			bench.write("FORMat:DATA REAL,32")
+			#bench.write("FORMat:DATA?")
+			#-> REAL,32
+			# bench.write("FORMat:DATA ASCII,0")
+			bench.write("FORMat:DATA REAL")			
+			status = bench.query_ascii_values("FORMat:DATA?")
+			print("Foramt = %s" %status)
+			#-> ASC,0
+
+			#// to init a measurement
+			bench.write(":ABOR;INITiate1:IMMediate")			
+			status = bench.query_ascii_values("*OPC?")
+			print("status = %s" %status)
+			#-> 1
+
+			#// read the data out
+			# bench.write("CALCulate1:DATA? FDATa")
+			#TestDatas = bench.query_ascii_values("CALCulate1:DATA? SDATa")
+			#print("length: %s\n %s" %(len(TestDatas), TestDatas))
+			#curve(range(len(TestDatas)//1), TestDatas, '', '', '')
+
+
+			# TestDatas = bench.query_binary_values("CALCulate1:DATA? SDATa", datatype='f', is_big_endian=True) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
+			TestDatas = bench.query_binary_values("CALCulate1:DATA? SDATa", datatype='f', is_big_endian=False) # convert the transferred ieee-encoded binaries into list (faster, 32-bit)
+			# print("length: %s\n %f" %(len(TestDatas), TestDatas))
+			yI, yQ, Amp, Pha = IQAParray(array(TestDatas))
+			curve([range(len(TestDatas)//2),range(len(TestDatas)//2)], [yI,yQ], 'In-Plane', 'Count', 'I(dB)', style=['-b','r'])
+			curve(range(len(TestDatas)//2), Amp, 'Amplitude', 'Count', 'Amp(dB)')
+			curve(range(len(TestDatas)//2), UnwraPhase(range(len(TestDatas)//2), Pha), 'UPhase', 'Count', 'UPha(dB)')
+
+			#input("Press any key...")			
+
+			#bench.write("FORMat:DATA ASCII")
+			#TestDatasAscii = bench.query_ascii_values("CALCulate1:DATA? SDATa")
+			#curve(range(len(TestDatas)//1), TestDatas, '', '', '')
+		"""
+			
 
 		else: print(Fore.RED + "Basic IO Test")
 	
 	input("Press any key to close: ")
+	
 	close(bench, mode="TEST")
+	
 	return
 
 if __name__ == "__main__":

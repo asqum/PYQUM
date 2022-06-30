@@ -351,8 +351,12 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC.output(dcbench, 0)
             DC.close(dcbench, reset=True, which=DC_label)
-        if JOBID in g.jobidlist:
             qout(queue, g.jobidlist[0],g.user['username'])
+            for i_module, channel_set in enumerate(DC_Matrix):
+                DC[i_module].output(DC_instance[i_module], 0)
+                DC[i_module].close(DC_instance[i_module], reset=True, which=DC_label[i_module])
+        if JOBID in g.queue_jobid_list:
+            qout(queue, g.queue_jobid_list[0],g.user['username'])
         break
 
     return
