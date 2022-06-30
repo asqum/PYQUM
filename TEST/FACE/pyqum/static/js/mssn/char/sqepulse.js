@@ -838,7 +838,6 @@ $('input.char.sqepulse.data-reset#sqepulse-reset').on('click', function () {
     $('div.char.sqepulse.confirm').show();
     $('button.char.sqepulse.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/char/sqepulse/resetdata', {
-            ownerpassword: $('input.char.sqepulse#sqepulse-ownerpassword').val(),
             truncateafter: $('input.char.sqepulse#sqepulse-truncateafter').val(),
         }, function (data) {
             $('div#char-sqepulse-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking SQE-PULSE.'));

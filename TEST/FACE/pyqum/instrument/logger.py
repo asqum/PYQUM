@@ -838,7 +838,7 @@ def qout(queue,jobid,username):
     '''Queue out without a Job'''
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if (int(g.user['measurement']) > 0) and (username==jobrunner):
+    if int(g.user['management'])>=7 or ( (int(g.user['measurement'])>0) and (username==jobrunner) ):
         try:
             db = get_db()
             db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))

@@ -412,13 +412,14 @@ def char_fresp_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/' + frespcryption + '/resetdata', methods=['GET'])
 def char_fresp_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID')) # use jobid instead of password, which is not secure for jsonify
     truncateafter = int(request.args.get('truncateafter'))
-    db = get_db()
-    people = db.execute( 'SELECT password FROM user WHERE username = ?', (session['people'],) ).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if check_password_hash(people['password'], ownerpassword): message = M_fresp[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+        message = M_fresp[session['user_name']].resetdata(truncateafter)
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -726,15 +727,14 @@ def char_cwsweep_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/cwsweep/resetdata', methods=['GET'])
 def char_cwsweep_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_cwsweep[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+        message = M_cwsweep[session['user_name']].resetdata(truncateafter)
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -1181,17 +1181,7 @@ def char_sqepulse_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/sqepulse/resetdata', methods=['GET'])
 def char_sqepulse_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
-    truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
-    close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_sqepulse[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
-
-    return jsonify(message=message)
+    return jsonify(message="data cemented for this deprecated task")
 
 # Chart is supposedly shared by all measurements (under construction for multi-purpose)
 @bp.route('/char/sqepulse/1ddata', methods=['GET'])
@@ -1660,15 +1650,14 @@ def mani_singleqb_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/mani/singleqb/resetdata', methods=['GET'])
 def mani_singleqb_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_singleqb[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+        message = M_singleqb[session['user_name']].resetdata(truncateafter)
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -2063,15 +2052,14 @@ def mani_qubits_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/mani/qubits/resetdata', methods=['GET'])
 def mani_qubits_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_qubits[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+        message = M_qubits[session['user_name']].resetdata(truncateafter)
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 

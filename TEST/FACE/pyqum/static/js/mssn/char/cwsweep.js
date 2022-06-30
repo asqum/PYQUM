@@ -876,7 +876,7 @@ $('input.char.cwsweep.data-reset#cwsweep-reset').on('click', function () {
     $('div.char.cwsweep.confirm').show();
     $('button.char.cwsweep.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/resetdata', {
-            ownerpassword: $('input.char.cwsweep[name="ownerpassword"]').val(),
+            ACCESSED_JOBID: ACCESSED_JOBID,
             truncateafter: $('input.char.cwsweep[name="truncateafter"]').val(),
         }, function (data) {
             $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking CWSWEEP.'));

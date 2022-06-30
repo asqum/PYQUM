@@ -1280,7 +1280,7 @@ $('input.mani.singleqb.data-reset#singleqb-reset').on('click', function () {
     $('div.mani.singleqb.confirm').show();
     $('button.mani.singleqb.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/mani/singleqb/resetdata', {
-            ownerpassword: $('input.mani.singleqb#singleqb-ownerpassword').val(),
+            ACCESSED_JOBID: ACCESSED_JOBID,
             truncateafter: $('input.mani.singleqb#singleqb-truncateafter').val(),
         }, function (data) {
             $('div#mani-singleqb-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking SQE-PULSE.'));
