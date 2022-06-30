@@ -782,7 +782,7 @@ def fit_sin(tt, yy):
 	fitfunc = lambda t: A * sin(w*t + p) + c
 	output = {"amp": A, "omega": w, "phase": p, "offset": c, "freq": f, "period": 1./f, "fitfunc": fitfunc, "maxcov": max(pcov), "rawres": (guess,popt,pcov)}
 	return output
-
+#test
 class Autoflux():
 
 	def __init__( self, quantificationObj, *args,**kwargs ):
