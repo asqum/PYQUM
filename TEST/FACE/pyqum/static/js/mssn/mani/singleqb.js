@@ -135,7 +135,7 @@ function accessdata_singleqb() {
             var colperow = 8; // row density
             var row = parseInt(i/colperow);
             if (i%colperow==0 || i==0) {
-                $('div.row.parameter').append('<table class="content-table mani-singleqb-extra E' + row + '"></table>');
+                $('div.row.singleqb-c-parameters').append('<table class="content-table mani-singleqb-extra E' + row + '"></table>');
                 $('table.mani-singleqb-extra.E' + row).append($('<thead></thead>').append($('<tr></tr>')));
                 $('table.mani-singleqb-extra.E' + row).append($('<tbody class="mani-singleqb parameter"></tbody>').append($('<tr></tr>')));
             };
@@ -871,12 +871,12 @@ $(function() {
                     $('div.channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
                         .append($('<label>').text( DAC_Which[i] + ": " + DAC_Role[i][j] + ": CHANNEL-" + CH_Address ))));
                     $('div.channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
-                        .append($('<textarea class="mani singleqb SCORE-JSON channel-' + CH_Address + '" type="text" rows="3" cols="13" style="color:red;">').val('Good Luck'))));
+                        .append($('<textarea class="mani singleqb SCORE-JSON channel-' + CH_Address + '" type="text" rows="3" cols="13" style="color:red;">').val('ns=60000;'))));
                     if (i!=0 || j!=0) { $("div.row.perimeter.score.CH" + CH_Address).hide(); };
                 });
             });
             $('select.channel-matrix').append($('<option>', { text: "ALL", value: "ALL" }));
-            window.selected_dach_address = $('select.channel-matrix').val(); // selected DAC-CH-Address
+            window.selected_dach_address = $('select.channel-matrix').val(); // selected DAC-CH-Address for "0. Inserting Pulse"
             
         });
         return false;

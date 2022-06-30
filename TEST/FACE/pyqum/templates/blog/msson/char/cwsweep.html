@@ -100,6 +100,9 @@
             <div class="col-10" id='left'><select class='char data cwsweep 2d' name="2d-direction" type="text"></select></div>
             <div class="col-10" id='left'><button class="char push_button w-95 blue" id="cwsweep-savemat">MAT-2D</button></div>
         </div>
+        <div class="row">
+            <div class="col-10" id='left'><select class='char data cwsweep 2d' name="2d-zsmooth" type="text"></select></div>
+        </div>
 
         <div id="char-cwsweep-perimeters"></div>
         <div id="char-cwsweep-announcement"></div>
@@ -116,15 +119,37 @@
                     
                 <div class="modal-body">
                     <div class="modal-content">
+
+                        <!-- 1. DC Settings (PENDING)-->
+                        <div class="row">
+                            <!-- MACE Pathway Matrix (listified & populated by JS) -->
+                            <div class="row perimeter">
+                                <div class="col-16" id='left'><select class="char-pathway-matrix zoomSelect"></select></div>
+                                <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                                <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                            </div>
+                            <div class="char-pathway-matrix"></div>
+                        
+                            <!-- Where Flexible-Parameters 'LEGO' happens: R-JSON -->
+                            <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
+                            <div class="row perimeter">
+                                <div class="col-97" id='left'>
+                                    <!-- Change the dimension in style.css -->
+                                    <textarea class='char cwsweep perimeter' id='cwsweep-R-JSON' type="text" rows="7" cols="13" style="color:blue;">{}</textarea>
+                                </div>
+                            </div>
+                        
+                        </div>
+
                         <!-- Some Perimeter(s) -->
                         <div class="row">
                             <div class="col-20" id='left'><label>Flux-Idle-Config</label></div>
-                            <div class="col-20" id='left'><label>Flux-Sweep-Channel</label></div>
+                            <div class="col-20" id='left'><label>Main-Sweep-Channel</label></div>
                             <div class="col-20" id='left'><label>Flux-Bias (V/A)</label></div>
-                            <div class="col-37" id='left'><label>Sweep-Config</label></div>
+                            <div class="col-37" id='left'><label>Sweep-Config (Yokogawa)</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='char cwsweep perimeter' id='cwsweep-z-idle' type="text" value="{}"/></div>
+                            <div class="col-20" id='left'><input class='char cwsweep perimeter' id='cwsweep-z-idle' type="text" value='{"1-4":"0"}'/></div>
                             <div class="col-20" id='left'><input class='char cwsweep perimeter' id='cwsweep-dcsweepch' type="number" value="1" min="1" step="1" max="4"/></div>
                             <div class="col-20" id='left'><input class='char cwsweep' name="fluxbias" type="text" value="OPT,"/></div>
                             <div class="col-37" id='left'><input class='char cwsweep perimeter' id='cwsweep-sweep-config' type="text" value='{"sweeprate":0.0001, "pulsewidth":1001e-3, "current":0}'/></div>

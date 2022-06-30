@@ -662,11 +662,23 @@ def char_cwsweep_access():
     cfreq_data = cfreq.data[0:session['c_cwsweep_address'][6]+1]
     cpowa_data = cpowa.data[0:(session['c_cwsweep_address'][7]+1)//cpowa_repeat//2]  # (to be adjusted ***)
     # print("cpowa_data: %s" %cpowa_data)
+
+    # Assembling Flexible Parameters:
+    corder=M_cwsweep[session['user_name']].corder
+    perimeter=M_cwsweep[session['user_name']].perimeter
+    # Integrate R-Parameters back into C-Order:
+    try: 
+        RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
+    except(KeyError): # for backward compatibility
+        RJSON = {} 
+        perimeter['MACE-JSON'] = {}
+
+
     
     note = jobsearch(JOBID, mode="note")
     return jsonify(JOBID=JOBID, note=note,
-        data_progress=data_progress, measureacheta=measureacheta, perimeter=M_cwsweep[session['user_name']].perimeter, 
-        corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
+        data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, 
+        comment=M_cwsweep[session['user_name']].comment, 
         data_repeat=data_repeat, cfluxbias_data=cfluxbias_data, cxyfreq_data=cxyfreq_data, cxypowa_data=cxypowa_data,
         csparam_data=csparam_data, cifb_data=cifb_data, cfreq_data=cfreq_data, cpowa_data=cpowa_data)
 # Resume the unfinished measurement
