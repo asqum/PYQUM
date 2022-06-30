@@ -105,6 +105,10 @@ def plot():
 def fidelity():
 	return render_template("blog/benchmark/fidelity.html")
 
+@bp.route('/powerdepend', methods=['POST', 'GET'])
+def powerdepend():
+	return render_template("blog/benchmark/powerdepend.html")
+
 @bp.route('/benchmark_getMeasurement', methods=['POST', 'GET'])
 def benchmark_getMeasurement():
 	'''
@@ -152,6 +156,10 @@ def register_Quantification():
 		return Autoflux(myExtendMeasurement)
 	def get_fidelity ( myExtendMeasurement ):
 		return Readout_fidelity(myExtendMeasurement)
+	def get_powerdepend ( myExtendMeasurement ):
+		return PowerDepend(myExtendMeasurement)
+
+
 	
 	quantification = {
 		'qEstimation': get_qEstimation,
@@ -159,6 +167,7 @@ def register_Quantification():
 		'common_fitting': get_common_fitting,
 		'autoflux': get_autoflux,
 		'fidelity':get_fidelity,
+		'powerdepend':get_powerdepend,
 	}
 	print(quantificationType+" is registed!!")
 	try: QDict[session['user_name']] = quantification[quantificationType](myExtendMeasurement)
@@ -836,6 +845,52 @@ def Readout_fidelity_getJson_Pretrain():
 	myQuantification.pre_analytic()
 	return json.dumps("A", cls=NumpyEncoder)
 
+# endregion
+
+@bp.route('/powerdepend/load',methods=['POST','GET'])
+def PowDepend_load():
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	analysisIndex = json.loads(request.args.get('analysisIndex'))
+
+	valueInd = analysisIndex["valueIndex"]
+	axisInd = analysisIndex["axisIndex"]
+	dimension = len(axisInd)
+
+	# Get average information from JS
+	aveAxisInd = analysisIndex["aveInfo"]["axisIndex"]
+	aveRange = 0
+	# Construct average informaion to reshape
+	if len(aveAxisInd) !=0:
+		aveRange = [int(k) for k in analysisIndex["aveInfo"]["aveRange"].split(",")]
+	aveInfo = {
+		"axisIndex": aveAxisInd,
+		"aveRange": aveRange,
+		"oneShotAxisIndex": [],
+	}
+
+
+	## Block user click plot frequently
+	# preAxisInd = myExtendMeasurement.axisInd
+	# preValueInd = myExtendMeasurement.varsInd
+	# if preAxisInd != axisInd  or ( yAxisKey==None and preValueInd != valueInd) or aveInfo!=aveInfo:
+	# 	print("Previous index",preValueInd,"New index",valueInd)
+	# 	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+	myExtendMeasurement.reshape_Data( valueInd, axisInd=axisInd, aveInfo=aveInfo )
+	return json.dumps("Data reshaped", cls=NumpyEncoder)
+
+@bp.route('/powerdepend/getJson_fitParaPlot',methods=['POST','GET'])
+def PowDepend_getJson_fitParaPlot():
+
+	myExtendMeasurement = benchmarkDict[session['user_name']]
+	myQuantification = QDict[session['user_name']] 
+
+	# fitParameters = json.loads(request.args.get('fitParameters'))
+
+	# myQuantification.fitParameters = fitParameters
+	myQuantification.do_analysis()
+	return json.dumps("finished", cls=NumpyEncoder)
 # endregion
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this

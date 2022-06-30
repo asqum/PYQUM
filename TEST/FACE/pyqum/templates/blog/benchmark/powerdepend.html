@@ -1,0 +1,71 @@
+<!doctype html> <!--extended from parent: bridge.html, which in turn inherited base.html-->
+
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+</head>
+
+<body class="benchmark">
+    <div class="qestimatecontent">
+        <h3>PowerDepend Functions</h3>
+
+        <div class="flex-allPara">
+
+            <div class="allMeasurePara" id="powerdepend-input">
+                <button id="powerdepend-button-load" type="submit">Load data</button>
+            </div>
+            <div class="allFitPara" id="powerdepend-plot">
+                <button id="powerdepend-plot2D-button" type="submit">2D Plot</button>
+                <label>Z signal type:</label>
+                <select id="powerdepend-plot2D-zSelector">
+                    <option value="amp">Amplitude</option>
+                    <option value="phase">Phase</option>
+                </select>
+                <label>y unit:</label>
+                <select id="powerdepend-plot2D-ySelector">
+                    <option value="y_index">Index</option>
+                    <option value="y_value">Value</option>
+                </select>
+                <button id="powerdepend-plot1D-button" type="submit">1D Plot</button>
+                <label>y index or value:</label>
+                <input type="text" id="powerdepend-plot1D-y_value">
+            </div>
+
+            <div class="allFitPara" id="powerdepend-allParamater">
+                <label>Fitting function:</label>
+                <select id="powerdepend-functionSelector">
+                    <option value="ExpDecay">Exponential Decay</option>
+                    <option value="RabiOscillation">Rabi Oscillation</option>
+                </select>
+
+                <label>Signal type:</label>
+                <select id="powerdepend-signalSelector">
+                    <option value="amp">Amplitude</option>
+                    <option value="phase">Phase</option>
+                    <option value="indpendent">IQ plane</option>
+                </select>
+
+                <div class="fitPara" id="powerdepend-parameters">
+
+                </div> 
+                <label>x range:</label>
+                <input type="text" id="powerdepend-fitRange">
+
+                <label>Name of parameters:</label>
+                <input type="text" id="powerdepend-parameterNames">
+                <label>Initial values:</label>
+                <input type="text" id="powerdepend-parameterInitValues">
+
+                <button id="powerdepend-button-fit" type="submit">Fit</button>
+
+            </div> 
+             
+        </div>
+        
+
+    </div>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/benchmark.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/benchmark/powerdepend.js') }}"></script>
+</body>
+
+</html>

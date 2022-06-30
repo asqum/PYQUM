@@ -982,8 +982,9 @@ def text_report(label):
 	label_list= ["gnd","exc"]
 	u_unique, counts = unique(label, return_counts=True)
 	print(dict(zip(label_list, counts)))
-	print("{:<31}".format("The percentage of ground state")+" : {:.2f}%".format(100*counts[1]/(counts[0]+counts[1])))
-	print("{:<31}".format("The percentage of excited state")+" : {:.2f}%".format(100*counts[0]/(counts[0]+counts[1])))
+	print("{:<18}".format("The percentage of ")+"{:<8}".format(label_list[1])+"state"+" : {:.2f}%".format(100*counts[1]/(counts[0]+counts[1])))
+	print("{:<18}".format("The percentage of ")+"{:<8}".format(label_list[0])+"state"+" : {:.2f}%".format(100*counts[0]/(counts[0]+counts[1])))
+	return {"1":100*counts[1]/(counts[0]+counts[1],"0":100*counts[0]/(counts[0]+counts[1]}
 
 def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
 	"""
@@ -1048,7 +1049,7 @@ class Readout_fidelity():
 		self.label_list= ["gnd","exc"]
 		self.probability = []
 		self.bleed = 10**-3
-
+		self.plot = 0
 	
 	
 	def do_analysis( self ):
@@ -1085,27 +1086,28 @@ class Readout_fidelity():
 			self.ax.plot(self.line, self.k*self.line+self.b,color = "k")
 			self.ax.plot(self.line, -1/self.k*self.line+self.b1,color = "r")
 			self.ax.plot(self.line, -1/self.k*self.line+self.b2,color = "r")
-			text_report(self.label)
+			self.out = text_report(self.label)
+			if plot:
+				#plotting the results:
+				for i in self.u_labels:
+					self.ax.scatter(self.data.T[0][self.label == i] , self.data.T[1][self.label == i] , label = self.label_list[i])
 
-			#plotting the results:
-			for i in self.u_labels:
-				self.ax.scatter(self.data.T[0][self.label == i] , self.data.T[1][self.label == i] , label = self.label_list[i])
 
+				# plot_svm_decision_function(kmeans)
+				for i in range(len(self.loaded_model.cluster_centers_)):
+					self.ax.scatter(self.loaded_model.cluster_centers_[i][0],self.loaded_model.cluster_centers_[i][1],color = "r")
 
-			# plot_svm_decision_function(kmeans)
-			for i in range(len(self.loaded_model.cluster_centers_)):
-				self.ax.scatter(self.loaded_model.cluster_centers_[i][0],self.loaded_model.cluster_centers_[i][1],color = "r")
+				for i in self.u_labels:
+					self.cov = cov(self.data.T[0][self.label == i], self.data.T[1][self.label == i])
+					print("{:<10}".format("The I-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(sqrt(self.cov[0][0])))
+					print("{:<10}".format("The Q-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(sqrt(self.cov[1][1])))
 
-			for i in self.u_labels:
-				self.cov = cov(self.data.T[0][self.label == i], self.data.T[1][self.label == i])
-				print("{:<10}".format("The I-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(sqrt(self.cov[0][0])))
-				print("{:<10}".format("The Q-std div of ")+"{:<8}".format(self.label_list[i])+"state"+" : {:.4f}".format(sqrt(self.cov[1][1])))
-
-			self.ax.legend()
-			plt.title("readout_fidelity")
-			plt.axis('equal')
-			plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
-			# plt.show()
+				self.ax.legend()
+				plt.title("readout_fidelity")
+				plt.axis('equal')
+				plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
+				# plt.show()
+			
 		else:
 			yAxisKey = self.quantificationObj.yAxisKey
 			self.y = self.quantificationObj.independentVars[yAxisKey]
@@ -1119,10 +1121,13 @@ class Readout_fidelity():
 				self.probtmp = 100*self.counts[0]/(self.counts[0]+self.counts[1])
 				self.probability.append(self.probtmp)
 				print("{:d} times : ".format(self.times+1)+"{:<31}".format("The percentage of excited state")+" : {:.2f}%".format(self.probtmp))
-			plt.figure()
-			plt.rcParams["figure.figsize"] = (12, 9)
-			plt.plot(self.y, self.probability)
-			plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
+			self.out = self.probability
+			if plot:
+				plt.figure()
+				plt.rcParams["figure.figsize"] = (12, 9)
+				plt.plot(self.y, self.probability)
+				plt.savefig(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\fitness.png')
+		return self.out
 
 	def pre_analytic( self ):
 		xAxisKey = self.quantificationObj.xAxisKey
@@ -1139,3 +1144,103 @@ class Readout_fidelity():
 		pickle.dump(self.kmeans, open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_kmeans_model.sav', 'wb'))
 		print("finished pretrain!")
 
+def outlier_detect(data,label):
+    error_label = 1
+    class0_label ,class1_label = 0,2
+    label = class1_label* label
+    iteration = 3
+    threshold = 1.5
+    IQR_end = 0.006
+    for i in range(iteration):
+        Q1_0 = np.quantile(data[:,1][label==class0_label],.25)
+        Q3_0 = np.quantile(data[:,1][label==class0_label],.75)
+        IQR_0 = Q3_0 - Q1_0
+        Q1_1 = np.quantile(data[:,1][label==class1_label],.25)
+        Q3_1 = np.quantile(data[:,1][label==class1_label],.75)
+        IQR_1 = Q3_1 - Q1_1
+        print("IQR :"+"{:.4f}".format(IQR_0)+" ; "+"{:.4f}".format(IQR_1))
+        for i in range(len(label)):
+            if label[i]==class0_label:
+                if IQR_0 <IQR_end:
+                    pass
+                elif((data[:,1][i] < (Q1_0 - threshold * IQR_0))| (data[:,1][i] > (Q3_0 + threshold * IQR_0))):
+                    label[i]=error_label
+            if label[i]==class1_label:
+                if IQR_1 <IQR_end:
+                    pass
+                elif((data[:,1][i] < (Q1_1 - threshold * IQR_1))| (data[:,1][i] > (Q3_1 + threshold * IQR_1))):
+                    label[i]=error_label
+        if (IQR_0<IQR_end)&(IQR_1<IQR_end):
+            print('end')
+            break
+    return label
+
+def cloc(label_new):
+    min_0,min_1, min_2 = -1,-1,-1
+    error_label = 1
+    class0_label ,class1_label = 0,2
+    for i in range(len(label_new)):
+        if min_0 != -1 | min_1 != -1| min_2 != -1:
+            break
+        if label_new[i]==error_label:
+            if ((min_0 != -1) | (min_1 != -1))&(min_2== -1):
+                min_2 = i
+        elif label_new[i]==class0_label:
+            if min_0 == -1:
+                min_0 = i
+        elif label_new[i]==class1_label:
+            if min_1 == -1:
+                min_1 = i
+#     print(min_0,min_1,min_2)
+    if min_0<min_1:
+        min_0 = min_2-1
+    else:
+        min_1 = min_2-1
+    return min_0,min_1
+
+class PowerDepend():
+
+	def __init__( self, quantificationObj, *args,**kwargs ):
+
+		self.quantificationObj = quantificationObj
+
+		# Fit
+		self.real, self.imag = [],[]
+		self.power,self.freq,self.I,self.Q = [],[],[],[]
+		self.plot = 0
+
+	def do_analysis( self ):
+		xAxisKey = self.quantificationObj.xAxisKey
+		yAxisKey = self.quantificationObj.yAxisKey
+		self.x = self.quantificationObj.independentVars[xAxisKey]
+		self.y = self.quantificationObj.independentVars[yAxisKey]
+		self.i = self.quantificationObj.rawData["iqSignal"].real
+		self.q = self.quantificationObj.rawData["iqSignal"].imag
+		self.iq = transpose(self.quantificationObj.rawData["iqSignal"])
+
+		#---------------prepare data ---------------
+		self.df1=DataFrame()
+		for j in range(len(self.x)):
+			self.port1 = notch_port(f_data=self.y,z_data_raw=self.iq[j])
+			self.port1.autofit()
+			self.df1 = self.df1.append(pd.DataFrame([port1.fitresults]), ignore_index = True)
+		self.df1.insert(loc=0, column='power', value=self.x)
+		#---------------drop the outward data---------------
+		self.f_min,self.f_max = min(self.y),max(self.y)
+		self.valid = self.df1[(self.df1['fr']>= self.f_min)&(self.df1['fr']<= self.f_max)]
+		self.valid.reset_index(inplace=True)
+		self.valid = self.valid.drop(labels=['index'], axis="columns")
+		self.power = self.valid['power']
+    	self.fr = self.valid['fr']*1000
+    	self.data = stack((self.power,self.fr), axis=1)
+		self.kmeans = KMeans(n_clusters=2)
+		self.label = self.kmeans.fit_predict(self.data)
+		self.label_new = outlier_detect(self.data,self.label)
+		self.power_0,self.power_1 = cloc(self.label_new)
+		print("power : "+"{:.2f}".format(self.data[:, 0][self.power_0])+"{:<7}".format(' dBm ; ')
+			+"fr : "+"{:.2f}".format(median(self.data[:, 1][self.label_new ==0]))+"{:<7}".format(' MHz ; \n')
+			+"power : "+"{:.2f}".format(self.data[:, 0][self.power_1])+"{:<7}".format(' dBm ; ')
+			+"fr : "+"{:.2f}".format(median(self.data[:, 1][self.label_new ==1]))+"{:<7}".format(' MHz ; '))
+		
+		return {"0":{"power":self.data[:, 0][self.power_0],"fr":median(self.data[:, 1][self.label_new ==0]},
+		"1":{"power":self.data[:, 0][self.power_1],"fr":median(self.data[:, 1][self.label_new ==1]}}
