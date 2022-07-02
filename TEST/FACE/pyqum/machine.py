@@ -552,7 +552,7 @@ def naconnect():
 @bp.route('/na/closet', methods=['GET'])
 def nacloset():
     natag, natype = '%s:%s' %(request.args.get('naname'),session['user_name']), request.args.get('natype')
-    try: status = NA[natype].close(nabench[natag], natag.split('-')[1].split(':')[0])
+    try: status = NA[natype].close(nabench[natag], which=natag.split('-')[1].split(':')[0])
     except: 
         status = "Connection lost"
         pass
