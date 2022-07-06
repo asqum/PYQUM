@@ -21,7 +21,7 @@ from copy import deepcopy
 
 from pyqum import get_db, close_db
 from pyqum.instrument.logger import get_histories, get_mat_history, get_status, set_mat_history, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
-                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobnote, jobsinqueue, check_sample_alignment
+                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobnote, jobsinqueue, check_sample_alignment, acting
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.instrument.composer import pulser
@@ -418,6 +418,7 @@ def char_fresp_resetdata():
     close_db()
     if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
         message = M_fresp[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
     else: 
         message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
@@ -733,6 +734,7 @@ def char_cwsweep_resetdata():
     close_db()
     if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
         message = M_cwsweep[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
     else: 
         message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
@@ -1656,6 +1658,7 @@ def mani_singleqb_resetdata():
     close_db()
     if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
         message = M_singleqb[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
     else: 
         message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
@@ -2058,6 +2061,7 @@ def mani_qubits_resetdata():
     close_db()
     if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
         message = M_qubits[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
     else: 
         message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 

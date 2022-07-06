@@ -998,6 +998,24 @@ def job_update_perimeter(JOBID, perimeter):
     else: pass
     return
 
+# ACTIVITY:
+def acting(log, comment="", note=""):
+    '''Log user's crucial activities'''
+    
+    try:
+        db = get_db()
+        cursor = db.execute('INSERT INTO activity (user_id, log, comment, note) VALUES (?,?,?,?)', (g.user['id'],log,comment,note))
+        LOGID = cursor.lastrowid
+        db.commit()
+        close_db()
+        print(Fore.GREEN + "Log#%s: %s" %(LOGID,log))
+    except:
+        # raise
+        LOGID = None 
+        print(Fore.RED + Back.WHITE + "Make sure you're logged in")
+        
+    return LOGID
+
 
 
 

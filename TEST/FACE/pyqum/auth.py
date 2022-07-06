@@ -17,7 +17,7 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from pyqum import get_db, close_db
-from pyqum.instrument.logger import lisample, set_status, get_status, which_queue_system
+from pyqum.instrument.logger import lisample, set_status, get_status, which_queue_system, acting
 from pyqum.instrument.reader import inst_designate
 
 bp = Blueprint(myname, __name__, url_prefix='/auth')
@@ -318,11 +318,13 @@ def usersamples_update():
             )
             db.commit()
             message = "Sample %s has been successfully updated!" %(sname)
+            acting("UPDATING SAMPLE: %s" %(sname))
         else:
             message = 'PASSWORD NOT VALID'
     except:
         message = "Check sample parameters"
     close_db()
+
     print(message)
     return jsonify(message=message)
 @bp.route('/user/samples/meal', methods=['GET'])
@@ -340,8 +342,11 @@ def usersamples_meal():
     except: 
         session['people'] = None
     # LOGGED INTO JSON: (PENDING: Align the other MSSN set_status as well with time-stamp)
-    try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'], time=0)})
-    except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='', time=0)})
+    try: 
+        set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'], time=0)})
+        acting("MEALING SAMPLE: %s" %(sname))
+    except: 
+        set_status("MSSN", {session['user_name']: dict(sample=sname, queue='', time=0)})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
 @bp.route('/user/samplesloc/update/qpc_wiring', methods=['GET'])
@@ -359,6 +364,7 @@ def usersamplesloc_update_qpc_wiring():
             for key, val in instr_organized.items(): 
                 inst_designate(qpc_selected, key, val)
             message = "%s's instrument assignment has been set successfully" %qpc_selected
+            acting(message)
         else: message = "Clearance not enough"
     except:
         message = "database error"
