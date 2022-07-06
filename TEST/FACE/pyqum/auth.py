@@ -306,12 +306,11 @@ def usersamples_update():
     coauthors = request.args.get('coauthors')
     level = request.args.get('level')
     history = request.args.get('history')
-    ownerpassword = request.args.get('ownerpassword')
+    
     db = get_db()
     try:
         sample_owner = db.execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
-        people = db.execute('SELECT password FROM user WHERE username = ?', (sample_owner,)).fetchone()
-        if check_password_hash(people['password'], ownerpassword):
+        if (int(g.user['management'])>=7) or (session['user_name']==sample_owner):
             db.execute(
                 'UPDATE sample SET location = ?, specifications = ?, description = ?, co_authors = ?, level = ?, history = ? WHERE samplename = ?',
                 (loc, specs, description, coauthors, level, history, sname,)
@@ -320,7 +319,7 @@ def usersamples_update():
             message = "Sample %s has been successfully updated!" %(sname)
             acting("UPDATING SAMPLE: %s" %(sname))
         else:
-            message = 'PASSWORD NOT VALID'
+            message = 'CLEARANCE NOT MATCHED: Only Admin / Owner allowed to update samples'
     except:
         message = "Check sample parameters"
     close_db()
@@ -338,7 +337,7 @@ def usersamples_meal():
     try: 
         session['people'] = get_db().execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
         close_db()
-        print(Fore.YELLOW + "%s is managed by %s" %(sname, session['people']))
+        print(Fore.YELLOW + "%s is managed (owned) by %s" %(sname, session['people']))
     except: 
         session['people'] = None
     # LOGGED INTO JSON: (PENDING: Align the other MSSN set_status as well with time-stamp)

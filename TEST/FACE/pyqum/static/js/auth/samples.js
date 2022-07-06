@@ -128,7 +128,6 @@ $('input.user.samples.confirm-update#samples-confirm').on('click', function(e) {
         level: $('select.user-samples#update[name="level"]').val(),
         description: $('textarea.user-samples#update[name="description"]').val(),
         history: $('textarea.user-samples#update[name="history"]').val(),
-        ownerpassword: $('input.user-samples#ownerpassword').val(),
     }, function (data) {
         $('.samples > label#registered').empty().append($('<h4 style="color: blue;"></h4>').text(data.message));
     });
