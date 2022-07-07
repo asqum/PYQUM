@@ -24,6 +24,7 @@ from zipfile import ZipFile
 from flask import session, g
 from pyqum import get_db, close_db
 from pyqum.instrument.toolbox import waveform, flatten
+from pyqum.instrument.reader import device_port
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
@@ -580,7 +581,7 @@ class measurement:
         # get data type:
         if type(data) is list:
             data = struct.pack(">" + "d"*len(data), *data)
-        else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
+        else: data = struct.pack('>' + 'd', data) #f:32-bit, d:64-bit each floating-number
         # inserting data:
         with open(self.pqfile, 'rb+') as datapie:
             datapie.seek(0, SEEK_END) #seek from end
