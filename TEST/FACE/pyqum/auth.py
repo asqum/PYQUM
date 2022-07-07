@@ -63,6 +63,7 @@ def load_logged_in_user():
         close_db()
         
         # 3. logged-in user's samples' details:
+        # PENDING: allow Admin to access all samples
         g.samples = get_db().execute(
             'SELECT s.id, author_id, samplename, specifications, location, level, description, registered'
             ' FROM sample s JOIN user u ON s.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
