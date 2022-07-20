@@ -749,7 +749,8 @@ def settings(datadensity=1):
                         M.insertdata(x)
                         # sleep(3) #for debugging purposes
                 except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
-                M.status = "M-JOB COMPLETED SUCCESSFULLY"
+                M.status = "M-JOB (%s) COMPLETED SUCCESSFULLY" %JOBID
+                M.jobid_analysis = JOBID
 
             else: M.status = "M-JOB REJECTED: PLS CHECK M-CLEARANCE!"
 
