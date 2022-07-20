@@ -2,7 +2,7 @@ from pandas import DataFrame
 from numpy import stack, quantile
 import matplotlib.pyplot as plt
 # from scipy.io import loadmat  # this is the SciPy module that loads mat-files
-from tools.circuit import notch_port
+from pyqum.directive.code.tools.circuit import notch_port
 
 # def loadmat_valid(path):
 #     mat = loadmat(path)
