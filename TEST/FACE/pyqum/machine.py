@@ -7,7 +7,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 from json import loads, dumps
 from importlib import import_module as im
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, session, send_from_directory, abort, g
-from pyqum.instrument.logger import get_status, set_status, status_code, output_code, clocker, set_mat, bdr_zip_log, address
+from pyqum.instrument.logger import get_status, set_status, status_code, output_code, clocker, set_mat, bdr_zip_log, address, acting
 
 # Error handling
 from contextlib import suppress
@@ -39,7 +39,9 @@ def show():
         if not g.user['instrument']:
             print(Fore.RED + "Please check %s's Clearances for instrument!"%session['user_name'])
             abort(404)
-        else: print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] "%(session['user_name'], session['user_id']) + Fore.LIGHTBLUE_EX + "has entered MACHINE" )
+        else: 
+            acting("ENTERING MACHINE")
+            print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s [%s] "%(session['user_name'], session['user_id']) + Fore.LIGHTBLUE_EX + "has entered MACHINE" )
         return render_template("blog/machn/machine.html")
     return("<h3>WHO ARE YOU?</h3><h3>Please F**k*ng Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 
@@ -114,6 +116,7 @@ def sgconnect():
             sgchannel[sgtag] = request.args.get('channel') # Default channel
             message = "%s is successfully initiated by %s" %(sgname,sguser)
             status = "connected"
+            acting("CONNECTING SG: %s" %(request.args.get('sgname')))
         except:
             # raise
             message = "Please check if %s's connection configuration is OK or is it being used!" %(sgname)
@@ -138,7 +141,9 @@ def sgconnect():
 @bp.route('/sg/closet', methods=['GET'])
 def sgcloset():
     sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
-    try: status = SG[sgtype].close(sgbench[sgtag], sgtag.split('-')[1].split(':')[0], reset=False)
+    try: 
+        status = SG[sgtype].close(sgbench[sgtag], sgtag.split('-')[1].split(':')[0], reset=False)
+        acting("CLOSING SG: %s" %(request.args.get('sgname')))
     except: 
         status = "Connection lost"
         pass
@@ -209,6 +214,7 @@ def dacconnect():
             DAC_handle[dactag] = DAC[dactype].Initiate(daclabel)
             message = "%s is successfully initiated by %s" %(dacname,dacuser)
             status = "connected"
+            acting("CONNECTING DAC: %s" %(request.args.get('dacname')))
         except:
             message = "Please check if %s's connection configuration is OK or is it being used!" %(dacname)
             status = 'error'
@@ -233,6 +239,7 @@ def dacconnect():
 def daccloset():
     dactag, dactype = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype')
     status = DAC[dactype].close(DAC_handle[dactag], dactag.split('-')[1].split(':')[0], reset=False)
+    acting("CLOSING DAC: %s" %(request.args.get('dacname')))
     del DAC_handle[dactag]
     return jsonify(message=status)
 @bp.route('/dac/testing', methods=['GET'])
@@ -385,6 +392,7 @@ def adcconnect():
             adcboard[adctag] = ADC[adctype].Initiate(adclabel)
             message = "%s is successfully initiated by %s" %(adcname,adcuser)
             status = "connected"
+            acting("CONNECTING ADC: %s" %(request.args.get('adcname')))
         except:
             message = "Please check if %s's connection configuration is OK or is it being used!" %(adcname)
             status = 'error'
@@ -483,6 +491,7 @@ def adc_export_1dmat():
 def adccloset():
     adctag, adctype = '%s:%s' %(request.args.get('adcname'),session['user_name']), request.args.get('adctype')
     status = ADC[adctype].close(adcboard[adctag], adctag.split('-')[1].split(':')[0])
+    acting("CLOSING ADC: %s" %(request.args.get('adcname')))
     del adcboard[adctag]
     return jsonify(message=status)
 @bp.route('/adc/testing', methods=['GET'])
@@ -530,6 +539,7 @@ def naconnect():
             nabench[natag] = NA[natype].Initiate(reset=False, which=nalabel)
             message = "%s is successfully initiated by %s" %(naname,nauser)
             status = "connected"
+            acting("CONNECTING NA: %s" %(request.args.get('naname')))
         except:
             message = "Please check if %s's connection configuration is OK or is it being used!" %(naname)
             status = 'error'
@@ -552,7 +562,9 @@ def naconnect():
 @bp.route('/na/closet', methods=['GET'])
 def nacloset():
     natag, natype = '%s:%s' %(request.args.get('naname'),session['user_name']), request.args.get('natype')
-    try: status = NA[natype].close(nabench[natag], natag.split('-')[1].split(':')[0])
+    try: 
+        status = NA[natype].close(nabench[natag], which=natag.split('-')[1].split(':')[0])
+        acting("CLOSING NA: %s" %(request.args.get('naname')))
     except: 
         status = "Connection lost"
         pass
@@ -671,6 +683,7 @@ def saconnect():
             # g.shared_sabench = sabench[satag] # Sharing handle across pages: become None?
             message = "%s is successfully initiated by %s" %(saname,sauser)
             status = "connected"
+            acting("CONNECTING SA: %s" %(request.args.get('saname')))
         except:
             raise
             message = "Please check if %s's connection configuration is OK or is it being used!" %(saname)
@@ -694,7 +707,9 @@ def saconnect():
 @bp.route('/sa/closet', methods=['GET'])
 def sacloset():
     satag, satype = '%s:%s' %(request.args.get('saname'),session['user_name']), request.args.get('satype')
-    try: status = SA[satype].close(sabench[satag], satag.split('-')[1].split(':')[0])
+    try: 
+        status = SA[satype].close(sabench[satag], satag.split('-')[1].split(':')[0])
+        acting("CLOSING SA: %s" %(request.args.get('saname')))
     except: 
         status = "Connection lost"
         pass
@@ -848,6 +863,7 @@ def bdrsamplesallocate():
             db.commit()
             close_db()
             status = "User %s has set sample %s into system %s" %(g.user['username'],set_sample,set_system)
+            acting("Setting sample %s into system %s" %(set_sample,set_system))
         except: status = "COULD NOT COMMIT TO DATABASE"
         print(Fore.YELLOW + status)
     else: 
@@ -888,6 +904,7 @@ def bdr_wiring_set_instruments():
             for key, val in instr_organized.items(): 
                 inst_designate(qsystem, key, val)
         message = "%s's instrument assignment has been set successfully" %qsystem
+        acting(message)
     except:
         message = "database error"
     return jsonify(message=message)
@@ -985,6 +1002,7 @@ def download(filename):
     Servers = ['ASQUM', 'ASQUM_2']
     uploads = "C:/Users/%s/HODOR/CONFIG/PORTAL" %(Servers[int(get_status("WEB")['port']) - 5300 -1])
     print(Fore.GREEN + "User %s is downloading %s from %s" %(session['user_name'], filename, uploads))
+    acting("Downloading %s from %s" %(filename, uploads))
     return send_from_directory(directory=uploads, path=filename)
 
 

@@ -666,7 +666,7 @@ $('input.char.fresp.data-reset#fresp-reset').on('click', function () {
     $('div.char.fresp.confirm').show();
     $('button.char.fresp.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/char/' + frespcryption + '/resetdata', {
-            ownerpassword: $('input.char.fresp[name="ownerpassword"]').val(),
+            ACCESSED_JOBID: ACCESSED_JOBID,
             truncateafter: $('input.char.fresp[name="truncateafter"]').val(),
         }, function (data) {
             $('div#char-fresp-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking FRESP.'));

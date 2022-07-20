@@ -104,10 +104,28 @@ function accessdata_cwsweep() {
         
         // checking parameters:
         console.log(data.corder);
-        // load each command:
-        console.log("Flux-Bias undefined: " + (typeof data.corder['Flux-Bias'] == "undefined")); //detecting undefined
+
+        // LOAD each command:
+        // 1. Loading Perimeters for NEW RUN:
+        $.each(cwsweep_Perimeters, function(i,perimeter){ 
+            if (typeof data.perimeter[perimeter] != "undefined") { $('input.char.cwsweep.perimeter#cwsweep-' + perimeter).val(data.perimeter[perimeter]); };
+            console.log((i+1) + ". " + perimeter + ": " + data.perimeter[perimeter]);
+        });
+        $.each(DC_PATH_Matrix, function(i,channel_set) {
+            $.each(channel_set, function(j,channel) {
+                let QPC_Pathway = "-QPC-" + DC_Role[i][j] + "-" + String(i+1) + "-" + String(channel); 
+                $('textarea.char.cwsweep.MACE-JSON.pathway-' + QPC_Pathway).val(data.perimeter['MACE-JSON']["PATH" + QPC_Pathway]); 
+            });
+        });
+        $.each(SG_PATH_Matrix, function(i,channel_set) {
+            $.each(channel_set, function(j,channel) {
+                let QPC_Pathway = "-QPC-" + SG_Role[i][j] + "-" + String(i+1) + "-" + String(channel); 
+                $('textarea.char.cwsweep.MACE-JSON.pathway-' + QPC_Pathway).val(data.perimeter['MACE-JSON']["PATH" + QPC_Pathway]); 
+            });
+        });
         
-        // Scale up optional parameter inputs:
+
+        // 2. optional parameter inputs for NEW RUN:
         if (typeof data.corder['Flux-Bias'] == "undefined") { $('input.char.cwsweep[name="fluxbias"]').val("OPT,");
         } else { $('input.char.cwsweep[name="fluxbias"]').val(data.corder['Flux-Bias']); };
         if (typeof data.corder['XY-Frequency'] == "undefined") { $('input.char.cwsweep[name="xyfreq"]').val("OPT,");
@@ -115,24 +133,27 @@ function accessdata_cwsweep() {
         if (typeof data.corder['XY-Power'] == "undefined") { $('input.char.cwsweep[name="xypowa"]').val("OPT,");
         } else { $('input.char.cwsweep[name="xypowa"]').val(data.corder['XY-Power']); };
         
-        // Basic parameter inputs:
+        // 3. Basic parameter inputs for NEW RUN:
         $('input.char.cwsweep[name="sparam"]').val(data.corder['S-Parameter']);
         $('input.char.cwsweep[name="ifb"]').val(data.corder['IF-Bandwidth']);
         $('input.char.cwsweep[name="freq"]').val(data.corder['Frequency']);
         $('input.char.cwsweep[name="powa"]').val(data.corder['Power']);
-        // load edittable comment:
+        
+        // 4. load edittable comment for NEW RUN:
         cwsweepcomment = data.comment;
-        // load narrated comment:
+        
+        // 5. load narrated comment for ACCESS:
         $('textarea.char.cwsweep[name="comment"]').text(data.comment);
-        // load narrated perimeter-JSON:
-        $('div#char-cwsweep-perimeters').empty().append($('<h4 style="color: blue;"></h4>').text(JSON.stringify(data.perimeter)));
-        // load narrated note:
+        // 6. load narrated note for ACCESS:
         $('textarea.char.cwsweep[name="note"]').val(data.note);
 
-        // load c-range for each command:
-        // SCROLL: scroll out repeated data (the exact reverse of averaging)
+        // 7. load narrated perimeter-JSON for ACCESS:
+        $('div#char-cwsweep-perimeters').empty().append($('<h4 style="color: blue;"></h4>').text(JSON.stringify(data.perimeter)));
+
+        // 8. load c-range for each command for ACCESS:
+        // 8.1 SCROLL: scroll out repeated data (the exact reverse of averaging)
         
-        // REPEATS:
+        // 8.2 REPEATS:
         $('select.char.cwsweep.parameter#c-repeat').empty();
         if (data.data_repeat > 1) {
             $('select.char.cwsweep.parameter#c-repeat').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
@@ -140,7 +161,7 @@ function accessdata_cwsweep() {
         };
         for (i = 0; i < data.data_repeat; i++) { $('select.char.cwsweep.parameter#c-repeat').append($('<option>', { text: i+1, value: i })); };
 
-        // OPTIONALS:
+        // 8.3 OPTIONALS:
         $('select.char.cwsweep.parameter#c-fluxbias').empty();
         if (data.cfluxbias_data.length > 1) {
             $('select.char.cwsweep.parameter#c-fluxbias').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
@@ -162,7 +183,7 @@ function accessdata_cwsweep() {
         };
         $.each(data.cxypowa_data, function(i,v){ $('select.char.cwsweep.parameter#c-xypowa').append($('<option>', { text: v, value: i })); });
         
-        // BASICS:
+        // 8.4 BASICS:
         $('select.char.cwsweep.parameter#c-sparam').empty()
         if (data.csparam_data.length > 1) {
             $('select.char.cwsweep.parameter#c-sparam').append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
@@ -191,18 +212,11 @@ function accessdata_cwsweep() {
         };
         $.each(data.cpowa_data, function(i,v){ $('select.char.cwsweep.parameter#c-powa').append($('<option>', { text: v, value: i })); });
         
-        // load data progress:
+        // 9. load data progress for ACCESS:
         var data_progress = "  " + String(data.data_progress.toFixed(3)) + "%";
         $('.data-progress.cwsweep').css({"width": data_progress}).text(data_progress);
         $('.data-eta.cwsweep').text("data: " + data.measureacheta + " until completion");
         console.log("Progress: " + data_progress);
-
-        // Loading Perimeters for NEW RUN:
-        $.each(cwsweep_Perimeters, function(i,perimeter) { 
-            // ONLY LOAD DEFINED (EXISTING) PERIMETER(s):
-            if (typeof data.perimeter[perimeter] != "undefined") { $('input.char.cwsweep.perimeter#cwsweep-' + perimeter).val(data.perimeter[perimeter]); };
-            console.log((i+1) + ". " + perimeter + ": " + data.perimeter[perimeter]);
-        });
 
     });
     return false;
@@ -390,16 +404,22 @@ function plot2D_cwsweep(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,zsmooth) 
 function Perimeter_Assembler_cwsweep() {
     var PERIMETER = {};
     // 1. Assemble Preset Perimeters into PERIMETER:
-    $.each(singleqb_Perimeters, function(i,perimeter) {
+    $.each(cwsweep_Perimeters, function(i,perimeter) {
         PERIMETER[perimeter] = $('.char.cwsweep.perimeter#cwsweep-' + perimeter).val();
         console.log("PERIMETER[" + perimeter + "]: " + PERIMETER[perimeter]);
     });
-    // 2. Assemble Flexible SCORE-JSON into PERIMETER:
-    PERIMETER['SCORE-JSON'] = {}
-    $.each(DAC_CH_Matrix, function(i,channel_set) {
+    // 2. Assemble Flexible MACE-JSON into PERIMETER:
+    PERIMETER['MACE-JSON'] = {}
+    $.each(DC_PATH_Matrix, function(i,channel_set) {
         $.each(channel_set, function(j,channel) {
-            let CH_Address = String(i+1) + "-" + String(channel); 
-            PERIMETER['SCORE-JSON']["CH" + CH_Address] = $('textarea.mani.singleqb.SCORE-JSON.channel-' + CH_Address).val(); 
+            let QPC_Pathway = "-QPC-" + DC_Role[i][j] + "-" + String(i+1) + "-" + String(channel); 
+            PERIMETER['MACE-JSON']["PATH" + QPC_Pathway] = $('textarea.char.cwsweep.MACE-JSON.pathway-' + QPC_Pathway).val(); 
+        });
+    });
+    $.each(SG_PATH_Matrix, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let QPC_Pathway = "-QPC-" + SG_Role[i][j] + "-" + String(i+1) + "-" + String(channel); 
+            PERIMETER['MACE-JSON']["PATH" + QPC_Pathway] = $('textarea.char.cwsweep.MACE-JSON.pathway-' + QPC_Pathway).val(); 
         });
     });
     return PERIMETER;
@@ -431,7 +451,7 @@ $(function() {
         $('button.char.access.cwsweep').addClass('selected');
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/init', {
         }, function (data) {
-            // Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
+            // 1. Check Run Permission: (PENDING: Use Global run_permission to notify user whenever certain disabled button is click)
             window.run_permission = data.run_permission;
             window.DAYLIST = data.daylist;
             console.log("run permission: " + run_permission);
@@ -445,6 +465,7 @@ $(function() {
                 $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text("RUN & RESUME BUTTON ENABLED"));
             };
             
+            // 2. Loading Day-List and relevant Options:
             $('select.char.cwsweep[name="wday"]').empty();
             $('select.char.cwsweep[name="wday"]').append($('<option>', { text: 'The latest:', value: '' }));
             $.each(data.daylist.reverse(), function(i,v){
@@ -456,6 +477,43 @@ $(function() {
             $('select.char.cwsweep[name="wday"]').append($('<option>', { text: '--Search--', value: 's' }));
             $('select.char.cwsweep[name="wday"]').append($('<option>', { text: '--New--', value: -1 }));
             $('select.char.cwsweep[name="wday"]').append($('<option>', { text: '--Temp--', value: -3 }));
+
+            // 3. Pre-arrange Channel-inputs accordingly based on the WIRING-settings:
+            $('select.char-pathway-matrix').empty();
+            $('div.char-pathway-matrix').empty();
+            // DC MaRoW:
+            window.DC_PATH_Matrix = data.DC_PATH_Matrix;
+            window.DC_Role = data.DC_Role;
+            window.DC_Which = data.DC_Which;
+            $.each(DC_PATH_Matrix, function(i,channel_set) {
+                $.each(channel_set, function(j,channel) {
+                    let QPC_Pathway = "-QPC-" + DC_Role[i][j] + "-" + String(i+1) + "-" + String(channel);
+                    $('select.char-pathway-matrix').append($('<option>', { text: QPC_Pathway + " (" + DC_Which[i] + ")", value: QPC_Pathway }));
+                    $('div.char-pathway-matrix').append($("<div class='row perimeter mace PATH" + QPC_Pathway + "'>").append($("<div class='col-97' id='left'>")
+                        .append($('<label>').text( QPC_Pathway + " (" + DC_Which[i] + ")" ))));
+                    $('div.char-pathway-matrix').append($("<div class='row perimeter mace PATH" + QPC_Pathway + "'>").append($("<div class='col-97' id='left'>")
+                        .append($('<textarea class="char cwsweep MACE-JSON pathway-' + QPC_Pathway + '" type="text" rows="3" cols="13" style="color:red;">').val('sweep=0'))));
+                    if (i!=0 || j!=0) { $("div.row.perimeter.mace.PATH" + QPC_Pathway).hide(); }; // only shows the 1st option when first load
+                });
+            });
+            // SG MaRoW:
+            window.SG_PATH_Matrix = data.SG_PATH_Matrix;
+            window.SG_Role = data.SG_Role;
+            window.SG_Which = data.SG_Which;
+            $.each(SG_PATH_Matrix, function(i,channel_set) {
+                $.each(channel_set, function(j,channel) {
+                    let QPC_Pathway = "-QPC-" + SG_Role[i][j] + "-" + String(i+1) + "-" + String(channel);
+                    $('select.char-pathway-matrix').append($('<option>', { text: QPC_Pathway + " (" + SG_Which[i] + ")", value: QPC_Pathway }));
+                    $('div.char-pathway-matrix').append($("<div class='row perimeter mace PATH" + QPC_Pathway + "'>").append($("<div class='col-97' id='left'>")
+                        .append($('<label>').text( QPC_Pathway + " (" + SG_Which[i] + ")" ))));
+                    $('div.char-pathway-matrix').append($("<div class='row perimeter mace PATH" + QPC_Pathway + "'>").append($("<div class='col-97' id='left'>")
+                        .append($('<textarea class="char cwsweep MACE-JSON pathway-' + QPC_Pathway + '" type="text" rows="3" cols="13" style="color:red;">').val('frequency=6, power=0'))));
+                    $("div.row.perimeter.mace.PATH" + QPC_Pathway).hide(); // hide the rest first
+                });
+            });
+            // Display ALL MaRoW:
+            $('select.char-pathway-matrix').append($('<option>', { text: "ALL", value: "ALL" }));
+
         });
         return false;
     });
@@ -468,6 +526,14 @@ $(function () {
         window.wday = $('select.char.cwsweep[name="wday"]').val();
         listimes_cwsweep();
     });
+    return false;
+});
+
+// Surfing through Pathways One-by-one or Altogether:
+$('select.char-pathway-matrix').on('change', function() {
+    $("div.row.perimeter.mace").hide();
+    if ($(this).val()=="ALL") { $("div.row.perimeter.mace").show(); 
+    } else { $("div.row.perimeter.mace.PATH" + $(this).val()).show(); };
     return false;
 });
 
@@ -810,7 +876,7 @@ $('input.char.cwsweep.data-reset#cwsweep-reset').on('click', function () {
     $('div.char.cwsweep.confirm').show();
     $('button.char.cwsweep.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/char/cwsweep/resetdata', {
-            ownerpassword: $('input.char.cwsweep[name="ownerpassword"]').val(),
+            ACCESSED_JOBID: ACCESSED_JOBID,
             truncateafter: $('input.char.cwsweep[name="truncateafter"]').val(),
         }, function (data) {
             $('div#char-cwsweep-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking CWSWEEP.'));

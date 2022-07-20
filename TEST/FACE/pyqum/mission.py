@@ -21,7 +21,7 @@ from copy import deepcopy
 
 from pyqum import get_db, close_db
 from pyqum.instrument.logger import get_histories, get_mat_history, get_status, set_mat_history, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
-                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobnote, jobsinqueue, check_sample_alignment
+                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobnote, jobsinqueue, check_sample_alignment, acting
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.instrument.composer import pulser
@@ -412,13 +412,15 @@ def char_fresp_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/' + frespcryption + '/resetdata', methods=['GET'])
 def char_fresp_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID')) # use jobid instead of password, which is not secure for jsonify
     truncateafter = int(request.args.get('truncateafter'))
-    db = get_db()
-    people = db.execute( 'SELECT password FROM user WHERE username = ?', (session['people'],) ).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if check_password_hash(people['password'], ownerpassword): message = M_fresp[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+        message = M_fresp[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -662,11 +664,23 @@ def char_cwsweep_access():
     cfreq_data = cfreq.data[0:session['c_cwsweep_address'][6]+1]
     cpowa_data = cpowa.data[0:(session['c_cwsweep_address'][7]+1)//cpowa_repeat//2]  # (to be adjusted ***)
     # print("cpowa_data: %s" %cpowa_data)
+
+    # Assembling Flexible Parameters:
+    corder=M_cwsweep[session['user_name']].corder
+    perimeter=M_cwsweep[session['user_name']].perimeter
+    # Integrate R-Parameters back into C-Order:
+    try: 
+        RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
+    except(KeyError): # for backward compatibility
+        RJSON = {} 
+        perimeter['MACE-JSON'] = {}
+
+
     
     note = jobsearch(JOBID, mode="note")
     return jsonify(JOBID=JOBID, note=note,
-        data_progress=data_progress, measureacheta=measureacheta, perimeter=M_cwsweep[session['user_name']].perimeter, 
-        corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
+        data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, 
+        comment=M_cwsweep[session['user_name']].comment, 
         data_repeat=data_repeat, cfluxbias_data=cfluxbias_data, cxyfreq_data=cxyfreq_data, cxypowa_data=cxypowa_data,
         csparam_data=csparam_data, cifb_data=cifb_data, cfreq_data=cfreq_data, cpowa_data=cpowa_data)
 # Resume the unfinished measurement
@@ -714,15 +728,15 @@ def char_cwsweep_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/cwsweep/resetdata', methods=['GET'])
 def char_cwsweep_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_cwsweep[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+        message = M_cwsweep[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -1169,17 +1183,7 @@ def char_sqepulse_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/sqepulse/resetdata', methods=['GET'])
 def char_sqepulse_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
-    truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
-    close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_sqepulse[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
-
-    return jsonify(message=message)
+    return jsonify(message="data cemented for this deprecated task")
 
 # Chart is supposedly shared by all measurements (under construction for multi-purpose)
 @bp.route('/char/sqepulse/1ddata', methods=['GET'])
@@ -1648,15 +1652,15 @@ def mani_singleqb_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/mani/singleqb/resetdata', methods=['GET'])
 def mani_singleqb_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_singleqb[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+        message = M_singleqb[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -2051,15 +2055,15 @@ def mani_qubits_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/mani/qubits/resetdata', methods=['GET'])
 def mani_qubits_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_qubits[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+        message = M_qubits[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 

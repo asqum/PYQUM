@@ -17,7 +17,7 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from pyqum import get_db, close_db
-from pyqum.instrument.logger import lisample, set_status, get_status, which_queue_system
+from pyqum.instrument.logger import lisample, set_status, get_status, which_queue_system, acting
 from pyqum.instrument.reader import inst_designate
 
 bp = Blueprint(myname, __name__, url_prefix='/auth')
@@ -63,6 +63,7 @@ def load_logged_in_user():
         close_db()
         
         # 3. logged-in user's samples' details:
+        # PENDING: allow Admin to access all samples
         g.samples = get_db().execute(
             'SELECT s.id, author_id, samplename, specifications, location, level, description, registered'
             ' FROM sample s JOIN user u ON s.author_id = u.id' # join tables to link (id in user) and (author_id in post) to get username
@@ -306,23 +307,24 @@ def usersamples_update():
     coauthors = request.args.get('coauthors')
     level = request.args.get('level')
     history = request.args.get('history')
-    ownerpassword = request.args.get('ownerpassword')
+    
     db = get_db()
     try:
         sample_owner = db.execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
-        people = db.execute('SELECT password FROM user WHERE username = ?', (sample_owner,)).fetchone()
-        if check_password_hash(people['password'], ownerpassword):
+        if (int(g.user['management'])>=7) or (session['user_name']==sample_owner):
             db.execute(
                 'UPDATE sample SET location = ?, specifications = ?, description = ?, co_authors = ?, level = ?, history = ? WHERE samplename = ?',
                 (loc, specs, description, coauthors, level, history, sname,)
             )
             db.commit()
             message = "Sample %s has been successfully updated!" %(sname)
+            acting("UPDATING SAMPLE: %s" %(sname))
         else:
-            message = 'PASSWORD NOT VALID'
+            message = 'CLEARANCE NOT MATCHED: Only Admin / Owner allowed to update samples'
     except:
         message = "Check sample parameters"
     close_db()
+
     print(message)
     return jsonify(message=message)
 @bp.route('/user/samples/meal', methods=['GET'])
@@ -336,12 +338,15 @@ def usersamples_meal():
     try: 
         session['people'] = get_db().execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
         close_db()
-        print(Fore.YELLOW + "%s is managed by %s" %(sname, session['people']))
+        print(Fore.YELLOW + "%s is managed (owned) by %s" %(sname, session['people']))
     except: 
         session['people'] = None
     # LOGGED INTO JSON: (PENDING: Align the other MSSN set_status as well with time-stamp)
-    try: set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'], time=0)})
-    except: set_status("MSSN", {session['user_name']: dict(sample=sname, queue='', time=0)})
+    try: 
+        set_status("MSSN", {session['user_name']: dict(sample=sname, queue=get_status("MSSN")[session['user_name']]['queue'], time=0)})
+        acting("MEALING SAMPLE: %s" %(sname))
+    except: 
+        set_status("MSSN", {session['user_name']: dict(sample=sname, queue='', time=0)})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
 @bp.route('/user/samplesloc/update/qpc_wiring', methods=['GET'])
@@ -359,6 +364,7 @@ def usersamplesloc_update_qpc_wiring():
             for key, val in instr_organized.items(): 
                 inst_designate(qpc_selected, key, val)
             message = "%s's instrument assignment has been set successfully" %qpc_selected
+            acting(message)
         else: message = "Clearance not enough"
     except:
         message = "database error"

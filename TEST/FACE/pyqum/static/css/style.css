@@ -141,6 +141,10 @@ textarea.SCORE-JSON {
     height: 101px;
     margin-top: -5px;
 }
+textarea.MACE-JSON {
+    height: 37px;
+    margin-top: -5px;
+}
 textarea#R-JSON {
     height: 137px;
     margin-top: -5px;

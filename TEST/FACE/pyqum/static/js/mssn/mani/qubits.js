@@ -1100,7 +1100,7 @@ $('input.mani.qubits.data-reset#qubits-reset').on('click', function () {
     $('div.mani.qubits.confirm').show();
     $('button.mani.qubits.reset-yes').on('click', function () {
         $.getJSON(mssnencrpytonian() + '/mssn/mani/qubits/resetdata', {
-            ownerpassword: $('input.mani.qubits#qubits-ownerpassword').val(),
+            ACCESSED_JOBID: ACCESSED_JOBID,
             truncateafter: $('input.mani.qubits#qubits-truncateafter').val(),
         }, function (data) {
             $('div#mani-qubits-announcement').empty().append($('<h4 style="color: red;"></h4>').text(data.message + '. Please refresh by clicking SQE-PULSE.'));

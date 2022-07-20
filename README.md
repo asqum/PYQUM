@@ -30,6 +30,20 @@
   * Qubit Frequency Prediction
 
 ## The Flow of Measurement:
+```mermaid
+
+flowchart LR
+
+A[User] -->|login| B(Sample)
+B --> |meal| C[Queue]
+C -->|CHAR0,1...| D(CW)
+C -->|QPC0,1...| E(Pulse)
+D --> D1[FRESP]
+D --> D2[CWSWEEP]
+E --> E1[SINGLEQB]
+E --> E2[QUBITS]
+
+```
 ### 6. User
 User need to register and will be granted certain level of access into the platform.
 

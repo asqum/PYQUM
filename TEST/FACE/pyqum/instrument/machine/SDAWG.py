@@ -274,7 +274,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
             if PINSW: # For DRIVING PIN-SWITCH: Following envelope.
                 if len(envelope): mkr_array = abs(normalize_dipeak(envelope)) # always RISING
             else: # For TRIGGER PURPOSES: Making sure marker-width is finite & less than pulse-length.
-                try: # pulse case
+                try: # pulse case (should contain at least 4 points to produce a marker)
                     shrinkage = 3
                     first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][0], where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][-1]
                     last_falling_edge = first_rising_edge + int(ceil((last_falling_edge - first_rising_edge)/shrinkage))
@@ -347,10 +347,9 @@ def close(module, which, reset=True, mode='DATABASE'):
 
 
 # Test Zone
-#def test():
 if __name__ == "__main__":
     # DAC_MATRIX = [[1,2,3,4],[1,2,3,4]] # WITHIN 100ns ALIGNMENT
-    DAC_MATRIX = [[1,2],[1,2,3]] # PERFECTO ALIGNMENT
+    DAC_MATRIX = [[1,2],[1,2,3,4]] # PERFECTO ALIGNMENT
     DAC_LABEL = [3, 1]
     Master = [True, False]
     markeroption = [7, 0]
@@ -387,7 +386,7 @@ if __name__ == "__main__":
         ready(M[i])
         play(M[i])
     
-    # Multiple WAVEs:
+    # Running Multiple WAVEs:
     for waveth,pulse_width in enumerate([1000,1700]):
         # stop(M[0]) # suggested by NCHU (YuHan)
         # stop(M[1]) # suggested by NCHU (YuHan)
@@ -399,6 +398,7 @@ if __name__ == "__main__":
                 pulseq = pulser(dt, clock_multiples=1, score="ns=50000,mhz=I/-17/ro1i-17;FLAT/,%s,0.1;" %pulse_width)
                 pulseq.song()
                 compose_DAC(M[i], int(ch), pulseq.music, pulseq.envelope, marker[i], update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+                print(Fore.BLUE + "Running %s data-points" %pulseq.totalpoints)
             ready(M[i])
 
     # print(Fore.CYAN + "Waveform-list: %s" %m2.waveformListLoad())
@@ -420,7 +420,3 @@ if __name__ == "__main__":
     # input("Any key to CLOSE AWG-3: ")
     # output(m3, 0)
     # close(m3, 3, True, 'TEST')
-
-    #return
-
-#test()

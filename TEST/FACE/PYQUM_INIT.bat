@@ -61,7 +61,7 @@ REM PAUSE
 :pyqum
     ::ECHO INITIATE AWG
     ::python -c "from pyqum.instrument.modular import AWG; print(AWG.InitWithOptions())"
-    set /p answer=WEB Production (P1/P2), Development (D) or LOCAL (L)?
+    set /p answer=WEB Production (P1/P2), Development (D) or LOCAL (L1/L2)?
     if /i "%answer:~,2%" EQU "P1" (
         SET FLASK_ENV=production
         echo Running WEB Production on DR-1
