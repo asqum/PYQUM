@@ -671,7 +671,7 @@ def predict_dataset(label_db,freq):
   b = sorted(b)
 
 
-  p2p = (freq[-1]-freq[0])/freq.shape[0]
+  p2p = (freq.max()-freq.min())/freq.shape[0]
 
   dataset = [] # dataset=[[freq,...],[freq,...],......]
   while len(b) != 0:
@@ -696,7 +696,7 @@ def predict_dataset(label_db,freq):
     i.sort()
     left_bound = i[0]-5*p2p  
     right_bound = i[0]+5*p2p
-    if left_bound > freq[0] and right_bound < freq[-1]:   # if the freq near the freq boundary it should be a noise
+    if left_bound > freq[0] and right_bound < freq.max():   # if the freq near the freq boundary it should be a noise
         after_output_process_array.append([n/10,left_bound,right_bound])
         n+=1
   

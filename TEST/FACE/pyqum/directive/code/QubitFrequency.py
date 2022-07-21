@@ -157,7 +157,7 @@ def denoise(susp_list,freq,sub_array):
   #取出尖點，判斷尖點方向
   tip_susp,tp = find_tip(susp_list,sub_array)
 
-  p2p_freq = (freq[-1]-freq[0])/freq.shape[0]
+  p2p_freq = (freq.max()-freq.min())/freq.shape[0]
   #先刪除距離含30MHz內
   #依尖點方向判斷留大或小
   tip = filter_in30(tip_susp,sub_array,tp,p2p_freq)

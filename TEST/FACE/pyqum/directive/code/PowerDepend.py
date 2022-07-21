@@ -1,12 +1,29 @@
 from pandas import DataFrame
+from numpy import array
 from numpy import stack, quantile
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # from scipy.io import loadmat  # this is the SciPy module that loads mat-files
 from pyqum.directive.code.tools.circuit import notch_port
 
-# def loadmat_valid(path):
+def loadmat_valid(data):
+    ''' 
+        mat form
+        x = Flux-Bias(V/A) ; y = freq(GHz) ;
+        I , Q ;
+        A = 20*log10(sqrt(I**2 + Q**2)) ;
+        P = arctan2(Q, I) # -pi < phase < pi
+        
+        output  = self.dataframe pandas dataframe
+    '''
 #     mat = loadmat(path)
-#     df1=DataFrame()
+    df1=DataFrame()
+    fr = []
+    for i in data["Power"].unique():
+        port1 = notch_port(f_data=data[data["Power"]==i]["Frequency"].values,z_data_raw=data[data["Power"]==i]["I"]+1j*data[data["Power"]==i]["Q"])
+        port1.autofit()
+        fr.append(port1.fitresults['fr'])
+    df1.insert(loc=0, column='fr', value = array(fr))
+    df1.insert(loc=0, column='power', value = data["Power"].unique())
 #     for j in range(len(mat['x'][0])):
 #         power,freq,I,Q,A,P,df= [],[],[],[],[],[],[]
 #         for i in range(len(mat['y'][0])):
@@ -24,14 +41,14 @@ from pyqum.directive.code.tools.circuit import notch_port
 #         df1 = df1.append(DataFrame([port1.fitresults]), ignore_index = True)
 #     df1.insert(loc=0, column='power', value=mat['x'][0])
 
-#     #---------------drop the outward data---------------
-#     f_min,f_max = min(mat['y'][0]),max(mat['y'][0])
-#     valid = df1[(df1['fr']>= f_min)&(df1['fr']<= f_max)]
-#     valid.reset_index(inplace=True)
-#     power = valid['power']
-#     fr = valid['fr']*1000
-#     data = stack((power,fr), axis=1)
-#     return data
+    #---------------drop the outward data---------------
+    f_min,f_max = min(data['Frequency']),max(data['Frequency'])
+    valid = df1[(df1['fr']>= f_min)&(df1['fr']<= f_max)]
+    valid.reset_index(inplace=True)
+    power = valid['power']
+    fr = valid['fr']*1000
+    data = stack((power,fr), axis=1)
+    return data
 
 def outlier_detect(data,label):
     error_label = 1

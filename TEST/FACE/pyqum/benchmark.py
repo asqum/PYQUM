@@ -969,9 +969,9 @@ def Autoscan1Q_do_analysis():
 	routine.cavitysearch()
 	print("start step1\n")
 	print(routine.cavity_list)
-	print(routine.total_cavity_len)
-	# for i in range(routine.total_cavity_len):
-	for i in range(0):
+	print(routine.total_cavity_list)
+	# for i in routine.total_cavity_list:
+	for i in routine.total_cavity_list:
 		print("start step2\n")
 		routine.powerdepend(i)
 		f_bare = mean(routine.cavity_list[str(i)])
@@ -979,6 +979,7 @@ def Autoscan1Q_do_analysis():
 		routine.fluxdepend(i,f_bare)
 		print("start step4\n")
 		routine.qubitsearch(i)
+		break #test once
 
 # import sys
 # sys.path.append('pyqum/directive/code')
@@ -998,7 +999,7 @@ from pyqum.directive.code.QubitFrequency import colect_cluster,cal_nopecenter,ca
 #---------------load package of power dependent---------------
 from sklearn.cluster import KMeans
 from numpy import median
-from pyqum.directive.code.PowerDepend import outlier_detect, cloc
+from pyqum.directive.code.PowerDepend import loadmat_valid,outlier_detect, cloc
 #---------------load package of flux dependent---------------
 from pyqum.directive.code.FluxDepend import flux_load_data, fit_sin
 #---------------save jobid list in pickle---------------
@@ -1007,7 +1008,8 @@ from pickle import dump,load
 from numpy import mean
 from pyqum.directive.characterize import F_Response, CW_Sweep
 from random import random
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 class Load_From_pyqum:
     def __init__(self, jobid):
@@ -1041,8 +1043,8 @@ class CavitySearch:
         self.fig = DataFrame(concat([Series(self.freq),Series(self.amplitude),Series(self.phase)],axis=1))
 
         # GRU part
-        AMP = load_model('C:/Users/ASQUM/Documents/GitHub/PYQUM/TEST/FACE/pyqum/directive/model/GRU_AMP_Accuracy: 96.63%.h5')
-        PHA = load_model('C:/Users/ASQUM/Documents/GitHub/PYQUM/TEST/FACE/pyqum/directive/model/GRU_PHA_Accuracy: 95.01%.h5')
+        AMP = load_model(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\directive\model\GRU_AMP_Accuracy.h5')
+        PHA = load_model(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\directive\model\GRU_PHA_Accuracy.h5')
 
         amp, pha, comparison = input_process(self.fig)      # frequency,amplitude,phase; comparison[no.][0] for freq start, end for comparison[no.][1] 
         self.fig.columns = ['<b>frequency(GHz)</b>','Amplitude','UPhase']
@@ -1092,17 +1094,17 @@ class CavitySearch:
 
 class PowerDepend:
     def __init__(self, dataframe):
-        self.data = dataframe
+        self.data = loadmat_valid(dataframe)
     def do_analysis(self):
         model = KMeans(n_clusters=2, n_init=1, random_state=0)
         label = model.fit_predict(self.data)
         label_new = outlier_detect(self.data,label)
         power_0,power_1 = cloc(label_new)
-        print("power : "+"{:.2f}".format(data[:, 0][power_0])+"{:<7}".format(' dBm ; ')+
-              "fr : "+"{:.2f}".format(median(data[:, 1][label_new ==0]))+"{:<7}".format(' MHz ; \n')+
-              "power : "+"{:.2f}".format(data[:, 0][power_1])+"{:<7}".format(' dBm ; ')+
-              "fr : "+"{:.2f}".format(median(data[:, 1][label_new ==1]))+"{:<7}".format(' MHz ; '))
-        self.select_power = min(data[:, 0][power_0],data[:, 0][power_1])
+        print("power : "+"{:.2f}".format(self.data[:, 0][power_0])+"{:<7}".format(' dBm ; ')+
+              "fr : "+"{:.2f}".format(median(self.data[:, 1][label_new ==0]))+"{:<7}".format(' MHz ; \n')+
+              "power : "+"{:.2f}".format(self.data[:, 0][power_1])+"{:<7}".format(' dBm ; ')+
+              "fr : "+"{:.2f}".format(median(self.data[:, 1][label_new ==1]))+"{:<7}".format(' MHz ; '))
+        self.select_power = min(self.data[:, 0][power_0],self.data[:, 0][power_1])
         return self.select_power
         
 class FluxDepend:
@@ -1225,7 +1227,7 @@ def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot"):
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
         comment = comment.replace("\"","") #comment
-        PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":0}'} # DC=YOKO
+        PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":1}'} # DC=YOKO
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
         print(CORDER)
         # Start Running:
@@ -1277,16 +1279,16 @@ class Quest_command:
         jobid = char_fresp_new(sparam=self.sparam,freq = "3 to 9 *3000",powa = "0",flux = "OPT,",dcsweepch = "1",comment = "By bot - step1 cavitysearch "+add_comment)
         return jobid
     def powerdepend(self,select_freq,add_comment=""):
-        freq_command = "%d to %d *200"%select_freq[0],select_freq[1]
-        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-50 to 10 * 13",flux = "0",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
+        freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
+        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-50 to 10 * 13",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
         return jobid
     def fluxdepend(self,select_freq,select_powa,add_comment=""):
-        freq_command = "%d to %d *200"%select_freq[0],select_freq[1]
-        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-300e-6 to 300e-6 * 20",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
+        freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
+        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-500e-6 to 500e-6 * 50",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
         return jobid
-    def qubitsearch(self,select_freq,select_flux,add_comment=""):
-        freq_command = "%d to %d *200"%select_freq[0],select_freq[1]
-        jobid = char_cwsweep_new(sparam=self.sparam,freq = freq_command,flux = select_flux,powa = "-10 to 10 *4 ",dcsweepch = "1",comment = "By bot - step4 qubit search "+add_comment)
+    def qubitsearch(self,select_freq,select_flux,dcsweepch,add_comment=""):
+        freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
+        jobid = char_cwsweep_new(sparam=self.sparam,freq = freq_command,flux = select_flux,powa = "-10 to 10 *4 ",dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
 
 
@@ -1302,30 +1304,34 @@ class AutoScan1Q:
             pass
         
     def cavitysearch(self):
-        jobid = Quest_command(self.sparam).cavitysearch(self.dcsweepch)
+        # jobid = Quest_command(self.sparam).cavitysearch(self.dcsweepch)
+        jobid = 5094
         print("do measurement\n")
         self.jobid_dict["CavitySearch"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.cavity_list = CavitySearch(dataframe).do_analysis(self.numCPW)
-        print(self.cavity_list)
-        self.total_cavity_len = len(self.cavity_list)
+        # self.cavity_list = CavitySearch(dataframe).do_analysis(self.numCPW) #model h5 cannot import
+        self.cavity_list = {'7116.0 MHz': [7.102, 7.128], '6334.0 MHz': [6.32, 6.346]}
+        self.total_cavity_list = list(self.cavity_list.keys())
     def powerdepend(self,cavity_num):
-        jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cavity_num],dcsweepch = self.dcsweepch,add_comment="with Cavity"+str(cavity_num))
+        # jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cavity_num],add_comment="with Cavity "+str(cavity_num))
+        jobid = 5097
         self.jobid_dict["PowerDepend"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.select_power = PowerDepend(dataframe).do_analysis()
-        print(self.select_power)
+        self.select_power = PowerDepend(dataframe).do_analysis() #pass
+        print("Select Power : %f"%self.select_power)
     def fluxdepend(self,cavity_num, f_bare):
-        jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_num],select_powa=self.select_power,dcsweepch = self.dcsweepch,add_comment="with Cavity"+str(cavity_num))
+        # jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_num],select_powa=self.select_power,add_comment="with Cavity "+str(cavity_num))
+        jobid = 5105
         self.jobid_dict["FluxDepend"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.wave = FluxDepend(dataframe).do_analysis(f_bare)
+        self.wave = FluxDepend(dataframe).do_analysis(f_bare) #pass
         print(self.wave)
     def qubitsearch(self,cavity_num):
-        jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.cavity_list[cavity_num],select_flux=self.wave["offset"],dcsweepch = self.dcsweepch,add_comment="with Cavity"+str(cavity_num))
+        # jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.cavity_list[cavity_num],select_flux=str(self.wave["offset"])+'e-6',dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_num))
+        jobid = 5106
         self.jobid_dict["QubitSearch"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.qubit = Db_Scan(dataframe).do_analysis()
+        self.qubit = QubitFreq_Scan(dataframe).do_analysis() #examine the input data form is dataframe because Series cannot reshape 
         print(self.qubit)
 
 def save_class(item,path = "save.pickle"):
