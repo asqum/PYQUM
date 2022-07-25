@@ -966,20 +966,21 @@ def Autoscan1Q_do_analysis():
 	print("start gogogo\n")
 	# search(self.quantificationObj)
 	routine = AutoScan1Q(numCPW = "3",sparam="S21,",dcsweepch = "1")
-	routine.cavitysearch()
 	print("start step1\n")
+	routine.cavitysearch()
 	print(routine.cavity_list)
 	print(routine.total_cavity_list)
 	# for i in routine.total_cavity_list:
 	for i in routine.total_cavity_list:
 		print("start step2\n")
 		routine.powerdepend(i)
-		f_bare = mean(routine.cavity_list[str(i)])
+		f_bare = float(i.split(" ")[0])
 		print("start step3\n")
 		routine.fluxdepend(i,f_bare)
 		print("start step4\n")
 		routine.qubitsearch(i)
 		break #test once
+	return routine.jobid_dict
 
 # import sys
 # sys.path.append('pyqum/directive/code')
@@ -1101,9 +1102,9 @@ class PowerDepend:
         label_new = outlier_detect(self.data,label)
         power_0,power_1 = cloc(label_new)
         print("power : "+"{:.2f}".format(self.data[:, 0][power_0])+"{:<7}".format(' dBm ; ')+
-              "fr : "+"{:.2f}".format(median(self.data[:, 1][label_new ==0]))+"{:<7}".format(' MHz ; \n')+
-              "power : "+"{:.2f}".format(self.data[:, 0][power_1])+"{:<7}".format(' dBm ; ')+
-              "fr : "+"{:.2f}".format(median(self.data[:, 1][label_new ==1]))+"{:<7}".format(' MHz ; '))
+            "fr : "+"{:.2f}".format(self.data[:, 1][power_0])+"{:<7}".format(' MHz ; \n')+
+            "power : "+"{:.2f}".format(self.data[:, 0][power_1])+"{:<7}".format(' dBm ; ')+
+            "fr : "+"{:.2f}".format(self.data[:, 1][power_1])+"{:<7}".format(' MHz ; '))
         self.select_power = min(self.data[:, 0][power_0],self.data[:, 0][power_1])
         return self.select_power
         
@@ -1159,9 +1160,9 @@ class QubitFreq_Scan:
 
 
     def do_analysis(self):
-        self.freq = self.dataframe['Frequency']  #for qubit  <b>XY-Frequency(GHz)</b>
-        I = self.dataframe['I']
-        Q = self.dataframe['Q']
+        self.freq = self.dataframe['Frequency'].to_numpy()  #for qubit  <b>XY-Frequency(GHz)</b>
+        I = self.dataframe['I'].to_numpy()
+        Q = self.dataframe['Q'].to_numpy()
 
         inp_db = []
         for i in range(I.shape[0]):
@@ -1222,7 +1223,7 @@ def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot"):
         print(comment)
         wday = int(-1)
         sparam = sparam   #S-Parameter
-        ifb = "50"     #IF-Bandwidth (Hz)
+        ifb = "100"     #IF-Bandwidth (Hz)
         freq = freq #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
@@ -1235,18 +1236,18 @@ def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot"):
         workspace = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, perimeter=PERIMETER)
         return workspace.jobid_analysis
     else: return show()
-def char_cwsweep_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot"):
+def char_cwsweep_new(sparam,freq,powa,flux,f_bare,dcsweepch = "1",comment = "By bot"):
     # Check user's current queue status:
     if session['run_clearance']:
         print(comment)
         wday = int(-1)
         sparam = sparam   #S-Parameter
-        ifb = "50"     #IF-Bandwidth (Hz)
-        freq = freq #Frequency (GHz)
+        ifb = "100"     #IF-Bandwidth (Hz)
+        freq = freq  #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
-        xyfreq = "OPT,"
-        xypowa = "OPT,"
+        xyfreq = "{} to {} * 400".format(f_bare-1,f_bare+1)#"OPT,"
+        xypowa = "-10 -30 r 10"#"OPT,"
         comment = comment.replace("\"","")
         PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', 'sg-locked': '{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":0}'} # DC=YOKO
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
@@ -1286,12 +1287,9 @@ class Quest_command:
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
         jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-500e-6 to 500e-6 * 50",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
         return jobid
-    def qubitsearch(self,select_freq,select_flux,dcsweepch,add_comment=""):
-        freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
-        jobid = char_cwsweep_new(sparam=self.sparam,freq = freq_command,flux = select_flux,powa = "-10 to 10 *4 ",dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
+    def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,dcsweepch,add_comment=""):
+        jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
-
-
 
 class AutoScan1Q:
     def __init__(self,numCPW="3",sparam="S21,",dcsweepch = "1"):
@@ -1327,12 +1325,13 @@ class AutoScan1Q:
         self.wave = FluxDepend(dataframe).do_analysis(f_bare) #pass
         print(self.wave)
     def qubitsearch(self,cavity_num):
-        # jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.cavity_list[cavity_num],select_flux=str(self.wave["offset"])+'e-6',dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_num))
-        jobid = 5106
+        jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.select_power,select_flux=str(self.wave["offset"])+'e-6',f_bare = self.wave["f_bare"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_num))
+        # jobid = 5106
         self.jobid_dict["QubitSearch"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
         self.qubit = QubitFreq_Scan(dataframe).do_analysis() #examine the input data form is dataframe because Series cannot reshape 
         print(self.qubit)
+
 
 def save_class(item,path = "save.pickle"):
     with open(path, 'wb') as f:

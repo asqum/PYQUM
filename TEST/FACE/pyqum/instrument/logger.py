@@ -963,7 +963,9 @@ def jobsearch(criteria, mode='jobid'):
         result = db.execute('SELECT task, parameter, perimeter, comment, tag FROM job WHERE id = ?', (criteria,)).fetchone()
     elif mode=='note':
         result = db.execute('SELECT j.note FROM job j WHERE j.id = ?', (criteria,)).fetchone()[0]
-    else: result = None 
+    else: result = None
+    # print(criteria) 
+    # print(result) 
     close_db()
     return result
 def jobtag(JOBID, tag, mode=0):
