@@ -1105,8 +1105,9 @@ class PowerDepend:
             "fr : "+"{:.2f}".format(self.data[:, 1][power_0])+"{:<7}".format(' MHz ; \n')+
             "power : "+"{:.2f}".format(self.data[:, 0][power_1])+"{:<7}".format(' dBm ; ')+
             "fr : "+"{:.2f}".format(self.data[:, 1][power_1])+"{:<7}".format(' MHz ; '))
-        self.select_power = min(self.data[:, 0][power_0],self.data[:, 0][power_1])
-        return self.select_power
+        self.low_power = min(self.data[:, 0][power_0],self.data[:, 0][power_1])
+        self.high_power = max(self.data[:, 0][power_0],self.data[:, 0][power_1])
+        return self.low_power, self.high_power
         
 class FluxDepend:
     def __init__(self, dataframe):
@@ -1227,17 +1228,18 @@ def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot"):
         freq = freq #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
-        comment = comment.replace("\"","") #comment
         PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":1}'} # DC=YOKO
         CORDER = {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
+        comment = comment.replace("\"","")+str(CORDER) #comment
         print(CORDER)
         # Start Running:
-        # TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
         workspace = F_Response(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, perimeter=PERIMETER)
         return workspace.jobid_analysis
     else: return show()
-def char_cwsweep_new(sparam,freq,powa,flux,f_bare,dcsweepch = "1",comment = "By bot"):
+def char_cwsweep_new(sparam,freq,powa,flux,f_bare,f_dress,dcsweepch = "1",comment = "By bot"):
     # Check user's current queue status:
+    ki = f_dress-f_bare
+    f_qubit = f_bare-40**2/ki
     if session['run_clearance']:
         print(comment)
         wday = int(-1)
@@ -1246,18 +1248,17 @@ def char_cwsweep_new(sparam,freq,powa,flux,f_bare,dcsweepch = "1",comment = "By 
         freq = freq  #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
-        xyfreq = "{} to {} * 400".format(f_bare-1,f_bare+1)#"OPT,"
+        xyfreq = "{} to {} * 400".format(f_qubit-1,f_qubit+1)#"OPT,"
         xypowa = "-10 -30 r 10"#"OPT,"
-        comment = comment.replace("\"","")
         PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', 'sg-locked': '{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":0}'} # DC=YOKO
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
+        comment = comment.replace("\"","")+str(CORDER) #comment
         print(CORDER)
         # Start Running:
-        # TOKEN = 'TOKEN(%s)%s'%(session['user_name'],random())
         workspace = CW_Sweep(session['people'], corder=CORDER, comment=comment, tag='', dayindex=wday, perimeter=PERIMETER)
-
         return workspace.jobid_analysis
     else: return show()
+
 class Quest_command:
     def __init__(self,sparam="S21,"):
         self.sparam = sparam
@@ -1281,19 +1282,32 @@ class Quest_command:
         return jobid
     def powerdepend(self,select_freq,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
+        if select_freq[0]>12 | select_freq[1]>12 | select_freq[0]<2 | select_freq[1]<2:
+            raise ValueError("Frequency is out of range with "+freq_command)
         jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-50 to 10 * 13",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
         return jobid
     def fluxdepend(self,select_freq,select_powa,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
+        if select_freq[0]>12 | select_freq[1]>12 | select_freq[0]<2 | select_freq[1]<2:
+            raise ValueError("Frequency is out of range with "+freq_command)
+        if select_powa >20 | select_powa <-60:
+            raise ValueError("Power is out of range with "+select_powa)
         jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-500e-6 to 500e-6 * 50",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
         return jobid
-    def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,dcsweepch,add_comment=""):
-        jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
+    def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,f_dress,dcsweepch,add_comment=""):
+        if select_freq>12 | select_freq<2:
+            raise ValueError("frequency is out of range with "+ select_freq)
+        if select_powa >20 | select_powa <-60:
+            raise ValueError("Power is out of range with "+select_powa)
+        if select_flux >500e-6 | select_flux <-500e-6:
+            raise ValueError("Flux is out of range with "+select_flux)
+        jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,f_dress =f_dress,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
 
 class AutoScan1Q:
     def __init__(self,numCPW="3",sparam="S21,",dcsweepch = "1"):
         self.jobid_dict = {"CavitySearch":0,"PowerDepend":0,"FluxDepend":0,"QubitSearch":0}
+        self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
         try:
@@ -1310,27 +1324,37 @@ class AutoScan1Q:
         # self.cavity_list = CavitySearch(dataframe).do_analysis(self.numCPW) #model h5 cannot import
         self.cavity_list = {'7116.0 MHz': [7.102, 7.128], '6334.0 MHz': [6.32, 6.346]}
         self.total_cavity_list = list(self.cavity_list.keys())
+        self.readout_para = {i: {} for i in self.total_cavity_list}
+        self.readout_para["cavity_list"] = self.cavity_list
+    
     def powerdepend(self,cavity_num):
         # jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cavity_num],add_comment="with Cavity "+str(cavity_num))
         jobid = 5097
         self.jobid_dict["PowerDepend"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.select_power = PowerDepend(dataframe).do_analysis() #pass
-        print("Select Power : %f"%self.select_power)
+        self.low_power, self.high_power = PowerDepend(dataframe).do_analysis() #pass
+        print("Select Power : %f"%self.low_power)
+        self.readout_para[cavity_num]["low_power"] = self.low_power
+        self.readout_para[cavity_num]["high_power"] = self.high_power
+      
     def fluxdepend(self,cavity_num, f_bare):
-        # jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_num],select_powa=self.select_power,add_comment="with Cavity "+str(cavity_num))
+        # jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_num],select_powa=self.low_power,add_comment="with Cavity "+str(cavity_num))
         jobid = 5105
         self.jobid_dict["FluxDepend"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
         self.wave = FluxDepend(dataframe).do_analysis(f_bare) #pass
-        print(self.wave)
+        print(self.wave)#{"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
+        self.readout_para[cavity_num]["f_bare"] = self.wave["f_bare"]
+        self.readout_para[cavity_num]["f_dress"] = self.wave["f_dress"]
+    
     def qubitsearch(self,cavity_num):
-        jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.select_power,select_flux=str(self.wave["offset"])+'e-6',f_bare = self.wave["f_bare"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_num))
+        jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"])+'e-6',f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_num))
         # jobid = 5106
         self.jobid_dict["QubitSearch"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
         self.qubit = QubitFreq_Scan(dataframe).do_analysis() #examine the input data form is dataframe because Series cannot reshape 
         print(self.qubit)
+        self.readout_para[cavity_num]["qubit"] = self.qubit
 
 
 def save_class(item,path = "save.pickle"):
