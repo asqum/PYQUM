@@ -33,9 +33,10 @@ def Initiate(reset=False, which=1, MaxChannel=2, mode='DATABASE'):
 		bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
 		if reset: stat = bench.write('*RST;*CLS') #Clear buffer memory;
 		else: stat = bench.write('*CLS') # Clear buffer memory;
+		bench.write('ROSC:SOUR EXT') # Set External 10MHz Reference
+		bench.write('ROSC:EXT:FREQ 10MHz')
 		bench.write(':ABORt;:INIT:CONT OFF;') # hold the trigger
 		bench.write('OUTPut:STATE ON') # Power ON
-		bench.write('SOURce:POWER:LEVEL -73') # PENDING: ZNB need to set generator (power) level first!!! 
 		# bench.write("SENS:CORR:EXT:AUTO:RESet") #clear port-extension auto-correction
 
 		bench.read_termination = '\n' #omit termination tag from output 
@@ -87,7 +88,7 @@ def sweepmode():
 @Attribute
 def linfreq(bench, action=['Get'] + 10 * ['']):
 	'''action=['Get/Set', <start(Hz)>, <stop(Hz)>]'''
-	bench.write("SENS:SWE:TYPE LINEAR") #by default: Freq Sweep
+	bench.write("SENS:SWE:TYPE LINEAR") # by default: Freq Sweep
 	SCPIcore = 'SENS:FREQuency:START;STOP'
 	return mdlname, bench, SCPIcore, action
 @Attribute
@@ -157,11 +158,14 @@ def setrace(bench, Mparam=['S11','S21','S12','S22']):
 
 # Getting Trace
 def getrace(bench):
-	'''getting traces displayed on the screen
+	'''getting traces in S-parameters displayed on the screen
 	'''	
-	catalog = bench.query("CONFigure:TRACe:CATalog?") # lai, for R&S VNA-ZNB
-	Mreturn = catalog.split(',')[1::2]
-	return Mreturn
+	S_parameters = []
+	Traces = bench.query("CONFigure:TRACe:CATalog?") 
+	for trace in Traces.replace("'","").split(',')[1::2]:
+		Sparam = bench.query("CALCulate1:PARameter:MEASure? '%s'" %trace)
+		S_parameters += [Sparam.replace("'","")]
+	return S_parameters
 
 def autoscal(bench):
 	tracenum = int( bench.query("CONFigure:TRACe:CATalog?").count(',') ) # lai, for R&S VNA-ZNB, count the numbers of ',' symbols to have trace count
@@ -212,6 +216,7 @@ def preset(bench):
 
 def close(bench, reset=True, which=1, mode='DATABASE'):
 	if reset:
+		# bench.write('SOUR:POW -17.3') # ZNB: when crossing over -30dBm borderline, the generator-level spooky-error will pop up nonetheless!!!
 		bench.write(':OUTPut:STATe OFF')
 		set_status(mdlname, dict(config='reset-off'))
 	else: set_status(mdlname, dict(config='previous'))
@@ -238,6 +243,7 @@ def test(detail=True):
 		if debug(mdlname, detail):
 			model(bench)
 			print(setrace(bench, ['s43','s11','S31','s21']))
+			print("Traces: %s" %getrace(bench))
 			dataform(bench, action=['Set', 'REAL'])
 			sweep(bench, action=['Set', 'ON', 1001])
 			ifbw(bench, action=['Set', 1000])

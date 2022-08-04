@@ -51,7 +51,7 @@ def all():
     current_usr = session['user_name']
     try: Bob_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("TC"))
     except: abort(404)
-    try: Scope_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("RTP"))
+    try: Scope_Address="%s"%(device_port("RTP"))
     except: abort(404)
     try: MXA_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("MXA"))
     except: abort(404)
@@ -66,27 +66,33 @@ def allsetmachine():
     return jsonify()
 @bp.route('/all/mxc', methods=['GET'])
 def allmxc():
-    # DR-specific T6 to be appended at the bottomline of measurement comment:
-    DR_platform = int(get_status("WEB")['port']) - 5300
-    DR_list = ["Alice", "Bob"]
-    dr = bluefors(designation=DR_list[DR_platform-1])
+    '''DR-specific T6 to be appended at the bottomline of measurement comment:'''
+    dr = bluefors(designation=device_port("BDR"))
     dr.selectday(-1)
 
-    # PENDING: use other route to display all BDR status, maybe in BDR pages itself
-    # Logging Latest Key-Readings for ALL
-    # latestbdr = {}
-    # for i in range(6):
-    # 	latestbdr.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
-    # for i in [1,2,5,6,7]:
-    # 	latestbdr.update({"T%s"%(i):dr.temperaturelog(i)[1][-1]})
-    # for i in range(21):
-    # 	latestbdr.update({"V%s"%(i+1):dr.channellog('v%s'%(i+1))[1][-1]})
-    # latestbdr.update({"Pulse-Tube":dr.channellog("pulsetube")[1][-1]})
-    # latestbdr.update({"Flow":dr.flowmeterlog()[1][-1]})
-    # set_status("BDR", latestbdr)
-    # log = pauselog() #disable logging (NOT applicable on Apache)
+    mxcmk=dr.temperaturelog(6)[1][-1]
+    try: mxcmk = int(mxcmk) * 1000 # convert to mK
+    except(ValueError): pass # in case the sensor is off (giving ~)
 
-    return jsonify(mxcmk=dr.temperaturelog(6)[1][-1]*1000)
+    return jsonify(mxcmk=mxcmk)
+@bp.route('/all/bdr/current/status', methods=['GET'])
+def allbdrcurrentstatus():
+    '''Display all BDR current status: Logging Latest Key-Readings for ALL'''
+    dr = bluefors(designation=device_port("BDR"))
+    dr.selectday(-1)
+    
+    latestbdr = {}
+    for i in range(6):
+        latestbdr.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
+    for i in [1,2,5,6,7]:
+        latestbdr.update({"T%s"%(i):dr.temperaturelog(i)[1][-1]})
+    for i in range(21):
+        latestbdr.update({"V%s"%(i+1):dr.channellog('v%s'%(i+1))[1][-1]})
+    latestbdr.update({"Pulse-Tube":dr.channellog("pulsetube")[1][-1]})
+    latestbdr.update({"Flow":dr.flowmeterlog()[1][-1]})
+    set_status("BDR", latestbdr)
+
+    return jsonify(latestbdr=latestbdr)
 # endregion
 
 # region: SG (user-specific, Generalized)
@@ -999,8 +1005,7 @@ def dc_keithley_vpulse():
 # Download File:
 @bp.route('/uploads/<path:filename>', methods=['GET', 'POST'])
 def download(filename):
-    Servers = ['ASQUM', 'ASQUM_2']
-    uploads = "C:/Users/%s/HODOR/CONFIG/PORTAL" %(Servers[int(get_status("WEB")['port']) - 5300 -1])
+    uploads = device_port("PORTAL") # The path is now stored in the SQL Database
     print(Fore.GREEN + "User %s is downloading %s from %s" %(session['user_name'], filename, uploads))
     acting("Downloading %s from %s" %(filename, uploads))
     return send_from_directory(directory=uploads, path=filename)

@@ -37,8 +37,8 @@ __status__ = "development"
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
 MAIN_PATH = Path(pyfilename).parents[7] / "HODOR" / "CONFIG"
 INSTR_PATH = MAIN_PATH / "INSTLOG"
-USR_PATH = MAIN_PATH / "USRLOG"
-PORTAL_PATH = MAIN_PATH / "PORTAL"
+USR_PATH = Path(device_port("USRLOG"))
+PORTAL_PATH = Path(device_port("PORTAL"))
 ADDRESS_PATH = MAIN_PATH / "Address"
 SPECS_PATH = MAIN_PATH / "SPECS"
 ANALYSIS_PATH = PORTAL_PATH / "ANALYSIS"
@@ -840,7 +840,7 @@ def qout(queue,jobid,username):
     '''Queue out without a Job'''
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if int(g.user['management'])>=7 or ( (int(g.user['measurement'])>0) and (username==jobrunner) ):
+    if ( (int(g.user['measurement'])>0) and (username==jobrunner) ) or int(g.user['management'])>=7:
         try:
             db = get_db()
             db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))

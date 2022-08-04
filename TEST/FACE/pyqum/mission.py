@@ -416,7 +416,7 @@ def char_fresp_resetdata():
     truncateafter = int(request.args.get('truncateafter'))
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
         message = M_fresp[session['user_name']].resetdata(truncateafter)
         acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
     else: 
@@ -513,6 +513,21 @@ def char_fresp_2ddata():
             INPLANE[j,:], QUAD[j,:], Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
         stage, prev = clocker(stage, prev, agenda="2D-Plot for power-frequency") # Marking time
 
+    elif iifb == "x" and ifreq == "y":
+        message = "(2D) X: IF-Bandwidth, Y: Frequency"
+        xtitle, ytitle = "<b>IFB(Hz)</b>", "<b>Frequency(GHz)</b>"
+        x, y = waveform(M_fresp[session['user_name']].corder['IF-Bandwidth']).data[0:session['c_fresp_address'][2]+1], waveform(M_fresp[session['user_name']].corder['Frequency']).data
+        x_count, y_count = session['c_fresp_address'][2]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
+
+        stage, prev = clocker(0)
+        fresp_addresses_0 = concatenate((ones([x_count,1])*array([int(ifluxbias),int(isparam)]), (ones([1,1])*arange(x_count)).T, ones([x_count,1])*array([int(ipowa)])), axis=1) # 2D stack of addresses
+        IQstack, INPLANE, QUAD, Amp, Pha = zeros([x_count,2]), zeros([y_count,x_count]), zeros([y_count,x_count]), zeros([y_count,x_count]), zeros([y_count,x_count])
+        for j in range(y_count):
+            IQstack[:,0] = selectedata[gotocdata(concatenate((fresp_addresses_0, 2*j*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
+            IQstack[:,1] = selectedata[gotocdata(concatenate((fresp_addresses_0, (2*j+1)*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
+            INPLANE[j,:], QUAD[j,:], Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
+        stage, prev = clocker(stage, prev, agenda="2D-Plot for ifb-frequency") # Marking time
+    
     elif ifluxbias == "x" and ipowa == "y":
         message = "(2D) X: Flux-Bias, Y: Power (PENDING)"
 
@@ -732,7 +747,7 @@ def char_cwsweep_resetdata():
     truncateafter = int(request.args.get('truncateafter'))
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
         message = M_cwsweep[session['user_name']].resetdata(truncateafter)
         acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
     else: 
@@ -1656,7 +1671,7 @@ def mani_singleqb_resetdata():
     truncateafter = int(request.args.get('truncateafter'))
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
         message = M_singleqb[session['user_name']].resetdata(truncateafter)
         acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
     else: 
@@ -2059,7 +2074,7 @@ def mani_qubits_resetdata():
     truncateafter = int(request.args.get('truncateafter'))
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if (int(g.user['management'])>=7) or (session['user_name']==session['people']) or ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ):
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
         message = M_qubits[session['user_name']].resetdata(truncateafter)
         acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
     else: 
