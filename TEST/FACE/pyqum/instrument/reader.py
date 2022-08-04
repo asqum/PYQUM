@@ -8,6 +8,8 @@ from sqlite3 import connect, Row, PARSE_DECLTYPES
 from json import loads
 
 from pathlib import Path
+
+from numpy import array
 pyfilename = Path(__file__).resolve() # current pyscript filename (usually with path)
 CONFIG_PATH = Path(pyfilename).parents[7] / "HODOR" / "CONFIG"
 DR_SETTINGS = path.join(CONFIG_PATH, 'DR_settings.sqlite')
@@ -99,12 +101,21 @@ def search_time(dictpaths, timestamp):
 # SQLite DATADASE:
 # 0. Server port:
 def device_port(dev):
+    '''retrieve path / port for specific access from DR-specific database'''
     db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
     db.row_factory = Row
     dev_port = db.execute('SELECT p.Port FROM PORT p WHERE p.Device = ?', (dev,)).fetchone()[0]
     return dev_port
+
+# 1. BDR address:
+def bdr_address(name):
+    '''retrieve BDR Specs from DR-specific database'''
+    db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
+    db.row_factory = Row
+    bdr_specs = db.execute('SELECT b.LogPath, b.TPath, b.Tname FROM BDR b WHERE b.Name = ?', (name,)).fetchone()
+    return array(bdr_specs)
     
-# 1. Instrument Allocation:
+# 2. Instrument Allocation:
 def inst_order(queue, category='ALL', tabulate=True):
     '''Return list of instruments accordingly'''
     db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
@@ -150,7 +161,7 @@ def inst_designate(queue, category, designation):
     db.close()
     return
 
-# 2. Mixer-parameters Catalog: (PENDING)
+# 3. Mixer-parameters Catalog: (PENDING)
 def mixer_order(module, LO_frequency):
     db = connect(MIXER_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
     db.row_factory = Row
@@ -213,6 +224,7 @@ def test():
     print("CHAR0's DC: %s" %inst_order("CHAR0", 'DC'))
     print("QPC0's DAC: %s" %inst_order("QPC0", 'DAC'))
     print("QPC0's DC: %s" %inst_order("QPC0", 'DC'))
+    print("QPC1's DC: %s" %inst_order("QPC1", 'DC'))
     print("QPC0's CH: %s" %inst_order("QPC0", 'CH'))
     print("QPC0's ROLE: %s" %inst_order("QPC0", 'ROLE'))
     print("DAC's Channel-Matrix: %s" %(inst_order("QPC0", 'CH')['DAC']))
@@ -228,5 +240,4 @@ def test():
     
     return
 
-
-# test()
+if __name__ == "__main__": test()
