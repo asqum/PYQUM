@@ -124,8 +124,12 @@ def inst_order(queue, category='ALL', tabulate=True):
         inst_list = db.execute("SELECT category, designation FROM %s ORDER BY id ASC"%queue,()).fetchall()
         inst_list = [dict(x) for x in inst_list]
     else: 
-        try: 
-            inst_list = db.execute("SELECT q.designation FROM %s q WHERE q.category = ? ORDER BY q.id ASC"%queue,(category,)).fetchone()[0]
+         
+        inst_list = db.execute("SELECT q.designation FROM %s q WHERE q.category = ? ORDER BY q.id ASC"%queue,(category,)).fetchone()
+        if inst_list is None or inst_list[0].replace(' ','')=='': # ABSENT in queue or BLANK space in category
+            inst_list = ['DUMMY_1'] # Creating Dummy Instrument for Compatibility reason: for macantouch...
+        else: 
+            inst_list = inst_list[0]
             
             if tabulate:
                 if category=='CH' or category=='ROLE': # virtual-instrument's output: dict
@@ -145,7 +149,6 @@ def inst_order(queue, category='ALL', tabulate=True):
             else: 
                 inst_list = str(inst_list) # for editting on WIRING-page
 
-        except(TypeError): inst_list = ['DUMMY_1'] # Creating Dummy Instrument for Compatibility reason: for macantouch...
     db.close()
 
     return inst_list
