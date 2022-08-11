@@ -21,7 +21,7 @@ from copy import deepcopy
 
 from pyqum import get_db, close_db
 from pyqum.instrument.logger import get_histories, get_mat_history, get_status, set_mat_history, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
-                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobnote, jobsinqueue, check_sample_alignment
+                                        measurement, qout, jobsearch, set_json_measurementinfo, jobtag, jobnote, jobsinqueue, check_sample_alignment, acting
 from pyqum.instrument.toolbox import cdatasearch, gotocdata, waveform
 from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAParray
 from pyqum.instrument.composer import pulser
@@ -133,10 +133,17 @@ def all_job():
     # LOG Calculated Progress interactively into SQL-Database for fast retrieval
     update_count = 0
     for j in joblist:
-        # print("Progress: %s" %j['progress'])
-        # print("j.tag: %s" %j['tag'])
-        # "bottleneck" of job-listing speed on ALL-page:
-        if (j['tag'] == "") and (j['id'] not in g.queue_jobid_list) and (j['progress'] is None or j['progress'] < 100): # not allowing queued-job to be accessed to avoid database locks
+        '''
+        Alleviating "bottleneck" of job-listing speed on ALL-page:
+        1. Ignore job(s) with tag
+        2. Ignore queued-job(s) to avoid database locks
+        3. Ignore 100% completed job(s)
+        4. Ignore Re-queued job(s) (usually characterized by the absence of date-day and its "bag")
+        '''
+        if (j['tag'] == "") \
+            and (j['id'] not in g.queue_jobid_list) \
+                and (j['progress'] is None or j['progress'] < 100) \
+                    and (j['dateday'] is not None): 
             try:
                 meas = measurement(mission=missioname, task=j['task'], owner=owner, sample=samplename) # but data is stored according to the owner of the sample
                 meas.selectday(meas.daylist.index(j['dateday']))
@@ -148,8 +155,9 @@ def all_job():
                 db.commit()
                 close_db()
                 update_count += 1
-            except(ValueError): j['progress'] = 0 # for job w/o its bag yet
             except(TypeError): return("<h3>RE-LOGIN DETECTED</h3><h3>Please press <USERNAME> on TOP-RIGHT to proceed.</h3><h3 style='color:blue;'>Courtesy from HoDoR</h3>")
+        elif (j['dateday'] is None): j['progress'] = -1 # for job w/o its bag yet
+        else: pass
 
     # Security:
     try: print(Fore.GREEN + "User %s is accessing the jobs" %g.user['username'])
@@ -404,13 +412,15 @@ def char_fresp_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/' + frespcryption + '/resetdata', methods=['GET'])
 def char_fresp_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID')) # use jobid instead of password, which is not secure for jsonify
     truncateafter = int(request.args.get('truncateafter'))
-    db = get_db()
-    people = db.execute( 'SELECT password FROM user WHERE username = ?', (session['people'],) ).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if check_password_hash(people['password'], ownerpassword): message = M_fresp[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
+        message = M_fresp[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -503,6 +513,21 @@ def char_fresp_2ddata():
             INPLANE[j,:], QUAD[j,:], Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
         stage, prev = clocker(stage, prev, agenda="2D-Plot for power-frequency") # Marking time
 
+    elif iifb == "x" and ifreq == "y":
+        message = "(2D) X: IF-Bandwidth, Y: Frequency"
+        xtitle, ytitle = "<b>IFB(Hz)</b>", "<b>Frequency(GHz)</b>"
+        x, y = waveform(M_fresp[session['user_name']].corder['IF-Bandwidth']).data[0:session['c_fresp_address'][2]+1], waveform(M_fresp[session['user_name']].corder['Frequency']).data
+        x_count, y_count = session['c_fresp_address'][2]+1, waveform(M_fresp[session['user_name']].corder['Frequency']).count
+
+        stage, prev = clocker(0)
+        fresp_addresses_0 = concatenate((ones([x_count,1])*array([int(ifluxbias),int(isparam)]), (ones([1,1])*arange(x_count)).T, ones([x_count,1])*array([int(ipowa)])), axis=1) # 2D stack of addresses
+        IQstack, INPLANE, QUAD, Amp, Pha = zeros([x_count,2]), zeros([y_count,x_count]), zeros([y_count,x_count]), zeros([y_count,x_count]), zeros([y_count,x_count])
+        for j in range(y_count):
+            IQstack[:,0] = selectedata[gotocdata(concatenate((fresp_addresses_0, 2*j*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
+            IQstack[:,1] = selectedata[gotocdata(concatenate((fresp_addresses_0, (2*j+1)*ones([x_count,1])), axis=1), session['c_fresp_structure'])]
+            INPLANE[j,:], QUAD[j,:], Amp[j,:], Pha[j,:] = IQAParray(IQstack, interlace=False)
+        stage, prev = clocker(stage, prev, agenda="2D-Plot for ifb-frequency") # Marking time
+    
     elif ifluxbias == "x" and ipowa == "y":
         message = "(2D) X: Flux-Bias, Y: Power (PENDING)"
 
@@ -543,15 +568,15 @@ def char_cwsweep_init():
 
     # Loading Channel-Matrix & Channel-Role based on WIRING-settings:
     # 1. DC:
-    DC_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DC']
+    DC_PATH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DC']
     DC_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['DC']
     DC_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'DC')
     # 2. SG:
-    SG_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['SG']
+    SG_PATH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['SG']
     SG_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['SG']
     SG_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'SG')
 
-    return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'], DC_CH_Matrix=DC_CH_Matrix, DC_Role=DC_Role, DC_Which=DC_Which, SG_CH_Matrix=SG_CH_Matrix, SG_Role=SG_Role, SG_Which=SG_Which)
+    return jsonify(daylist=M_cwsweep[session['user_name']].daylist, run_permission=session['run_clearance'], DC_PATH_Matrix=DC_PATH_Matrix, DC_Role=DC_Role, DC_Which=DC_Which, SG_PATH_Matrix=SG_PATH_Matrix, SG_Role=SG_Role, SG_Which=SG_Which)
 # list task entries based on day picked
 @bp.route('/char/cwsweep/time', methods=['GET'])
 def char_cwsweep_time():
@@ -654,11 +679,23 @@ def char_cwsweep_access():
     cfreq_data = cfreq.data[0:session['c_cwsweep_address'][6]+1]
     cpowa_data = cpowa.data[0:(session['c_cwsweep_address'][7]+1)//cpowa_repeat//2]  # (to be adjusted ***)
     # print("cpowa_data: %s" %cpowa_data)
+
+    # Assembling Flexible Parameters:
+    corder=M_cwsweep[session['user_name']].corder
+    perimeter=M_cwsweep[session['user_name']].perimeter
+    # Integrate R-Parameters back into C-Order:
+    try: 
+        RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
+    except(KeyError): # for backward compatibility
+        RJSON = {} 
+        perimeter['MACE-JSON'] = {}
+
+
     
     note = jobsearch(JOBID, mode="note")
     return jsonify(JOBID=JOBID, note=note,
-        data_progress=data_progress, measureacheta=measureacheta, perimeter=M_cwsweep[session['user_name']].perimeter, 
-        corder=M_cwsweep[session['user_name']].corder, comment=M_cwsweep[session['user_name']].comment, 
+        data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, 
+        comment=M_cwsweep[session['user_name']].comment, 
         data_repeat=data_repeat, cfluxbias_data=cfluxbias_data, cxyfreq_data=cxyfreq_data, cxypowa_data=cxypowa_data,
         csparam_data=csparam_data, cifb_data=cifb_data, cfreq_data=cfreq_data, cpowa_data=cpowa_data)
 # Resume the unfinished measurement
@@ -706,15 +743,15 @@ def char_cwsweep_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/cwsweep/resetdata', methods=['GET'])
 def char_cwsweep_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_cwsweep[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
+        message = M_cwsweep[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -1161,17 +1198,7 @@ def char_sqepulse_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/char/sqepulse/resetdata', methods=['GET'])
 def char_sqepulse_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
-    truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
-    close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_sqepulse[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
-
-    return jsonify(message=message)
+    return jsonify(message="data cemented for this deprecated task")
 
 # Chart is supposedly shared by all measurements (under construction for multi-purpose)
 @bp.route('/char/sqepulse/1ddata', methods=['GET'])
@@ -1640,15 +1667,15 @@ def mani_singleqb_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/mani/singleqb/resetdata', methods=['GET'])
 def mani_singleqb_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_singleqb[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
+        message = M_singleqb[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 
@@ -2043,15 +2070,15 @@ def mani_qubits_trackdata():
     return jsonify(data_location=data_location)
 @bp.route('/mani/qubits/resetdata', methods=['GET'])
 def mani_qubits_resetdata():
-    ownerpassword = request.args.get('ownerpassword')
+    jobid = int(request.args.get('ACCESSED_JOBID'))
     truncateafter = int(request.args.get('truncateafter'))
-
-    db = get_db()
-    people = db.execute('SELECT password FROM user WHERE username = ?', (session['people'],)).fetchone()
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-
-    if check_password_hash(people['password'], ownerpassword): message = M_qubits[session['user_name']].resetdata(truncateafter)
-    else: message = 'PASSWORD NOT VALID'
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
+        message = M_qubits[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
 
     return jsonify(message=message)
 

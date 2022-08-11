@@ -8,18 +8,25 @@ from os import listdir
 from numpy import diff
 from telnetlib import Telnet, IAC, NOP
 from pyqum.instrument.analyzer import derivative, curve, cleantrace
+from pyqum.instrument.reader import bdr_address
 
 class bluefors:
 
     def __init__(self, designation="Alice"):
-        if designation=="Alice":
-            self.LogPath = Path(r'\\BLUEFORSAS\BlueLogs') # direct-access without password
-            self._TPath = Path(r'') # compensate for temperature path
-            self.T_name = 'T'
-        elif designation=="Bob":
-            self.LogPath = Path(r'\\BLUEFORSAS2\dr_bob') # direct-access without password
-            self._TPath = Path(r'\log-data\192.168.1.188') # compensate for temperature path
-            self.T_name = 'TEMPERATURE'
+
+        # if designation=="Alice":
+        #     self.LogPath = Path(r'\\BLUEFORSAS\BlueLogs') # direct-access without password
+        #     self._TPath = Path(r'') # compensate for temperature path
+        #     self.T_name = 'T'
+        # elif designation=="Bob":
+        #     self.LogPath = Path(r'\\BLUEFORSAS2\dr_bob') # direct-access without password
+        #     self._TPath = Path(r'\log-data\192.168.1.188') # compensate for temperature path
+        #     self.T_name = 'TEMPERATURE'
+
+        self.LogPath = Path(r'%s' %bdr_address(designation)[0]) # direct-access without password
+        self._TPath = Path(r'%s' %bdr_address(designation)[1]) # compensate for temperature path
+        self.T_name = bdr_address(designation)[2]
+
         P_Days, T_Days = set(listdir(self.LogPath)), set(listdir(self.LogPath / self._TPath))
         self.Days = list((P_Days | T_Days) - {'log-data'})
         self.Days.sort()

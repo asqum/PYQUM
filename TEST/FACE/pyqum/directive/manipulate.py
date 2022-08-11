@@ -50,14 +50,20 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     # User-specific settings in JSON:
     sample = get_status("MSSN")[session['user_name']]['sample']
     queue = get_status("MSSN")[session['user_name']]['queue']
+    print(Back.GREEN + Fore.BLUE + "User [%s] is measuring sample [%s] on queue [%s]" %(session['user_name'],sample,queue))
 
     # Loading Channel-Settings:
     CH_Wiring = inst_order(queue, 'CH')
-    DACH_Matrix = CH_Wiring['DAC']
+    DAC_CH_Matrix = CH_Wiring['DAC']
     ROLE_Wiring = inst_order(queue, 'ROLE')
     DACH_Role = ROLE_Wiring['DAC']
-    RO_addr = find_in_list(DACH_Role, 'I1')
-    XY_addr = find_in_list(DACH_Role, 'X1')
+    
+    # Find Address in the Listified Multi-dimensional Matrix as <MODule>-<CHannel>
+    try: RO_addr = find_in_list(DACH_Role, 'I1')
+    except: RO_addr = 'OPT' # Optionized if not present
+    try: XY_addr = find_in_list(DACH_Role, 'X1')
+    except: XY_addr = 'OPT' # Optionized if not present
+
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
@@ -147,10 +153,10 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
     DAC_qty = len(instr['DAC'])
     DAC_type, DAC_label, DAC, DAC_instance = [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty
     # PENDING: ASSIGN according to instr['CH']
-    # if DAC_qty>1: DACH_Matrix = [[1,2,3,4],[1,2]] # [[RO-I,RO-Q,Z1,Z2],[XY-I,XY-Q]]
-    # elif DAC_qty==1: DACH_Matrix = [[1,2,3,4]] # [[RO-I,RO-Q,XY-I,XY-Q]]
+    # if DAC_qty>1: DAC_CH_Matrix = [[1,2,3,4],[1,2]] # [[RO-I,RO-Q,Z1,Z2],[XY-I,XY-Q]]
+    # elif DAC_qty==1: DAC_CH_Matrix = [[1,2,3,4]] # [[RO-I,RO-Q,XY-I,XY-Q]]
 
-    for i, channel_set in enumerate(DACH_Matrix):
+    for i, channel_set in enumerate(DAC_CH_Matrix):
         [DAC_type[i], DAC_label[i]] = instr['DAC'][i].split('_')
         DAC[i] = im("pyqum.instrument.machine.%s" %DAC_type[i])
         DAC_instance[i] = DAC[i].Initiate(which=DAC_label[i])
@@ -248,7 +254,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
                 # DAC's SCORE-UPDATE:
                 if j > 2:
                     # for ch in range(4):
-                    for i_slot_order, channel_set in enumerate(DACH_Matrix):
+                    for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
                         for ch in channel_set:
                             dach_address = "%s-%s" %(i_slot_order+1,ch)
                             if ">" in structure[j]: # for locked variables with customized math expression:
@@ -265,7 +271,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
             # IN THE FUTURE: HVI-ROUTINE STARTS HERE:
             # Basic Control (Every-loop)
             # DAC
-            for i_slot_order, channel_set in enumerate(DACH_Matrix):
+            for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
                 # PENDING: Extract the settings from the machine database instead.
                 if i_slot_order==0: update_settings = dict(Master=True, clearQ=int(bool(len(channel_set)==4)) ) # First-in-line = Master
                 else: update_settings = dict(Master=False, clearQ=int(bool(len(channel_set)==4)) ) # NOTE: manually write stalking-envelop-SCORE for CH4 to drive PIN-SWITCH
@@ -331,7 +337,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
 
         # PENDING: LISTIFY / DICTIFY THE HANDLE?
         ADC.close(adca, which=ADC_label)
-        for i_slot_order, channel_set in enumerate(DACH_Matrix):
+        for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
             DAC[i_slot_order].alloff(DAC_instance[i_slot_order], action=['Set',1])
             DAC[i_slot_order].close(DAC_instance[i_slot_order], which=DAC_label[i_slot_order])
         if "opt" not in rofreq.data: # check if it is in optional-state
@@ -394,7 +400,7 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
 
     # Loading Channel-Settings:
     CH_Wiring = inst_order(queue, 'CH')
-    DACH_Matrix = CH_Wiring['DAC']
+    DAC_CH_Matrix = CH_Wiring['DAC']
     ROLE_Wiring = inst_order(queue, 'ROLE')
     DACH_Role = ROLE_Wiring['DAC']
     RO_addr = find_in_list(DACH_Role, 'I1')
@@ -485,10 +491,10 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     DAC_qty = len(instr['DAC'])
     DAC_type, DAC_label, DAC, DAC_instance = [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty
     # PENDING: ASSIGN according to instr['CH']
-    # if DAC_qty>1: DACH_Matrix = [[1,2,3,4],[1,2]] # [[RO-I,RO-Q,Z1,Z2],[XY-I,XY-Q]]
-    # elif DAC_qty==1: DACH_Matrix = [[1,2,3,4]] # [[RO-I,RO-Q,XY-I,XY-Q]]
+    # if DAC_qty>1: DAC_CH_Matrix = [[1,2,3,4],[1,2]] # [[RO-I,RO-Q,Z1,Z2],[XY-I,XY-Q]]
+    # elif DAC_qty==1: DAC_CH_Matrix = [[1,2,3,4]] # [[RO-I,RO-Q,XY-I,XY-Q]]
 
-    for i, channel_set in enumerate(DACH_Matrix):
+    for i, channel_set in enumerate(DAC_CH_Matrix):
         [DAC_type[i], DAC_label[i]] = instr['DAC'][i].split('_')
         DAC[i] = im("pyqum.instrument.machine.%s" %DAC_type[i])
         DAC_instance[i] = DAC[i].Initiate(which=DAC_label[i])
@@ -582,7 +588,7 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
                 # DAC's SCORE-UPDATE:
                 if j > 2:
                     # for ch in range(4):
-                    for i_slot_order, channel_set in enumerate(DACH_Matrix):
+                    for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
                         for ch in channel_set:
                             dach_address = "%s-%s" %(i_slot_order+1,ch)
                             if ">" in structure[j]: # for locked variables with customized math expression:
@@ -599,7 +605,7 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
             # IN THE FUTURE: HVI-ROUTINE STARTS HERE:
             # Basic Control (Every-loop)
             # DAC
-            for i_slot_order, channel_set in enumerate(DACH_Matrix):
+            for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
                 # PENDING: Extract the settings from the machine database instead.
                 if i_slot_order==0: update_settings = dict(Master=True, clearQ=int(bool(len(channel_set)==4)) ) # First-in-line = Master
                 else: update_settings = dict(Master=False, clearQ=int(bool(len(channel_set)==4)) ) # NOTE: manually write stalking-envelop-SCORE for CH4 to drive PIN-SWITCH
@@ -662,7 +668,7 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
 
         # PENDING: LISTIFY / DICTIFY THE HANDLE?
         ADC.close(adca, which=ADC_label)
-        for i_slot_order, channel_set in enumerate(DACH_Matrix):
+        for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
             DAC[i_slot_order].alloff(DAC_instance[i_slot_order], action=['Set',1])
             DAC[i_slot_order].close(DAC_instance[i_slot_order], which=DAC_label[i_slot_order])
         if "opt" not in rofreq.data: # check if it is in optional-state

@@ -24,6 +24,7 @@ from zipfile import ZipFile
 from flask import session, g
 from pyqum import get_db, close_db
 from pyqum.instrument.toolbox import waveform, flatten
+from pyqum.instrument.reader import device_port
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"
@@ -36,8 +37,8 @@ __status__ = "development"
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
 MAIN_PATH = Path(pyfilename).parents[7] / "HODOR" / "CONFIG"
 INSTR_PATH = MAIN_PATH / "INSTLOG"
-USR_PATH = MAIN_PATH / "USRLOG"
-PORTAL_PATH = MAIN_PATH / "PORTAL"
+USR_PATH = Path(device_port("USRLOG"))
+PORTAL_PATH = Path(device_port("PORTAL"))
 ADDRESS_PATH = MAIN_PATH / "Address"
 SPECS_PATH = MAIN_PATH / "SPECS"
 ANALYSIS_PATH = PORTAL_PATH / "ANALYSIS"
@@ -580,7 +581,7 @@ class measurement:
         # get data type:
         if type(data) is list:
             data = struct.pack(">" + "d"*len(data), *data)
-        else: data = struct.pack('>' + 'd', data) #f:32bit, d:64bit each floating-number
+        else: data = struct.pack('>' + 'd', data) #f:32-bit, d:64-bit each floating-number
         # inserting data:
         with open(self.pqfile, 'rb+') as datapie:
             datapie.seek(0, SEEK_END) #seek from end
@@ -748,7 +749,8 @@ def settings(datadensity=1):
                         M.insertdata(x)
                         # sleep(3) #for debugging purposes
                 except(KeyboardInterrupt): print(Fore.RED + "\nSTOPPED")
-                M.status = "M-JOB COMPLETED SUCCESSFULLY"
+                M.status = "M-JOB (%s) COMPLETED SUCCESSFULLY" %JOBID
+                M.jobid_analysis = JOBID
 
             else: M.status = "M-JOB REJECTED: PLS CHECK M-CLEARANCE!"
 
@@ -838,7 +840,7 @@ def qout(queue,jobid,username):
     '''Queue out without a Job'''
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if (int(g.user['measurement']) > 0) and (username==jobrunner):
+    if ( (int(g.user['measurement'])>0) and (username==jobrunner) ) or int(g.user['management'])>=7:
         try:
             db = get_db()
             db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))
@@ -997,6 +999,24 @@ def job_update_perimeter(JOBID, perimeter):
             raise
     else: pass
     return
+
+# ACTIVITY:
+def acting(log, comment="", note=""):
+    '''Log user's crucial activities'''
+    
+    try:
+        db = get_db()
+        cursor = db.execute('INSERT INTO activity (user_id, log, comment, note) VALUES (?,?,?,?)', (g.user['id'],log,comment,note))
+        LOGID = cursor.lastrowid
+        db.commit()
+        close_db()
+        print(Fore.GREEN + "Log#%s: %s" %(LOGID,log))
+    except:
+        # raise
+        LOGID = None 
+        print(Fore.RED + Back.WHITE + "Make sure you're logged in")
+        
+    return LOGID
 
 
 

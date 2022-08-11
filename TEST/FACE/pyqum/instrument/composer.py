@@ -63,7 +63,7 @@ class pulser:
         self.mixerInfo = None
         if self.ifChannel == "i" or self.ifChannel == "q":
             self.mixerInfo = qos.IQMixerChannel() 
-        # set IQ Mixer calibration parameters into IQMixerChannel object
+        # Set IQ Mixer calibration parameters into IQMixerChannel object
             try:
                 mixerName = self.mixer_module.split(self.ifChannel.lower())[0]
                 lable_IF = self.mixer_module.split(self.ifChannel.lower())[1]
@@ -93,7 +93,7 @@ class pulser:
             stack a variety of pulse-instruction(s) according to the format illustrated above.
         '''
 
-        # 1. BB Shaping:
+        # 1. Baseband Shaping:
         for beat in self.score.split(";")[1:]:
             if beat == '': break # for the last semicolon
 
@@ -117,32 +117,32 @@ class pulser:
             pulsewidth = pulsePts*self.dt
             self.beatime += pulsewidth
             op = qos.PulseBuilder(pulsePts,self.dt)
-            # Shapes of Tones:
+            
+            # Shapes of Tones: (PENDING: BUILD CONNECTORS: require the knowledge of the last height)
             # 1. Constant Flat Line:
             def get_flat(): 
                 op.idle([pulseheight], channel=self.ifChannel)
 
-            # Gaussian
+            # 2. Gaussian
             # 2.0 complete:
             def get_gauss():
                 if isnan(waveformParas[0]): sfactor = 4
                 else: sfactor = waveformParas[0]
                 qosp = [pulseheight, 1/(sfactor)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian')
-
             # 2.1 raising from zero:
             def get_gaussup():
                 if isnan(waveformParas[0]): sfactor = 4
                 else: sfactor = waveformParas[0]
                 qosp = [pulseheight, 1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
-
             # 2.2 falling to zero:
             def get_gaussdn():
                 if isnan(waveformParas[0]): sfactor = 4
                 else: sfactor = waveformParas[0]
                 qosp = [pulseheight, -1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='gaussian_half')
+            
             # 3 Derivative Gaussian
             # 3.0
             def get_dgauss():
@@ -150,7 +150,6 @@ class pulser:
                 else: sfactor = waveformParas[0]
                 qosp = [pulseheight, -1/(sfactor)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian')
-            
             # 3.1 dgauss up
             def get_dgaussup():
                 if isnan(waveformParas[0]): sfactor = 4
@@ -163,8 +162,7 @@ class pulser:
                 else: sfactor = waveformParas[0]
                 qosp = [pulseheight, -1/(sfactor/2)]
                 op.purePulse(qosp, channel=self.ifChannel, shape='degaussian_half')
-
-            # PENDING: BUILD CONNECTORS: require the knowledge of the last height
+            # 3.3 Polar DRAG (Complex-plane)
             def get_drag():
                 if len(waveformParas)==1:
                     sfactor = 4
@@ -213,6 +211,7 @@ class pulser:
 
             # 8. Hyperbolic
             #else: print(Fore.RED + "UNRECOGNIZED PULSE-SHAPE. PLEASE CONSULT HELP.")
+            
             pulse = {
                 'flat': get_flat,
                 'gauss': get_gauss,
@@ -245,11 +244,11 @@ class pulser:
         if self.ifChannel == "i":
             self.envelope = abs(self.operationSeq.xywaveform["data"])
             self.music = self.operationSeq.iqwaveform["data"].real
-
         elif self.ifChannel == "q":
             self.envelope = abs(self.operationSeq.xywaveform["data"])
             self.music = self.operationSeq.iqwaveform["data"].imag
-        elif self.ifChannel == "z":
+
+        elif self.ifChannel == "z": # for z-gate
             self.envelope = abs(self.operationSeq.xywaveform["data"])
             self.music = abs(self.operationSeq.iqwaveform["data"])
         #print("operation number",len(self.operationList))
