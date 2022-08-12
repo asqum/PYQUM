@@ -54,7 +54,47 @@ if exist %config_FQPN% (
     ECHO Activate conda: %CONDAPATH%\Scripts\activate.bat 
     call %CONDAPATH%\Scripts\activate.bat base
     call conda env create -f environment.yml
-    goto check_database
+    goto install_package
+
+
+:install_package
+	:: qspp (editable installation, files are in PYQUM)
+	ECHO Installing qspp
+	pip install -e ..\BETAsite\Signal_Processing
+
+	:: pulse_generator (editable installation, files are in PYQUM)
+	ECHO Installing pulse_generator
+	pip install -e ..\BETAsite\pulse_generator
+
+	:: asqpu (editable installation, files are in PYQUM)
+	ECHO Installing asqpu
+	pip install -e ..\BETAsite\asqpu
+
+	:: state_distinguishability (editable installation, files are in PYQUM)
+	ECHO Installing state_distinguishability
+	pip install -e ..\BETAsite\state_distinguishability
+
+	:: resonator_tools (editable installation, files are in PYQUM)
+	ECHO Installing resonator_tools
+	pip install -e ..\BETAsite\resonator_tools
+
+	:: atsapi (normal installation, files are in MEGA)
+	ECHO Installing atsapi
+	:: DR1 pip install ..\..\..\..\MEGAsync\MANUALS\DAC_ADC\AlazarTech\SDK\Library
+	pip install ..\..\..\..\MEGA\MANUALS\DAC_ADC\AlazarTech\SDK\Library
+
+	:: keysightSD1 (normal installation, files are in MEGA)
+	ECHO Installing keysightSD1
+	:: DR1 pip install ..\..\..\..\MEGAsync\MANUALS\DAC_ADC\KeySight\keysightSD1_3
+	pip install ..\..\..\..\MEGA\MANUALS\DAC_ADC\KeySight\keysightSD1_3
+
+	:: PYQUM (editable installation, files are in PYQUM)
+	ECHO Installing PYQUM 101
+	pip install -e .
+
+goto check_database
+
+
 
 
 :check_database
