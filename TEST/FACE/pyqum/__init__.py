@@ -16,7 +16,7 @@ def get_db():
     is unique for each request and will be reused if this is called
     again.
     """
-    # print("Accessing Database from:\n %s" %current_app.config['DATABASE'])
+    print("Accessing Database from:\n %s" %current_app.config['DATABASE'])
     if 'db' not in g:
         g.db = sqlite3.connect(
             current_app.config['DATABASE'],
@@ -39,6 +39,7 @@ def init_db():
     db = get_db()
     with current_app.open_resource('authschema.sql') as f:
         db.executescript(f.read().decode('utf8'))
+        print(Fore.YELLOW + "Database Built")
 
 @click.command('init-db')
 @with_appcontext

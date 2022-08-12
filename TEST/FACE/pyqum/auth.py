@@ -46,9 +46,18 @@ def load_logged_in_user():
     # 0. DR-specific parameters:
     g.DR_platform = int(get_status("WEB")['port']) - 5300
     navbar_colors = ['#ffba26', '#ff2626'] # hex-color-sequence for each DR
-    g.base_color = "rgb(%s, %s, %s)" %tuple([int(navbar_colors[g.DR_platform-1].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)]) # convert hex- to rgb-color
+    try: g.base_color = "rgb(%s, %s, %s)" %tuple([int(navbar_colors[g.DR_platform-1].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)]) # convert hex- to rgb-color
+    except: g.base_color = "rgb(%s, %s, %s)" %(0, 0, 0) # Black for Virtual Environment
     
-    user_id = session.get('user_id')
+    if session.get('DR_platform') is None: 
+        user_id = None
+    elif session['DR_platform'] == int(get_status("WEB")['port']) - 5300: 
+        user_id = session.get('user_id')
+    else: 
+        session.clear()
+        user_id = None
+        return("<h3>DEFLECTED-LOGIN DETECTED</h3><h3>PLEASE REFRESH & RE-LOGIN</h3><h3 style='color:blue;'>Courtesy from HoDoR</h3>")
+    
     if user_id is None:
         g.user = None
     else:
@@ -59,7 +68,11 @@ def load_logged_in_user():
         close_db()
 
         # 2. Latest sample-loading date: (to prevent measuring old samples)
-        g.latest_date = get_db().execute('SELECT s.registered FROM sample s ORDER BY registered DESC').fetchone()[0].strftime("%Y-%m-%d")
+        try: 
+            g.latest_date = get_db().execute('SELECT s.registered FROM sample s ORDER BY registered DESC').fetchone()[0].strftime("%Y-%m-%d")
+        except: 
+            g.latest_date = 0
+            print(Fore.BLUE + "No samples yet to be found in the database")
         close_db()
         
         # 3. logged-in user's samples' details:
@@ -181,6 +194,7 @@ def login():
         if error is None:
             # store the user's credentials in a new SESSION (Cookies) and return to the index
             session.clear()
+            session['DR_platform'] = int(get_status("WEB")['port']) - 5300
             session['user_id'] = user['id']
             session['user_name'] = user['username']
             session['user_status'] = user['status']

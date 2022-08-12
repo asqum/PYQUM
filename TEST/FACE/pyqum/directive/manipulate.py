@@ -20,7 +20,7 @@ from pyqum.instrument.composer import pulser
 from pyqum.instrument.analyzer import pulse_baseband
 from pyqum.instrument.reader import inst_order
 
-from asqpu.hardware_information import *
+# from asqpu.hardware_information import *
 
 __author__ = "Teik-Hui Lee"
 __copyright__ = "Copyright 2019, The Pyqum Project"

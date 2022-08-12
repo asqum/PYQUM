@@ -16,6 +16,7 @@ import time
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..', 'Library'))
 import atsapi as ats
 
+
 from json import loads
 from pyqum.instrument.logger import address, set_status
 from pyqum.instrument.analyzer import curve
