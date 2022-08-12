@@ -58,6 +58,10 @@ if exist %config_FQPN% (
 
 
 :install_package
+
+	set ENVNAME=PYQUM-server-offline
+	call conda activate %ENVNAME%
+	
 	:: qspp (editable installation, files are in PYQUM)
 	ECHO Installing qspp
 	pip install -e ..\BETAsite\Signal_Processing
