@@ -19,7 +19,8 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 
 # Load instruments
 from pyqum import get_db, close_db
-from pyqum.instrument.machine import YOKO, KEIT, ALZDG
+try: from pyqum.instrument.machine import YOKO, KEIT, ALZDG
+except: print(Fore.RED + Back.WHITE + "Some Drivers Missing... Entering Virtual Mode.")
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.toolbox import match, waveform, pauselog
 from pyqum.instrument.analyzer import IQAParray, pulse_baseband, UnwraPhase

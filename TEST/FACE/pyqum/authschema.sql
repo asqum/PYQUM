@@ -22,7 +22,7 @@ CREATE TABLE "user" (
 	"email"	TEXT,
 	"since"	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY("id" AUTOINCREMENT)
-)
+);
 
 CREATE TABLE "sample" (
 	"id"	INTEGER,
@@ -40,7 +40,7 @@ CREATE TABLE "sample" (
 	"available"	INTEGER,
 	PRIMARY KEY("id" AUTOINCREMENT),
 	FOREIGN KEY("author_id") REFERENCES "user"("id")
-)
+);
 
 CREATE TABLE "queue" (
 	"id"	INTEGER NOT NULL UNIQUE,
@@ -49,7 +49,7 @@ CREATE TABLE "queue" (
 	"samplename"	TEXT UNIQUE,
 	FOREIGN KEY("samplename") REFERENCES "sample"("samplename"),
 	PRIMARY KEY("id" AUTOINCREMENT)
-)
+);
 
 CREATE TABLE "job" (
 	"id"	INTEGER NOT NULL UNIQUE,
@@ -71,7 +71,7 @@ CREATE TABLE "job" (
 	PRIMARY KEY("id" AUTOINCREMENT),
 	FOREIGN KEY("sample_id") REFERENCES "sample"("id"),
 	FOREIGN KEY("user_id") REFERENCES "user"("id")
-)
+);
 
 CREATE TABLE "CHAR0" (
 	"id"	INTEGER NOT NULL UNIQUE,
@@ -79,7 +79,7 @@ CREATE TABLE "CHAR0" (
 	"token"	TEXT UNIQUE,
 	FOREIGN KEY("job_id") REFERENCES "job"("id"),
 	PRIMARY KEY("id")
-)
+);
 
 CREATE TABLE "CHAR1" (
 	"id"	INTEGER NOT NULL UNIQUE,
@@ -87,7 +87,7 @@ CREATE TABLE "CHAR1" (
 	"token"	TEXT UNIQUE,
 	FOREIGN KEY("job_id") REFERENCES "job"("id"),
 	PRIMARY KEY("id")
-)
+);
 
 CREATE TABLE "QPC0" (
 	"id"	INTEGER NOT NULL UNIQUE,
@@ -95,7 +95,7 @@ CREATE TABLE "QPC0" (
 	"token"	TEXT UNIQUE,
 	PRIMARY KEY("id"),
 	FOREIGN KEY("job_id") REFERENCES "job"("id")
-)
+);
 
 CREATE TABLE "QPC1" (
 	"id"	INTEGER NOT NULL UNIQUE,
@@ -103,7 +103,7 @@ CREATE TABLE "QPC1" (
 	"token"	TEXT UNIQUE,
 	PRIMARY KEY("id" AUTOINCREMENT),
 	FOREIGN KEY("job_id") REFERENCES "job"("id")
-)
+);
 
 CREATE TABLE "machine" (
 	"id"	INTEGER NOT NULL UNIQUE,
@@ -125,7 +125,7 @@ CREATE TABLE "machine" (
 	PRIMARY KEY("id" AUTOINCREMENT),
 	FOREIGN KEY("user_id") REFERENCES "user"("id"),
 	FOREIGN KEY("system") REFERENCES "queue"("system")
-)
+);
 
 CREATE TABLE "post" (
 	"id"	INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,7 +135,7 @@ CREATE TABLE "post" (
 	"title"	TEXT NOT NULL,
 	"body"	TEXT NOT NULL,
 	FOREIGN KEY("author_id") REFERENCES "user"("id")
-)
+);
 
 CREATE TABLE "activity" (
 	"id"	INTEGER NOT NULL UNIQUE,
@@ -146,5 +146,5 @@ CREATE TABLE "activity" (
 	"note"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT),
 	FOREIGN KEY("user_id") REFERENCES "user"("id")
-)
+);
 
