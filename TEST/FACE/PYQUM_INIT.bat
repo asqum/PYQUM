@@ -6,16 +6,17 @@
 rem take current dir of this file
 set "crt_dir=%~dp0"
 echo Current dir:"%crt_dir%"
+
+rem get root dir of this repo
+set "relative_root=..\..\"
+for %%I in ("%crt_dir%%relative_root%") do set "root_FQPN=%%~fI"
+echo Fully Qualified root path: %root_FQPN%
+
 rem set config file name
-set "config_file_name=..\..\..\path.cfg"
-
-
-:: echo Config path:
-:: echo Relative Config file path: %crt_dir%%config_file_name%
-:: %crt_dir%%config_file_name%
+set "config_file_name=..\path.cfg"
 
 rem get Fully Qualified path of CONFIGG folder
-for %%I in ("%crt_dir%%config_file_name%") do set "config_FQPN=%%~fI"
+for %%I in ("%root_FQPN%%config_file_name%") do set "config_FQPN=%%~fI"
 echo Fully Qualified config file path: %config_FQPN%
 
 
@@ -72,7 +73,7 @@ if exist %config_FQPN% (
 
 	:: asqpu (editable installation, files are in PYQUM)
 	ECHO Installing asqpu
-	pip install -e ..\BETAsite\asqpu
+	pip install -e %root_FQPN%\SKILLS\asqpu
 
 	:: state_distinguishability (editable installation, files are in PYQUM)
 	ECHO Installing state_distinguishability
