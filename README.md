@@ -1,98 +1,131 @@
-# PiQUM 
+# PiQUM
 
 **PiQuM** is a **P**latform **i**ndependent & **P**urpose **i**ntegrated **Q**uantum **U**niversal **M**achine
 
 >Created by: ````David Lee, Teik-Hui````
 
->Contributed by: ````Jackie Hsiao, Li-Chieh, ````
+>Contributed by: ````Jackie Hsiao, Li-Chieh,````
 
 >Acknowledgment: ````Academia Sinica````
 
-## Structure of PiQUM:
+## Structure of PiQUM
+
 ### 1. Blog (LaBooK)
-  * Crucial BDR runtimes.
-  * Measurement status.
+
+* Crucial BDR runtimes.
+* Measurement status.
 
 ### 2. Machine
-  * ALL list of Instruments based on DR affiliation.
-  * Sample assignment to each available ````Queue````.
-  * Wiring configuration specific for each ````Queue````.
+
+* ALL list of Instruments based on DR affiliation.
+* Sample assignment to each available ````Queue````.
+* Wiring configuration specific for each ````Queue````.
 
 ### 3. Bridge
-  * IQ Calibration
+
+* IQ Calibration
 
 ### 4. Benchmark
-  * Quality factor Estimation
-  * Population Estimation (Fidelity)
-  * Common Fitting (Rabi, T1, T2)
+
+* Quality factor Estimation
+* Population Estimation (Fidelity)
+* Common Fitting (Rabi, T1, T2)
 
 ### 5. Guide
-  * Qubit Frequency Prediction
 
-## The Flow of Measurement:
+* Qubit Frequency Prediction
+
+## The Flow of Measurement
+
 ```mermaid
 
 flowchart LR
 
 A[User] -->|login| B(Sample)
 B --> |meal| C[Queue]
-C -->|CHAR0,1...| D(CW)
-C -->|QPC0,1...| E(Pulse)
+C -->|Characterize:\nCHAR0,1...| D(CW)
+C -->|Manipulate:\nQPC0,1...| E(Pulse)
 D --> D1[FRESP]
 D --> D2[CWSWEEP]
 E --> E1[SINGLEQB]
 E --> E2[QUBITS]
+E --> E3[QPU-1, 2, ...]
 
 ```
+
 ### 6. User
+
 User need to register and will be granted certain level of access into the platform.
 
 ### 7. Sample
+
 Sample will be logged for each run of measurement.
 
 ### 8. Queue
+
 Enter the Queue after checking every details about the sample is correct & appropriate.
 Each Queue can run in parallel to each others.
-  * ````CHAR````: Frequency-domain measurement for basic **char**acterization of each cavities and physical qubits.
-  * ````QPC````: Time-domain measurement for advanced **Q**uantum **P**rocessor **C**ontrol
+
+* ````CHAR````: Frequency-domain measurement for basic **char**acterization of each cavities and physical qubits. (*characterize*)
+* ````QPC````: Time-domain measurement for advanced **Q**uantum **P**rocessor **C**ontrol (*manipulate*)
 
 ### 9. Task
+
 Each task has its own directive for respective measurement schemes.
-  * ````FRESP````: Frequency Response
-  * ````CWSWEEP````: Continuous Wave Sweeping
-  * ````SINGLEQB````: Single-Qubit-ish pulse measurement
-  * ````QUBITS````: Multiple Qubits Orchestration
+
+* ````FRESP````: Frequency Response
+* ````CWSWEEP````: Continuous Wave Sweeping
+* ````SINGLEQB````: Single-Qubit-ish pulse measurement
+* ````QUBITS````: Multiple Qubits Orchestration
 
 ### 10. Story
+
 Automatically telling unique story for each sample based on the ````notes```` taken by user. (coming soon)
 
-## Scripting:
-### 1. Parameter & Perimeter:
-  * Wiring
+## Scripting
 
+### 1. Parameter & Perimeter
 
-  * Waveform / Rhythm:
+* Wiring
+
+* Waveform / Rhythm:
+
   ````
     <start> to <stop> * <steps> <' r ' or '^'> <repeat>
   ````
-  > Examples:
-  >> ````-3 to 3 \*600 r 300 ```` means -3, -2.999, ... 2.998, 2.999, 3 with each point repeating for 300 times.
-  >>> ````-1 to  1*200 ^100 ```` means -1, -0.999, ... 0.998, 0.999, 1 with each point repeating for 100 times.
 
-  
-### 2. Pulse Sequencing:
-#### 2.1 SCORE:
-"Musical" score dedicated for each DAC channel to orchestrate the train of pulses.
+  > Examples:
+  >> ````-3 to 3 \*600 r 300```` means -3, -2.999, ... 2.998, 2.999, 3 with each point repeating for 300 times.
+  >>> ````-1 to  1*200 ^100```` means -1, -0.999, ... 0.998, 0.999, 1 with each point repeating for 100 times.
+
+### 2. Pulse Sequencing
+
+#### 2.11 SCORE: **SC**ripted **OR**chestration of **E**ntanglements
+
+"Musical" **score** dedicated for each DAC channel to orchestrate the train of pulses.
+
 ````
 ns=<period>,mhz=<'i' or 'q'>/<IF-rotation>/<mixer-module>; 
 <shape-1>/<parameter-i>/.../<parameter-f>,<pulse-width>,<pulse-height>;
 ...
 <shape-n>/<parameter-i>/.../<parameter-f>,<pulse-width>,<pulse-height>;
 ````
+
 > Available Shapes: Flat, Gauss, Gaussup, Gaussdn, dGauss, dGaussup, dGaussdn
 
-#### 2.2 R-JSON:
-A JSON-format statement with the capability to Schedule, Relate and Entangle each ````SCORE```` to perform all sorts of measurements and benchmarkings.
+#### 2.12 MACE: **M**odular **A**ssembly of **C**ommanders' (**C**ontinuous) **E**xecution
+
+Flexible **mace** to control multiple parametrized pieces of constant modules.
+The set of **skills** a **commander** possesses will be stored in DR-settings.
+
+````
+<skill-1>: {R1}, <skill-2>: {R2} ... <skill-n>: {Rn}
+````
+
+#### 2.2 R-JSON
+
+A JSON-format statement with the capability to **R**elate each ````MACE```` and ````SCORE```` to perform all sorts of measurements and benchmarkings.
+
 ````
 {
 "<parameter in SCORE>" : "<value or waveform assigned>",
