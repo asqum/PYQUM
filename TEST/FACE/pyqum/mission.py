@@ -7,7 +7,6 @@ from os.path import getmtime
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 import json, ast
-from numpy.lib.npyio import loads
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
