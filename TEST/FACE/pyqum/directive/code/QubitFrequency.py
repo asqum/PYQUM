@@ -391,18 +391,7 @@ def freq_clustering(x,y):
             group = list(k_fitter(x.reshape(-1,1),y.reshape(-1,1),2,ini_center ='k-means++'))
 
     else:
-        # find the best cluster with silhouette_score
-        score_min = -1 #this is the minimum possible score
-        k = 0
-        for n_clusters in range(2,4):
-            model = KMeans(n_clusters = n_clusters, init='k-means++', max_iter=100, n_init=1)
-            labels = model.fit_predict(y.reshape(-1,1))
-            k_score = silhouette_score(y.reshape(-1,1), labels)
-            if k_score > score_min:
-                score_min = k_score
-                k =  n_clusters
-
-        group = list(k_fitter(x.reshape(-1,1),y.reshape(-1,1),k,ini_center ='k-means++')) 
+        group = list(k_fitter(x.reshape(-1,1),y.reshape(-1,1),3,ini_center ='k-means++')) 
         
     return group
 
