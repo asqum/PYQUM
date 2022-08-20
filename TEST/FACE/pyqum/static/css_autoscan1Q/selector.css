@@ -1,0 +1,34 @@
+.CS-selector{
+    position: absolute;
+    top:38%;
+    right:21%;
+    border-radius: 1.125rem;
+    font-family: Arial;
+    background-color: rgba(4, 8, 87, 0.723);
+    color:white;
+    height:3.5%;
+    width:28%;
+    font-size:1rem;
+}
+.CS-selector:hover {
+    background-color: #fef992;
+    color:rgb(255, 0, 30);
+    border: 0.2rem solid rgb(255, 0, 0);
+}
+.PD-selector,.FD-selector,.CW-selector{
+    position: absolute;
+    top:19%;
+    right:21%;
+    border-radius: 1.125rem;
+    font-family: Arial;
+    background-color: rgba(4, 8, 87, 0.723);
+    color:white;
+    height:3.5%;
+    width:28%;
+    font-size:1rem;
+}
+.PD-selector:hover,.FD-selector:hover,.CW-selector:hover {
+    background-color: #fef992;
+    color:rgb(255, 0, 30);
+    border: 0.2rem solid rgb(255, 0, 0);
+}

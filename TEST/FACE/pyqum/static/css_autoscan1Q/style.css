@@ -1,0 +1,266 @@
+html{
+    
+    border:0 0 0 0;
+    padding:0 0 0 0 ;
+    margin:0 0 0 0 ;
+}
+header{
+    width:100%;
+    height:10%;
+    position:fixed;
+    top:90%;
+    right:0;
+    z-index: 10;
+}
+body {
+    background-color: rgb(252, 243, 223);
+    width: 100%;
+    height: fit-content;
+    font-family: Arial, Helvetica, sans-serif;
+    font-family: Verdana, sans-serif;
+    border: 1px solid transparent;
+    border:0 0 0 0;
+    padding:0 0 0 0 ;
+    margin:0 0 0 0 ;
+}
+.title{
+    position:fixed;
+    top:1%;
+    left:1%;
+    width:50%;
+    height:10%;
+    font-size: 1.2rem;
+    z-index: 10;
+}
+.content-title{
+    position:relative;
+    top:5%;
+    left:28%;
+    display:block;
+    width:40%;
+    height:10%;
+    font-size: 2rem;
+    line-height: 100px;
+    text-align: center;
+
+}
+.select-area{
+    position:relative;
+    top:10%;
+    left:73%;
+    width:25%;
+    height:100%;
+}
+.Plot-area{
+    position:relative;
+    top:-85%;
+    left:20%;
+    width:60%;
+    height:80%;
+}
+.dark-mode {
+    background-color: rgb(0, 0, 0);
+    color: rgb(0, 255, 26);
+}
+.set-pad{
+    position:absolute;
+    top:20%;
+    right:0;
+    width:100%;
+    height:50%;
+}
+#dc-channel{
+    position:absolute;
+    left:-60%;
+    top:170%;
+    font-size:1.2rem;
+    width:30%;
+}
+#dc-channel-inp{
+    position:absolute;
+    border:0 none;
+    background:rgb(146, 146, 146);
+    left: -30%;
+    top:260%;
+    border-radius: 0.4rem;
+    width:15%;
+    height:70%;
+    font-size: 1.2rem;
+    text-align: center;
+}
+#CPW-num{
+    position:absolute;
+    left:-5%;
+    top:170%;
+    font-size:1.2rem;
+    width:45%;
+}
+#CPW-num-inp{
+    position:absolute;
+    border:0 none;
+    background:rgb(146, 146, 146);
+    left:43%;
+    top:260%;
+    border-radius: 0.4rem;
+    width:15%;
+    height:70%;
+    font-size: 1.2rem;
+    text-align: center;
+}
+#port{
+    position:absolute;
+    left:65%;
+    top:170%;
+    font-size:1.2rem;
+    width:40%;
+}
+#port-inp{
+    position:absolute;
+    border:0 none;
+    background:rgb(146, 146, 146);
+    left: 105%;
+    top:260%;
+    border-radius: 0.4rem;
+    width:15%;
+    height:70%;
+    font-size: 1.2rem;
+    text-align: center;
+}
+#dc-channel-inp:hover,#CPW-num-inp:hover,#port-inp:hover {
+    border: 0.2rem solid rgb(255, 0, 30);
+}
+.sectitle{
+    position:relative;
+    top:23%;
+    left:40%;
+    font-size:1.4rem;
+    width:40%;
+    height:10%;
+}
+
+
+input[id='jobID-CS'] {
+    background:#ccc; 
+    border:0 none;
+    position:absolute;
+    top:5%;
+    right:1.1%;
+    width:40%;
+    height:3.5%;
+    cursor:pointer;
+    font-size: 1.25rem;
+    -webkit-border-radius: 0.33rem;
+    border-radius: 0.33rem; 
+}
+input[id='designed-number'] {
+    width:40%;
+    height:3.5%;
+    background:#ccc; 
+    border:0 none;
+    position:absolute;
+    top:10%;
+    right:1.1%;
+    font-size: 1.25rem;
+    cursor:pointer;
+    -webkit-border-radius: 0.33rem;
+    border-radius: 0.33rem; 
+}
+input[id='jobID-CS']:hover,input[id='designed-number']:hover {
+    border: 0.2rem solid rgb(255, 0, 30);
+}
+.cavity-select-text{
+    font-size: 1rem;
+    position:absolute;
+    top:14%;
+    right:22%;
+}
+.cavity-select-CS{
+    position:absolute;
+    top:32%;
+    right:20%;
+    font-size: 1rem;
+}
+/*Cavity Search part*/
+.CS-container{
+    width:100%;
+    height:100%;
+    margin:0 0 0 0;
+}
+#resultId-CS{
+    position: absolute;
+    top: 82%;
+    right:45%;
+    font-size: 0.66rem;
+    text-align: center;
+}
+.plotframe-squ{
+    width: 75%;
+    height: 90%;
+    position:relative;
+    left:10%;
+    top:-10%;
+}
+.plotframe-rec{
+    width: 90%;
+    height: 80%;
+    position:relative;
+    left:3%;
+}
+#menu{
+    width:20%;
+    height:48%;
+    position:relative;
+    top:-150%;
+    left:2%;
+}
+.paras{
+    font-size: 1rem;
+    margin-top:2rem;
+}
+label[class='cavity-select-text'] {
+    display:block;
+    position: absolute;
+    top:250px;
+    right:240px;
+}
+
+/*measurement settings part*/
+.MS-container{
+    width:100%;
+    height:100%;
+}
+
+/*Power Dependence part*/
+.PD-container{
+    width:100%;
+    height:100%;
+}
+
+/*Flux Dependence part*/
+.FD-container{
+    width:100%;
+    height:100%;
+}
+
+/*CWsweep part*/
+.CW-container{
+    width:100%;
+    height:100%;
+}
+
+.jobid-hand{
+    background:#ccc; 
+    border:0 none;
+    position:absolute;
+    top:9%;
+    right:1.1%;
+    width:40%;
+    height:5%;
+    cursor:pointer;
+    font-size: 1.13rem;
+    -webkit-border-radius: 0.33rem;
+    border-radius: 0.33rem;  
+}
+.jobid-hand:hover {
+    border: 0.2rem solid rgb(255, 0, 30);
+}

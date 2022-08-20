@@ -1134,12 +1134,16 @@ class CavitySearch:
         return self.final_answer  # return out {'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
         
     #to call below send arrays to js plotly            
-    def give_js_info(self,freq_MHz):
-        self.ans_array = {
-        'Frequency':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer['%d MHz'%freq_MHz][0],self.answer['%d MHz'%freq_MHz][1])]['Frequency']),
-        'Amplitude':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer['%d MHz'%freq_MHz][0],self.answer['%d MHz'%freq_MHz][1])]['Amplitude']),
-        'UPhase':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer['%d MHz'%freq_MHz][0],self.answer['%d MHz'%freq_MHz][1])]['UPhase'])
-        }
+    def give_plot_info(self):
+        plot_items = {}
+        for cavity in self.final_answer.keys():
+            plot_items[cavity] = {
+				'Frequency':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer[cavity][0],self.answer[cavity][1])]['Frequency']),
+				'Amplitude':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer[cavity][0],self.answer[cavity][1])]['Amplitude']),
+				'UPhase':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer[cavity][0],self.answer[cavity][1])]['UPhase'])
+            }
+        return plot_items
+        
 
 class PowerDepend:
     def __init__(self, dataframe):
@@ -1265,6 +1269,7 @@ class QubitFreq_Scan:
             'Sub_Frequency':self.freq,
             'Substrate':self.sub
         }
+        
 
 # 0820 add compare different xy-power
 class QubitFreq_Compa:
@@ -1274,7 +1279,7 @@ class QubitFreq_Compa:
         self.fqS = {}
         self.ecS = {}
         self.stS = {}
-        self.plotly = {}
+        self.plot_items = {}
         self.sorted = {}
     # make different xy-power dataframes    
     def seperate_lab_df(self):
@@ -1291,7 +1296,7 @@ class QubitFreq_Compa:
             self.fqS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.target_freq
             self.ecS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.Ec
             self.stS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.status
-            self.plotly[str(powa_df['XY-Power'].unique()[0])]= FQ_db.plot_items
+            self.plot_items[str(powa_df['XY-Power'].unique()[0])]= FQ_db.plot_items
     
     def compa(self):
         y = []    # frequency set
@@ -1428,15 +1433,12 @@ class Quest_command:
         return jobid
 
 class AutoScan1Q:
-    def __init__(self,numCPW="3",sparam="S21,",dcsweepch = "1"):
+    def __init__(self,sparam="S21,",dcsweepch = "1"):
         self.jobid_dict = {"CavitySearch":0,"PowerDepend":0,"FluxDepend":0,"QubitSearch":0}
         self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
-        try:
-            self.numCPW = int(numCPW)
-        except:
-            pass
+
         
     def cavitysearch(self):
         # jobid = Quest_command(self.sparam).cavitysearch(self.dcsweepch)
@@ -1444,41 +1446,47 @@ class AutoScan1Q:
         print("do measurement\n")
         self.jobid_dict["CavitySearch"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.cavity_list = CavitySearch(dataframe).do_analysis() #model h5 cannot import <- 0818 update, no need it anymore
+        CS = CavitySearch(dataframe)
+        self.cavity_list = CS.do_analysis() #model h5 cannot import <- 0818 update, no need it anymore
+        self.CS_plot_items = CS.give_plot_info()
         #self.cavity_list = {'7116.0 MHz': [7.102, 7.128], '6334.0 MHz': [6.32, 6.346]}
         self.total_cavity_list = list(self.cavity_list.keys())
         self.readout_para = {i: {} for i in self.total_cavity_list}
         self.readout_para["cavity_list"] = self.cavity_list
     
-    def powerdepend(self,cavity_num):
+    def powerdepend(self,cavity_freq):
         # jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cavity_num],add_comment="with Cavity "+str(cavity_num))
         jobid = 5097
         self.jobid_dict["PowerDepend"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
         self.low_power, self.high_power = PowerDepend(dataframe).do_analysis() #pass
         print("Select Power : %f"%self.low_power)
-        self.readout_para[cavity_num]["low_power"] = self.low_power
-        self.readout_para[cavity_num]["high_power"] = self.high_power
+        self.readout_para[cavity_freq]["low_power"] = self.low_power
+        self.readout_para[cavity_freq]["high_power"] = self.high_power
       
-    def fluxdepend(self,cavity_num, f_bare):
+    def fluxdepend(self,cavity_freq, f_bare):
         # jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_num],select_powa=self.low_power,add_comment="with Cavity "+str(cavity_num))
         jobid = 5105
         self.jobid_dict["FluxDepend"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
         self.wave = FluxDepend(dataframe).do_analysis(f_bare) #pass
         print(self.wave)#{"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
-        self.readout_para[cavity_num]["f_bare"] = self.wave["f_bare"]
-        self.readout_para[cavity_num]["f_dress"] = self.wave["f_dress"]
+        self.readout_para[cavity_freq]["f_bare"] = self.wave["f_bare"]
+        self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
     
-    def qubitsearch(self,cavity_num):
+    def qubitsearch(self,cavity_freq):
         jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"])+'e-6',f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_num))
         # jobid = 5106
         self.jobid_dict["QubitSearch"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.qubit = QubitFreq_Compa(dataframe).do_analysis() #examine the input data form is dataframe because Series cannot reshape 
-        print(self.qubit)                                     #0820 update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
-        self.readout_para[cavity_num]["qubit"] = self.qubit
-
+        CW = QubitFreq_Compa(dataframe)
+        self.qubit_info = CW.do_analysis() #examine the input data form is dataframe because Series cannot reshape 
+        self.CW_plot_items = CW.plot_items()
+        print(self.qubit_info)                                     #0820 update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
+		# 0820 update
+        self.readout_para[cavity_freq]["qubit"] = self.qubit_info['Fq_avg']
+        self.readout_para[cavity_freq]["Ec"] = self.qubit_info['Ec_avg']
+        self.readout_para[cavity_freq]["acStark"] = self.qubit_info['acStark_power']
 
 def save_class(item,path = "save.pickle"):
     with open(path, 'wb') as f:
