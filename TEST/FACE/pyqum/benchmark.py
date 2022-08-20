@@ -994,10 +994,12 @@ from pyqum.directive.code.LoadData_lab import jobid_search_pyqum, pyqum_load_dat
 #---------------load package of cavity search---------------
 from pyqum.directive.code.CavitySearch import normalize_1d, peak_info, corr_peak_loc, compu_peak_center_dist, poopoo_filter, rm_empty, gaus, gaussian_fitor, gaussian_filter, amp_pha_compa, ena_clutch_filter
 from scipy.optimize import curve_fit
-from numpy import array, log10, diff, unwrap, arctan2, vstack, hstack, average, max, min, median, std,
+from numpy import array, log10, diff, unwrap, arctan2, vstack, hstack, average, max, min, std
 from scipy.signal import savgol_filter as SGF
 from pandas import Series, DataFrame, concat
-from pyqum.directive.code.QubitFrequency import colect_cluster,cal_nopecenter,cal_distance,denoise,check_overpower,find_farest,cal_Ec_GHz,freq2idx
+#-----------------load package of qubit frequency search-------------------
+from pyqum.directive.code.QubitFrequency import Find_eps,dbscan,colect_cluster,cal_nopecenter,cal_distance,denoise,check_overpower,find_farest,cal_Ec_GHz,freq2idx,freq_sorter,check_acStark_power,freq_clustering
+from colorama import init, Fore, Back, Style
 #---------------load package of power dependent---------------
 from sklearn.cluster import KMeans
 from numpy import median
@@ -1097,7 +1099,7 @@ class CavitySearch:
             pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-4*avg_FWHM,tip_freq+4*avg_FWHM]
+            region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-6*avg_FWHM,tip_freq+6*avg_FWHM]
 
         self.final_answer = region  #{'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
         
@@ -1263,6 +1265,81 @@ class QubitFreq_Scan:
             'Sub_Frequency':self.freq,
             'Substrate':self.sub
         }
+
+# 0820 add compare different xy-power
+class QubitFreq_Compa:
+    def __init__(self,dataframe):
+        self.lab_df = dataframe
+        self.sep_dfS = []
+        self.fqS = {}
+        self.ecS = {}
+        self.stS = {}
+        self.plotly = {}
+        self.sorted = {}
+    # make different xy-power dataframes    
+    def seperate_lab_df(self):
+        xy_powa = self.lab_df['XY-Power'].unique()    #[xy-power_1,xy_power_2,....]
+        for powa in xy_powa:
+            self.sep_dfS.append(self.lab_df[(self.lab_df['XY-Power']==powa)])
+    
+    def calcu(self):
+        self.seperate_lab_df()
+        for powa_df in self.sep_dfS :
+            FQ_db = QubitFreq_Scan(powa_df)
+            FQ_db.do_analysis()
+            FQ_db.give_result()
+            self.fqS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.target_freq
+            self.ecS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.Ec
+            self.stS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.status
+            self.plotly[str(powa_df['XY-Power'].unique()[0])]= FQ_db.plot_items
+    
+    def compa(self):
+        y = []    # frequency set
+        for powa in self.fqS.keys():
+            for j in self.fqS[powa]:
+                y.append(j)
+        y = array(y)        
+        x = arange(0,y.shape[0])
+        if y.shape[0] >= 2:
+            group = freq_clustering(x,y)
+            self.sorted = freq_sorter(y,group)  #{'low':[...],'mid':[...],'high':[...]}
+        else:
+            init()
+            print(Style.BRIGHT+Fore.RED+'Warning! DB-scan somewhere maybe goes wrong check it plz!'+Style.RESET_ALL)
+            self.sorted =  {'high':y,'mid':array([]),'low':array([])}
+        
+    def do_analysis(self):
+        self.calcu()
+        self.compa()
+        high_freq_group = self.sorted['high']
+        mid_freq_group = self.sorted['mid']
+        if mid_freq_group.shape[0] != 0:
+            power_with_Ec = []
+            for powa in self.fqS.keys():
+                for high_freq in high_freq_group:
+                    for mid_freq in mid_freq_group:
+                        if high_freq in self.fqS[powa] and mid_freq in self.fqS[powa]:
+                            power_with_Ec.append(powa)
+                        else:
+                            power_with_Ec.append([])
+            with_Ec = rm_empty(power_with_Ec)
+            Ec_collector = []
+            fq_collector = []
+            for powa in with_Ec:
+                Ec_collector.append(self.fqS[powa][0]-self.fqS[powa][1])
+                fq_collector.append(self.fqS[powa][0])
+            init()    
+            print(Style.BRIGHT+Fore.YELLOW+'After compare different power, there is a ordinary Ec & Fq with average!\n'+Style.RESET_ALL)
+            compa_ans = {'Ec_avg':mean(Ec_collector)*2,'Fq_avg':mean(fq_collector)} 
+        else:
+            print(Style.BRIGHT+Fore.YELLOW+'After compare different power, there "only exist Fq" with average!\n'+Style.RESET_ALL)
+            compa_ans = {'Ec_avg':array([]),'Fq_avg':mean(high_freq_group)}
+        
+        compa_ans['acStark_power'] = check_acStark_power(self.stS,self.fqS,high_freq_group)
+        
+        return compa_ans
+        
+
       
 def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot"):
     # Check user's current queue status:
@@ -1398,8 +1475,8 @@ class AutoScan1Q:
         # jobid = 5106
         self.jobid_dict["QubitSearch"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.qubit = QubitFreq_Scan(dataframe).do_analysis() #examine the input data form is dataframe because Series cannot reshape 
-        print(self.qubit)
+        self.qubit = QubitFreq_Compa(dataframe).do_analysis() #examine the input data form is dataframe because Series cannot reshape 
+        print(self.qubit)                                     #0820 update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
         self.readout_para[cavity_num]["qubit"] = self.qubit
 
 
