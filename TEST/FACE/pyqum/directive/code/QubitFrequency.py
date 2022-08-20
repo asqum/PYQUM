@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import silhouette_score
 from kneed import KneeLocator
+from colorama import init, Fore, Back, Style
 
 # kmeans input and fitting ,輸出預測資料及標籤
 def k_fitter(x,y,k,ini_center ='k-means++'):
@@ -402,8 +403,7 @@ def freq_clustering(x,y):
                 k =  n_clusters
 
         group = list(k_fitter(x.reshape(-1,1),y.reshape(-1,1),k,ini_center ='k-means++')) 
-        plt.scatter(x,y,c=group)
-        plt.show()
+        
     return group
 
 def check_acStark_power(powa_status,fqS,high_freq_group):  #inputs dict, dict, array
