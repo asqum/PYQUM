@@ -1030,6 +1030,7 @@ class Load_From_pyqum:
 class CavitySearch:
     def __init__(self,dataframe):
         self.df = dataframe
+        self.overview = {}
         self.info = {}
         self.peak_amp, self.peak_pha = [], []
         self.sliced_freq = []
@@ -1040,6 +1041,7 @@ class CavitySearch:
         
     
     def make_amp_uph_from_IQ(self):
+        self.overview = {'Frequency':array(self.df['Frequency']),'Amplitude':array(self.df['Amplitude']),'UPhase':array(self.df['UPhase'])}
         df = self.df[self.df['Frequency'].between(4,8)]
         freq = array(df['Frequency'])
         I = array(df['I'])
@@ -1264,10 +1266,10 @@ class QubitFreq_Scan:
     def give_result(self):
         farest = freq2idx(self.target_freq,self.freq)[:3]
         self.plot_items = {
-            'Targets':self.sub[farest],
-            'Targets_Freq':self.freq[farest],
+            'Targets_value':array(self.sub[farest]),
+            'Targets_Freq':array(self.freq[farest]),
             'Sub_Frequency':self.freq,
-            'Substrate':self.sub
+            'Substrate_value':self.sub
         }
         
 
@@ -1434,7 +1436,8 @@ class Quest_command:
 
 class AutoScan1Q:
     def __init__(self,sparam="S21,",dcsweepch = "1"):
-        self.jobid_dict = {"CavitySearch":0,"PowerDepend":0,"FluxDepend":0,"QubitSearch":0}
+        self.jobid_dict = {"PowerDepend":0,"FluxDepend":0,"QubitSearch":0}
+        self.CS_jobid = 0
         self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
@@ -1444,11 +1447,12 @@ class AutoScan1Q:
         # jobid = Quest_command(self.sparam).cavitysearch(self.dcsweepch)
         jobid = 5094
         print("do measurement\n")
-        self.jobid_dict["CavitySearch"] = jobid
+        self.CS_jobid = jobid
         dataframe = Load_From_pyqum(jobid).load()
         CS = CavitySearch(dataframe)
         self.cavity_list = CS.do_analysis() #model h5 cannot import <- 0818 update, no need it anymore
         self.CS_plot_items = CS.give_plot_info()
+        self.CS_overview = CS.overview    # ena scan results
         #self.cavity_list = {'7116.0 MHz': [7.102, 7.128], '6334.0 MHz': [6.32, 6.346]}
         self.total_cavity_list = list(self.cavity_list.keys())
         self.readout_para = {i: {} for i in self.total_cavity_list}

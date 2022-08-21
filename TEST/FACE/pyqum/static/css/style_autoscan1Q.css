@@ -177,7 +177,7 @@ input[id='jobID-CS']:hover,input[id='designed-number']:hover {
 .cavity-select-CS{
     position:absolute;
     top:32%;
-    right:20%;
+    right:22%;
     font-size: 1rem;
 }
 /*Cavity Search part*/
@@ -263,4 +263,10 @@ label[class='cavity-select-text'] {
 }
 .jobid-hand:hover {
     border: 0.2rem solid rgb(255, 0, 30);
+}
+.xypower-select-text{
+    font-size: 1rem;
+    position:absolute;
+    top:42.5%;
+    right:22%;
 }

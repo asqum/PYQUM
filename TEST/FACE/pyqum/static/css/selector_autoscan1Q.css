@@ -32,3 +32,20 @@
     color:rgb(255, 0, 30);
     border: 0.2rem solid rgb(255, 0, 0);
 }
+#power-select-CW{
+    position: absolute;
+    top:48%;
+    right:21%;
+    border-radius: 1.125rem;
+    font-family: Arial;
+    background-color: rgba(4, 8, 87, 0.723);
+    color:white;
+    height:3.5%;
+    width:28%;
+    font-size:1rem;
+}
+#power-select-CW:hover{
+    background-color: #fef992;
+    color:rgb(255, 0, 30);
+    border: 0.2rem solid rgb(255, 0, 0);
+}

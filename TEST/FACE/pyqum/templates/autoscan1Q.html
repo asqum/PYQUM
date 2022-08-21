@@ -1,10 +1,10 @@
 <html>
 
 <head>
-  <meta charset="utf-8">
-  <link rel="stylesheet" href="../static/css_autoscan1Q/buttom.css">
-  <link rel="stylesheet" href="../static/css_autoscan1Q/selector.css">
-  <link rel="stylesheet" href="../static/css_autoscan1Q/style.css">
+  <meta name="viewport" content="width=device-width,height=device-height, initial-scale=1.0">
+  <link rel="stylesheet" href="../static/css/buttom_autoscan1Q.css">
+  <link rel="stylesheet" href="../static/css/selector_autoscan1Q.css">
+  <link rel="stylesheet" href="../static/css/style_autoscan1Q.css">
   
   <script language="JavaScript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
@@ -47,8 +47,8 @@
       
       <div class="select-area">
         <input type="text" id="jobID-CS" placeholder="JOBID:">
-        <h3 class='cavity-select-CS'>Cavity Options</h3>
-        <select class="CS-selector"  id="cavity-select-CS"></select>
+        <h3 class='cavity-select-CS'>Cavity @</h3>
+        <select class="CS-selector"  id="cavity-select-CS" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="CS-search" value="0">Plot</button>
         <button type="button" class="button-run" id="looks-CS">Cavity</button>
         <button type="button" class="ShowPara-CS" id="sp-CS" value="0">Paras</button>
@@ -72,9 +72,9 @@
       <div class="content-title"><h2 id="PD">Power Dependence</h2></div>
 
       <div class="select-area">
-        <input type="text" class='jobid-hand' id="jobid-PD" placeholder="JOBID:">
-        <h3 class='cavity-select-text'>Cavity Options</h3>
-        <select class="PD-selector"  id="cavity-select-PD"></select>
+        <input type="text" class='jobid-hand' id="jobID-PD" placeholder="JOBID:">
+        <h3 class='cavity-select-text'>Cavity @</h3>
+        <select class="PD-selector"  id="cavity-select-PD" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="PD-search" value="0">Show</button>
         <button type="button" class="ShowPara-PD" id="sp-PD" value="0">Paras</button>
       </div>
@@ -97,9 +97,9 @@
       <div class="content-title"><h2 id="FD">Flux Dependence</h2></div>
 
       <div class="select-area">
-        <input type="text" class='jobid-hand' id="jobid-FD" placeholder="JOBID:">
-        <h3 class='cavity-select-text'>Cavity Options</h3>
-        <select class="FD-selector"  id="cavity-select-FD"></select>
+        <input type="text" class='jobid-hand' id="jobID-FD" placeholder="JOBID:">
+        <h3 class='cavity-select-text'>Cavity @</h3>
+        <select class="FD-selector"  id="cavity-select-FD" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="FD-search" value="0">Show</button>
         <button type="button" class="ShowPara-FD" id="sp-FD" value="0">Paras</button>
       </div>
@@ -123,9 +123,11 @@
       <div class="content-title"><h2>CWsweep</h2></div>
       
       <div class="select-area">
-        <h3 class='cavity-select-text'>Cavity Options</h3>
-        <input type="text" class='jobid-hand' id="jobid-CW" placeholder="JOBID:">
-        <select class="CW-selector"  id="cavity-select-CW"></select>
+        <h3 class='cavity-select-text'>Cavity @</h3>
+        <input type="text" class='jobid-hand' id="jobID-CW" placeholder="JOBID:">
+        <select class="CW-selector"  id="cavity-select-CW" aria-label="label for the select"></select>
+        <h3 class='xypower-select-text'>XY-Power @</h3>
+        <select class="xy-power-selector" id="power-select-CW" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="CW-search" value="0">Show</button>
         <button type="button" class="ShowPara-CW" id="sp-CW" value="0">Paras</button>
       </div>
