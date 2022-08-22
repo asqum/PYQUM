@@ -865,6 +865,33 @@ function xypowa_options_generator(mode){
 
 //---------------------------------------------------------------------------mission complete
 
+// 顯示目前量測參數
+function showparas(where){
+    let paranum = document.getElementById('sp-CW').value;
+    if(paranum=='1'){
+        document.getElementById('Freqrange-'+where).innerHTML = '';
+        document.getElementById('Powrange-CW').innerHTML = '';
+        document.getElementById('Fluxrange-CW').innerHTML = '';
+        document.getElementById('IFBW-CW').innerHTML = '';
+        document.getElementById('XYFreqrange-CW').innerHTML = '';
+        document.getElementById('XYPowrange-CW').innerHTML = '';
+        document.getElementById('Repeattime-CW').innerHTML = '';
+        document.getElementById('sp-CW').setAttribute('value','0');
+    }else{
+        //Show parameters
+        document.getElementById('Freqrange-CW').innerHTML = '•Frequence : '+ document.getElementById('cavity-select-CW').value.slice(3);
+        document.getElementById('Powrange-CW').innerHTML = '•Power : -20 dBm';
+        document.getElementById('Fluxrange-CW').innerHTML = '•Flux : -65 µA';
+        document.getElementById('IFBW-CW').innerHTML = '•IF Bandwidth : 200';
+        document.getElementById('XYFreqrange-CW').innerHTML = '•XY-Frequency Range : 0 ~ 9 GHz';
+        document.getElementById('XYPowrange-CW').innerHTML = '•XY-Power : -20 dBm';
+        document.getElementById('Repeattime-CW').innerHTML = '•Repeat times : 10';
+        document.getElementById('sp-CW').setAttribute('value','1');
+    };
+};
+
+
+
 // developing... show measurement parameters
 function show_paras(where){
     console.log("Access measurement parameters...")
