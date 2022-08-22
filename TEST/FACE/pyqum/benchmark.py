@@ -1149,6 +1149,7 @@ class CavitySearch:
 
 class PowerDepend:
     def __init__(self, dataframe):
+        self.dataframe = dataframe
         self.data = loadmat_valid(dataframe)
     def do_analysis(self):
         model = KMeans(n_clusters=2, n_init=1, random_state=0)
@@ -1162,7 +1163,18 @@ class PowerDepend:
         self.low_power = min(self.data[:, 0][power_0],self.data[:, 0][power_1])
         self.high_power = max(self.data[:, 0][power_0],self.data[:, 0][power_1])
         return self.low_power, self.high_power
-        
+    def give_plot_info(self):
+        plot_items  = {
+			'Frequency':array(self.dataframe['Frequency']),
+			'Power':array(self.dataframe['Power']),
+			'Amplitude':array(self.dataframe['Amp'])
+		}
+        plot_scatter = {
+			'Power':array(self.data[:, 0]),
+			'Fr':array(self.data[:, 1])
+		}
+        return plot_items,plot_scatter
+
 class FluxDepend:
     def __init__(self, dataframe):
         self.dataframe = dataframe
@@ -1197,7 +1209,18 @@ class FluxDepend:
     #         plt.legend()
     #         plt.show()
         return {"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
-    
+    def give_plot_info(self):
+        plot_items = {
+			'Frequency':array(self.datafrme['Frequency']),
+			'Flux':array(self.datafrme['Flux-Bias']),
+			'Amplitude':array(self.datafrme['Amp'])
+		}
+        plot_scatter = {
+			'Flux':array(self.valid['flux']),
+			'Fr':array(self.valid['fr'])
+		}
+        return plot_items,plot_scatter
+
 class QubitFreq_Scan:
     def __init__(self,dataframe):#,Ec,status,area_Maxratio,density
         self.dataframe = dataframe
@@ -1470,12 +1493,13 @@ class AutoScan1Q:
             plot_ornot = 1
         self.jobid_dict["PowerDepend"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.low_power, self.high_power = PowerDepend(dataframe).do_analysis() #pass
+        PD = PowerDepend(dataframe)
+        self.low_power, self.high_power = PD.do_analysis() #pass
         print("Select Power : %f"%self.low_power)
         self.readout_para[cavity_freq]["low_power"] = self.low_power
         self.readout_para[cavity_freq]["high_power"] = self.high_power
         if plot_ornot:
-            self.PD_plot_items = PowerDepend(dataframe).get_plot_items()    # assume the function named `get_plot_items()`
+            self.PD_plot_items,self.PD_plot_scatter = PD.give_plot_info()    # assume the function named `get_plot_items()`
 
 
     def fluxdepend(self,cavity_freq, f_bare,jobid):
@@ -1486,13 +1510,14 @@ class AutoScan1Q:
             plot_ornot = 1
         self.jobid_dict["FluxDepend"] = jobid
         dataframe = Load_From_pyqum(jobid).load()
-        self.wave = FluxDepend(dataframe).do_analysis(f_bare) #pass
+        FD = FluxDepend(dataframe)
+        self.wave = FD.do_analysis(f_bare) #pass
         print(self.wave)#{"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
         self.readout_para[cavity_freq]["f_bare"] = self.wave["f_bare"]
         self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
         self.readout_para[cavity_freq]["offset"] = self.wave["offset"]
         if plot_ornot:
-            self.FD_plot_items = FluxDepend(dataframe).get_plot_items()  # assume the function named `get_plot_items()`
+            self.FD_plot_items,self.FD_plot_scatter = FD.give_plot_info()  # assume the function named `get_plot_items()`
     
     def qubitsearch(self,cavity_freq,jobid):
         if jobid == "":
@@ -1505,7 +1530,7 @@ class AutoScan1Q:
         CW = QubitFreq_Compa(dataframe)
         self.qubit_info = CW.do_analysis() #examine the input data form is dataframe because Series cannot reshape 
         if plot_ornot:
-            self.CW_plot_items = CW.plot_items()
+            self.CW_plot_items = CW.plot_items
         print(self.qubit_info)                                     #0820 update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
 		# 0820 update
         self.readout_para[cavity_freq]["qubit"] = self.qubit_info['Fq_avg']
