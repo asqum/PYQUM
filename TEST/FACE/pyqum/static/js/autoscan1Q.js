@@ -58,14 +58,13 @@ function show_content(but_id,content_id){
 };
 
 //重置量測參數
-function reset_paras(){
-    document.getElementById('Freqrange').innerHTML = '';
-    document.getElementById('Powrange').innerHTML = '';
-    document.getElementById('Fluxrange').innerHTML = '';
-    document.getElementById('IFBW').innerHTML = '';
-    document.getElementById('XYFreqrange').innerHTML = '';
-    document.getElementById('XYPowrange').innerHTML = '';
-    document.getElementById('Repeattime').innerHTML = '';
+function reset_paras(where){
+    document.getElementById('Freqrange-'+where).innerHTML = '';
+    document.getElementById('Powrange-'+where).innerHTML = '';
+    document.getElementById('Fluxrange-'+where).innerHTML = '';
+    document.getElementById('IFBW-'+where).innerHTML = '';
+    document.getElementById('XYFreqrange-'+where).innerHTML = '';
+    document.getElementById('XYPowrange-'+where).innerHTML = '';
 };
 
 function reset_address(){
@@ -81,6 +80,7 @@ MS_process.addEventListener('click' , start_measure);
 var showcontent_MS = document.getElementById("showcontent-MS");
 showcontent_MS.addEventListener('click' , show_content_MS);
 //refresh all the html
+
 var refresh= document.getElementById("refresh");
 refresh.addEventListener('click' , reset_address);
 
@@ -114,49 +114,52 @@ function start_measure(){
     $.getJSON( '/autoscan1Q2js/measurement',{  
         dc_channel: JSON.stringify(dc_ch),
         inout_port: JSON.stringify(port), 
-
     }, function (datas) {   //need to check this is correct or not
         console.log( "Searching Finished " );
-        cavities = datas["CS"]['answer'];               // {'5487 MHz':[freq_start,freq_end],'~ MHz':[...],...}
-        cavities_plot = datas["CS"]['plot_items'];      // {'5487 MHz':{'Frequency':[...],'Amplitude':[...],'UPhase':[...]},'~ MHz':{...},...}
-        CS_overview = datas["CS"]['overview']           // {'Frequency':[...],'Amplitude':[],'UPhase':[]}
-        jobid['CavitySearch'] = datas["JOBID"]["CavitySearch"]
-        cavity_keys = Object.keys(cavities);  //['5487 MHz','~ MHz',...]
-        for (let i=0;i<cavity_keys.length;i++){
-            pd_powers[cavity_keys[i]] = datas["PD"][cavity_keys[i]]['power'] // a number
-            pd_array[cavity_keys[i]] = datas["PD"][cavity_keys[i]]['arrays'] // a dataframe
-
-            flux[cavity_keys[i]] = datas["FD"][cavity_keys[i]]['flux']   // a number
-            fd_array[cavity_keys[i]] = datas["FD"][cavity_keys[i]]['arrays']  // a dataframe
-
-            q_freq[cavity_keys[i]] = datas["CW"][cavity_keys[i]]['q_freq']   // a number
-            Ec[cavity_keys[i]] = datas["CW"][cavity_keys[i]]['Ec']      // a number or empty array
-            acStark[cavity_keys[i]] = datas["CW"][cavity_keys[i]]['acStark']  // array contains power or empty array
-            q_plot[cavity_keys[i]] = datas["CW"][cavity_keys[i]]['plot_items']  // {'xy_power':{'Targets_value':array([...]),'Targets_Freq':array([...]),'Sub_Frequency':array([...]),'Substrate_value':array([...])},'xy_power':{...},...}
-            
-            jobid[cavity_keys[i]] = datas["JOBID"][cavity_keys[i]] //  {'CavitySearch':5201,"5487 MHz":{"PowerDepend":1000,"FluxDepend":1001,"QubitSearch":1002},...}
-        };
-        
     });
     // ToSolve: How to show the results on the html?
-    console.log("Print out the results");
-    show_results();
 };
 
 
 
 function show_results(){
-    let resultsBycavity = {};
-    for(let i=0;i<cavity_keys.length;i++){
-        let target_cav = cavity_keys[i];  //'5487 MHz'...
-        resultsBycavity[target_cav] = ["Power: "+String(powers[target_cav])+" dBm","Flux: "+String(flux[target_cav])+" µA","Qubit @ "+String(Math.floor(Number(q_freq[target_cav])*1000))+" MHz","Ec: "+String(Math.floor(Number(Ec[target_cav])*1000))+" MHz","acStark(dBm): "+String(acStark[target_cav])];
-    };
+    let resultsBycavity = {}
+    $.getJSON( '/autoscan1Q2js/get_results',{  
+    }, function (results){             
+        let cavity_key = results['CS']['answer'];
+        for (let i=0;i<cavity_key.length;i++){   
+            resultsBycavity[cavity_key[i]] = {"PowerDepnd":results["PD"][cavity_key[i]],"FluxDepnd":resuts["FD"][cavity_key[i]],"QubitSearch":resuts["CW"][cavity_key[i]]};    
+        };
+    });
     document.getElementById('result').innerHTML = resultsBycavity;
 };
 
 function show_content_MS(){
     window.location.hash = "#MS-content";
 };
+
+//---------------------Search JOBID--------------------------
+
+var search_process = document.getElementById("search-jobid");
+search_process.addEventListener('click' , search_jobids);
+
+var CS_jobid = 0;
+var PD_jobids = {};
+var FD_jobids = {};
+var CW_jobids = {};
+
+
+function search_jobids(){
+    $.getJSON( '/autoscan1Q2js/get_jobid',{  
+    }, function (JOBIDs){
+        CS_jobid = JOBIDs['CavitySearch']
+        PD_jobids = JOBIDs['PowerDepend']
+        FD_jobids = JOBIDs['FluxDepend']
+        CW_jobids = JOBIDs['QubitSearch'] 
+    });
+    genopt (PD_jobids); 
+};
+
 
 //-----------------CavitySearch---------------------------
 // 畫出baseline
@@ -167,7 +170,7 @@ var cavities_CS = document.getElementById("looks-CS");
 cavities_CS.addEventListener('click' , show_cavities);
 // 顯示量測參數
 var showpara_CS = document.getElementById("sp-CS");
-showpara_CS.addEventListener('click' , showparas_CS);
+showpara_CS.addEventListener('click' , function(){show_paras("CS");});
 
 //顯示內文
 var showcontent_CS = document.getElementById("showcontent-CS");
@@ -190,22 +193,6 @@ function generate_options(id,data,cata){
         };
 };
 
-// 顯示目前量測參數
-function showparas_CS(){
-    let paranum = document.getElementById('sp-CS').value;
-    if(paranum=='1'){
-        document.getElementById('Freqrange-CS').innerHTML = '';
-        document.getElementById('Powrange-CS').innerHTML = '';
-        document.getElementById('IFBW-CS').innerHTML = '';
-        document.getElementById('sp-CS').setAttribute('value','0');
-    }else{
-        //Show parameters
-        document.getElementById('Freqrange-CS').innerHTML = '•Frequence Range : 0 ~ 5 GHz';
-        document.getElementById('Powrange-CS').innerHTML = '•Power : -20 dBm';
-        document.getElementById('IFBW-CS').innerHTML = '•IF Bandwidth : 200';
-        document.getElementById('sp-CS').setAttribute('value','1');
-    };
-};
 
 // after we have the cavities, generate the correspond options in the next steps which needs to select the cavity.
 function genopt (data) {
@@ -219,14 +206,16 @@ function genopt (data) {
             generate_options(selectors[i],data,catagories[i]);
         };
         const result = Object.keys(data);
-        document.getElementById('resultId-CS').innerHTML = 'Cavity @ (GHz): '+result;
+        document.getElementById('resultId-CS').innerHTML = 'Cavity @ : '+result;
     }else{
         alert("WARNING!!\nNo cavity is detected!");
     };   
 };
 
+
 // plot search result
 function plot1D_2y_CS ( data, axisKeys, plotId, modenum ){
+   
     let groupNumber = axisKeys.x.length;
     let color_list= []
     let tracies = [];
@@ -352,6 +341,8 @@ function plot1D_2y_CS ( data, axisKeys, plotId, modenum ){
     Plotly.newPlot(plotId, tracies, layout);
 };
 
+var CS_overview = {};
+var cavities_plot = {};
 // plot the result of whole cavity 
 function get_plot1D_CS(){
     let modenum = document.getElementById('dmbutton').value;  // get darkmode or not
@@ -361,8 +352,16 @@ function get_plot1D_CS(){
         x: [ ["Frequency"], ["Frequency"] ] ,
         y: [ ["Amplitude"],["UPhase"] ],
     };
+    let where = "CS";
+    $.getJSON( '/autoscan1Q2js/plot_result',{  
+        measurement_catagories : JSON.stringify(where),
+        specific_jobid : JSON.stringify(CS_jobid)
 
-    genopt (cavities);  
+    }, function (plot_items) {   //need to check this is correct or not
+        cavities_plot = plot_items['plot_items']
+        CS_overview = plot_items['overview']
+    });
+
     plot1D_2y_CS(CS_overview, ampPhaseKeys, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('CS-search').setAttribute('value','1');
@@ -377,9 +376,17 @@ function show_cavities(){
         x: [ ["Frequency"], ["Frequency"] ] ,
         y: [ ["Amplitude"],["UPhase"] ]
     };
-    let plot_dict = cavities_plot[cavity];      // plot_array = {'Frequency':[],'Amplitude':[],'UPhase':[]}
 
-    plot1D_2y_CS(plot_dict, ampPhaseKeys, "CavitySearch-result-plot",modenum);
+    let where = "CS";
+    $.getJSON( '/autoscan1Q2js/plot_result',{  
+        measurement_catagories:JSON.stringify(where),
+        specific_jobid : JSON.stringify(CS_jobid)
+    }, function (plot_items) {   //need to check this is correct or not
+        cavities_plot = plot_items['plot_items']
+        CS_overview = plot_items['overview']
+    });
+
+    plot1D_2y_CS(cavities_plot[cavity], ampPhaseKeys, "CavitySearch-result-plot", modenum);
     document.getElementById("CavitySearch-result-plot").style.display = "block";
     document.getElementById('CS-search').setAttribute('value','2');
 };
@@ -389,30 +396,12 @@ function show_cavities(){
 var fig_PD = document.getElementById("PD-search");
 fig_PD.addEventListener('click' , get_plot2D_PD);
 var showpara_PD = document.getElementById("sp-PD");
-showpara_PD.addEventListener('click' , showparas_PD);
+showpara_PD.addEventListener('click' , function(){show_paras("PD");});
 var showcontent_PD = document.getElementById("showcontent-PD");
-showcontent_PD.addEventListener('click' , function(){show_content("showcontent-PD","FD-content");});
+showcontent_PD.addEventListener('click' , function(){show_content("showcontent-PD","PD-content");});
 
 
-// 顯示目前量測參數
-function showparas_PD(){
-    let paranum = document.getElementById('sp-PD').value;
-    if(paranum=='1'){
-        //Show parameters
-        document.getElementById('Freqrange-PD').innerHTML = '';
-        document.getElementById('Powrange-PD').innerHTML = '';
-        document.getElementById('IFBW-PD').innerHTML = '';
-        document.getElementById('sp-PD').setAttribute('value','0');
-    }else{
-        //Show parameters
-        document.getElementById('Freqrange-PD').innerHTML = '•Frequence : '+ document.getElementById('cavity-select-PD').value.slice(3);
-        document.getElementById('Powrange-PD').innerHTML = '•Power : -20 ~ 20 dBm';
-        document.getElementById('IFBW-PD').innerHTML = '•IF Bandwidth : 200';
-        document.getElementById('sp-PD').setAttribute('value','1');
-    };
-};
-
-function plot2D_PD( data, axisKeys, plotId, modenum ) {
+function plot2D_PD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenum ) {
 
     let paper = ''
     let color_x = ''
@@ -449,6 +438,13 @@ function plot2D_PD( data, axisKeys, plotId, modenum ) {
                 font:{size:30,color:color_z}
             }
         },
+    };
+    var trace_scatter = { 
+        x: data_scatter[axisKeys_scatter.x], 
+        y: data_scatter[axisKeys_scatter.y],
+        mode:'markers',
+        name:"Fr",
+        line:{color:'#37A22F'}
     };
     var layout = {
         paper_bgcolor:paper,
@@ -476,18 +472,22 @@ function plot2D_PD( data, axisKeys, plotId, modenum ) {
             tickfont:{size:25},
             color: color_y
         },
-        showlegend: true,
+        yaxis2: {
+            
+        },
+        showlegend: false,
         hoverlabel:{font:{size:26}}
     };
-    var Trace = [trace]
+    var Trace = [trace,trace_scatter]
     Plotly.newPlot(plotId, Trace,layout);
 };
 
 
 
-
+var pd_plot = {};
 function get_plot2D_PD(){
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
+    let cavity = document.getElementById('cavity-select-PD').value.slice(3);
     const location_id = "PowerDep-result-plot";
     // check the column name of the dataframe
     let PDKeys = {
@@ -495,20 +495,23 @@ function get_plot2D_PD(){
         y: [ "Frequency" ],
         z: [ "Amplitude" ]
     };
+    let PDKeys_scatter = {
+        x: [ "Power" ] ,
+        y: [ "Fr" ],
+    }
+
+    let where = "PD";
+    $.getJSON( '/autoscan1Q2js/plot_result',{  
+        measurement_catagories:JSON.stringify(where),
+        specific_jobid : JSON.stringify(PD_jobids[cavity]),
+        target_cavity : JSON.stringify(cavity)
+    }, function (plot_items) {   //need to check this is correct or not
+        pd_plot = plot_items;
+    });
 
     //make up the quantification output
-    let option_num = document.getElementById('cavity-select-PD').length;
-    let cavity = document.getElementById('cavity-select-PD').value.slice(3);
 
-    let plot_array = {};
-    for(let i=0;i<option_num;i++){
-        let target = Object.keys(pd_array)[i];
-        if(Number(cavity)==Math.floor(Number(target)*1000)){
-            plot_array = pd_array[target];
-        };
-    };
-
-    plot2D_PD(plot_array, PDKeys, location_id,modenum);
+    plot2D_PD(pd_plot['3D_axis'], pd_plot['scatter'], PDKeys, PDKeys_scatter, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('PD-search').setAttribute('value','1');
 
@@ -519,32 +522,13 @@ function get_plot2D_PD(){
 var fig_FD = document.getElementById("FD-search");
 fig_FD.addEventListener('click' , get_plot2D_FD);
 var showpara_FD = document.getElementById("sp-FD");
-showpara_FD.addEventListener('click' , showparas_FD);
+showpara_FD.addEventListener('click' , function(){show_paras("FD");});
 var showcontent_FD = document.getElementById("showcontent-FD");
 showcontent_FD.addEventListener('click' , function(){show_content("showcontent-FD","FD-content");});
 
 
-// 顯示目前量測參數
-function showparas_FD(){
-    let paranum = document.getElementById('sp-FD').value;
-    if(paranum=='1'){
-        //Show parameters
-        document.getElementById('Freqrange-FD').innerHTML = '';
-        document.getElementById('Powrange-FD').innerHTML = '';
-        document.getElementById('IFBW-FD').innerHTML = '';
-        document.getElementById('Fluxrange-FD').innerHTML = '';
-        document.getElementById('sp-FD').setAttribute('value','0');
-    }else{
-        //Show parameters
-        document.getElementById('Freqrange-FD').innerHTML = '•Frequence : '+ document.getElementById('cavity-select-FD').value.slice(3);
-        document.getElementById('Powrange-FD').innerHTML = '•Power : -10 dBm';
-        document.getElementById('IFBW-FD').innerHTML = '•IF Bandwidth : 200';
-        document.getElementById('Fluxrange-FD').innerHTML = '•Flux: -300 ~ 300 µA';
-        document.getElementById('sp-FD').setAttribute('value','1');
-    };
-};
 
-function plot2D_FD( data, axisKeys, plotId, modenum ) {
+function plot2D_FD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenum ) {
 
     let paper = ''
     let color_x = ''
@@ -582,6 +566,13 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
             }
         },
     };
+    var trace_scatter = { 
+        x: data_scatter[axisKeys_scatter.x], 
+        y: data_scatter[axisKeys_scatter.y],
+        mode:'markers',
+        name:"Fr",
+        line:{color:'#37A22F'}
+    };
     var layout = {
         paper_bgcolor:paper,
         title:{
@@ -608,18 +599,20 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
             tickfont:{size:25},
             color: color_y
         },
-        showlegend: true,
+        yaxis2:{},
+        showlegend: false,
         hoverlabel:{font:{size:26}}
     };
-    var Trace = [trace]
+    var Trace = [trace,trace_scatter]
     Plotly.newPlot(plotId, Trace,layout);
 };
 
 
 
-
+var fd_plot = {};
 function get_plot2D_FD(){
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
+    let cavity = document.getElementById('cavity-select-FD').value.slice(3);
     const location_id = "FluxDep-result-plot";
     
     let FDKeys = {
@@ -627,19 +620,20 @@ function get_plot2D_FD(){
         y: [ "Frequency" ],
         z: [ "Amplitude" ]
     };
-
-    //make up the quantification output
-    let cavity = document.getElementById('cavity-select-FD').value.slice(3);
-    let option_num = document.getElementById('cavity-select-FD').length;
-
-    let plot_array = {};
-    for(let i=0;i<option_num;i++){
-        let target = Object.keys(fd_array)[i];
-        if(Number(cavity)==Math.floor(Number(target)*1000)){
-            plot_array = fd_array[target];
-        };
+    let FDKeys_scatter = {
+        x: [ "Flux" ] ,
+        y: [ "Fr" ],
     };
-    plot2D_FD(plot_array, FDKeys, location_id,modenum);
+    let where = "PD";
+    $.getJSON( '/autoscan1Q2js/plot_result',{  
+        measurement_catagories:JSON.stringify(where),
+        specific_jobid : JSON.stringify(FD_jobids[cavity]),
+        target_cavity : JSON.stringify(cavity)
+    }, function (plot_items) {   //need to check this is correct or not
+        fd_plot = plot_items;
+    });
+    
+    plot2D_FD(fd_plot['3D_axis'], fd_plot['scatter'], FDKeys, FDKeys_scatter, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('FD-search').setAttribute('value','1');
 
@@ -650,7 +644,7 @@ function get_plot2D_FD(){
 var fig_cw = document.getElementById("CW-search");
 fig_cw.addEventListener('click' , get_plot1D_CW);
 var showpara_CW = document.getElementById("sp-CW");
-showpara_CW.addEventListener('click' , showparas_CW);
+showpara_CW.addEventListener('click' , function(){show_paras("CW");});
 //顯示內文
 var showcontent_CW = document.getElementById("showcontent-CW");
 showcontent_CW.addEventListener('click' , function(){show_content("showcontent-CW","CW-content");});
@@ -661,31 +655,6 @@ showcontent_CW.addEventListener('click' , function(){xypowa_options_generator(mo
 var xypower_switcher = document.getElementById("cavity-select-CW");
 xypower_switcher.addEventListener('change' , function(){xypowa_options_generator(mode='switch');});
 
-
-// 顯示目前量測參數
-function showparas_CW(){
-    let paranum = document.getElementById('sp-CW').value;
-    if(paranum=='1'){
-        document.getElementById('Freqrange-CW').innerHTML = '';
-        document.getElementById('Powrange-CW').innerHTML = '';
-        document.getElementById('Fluxrange-CW').innerHTML = '';
-        document.getElementById('IFBW-CW').innerHTML = '';
-        document.getElementById('XYFreqrange-CW').innerHTML = '';
-        document.getElementById('XYPowrange-CW').innerHTML = '';
-        document.getElementById('Repeattime-CW').innerHTML = '';
-        document.getElementById('sp-CW').setAttribute('value','0');
-    }else{
-        //Show parameters
-        document.getElementById('Freqrange-CW').innerHTML = '•Frequence : '+ document.getElementById('cavity-select-CW').value.slice(3);
-        document.getElementById('Powrange-CW').innerHTML = '•Power : -20 dBm';
-        document.getElementById('Fluxrange-CW').innerHTML = '•Flux : -65 µA';
-        document.getElementById('IFBW-CW').innerHTML = '•IF Bandwidth : 200';
-        document.getElementById('XYFreqrange-CW').innerHTML = '•XY-Frequency Range : 0 ~ 9 GHz';
-        document.getElementById('XYPowrange-CW').innerHTML = '•XY-Power : -20 dBm';
-        document.getElementById('Repeattime-CW').innerHTML = '•Repeat times : 10';
-        document.getElementById('sp-CW').setAttribute('value','1');
-    };
-};
 
 function plot1D_2y_CW ( data, axisKeys, plotId, modenum ){
     let groupNumber = axisKeys.x.length;
@@ -814,22 +783,29 @@ function plot1D_2y_CW ( data, axisKeys, plotId, modenum ){
     Plotly.newPlot(plotId, tracies, layout);
 };
 
+var q_plot = {};
 function get_plot1D_CW(){
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
     const location_id = "CWsweep-result-plot";
-    
+    let cavity = document.getElementById('cavity-select-CW').value.slice(3)
+    let xy_powa = document.getElementById('power-select-CW').value.slice(8)
+
     let CWKeys = {
         x: [ ["Sub_Frequency"], ["Targets_Freq"] ] ,
         y: [ ["Substrate_value"],["Targets_value"] ]
     };
 
-    //make up the quantification output
-    let cavity = document.getElementById('cavity-select-CW').value.slice(3)
-    let xy_powa = document.getElementById('power-select-CW').value.slice(8)
+    let where = "CW";
+    $.getJSON( '/autoscan1Q2js/plot_result',{  
+        measurement_catagories:JSON.stringify(where),
+        specific_jobid : JSON.stringify(CW_jobids[cavity]),
+        target_cavity : JSON.stringify(cavity)
 
-    let plot_array = q_array[cavity][xy_powa];
+    }, function (plot_items) {   //need to check this is correct or not
+        q_plot = plot_items;
+    });
 
-    plot1D_2y_CW(plot_array, CWKeys, location_id,modenum);
+    plot1D_2y_CW(q_plot[xy_powa], CWKeys, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('CW-search').setAttribute('value','1');
 
@@ -839,9 +815,21 @@ function xypowa_options_generator(mode){
     
     // get the selector in the body
     let xyPowaSelect = document.getElementById('power-select-CW'); 
-    let target_cavity = document.getElementById('cavity-select-CW').value.slice(3);
-    let result_keys =  Object.keys(q_plot[target_cavity])
-    const opt_num = Object.keys(q_plot[target_cavity]).length
+    let cavity = document.getElementById('cavity-select-CW').value.slice(3);
+    let xy_options = {}
+
+
+    let where = "CW";
+    $.getJSON( '/autoscan1Q2js/plot_result',{  
+        measurement_catagories:JSON.stringify(where),
+        specific_jobid : JSON.stringify(CW_jobids[cavity]),
+        target_cavity : JSON.stringify(cavity)
+
+    }, function (plot_items) {   //need to check this is correct or not
+        xy_options = Object.keys(plot_items);
+    });
+
+    const opt_num = xy_options.length
     if (mode=='initialize'){
         for(let ipt=0; ipt<opt_num; ipt++){
             let option = document.createElement("option");
@@ -865,28 +853,33 @@ function xypowa_options_generator(mode){
 
 //---------------------------------------------------------------------------mission complete
 
+
+
+
+
+
+
+
 // 顯示目前量測參數
-function showparas(where){
-    let paranum = document.getElementById('sp-CW').value;
+function paras_layout(where,paras_dict){
+    let paranum = document.getElementById('sp-'+where).value;
+    if(where != 'CW'){
+        paras_dict['XY-Frequency'] = "OPT"
+        paras_dict['XY-Power'] = "OPT"
+    };
+
     if(paranum=='1'){
-        document.getElementById('Freqrange-'+where).innerHTML = '';
-        document.getElementById('Powrange-CW').innerHTML = '';
-        document.getElementById('Fluxrange-CW').innerHTML = '';
-        document.getElementById('IFBW-CW').innerHTML = '';
-        document.getElementById('XYFreqrange-CW').innerHTML = '';
-        document.getElementById('XYPowrange-CW').innerHTML = '';
-        document.getElementById('Repeattime-CW').innerHTML = '';
-        document.getElementById('sp-CW').setAttribute('value','0');
+        reset_paras(where);
+        document.getElementById('sp-'+where).setAttribute('value','0');
     }else{
         //Show parameters
-        document.getElementById('Freqrange-CW').innerHTML = '•Frequence : '+ document.getElementById('cavity-select-CW').value.slice(3);
-        document.getElementById('Powrange-CW').innerHTML = '•Power : -20 dBm';
-        document.getElementById('Fluxrange-CW').innerHTML = '•Flux : -65 µA';
-        document.getElementById('IFBW-CW').innerHTML = '•IF Bandwidth : 200';
-        document.getElementById('XYFreqrange-CW').innerHTML = '•XY-Frequency Range : 0 ~ 9 GHz';
-        document.getElementById('XYPowrange-CW').innerHTML = '•XY-Power : -20 dBm';
-        document.getElementById('Repeattime-CW').innerHTML = '•Repeat times : 10';
-        document.getElementById('sp-CW').setAttribute('value','1');
+        document.getElementById('Freqrange-'+where).innerHTML = '•Frequence : '+ document.getElementById('cavity-select-'+where).value.slice(3);
+        document.getElementById('Powrange-'+where).innerHTML = '•Power : '+ String(paras_dict['Power'])+' dBm';
+        document.getElementById('Fluxrange-'+where).innerHTML = '•Flux : '+ String(paras_dict['Flux-Bias']);
+        document.getElementById('IFBW-'+where).innerHTML = '•IF Bandwidth : '+ String(paras_dict['IF-Bandwidth']);
+        document.getElementById('XYFreqrange-'+where).innerHTML = '•XY-Frequency Range : '+ String(paras_dict['XY-Frequency']);
+        document.getElementById('XYPowrange-'+where).innerHTML = '•XY-Power : '+ String(paras_dict['XY-Power'])+' dBm';
+        document.getElementById('sp-'+where).setAttribute('value','1');
     };
 };
 
@@ -895,60 +888,31 @@ function showparas(where){
 // developing... show measurement parameters
 function show_paras(where){
     console.log("Access measurement parameters...")
-    let request_id = ""
     let step_key = ''
     let cavity_key = ''
-    let xypowa_key = ''
+    let request_jobid = ''
     if(where == 'CS'){
         step_key = 'CavitySearch'
-        let specified_jobid = document.getElementById('jobID-CS').value
-        if(specified_jobid!=""){
-            request_jobid = specified_jobid;
-        }else{
-            request_jobid = String(jobid[step_key]);
-        };
+        request_jobid = String(CS_jobid);
+
     }else if(where == 'PD'){
         step_key = 'PowerDepend'
         cavity_key = document.getElementById('cavity-select-PD').value.slice(3)
-        let specified_jobid = document.getElementById('jobID-PD').value
-        if(specified_jobid!=""){
-            request_jobid = specified_jobid;
-        }else{
-            request_jobid = String(jobid[step_key][cavity_key]);
-        };
+        request_jobid = String(PD_jobids[cavity_key]);
+        
     }else if(where == 'FD'){
         step_key = 'FluxDepend'
         cavity_key = document.getElementById('cavity-select-FD').value.slice(3)
-        let specified_jobid = document.getElementById('jobID-FD').value
-        if(specified_jobid!=""){
-            request_jobid = specified_jobid;
-        }else{
-            request_jobid = String(jobid[step_key][cavity_key]);
-        };
+        request_jobid = String(FD_jobids[cavity_key]);
     }else{
         step_key = 'QubitSearch'
         cavity_key = document.getElementById('cavity-select-CW').value.slice(3)
-        xypowa_key = document.getElementById('power-select-CW').value.slice(8) 
-        let specified_jobid = document.getElementById('jobID-CW').value
-        if(specified_jobid!=""){
-            request_jobid = specified_jobid;
-        }else{
-            request_jobid = String(jobid[step_key][cavity_key]);
-        };
+        request_jobid = String(CW_jobids[cavity_key]);
     };
-
 
     $.getJSON( '/autoscan1Q2js/measurement_paras',{  
         this_jobid: JSON.stringify(request_id),
     }, function (paras){
-        if(where == 'CS'){
-            showparas_CS();
-        }else if(where == 'PD'){
-            showparas_PD();
-        }else if(where == 'FD'){
-            showparas_FD();
-        }else{
-            showparas_CW();
-        };
+        paras_layout(where,paras)
     });
 };

@@ -1,5 +1,6 @@
 from benchmark import AutoScan1Q
-from flask import Blueprint, request
+from flask import Blueprint, request, session
+from pyqum.instrument.logger import  get_status
 from sqlite3 import connect
 from pandas import read_sql_query
 import json
@@ -9,7 +10,7 @@ from colorama import init, Fore, Back, Style
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 bp = Blueprint(myname, __name__, url_prefix='/autoscan1Q2js')
-
+sql_path = ''
 ## Common function
 class NumpyEncoder(json.JSONEncoder):
 	def default(self, obj):
@@ -32,7 +33,7 @@ def auto_measurement():  # measurement do not plot
     routine = AutoScan1Q(sparam=port,dcsweepch = dc_ch)
     print("CavitySearch start:\n")
     routine.cavitysearch(jobid="")
-    CS = {'answer':routine.cavity_list}  #{'5487 MHz':{'Frequency':[...],'Amplitude':[...],'UPhase':[...]},'~ MHz':{...},...}
+    CS = {'answer':routine.total_cavity_list}  #['5487 MHz',...]
     PD, FD, CW = {}, {}, {}
     JOBIDs = {'CavitySearch':routine.CS_jobid,'PowerDepend':{},'FluxDepend':{},'QubitSearch':{}}
     for i in routine.total_cavity_list:
@@ -55,33 +56,53 @@ def auto_measurement():  # measurement do not plot
     #jobid = {'CavitySearch':2051,'5487 MHz':{"PowerDepend":1000,"FluxDepend":1001,"QubitSearch":1002},...}
     print("Measurement Finish")
     measure_result = {"CS":CS,"PD":PD,"FD":FD,"CW":CW}   #<- this will be saved in sql and show in sameple description
-
+    specifications  = {"result": measure_result,"JOBID":JOBIDs}
+    db = connect(sql_path)
+    samplename = get_status("MSSN")[session['user_name']]['sample']
+    # samplename = "2QAS-19-3"
+    db.execute('UPDATE sample SET specifications = ? WHERE samplename = ?', (specifications,samplename))
+    db.commit()
+    db.close()
     #return json.dumps(measure_result, cls=NumpyEncoder)
 
 # developing.... try to put the paras in dictionary with corresponding key
 @bp.route('/measurement_paras',methods=['POST','GET'])
 def get_paras():
     id = json.loads(request.args.get('this_jobid'))
-
-    path='pyqum.sqlite'
-    connection = connect(path)
+    connection = connect(sql_path)
     job = read_sql_query("SELECT*FROM job",connection)
-    paras = job[job['id']==id]['parameter'].iloc[0]    # <- this is a dictionary with F-response: {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
+    paras = job[job['id']==int(id)]['parameter'].iloc[0]    # <- this is a dictionary with F-response: {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
     return json.dumps(paras, cls=NumpyEncoder)                                 # with CWsweep: {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
 
 # get the specific jobid in the sample description
 # set a search button for jobid
+# the position in sql is unknown
 @bp.route('/get_jobid',methods=['POST','GET'])
 def get_jobid():
-    JOBIDs = json.loads(request.args.get('jobid_dict'))
-    return json.dumps(JOBIDs, cls=NumpyEncoder)     # contains {'CavitySearch':2051,'PowerDepend':{'5487 MHz':2052,...},'FluxDepend':{'5487 MHz':2053,...},'QubitSearch':{'5487 MHz':2054,...}}
+    connection = connect(sql_path)
+    sample = read_sql_query("SELECT * FROM sample", connection)
+    samplename = get_status("MSSN")[session['user_name']]['sample']
+    # samplename = "2QAS-19-3"
+    specifications = sample[sample['samplename']==samplename]['specifications'].iloc[0]
 
+
+    return json.dumps(specifications["JOBID"], cls=NumpyEncoder)     # contains {'CavitySearch':2051,'PowerDepend':{'5487 MHz':2052,...},'FluxDepend':{'5487 MHz':2053,...},'QubitSearch':{'5487 MHz':2054,...}}
+
+
+@bp.route('/get_results',methods=['POST','GET'])
+def get_results():
+    connection = connect(sql_path)
+    sample = read_sql_query("SELECT * FROM sample", connection)
+    samplename = get_status("MSSN")[session['user_name']]['sample']
+    # samplename = "2QAS-19-3"
+    specifications = sample[sample['samplename']==samplename]['specifications'].iloc[0]
+
+    return json.dumps(specifications["result"], cls=NumpyEncoder)     
 
 # not for measurement but for plot with a specific jobid
 @bp.route('/plot_result',methods=['POST','GET'])
 def plot_after_jobid():
-    specific_id = json.loads(request.args.get('specific_jobid'))
-    cavity = json.loads(request.args.get('target_cavity'))
+    specific_id = int(json.loads(request.args.get('specific_jobid')))
     where_plot = json.loads(request.args.get('measurement_catagories'))
     PD, FD, CW = {}, {}, {}
     print("Construct plot items:\n")
@@ -91,42 +112,32 @@ def plot_after_jobid():
         print("CavitySearch start:\n")
         routine.cavitysearch(jobid=specific_id)
         CS = {'plot_items':routine.CS_plot_items,'overview':routine.CS_overview}  #{'5487 MHz':{'Frequency':[...],'Amplitude':[...],'UPhase':[...]},'~ MHz':{...},...}
-        
+                                                                                  #{'Frequency':[...],'Amplitude':[...],'UPhase':[...]}
         print("Construction Finish")
         return json.dumps(CS, cls=NumpyEncoder)
     elif where_plot == "PD":
-        print("CavitySearch start:\n")
-        routine.cavitysearch(jobid=specific_id)
+        cavity = json.loads(request.args.get('target_cavity'))
         print("PowerDependent start:\n")
         routine.powerdepend(cavity,jobid=specific_id)
         f_bare = float(cavity.split(" ")[0])
-        PD[cavity]={routine.PD_plot_items} #need to check
+        PD[cavity] = routine.PD_plot_items   # {"3D_axis":{"Frequency":[],"Power":[],"Amplitude":[]},"scatter":{'Power':[],'Fr':[]}}
 
         print("Construction Finish")
         return json.dumps(PD, cls=NumpyEncoder)
     elif where_plot == "FD":
-        print("CavitySearch start:\n")
-        routine.cavitysearch(jobid=specific_id)
-        print("PowerDependent start:\n")
-        routine.powerdepend(cavity,jobid=specific_id)
+        cavity = json.loads(request.args.get('target_cavity'))
         f_bare = float(cavity.split(" ")[0])
         print("FluxDependent start:\n")
         routine.fluxdepend(cavity,f_bare,jobid=specific_id)
-        FD[cavity] = routine.FD_plot_items  #need to check
+        FD[cavity] = routine.FD_plot_items       # {"3D_axis":{"Frequency":[],"Flux":[],"Amplitude":[]},"scatter":{'Flux':[],'Fr':[]}}
 
         print("Construction Finish")
         return json.dumps(FD, cls=NumpyEncoder)
     else:
-        print("CavitySearch start:\n")
-        routine.cavitysearch(jobid=specific_id)
-        print("PowerDependent start:\n")
-        routine.powerdepend(cavity,jobid=specific_id)
-        f_bare = float(cavity.split(" ")[0])
-        print("FluxDependent start:\n")
-        routine.fluxdepend(cavity,f_bare,jobid=specific_id)
-        print("CWsweep start:\n")
+        cavity = json.loads(request.args.get('target_cavity'))
+        print("QubitSearch start:\n")
         routine.qubitsearch(cavity,jobid=specific_id)
-        CW[cavity] = routine.CW_plot_items
+        CW[cavity] = routine.CW_plot_items      #{'xy_power1':{'Targets_value':[],'Targets_Freq':[],'Sub_Frequency':[],'Substrate_value':[]},'xy_power2':{...},...}
 
         print("Construction Finish")
         return json.dumps(CW, cls=NumpyEncoder)

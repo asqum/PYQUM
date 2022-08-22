@@ -13,7 +13,7 @@
     font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
     font-size: 1rem;
     width:6%;
-    height:8%;
+    height:5%;
     position:fixed;
     top:1.7%;
     right:1%;
@@ -250,11 +250,11 @@
 #showcontent-MS{
     background-color: transparent;
     color:rgb(0,0,0);
-    position:relative;
-    top:25%;
-    right:-93%;
-    width:5%;
-    height:60%;
+    position:fixed;
+    top:1.7%;
+    right:7.5%;
+    width:3%;
+    height:11%;
     border-radius: 1rem;
     z-index: 10;
     font-size:1rem ;
@@ -266,7 +266,7 @@
     color:rgb(0,0,0);
     position:relative;
     top:25%;
-    right:-82%;
+    right:-93%;
     width:5%;
     height:60%;
     border-radius: 1rem;
@@ -279,7 +279,7 @@
     color:rgb(0,0,0);
     position:relative;
     top:25%;
-    right:-71%;
+    right:-82%;
     width:5%;
     height:60%;
     border-radius: 1rem;
@@ -292,7 +292,7 @@
     color:rgb(0,0,0);
     position:relative;
     top:25%;
-    right:-60%;
+    right:-71%;
     width:5%;
     height:60%;
     border-radius: 1rem;
@@ -305,7 +305,7 @@
     color:rgb(0,0,0);
     position:relative;
     top:25%;
-    right:-49%;
+    right:-60%;
     width:5%;
     height:60%;
     border-radius: 1rem;
@@ -313,23 +313,39 @@
     font-size:1rem ;
     border: 0.2rem solid rgb(79, 70, 70);
 }
-#showcontent-MS:hover,#showcontent-PD:hover,#showcontent-FD:hover,#showcontent-CS:hover,#showcontent-CW:hover  {
+#search-jobid{
+    background-color:transparent;
+    color:rgb(0,0,0);
+    position:fixed;
+    top:8%;
+    right:1%;
+    width:6%;
+    height:5%;
+    border-radius: 1rem;
+    z-index: 10;
+    font-size:1rem ;
+    border: 0.2rem solid rgb(79, 70, 70);
+}
+#showcontent-MS:hover,#showcontent-PD:hover,#showcontent-FD:hover,#showcontent-CS:hover,#showcontent-CW:hover,#search-jobid:hover  {
     color:rgb(255, 0, 30);
     border: 0.2rem solid rgb(255, 0, 0);
     box-shadow: rgba(255, 255, 255, 0.918) 0 0.25rem 0.25rem inset;
 }
-#showcontent-MS:active,#showcontent-PD:active,#showcontent-FD:active,#showcontent-CW:active,#showcontent-CS:active {
+#showcontent-MS:active,#showcontent-PD:active,#showcontent-FD:active,#showcontent-CW:active,#showcontent-CS:active,#search-jobid:active {
     border: 0.2rem solid rgb(178, 247, 82);
 }
+
 #refresh{
     background-color: transparent;
     position:fixed;
-    top:1.7%;
-    right:8%;
+    bottom:0.1%;
+    left:1%;
     z-index: 10;
     font-size:3rem ;
     border: 0.2rem solid transparent;
     border-radius: 1rem;
+    height: -3%;
+    width:-3%;
 
 }
 #refresh:hover  {

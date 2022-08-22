@@ -46,7 +46,7 @@ body {
 }
 .select-area{
     position:relative;
-    top:10%;
+    top:5%;
     left:73%;
     width:25%;
     height:100%;
@@ -131,8 +131,8 @@ body {
 }
 .sectitle{
     position:relative;
-    top:23%;
-    left:40%;
+    top:18%;
+    left:37%;
     font-size:1.4rem;
     width:40%;
     height:10%;

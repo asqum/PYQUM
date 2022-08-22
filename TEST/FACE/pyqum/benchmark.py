@@ -1173,7 +1173,7 @@ class PowerDepend:
 			'Power':array(self.data[:, 0]),
 			'Fr':array(self.data[:, 1])
 		}
-        return plot_items,plot_scatter
+        return {'3D_axis':plot_items,'scatter':plot_scatter}
 
 class FluxDepend:
     def __init__(self, dataframe):
@@ -1219,7 +1219,7 @@ class FluxDepend:
 			'Flux':array(self.valid['flux']),
 			'Fr':array(self.valid['fr'])
 		}
-        return plot_items,plot_scatter
+        return {'3D_axis':plot_items,'scatter':plot_scatter}
 
 class QubitFreq_Scan:
     def __init__(self,dataframe):#,Ec,status,area_Maxratio,density
@@ -1499,7 +1499,7 @@ class AutoScan1Q:
         self.readout_para[cavity_freq]["low_power"] = self.low_power
         self.readout_para[cavity_freq]["high_power"] = self.high_power
         if plot_ornot:
-            self.PD_plot_items,self.PD_plot_scatter = PD.give_plot_info()    # assume the function named `get_plot_items()`
+            self.PD_plot_items = PD.give_plot_info()    # assume the function named `get_plot_items()`
 
 
     def fluxdepend(self,cavity_freq, f_bare,jobid):
@@ -1517,7 +1517,7 @@ class AutoScan1Q:
         self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
         self.readout_para[cavity_freq]["offset"] = self.wave["offset"]
         if plot_ornot:
-            self.FD_plot_items,self.FD_plot_scatter = FD.give_plot_info()  # assume the function named `get_plot_items()`
+            self.FD_plot_items = FD.give_plot_info()  # assume the function named `get_plot_items()`
     
     def qubitsearch(self,cavity_freq,jobid):
         if jobid == "":

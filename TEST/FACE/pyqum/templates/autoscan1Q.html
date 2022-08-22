@@ -13,11 +13,12 @@
   <h1 class="title">SingleQubit Automated Measurement Report</h1>
   <button class='refresh-button' id="refresh">🔄</button>
   <button id="dmbutton" class="button-d" value="0">Dark</button>
-  <button class='content-button' id="showcontent-MS" value="0">Sets</button>
+  <button class='content-button' id="showcontent-MS" value="0">Set</button>
   <button class='content-button' id="showcontent-CS" value="0">Cavity</button>
   <button class='content-button' id="showcontent-PD" value="0">Power</button>
   <button class='content-button' id="showcontent-FD" value="0">Flux</button>
   <button class='content-button' id="showcontent-CW" value="0">2Tone</button>
+  <button class='content-button' id="search-jobid" value="0">JOBID</button>
   
 </header>
 
@@ -46,7 +47,6 @@
       <div class="content-title"><h2>Cavity Search</h2></div>
       
       <div class="select-area">
-        <input type="text" id="jobID-CS" placeholder="JOBID:">
         <h3 class='cavity-select-CS'>Cavity @</h3>
         <select class="CS-selector"  id="cavity-select-CS" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="CS-search" value="0">Plot</button>
@@ -62,7 +62,11 @@
       <div id="menu">
         <b><div class="paras" id="Freqrange-CS"></div></b>
         <b><div class="paras" id="Powrange-CS"></div></b>
+        <b><div class="paras" id="Fluxrange-CS"></div></b>
         <b><div class="paras" id="IFBW-CS"></div><br></b>
+        <b><div class="paras" id="XYFreqrange-CS"></div></b>
+        <b><div class="paras" id="XYPowrange-CS"></div></b>
+        <b><div class="paras" id="Repeattime-CS"></div></b>
       </div>
 
     </div>
@@ -72,7 +76,6 @@
       <div class="content-title"><h2 id="PD">Power Dependence</h2></div>
 
       <div class="select-area">
-        <input type="text" class='jobid-hand' id="jobID-PD" placeholder="JOBID:">
         <h3 class='cavity-select-text'>Cavity @</h3>
         <select class="PD-selector"  id="cavity-select-PD" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="PD-search" value="0">Show</button>
@@ -86,7 +89,11 @@
       <div id="menu">
         <b><div class="paras" id="Freqrange-PD"></div></b>
         <b><div class="paras" id="Powrange-PD"></div></b>
+        <b><div class="paras" id="Fluxrange-PD"></div></b>
         <b><div class="paras" id="IFBW-PD"></div><br></b>
+        <b><div class="paras" id="XYFreqrange-PD"></div></b>
+        <b><div class="paras" id="XYPowrange-PD"></div></b>
+        <b><div class="paras" id="Repeattime-PD"></div></b>
       </div>
 
     </div>
@@ -97,7 +104,6 @@
       <div class="content-title"><h2 id="FD">Flux Dependence</h2></div>
 
       <div class="select-area">
-        <input type="text" class='jobid-hand' id="jobID-FD" placeholder="JOBID:">
         <h3 class='cavity-select-text'>Cavity @</h3>
         <select class="FD-selector"  id="cavity-select-FD" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="FD-search" value="0">Show</button>
@@ -113,6 +119,9 @@
         <b><div class="paras" id="Powrange-FD"></div></b>
         <b><div class="paras" id="Fluxrange-FD"></div></b>
         <b><div class="paras" id="IFBW-FD"></div><br></b>
+        <b><div class="paras" id="XYFreqrange-FD"></div></b>
+        <b><div class="paras" id="XYPowrange-FD"></div></b>
+        <b><div class="paras" id="Repeattime-FD"></div></b>
       </div>
 
     </div>
@@ -124,7 +133,6 @@
       
       <div class="select-area">
         <h3 class='cavity-select-text'>Cavity @</h3>
-        <input type="text" class='jobid-hand' id="jobID-CW" placeholder="JOBID:">
         <select class="CW-selector"  id="cavity-select-CW" aria-label="label for the select"></select>
         <h3 class='xypower-select-text'>XY-Power @</h3>
         <select class="xy-power-selector" id="power-select-CW" aria-label="label for the select"></select>
