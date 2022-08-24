@@ -1,5 +1,5 @@
 from benchmark import AutoScan1Q,Load_From_pyqum
-from flask import Blueprint, request, session
+from flask import Blueprint, request, session,render_template
 from pyqum.instrument.logger import  get_status
 from sqlite3 import connect
 from pandas import read_sql_query
@@ -10,6 +10,12 @@ from colorama import init, Fore, Back, Style
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
 bp = Blueprint(myname, __name__, url_prefix='/autoscan1Q2js')
+
+@bp.route('/autoscan1Q', methods=['POST', 'GET'])
+def autoscan1Q():
+	return render_template("blog/autoscan1Q.html")
+
+
 sql_path = ''
 ## Common function
 class NumpyEncoder(json.JSONEncoder):

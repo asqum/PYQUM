@@ -1,7 +1,65 @@
+$(document).ready(function(){
+    var dark = document.getElementById("dmbutton");
+    dark.addEventListener('click' , darkMode);
+    //start auto measurement
+    var MS_process = document.getElementById("Start-measure-but");
+    MS_process.addEventListener('click' , start_measure);
+    //hash to the MS window
+    var showcontent_MS = document.getElementById("showcontent-MS");
+    showcontent_MS.addEventListener('click' , show_content_MS);
+    //refresh all the html
+    var refresh= document.getElementById("refresh");
+    refresh.addEventListener('click' , reset_address);
+    var search_process = document.getElementById("search-jobid");
+    search_process.addEventListener('click' , search_jobids);
+    // 畫出baseline
+    var fig_CS = document.getElementById("CS-search");
+    fig_CS.addEventListener('click' , get_plot1D_CS);
+    //根據選項畫出cavities
+    var cavities_CS = document.getElementById("looks-CS");
+    cavities_CS.addEventListener('click' , show_cavities);
+    // 顯示量測參數
+    var showpara_CS = document.getElementById("sp-CS");
+    showpara_CS.addEventListener('click' , function(){show_paras("CS");});
+
+    //顯示內文
+    var showcontent_CS = document.getElementById("showcontent-CS");
+    showcontent_CS.addEventListener('click' , function(){show_content("showcontent-CS","CS-content");});
+    // 畫出baseline
+    var fig_PD = document.getElementById("PD-search");
+    fig_PD.addEventListener('click' , get_plot2D_PD);
+    var showpara_PD = document.getElementById("sp-PD");
+    showpara_PD.addEventListener('click' , function(){show_paras("PD");});
+    var showcontent_PD = document.getElementById("showcontent-PD");
+    showcontent_PD.addEventListener('click' , function(){show_content("showcontent-PD","PD-content");});
+    // 畫出baseline
+    var fig_FD = document.getElementById("FD-search");
+    fig_FD.addEventListener('click' , get_plot2D_FD);
+    var showpara_FD = document.getElementById("sp-FD");
+    showpara_FD.addEventListener('click' , function(){show_paras("FD");});
+    var showcontent_FD = document.getElementById("showcontent-FD");
+    showcontent_FD.addEventListener('click' , function(){show_content("showcontent-FD","FD-content");});
+    var fig_cw = document.getElementById("CW-search");
+    fig_cw.addEventListener('click' , get_plot1D_CW);
+    var showpara_CW = document.getElementById("sp-CW");
+    showpara_CW.addEventListener('click' , function(){show_paras("CW");});
+    //顯示內文
+    var showcontent_CW = document.getElementById("showcontent-CW");
+    showcontent_CW.addEventListener('click' , function(){show_content("showcontent-CW","CW-content");});
+    // 生成初始xypower選項
+    var xypowa_generator = document.getElementById("showcontent-CW");
+    xypowa_generator.addEventListener('click' , function(){xypowa_options_generator(mode='initialize');});
+    // 改變xypower選項
+    var xypower_switcher = document.getElementById("cavity-select-CW");
+    xypower_switcher.addEventListener('change' , function(){xypowa_options_generator(mode='switch');});
+});
+
+
+
+
 //--------------------Global functions-------------------------
 // 開關深色模式
-var dark = document.getElementById("dmbutton");
-dark.addEventListener('click' , darkMode);
+
 // Dark Mode
 function darkMode() {
     let element = document.body;
@@ -73,16 +131,7 @@ function reset_address(){
 };
 
 //-----------------Measurement settings-------------------
-//start auto measurement
-var MS_process = document.getElementById("Start-measure-but");
-MS_process.addEventListener('click' , start_measure);
-//hash to the MS window
-var showcontent_MS = document.getElementById("showcontent-MS");
-showcontent_MS.addEventListener('click' , show_content_MS);
-//refresh all the html
 
-var refresh= document.getElementById("refresh");
-refresh.addEventListener('click' , reset_address);
 
 // results container
 
@@ -128,8 +177,7 @@ function show_content_MS(){
 
 //---------------------Search JOBID--------------------------
 // do first 
-var search_process = document.getElementById("search-jobid");
-search_process.addEventListener('click' , search_jobids);
+
 
 var CS_jobid = 0;
 var PD_jobids = {};
@@ -151,19 +199,7 @@ function search_jobids(){
 
 
 //-----------------CavitySearch---------------------------
-// 畫出baseline
-var fig_CS = document.getElementById("CS-search");
-fig_CS.addEventListener('click' , get_plot1D_CS);
-//根據選項畫出cavities
-var cavities_CS = document.getElementById("looks-CS");
-cavities_CS.addEventListener('click' , show_cavities);
-// 顯示量測參數
-var showpara_CS = document.getElementById("sp-CS");
-showpara_CS.addEventListener('click' , function(){show_paras("CS");});
 
-//顯示內文
-var showcontent_CS = document.getElementById("showcontent-CS");
-showcontent_CS.addEventListener('click' , function(){show_content("showcontent-CS","CS-content");});
 
 
 // generate the options in the select id
@@ -382,13 +418,7 @@ function show_cavities(){
 };
 
 //------------------PowerDependence-----------------------------------
-// 畫出baseline
-var fig_PD = document.getElementById("PD-search");
-fig_PD.addEventListener('click' , get_plot2D_PD);
-var showpara_PD = document.getElementById("sp-PD");
-showpara_PD.addEventListener('click' , function(){show_paras("PD");});
-var showcontent_PD = document.getElementById("showcontent-PD");
-showcontent_PD.addEventListener('click' , function(){show_content("showcontent-PD","PD-content");});
+
 
 
 function plot2D_PD( data, axisKeys, plotId, modenum ) {
@@ -506,13 +536,7 @@ function get_plot2D_PD(){
 };
 
 //-------------------FluxDependence---------------------------------
-// 畫出baseline
-var fig_FD = document.getElementById("FD-search");
-fig_FD.addEventListener('click' , get_plot2D_FD);
-var showpara_FD = document.getElementById("sp-FD");
-showpara_FD.addEventListener('click' , function(){show_paras("FD");});
-var showcontent_FD = document.getElementById("showcontent-FD");
-showcontent_FD.addEventListener('click' , function(){show_content("showcontent-FD","FD-content");});
+
 
 
 
@@ -627,19 +651,7 @@ function get_plot2D_FD(){
 
 
 //-------------------------CWsweep-------------------------------------------
-var fig_cw = document.getElementById("CW-search");
-fig_cw.addEventListener('click' , get_plot1D_CW);
-var showpara_CW = document.getElementById("sp-CW");
-showpara_CW.addEventListener('click' , function(){show_paras("CW");});
-//顯示內文
-var showcontent_CW = document.getElementById("showcontent-CW");
-showcontent_CW.addEventListener('click' , function(){show_content("showcontent-CW","CW-content");});
-// 生成初始xypower選項
-var xypowa_generator = document.getElementById("showcontent-CW");
-xypowa_generator.addEventListener('click' , function(){xypowa_options_generator(mode='initialize');});
-// 改變xypower選項
-var xypower_switcher = document.getElementById("cavity-select-CW");
-xypower_switcher.addEventListener('change' , function(){xypowa_options_generator(mode='switch');});
+
 
 
 function plot1D_2y_CW ( data, axisKeys, plotId, modenum ){
