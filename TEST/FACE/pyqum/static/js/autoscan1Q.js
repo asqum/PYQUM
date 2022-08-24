@@ -85,25 +85,12 @@ var refresh= document.getElementById("refresh");
 refresh.addEventListener('click' , reset_address);
 
 // results container
-var CS_overview = {}
-var cavities = {};
-var cavity_keys = [];
-var cavities_plot = {};
-var pd_powers = {};
-var pd_array = {};
-var flux = {};
-var fd_array = {};
-var q_freq = {};
-var Ec = {}
-var acStark = {}
-var q_plot = {};
-var jobid = {}
+
 
 // measurement settings
-var designed_num = '0';
 var dc_ch = '1';
 var port = 'S21,';
-
+// work independently
 function start_measure(){
 
     dc_ch = document.getElementById('dc-channel-inp').value;
@@ -115,20 +102,20 @@ function start_measure(){
         dc_channel: JSON.stringify(dc_ch),
         inout_port: JSON.stringify(port), 
     }, function (datas) {   //need to check this is correct or not
-        console.log( "Searching Finished " );
+        console.log( "Measurement finish!" );
     });
     // ToSolve: How to show the results on the html?
 };
 
 
-
+// show when the search jobid button click
 function show_results(){
     let resultsBycavity = {}
     $.getJSON( '/autoscan1Q2js/get_results',{  
     }, function (results){             
         let cavity_key = results['CS']['answer'];
         for (let i=0;i<cavity_key.length;i++){   
-            resultsBycavity[cavity_key[i]] = {"PowerDepnd":results["PD"][cavity_key[i]],"FluxDepnd":resuts["FD"][cavity_key[i]],"QubitSearch":resuts["CW"][cavity_key[i]]};    
+            resultsBycavity[cavity_key[i]] = {"PowerDepnd":results["PD"][cavity_key[i]],"FluxDepnd":results["FD"][cavity_key[i]],"QubitSearch":results["CW"][cavity_key[i]]};    
         };
     });
     document.getElementById('result').innerHTML = resultsBycavity;
@@ -139,7 +126,7 @@ function show_content_MS(){
 };
 
 //---------------------Search JOBID--------------------------
-
+// do first 
 var search_process = document.getElementById("search-jobid");
 search_process.addEventListener('click' , search_jobids);
 
@@ -150,6 +137,7 @@ var CW_jobids = {};
 
 
 function search_jobids(){
+    show_results();
     $.getJSON( '/autoscan1Q2js/get_jobid',{  
     }, function (JOBIDs){
         CS_jobid = JOBIDs['CavitySearch']
@@ -401,7 +389,7 @@ var showcontent_PD = document.getElementById("showcontent-PD");
 showcontent_PD.addEventListener('click' , function(){show_content("showcontent-PD","PD-content");});
 
 
-function plot2D_PD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenum ) {
+function plot2D_PD( data, axisKeys, plotId, modenum ) {
 
     let paper = ''
     let color_x = ''
@@ -423,9 +411,9 @@ function plot2D_PD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenu
     };
     // Frame assembly:
     var trace = {
-        z: data[axisKeys.z], 
-        x: data[axisKeys.x], 
-        y: data[axisKeys.y], 
+        z: data['heatmap'][axisKeys.z], 
+        x: data['heatmap'][axisKeys.x], 
+        y: data['heatmap'][axisKeys.y], 
         zsmooth: 'best',
         mode: 'lines', 
         type: 'heatmap',
@@ -440,8 +428,8 @@ function plot2D_PD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenu
         },
     };
     var trace_scatter = { 
-        x: data_scatter[axisKeys_scatter.x], 
-        y: data_scatter[axisKeys_scatter.y],
+        x: data['scatter'][axisKeys.x], 
+        y: data['scatter'][axisKeys.y2],
         mode:'markers',
         name:"Fr",
         line:{color:'#37A22F'}
@@ -484,7 +472,7 @@ function plot2D_PD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenu
 
 
 
-var pd_plot = {};
+
 function get_plot2D_PD(){
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
     let cavity = document.getElementById('cavity-select-PD').value.slice(3);
@@ -493,13 +481,11 @@ function get_plot2D_PD(){
     let PDKeys = {
         x: [ "Power" ] ,
         y: [ "Frequency" ],
+        y2:[ "Fr" ],
         z: [ "Amplitude" ]
     };
-    let PDKeys_scatter = {
-        x: [ "Power" ] ,
-        y: [ "Fr" ],
-    }
 
+    let pd_plot = {};
     let where = "PD";
     $.getJSON( '/autoscan1Q2js/plot_result',{  
         measurement_catagories:JSON.stringify(where),
@@ -511,7 +497,7 @@ function get_plot2D_PD(){
 
     //make up the quantification output
 
-    plot2D_PD(pd_plot['3D_axis'], pd_plot['scatter'], PDKeys, PDKeys_scatter, location_id,modenum);
+    plot2D_PD(pd_plot, PDKeys, location_id, modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('PD-search').setAttribute('value','1');
 
@@ -528,7 +514,7 @@ showcontent_FD.addEventListener('click' , function(){show_content("showcontent-F
 
 
 
-function plot2D_FD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenum ) {
+function plot2D_FD( data, axisKeys, plotId, modenum ) {
 
     let paper = ''
     let color_x = ''
@@ -550,9 +536,9 @@ function plot2D_FD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenu
     };
     // Frame assembly:
     var trace = {
-        z: data[axisKeys.z], 
-        x: data[axisKeys.x], 
-        y: data[axisKeys.y], 
+        z: data['heatmap'][axisKeys.z], 
+        x: data['heatmap'][axisKeys.x], 
+        y: data['heatmap'][axisKeys.y], 
         zsmooth: 'best',
         mode: 'lines', 
         type: 'heatmap',
@@ -567,8 +553,8 @@ function plot2D_FD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenu
         },
     };
     var trace_scatter = { 
-        x: data_scatter[axisKeys_scatter.x], 
-        y: data_scatter[axisKeys_scatter.y],
+        x: data['scatter'][axisKeys.x], 
+        y: data['scatter'][axisKeys.y2],
         mode:'markers',
         name:"Fr",
         line:{color:'#37A22F'}
@@ -609,7 +595,7 @@ function plot2D_FD( data,data_scatter, axisKeys,axisKeys_scatter, plotId, modenu
 
 
 
-var fd_plot = {};
+
 function get_plot2D_FD(){
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
     let cavity = document.getElementById('cavity-select-FD').value.slice(3);
@@ -618,13 +604,11 @@ function get_plot2D_FD(){
     let FDKeys = {
         x: [ "Flux" ] ,
         y: [ "Frequency" ],
+        y2: [ "Fr" ],
         z: [ "Amplitude" ]
     };
-    let FDKeys_scatter = {
-        x: [ "Flux" ] ,
-        y: [ "Fr" ],
-    };
-    let where = "PD";
+    let fd_plot = {};
+    let where = "FD";
     $.getJSON( '/autoscan1Q2js/plot_result',{  
         measurement_catagories:JSON.stringify(where),
         specific_jobid : JSON.stringify(FD_jobids[cavity]),
@@ -633,7 +617,7 @@ function get_plot2D_FD(){
         fd_plot = plot_items;
     });
     
-    plot2D_FD(fd_plot['3D_axis'], fd_plot['scatter'], FDKeys, FDKeys_scatter, location_id,modenum);
+    plot2D_FD(fd_plot, FDKeys, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('FD-search').setAttribute('value','1');
 
@@ -649,8 +633,8 @@ showpara_CW.addEventListener('click' , function(){show_paras("CW");});
 var showcontent_CW = document.getElementById("showcontent-CW");
 showcontent_CW.addEventListener('click' , function(){show_content("showcontent-CW","CW-content");});
 // 生成初始xypower選項
-var showcontent_CW = document.getElementById("showcontent-CW");
-showcontent_CW.addEventListener('click' , function(){xypowa_options_generator(mode='initialize');});
+var xypowa_generator = document.getElementById("showcontent-CW");
+xypowa_generator.addEventListener('click' , function(){xypowa_options_generator(mode='initialize');});
 // 改變xypower選項
 var xypower_switcher = document.getElementById("cavity-select-CW");
 xypower_switcher.addEventListener('change' , function(){xypowa_options_generator(mode='switch');});
@@ -851,13 +835,7 @@ function xypowa_options_generator(mode){
 };
 
 
-//---------------------------------------------------------------------------mission complete
-
-
-
-
-
-
+//------------------------------ShowParameters----------------------------------------
 
 
 // 顯示目前量測參數
@@ -888,26 +866,22 @@ function paras_layout(where,paras_dict){
 // developing... show measurement parameters
 function show_paras(where){
     console.log("Access measurement parameters...")
-    let step_key = ''
-    let cavity_key = ''
     let request_jobid = ''
     if(where == 'CS'){
-        step_key = 'CavitySearch'
         request_jobid = String(CS_jobid);
 
     }else if(where == 'PD'){
-        step_key = 'PowerDepend'
-        cavity_key = document.getElementById('cavity-select-PD').value.slice(3)
+        let cavity_key = document.getElementById('cavity-select-PD').value.slice(3)
         request_jobid = String(PD_jobids[cavity_key]);
         
     }else if(where == 'FD'){
-        step_key = 'FluxDepend'
-        cavity_key = document.getElementById('cavity-select-FD').value.slice(3)
+        let cavity_key = document.getElementById('cavity-select-FD').value.slice(3)
         request_jobid = String(FD_jobids[cavity_key]);
+
     }else{
-        step_key = 'QubitSearch'
-        cavity_key = document.getElementById('cavity-select-CW').value.slice(3)
+        let cavity_key = document.getElementById('cavity-select-CW').value.slice(3)
         request_jobid = String(CW_jobids[cavity_key]);
+
     };
 
     $.getJSON( '/autoscan1Q2js/measurement_paras',{  

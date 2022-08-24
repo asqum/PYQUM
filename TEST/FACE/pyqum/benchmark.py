@@ -1173,7 +1173,7 @@ class PowerDepend:
 			'Power':array(self.data[:, 0]),
 			'Fr':array(self.data[:, 1])
 		}
-        return {'3D_axis':plot_items,'scatter':plot_scatter}
+        return {'heatmap':plot_items,'scatter':plot_scatter}
 
 class FluxDepend:
     def __init__(self, dataframe):
@@ -1219,7 +1219,7 @@ class FluxDepend:
 			'Flux':array(self.valid['flux']),
 			'Fr':array(self.valid['fr'])
 		}
-        return {'3D_axis':plot_items,'scatter':plot_scatter}
+        return {'heatmap':plot_items,'scatter':plot_scatter}
 
 class QubitFreq_Scan:
     def __init__(self,dataframe):#,Ec,status,area_Maxratio,density
