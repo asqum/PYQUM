@@ -105,7 +105,7 @@ function start_measure(){
         console.log( "Measurement finish!" );
     });
     // ToSolve: How to show the results on the html?
-};
+}
 
 
 // show when the search jobid button click
@@ -119,11 +119,12 @@ function show_results(){
         };
     });
     document.getElementById('result').innerHTML = resultsBycavity;
-};
+    return cavity_key;
+}
 
 function show_content_MS(){
     window.location.hash = "#MS-content";
-};
+}
 
 //---------------------Search JOBID--------------------------
 // do first 
@@ -343,11 +344,12 @@ function get_plot1D_CS(){
     let where = "CS";
     $.getJSON( '/autoscan1Q2js/plot_result',{  
         measurement_catagories : JSON.stringify(where),
-        specific_jobid : JSON.stringify(CS_jobid)
+        specific_jobid : JSON.stringify("5094")   //CS_jobid
 
     }, function (plot_items) {   //need to check this is correct or not
         cavities_plot = plot_items['plot_items']
         CS_overview = plot_items['overview']
+        genopt (cavities_plot)
     });
 
     plot1D_2y_CS(CS_overview, ampPhaseKeys, location_id,modenum);
@@ -368,7 +370,7 @@ function show_cavities(){
     let where = "CS";
     $.getJSON( '/autoscan1Q2js/plot_result',{  
         measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify(CS_jobid)
+        specific_jobid : JSON.stringify("5094")  //CS_jobid
     }, function (plot_items) {   //need to check this is correct or not
         cavities_plot = plot_items['plot_items']
         CS_overview = plot_items['overview']
@@ -489,7 +491,7 @@ function get_plot2D_PD(){
     let where = "PD";
     $.getJSON( '/autoscan1Q2js/plot_result',{  
         measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify(PD_jobids[cavity]),
+        specific_jobid : JSON.stringify("5097"),  //PD_jobids[cavity]
         target_cavity : JSON.stringify(cavity)
     }, function (plot_items) {   //need to check this is correct or not
         pd_plot = plot_items;
@@ -611,7 +613,7 @@ function get_plot2D_FD(){
     let where = "FD";
     $.getJSON( '/autoscan1Q2js/plot_result',{  
         measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify(FD_jobids[cavity]),
+        specific_jobid : JSON.stringify("5105"),//FD_jobids[cavity]
         target_cavity : JSON.stringify(cavity)
     }, function (plot_items) {   //need to check this is correct or not
         fd_plot = plot_items;
@@ -782,7 +784,7 @@ function get_plot1D_CW(){
     let where = "CW";
     $.getJSON( '/autoscan1Q2js/plot_result',{  
         measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify(CW_jobids[cavity]),
+        specific_jobid : JSON.stringify("5106"),//CW_jobids[cavity]
         target_cavity : JSON.stringify(cavity)
 
     }, function (plot_items) {   //need to check this is correct or not
@@ -802,15 +804,11 @@ function xypowa_options_generator(mode){
     let cavity = document.getElementById('cavity-select-CW').value.slice(3);
     let xy_options = {}
 
+    $.getJSON( '/autoscan1Q2js/get_xypower',{  
+        specific_jobid : JSON.stringify("5106"),//CW_jobids[cavity]
 
-    let where = "CW";
-    $.getJSON( '/autoscan1Q2js/plot_result',{  
-        measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify(CW_jobids[cavity]),
-        target_cavity : JSON.stringify(cavity)
-
-    }, function (plot_items) {   //need to check this is correct or not
-        xy_options = Object.keys(plot_items);
+    }, function (xy_powas) {   //need to check this is correct or not
+        xy_options = xy_powas['xy_power']; //list
     });
 
     const opt_num = xy_options.length
@@ -868,19 +866,19 @@ function show_paras(where){
     console.log("Access measurement parameters...")
     let request_jobid = ''
     if(where == 'CS'){
-        request_jobid = String(CS_jobid);
+        request_jobid = "5094";//String(CS_jobid);
 
     }else if(where == 'PD'){
         let cavity_key = document.getElementById('cavity-select-PD').value.slice(3)
-        request_jobid = String(PD_jobids[cavity_key]);
+        request_jobid = "5097";//String(PD_jobids[cavity_key]);
         
     }else if(where == 'FD'){
         let cavity_key = document.getElementById('cavity-select-FD').value.slice(3)
-        request_jobid = String(FD_jobids[cavity_key]);
+        request_jobid = "5105";//String(FD_jobids[cavity_key]);
 
     }else{
         let cavity_key = document.getElementById('cavity-select-CW').value.slice(3)
-        request_jobid = String(CW_jobids[cavity_key]);
+        request_jobid = "5106";String(CW_jobids[cavity_key]);
 
     };
 

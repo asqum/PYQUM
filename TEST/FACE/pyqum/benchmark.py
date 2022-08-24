@@ -1484,6 +1484,7 @@ class AutoScan1Q:
         self.total_cavity_list = list(self.cavity_list.keys())
         self.readout_para = {i: {} for i in self.total_cavity_list}
         self.readout_para["cavity_list"] = self.cavity_list
+		
     
     def powerdepend(self,cavity_freq,jobid):
         if jobid == '':

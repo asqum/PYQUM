@@ -1,4 +1,4 @@
-from benchmark import AutoScan1Q
+from benchmark import AutoScan1Q,Load_From_pyqum
 from flask import Blueprint, request, session
 from pyqum.instrument.logger import  get_status
 from sqlite3 import connect
@@ -142,3 +142,10 @@ def plot_after_jobid():
         print("Construction Finish")
         return json.dumps(CW, cls=NumpyEncoder)
     
+@bp.route('/get_xypower',methods=['POST','GET'])
+def get_xypower():
+    specific_id = int(json.loads(request.args.get('specific_jobid')))
+    dataframe = Load_From_pyqum(specific_id).load()
+    xy_powa = dataframe['XY-Power'].unique() #['-10','-20',...]
+
+    return json.dumps({'xy_power':xy_powa}, cls=NumpyEncoder)
