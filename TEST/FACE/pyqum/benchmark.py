@@ -1241,7 +1241,7 @@ class QubitFreq_Scan:
 
 
     def do_analysis(self):
-        print( self.dataframe.columns)
+        
         self.freq = self.dataframe['XY-Frequency'].to_numpy()  #for qubit  <b>XY-Frequency(GHz)</b>
         I = self.dataframe['I'].to_numpy()
         Q = self.dataframe['Q'].to_numpy()

@@ -855,14 +855,14 @@ function xypowa_options_generator(mode){
 
 // 顯示目前量測參數
 function paras_layout(where,paras_dict){
-    console.log(paras_dict);
+    
     $.ajaxSettings.async = false;
     let paranum = document.getElementById('sp-'+where).value;
     if(where != 'CW'){
         paras_dict['XY-Frequency']='OPT,';
         paras_dict['XY-Power']='OPT,';
     };
-    console.log(Object.keys(paras_dict));
+    
     if(paranum=='1'){
         reset_paras(where);
         document.getElementById('sp-'+where).setAttribute('value','0');
@@ -910,6 +910,6 @@ function show_paras(where){
         paras_dict = paras;
     });
     $.ajaxSettings.async = true;
-    console.log(Object.keys(paras_dict));
+    
     paras_layout(where,paras_dict);
 };
