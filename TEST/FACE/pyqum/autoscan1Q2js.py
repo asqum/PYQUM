@@ -1,19 +1,32 @@
 from benchmark import AutoScan1Q,Load_From_pyqum
-from flask import Blueprint, request, session,render_template
+from flask import Blueprint, request, session,render_template, abort, g
 from pyqum.instrument.logger import  get_status
 from sqlite3 import connect
 from pandas import read_sql_query
 import json
 from numpy import ndarray,mean,array
 from colorama import init, Fore, Back, Style
+# Error handling
+from contextlib import suppress
 
 from os.path import basename as bs
 myname = bs(__file__).split('.')[0] # This py-script's name
-bp = Blueprint(myname, __name__, url_prefix='/autoscan1Q2js')
+encryp = 'ghhgjadz'
+bp = Blueprint(myname, __name__, url_prefix='/autoscan1Q')
 
-@bp.route('/autoscan1Q', methods=['POST', 'GET'])
-def autoscan1Q():
-	return render_template("blog/autoscan1Q.html")
+@bp.route('/')
+def show():
+	with suppress(KeyError):
+		print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s "%session['user_name'] + Fore.LIGHTBLUE_EX + "has just logged in as Guest #%s!"%session['user_id'])
+		# Security implementation:
+		if not g.user['instrument']:
+			abort(404)
+		#quantificationType = benchmarkDict[session['user_name']].quantificationType
+		return render_template("blog/autoscan1Q/autoscan1Q.html")
+	return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
+
+
+
 
 
 sql_path = ''

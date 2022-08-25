@@ -31,4 +31,19 @@ $('#char-to-benchmark').click( function(){
     return false;
     }
 );
- 
+// 0825 update
+// Autoscan1Q on click > Loading measurement data into Benchmark:
+$('#char-to-autoscan1Q').click( function(){
+    $.ajaxSettings.async = false;
+
+    let quantificationType = ["qfactor_estimation"];
+    $.getJSON( '/benchmark/benchmark_getMeasurement', 
+    { measurementType: char_TASK, quantificationType: JSON.stringify(quantificationType) }, 
+        function () {
+    }); 
+
+    window.open("/autoscan1Q");
+    $.ajaxSettings.async = true;
+    return false;
+    }
+);
