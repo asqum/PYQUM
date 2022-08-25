@@ -1042,7 +1042,8 @@ class CavitySearch:
         
     
     def make_amp_uph_from_IQ(self):
-        self.overview = {'Frequency':array(self.df['Frequency']),'Amplitude':array(self.df['Amplitude']),'UPhase':array(self.df['UPhase'])}
+        UPhase = diff(unwrap(arctan2(array(self.df['Q']),array(self.df['I']))))
+        self.overview = {'Frequency':array(self.df['Frequency']),'Amplitude':array(self.df['Amp']),'UPhase':array(UPhase)}
         df = self.df[self.df['Frequency'].between(4,8)]
         freq = array(df['Frequency'])
         I = array(df['I'])
