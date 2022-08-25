@@ -6,6 +6,7 @@ from pandas import read_sql_query
 import json
 from numpy import ndarray,mean,array
 from colorama import init, Fore, Back, Style
+import ast
 # Error handling
 from contextlib import suppress
 
@@ -90,8 +91,9 @@ def get_paras():
     id = json.loads(request.args.get('this_jobid'))
     connection = connect(sql_path)
     job = read_sql_query("SELECT*FROM job",connection)
-    paras = job[job['id']==int(id)]['parameter'].iloc[0]    # <- this is a dictionary with F-response: {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
-    return json.dumps(paras, cls=NumpyEncoder)                                 # with CWsweep: {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
+    paras = job[job['id']==int(id)]['parameter'].iloc[0]    # <- this is a string with F-response: {'Flux-Bias':fluxbias, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Power':powa, 'Frequency':freq}
+    
+    return json.dumps(ast.literal_eval(paras), cls=NumpyEncoder)                                 # with CWsweep: {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
 
 # get the specific jobid in the sample description
 # set a search button for jobid
@@ -156,7 +158,7 @@ def plot_after_jobid():
         cavity = json.loads(request.args.get('target_cavity'))
         print("QubitSearch start:\n")
         routine.qubitsearch(cavity,jobid=specific_id)
-        CW[cavity] = routine.CW_plot_items      #{'xy_power1':{'Targets_value':[],'Targets_Freq':[],'Sub_Frequency':[],'Substrate_value':[]},'xy_power2':{...},...}
+        CW = routine.CW_plot_items      #{'xy_power1':{'Targets_value':[],'Targets_Freq':[],'Sub_Frequency':[],'Substrate_value':[]},'xy_power2':{...},...}
 
         print("Construction Finish")
         return json.dumps(CW, cls=NumpyEncoder)

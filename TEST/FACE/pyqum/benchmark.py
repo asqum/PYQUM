@@ -995,7 +995,8 @@ from pyqum.directive.code.LoadData_lab import jobid_search_pyqum, pyqum_load_dat
 #---------------load package of cavity search---------------
 from pyqum.directive.code.CavitySearch import normalize_1d, peak_info, corr_peak_loc, compu_peak_center_dist, poopoo_filter, rm_empty, gaus, gaussian_fitor, gaussian_filter, amp_pha_compa, ena_clutch_filter
 from scipy.optimize import curve_fit
-from numpy import array, log10, diff, unwrap, arctan2, vstack, hstack, average, max, min, std
+import numpy as np
+from numpy import array, log10, diff, unwrap, arctan2, vstack, hstack, average, std
 from scipy.signal import savgol_filter as SGF
 from pandas import Series, DataFrame, concat
 #-----------------load package of qubit frequency search-------------------
@@ -1071,10 +1072,10 @@ class CavitySearch:
 
             sliced_amp = array(self.info['Amplitude'][i:i+range_point])
             sliced_pha = array(self.info['UPhase'][i:i+range_point])
-            min_max_mid_amp = 0.5*(max(sliced_amp)+min(sliced_amp))
+            min_max_mid_amp = 0.5*(np.max(sliced_amp)+np.min(sliced_amp))
             median_amp = median(sliced_amp)
             sd_amp = std(sliced_amp)
-            min_max_mid_pha = 0.5*(max(sliced_pha)+min(sliced_pha))
+            min_max_mid_pha = 0.5*(np.max(sliced_pha)+np.min(sliced_pha))
             median_pha = median(sliced_pha)
             sd_pha = std(sliced_pha)
             condi_amp = (median_amp-sd_amp > min_max_mid_amp or min_max_mid_amp > median_amp+sd_amp)
@@ -1082,10 +1083,10 @@ class CavitySearch:
 
             if  condi_amp or condi_pha :
                 if i != 0 or i != (self.info['Frequency'].shape[0]-range_point):
-                    if abs(sliced_amp[0]-median_amp) > abs(0.34*(max(sliced_amp)-min(sliced_amp))) or  abs(sliced_pha[0]-median_pha) > abs(0.34*(max(sliced_pha)+min(sliced_pha))):
+                    if abs(sliced_amp[0]-median_amp) > abs(0.34*(np.max(sliced_amp)-np.min(sliced_amp))) or  abs(sliced_pha[0]-median_pha) > abs(0.34*(np.max(sliced_pha)+np.min(sliced_pha))):
                         freq_shifted.append([array(self.info['Frequency'][i-int(range_point/2):i-int(range_point/2)+range_point])[0],array(self.info['Frequency'][i-int(range_point/2):i-int(range_point/2)+range_point])[-1]])
 
-                    if abs(sliced_amp[-1]-median_amp) > abs(0.34*(max(sliced_amp)-min(sliced_amp))) or  abs(sliced_pha[-1]-median_pha) > abs(0.34*(max(sliced_pha)+min(sliced_pha))):
+                    if abs(sliced_amp[-1]-median_amp) > abs(0.34*(np.max(sliced_amp)-np.min(sliced_amp))) or  abs(sliced_pha[-1]-median_pha) > abs(0.34*(np.max(sliced_pha)+np.min(sliced_pha))):
                         freq_shifted.append([array(self.info['Frequency'][i+int(range_point/2):i+int(range_point/2)+range_point])[0],array(self.info['Frequency'][i+int(range_point/2):i+int(range_point/2)+range_point])[-1]])
         
         freq_sliced.extend(freq_shifted)
@@ -1103,7 +1104,7 @@ class CavitySearch:
             pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-6*avg_FWHM,tip_freq+6*avg_FWHM]
+            region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-3*avg_FWHM,tip_freq+3*avg_FWHM]
 
         self.final_answer = region  #{'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
         
@@ -1142,9 +1143,9 @@ class CavitySearch:
         plot_items = {}
         for cavity in self.final_answer.keys():
             plot_items[cavity] = {
-				'Frequency':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer[cavity][0],self.answer[cavity][1])]['Frequency']),
-				'Amplitude':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer[cavity][0],self.answer[cavity][1])]['Amplitude']),
-				'UPhase':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.answer[cavity][0],self.answer[cavity][1])]['UPhase'])
+				'Frequency':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.final_answer[cavity][0],self.final_answer[cavity][1])]['Frequency']),
+				'Amplitude':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.final_answer[cavity][0],self.final_answer[cavity][1])]['Amplitude']),
+				'UPhase':array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(self.final_answer[cavity][0],self.final_answer[cavity][1])]['UPhase'])
             }
         return plot_items
         
@@ -1173,7 +1174,7 @@ class PowerDepend:
 		}
         plot_scatter = {
 			'Power':array(self.data[:, 0]),
-			'Fr':array(self.data[:, 1])
+			'Fr':array(self.data[:, 1])/1000
 		}
         return {'heatmap':plot_items,'scatter':plot_scatter}
 
@@ -1213,13 +1214,13 @@ class FluxDepend:
         return {"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
     def give_plot_info(self):
         plot_items = {
-			'Frequency':array(self.datafrme['Frequency']),
-			'Flux':array(self.datafrme['Flux-Bias']),
-			'Amplitude':array(self.datafrme['Amp'])
+			'Frequency':array(self.dataframe['Frequency']),
+			'Flux':array(self.dataframe['Flux-Bias'])*1e6,
+			'Amplitude':array(self.dataframe['Amp'])
 		}
         plot_scatter = {
 			'Flux':array(self.valid['flux']),
-			'Fr':array(self.valid['fr'])
+			'Fr':array(self.valid['fr'])/1000
 		}
         return {'heatmap':plot_items,'scatter':plot_scatter}
 
@@ -1240,7 +1241,8 @@ class QubitFreq_Scan:
 
 
     def do_analysis(self):
-        self.freq = self.dataframe['Frequency'].to_numpy()  #for qubit  <b>XY-Frequency(GHz)</b>
+        print( self.dataframe.columns)
+        self.freq = self.dataframe['XY-Frequency'].to_numpy()  #for qubit  <b>XY-Frequency(GHz)</b>
         I = self.dataframe['I'].to_numpy()
         Q = self.dataframe['Q'].to_numpy()
 
@@ -1499,8 +1501,8 @@ class AutoScan1Q:
         PD = PowerDepend(dataframe)
         self.low_power, self.high_power = PD.do_analysis() #pass
         print("Select Power : %f"%self.low_power)
-        self.readout_para[cavity_freq]["low_power"] = self.low_power
-        self.readout_para[cavity_freq]["high_power"] = self.high_power
+        #self.readout_para[cavity_freq]["low_power"] = self.low_power
+        #self.readout_para[cavity_freq]["high_power"] = self.high_power
         if plot_ornot:
             self.PD_plot_items = PD.give_plot_info()    # assume the function named `get_plot_items()`
 
@@ -1516,9 +1518,9 @@ class AutoScan1Q:
         FD = FluxDepend(dataframe)
         self.wave = FD.do_analysis(f_bare) #pass
         print(self.wave)#{"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
-        self.readout_para[cavity_freq]["f_bare"] = self.wave["f_bare"]
-        self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
-        self.readout_para[cavity_freq]["offset"] = self.wave["offset"]
+        # self.readout_para[cavity_freq]["f_bare"] = self.wave["f_bare"]
+        # self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
+        # self.readout_para[cavity_freq]["offset"] = self.wave["offset"]
         if plot_ornot:
             self.FD_plot_items = FD.give_plot_info()  # assume the function named `get_plot_items()`
     
@@ -1536,9 +1538,9 @@ class AutoScan1Q:
             self.CW_plot_items = CW.plot_items
         print(self.qubit_info)                                     #0820 update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
 		# 0820 update
-        self.readout_para[cavity_freq]["qubit"] = self.qubit_info['Fq_avg']
-        self.readout_para[cavity_freq]["Ec"] = self.qubit_info['Ec_avg']
-        self.readout_para[cavity_freq]["acStark"] = self.qubit_info['acStark_power']
+        # self.readout_para[cavity_freq]["qubit"] = self.qubit_info['Fq_avg']
+        # self.readout_para[cavity_freq]["Ec"] = self.qubit_info['Ec_avg']
+        # self.readout_para[cavity_freq]["acStark"] = self.qubit_info['acStark_power']
 
 def save_class(item,path = "save.pickle"):
     with open(path, 'wb') as f:

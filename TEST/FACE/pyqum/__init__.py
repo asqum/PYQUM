@@ -69,6 +69,7 @@ def stream_template(template_name, **context):
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True,instance_path=DB_PATH)
+    
     app.config.from_mapping(
         # a default secret that should be overridden by instance config
         SECRET_KEY='good',
@@ -92,7 +93,7 @@ def create_app(test_config=None):
 
     # register the database commands
     init_app(app)
-
+    
     # Register Blueprints
     print(Back.WHITE + Fore.BLACK + "Registering Blueprints...")
     from pyqum import auth, blog, display, bridge, machine, guide, mission, benchmark, autoscan1Q
@@ -135,5 +136,5 @@ def create_app(test_config=None):
     # sys.path.append('C:\Program Files (x86)\Keysight\SD1\Libraries\Python')
     # import keysightSD1
     # print("import keysightSD1>>")
-
+    
     return app
