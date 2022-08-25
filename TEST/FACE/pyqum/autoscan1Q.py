@@ -1,4 +1,4 @@
-from benchmark import AutoScan1Q,Load_From_pyqum
+from pyqum.benchmark import AutoScan1Q,Load_From_pyqum
 from flask import Blueprint, request, session,render_template, abort, g
 from pyqum.instrument.logger import  get_status
 from sqlite3 import connect
@@ -19,8 +19,8 @@ def show():
 	with suppress(KeyError):
 		print(Fore.LIGHTBLUE_EX + "USER " + Fore.YELLOW + "%s "%session['user_name'] + Fore.LIGHTBLUE_EX + "has just logged in as Guest #%s!"%session['user_id'])
 		# Security implementation:
-		if not g.user['instrument']:
-			abort(404)
+		# if not g.user['instrument']:
+		# 	abort(404)
 		#quantificationType = benchmarkDict[session['user_name']].quantificationType
 		return render_template("blog/autoscan1Q/autoscan1Q.html")
 	return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
@@ -29,7 +29,7 @@ def show():
 
 
 
-sql_path = ''
+sql_path = r'C:\Users\ASQUM\HODOR\CONFIG\pyqum.sqlite'
 ## Common function
 class NumpyEncoder(json.JSONEncoder):
 	def default(self, obj):

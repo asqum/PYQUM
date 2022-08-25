@@ -187,7 +187,7 @@ var CW_jobids = {};
 
 function search_jobids(){
     show_results();
-    $.getJSON( '/autoscan1Q2js/get_jobid',{  
+    $.getJSON( '/autoscan1Q/get_jobid',{  
     }, function (JOBIDs){
         CS_jobid = JOBIDs['CavitySearch']
         PD_jobids = JOBIDs['PowerDepend']
@@ -378,7 +378,7 @@ function get_plot1D_CS(){
         y: [ ["Amplitude"],["UPhase"] ],
     };
     let where = "CS";
-    $.getJSON( '/autoscan1Q2js/plot_result',{  
+    $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories : JSON.stringify(where),
         specific_jobid : JSON.stringify("5094")   //CS_jobid
 
@@ -404,7 +404,7 @@ function show_cavities(){
     };
 
     let where = "CS";
-    $.getJSON( '/autoscan1Q2js/plot_result',{  
+    $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories:JSON.stringify(where),
         specific_jobid : JSON.stringify("5094")  //CS_jobid
     }, function (plot_items) {   //need to check this is correct or not
@@ -519,7 +519,7 @@ function get_plot2D_PD(){
 
     let pd_plot = {};
     let where = "PD";
-    $.getJSON( '/autoscan1Q2js/plot_result',{  
+    $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories:JSON.stringify(where),
         specific_jobid : JSON.stringify("5097"),  //PD_jobids[cavity]
         target_cavity : JSON.stringify(cavity)
@@ -635,7 +635,7 @@ function get_plot2D_FD(){
     };
     let fd_plot = {};
     let where = "FD";
-    $.getJSON( '/autoscan1Q2js/plot_result',{  
+    $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories:JSON.stringify(where),
         specific_jobid : JSON.stringify("5105"),//FD_jobids[cavity]
         target_cavity : JSON.stringify(cavity)
@@ -794,7 +794,7 @@ function get_plot1D_CW(){
     };
 
     let where = "CW";
-    $.getJSON( '/autoscan1Q2js/plot_result',{  
+    $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories:JSON.stringify(where),
         specific_jobid : JSON.stringify("5106"),//CW_jobids[cavity]
         target_cavity : JSON.stringify(cavity)
@@ -816,7 +816,7 @@ function xypowa_options_generator(mode){
     let cavity = document.getElementById('cavity-select-CW').value.slice(3);
     let xy_options = {}
 
-    $.getJSON( '/autoscan1Q2js/get_xypower',{  
+    $.getJSON( '/autoscan1Q/get_xypower',{  
         specific_jobid : JSON.stringify("5106"),//CW_jobids[cavity]
 
     }, function (xy_powas) {   //need to check this is correct or not
@@ -894,7 +894,7 @@ function show_paras(where){
 
     };
 
-    $.getJSON( '/autoscan1Q2js/measurement_paras',{  
+    $.getJSON( '/autoscan1Q/measurement_paras',{  
         this_jobid: JSON.stringify(request_id),
     }, function (paras){
         paras_layout(where,paras)
