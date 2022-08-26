@@ -1486,6 +1486,7 @@ class AutoScan1Q:
         dataframe = Load_From_pyqum(jobid).load()
         CS = CavitySearch(dataframe)
         self.CS_progress_address = id(CS.progress)
+        print('address: ',self.CS_progress_address)
         self.cavity_list = CS.do_analysis() #model h5 cannot import <- 0818 update, no need it anymore
         if plot_ornot:
             self.CS_plot_items = CS.give_plot_info()

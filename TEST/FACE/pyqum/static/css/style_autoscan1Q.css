@@ -270,38 +270,34 @@ label[class='cavity-select-text'] {
     top:42.5%;
     right:22%;
 }
-#LoadProgress {
-    width: 10%;
-    background-color: grey;
-    border-radius: 1rem; 
-    position:relative;
-    top:14.5%;
-    left:63%;
-    text-align: right;
-    color :white;
-}
-  
-#ProgressBar {
-    width: 0%;
-    height: 2%;
-    border-radius: 1rem; 
-    background-color: rgb(255, 0, 0);
-    position:relative;
-    top:14.5%;
-}
 
 #progress_report_block{
+    position:fixed;
+    top:7%;
+    left:7%;
+    width:20%;
+    height:5%;
+    font-size: 1.2rem;
+    z-index: 10;
+    background-color: rgb(146, 63, 63);
+    color:rgb(255, 225, 0);
+    border-radius: 1rem;
+    display : flex;
+    align-items : center;
+    justify-content : left;
+}
+#status{
     position:fixed;
     top:7%;
     left:1%;
     width:20%;
     height:5%;
-    font-size: 1rem;
+    font-size: 1.2rem;
     z-index: 10;
-    background-color: rgb(255, 0, 0);
-    color:aliceblue;
+    background-color: rgb(146, 63, 63);
+    color:rgb(246, 247, 255);
     border-radius: 1rem;
     display : flex;
     align-items : center;
-    justify-content : center;
+    justify-content : left;
 }

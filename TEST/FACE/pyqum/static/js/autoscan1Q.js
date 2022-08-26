@@ -137,30 +137,6 @@ function reset_address(){
     history.go(0);
 };
 
-var progress = 0;
-function progressbar_move() {
-    if (progress == 0) {
-        progress = 1;
-        var elem = document.getElementById("ProgressBar");
-        var width = 0;
-        var id = setInterval(frame, 10);
-        function frame() {
-            if (width >= 100) {
-                clearInterval(id);
-                log.innerHTML = "JOBIDs Loading finish!";
-                progress = 0;
-            } else {
-                $.getJSON( '/autoscan1Q/get_CS_progress',{  
-                }, function (CS_progress) {   //need to check this is correct or not
-                    width = width + (Number(CS_progress['CS_progress'])*100);
-                });
-                elem.style.width = String(width) + "%";
-                elem.innerHTML = String(width) + "%";
-            }
-        }
-    }
-  
-}
 
 
 //-----------------Measurement settings-------------------
@@ -235,19 +211,28 @@ var cavities_plot = {};
 var CS_overview = {};
 
 function gaussian_fitting(){
-    log_print("Start Gaussian fitting...");
+   
+    log_print("Start Gaussian fitting wait plz...");
     let where = "CS";
+    
     $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories : JSON.stringify(where),
         specific_jobid : JSON.stringify("5108")   //CS_jobid
 
     }, function (plot_items) {   //need to check this is correct or not
-        cavities_plot = plot_items['plot_items']
-        CS_overview = plot_items['overview']
-        genopt (cavities_plot)
+        cavities_plot = plot_items['plot_items'];
+        CS_overview = plot_items['overview'];
+        genopt (cavities_plot);
+    })
+    .done(function(plot_items) {
+        log_print("Gaussian fitting finish!");
+    })
+    .fail(function(jqxhr, textStatus, error){
+        log_print("Somwhere missing...");
     });
-    $.ajaxSettings.async = true;
-    log_print("Gaussian fitting finish!");
+
+   
+    
 }
 
 
@@ -279,13 +264,10 @@ function genopt (data) {
     let catagories = ['CS-','PD-','FD-','CW-']
     const detected_num = Object.keys(data).length;
     if(detected_num>0){
-
         for(let i=0;i<selectors.length;i++){
             document.getElementById(selectors[i]).options.length = 0; //清除舊options
             generate_options(selectors[i],data,catagories[i]);
-        };
-        const result = Object.keys(data);
-        document.getElementById('resultId-CS').innerHTML = 'Cavity @ : '+result;
+        };   
     }else{
         alert("WARNING!!\nNo cavity is detected!");
     };   
@@ -434,6 +416,8 @@ function get_plot1D_CS(){
     };
     $.ajaxSettings.async = true;
     plot1D_2y_CS(CS_overview, ampPhaseKeys, location_id,modenum);
+    const result = Object.keys(cavities_plot);
+    document.getElementById('resultId-CS').innerHTML = 'Cavity @ : '+result;
     document.getElementById(location_id).style.display = "block";
     document.getElementById('CS-search').setAttribute('value','1');
     log_print("Ploting finish!");
@@ -490,6 +474,7 @@ function plot2D_PD( data, axisKeys, plotId, modenum ) {
         type: 'heatmap',
         width: 2.5,
         colorbar:{
+            automargin: true,
             tickfont:{color:color_z,size:25},
             title:{
                 text:'Amplitude (dBm)',
@@ -507,6 +492,7 @@ function plot2D_PD( data, axisKeys, plotId, modenum ) {
     };
     var layout = {
         paper_bgcolor:paper,
+        plot_bgcolor:paper,
         title:{
             text:'PowerDependence-Results',
             font:{
@@ -528,14 +514,15 @@ function plot2D_PD( data, axisKeys, plotId, modenum ) {
                 text:'Frequency (GHz)',
                 font:{size:25},  
             },
-            tickfont:{size:25},
-            color: color_y
+            tickfont:{size:16},
+            color: color_y,
+            automargin: true
         },
         yaxis2: {
             
         },
         showlegend: false,
-        hoverlabel:{font:{size:26}}
+        hoverlabel:{font:{size:20}}
     };
     var Trace = [trace,trace_scatter]
     Plotly.newPlot(plotId, Trace,layout);
@@ -595,7 +582,7 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
         color_z = "rgb(0,0,0)";
         color_t = 'rgb(0,0,0)';
     }else{
-        paper = "rgb(0,0,0)";
+        paper = "rgb(0,0,0)"; 
         color_x = "rgb(0,255,0)";
         color_y = 'rgb(255,255,0)';
         color_z = 'rgb(255,0,255)'
@@ -612,6 +599,7 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
         width: 2.5,
         colorbar:{
             tickfont:{color:color_z,size:25},
+            automargin: true,
             title:{
                 text:'Amplitude (dBm)',
                 side:'right',
@@ -628,6 +616,7 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
     };
     var layout = {
         paper_bgcolor:paper,
+        plot_bgcolor:paper,
         title:{
             text:'PowerDependence-Results',
             font:{
@@ -649,12 +638,13 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
                 text:'Frequency (GHz)',
                 font:{size:25},  
             },
-            tickfont:{size:25},
-            color: color_y
+            tickfont:{size:16},
+            color: color_y,
+            automargin: true
         },
         yaxis2:{},
         showlegend: false,
-        hoverlabel:{font:{size:26}}
+        hoverlabel:{font:{size:20}}
     };
     var Trace = [trace,trace_scatter]
     Plotly.newPlot(plotId, Trace,layout);
