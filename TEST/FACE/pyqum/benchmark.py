@@ -1037,6 +1037,7 @@ class CavitySearch:
         self.peak_amp, self.peak_pha = [], []
         self.sliced_freq = []
         self.final_answer = []
+        self.progress = 0.0
         # data pre-smooth : Savitzky-Golay filter
         self.SGF_width = 11
         self.polyorder = 1
@@ -1125,11 +1126,14 @@ class CavitySearch:
         self.make_amp_uph_from_IQ()
         self.strong_slice()
         gaussian_exist = {"peak_freq_amp":[],"peak_freq_pha":[]}
+        step = 0
         for i in range(self.sliced_freq.shape[0]):
             peak_amp, peak_pha =  gaussian_filter(self.sliced_freq[i],self.info['Comparison_fig'],self.info['p2p_freq'])
 
             gaussian_exist['peak_freq_amp'].append(peak_amp)
             gaussian_exist['peak_freq_pha'].append(peak_pha)
+            step += 1
+            self.progress = step/self.sliced_freq.shape[0]
 
         self.peak_amp = rm_empty(gaussian_exist["peak_freq_amp"])
         self.peak_pha = rm_empty(gaussian_exist["peak_freq_pha"])
@@ -1468,6 +1472,7 @@ class AutoScan1Q:
         self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
+        self.CS_progress_address = 0
 
         
     def cavitysearch(self,jobid):
@@ -1480,6 +1485,7 @@ class AutoScan1Q:
         self.CS_jobid = jobid
         dataframe = Load_From_pyqum(jobid).load()
         CS = CavitySearch(dataframe)
+        self.CS_progress_address = id(CS.progress)
         self.cavity_list = CS.do_analysis() #model h5 cannot import <- 0818 update, no need it anymore
         if plot_ornot:
             self.CS_plot_items = CS.give_plot_info()

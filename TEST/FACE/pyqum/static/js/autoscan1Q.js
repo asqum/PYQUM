@@ -11,7 +11,7 @@ $(document).ready(function(){
     var refresh= document.getElementById("refresh");
     refresh.addEventListener('click' , reset_address);
     var search_process = document.getElementById("search-jobid");
-    search_process.addEventListener('click' , search_jobids);
+    search_process.addEventListener('click' , gaussian_fitting);
     // 畫出baseline
     var fig_CS = document.getElementById("CS-search");
     fig_CS.addEventListener('click' , get_plot1D_CS);
@@ -58,8 +58,15 @@ $(document).ready(function(){
 
 
 //--------------------Global functions-------------------------
-// 開關深色模式
+function log_print(text){
+    var log = document.getElementById("progress_report_block");
+    log.innerHTML = text;
+}
 
+
+
+
+// 開關深色模式
 // Dark Mode
 function darkMode() {
     let element = document.body;
@@ -130,6 +137,32 @@ function reset_address(){
     history.go(0);
 };
 
+var progress = 0;
+function progressbar_move() {
+    if (progress == 0) {
+        progress = 1;
+        var elem = document.getElementById("ProgressBar");
+        var width = 0;
+        var id = setInterval(frame, 10);
+        function frame() {
+            if (width >= 100) {
+                clearInterval(id);
+                log.innerHTML = "JOBIDs Loading finish!";
+                progress = 0;
+            } else {
+                $.getJSON( '/autoscan1Q/get_CS_progress',{  
+                }, function (CS_progress) {   //need to check this is correct or not
+                    width = width + (Number(CS_progress['CS_progress'])*100);
+                });
+                elem.style.width = String(width) + "%";
+                elem.innerHTML = String(width) + "%";
+            }
+        }
+    }
+  
+}
+
+
 //-----------------Measurement settings-------------------
 
 
@@ -186,7 +219,7 @@ var CW_jobids = {};
 
 
 function search_jobids(){
-    show_results();
+    log_print("JOBIDs Loading...");
     $.getJSON( '/autoscan1Q/get_jobid',{  
     }, function (JOBIDs){
         CS_jobid = JOBIDs['CavitySearch']
@@ -195,7 +228,28 @@ function search_jobids(){
         CW_jobids = JOBIDs['QubitSearch'] 
     });
     genopt (PD_jobids); 
+    show_results();
 };
+
+var cavities_plot = {};
+var CS_overview = {};
+
+function gaussian_fitting(){
+    log_print("Start Gaussian fitting...");
+    let where = "CS";
+    $.getJSON( '/autoscan1Q/plot_result',{  
+        measurement_catagories : JSON.stringify(where),
+        specific_jobid : JSON.stringify("5108")   //CS_jobid
+
+    }, function (plot_items) {   //need to check this is correct or not
+        cavities_plot = plot_items['plot_items']
+        CS_overview = plot_items['overview']
+        genopt (cavities_plot)
+    });
+    $.ajaxSettings.async = true;
+    log_print("Gaussian fitting finish!");
+}
+
 
 
 //-----------------CavitySearch---------------------------
@@ -366,10 +420,10 @@ function plot1D_2y_CS ( data, axisKeys, plotId, modenum ){
     Plotly.newPlot(plotId, tracies, layout);
 };
 
-var CS_overview = {};
-var cavities_plot = {};
+
 // plot the result of whole cavity 
 function get_plot1D_CS(){
+    log_print("Ploting Cavity baseline...");
     $.ajaxSettings.async = false;
     let modenum = document.getElementById('dmbutton').value;  // get darkmode or not
     
@@ -378,25 +432,17 @@ function get_plot1D_CS(){
         x: [ ["Frequency"], ["Frequency"] ] ,
         y: [ ["Amplitude"],["UPhase"] ],
     };
-    let where = "CS";
-    $.getJSON( '/autoscan1Q/plot_result',{  
-        measurement_catagories : JSON.stringify(where),
-        specific_jobid : JSON.stringify("5108")   //CS_jobid
-
-    }, function (plot_items) {   //need to check this is correct or not
-        cavities_plot = plot_items['plot_items']
-        CS_overview = plot_items['overview']
-        genopt (cavities_plot)
-    });
     $.ajaxSettings.async = true;
     plot1D_2y_CS(CS_overview, ampPhaseKeys, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('CS-search').setAttribute('value','1');
+    log_print("Ploting finish!");
 };
 
 
 // jump to cavities plot html
 function show_cavities(){
+    log_print("Ploting specific cavity...");
     let modenum = document.getElementById('dmbutton').value;
     let cavity = document.getElementById('cavity-select-CS').value.slice(3);
     let ampPhaseKeys = {
@@ -404,18 +450,10 @@ function show_cavities(){
         y: [ ["Amplitude"],["UPhase"] ]
     };
 
-    let where = "CS";
-    $.getJSON( '/autoscan1Q/plot_result',{  
-        measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify("5108")  //CS_jobid
-    }, function (plot_items) {   //need to check this is correct or not
-        cavities_plot = plot_items['plot_items']
-        CS_overview = plot_items['overview']
-    });
-
     plot1D_2y_CS(cavities_plot[cavity], ampPhaseKeys, "CavitySearch-result-plot", modenum);
     document.getElementById("CavitySearch-result-plot").style.display = "block";
     document.getElementById('CS-search').setAttribute('value','2');
+    log_print("Ploting cavity finish!");
 };
 
 //------------------PowerDependence-----------------------------------
@@ -507,6 +545,7 @@ function plot2D_PD( data, axisKeys, plotId, modenum ) {
 
 
 function get_plot2D_PD(){
+    log_print("Ploting PowerDependence result...");
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
     let cavity = document.getElementById('cavity-select-PD').value.slice(3);
     const location_id = "PowerDep-result-plot";
@@ -534,7 +573,7 @@ function get_plot2D_PD(){
     plot2D_PD(pd_plot, PDKeys, location_id, modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('PD-search').setAttribute('value','1');
-
+    log_print("Ploting finish!");
 };
 
 //-------------------FluxDependence---------------------------------
@@ -625,6 +664,7 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
 
 
 function get_plot2D_FD(){
+    log_print("Ploting FluxDependence result...");
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
     let cavity = document.getElementById('cavity-select-FD').value.slice(3);
     const location_id = "FluxDep-result-plot";
@@ -648,7 +688,7 @@ function get_plot2D_FD(){
     plot2D_FD(fd_plot, FDKeys, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('FD-search').setAttribute('value','1');
-
+    log_print("Ploting finish!");
 };
 
 
@@ -785,6 +825,7 @@ function plot1D_2y_CW ( data, axisKeys, plotId, modenum ){
 
 var q_plot = {};
 function get_plot1D_CW(){
+    log_print("Ploting CWsweep result...");
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
     const location_id = "CWsweep-result-plot";
     let cavity = document.getElementById('cavity-select-CW').value.slice(3)
@@ -808,7 +849,7 @@ function get_plot1D_CW(){
     plot1D_2y_CW(q_plot[xy_powa], CWKeys, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('CW-search').setAttribute('value','1');
-
+    log_print("Ploting finish!");
 };
 
 function xypowa_options_generator(mode){
@@ -883,7 +924,7 @@ function paras_layout(where,paras_dict){
 
 // developing... show measurement parameters
 function show_paras(where){
-    console.log("Access measurement parameters...")
+    log_print("Access measurement parameters...")
     let request_jobid = ''
     if(where == 'CS'){
         request_jobid = "5108";//String(CS_jobid);
@@ -912,4 +953,5 @@ function show_paras(where){
     $.ajaxSettings.async = true;
     
     paras_layout(where,paras_dict);
+    log_print("Parameters showing!");
 };

@@ -7,6 +7,7 @@ import json
 from numpy import ndarray,mean,array
 from colorama import init, Fore, Back, Style
 import ast
+from ctypes import PyObj_FromPtr as  read_address
 # Error handling
 from contextlib import suppress
 
@@ -118,7 +119,10 @@ def get_results():
     # samplename = "2QAS-19-3"
     specifications = sample[sample['samplename']==samplename]['specifications'].iloc[0]
 
-    return json.dumps(specifications["result"], cls=NumpyEncoder)     
+    return json.dumps(specifications["result"], cls=NumpyEncoder)  
+
+# CS progress variable
+#CS_progress_address = 0
 
 # not for measurement but for plot with a specific jobid
 @bp.route('/plot_result',methods=['POST','GET'])
@@ -131,6 +135,8 @@ def plot_after_jobid():
     routine = AutoScan1Q(sparam="",dcsweepch = "")
     if where_plot == "CS":
         print("CavitySearch start:\n")
+        global CS_progress_address 
+        CS_progress_address = routine.CS_progress_address
         routine.cavitysearch(jobid=specific_id)
         CS = {'plot_items':routine.CS_plot_items,'overview':routine.CS_overview}  #{'5487 MHz':{'Frequency':[...],'Amplitude':[...],'UPhase':[...]},'~ MHz':{...},...}
                                                                                   #{'Frequency':[...],'Amplitude':[...],'UPhase':[...]}
@@ -162,7 +168,8 @@ def plot_after_jobid():
 
         print("Construction Finish")
         return json.dumps(CW, cls=NumpyEncoder)
-    
+
+
 @bp.route('/get_xypower',methods=['POST','GET'])
 def get_xypower():
     specific_id = int(json.loads(request.args.get('specific_jobid')))
@@ -170,3 +177,8 @@ def get_xypower():
     xy_powa = dataframe['XY-Power'].unique() #['-10','-20',...]
 
     return json.dumps({'xy_power':xy_powa}, cls=NumpyEncoder)
+
+
+@bp.route('/get_CS_progress',methods=['POST','GET'])
+def get_CS_progress():
+    return json.dumps({'CS_progress':read_address(CS_progress_address)}, cls=NumpyEncoder)
