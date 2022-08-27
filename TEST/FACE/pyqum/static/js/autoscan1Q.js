@@ -211,10 +211,11 @@ var cavities_plot = {};
 var CS_overview = {};
 
 function gaussian_fitting(){
-   
+    let spinner = document.getElementById("spinner");
     log_print("Start Gaussian fitting wait plz...");
     let where = "CS";
-    
+    spinner.style.visibility = "visible";
+    spinner.style.opacity = '1';
     $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories : JSON.stringify(where),
         specific_jobid : JSON.stringify("5108")   //CS_jobid
@@ -225,14 +226,15 @@ function gaussian_fitting(){
         genopt (cavities_plot);
     })
     .done(function(plot_items) {
+        spinner.style.visibility = "hidden";
+        spinner.style.opacity = '0';
         log_print("Gaussian fitting finish!");
     })
     .fail(function(jqxhr, textStatus, error){
+        spinner.style.visibility = "hidden";
+        spinner.style.opacity = '0';
         log_print("Somwhere missing...");
     });
-
-   
-    
 }
 
 
