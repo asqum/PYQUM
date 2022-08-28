@@ -275,7 +275,8 @@
 }
 #search-jobid:active,#dmbutton:active,#CS-search:active,#looks-CS:active
 ,.ShowPara:active,.button-run:active,.content-button:active,#Start-measure-but:active {
-    color: #000
+    color: #000;
+    opacity: 0.5;
 }
 #search-jobid:hover:before,#dmbutton:hover:before,#CS-search:hover:before,#looks-CS:hover:before
 ,.ShowPara:hover:before,.button-run:hover:before,.content-button:hover:before,#Start-measure-but:hover:before {
