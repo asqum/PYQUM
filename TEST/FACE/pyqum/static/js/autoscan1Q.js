@@ -901,7 +901,11 @@ function paras_layout(where,paras_dict){
         document.getElementById('sp-'+where).setAttribute('value','0');
     }else{
         //Show parameters
-        document.getElementById('Freqrange-'+where).innerHTML = '•Frequence : '+ document.getElementById('cavity-select-'+where).value.slice(3);
+        if(where=='CS'){
+            document.getElementById('Freqrange-'+where).innerHTML = '•Frequence : '+ String(paras_dict['Frequency']);
+        }else{
+            document.getElementById('Freqrange-'+where).innerHTML = '•Frequence : '+ document.getElementById('cavity-select-'+where).value.slice(3);
+        }
         document.getElementById('Powrange-'+where).innerHTML = '•Power (dBm) : '+ String(paras_dict['Power']);
         document.getElementById('Fluxrange-'+where).innerHTML = '•Flux : '+ String(paras_dict['Flux-Bias']);
         document.getElementById('IFBW-'+where).innerHTML = '•IF Bandwidth : '+ String(paras_dict['IF-Bandwidth']);

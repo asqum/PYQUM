@@ -13,8 +13,7 @@
 
 <header>
   <h1 class="title">SingleQubit Automated Measurement Report</h1>
-  <div id="status">Status NOW:</div>
-  <div id="progress_report_block">Welcome!</div>
+  <div id="status">Status NOW:<span id="progress_report_block">Welcome!</span></div>
   <div class="loading" id="spinner" style="visibility:hidden;">Loading&#8230;</div>
   <button class='refresh-button' id="refresh">🔄</button>
   <button id="dmbutton" class="button-d" value="0">Dark</button>
@@ -56,7 +55,7 @@
         <select class="CS-selector"  id="cavity-select-CS" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="CS-search" value="0">Plot</button>
         <button type="button" class="button-run" id="looks-CS">Cavity</button>
-        <button type="button" class="ShowPara-CS" id="sp-CS" value="0">Paras</button>
+        <button type="button" class="ShowPara" id="sp-CS" value="0">Paras</button>
       </div>
       
       <div class="Plot-area">
@@ -84,7 +83,7 @@
         <h3 class='cavity-select-text'>Cavity @</h3>
         <select class="PD-selector"  id="cavity-select-PD" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="PD-search" value="0">Show</button>
-        <button type="button" class="ShowPara-PD" id="sp-PD" value="0">Paras</button>
+        <button type="button" class="ShowPara" id="sp-PD" value="0">Paras</button>
       </div>
 
       <div class="Plot-area">
@@ -112,7 +111,7 @@
         <h3 class='cavity-select-text'>Cavity @</h3>
         <select class="FD-selector"  id="cavity-select-FD" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="FD-search" value="0">Show</button>
-        <button type="button" class="ShowPara-FD" id="sp-FD" value="0">Paras</button>
+        <button type="button" class="ShowPara" id="sp-FD" value="0">Paras</button>
       </div>
 
       <div class="Plot-area">
@@ -142,7 +141,7 @@
         <h3 class='xypower-select-text'>XY-Power @</h3>
         <select class="xy-power-selector" id="power-select-CW" aria-label="label for the select"></select>
         <button type="button" class="button-run" id="CW-search" value="0">Show</button>
-        <button type="button" class="ShowPara-CW" id="sp-CW" value="0">Paras</button>
+        <button type="button" class="ShowPara" id="sp-CW" value="0">Paras</button>
       </div>
 
       <div class="Plot-area">

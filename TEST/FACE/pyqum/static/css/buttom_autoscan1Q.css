@@ -1,16 +1,12 @@
 
 /*Darkmode button*/
 #dmbutton {
-    appearance: none;
-    background-color: #000000e8;
+    background-color: rgb(25, 45, 24);
     border: 0.2rem solid rgba(222, 222, 222, 0.369);
     border-radius: 1rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
-    box-sizing: border-box;
-    color: rgb(0, 255, 21);
+    color: rgb(255, 255, 255);
     cursor: pointer;
-    display: inline-block;
-    font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
     font-size: 1rem;
     width:6%;
     height:5%;
@@ -18,59 +14,32 @@
     top:1.7%;
     right:1%;
     z-index: 10;
-
     text-align: center;
-    text-decoration: none;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
     vertical-align: middle;
-    white-space: nowrap;
-}
-#dmbutton:hover {
-    background-color: #fef992;
-    color:rgb(255, 0, 30);
-    border: 0.2rem solid rgb(255, 0, 0);
-}
-
-#dmbutton:active {
-    background-color: #7d8797;
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
 }
 
 #Start-measure-but{
     position:absolute;
-    background-color:#48724b;
+    background-color:rgb(255, 113, 113);
     color:rgb(255, 255, 255);
     top:250%;
     left:135%;
     width:15%;
     height:90%;
-    border-radius: 1.5rem;
+    border-radius: 1rem;
     font-size:1.2rem;
+    z-index: 2;
 }
-#Start-measure-but:hover {
-    background-color: #fef992;
-    color:rgb(255, 0, 30);
-    border: 0.2rem solid rgb(255, 0, 0);
-}
-#Start-measure-but:active {
-    background-color: #7d8797;
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
+
 /*Cavity search button part*/
 #CS-search{
-    appearance: none;
     background-color: #ff7f7f;
-    border: 0.2rem solid rgba(27, 31, 35, .15);
+    color:rgb(255, 255, 255);
+    border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 1.2rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
-    box-sizing: border-box;
-    color: #fff;
     cursor: pointer;
-    display: inline-block;
-    font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
-    font-size: 1rem;
+    font-size: 1.3rem;
     line-height: 1.34rem;
     width: 18.5%;
     height:22.5%;
@@ -78,34 +47,19 @@
     top:12.5%;
     right:1%;
     text-align: center;
-    text-decoration: none;
-    user-select: none;
-    -webkit-user-select: none;
     touch-action: manipulation;
     vertical-align: middle;
-    white-space: nowrap;
+    z-index: 2;
 }
-#CS-search:hover {
-    background-color: #fef992;
-    color:rgb(255, 0, 30);
-    border: 0.2rem solid rgb(255, 0, 0);
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
-#CS-search:active {
-    background-color: #b6555c;
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
+
 #looks-CS{
-    appearance: none;
     background-color: #fca3fa;
-    border: 0.2rem solid rgba(27, 31, 35, .15);
+    color:#000;
+    border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 1.2rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
-    box-sizing: border-box;
-    color: #fff;
+    color: #000;
     cursor: pointer;
-    display: inline-block;
-    font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
     font-size: 1rem;
     font-weight: 600;
     line-height: 1.34rem;
@@ -115,34 +69,17 @@
     top:36.5%;
     right:1%;
     text-align: center;
-    text-decoration: none;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
     vertical-align: middle;
-    white-space: nowrap;
+    z-index: 2;
 }
-#looks-CS:hover {
-    background-color: #fef992;
-    color:rgb(255, 0, 30);
-    border: 0.2rem solid rgb(255, 0, 0);
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
-#looks-CS:active {
-    background-color: #c983c7;
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
-.ShowPara-CS {
-    appearance: none;
+
+#sp-CS {
     background-color: #b1ae52;
-    border: 0.2rem solid rgba(27, 31, 35, .15);
-    border-radius: 1.2rem;
+    color:#000;
+    border: 0.2rem solid rgb(79, 70, 70);
+    border-radius: 0.9rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
-    box-sizing: border-box;
-    color: #fff;
     cursor: pointer;
-    display: inline-block;
-    font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
     font-size: 1rem;
     font-weight: 600;
     line-height: 1.34rem;
@@ -152,37 +89,21 @@
     top:62%;
     right:1.1%;
     text-align: center;
-    text-decoration: none;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
     vertical-align: middle;
-    white-space: nowrap;
+    z-index: 2;
 }
-.ShowPara-CS:hover {
-    background-color: #fef992;
-    color:rgb(255, 0, 30);
-    border: 0.2rem solid rgb(255, 0, 0);
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
+#CS-search:hover,#looks-CS:hover,#sp-CS:hover,#Start-measure-but:hover {
+    border: 0.1rem solid rgb(255, 0, 0);
 }
-.ShowPara-CS:active {
-    background-color: #c5b443;
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
-
 
 /*Power Dependence button part*/
 #PD-search,#FD-search,#CW-search {
-    appearance: none;
     background-color: #ff7f7f;
-    border: 0.2rem solid rgba(27, 31, 35, .15);
+    color:#000;
+    border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 1.2rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
-    box-sizing: border-box;
-    color: #fff;
     cursor: pointer;
-    display: inline-block;
-    font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
     font-size: 1rem;
     font-weight: 600;
     line-height: 1.34rem;
@@ -192,34 +113,19 @@
     top:17%;
     right:1.1%;
     text-align: center;
-    text-decoration:none;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
     vertical-align: middle;
-    white-space: nowrap;
+    z-index: 2;
 }
 #PD-search:hover,#FD-search:hover,#CW-search:hover {
-    background-color: #fef992;
-    color:rgb(255, 0, 30);
-    border: 0.2rem solid rgb(255, 0, 0);
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
-#PD-search:active,#FD-search:active,#CW-search:active {
-    background-color: #b6555c;
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
-.ShowPara-PD,.ShowPara-FD,.ShowPara-CW {
-    appearance: none;
+    border: 0.3rem solid rgb(255, 0, 0);
+} 
+#sp-PD,#sp-FD,#sp-CW {
     background-color: #b1ae52;
-    border: 0.2rem solid rgba(27, 31, 35, .15);
+    color:#000;
+    border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 1.2rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
-    box-sizing: border-box;
-    color: #fff;
     cursor: pointer;
-    display: inline-block;
-    font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
     font-size: 1rem;
     font-weight: 600;
     line-height: 1.34rem;
@@ -229,27 +135,15 @@
     top:64%;
     right:1.1%;
     text-align: center;
-    text-decoration: none;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
     vertical-align: middle;
-    white-space: nowrap;
+    z-index: 2;
 }
-.ShowPara-PD:hover,.ShowPara-FD:hover,.ShowPara-CW:hover {
-    background-color: #fef992;
-    color:rgb(255, 0, 30);
-    border: 0.2rem solid rgb(255, 0, 0);
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
+#sp-PD:hover,#sp-FD:hover,#sp-CW:hover{
+    border: 0.3rem solid rgb(255, 0, 0);
 }
-.ShowPara-PD:active,.ShowPara-FD:active,.ShowPara-CW:active {
-    background-color: #c5b443;
-    box-shadow: rgba(20, 70, 32, .2) 0 0.07rem 0 inset;
-}
-
 #showcontent-MS{
-    background-color: transparent;
-    color:rgb(0,0,0);
+    background-color: rgb(25, 45, 24);
+    color:white;
     position:fixed;
     top:1.7%;
     right:7.5%;
@@ -259,11 +153,12 @@
     z-index: 10;
     font-size:1rem ;
     border: 0.2rem solid rgb(79, 70, 70);
+    z-index: 10;
 }
 
 #showcontent-CS{
-    background-color: transparent;
-    color:rgb(0,0,0);
+    background-color: rgb(25, 45, 24);
+    color:white;
     position:relative;
     top:25%;
     right:-93%;
@@ -275,8 +170,8 @@
     border: 0.2rem solid rgb(79, 70, 70);
 }
 #showcontent-PD{
-    background-color:transparent;
-    color:rgb(0,0,0);
+    background-color: rgb(25, 45, 24);
+    color:white;
     position:relative;
     top:25%;
     right:-82%;
@@ -288,8 +183,8 @@
     border: 0.2rem solid rgb(79, 70, 70);
 }
 #showcontent-FD{
-    background-color:transparent;
-    color:rgb(0,0,0);
+    background-color: rgb(25, 45, 24);
+    color:white;
     position:relative;
     top:25%;
     right:-71%;
@@ -301,8 +196,8 @@
     border: 0.2rem solid rgb(79, 70, 70);
 }
 #showcontent-CW{
-    background-color:transparent;
-    color:rgb(0,0,0);
+    background-color: rgb(25, 45, 24);
+    color:white;
     position:relative;
     top:25%;
     right:-60%;
@@ -314,8 +209,9 @@
     border: 0.2rem solid rgb(79, 70, 70);
 }
 #search-jobid{
-    background-color:transparent;
-    color:rgb(0,0,0);
+    background-color: rgb(25, 45, 24);
+    color:white;
+    color:rgb(255, 255, 255);
     position:fixed;
     top:8%;
     right:1%;
@@ -328,7 +224,6 @@
 }
 #showcontent-MS:hover,#showcontent-PD:hover,#showcontent-FD:hover,#showcontent-CS:hover,#showcontent-CW:hover,#search-jobid:hover  {
     color:rgb(255, 0, 30);
-    border: 0.2rem solid rgb(255, 0, 0);
     box-shadow: rgba(255, 255, 255, 0.918) 0 0.25rem 0.25rem inset;
 }
 #showcontent-MS:active,#showcontent-PD:active,#showcontent-FD:active,#showcontent-CW:active,#showcontent-CS:active,#search-jobid:active {
@@ -355,4 +250,90 @@
 }
 #refresh:active {
     border: 0.2rem solid rgb(178, 247, 82);
+}
+
+#search-jobid:before,#dmbutton:before,#CS-search:before,#looks-CS:before
+,.ShowPara:before,.button-run:before,.content-button:before,#Start-measure-but:before {
+    content: '';
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    position: absolute;
+    top: -2px;
+    left:-2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity .3s ease-in-out;
+    border-radius: 1rem;
+}
+#search-jobid:active:after,#dmbutton:active:after,#CS-search:active:after,#looks-CS:active:after
+,.ShowPara:active:after,.button-run:active:after,.content-button:active:after,#Start-measure-but:active:after {
+    background: transparent;
+}
+#search-jobid:active,#dmbutton:active,#CS-search:active,#looks-CS:active
+,.ShowPara:active,.button-run:active,.content-button:active,#Start-measure-but:active {
+    color: #000
+}
+#search-jobid:hover:before,#dmbutton:hover:before,#CS-search:hover:before,#looks-CS:hover:before
+,.ShowPara:hover:before,.button-run:hover:before,.content-button:hover:before,#Start-measure-but:hover:before {
+    opacity: 1;
+}
+
+#search-jobid:after,#dmbutton:after,.content-button:after{
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgb(25, 45, 24);
+    left: 0;
+    top: 0;
+    border-radius: 1rem;
+}
+#search-jobid:active,#dmbutton:active,.content-button:active{
+    color:#ffa600;
+}
+.button-run:after,#Start-measure-but:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgb(255, 113, 113);
+    left: 0;
+    top: 0;
+    border-radius: 1rem;
+    color:transparent;
+    
+}
+#looks-CS:after{
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgb(255, 148, 214);
+    left: 0;
+    top: 0;
+    border-radius: 1rem; 
+}
+.ShowPara:after{
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #b1ae52;
+    left: 0;
+    top: 0;
+    border-radius: 1rem; 
+}
+
+@keyframes glowing {
+    0% { background-position: 0 0; }
+    50% { background-position: 400% 0; }
+    100% { background-position: 0 0; }
 }
