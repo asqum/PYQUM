@@ -131,13 +131,29 @@ body {
 }
 .sectitle{
     position:relative;
-    top:18%;
-    left:37%;
+    top:23%;
+    left:0%;
     font-size:1.4rem;
-    width:40%;
-    height:10%;
+    width:75%;
+    height:65%;
+    text-align: center;
 }
-
+#result{
+    position:relative;
+    top:0.5%;
+    left:15%;
+    width:100%;
+    height:75%;
+    text-align: left;  
+    border: 0.2rem solid rgb(255, 198, 198);
+}
+.sub-content-title{
+    position:relative;
+    top:23%;
+    left:40%;
+    font-size:1.4rem;
+    width: 30%;
+}
 
 input[id='jobID-CS'] {
     background:#ccc; 

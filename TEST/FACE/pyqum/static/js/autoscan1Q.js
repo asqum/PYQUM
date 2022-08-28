@@ -63,6 +63,31 @@ function log_print(text){
     log.innerHTML = text;
 }
 
+// generate the spans in results with div tag input a dictionary
+function generate_result_span(results){  
+    document.getElementById('Start-measure-but').setAttribute('value','1')
+  // get the selector in the body
+    let dm_mode = document.getElementById("dmbutton").value;
+    let cavity = Object.keys(results);
+    let len = cavity.length;
+    let result_block = document.getElementById("result");
+    result_block.innerHTML = "";
+  // generate the options in the select
+    for(let ipt=0; ipt<len; ipt++){
+        let div = document.createElement("div");
+        div.innerHTML = cavity[ipt]+": "+results[cavity[ipt]];
+        div.setAttribute('value','result'+cavity[ipt]);//String(Number(result_keys[ipt])*1000)+' MHz'
+        result_block.appendChild(div);
+    };
+    if(dm_mode==0){
+      result_block.style.backgroundColor = "rgb(248, 218, 218)";
+      result_block.style.color = "#000";
+    }else{
+      result_block.style.backgroundColor = "rgba(37, 37, 37, 0.369)";
+      result_block.style.color = "rgb(225, 255, 0)";
+    };
+    result_block.style.display="block"
+};
 
 
 
@@ -73,20 +98,13 @@ function darkMode() {
     element.classList.toggle("dark-mode");
     if(document.getElementById('dmbutton').value=='0'){
         document.getElementById('dmbutton').setAttribute('value','1');
-        //按鍵變為深色模式
-        let but = document.getElementsByClassName('content-button');
-        for(let i=0;i<but.length;i++){
-            but[i].style.color = 'rgb(0,255,0)';
-        };
-
     }else{
         document.getElementById('dmbutton').setAttribute('value','0');
-        let but = document.getElementsByClassName('content-button');
-        for(let i=0;i<but.length;i++){
-            but[i].style.color = 'rgb(0,0,0)';
-        };
     };
     dark_plot();
+    if(document.getElementById('Start-measure-but').value==='1'){
+        generate_result_span(); 
+    };
 };
 
 function dark_plot(){
@@ -155,30 +173,16 @@ function start_measure(){
     port = document.getElementById('port-inp').value;
 
     // connect to autoscan1Q2js.py
-    console.log("Start Measurement by Bot ")
+    log_print("Start Measurement by Bot ")
     $.getJSON( '/autoscan1Q2js/measurement',{  
         dc_channel: JSON.stringify(dc_ch),
         inout_port: JSON.stringify(port), 
     }, function (datas) {   //need to check this is correct or not
-        console.log( "Measurement finish!" );
+        log_print( "Measurement finish!" );
     });
     // ToSolve: How to show the results on the html?
 }
 
-
-// show when the search jobid button click
-function show_results(){
-    let resultsBycavity = {}
-    $.getJSON( '/autoscan1Q2js/get_results',{  
-    }, function (results){             
-        let cavity_key = results['CS']['answer'];
-        for (let i=0;i<cavity_key.length;i++){   
-            resultsBycavity[cavity_key[i]] = {"PowerDepnd":results["PD"][cavity_key[i]],"FluxDepnd":results["FD"][cavity_key[i]],"QubitSearch":results["CW"][cavity_key[i]]};    
-        };
-    });
-    document.getElementById('result').innerHTML = resultsBycavity;
-    return cavity_key;
-}
 
 function show_content_MS(){
     window.location.hash = "#MS-content";
@@ -203,8 +207,7 @@ function search_jobids(){
         FD_jobids = JOBIDs['FluxDepend']
         CW_jobids = JOBIDs['QubitSearch'] 
     });
-    genopt (PD_jobids); 
-    show_results();
+    genopt (PD_jobids);
 };
 
 var cavities_plot = {};
@@ -229,6 +232,7 @@ function gaussian_fitting(){
         spinner.style.visibility = "hidden";
         spinner.style.opacity = '0';
         log_print("Gaussian fitting finish!");
+        generate_result_span(cavities_plot);
     })
     .fail(function(jqxhr, textStatus, error){
         spinner.style.visibility = "hidden";
