@@ -238,6 +238,7 @@ function gaussian_fitting(){
         spinner.style.visibility = "hidden";
         spinner.style.opacity = '0';
         log_print("Somwhere missing...");
+        alert("Gaussian fitting mixing!");
     });
 }
 

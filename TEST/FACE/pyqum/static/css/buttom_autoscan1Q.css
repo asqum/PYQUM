@@ -20,7 +20,7 @@
 
 #Start-measure-but{
     position:absolute;
-    background-color:rgb(255, 113, 113);
+    background-color:rgb(36, 34, 55);
     color:rgb(255, 255, 255);
     top:250%;
     left:135%;
@@ -33,7 +33,7 @@
 
 /*Cavity search button part*/
 #CS-search{
-    background-color: #ff7f7f;
+    background-color:rgb(36, 34, 55);
     color:rgb(255, 255, 255);
     border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 1.2rem;
@@ -53,12 +53,11 @@
 }
 
 #looks-CS{
-    background-color: #fca3fa;
-    color:#000;
+    background-color: #25112a;
+    color:white;
     border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 1.2rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
-    color: #000;
     cursor: pointer;
     font-size: 1rem;
     font-weight: 600;
@@ -74,8 +73,8 @@
 }
 
 #sp-CS {
-    background-color: #b1ae52;
-    color:#000;
+    background-color: #383201;
+    color:white;
     border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 0.9rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
@@ -98,8 +97,8 @@
 
 /*Power Dependence button part*/
 #PD-search,#FD-search,#CW-search {
-    background-color: #ff7f7f;
-    color:#000;
+    background-color: rgb(36, 34, 55);
+    color:white;
     border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 1.2rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
@@ -120,8 +119,8 @@
     border: 0.3rem solid rgb(255, 0, 0);
 } 
 #sp-PD,#sp-FD,#sp-CW {
-    background-color: #b1ae52;
-    color:#000;
+    background-color: #383201;
+    color:white;
     border: 0.2rem solid rgb(79, 70, 70);
     border-radius: 1.2rem;
     box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
@@ -303,7 +302,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background: rgb(255, 113, 113);
+    background: rgb(36, 34, 55);
     left: 0;
     top: 0;
     border-radius: 1rem;
@@ -316,7 +315,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background: rgb(255, 148, 214);
+    background: #25112a;
     left: 0;
     top: 0;
     border-radius: 1rem; 
@@ -327,7 +326,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background: #b1ae52;
+    background: #383201;
     left: 0;
     top: 0;
     border-radius: 1rem; 
