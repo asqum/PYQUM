@@ -958,3 +958,23 @@ function show_paras(where){
     paras_layout(where,paras_dict);
     log_print("Parameters showing!");
 };
+
+//----------------------test-------------------------
+function get_test(){
+    $.getJSON( '/autoscan1Q/test',{  
+    }, function (data) {
+        console.log(data);
+    });
+    var intervalID = window.setInterval(function(){
+        $.getJSON( '/autoscan1Q/get_test',{  
+        }, function (data) {
+            console.log(data['now']);
+        })
+        .done(function(data) {
+            clearInterval(intervalID);
+        })
+        .fail(function(jqxhr, textStatus, error){
+            alert("test error!");
+        });
+    }, 50);
+};

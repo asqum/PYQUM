@@ -1,3 +1,4 @@
+from sys import setprofile
 from pyqum.benchmark import AutoScan1Q,Load_From_pyqum
 from flask import Blueprint, request, session,render_template, abort, g
 from pyqum.instrument.logger import  get_status
@@ -176,3 +177,16 @@ def get_xypower():
 
     return json.dumps({'xy_power':xy_powa}, cls=NumpyEncoder)
 
+@bp.route('/test',methods=['POST','GET'])
+def test():
+    global step
+    step = 0
+    for i in range(10000):
+        step+=1
+
+    return json.dumps({"total":step}, cls=NumpyEncoder)
+
+    
+@bp.route('/get_test',methods=['POST','GET'])
+def get_test():
+    return json.dumps({'now':step}, cls=NumpyEncoder)
