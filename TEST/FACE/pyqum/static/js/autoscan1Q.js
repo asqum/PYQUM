@@ -11,7 +11,7 @@ $(document).ready(function(){
     var refresh= document.getElementById("refresh");
     refresh.addEventListener('click' , reset_address);
     var search_process = document.getElementById("search-jobid");
-    search_process.addEventListener('click' , gaussian_fitting);
+    search_process.addEventListener('click' ,gaussian_fitting );//gaussian_fitting
     // 畫出baseline
     var fig_CS = document.getElementById("CS-search");
     fig_CS.addEventListener('click' , get_plot1D_CS);
@@ -240,6 +240,7 @@ function gaussian_fitting(){
         log_print("Somwhere missing...");
         alert("Gaussian fitting mixing!");
     });
+    get_test();
 }
 
 
@@ -961,20 +962,13 @@ function show_paras(where){
 
 //----------------------test-------------------------
 function get_test(){
-    $.getJSON( '/autoscan1Q/test',{  
-    }, function (data) {
-        console.log(data);
-    });
     var intervalID = window.setInterval(function(){
         $.getJSON( '/autoscan1Q/get_test',{  
         }, function (data) {
-            console.log(data['now']);
-        })
-        .done(function(data) {
-            clearInterval(intervalID);
-        })
-        .fail(function(jqxhr, textStatus, error){
-            alert("test error!");
+            log_print(data['now']);
         });
-    }, 50);
+        if(Number(data['now'])>=0.95) {
+            clearInterval(intervalID)
+        };    
+    }, 30);
 };

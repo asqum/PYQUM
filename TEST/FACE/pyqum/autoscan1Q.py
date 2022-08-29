@@ -123,7 +123,7 @@ def get_results():
     return json.dumps(specifications["result"], cls=NumpyEncoder)  
 
 
-
+global progress
 # not for measurement but for plot with a specific jobid
 @bp.route('/plot_result',methods=['POST','GET'])
 def plot_after_jobid():
@@ -135,7 +135,8 @@ def plot_after_jobid():
     routine = AutoScan1Q(sparam="",dcsweepch = "")
     if where_plot == "CS":
         print("CavitySearch start:\n")
-
+        global progress
+        progress = routine.id
         routine.cavitysearch(jobid=specific_id)
         CS = {'plot_items':routine.CS_plot_items,'overview':routine.CS_overview}  #{'5487 MHz':{'Frequency':[...],'Amplitude':[...],'UPhase':[...]},'~ MHz':{...},...}
                                                                                   #{'Frequency':[...],'Amplitude':[...],'UPhase':[...]}
@@ -177,16 +178,9 @@ def get_xypower():
 
     return json.dumps({'xy_power':xy_powa}, cls=NumpyEncoder)
 
-@bp.route('/test',methods=['POST','GET'])
-def test():
-    global step
-    step = 0
-    for i in range(10000):
-        step+=1
-
-    return json.dumps({"total":step}, cls=NumpyEncoder)
-
-    
+   
 @bp.route('/get_test',methods=['POST','GET'])
 def get_test():
-    return json.dumps({'now':step}, cls=NumpyEncoder)
+    print("check here: ",progress)
+    print('read address:',ctypes.cast(progress, ctypes.py_object).value)
+    return json.dumps({'now':ctypes.cast(progress, ctypes.py_object).value}, cls=NumpyEncoder)

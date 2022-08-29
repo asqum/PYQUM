@@ -1472,7 +1472,8 @@ class AutoScan1Q:
         self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
-        self.CS_progress_address = 0
+        self.CS_progress = 0
+        self.id = id(self.CS_progress)
 
         
     def cavitysearch(self,jobid):
@@ -1485,8 +1486,8 @@ class AutoScan1Q:
         self.CS_jobid = jobid
         dataframe = Load_From_pyqum(jobid).load()
         CS = CavitySearch(dataframe)
-        self.CS_progress_address = id(CS.progress)
-        print('address: ',self.CS_progress_address)
+        self.CS_progress = CS.progress
+        print('address: ',self.CS_progress)
         self.cavity_list = CS.do_analysis() #model h5 cannot import <- 0818 update, no need it anymore
         if plot_ornot:
             self.CS_plot_items = CS.give_plot_info()
