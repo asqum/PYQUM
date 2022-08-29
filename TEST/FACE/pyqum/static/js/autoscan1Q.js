@@ -65,7 +65,7 @@ function log_print(text){
 
 // generate the spans in results with div tag input a dictionary
 function generate_result_span(results){  
-    document.getElementById('Start-measure-but').setAttribute('value','1')
+    document.getElementById('search-jobid').setAttribute('value','1')
   // get the selector in the body
     let dm_mode = document.getElementById("dmbutton").value;
     let cavity = Object.keys(results);
@@ -102,8 +102,8 @@ function darkMode() {
         document.getElementById('dmbutton').setAttribute('value','0');
     };
     dark_plot();
-    if(document.getElementById('Start-measure-but').value==='1'){
-        generate_result_span(); 
+    if(document.getElementById('search-jobid').value==='1'){
+        generate_result_span(cavities_plot); 
     };
 };
 
@@ -514,6 +514,7 @@ function plot2D_PD( data, axisKeys, plotId, modenum ) {
             zeroline: false,
             color:color_x,
             tickfont:{size:25},
+            automargin: true
         },
         yaxis: {
             title: {
@@ -638,6 +639,7 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
             zeroline: false,
             color:color_x,
             tickfont:{size:25},
+            automargin: true
         },
         yaxis: {
             title: {

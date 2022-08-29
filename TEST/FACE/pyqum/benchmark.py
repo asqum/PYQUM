@@ -1105,7 +1105,7 @@ class CavitySearch:
             pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-3*avg_FWHM,tip_freq+3*avg_FWHM]
+            region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-5*avg_FWHM,tip_freq+5*avg_FWHM]
 
         self.final_answer = region  #{'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
         
@@ -1410,7 +1410,7 @@ def char_cwsweep_new(sparam,freq,powa,flux,f_bare,f_dress,dcsweepch = "1",commen
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
         xyfreq = "{} to {} * 400".format(f_qubit-1,f_qubit+1)#"OPT,"
-        xypowa = "-10 -30 r 10"#"OPT,"
+        xypowa = "0 -10 -20 -30 r 10"#"OPT,"
         PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', 'sg-locked': '{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":0}'} # DC=YOKO
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         comment = comment.replace("\"","")+str(CORDER) #comment
@@ -1439,7 +1439,7 @@ class Quest_command:
         else: pass
     
     def cavitysearch(self,dcsweepch,add_comment=""):
-        jobid = char_fresp_new(sparam=self.sparam,freq = "3 to 9 *3000",powa = "0",flux = "OPT,",dcsweepch = "1",comment = "By bot - step1 cavitysearch "+add_comment)
+        jobid = char_fresp_new(sparam=self.sparam,freq = "3 to 9 *10000",powa = "0",flux = "OPT,",dcsweepch = "1",comment = "By bot - step1 cavitysearch "+add_comment)
         return jobid
     def powerdepend(self,select_freq,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
