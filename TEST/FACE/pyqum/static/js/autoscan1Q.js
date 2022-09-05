@@ -214,6 +214,7 @@ var cavities_plot = {};
 var CS_overview = {};
 
 function gaussian_fitting(){
+    
     let spinner = document.getElementById("spinner");
     log_print("Start Gaussian fitting wait plz...");
     let where = "CS";
@@ -240,7 +241,7 @@ function gaussian_fitting(){
         log_print("Somwhere missing...");
         alert("Gaussian fitting mixing!");
     });
-    get_test();
+    
 }
 
 
@@ -960,15 +961,4 @@ function show_paras(where){
     log_print("Parameters showing!");
 };
 
-//----------------------test-------------------------
-function get_test(){
-    var intervalID = window.setInterval(function(){
-        $.getJSON( '/autoscan1Q/get_test',{  
-        }, function (data) {
-            log_print(data['now']);
-        });
-        if(Number(data['now'])>=0.95) {
-            clearInterval(intervalID)
-        };    
-    }, 30);
-};
+

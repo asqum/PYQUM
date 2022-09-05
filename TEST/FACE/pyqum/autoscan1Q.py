@@ -178,7 +178,7 @@ def get_xypower():
 
     return json.dumps({'xy_power':xy_powa}, cls=NumpyEncoder)
 
-   
+#----------------------------test-------------------------------------------------  
 @bp.route('/get_test',methods=['POST','GET'])
 def get_test():
     print("check here: ",progress)

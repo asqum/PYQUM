@@ -1133,7 +1133,7 @@ class CavitySearch:
             gaussian_exist['peak_freq_amp'].append(peak_amp)
             gaussian_exist['peak_freq_pha'].append(peak_pha)
             step += 1
-            self.progress = step/self.sliced_freq.shape[0]
+            self.progress = step*100/self.sliced_freq.shape[0]
 
         self.peak_amp = rm_empty(gaussian_exist["peak_freq_amp"])
         self.peak_pha = rm_empty(gaussian_exist["peak_freq_pha"])
