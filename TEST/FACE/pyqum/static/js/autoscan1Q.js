@@ -239,7 +239,7 @@ function gaussian_fitting(){
     .fail(function(jqxhr, textStatus, error){
         spinner.style.visibility = "hidden";
         spinner.style.opacity = '0';
-        log_print("Somwhere missing...");
+        log_print("Somewhere missing...");
         alert("Gaussian fitting mixing!");
     });
     
