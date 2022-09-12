@@ -181,6 +181,7 @@ function start_measure(){
         log_print( "Measurement finish!" );
     });
     // ToSolve: How to show the results on the html?
+    gaussian_fitting();
 }
 
 
@@ -214,7 +215,7 @@ var cavities_plot = {};
 var CS_overview = {};
 
 function gaussian_fitting(){
-    
+    search_jobids();
     let spinner = document.getElementById("spinner");
     log_print("Start Gaussian fitting wait plz...");
     let where = "CS";
@@ -222,7 +223,7 @@ function gaussian_fitting(){
     spinner.style.opacity = '1';
     $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories : JSON.stringify(where),
-        specific_jobid : JSON.stringify("5108")   //CS_jobid
+        specific_jobid : JSON.stringify(String(CS_jobid))   //CS_jobid"5108"
 
     }, function (plot_items) {   //need to check this is correct or not
         cavities_plot = plot_items['plot_items'];
@@ -558,7 +559,7 @@ function get_plot2D_PD(){
     let where = "PD";
     $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify("5097"),  //PD_jobids[cavity]
+        specific_jobid : JSON.stringify(String(PD_jobids[cavity])),  //PD_jobids[cavity]5097
         target_cavity : JSON.stringify(cavity)
     }, function (plot_items) {   //need to check this is correct or not
         pd_plot = plot_items[cavity];
@@ -680,7 +681,7 @@ function get_plot2D_FD(){
     let where = "FD";
     $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify("5105"),//FD_jobids[cavity]
+        specific_jobid : JSON.stringify(String(FD_jobids[cavity])),//FD_jobids[cavity]5105
         target_cavity : JSON.stringify(cavity)
     }, function (plot_items) {   //need to check this is correct or not
         fd_plot = plot_items[cavity];
@@ -840,7 +841,7 @@ function get_plot1D_CW(){
     let where = "CW";
     $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify("5141"),//CW_jobids[cavity]
+        specific_jobid : JSON.stringify(String(CW_jobids[cavity])),//CW_jobids[cavity]5141
         target_cavity : JSON.stringify(cavity)
 
     }, function (plot_items) {   //need to check this is correct or not
@@ -863,7 +864,7 @@ function xypowa_options_generator(mode){
     let xy_options = {}
     
     $.getJSON( '/autoscan1Q/get_xypower',{  
-        specific_jobid : JSON.stringify("5141"),//CW_jobids[cavity]
+        specific_jobid : JSON.stringify(String(CW_jobids[cavity])),//CW_jobids[cavity]5141
 
     }, function (xy_powas) {   //need to check this is correct or not
         xy_options = xy_powas['xy_power']; //list
@@ -932,19 +933,19 @@ function show_paras(where){
     log_print("Access measurement parameters...")
     let request_jobid = ''
     if(where == 'CS'){
-        request_jobid = "5108";//String(CS_jobid);
+        request_jobid = String(CS_jobid);//String(CS_jobid);"5108"
 
     }else if(where == 'PD'){
         let cavity_key = document.getElementById('cavity-select-PD').value.slice(3)
-        request_jobid = "5097";//String(PD_jobids[cavity_key]);
+        request_jobid = String(PD_jobids[cavity_key]);//String(PD_jobids[cavity_key]);"5097"
         
     }else if(where == 'FD'){
         let cavity_key = document.getElementById('cavity-select-FD').value.slice(3)
-        request_jobid = "5105";//String(FD_jobids[cavity_key]);
+        request_jobid = String(FD_jobids[cavity_key]);//String(FD_jobids[cavity_key]);"5105"
 
     }else{
         let cavity_key = document.getElementById('cavity-select-CW').value.slice(3)
-        request_jobid = "5141";//String(CW_jobids[cavity_key]);
+        request_jobid = String(CW_jobids[cavity_key]);//String(CW_jobids[cavity_key]);"5141"
 
     };
     $.ajaxSettings.async = false;
