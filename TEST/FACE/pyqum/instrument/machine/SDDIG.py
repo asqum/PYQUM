@@ -62,7 +62,8 @@ def ConfigureBoard(module, update_settings={}):
         if PXI < 0: # EXTERNAL FRONT-PANEL TRIGGER:
             print(Fore.CYAN + "Trigger from front panel EXT:")
             module.DAQdigitalTriggerConfig(DAQ_CH, keysightSD1.SD_TriggerExternalSources.TRIGGER_EXTERN, keysightSD1.SD_TriggerBehaviors.TRIGGER_RISE)
-        else: module.DAQdigitalTriggerConfig(DAQ_CH, keysightSD1.SD_TriggerExternalSources.TRIGGER_PXI+PXI, keysightSD1.SD_TriggerBehaviors.TRIGGER_FALL)
+        else: # PXI-Marker from DAC cannot be easily customized to follow the main pulse...
+            module.DAQdigitalTriggerConfig(DAQ_CH, keysightSD1.SD_TriggerExternalSources.TRIGGER_PXI+PXI, keysightSD1.SD_TriggerBehaviors.TRIGGER_FALL)
 
     samplesPerSec = sampling_rate(module)
     dt_ns = 1 / samplesPerSec / 1e-9 # in nano-second

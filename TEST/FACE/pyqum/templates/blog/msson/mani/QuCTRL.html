@@ -3,28 +3,30 @@
 <head>
     <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/mani/singleqb.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/mani/QuCTRL.js') }}"></script>
 </head>
 
 <body class='mani'>
 
 <div class="container">
 
-        <div class="row access"> <!-- New Role for File-status -->
-            <div class="col-15" id='left'><select class='mani singleqb wday zoomSelect' type="text" style="color: navy;"></select></div>
-            <div class="col-7" id='left'><select class='mani singleqb wmoment zoomSelect-1' type="number" style="color: orangered;"></select></div>
+        <div class="row"> <!-- New Role for File-status -->
+            <div class="col-15" id='left'><select class='mani QuCTRL wday zoomSelect' type="text" style="color: navy;"></select></div>
+            <div class="col-7" id='left'><select class='mani QuCTRL wmoment zoomSelect-1' type="number" style="color: orangered;"></select></div>
             <div class="col-20" id='left'>
-                <ul class="data-status singleqb">
+                <ul class="data-status QuCTRL">
                     <li>
-                        <span class="bar data-progress singleqb"></span>
-                        <h4 class="data-eta singleqb"></h4>
+                        <span class="bar data-progress QuCTRL"></span>
+                        <h4 class="data-eta QuCTRL"></h4>
                     </li>
                 </ul>
             </div>
             
             <div class="col-28" id='right'>
-                <!-- Notification -->
-                <div><input class='singleqb notification' type='submit' value="EXTRACT JOB FROM ALL-PAGE"></input></div>
+                <!-- Notification: should align with the mani.access button in mani.html -->
+                <input class='QuCTRL notification' id='Single_Qubit_notification' type='submit' value=""></input>
+                <input class='QuCTRL notification' id='Qubits_notification' type='submit' value=""></input>
+                <input class='QuCTRL notification' id='QPU_notification' type='submit' value=""></input>
             </div>
             <div class="col-2" id='right'><button class="plusButton-1" style="color: orangered;">+</button></div>
             <div class="col-2" id='right'><button class="minusButton-1" style="color: orangered;">-</button></div>
@@ -35,77 +37,70 @@
         <div class="row">
            
             <div class="col" id='left' style="width:49%">
-                <div class="row">
-                     <!-- Read-only Comment -->
-                    <textarea class='mani singleqb comment' type="text" rows="15" cols="73" readonly>--comment--</textarea>
-                </div>
-                <div class="row">
-                    <!-- Editable Note -->
-                    <textarea class='mani singleqb note' type="text" rows="15" cols="73">--note--</textarea>
-                </div>
+                <!-- Read-only Comment -->
+                <div class="col-row-split"><textarea class='mani QuCTRL comment' type="text" rows="15" cols="73" readonly>--comment--</textarea></div>
+                <!-- Editable Note -->
+                <div class="col-row-split"><textarea class='mani QuCTRL note' type="text" rows="15" cols="73">--note--</textarea></div>
             </div>
             
             <div class="col" id='left' style="width:49%">
-                <div class="row">
-                    <!-- Read-only Peripheral (perimeter, SCORE etc.) Statement -->
-                    <textarea class='mani singleqb PSTATEMENT' type="text" rows="15" cols="73" readonly>--P-STATEMENT(s)--</textarea>
-                </div>
-                
+                <!-- Read-only Peripheral (perimeter, SCORE etc.) Statement -->
+                <div><textarea class='mani QuCTRL PSTATEMENT' type="text" rows="15" cols="73" readonly>--P-STATEMENT(s)--</textarea></div>
             </div>
             
         </div>
 
         <!-- Perimeters (already merged into flexible-parameters below) -->
         <!-- <div class="row perimeter">
-            <div id="mani-singleqb-perimeter"></div>
+            <div id="mani-QuCTRL-perimeter"></div>
         </div> -->
 
         <!-- Combined Fixed & Flexible Parameters -->
-        <div class="row singleqb-c-parameters"></div>
+        <div class="row QuCTRL-c-parameters"></div>
 
         <!-- Check, Plot 1D-Data -->
         <div class="row 1D">
-            <div class="col-10" id='left'><input class='mani data singleqb' id="singleqb-1d-data" type="submit" value="1D-Data"/></div>
-            <div class="col-5" id='left'><select class='mani data singleqb' id="singleqb-1d-VdBm" type="text">
+            <div class="col-10" id='left'><input class='mani data QuCTRL' id="QuCTRL-1d-data" type="submit" value="1D-Data"/></div>
+            <div class="col-5" id='left'><select class='mani data QuCTRL' id="QuCTRL-1d-VdBm" type="text">
                 <option value='V'>V</option>
                 <option value='dBm'>dBm</option>
             </select></div>
-            <div class="col-15" id='left'><input class='mani data singleqb' id="singleqb-sample-range" type="text" value="100,200,500,700"/></div>
-            <div class="col-7" id='left'><select class='mani data singleqb' id="singleqb-sample-mode" type="text">
+            <div class="col-15" id='left'><input class='mani data QuCTRL' id="QuCTRL-sample-range" type="text" value="100,200,500,700"/></div>
+            <div class="col-7" id='left'><select class='mani data QuCTRL' id="QuCTRL-sample-mode" type="text">
                 <option value='A' selected>A. DRS</option>
                 <option value='B'>B. RSD</option>
                 <option value='C'>C. MON</option>
                 <option value='D'>D. RMS</option>
             </select></div>
-            <div class="col-8" id='left'><select class='mani data singleqb' id="singleqb-1d-mode" type="text">
+            <div class="col-8" id='left'><select class='mani data QuCTRL' id="QuCTRL-1d-mode" type="text">
                 <option value='lines'>Line</option>
                 <option value='markers'>Marker</option>
             </select></div>
-            <div class="col-12" id='left'><input class='mani data singleqb multiplot' id="plot-name" type="text" value=""/></div>
+            <div class="col-12" id='left'><input class='mani data QuCTRL multiplot' id="plot-name" type="text" value=""/></div>
             <div class="col-10" id='left'><h4>:curve-name</h4></div>
         </div>
         <!-- Compare 1D-Data -->
         <div class="row 1D">
-            <div class="col-10" id='left'><input class='mani data singleqb' id="singleqb-insert-1D" style="background-color:navy;" type="submit" value="1D-1D"/></div>
-            <div class="col-10" id='left'><select class='mani data singleqb compare' id="singleqb-compare-nml" type="text"></select></div>
-            <div class="col-10" id='left'><select class='mani data singleqb compare' id="singleqb-compare-iqap" type="text"></select></div>
-            <div class="col-10" id='left'><input class='mani data singleqb compare' id="singleqb-shot-range" type="text" value="1,4300"/></div>
+            <div class="col-10" id='left'><input class='mani data QuCTRL' id="QuCTRL-insert-1D" style="background-color:navy;" type="submit" value="1D-1D"/></div>
+            <div class="col-10" id='left'><select class='mani data QuCTRL compare' id="QuCTRL-compare-nml" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data QuCTRL compare' id="QuCTRL-compare-iqap" type="text"></select></div>
+            <div class="col-10" id='left'><input class='mani data QuCTRL compare' id="QuCTRL-shot-range" type="text" value="1,4300"/></div>
             <div class="col-10" id='left'><h4>:shot-range</h4></div>
         </div>
 
         <!-- 2D-Data Assembly and Grooming -->
         <div class="row 2D">
-            <div class="col-10" id='left'><input class='mani data singleqb' id="singleqb-2d-data" type="submit" value="2D-Data"/></div>
-            <div class="col-5" id='left'><select class='mani data singleqb' id="singleqb-2d-VdBm" type="text">
+            <div class="col-10" id='left'><input class='mani data QuCTRL' id="QuCTRL-2d-data" type="submit" value="2D-Data"/></div>
+            <div class="col-5" id='left'><select class='mani data QuCTRL' id="QuCTRL-2d-VdBm" type="text">
                 <option value='V'>V</option>
                 <option value='dBm'>dBm</option>
             </select></div>
-            <div class="col-10" id='left'><select class='mani data singleqb' id="singleqb-2d-iqamphase" type="text"></select></div>
-            <div class="col-10" id='left'><select class='mani data singleqb' id="singleqb-2d-type" type="text"></select></div>
-            <div class="col-10" id='left'><select class='mani data singleqb' id="singleqb-2d-colorscale" type="text"></select></div>
-            <div class="col-10" id='left'><select class='mani data singleqb' id="singleqb-2d-direction" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data QuCTRL' id="QuCTRL-2d-iqamphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data QuCTRL' id="QuCTRL-2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data QuCTRL' id="QuCTRL-2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='mani data QuCTRL' id="QuCTRL-2d-direction" type="text"></select></div>
             <!-- SAVE PERIMETER SETTINGS (PULSE SCHEMES) -->
-            <div class="col-20" id='left'><select class='mani scheme singleqb' id="SCHEME_LIST" type="text">
+            <div class="col-20" id='left'><select class='mani scheme QuCTRL' id="SCHEME_LIST" type="text">
                 <option value='TRANSFER' selected>TRANSFER</option>
                 <option value='FRESP'>FREQ. RESPONSE</option>
                 <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
@@ -115,78 +110,78 @@
                 <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
                 <option value='GENERAL'>GENERALIZED</option>
             </select></div>
-            <div class="col-10" id='left'><input class="singleqb perimeter-settings save" type="submit" value="SAVE"/></div>
+            <div class="col-10" id='left'><input class="QuCTRL perimeter-settings save" type="submit" value="SAVE"/></div>
             
         </div>
 
         <!-- 2D Histories -->
         <div class="row">
-            <div class="col-10" id='left'><input class='mani data singleqb' id="singleqb-2d-2d" style="background-color:navy;" type="submit" value="2D-2D"/></div>
-            <div class="col-84" id='left'><select class='mani data singleqb' id="singleqb-data-assemblies" type="text"></select></div>
+            <div class="col-10" id='left'><input class='mani data QuCTRL' id="QuCTRL-2d-2d" style="background-color:navy;" type="submit" value="2D-2D"/></div>
+            <div class="col-84" id='left'><select class='mani data QuCTRL' id="QuCTRL-data-assemblies" type="text"></select></div>
         </div>
         <!-- Download 1D & 2D data for external analysis -->
         <div class="row">
-            <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savecsv">CSV-1D</button></div>
-            <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savemat">MAT-2D</button></div>
+            <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="QuCTRL-savecsv">CSV-1D</button></div>
+            <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="QuCTRL-savemat">MAT-2D</button></div>
         </div>
 
-        <div id="mani-singleqb-announcement"></div>
+        <div id="mani-QuCTRL-announcement"></div>
 
-        <div id="mani-singleqb-chart"></div>
+        <div id="mani-QuCTRL-chart"></div>
         
         <!-- Brings up dialogue box for parameter settings -->
-        <div class="modal new singleqb">
-            <div class="modal-overlay modal-toggle new singleqb"></div>
+        <div class="modal new QuCTRL">
+            <div class="modal-overlay modal-toggle new QuCTRL"></div>
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
                     <h2 class="modal-heading">Setting up Single-Qubit Measurement:</h2>
-                    <div class="singleqb settingstatus"></div>
+                    <div class="QuCTRL settingstatus"></div>
                 </div>
 
                 <div class="modal-header">
                     <h4 style="color: rgb(5, 70, 16);">0. Inserting Pulse:</h4>
                     <div class="row">
-                        <div class="col-10" id='left'><input class="singleqb set-period" type="submit" value="INITIALIZE"/></div>
+                        <div class="col-10" id='left'><input class="QuCTRL set-period" type="submit" value="INITIALIZE"/></div>
 
                         <div class="col-10" id='left'><label class='parameter'>Width(ns)</label></div>
-                        <div class="col-10" id='left'><select class='singleqb setchannels finite-variable pulse-width' type="text">
+                        <div class="col-10" id='left'><select class='QuCTRL setchannels finite-variable pulse-width' type="text">
                             <option value='finite'>finite</option><option value='variable'>variable</option></select></div>
 
                         <div class="col-10" id='left'><label class='parameter'>Height(au)</label></div>
-                        <div class="col-10" id='left'><select class='singleqb setchannels finite-variable pulse-height' type="text">
+                        <div class="col-10" id='left'><select class='QuCTRL setchannels finite-variable pulse-height' type="text">
                             <option value='finite'>finite</option><option value='variable'>variable</option></select></div>
 
                         <div class="col-10" id='left'><label class='parameter'>Shape</label></div>
                     </div>
                     <div class="row">
-                        <div class="col-10" id='left'><input style="color:blue;" class="singleqb setchannels finite pulse-period" type="number" value='20000' min=0 max=1000000/></div>
+                        <div class="col-10" id='left'><input style="color:blue;" class="QuCTRL setchannels finite pulse-period" type="number" value='20000' min=0 max=1000000/></div>
 
-                        <div class="col-20" id='left'><input style="color:blue;" class="singleqb setchannels finite pulse-width" type="number" value='100'/></div>
-                        <div class="col-20" id='left'><input style="color:blue;" class='singleqb setchannels variable pulse-width' type="text" value="R1 = 0 to 10000 * 5000"/></div>
+                        <div class="col-20" id='left'><input style="color:blue;" class="QuCTRL setchannels finite pulse-width" type="number" value='100'/></div>
+                        <div class="col-20" id='left'><input style="color:blue;" class='QuCTRL setchannels variable pulse-width' type="text" value="R1 = 0 to 10000 * 5000"/></div>
 
-                        <div class="col-20" id='left'><input style="color:blue;" class="singleqb setchannels finite pulse-height" type="number" value=0.42 min=0 max=1 step=0.05/></div>
-                        <div class="col-20" id='left'><input style="color:blue;" class='singleqb setchannels variable pulse-height' type="text" value="R2 = 0 to 1 * 1000"/></div>
+                        <div class="col-20" id='left'><input style="color:blue;" class="QuCTRL setchannels finite pulse-height" type="number" value=0.42 min=0 max=1 step=0.05/></div>
+                        <div class="col-20" id='left'><input style="color:blue;" class='QuCTRL setchannels variable pulse-height' type="text" value="R2 = 0 to 1 * 1000"/></div>
 
-                        <div class="col-10" id='left'><select class='singleqb setchannels pulse-shape' type="text">
+                        <div class="col-10" id='left'><select class='QuCTRL setchannels pulse-shape' type="text">
                             <option value='FLAT' selected>FLAT</option>
                             <option value='GAUSS UP'>GAUSS UP</option>
                             <option value='GAUSS DN'>GAUSS DN</option>
                         </select></div>
 
-                        <!-- <div class="col-10" id='left'><select class='singleqb setchannels score-channel' type="text">
+                        <!-- <div class="col-10" id='left'><select class='QuCTRL setchannels score-channel' type="text">
                             <option value='1' selected>Score-1</option>
                             <option value='2'>Score-2</option>
                             <option value='3'>Score-3</option>
                             <option value='4'>Score-4</option>
                         </select></div> -->
 
-                        <div class="col-10" id='left'><input class="singleqb setchannels insert" type="submit" value="INSERT"/></div>
-                        <div class="col-10" id='left'><input class="singleqb setchannels back" type="submit" value="BACK"/></div>
+                        <div class="col-10" id='left'><input class="QuCTRL setchannels insert" type="submit" value="INSERT"/></div>
+                        <div class="col-10" id='left'><input class="QuCTRL setchannels back" type="submit" value="BACK"/></div>
                     </div>
                     <!-- LOAD PERIMETER SETTINGS (PULSE SCHEMES) -->
                     <div class="row perimeter">
-                        <div class="col-10" id='left'><input class="loaded singleqb perimeter-settings load" type="submit" value="LOAD"/></div>
-                        <div class="col-20" id='left'><select class='mani config singleqb' id="SCHEME_LIST" type="text">
+                        <div class="col-10" id='left'><input class="loaded QuCTRL perimeter-settings load" type="submit" value="LOAD"/></div>
+                        <div class="col-20" id='left'><select class='mani config QuCTRL' id="SCHEME_LIST" type="text">
                             <option value='TRANSFER' selected>TRANSFER</option>
                             <option value='FRESP'>FREQ. RESPONSE</option>
                             <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
@@ -212,18 +207,18 @@
                         <div class="col-16" id='left'><label>Trigger-Delay(ns)</label></div>
                     </div>
                     <div class="row perimeter">
-                        <div class="col-16" id='left'><select class='mani config singleqb' id="DIGIHOME" type="text">
+                        <div class="col-16" id='left'><select class='mani config QuCTRL' id="DIGIHOME" type="text">
                             <option value='original' selected>Original</option>
                             <option value='dual_digital_homodyne'>Dual roll-back</option>
                             <option value='i_digital_homodyne'>I integration</option>
                             <option value='q_digital_homodyne'>Q integration</option>
                         </select></div>
-                        <!-- <div class="col-16" id='left'><input class='mani config singleqb' id="IF_MHZ" type="number" value="0" step=1 /></div> -->
-                        <div class="col-16" id='left'><input class='mani config singleqb' id="IF_ALIGN_KHZ" type="number" value="0" step=1 /></div>
+                        <!-- <div class="col-16" id='left'><input class='mani config QuCTRL' id="IF_MHZ" type="number" value="0" step=1 /></div> -->
+                        <div class="col-16" id='left'><input class='mani config QuCTRL' id="IF_ALIGN_KHZ" type="number" value="0" step=1 /></div>
                         <div class="col-16" id='left'><label> </label></div>
 
-                        <div class="col-16" id='left'><input class='mani config singleqb' id="TRIGGER_DELAY_NS" type="number" value="0" step=8 min=0 /></div>
-                        <div class="col-16" id='left'><input class="singleqb adc-timsum check" type="submit" value="CHECK-TIMSUM"/></div>
+                        <div class="col-16" id='left'><input class='mani config QuCTRL' id="TRIGGER_DELAY_NS" type="number" value="0" step=8 min=0 /></div>
+                        <div class="col-16" id='left'><input class="QuCTRL adc-timsum check" type="submit" value="CHECK-TIMSUM"/></div>
                     </div>
 
                     <!-- 2. Instrument Settings -->
@@ -236,15 +231,15 @@
                         <div class="col-16" id='left'><label>Readout TYPE</label></div>
                     </div>
                     <div class="row perimeter">
-                        <div class="col-16" id='left'><select class='mani config singleqb' id="BIASMODE" type="text">
+                        <div class="col-16" id='left'><select class='mani config QuCTRL' id="BIASMODE" type="text">
                             <option value='0'>Voltage</option>
                             <option value='1' selected>Current</option>
                         </select></div>
-                        <div class="col-16" id='left'><input class='mani config singleqb' id="XY-LO-Power" type="number" value="16" step=1 /></div>
-                        <div class="col-16" id='left'><input class='mani config singleqb' id="RO-LO-Power" type="number" value="18" step=1 /></div>
-                        <div class="col-16" id='left'><input class='mani config singleqb' id="RECORD-SUM" type="number" value="1024" step=128 min=1024 max=102400/></div>
-                        <div class="col-16" id='left'><input class='mani config singleqb' id="RECORD_TIME_NS" type="number" value="1280" step=128 min=1280 max=128000/></div>
-                        <div class="col-16" id='left'><select class='mani config singleqb' id="READOUTYPE" type="text">
+                        <div class="col-16" id='left'><input class='mani config QuCTRL' id="XY-LO-Power" type="number" value="16" step=1 /></div>
+                        <div class="col-16" id='left'><input class='mani config QuCTRL' id="RO-LO-Power" type="number" value="18" step=1 /></div>
+                        <div class="col-16" id='left'><input class='mani config QuCTRL' id="RECORD-SUM" type="number" value="1024" step=128 min=1024 max=102400/></div>
+                        <div class="col-16" id='left'><input class='mani config QuCTRL' id="RECORD_TIME_NS" type="number" value="1280" step=128 min=1280 max=128000/></div>
+                        <div class="col-16" id='left'><select class='mani config QuCTRL' id="READOUTYPE" type="text">
                             <option value='one-shot'>ONE-SHOT</option>
                             <option value='continuous' selected>CONTINUOUS</option>
                         </select></div>
@@ -265,7 +260,7 @@
                             <div class="row perimeter">
                                 <div class="col-97" id='left'>
                                     <!-- Change the dimension in style.css -->
-                                    <textarea class='mani config singleqb' id='R-JSON' type="text" rows="7" cols="13" style="color:blue;">{}</textarea>
+                                    <textarea class='mani config QuCTRL' id='R-JSON' type="text" rows="7" cols="13" style="color:blue;">{}</textarea>
                                 </div>
                             </div>
                         
@@ -273,12 +268,12 @@
                     
                     <!-- Pulse Check -->
                     <div class="row perimeter">
-                        <div class="col-15" id='left'><input class="mani modal-toggle singleqb pulse-check" id="singleqb-pulse-check"  type="submit" value="PULSE-CHECK"/></div>
-                        <div class="col-15" id='left'><input class="mani modal-toggle singleqb toggle-pulses" id="singleqb-toggle-pulses"  type="submit" value="TOGGLE-PULSES"/></div>
+                        <div class="col-15" id='left'><input class="mani modal-toggle QuCTRL pulse-check" id="QuCTRL-pulse-check"  type="submit" value="PULSE-CHECK"/></div>
+                        <div class="col-15" id='left'><input class="mani modal-toggle QuCTRL toggle-pulses" id="QuCTRL-toggle-pulses"  type="submit" value="TOGGLE-PULSES"/></div>
                     </div>
-                    <div class="singleqb" id="singleqb-check-pulse-progress"></div>
+                    <div class="QuCTRL" id="QuCTRL-check-pulse-progress"></div>
                     <div class="row perimeter">
-                        <div class="mani modal-toggle" id="mani-singleqb-pulse-check"></div>
+                        <div class="mani modal-toggle" id="mani-QuCTRL-pulse-check"></div>
                     </div>
                     
 
@@ -295,33 +290,33 @@
                             
                         </div>
                         <div class="row"> <!-- NOTE: The id should be aligned with the corresponding CORDER's key! --> 
-                            <div class="col-16" id='left'><input class='mani singleqb' id="Flux-Bias" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='mani singleqb' id="XY-LO-Frequency" type="text" value="OPT,"/></div>
-                            <div class="col-16" id='left'><input class='mani singleqb' id="RO-LO-Frequency" type="text" value="6 to 7 * 3000"/></div>
+                            <div class="col-16" id='left'><input class='mani QuCTRL' id="Flux-Bias" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='mani QuCTRL' id="XY-LO-Frequency" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='mani QuCTRL' id="RO-LO-Frequency" type="text" value="6 to 7 * 3000"/></div>
                             
                         </div>
 
                         <!-- Comment -->
                         <div class="row">
                             <div class="col-75" id='left'>
-                                <textarea class='mani singleqb' id="singleqb-ecomment" type="text" rows="3" cols="73">--comment--</textarea>
+                                <textarea class='mani QuCTRL' id="QuCTRL-ecomment" type="text" rows="3" cols="73">--comment--</textarea>
                             </div>
                         </div>                      
 
                         <!-- RUN -->
                         <div class="row">
-                            <div class="col-15" id='left'><input class="singleqb setchannels check" type="submit" value="CHECK-RJSON"/></div> 
-                            <div class="col-15" id='left'><input class="mani modal-toggle new singleqb" id="singleqb-run"  type="submit" value="RUN"/></div>
-                            <div class="col-15" id='left'><input class="mani modal-toggle new singleqb" id="singleqb-cancel" type="submit" value="CANCEL"/></div>
+                            <div class="col-15" id='left'><input class="QuCTRL setchannels check" type="submit" value="CHECK-RJSON"/></div> 
+                            <div class="col-15" id='left'><input class="mani modal-toggle new QuCTRL" id="QuCTRL-run"  type="submit" value="RUN"/></div>
+                            <div class="col-15" id='left'><input class="mani modal-toggle new QuCTRL" id="QuCTRL-cancel" type="submit" value="CANCEL"/></div>
                         </div>
-                        <div class="row"><div class="col-49" id='left'><div class='singleqb check-rjson-status'></div></div></div>
+                        <div class="row"><div class="col-49" id='left'><div class='QuCTRL check-rjson-status'></div></div></div>
                         <div class="row">
                             <div class="col-12" id='left'><label class='parameter'>Queue system: </label></div>
-                            <div class="col-49" id='left'><div class='singleqb queue-system'></div></div>
+                            <div class="col-49" id='left'><div class='QuCTRL queue-system'></div></div>
                         </div>
                         <div class="row">
                             <div class="col-12" id='left'><label class='parameter'>Instruments: </label></div>
-                            <div class="col-49" id='left'><div class='singleqb all-instruments'></div></div>
+                            <div class="col-49" id='left'><div class='QuCTRL all-instruments'></div></div>
                         </div>
 
                     </div>
@@ -330,8 +325,8 @@
         </div>
 
         <!-- Brings up dialogue box for file-managing -->
-        <div class="modal manage singleqb">
-            <div class="modal-overlay modal-toggle manage singleqb"></div>
+        <div class="modal manage QuCTRL">
+            <div class="modal-overlay modal-toggle manage QuCTRL"></div>
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
                     <h2 class="modal-heading">Management office:</h2>
@@ -341,10 +336,10 @@
                     <div class="modal-content">
                         <div class="row"> <!-- New Row for Parameter-input -->
                             {% if session['run_clearance'] %}
-                                <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-resume">RESUME</button></div>
+                                <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="QuCTRL-resume">RESUME</button></div>
                             {% endif %}
-                            <!-- <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="singleqb-savenote">SAVE NOTE</button></div> -->
-                            <div class="col-10" id='left'><button class="mani push_button w-95 red" id="singleqb-datareset">CLIP</button></div>
+                            <!-- <div class="col-10" id='left'><button class="mani push_button w-95 blue" id="QuCTRL-savenote">SAVE NOTE</button></div> -->
+                            <div class="col-10" id='left'><button class="mani push_button w-95 red" id="QuCTRL-datareset">CLIP</button></div>
                         </div>
                     </div>
                 </div>
@@ -352,8 +347,8 @@
         </div>
 
         <!-- Brings up dialogue box for data-reset -->
-        <div class="modal data-reset singleqb">
-            <div class="modal-overlay modal-toggle data-reset singleqb"></div>
+        <div class="modal data-reset QuCTRL">
+            <div class="modal-overlay modal-toggle data-reset QuCTRL"></div>
             <div class="modal-wrapper modal-transition">
                 <div class="modal-header">
                     <h2 class="modal-heading" style="color:red">DATA RESET: PLEASE CONSIDER IT CAREFULLY. THIS ACTION CANNOT BE UNDONE.</h2>
@@ -366,23 +361,23 @@
                             <div class="col-20" id='left'><label>Truncate After:</label></div>
                         </div>
                         <div class="row">
-                            <div class="col-20" id='left'><input class='mani singleqb' id="singleqb-truncateafter" type="text"/></div> 
+                            <div class="col-20" id='left'><input class='mani QuCTRL' id="QuCTRL-truncateafter" type="text"/></div> 
                             <div class="col-10" id='left'><label>point(s)</label></div>  
                         </div>
 
                         <div class="row">
-                            <div class="col-10" id='left'><input class="mani modal-toggle data-reset singleqb" id="singleqb-reset" type="submit" value="RESET"/></div>
-                            <div class="col-10" id='left'><input class="mani modal-toggle data-reset singleqb" id="singleqb-cancel" type="submit" value="CANCEL"/></div>
+                            <div class="col-10" id='left'><input class="mani modal-toggle data-reset QuCTRL" id="QuCTRL-reset" type="submit" value="RESET"/></div>
+                            <div class="col-10" id='left'><input class="mani modal-toggle data-reset QuCTRL" id="QuCTRL-cancel" type="submit" value="CANCEL"/></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="mani singleqb confirm">
+        <div class="mani QuCTRL confirm">
             <h1>Confirm your action</h1>
             <p>Are you really <em>really</em> <strong>really</strong> sure that you want to make changes to the FILE?</p>
-            <button class="mani singleqb reset-no" autofocus>NO</button>
-            <button class="mani singleqb reset-yes">YES</button>
+            <button class="mani QuCTRL reset-no" autofocus>NO</button>
+            <button class="mani QuCTRL reset-yes">YES</button>
         </div>
 
     </div>

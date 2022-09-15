@@ -12,7 +12,7 @@
 <body class="home">
 
 {% if g.user %}
-<div class="container" id="post">
+<div class="container-post">
 
     <div class='row'>
         <div class='col-15' id='left'>
@@ -20,6 +20,9 @@
         </div>
         <div class='col-8' id='left'>
             <a class="action" href="{{ url_for('blog.create') }}"><h5>New</h5></a>
+        </div>
+        <div class='col-10' id='left'>
+            <a class="action" href="{{ url_for('blog.activities_table') }}"><h5>Activity</h5></a>
         </div>
     </div>
 
