@@ -85,7 +85,7 @@ def auto_measurement():  # measurement do not plot
     db.execute('UPDATE sample SET specifications = ? WHERE samplename = ?', (specifications,samplename))
     db.commit()
     db.close()
-    #return json.dumps(measure_result, cls=NumpyEncoder)
+    return json.dumps(measure_result, cls=NumpyEncoder)
 
 # developing.... try to put the paras in dictionary with corresponding key
 @bp.route('/measurement_paras',methods=['POST','GET'])

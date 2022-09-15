@@ -63,19 +63,18 @@ function log_print(text){
     log.innerHTML = text;
 }
 
-// generate the spans in results with div tag input a dictionary
-function generate_result_span(results){  
-    document.getElementById('search-jobid').setAttribute('value','1')
+// generate the spans in results with div tag input a dictionary  (naked check OK)
+function generate_result_span(){  
+    results = cavities_plot;
   // get the selector in the body
     let dm_mode = document.getElementById("dmbutton").value;
-    let cavity = Object.keys(results);
-    let len = cavity.length;
+    let cavity = Object.keys(results);     // cavity freq list ['5487 MHz',...];
     let result_block = document.getElementById("result");
     result_block.innerHTML = "";
   // generate the options in the select
-    for(let ipt=0; ipt<len; ipt++){
+    for(let ipt=0; ipt<cavity.length; ipt++){
         let div = document.createElement("div");
-        div.innerHTML = cavity[ipt]+": "+results[cavity[ipt]];
+        div.innerHTML = cavity[ipt]+": "+final_result_set['PD'][cavity[ipt]]+","+final_result_set['FD'][cavity[ipt]]+","+final_result_set['CW'][cavity[ipt]];
         div.setAttribute('value','result'+cavity[ipt]);//String(Number(result_keys[ipt])*1000)+' MHz'
         result_block.appendChild(div);
     };
@@ -161,6 +160,7 @@ function reset_address(){
 
 
 // results container
+var final_result_set = {};
 
 
 // measurement settings
@@ -177,7 +177,8 @@ function start_measure(){
     $.getJSON( '/autoscan1Q2js/measurement',{  
         dc_channel: JSON.stringify(dc_ch),
         inout_port: JSON.stringify(port), 
-    }, function (datas) {   //need to check this is correct or not
+    }, function (measure_result) {   //need to check this is correct or not
+        final_result_set = measure_result;
         log_print( "Measurement finish!" );
     });
     // ToSolve: How to show the results on the html?
@@ -194,9 +195,9 @@ function show_content_MS(){
 
 
 var CS_jobid = 0;
-var PD_jobids = {};
-var FD_jobids = {};
-var CW_jobids = {};
+var PD_jobids = {}; //{'5487 MHz':5050,...}
+var FD_jobids = {}; // smae above
+var CW_jobids = {}; // same above
 
 
 function search_jobids(){
@@ -208,7 +209,13 @@ function search_jobids(){
         FD_jobids = JOBIDs['FluxDepend']
         CW_jobids = JOBIDs['QubitSearch'] 
     });
+    log_print("Results Loading...");
+    $.getJSON( '/autoscan1Q/get_results',{  
+    }, function (results){
+        final_result_set = results;
+    });
     genopt (PD_jobids);
+    document.getElementById('search-jobid').setAttribute('value','1')
 };
 
 var cavities_plot = {};
@@ -234,7 +241,7 @@ function gaussian_fitting(){
         spinner.style.visibility = "hidden";
         spinner.style.opacity = '0';
         log_print("Gaussian fitting finish!");
-        generate_result_span(cavities_plot);
+        generate_result_span();
     })
     .fail(function(jqxhr, textStatus, error){
         spinner.style.visibility = "hidden";
@@ -928,7 +935,7 @@ function paras_layout(where,paras_dict){
 
 
 
-// developing... show measurement parameters
+// show measurement parameters  naked check OK
 function show_paras(where){
     log_print("Access measurement parameters...")
     let request_jobid = ''
