@@ -70,11 +70,12 @@ def compu_peak_center_dist(freq_1,freq_2,compa_fig,p2p):
     score = {'freq_1':0,'freq_2':0}
     for substrate in l:
         loc_idx ,_ = peak_info(substrate,p2p)
-        for target_freq in [array(df_1['Frequency'])[loc_idx],array(df_2['Frequency'])[loc_idx]]:
-            if abs(freq_1-target_freq) < abs(freq_2-target_freq):
-                score['freq_1']+=1
-            else:
-                score['freq_2']+=1
+        if (loc_idx < df_1['Frequency'].shape[0]) and (loc_idx < df_2['Frequency'].shape[0]):
+            for target_freq in [array(df_1['Frequency'])[loc_idx],array(df_2['Frequency'])[loc_idx]]:
+                if abs(freq_1-target_freq) < abs(freq_2-target_freq):
+                    score['freq_1']+=1
+                else:
+                    score['freq_2']+=1
     if score['freq_1']>score['freq_2']:
         return freq_1
     else:
@@ -268,7 +269,7 @@ def find_best_ans(region,voted,fig,designed):
             break
 
         step+=1
-    top = []
+    
     if len(rang)>designed:
         diff = []
         for i in range(len(rang)):
@@ -276,12 +277,13 @@ def find_best_ans(region,voted,fig,designed):
             diff.append([i,np.max(pha)-np.min(pha)])
         
         top = sorted(array(diff), key=lambda x:x[1], reverse=True)[:designed]  # big > small
-    final_answer = []
-    print(top)
-    for i in top:
-        final_answer.append(rang[int(i[0])])
+        final_answer = []
+        for i in top:
+            final_answer.append(rang[int(i[0])])
     
-    return np.array(final_answer), ori_status    # rang is the final answer     
+        return np.array(final_answer), ori_status    # rang is the final answer    
+    else:
+        return np.array(rang), ori_status
 
 # remove the empty list from a given array
 def rm_empty(ary):

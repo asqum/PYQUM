@@ -1096,18 +1096,16 @@ class CavitySearch:
 
     def zscore_filter(self,region,designed_CPW_num):
         amp_voted, pha_voted = pred_filter(region,self.info['Comparison_fig'])
-        print('pha_voted: ',pha_voted)
+
         true, _ =  find_best_ans(region, pha_voted,self.info['Comparison_fig'],designed_CPW_num)
         for i in region.keys():
             for j in true:
                 if region[i][0] == j[0] and region[i][1] == j[1] :
-                    print(region[i])
-                    print(j)
                     self.final_answer[i] = region[i]
         
-    def give_region(self,designed_CPW_num):
+    def give_region(self,x,designed_CPW_num):
     
-        for tip_freq in self.final_answer: 
+        for tip_freq in x: 
             freq = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Frequency']
             amp = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Amplitude']
             pha = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['UPhase']
@@ -1464,16 +1462,16 @@ class Quest_command:
         print('check FD freq_range: ',freq_command)
         if (select_freq[0]>12) | (select_freq[1]>12) | (select_freq[0]<2) | (select_freq[1]<2):
             raise ValueError("Frequency is out of range with "+freq_command)
-        if select_powa >20 | select_powa <-60:
+        if (select_powa >20) | (select_powa <-60):
             raise ValueError("Power is out of range with "+select_powa)
         jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-500e-6 to 500e-6 * 50",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
         return jobid
-    def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,f_dress,dcsweepch,add_comment=""):
+    def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,f_dress,dcsweepch,add_comment):
         if (select_freq>12) | (select_freq<2):
             raise ValueError("frequency is out of range with "+ select_freq)
         if (select_powa >20) | (select_powa <-60):
             raise ValueError("Power is out of range with "+select_powa)
-        if (select_flux >500e-6) | (select_flux <-500e-6):
+        if (select_flux >500e-6) | (select_flux <-500e-6):  # 0915 TypeError: '>' not supported between instances of 'str' and 'float'  
             raise ValueError("Flux is out of range with "+select_flux)
         jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,f_dress =f_dress,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
@@ -1485,7 +1483,7 @@ class AutoScan1Q:
         self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
-        self.designed = designed
+        self.designed = int(designed)
         self.CS_progress = 0
         self.id = id(self.CS_progress)
 

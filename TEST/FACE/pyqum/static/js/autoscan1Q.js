@@ -164,17 +164,15 @@ var final_result_set = {};
 
 
 // measurement settings
-var dc_ch = '1';
-var port = 'S21,';
+
 // work independently
 function start_measure(){
-    
-    dc_ch = document.getElementById('dc-channel-inp').value;
-    port = document.getElementById('port-inp').value;
-    designed = document.getElementById('CPw-num-inp').value;
-
+    $.ajaxSettings.async = false;
     // connect to autoscan1Q2js.py
     log_print("Start Measurement by Bot ")
+    let dc_ch = document.getElementById('dc-channel-inp').value;
+    let port = document.getElementById('port-inp').value;
+    let designed = document.getElementById('CPw-num-inp').value;
     $.getJSON( '/autoscan1Q/measurement',{  
         dc_channel: JSON.stringify(dc_ch),
         inout_port: JSON.stringify(port), 
@@ -184,7 +182,8 @@ function start_measure(){
         log_print( "Measurement finish!" );
     });
     // ToSolve: How to show the results on the html?
-    //gaussian_fitting();
+    gaussian_fitting(specific_jobid="");
+    $.ajaxSettings.async = true;
 }
 
 
@@ -256,12 +255,14 @@ function gaussian_fitting(specific_jobid=""){
         let spinner = document.getElementById("spinner");
         log_print("Start Gaussian fitting wait plz...");
         let where = "CS";
+        var designed = document.getElementById('designed-CPW').value;
         spinner.style.visibility = "visible";
         spinner.style.opacity = '1';
+        console.log(designed);
         $.getJSON( '/autoscan1Q/plot_result',{  
             measurement_catagories : JSON.stringify(where),
-            specific_jobid : JSON.stringify(String(specific_jobid))   //CS_jobid"5108"
-
+            specific_jobid : JSON.stringify(String(specific_jobid)),   //CS_jobid"5108"
+            designed: JSON.stringify(String(designed))
         }, function (plot_items) {   //need to check this is correct or not
             cavities_plot = plot_items['plot_items'];
             CS_overview = plot_items['overview'];
@@ -452,10 +453,11 @@ function plot1D_2y_CS ( data, axisKeys, plotId, modenum ){
 
 // plot the result of whole cavity 
 function get_plot1D_CS(){
-    log_print("Ploting Cavity baseline...");
     $.ajaxSettings.async = false;
     let specific_jobid = document.getElementById('jobid-CS').value;
-    if (specific_jobid!==""){
+    log_print(String(specific_jobid));
+    log_print("Plotting Cavity baseline...");
+    if (specific_jobid===""){
         let modenum = document.getElementById('dmbutton').value;  // get darkmode or not
         
         const location_id = "CavitySearch-result-plot";
@@ -483,7 +485,9 @@ function get_plot1D_CS(){
         document.getElementById(location_id).style.display = "block";
         document.getElementById('CS-search').setAttribute('value','1');
         log_print("Ploting finish!");
+        
     };
+    $.ajaxSettings.async = true;
 };
 
 

@@ -130,11 +130,12 @@ global progress
 @bp.route('/plot_result',methods=['POST','GET'])
 def plot_after_jobid():
     specific_id = int(json.loads(request.args.get('specific_jobid')))
+    designed = int(json.loads(request.args.get('designed')))
     where_plot = json.loads(request.args.get('measurement_catagories'))
     PD, FD, CW = {}, {}, {}
     print("Construct plot items:\n")
     # search(self.quantificationObj)
-    routine = AutoScan1Q(sparam="",dcsweepch = "")
+    routine = AutoScan1Q(sparam="",dcsweepch = "",designed=designed)
     if where_plot == "CS":
         print("CavitySearch start:\n")
         global progress
