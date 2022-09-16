@@ -168,13 +168,13 @@ var dc_ch = '1';
 var port = 'S21,';
 // work independently
 function start_measure(){
-
+    
     dc_ch = document.getElementById('dc-channel-inp').value;
     port = document.getElementById('port-inp').value;
 
     // connect to autoscan1Q2js.py
     log_print("Start Measurement by Bot ")
-    $.getJSON( '/autoscan1Q2js/measurement',{  
+    $.getJSON( '/autoscan1Q/measurement',{  
         dc_channel: JSON.stringify(dc_ch),
         inout_port: JSON.stringify(port), 
     }, function (measure_result) {   //need to check this is correct or not
@@ -182,7 +182,7 @@ function start_measure(){
         log_print( "Measurement finish!" );
     });
     // ToSolve: How to show the results on the html?
-    gaussian_fitting();
+    //gaussian_fitting();
 }
 
 

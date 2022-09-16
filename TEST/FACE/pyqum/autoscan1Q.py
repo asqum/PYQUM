@@ -50,12 +50,14 @@ def auto_measurement():  # measurement do not plot
 
     dc_ch = json.loads(request.args.get('dc_channel'))
     port = json.loads(request.args.get('inout_port'))
+    print('port check: ',port)
     print("Automatic measurement gogogo\n")
     # search(self.quantificationObj)
     routine = AutoScan1Q(sparam=port,dcsweepch = dc_ch)
     print("CavitySearch start:\n")
     routine.cavitysearch(jobid="")
     CS = {'answer':routine.total_cavity_list}  #['5487 MHz',...]
+    print('CS answer: ',CS)
     PD, FD, CW = {}, {}, {}
     JOBIDs = {'CavitySearch':routine.CS_jobid,'PowerDepend':{},'FluxDepend':{},'QubitSearch':{}}
     for i in routine.total_cavity_list:
@@ -107,7 +109,7 @@ def get_jobid():
     samplename = get_status("MSSN")[session['user_name']]['sample']
     # samplename = "2QAS-19-3"
     specifications = sample[sample['samplename']==samplename]['specifications'].iloc[0]
-
+    print("check here: ",specifications)
 
     return json.dumps(specifications["JOBID"], cls=NumpyEncoder)     # contains {'CavitySearch':2051,'PowerDepend':{'5487 MHz':2052,...},'FluxDepend':{'5487 MHz':2053,...},'QubitSearch':{'5487 MHz':2054,...}}
 

@@ -1443,24 +1443,26 @@ class Quest_command:
         return jobid
     def powerdepend(self,select_freq,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
-        if select_freq[0]>12 | select_freq[1]>12 | select_freq[0]<2 | select_freq[1]<2:
+        print('check PD freq_range: ',freq_command)
+        if (select_freq[0]>12) | (select_freq[1]>12) | (select_freq[0]<2) | (select_freq[1]<2):
             raise ValueError("Frequency is out of range with "+freq_command)
         jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-50 to 10 * 13",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
         return jobid
     def fluxdepend(self,select_freq,select_powa,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
-        if select_freq[0]>12 | select_freq[1]>12 | select_freq[0]<2 | select_freq[1]<2:
+        print('check FD freq_range: ',freq_command)
+        if (select_freq[0]>12) | (select_freq[1]>12) | (select_freq[0]<2) | (select_freq[1]<2):
             raise ValueError("Frequency is out of range with "+freq_command)
         if select_powa >20 | select_powa <-60:
             raise ValueError("Power is out of range with "+select_powa)
         jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-500e-6 to 500e-6 * 50",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
         return jobid
     def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,f_dress,dcsweepch,add_comment=""):
-        if select_freq>12 | select_freq<2:
+        if (select_freq>12) | (select_freq<2):
             raise ValueError("frequency is out of range with "+ select_freq)
-        if select_powa >20 | select_powa <-60:
+        if (select_powa >20) | (select_powa <-60):
             raise ValueError("Power is out of range with "+select_powa)
-        if select_flux >500e-6 | select_flux <-500e-6:
+        if (select_flux >500e-6) | (select_flux <-500e-6):
             raise ValueError("Flux is out of range with "+select_flux)
         jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,f_dress =f_dress,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
@@ -1509,8 +1511,8 @@ class AutoScan1Q:
         PD = PowerDepend(dataframe)
         self.low_power, self.high_power = PD.do_analysis() #pass
         print("Select Power : %f"%self.low_power)
-        #self.readout_para[cavity_freq]["low_power"] = self.low_power
-        #self.readout_para[cavity_freq]["high_power"] = self.high_power
+        self.readout_para[cavity_freq]["low_power"] = self.low_power
+        self.readout_para[cavity_freq]["high_power"] = self.high_power
         if plot_ornot:
             self.PD_plot_items = PD.give_plot_info()    # assume the function named `get_plot_items()`
 
@@ -1526,9 +1528,9 @@ class AutoScan1Q:
         FD = FluxDepend(dataframe)
         self.wave = FD.do_analysis(f_bare) #pass
         print(self.wave)#{"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
-        # self.readout_para[cavity_freq]["f_bare"] = self.wave["f_bare"]
-        # self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
-        # self.readout_para[cavity_freq]["offset"] = self.wave["offset"]
+        self.readout_para[cavity_freq]["f_bare"] = self.wave["f_bare"]
+        self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
+        self.readout_para[cavity_freq]["offset"] = self.wave["offset"]
         if plot_ornot:
             self.FD_plot_items = FD.give_plot_info()  # assume the function named `get_plot_items()`
     
