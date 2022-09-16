@@ -993,7 +993,7 @@ from json import dumps
 #---------------load package of load_data---------------
 from pyqum.directive.code.LoadData_lab import jobid_search_pyqum, pyqum_load_data
 #---------------load package of cavity search---------------
-from pyqum.directive.code.CavitySearch import normalize_1d, peak_info, corr_peak_loc, compu_peak_center_dist, poopoo_filter, rm_empty, gaus, gaussian_fitor, gaussian_filter, amp_pha_compa, ena_clutch_filter
+from pyqum.directive.code.CavitySearch import normalize_1d, peak_info, corr_peak_loc, compu_peak_center_dist, poopoo_filter, rm_empty, gaus, gaussian_fitor, gaussian_filter, amp_pha_compa, ena_clutch_filter, pred_filter, find_best_ans 
 from scipy.optimize import curve_fit
 import numpy as np
 from numpy import array, log10, diff, unwrap, arctan2, vstack, hstack, average, std
@@ -1034,9 +1034,10 @@ class CavitySearch:
         self.df = dataframe
         self.overview = {}
         self.info = {}
+        self.region = {}
         self.peak_amp, self.peak_pha = [], []
         self.sliced_freq = []
-        self.final_answer = []
+        self.final_answer = {}
         self.progress = 0.0
         # data pre-smooth : Savitzky-Golay filter
         self.SGF_width = 11
@@ -1092,9 +1093,19 @@ class CavitySearch:
         
         freq_sliced.extend(freq_shifted)
         self.sliced_freq = array(freq_sliced) 
+
+    def zscore_filter(self,region,designed_CPW_num):
+        amp_voted, pha_voted = pred_filter(region,self.info['Comparison_fig'])
+        print('pha_voted: ',pha_voted)
+        true, _ =  find_best_ans(region, pha_voted,self.info['Comparison_fig'],designed_CPW_num)
+        for i in region.keys():
+            for j in true:
+                if region[i][0] == j[0] and region[i][1] == j[1] :
+                    print(region[i])
+                    print(j)
+                    self.final_answer[i] = region[i]
         
-    def give_region(self):
-        region = {}
+    def give_region(self,designed_CPW_num):
     
         for tip_freq in self.final_answer: 
             freq = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Frequency']
@@ -1105,11 +1116,11 @@ class CavitySearch:
             pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-5*avg_FWHM,tip_freq+5*avg_FWHM]
+            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-5*avg_FWHM,tip_freq+5*avg_FWHM]
 
-        self.final_answer = region  #{'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
+        self.zscore_filter(self.region,designed_CPW_num) #{'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
         
-    def amp_pha_compa(self):
+    def amp_pha_compa(self,designed_CPW_num):
         amp_loc_array = list(self.peak_amp)
         pha_loc_array = list(self.peak_pha)
         nearest = []
@@ -1119,10 +1130,11 @@ class CavitySearch:
                     near_center_freq = compu_peak_center_dist(amp_peak,pha_peak,self.info['Comparison_fig'],self.info['p2p_freq'])
                     nearest.append(near_center_freq)
                 
-        self.final_answer = ena_clutch_filter(list(set(poopoo_filter(array(nearest),self.info['Comparison_fig']))))    # 1D array contain tip freq [freq1,freq2,...]
-          
+        x = ena_clutch_filter(list(set(poopoo_filter(array(nearest),self.info['Comparison_fig']))))    # 1D array contain tip freq [freq1,freq2,...]
+        self.give_region(x,designed_CPW_num)
+
     # to call below do analysis                     
-    def do_analysis(self): 
+    def do_analysis(self,designed_CPW_num): 
         self.make_amp_uph_from_IQ()
         self.strong_slice()
         gaussian_exist = {"peak_freq_amp":[],"peak_freq_pha":[]}
@@ -1137,8 +1149,7 @@ class CavitySearch:
 
         self.peak_amp = rm_empty(gaussian_exist["peak_freq_amp"])
         self.peak_pha = rm_empty(gaussian_exist["peak_freq_pha"])
-        self.amp_pha_compa()
-        self.give_region()
+        self.amp_pha_compa(designed_CPW_num)
 
         return self.final_answer  # return out {'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
         
@@ -1468,12 +1479,13 @@ class Quest_command:
         return jobid
 
 class AutoScan1Q:
-    def __init__(self,sparam="S21,",dcsweepch = "1"):
+    def __init__(self,sparam="S21,",dcsweepch = "1",designed=""):
         self.jobid_dict = {"PowerDepend":0,"FluxDepend":0,"QubitSearch":0}
         self.CS_jobid = 0
         self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
+        self.designed = designed
         self.CS_progress = 0
         self.id = id(self.CS_progress)
 
@@ -1490,7 +1502,7 @@ class AutoScan1Q:
         CS = CavitySearch(dataframe)
         self.CS_progress = CS.progress
         print('address: ',self.CS_progress)
-        self.cavity_list = CS.do_analysis() #model h5 cannot import <- 0818 update, no need it anymore
+        self.cavity_list = CS.do_analysis(self.designed) #model h5 cannot import <- 0818 update, no need it anymore
         if plot_ornot:
             self.CS_plot_items = CS.give_plot_info()
             self.CS_overview = CS.overview    # ena scan results

@@ -98,7 +98,190 @@ def poopoo_filter(freq_ary,compa_fig):
             filtered.append(freq)
             
     return array(filtered)
+
+
+# define the peak detecting method
+def thresholding_algo(y, lag, threshold, influence):
+    signals = np.zeros(len(y))
+    filteredY = np.array(y)
+    avgFilter = [0]*len(y)
+    stdFilter = [0]*len(y)
+    avgFilter[lag - 1] = np.mean(y[0:lag])
+    stdFilter[lag - 1] = np.std(y[0:lag])
+    for i in range(lag, len(y)):             # <<< need to add the i<lag part
+        if abs(y[i] - avgFilter[i-1]) > threshold * stdFilter [i-1]:
+            if y[i] > avgFilter[i-1]:
+                signals[i] = 1
+            else:
+                signals[i] = -1
+
+            filteredY[i] = influence * y[i] + (1 - influence) * filteredY[i-1]
+            avgFilter[i] = np.mean(filteredY[(i-lag+1):i+1])
+            stdFilter[i] = np.std(filteredY[(i-lag+1):i+1])
+        else:
+            signals[i] = 0
+            filteredY[i] = y[i]
+            avgFilter[i] = np.mean(filteredY[(i-lag+1):i+1])
+            stdFilter[i] = np.std(filteredY[(i-lag+1):i+1])
+    #addition below
+    for i in range(len(signals)-2):
+        if (signals[i] == signals[i+2] == 1) & (signals[i+1] == 0):
+            signals[i+1] = 1
+    for i in range(len(signals)-2):
+        if (signals[i] == signals[i+2] == -1) & (signals[i+1] == 0):
+            signals[i+1] = -1
+    #addition above
+
+    return dict(signals = np.asarray(signals),
+                avgFilter = np.asarray(avgFilter),
+                stdFilter = np.asarray(stdFilter))
+
+def ZscoreFilter(region,voted,peak_limit):
+ 
+  # pick up the range > peak_limit 
+    peak = []
+    for i in voted:
+        if int(i[1]) >= peak_limit:
+            peak.append(i[0])
+
+  # the following will return the freq range
+    ret = []
+    for i in peak:
+        for j in region.keys():  
+            if i == j:
+                ret.append(region[j])
+                break
+
+    return np.array(ret)
+
+# applying the ZScore filter to voting a sequence (not revised yet)
+def pred_filter(region,fig):
+    filter_out = []     # [[amp_filter,pha_filter],[...],...]
+    for i in region.keys(): 
+        starts = region[i][0]
+        ends = region[i][1]
+        target_pha_df = fig[fig["Frequency"].between(starts,ends)]['UPhase']   # plot true[1]
+        target_amp_df = fig[fig["Frequency"].between(starts,ends)]['Amplitude'] 
+        target_pha_freq_df = fig[fig["Frequency"].between(starts,ends)]['Frequency']
+
+        count = []   #[amp_filter,pha_filter]
+        for j in [target_amp_df,target_pha_df]:
+            window_ary = array(j)
+
+              # Run algo with settings from above
+            vote = 0
+            for j in range(6,21,1):
+                result = thresholding_algo(window_ary, lag=int(window_ary.shape[0]/3),threshold=j/2 , influence=0)
+                score = 0 
+                switch = 0
+                for k in result["signals"] :
+                    if k == 1 or k == -1 :
+                        vote+=1
+                        score+=1
+                        break
+                if score == switch:
+                    count.append([i,vote])   #zone[i][0] is the no.
+                    break
+            if score != switch: 
+                count.append([i,vote])
+
+        filter_out.append(count)
+
+    filter_amp = []
+    filter_pha = []
+    for i in filter_out:
+        filter_amp.append(i[0])
+        filter_pha.append(i[1])
+
+    out_amp = sorted(array(filter_amp), key=lambda x:x[1], reverse=True)
+    out_pha = sorted(array(filter_pha), key=lambda x:x[1], reverse=True)
+    return array(out_amp), array(out_pha)   # [['5555 MHz',7],['4444 MHz', 12],...] ,[[...],...] 
+
+
+def test(true,designed):  # designed is the no. of cavities should exist, not observed
+    if designed!=0:
+        if len(true) > designed:
+            status = 'More'
+        elif len(true) < designed:
+            status = 'Less'
+        else:
+            status = 'Perfect'
+    else:
+        status = 'NONE'
+    return true, status     # if len(status) == 0 means 'no given designed frequency' or 'detected = designed'
+
+  
+def find_best_ans(region,voted,fig,designed):
+    peak_limit = 8
+    last_status, status = 'default', 'zscoring !'
+    last_true, true, rang = [], [], []
+    step = 0 
+    ori_status = ''
+    bigger_limit = ZscoreFilter(region,voted,peak_limit)
+    _, ori_status = test(bigger_limit,designed)  # <- give the origin status as the peak_limit=8 
+
+    while len(status) != 0:
+        true = ZscoreFilter(region,voted,peak_limit)
+  
+    # when true is empty means no peaks
+        if true==[]:
+            break
+    # when less -> more turning point! 
+        if last_status != status and last_status != 'default':
+            break
+
+        rang, status = test(true,designed)
+    # less means tp lower limit , more means to increase limit
+        if status=='Less':
+            peak_limit-=1
+            if peak_limit < 6:
+                break
+        elif status=='More':
+            peak_limit+=1
+            if peak_limit > 16:
+                break
+        else:
+            break
+    # when lower a limit get the data more than we need
+        if abs(len(last_true) - designed) < abs(len(last_true)-len(true)) and last_status != 'default':
+            true = last_true[-1]
+            rang, status = test(true,designed)
+            break
+
+        last_status = status
+    # determine new_true to be memory
+        if len(last_true)!=0:
+            len_rec = []
+            for i in last_true:
+                if len(true) != len(i):
+                    len_rec.append(1)
+                else:
+                    len_rec.append(0)
+            if all(len_rec) and true!= []:
+                last_true.append(true)
+        else:
+            last_true.append(true)
+   
+    # do more than 10 times break!
+        if step==10:
+            rang, status = test(last_true[-1],designed)
+            break
+
+        step+=1
+    top = []
+    if len(rang)>designed:
+        diff = []
+        for i in range(len(rang)):
+            pha = np.array(fig[fig["Frequency"].between(rang[i][0],rang[i][1])]['UPhase'])
+            diff.append([i,np.max(pha)-np.min(pha)])
         
+        top = sorted(array(diff), key=lambda x:x[1], reverse=True)[:designed]  # big > small
+    final_answer = []
+    print(top)
+    for i in top:
+        final_answer.append(rang[int(i[0])])
+    
+    return np.array(final_answer), ori_status    # rang is the final answer     
 
 # remove the empty list from a given array
 def rm_empty(ary):
@@ -212,6 +395,7 @@ class CavitySearch:
     def __init__(self,dataframe):
         self.df = dataframe
         self.info = {}
+        self.region = {}
         self.peak_amp, self.peak_pha = [], []
         self.sliced_freq = []
         self.final_answer = []
@@ -267,10 +451,20 @@ class CavitySearch:
         
         freq_sliced.extend(freq_shifted)
         self.sliced_freq = array(freq_sliced) 
+
+    def zscore_filter(self,region,designed_CPW_num):
+        amp_voted, pha_voted = pred_filter(region,self.info['Comparison_fig'])
+        print('pha_voted: ',pha_voted)
+        true, _ =  find_best_ans(region, pha_voted,self.info['Comparison_fig'],designed_CPW_num)
+        for i in region.keys():
+            for j in true:
+                if region[i][0] == j[0] and region[i][1] == j[1] :
+                    print(region[i])
+                    print(j)
+                    self.final_answer[i] = region[i]
         
-    def give_region(self):
-        region = {}
-    
+        
+    def give_region(self,designed_CPW_num):
         for tip_freq in self.final_answer: 
             freq = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Frequency']
             amp = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Amplitude']
@@ -280,11 +474,10 @@ class CavitySearch:
             pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-4*avg_FWHM,tip_freq+4*avg_FWHM]
-
-        self.final_answer = region  #{'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
+            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-4*avg_FWHM,tip_freq+4*avg_FWHM] #{'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
+        self.zscore_filter(self.region,designed_CPW_num) 
         
-    def amp_pha_compa(self):
+    def amp_pha_compa(self,designed_CPW_num):
         amp_loc_array = list(self.peak_amp)
         pha_loc_array = list(self.peak_pha)
         nearest = []
@@ -294,10 +487,11 @@ class CavitySearch:
                     near_center_freq = compu_peak_center_dist(amp_peak,pha_peak,self.info['Comparison_fig'],self.info['p2p_freq'])
                     nearest.append(near_center_freq)
                 
-        self.final_answer = ena_clutch_filter(list(set(poopoo_filter(array(nearest),self.info['Comparison_fig']))))    # 1D array contain tip freq [freq1,freq2,...]
-          
+        x = ena_clutch_filter(list(set(poopoo_filter(array(nearest),self.info['Comparison_fig']))))    # 1D array contain tip freq [freq1,freq2,...]
+        self.give_region(x,designed_CPW_num)
+
     # to call below do analysis                     
-    def do_analysis(self): 
+    def do_analysis(self,designed_CPW_num): 
         self.make_amp_uph_from_IQ()
         self.strong_slice()
         gaussian_exist = {"peak_freq_amp":[],"peak_freq_pha":[]}
@@ -309,8 +503,7 @@ class CavitySearch:
 
         self.peak_amp = rm_empty(gaussian_exist["peak_freq_amp"])
         self.peak_pha = rm_empty(gaussian_exist["peak_freq_pha"])
-        self.amp_pha_compa()
-        self.give_region()
+        self.amp_pha_compa(designed_CPW_num)
         
     #to call below send arrays to js plotly            
     def give_js_info(self,freq_MHz):

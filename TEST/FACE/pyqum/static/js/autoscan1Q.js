@@ -171,12 +171,14 @@ function start_measure(){
     
     dc_ch = document.getElementById('dc-channel-inp').value;
     port = document.getElementById('port-inp').value;
+    designed = document.getElementById('CPw-num-inp').value;
 
     // connect to autoscan1Q2js.py
     log_print("Start Measurement by Bot ")
     $.getJSON( '/autoscan1Q/measurement',{  
         dc_channel: JSON.stringify(dc_ch),
         inout_port: JSON.stringify(port), 
+        designed: JSON.stringify(designed),
     }, function (measure_result) {   //need to check this is correct or not
         final_result_set = measure_result;
         log_print( "Measurement finish!" );
