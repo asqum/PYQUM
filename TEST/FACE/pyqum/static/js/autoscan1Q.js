@@ -11,7 +11,7 @@ $(document).ready(function(){
     var refresh= document.getElementById("refresh");
     refresh.addEventListener('click' , reset_address);
     var search_process = document.getElementById("search-jobid");
-    search_process.addEventListener('click' ,function(){gaussian_fitting(designed=document.getElementById('CPw-num-inp').value,specific_jobid="");});//gaussian_fitting
+    search_process.addEventListener('click' ,function(){gaussian_fitting(designed="",specific_jobid="");});//gaussian_fitting
     // 畫出baseline
     var fig_CS = document.getElementById("CS-search");
     fig_CS.addEventListener('click' , get_plot1D_CS);
@@ -226,16 +226,16 @@ var CS_overview = {};
 
 function gaussian_fitting(designed="",specific_jobid=""){
     if (specific_jobid===""){
-        search_jobids();
         let spinner = document.getElementById("spinner");
         log_print("Start Gaussian fitting wait plz...");
         let where = "CS";
         spinner.style.visibility = "visible";
         spinner.style.opacity = '1';
+        search_jobids();
         $.getJSON( '/autoscan1Q/plot_result',{  
             measurement_catagories : JSON.stringify(where),
             specific_jobid : JSON.stringify(String(CS_jobid)),   //CS_jobid"5108"
-            designed : JSON.stringify(String(designed))
+            designed : JSON.stringify(String(Object.keys(PD_jobids).length))
 
         }, function (plot_items) {   //need to check this is correct or not
             cavities_plot = plot_items['plot_items'];
@@ -274,7 +274,6 @@ function gaussian_fitting(designed="",specific_jobid=""){
             spinner.style.visibility = "hidden";
             spinner.style.opacity = '0';
             log_print("Gaussian fitting finish!");
-            generate_result_span();
         })
         .fail(function(jqxhr, textStatus, error){
             spinner.style.visibility = "hidden";
