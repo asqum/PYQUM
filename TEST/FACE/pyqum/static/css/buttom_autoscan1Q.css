@@ -250,9 +250,21 @@
 #refresh:active {
     border: 0.2rem solid rgb(178, 247, 82);
 }
+#load-jobid-CW{
+    background-color: rgb(25, 45, 24);
+    color:white;
+    width: 15%;
+    height:5%;
+    position: absolute;
+    top:6%;
+    right:1%;
+    font-size:0.8rem ;
+    border-radius: 1rem;
+    border: 0.2rem solid rgb(79, 70, 70);
+}
 
 #search-jobid:before,#dmbutton:before,#CS-search:before,#looks-CS:before
-,.ShowPara:before,.button-run:before,.content-button:before,#Start-measure-but:before {
+,.ShowPara:before,.button-run:before,.content-button:before,#Start-measure-but:before,#load-jobid-CW:before {
     content: '';
     background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
     position: absolute;
@@ -269,16 +281,16 @@
     border-radius: 1rem;
 }
 #search-jobid:active:after,#dmbutton:active:after,#CS-search:active:after,#looks-CS:active:after
-,.ShowPara:active:after,.button-run:active:after,.content-button:active:after,#Start-measure-but:active:after {
+,.ShowPara:active:after,.button-run:active:after,.content-button:active:after,#Start-measure-but:active:after,#load-jobid-CW:active:after {
     background: transparent;
 }
 #search-jobid:active,#dmbutton:active,#CS-search:active,#looks-CS:active
-,.ShowPara:active,.button-run:active,.content-button:active,#Start-measure-but:active {
+,.ShowPara:active,.button-run:active,.content-button:active,#Start-measure-but:active,#load-jobid-CW:active {
     color: #000;
     opacity: 0.5;
 }
 #search-jobid:hover:before,#dmbutton:hover:before,#CS-search:hover:before,#looks-CS:hover:before
-,.ShowPara:hover:before,.button-run:hover:before,.content-button:hover:before,#Start-measure-but:hover:before {
+,.ShowPara:hover:before,.button-run:hover:before,.content-button:hover:before,#Start-measure-but:hover:before,#load-jobid-CW:hover:before{
     opacity: 1;
 }
 

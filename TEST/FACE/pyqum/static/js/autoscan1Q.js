@@ -11,7 +11,7 @@ $(document).ready(function(){
     var refresh= document.getElementById("refresh");
     refresh.addEventListener('click' , reset_address);
     var search_process = document.getElementById("search-jobid");
-    search_process.addEventListener('click' ,gaussian_fitting );//gaussian_fitting
+    search_process.addEventListener('click' ,function(){gaussian_fitting(designed=document.getElementById('CPw-num-inp').value,specific_jobid="");});//gaussian_fitting
     // 畫出baseline
     var fig_CS = document.getElementById("CS-search");
     fig_CS.addEventListener('click' , get_plot1D_CS);
@@ -52,6 +52,8 @@ $(document).ready(function(){
     // 改變xypower選項
     var xypower_switcher = document.getElementById("cavity-select-CW");
     xypower_switcher.addEventListener('change' , function(){xypowa_options_generator(mode='switch');});
+    var xypower_specifier = document.getElementById("load-jobid-CW");
+    xypower_specifier.addEventListener('change' , function(){xypowa_options_generator(mode='specific');});
 });
 
 
@@ -472,7 +474,7 @@ function get_plot1D_CS(){
         document.getElementById('CS-search').setAttribute('value','1');
         log_print("Ploting finish!");
     }else{
-        gaussian_fitting(specific_jobid);
+        gaussian_fitting(designed=document.getElementById('designed-CPW').value,specific_jobid);
         let modenum = document.getElementById('dmbutton').value;  // get darkmode or not
         const location_id = "CavitySearch-result-plot";
         let ampPhaseKeys = {
@@ -910,59 +912,95 @@ function plot1D_2y_CW ( data, axisKeys, plotId, modenum ){
 
 var q_plot = {};
 function get_plot1D_CW(){
+    $.ajaxSettings.async = false;
     log_print("Ploting CWsweep result...");
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
     const location_id = "CWsweep-result-plot";
-    let cavity = document.getElementById('cavity-select-CW').value.slice(3)
-    let xy_powa = document.getElementById('power-select-CW').value.slice(8)
-    $.ajaxSettings.async = false;
+    let specific_jobid = document.getElementById('jobid-CW').value;
     let CWKeys = {
         x: [ ["Sub_Frequency"], ["Targets_Freq"] ] ,
         y: [ ["Substrate_value"],["Targets_value"] ]
     };
-
     let where = "CW";
-    $.getJSON( '/autoscan1Q/plot_result',{  
-        measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify(String(CW_jobids[cavity])),//CW_jobids[cavity]5141
-        target_cavity : JSON.stringify(cavity),
-        designed : JSON.stringify("")
+    if (specific_jobid===''){
+        let cavity = document.getElementById('cavity-select-CW').value.slice(3)
+        let xy_powa = document.getElementById('power-select-CW').value.slice(8)
+       
+        $.getJSON( '/autoscan1Q/plot_result',{  
+            measurement_catagories:JSON.stringify(where),
+            specific_jobid : JSON.stringify(String(CW_jobids[cavity])),//CW_jobids[cavity]5141
+            target_cavity : JSON.stringify(cavity),
+            designed : JSON.stringify("")
 
-    }, function (plot_items) {   //need to check this is correct or not
-        q_plot = plot_items;
-    });
+        }, function (plot_items) {   //need to check this is correct or not
+            q_plot = plot_items[xy_powa];
+        });
+    }else{
+        let xy_powa = document.getElementById('power-select-CW').value.slice(8)
+        $.getJSON( '/autoscan1Q/plot_result',{  
+            measurement_catagories:JSON.stringify(where),
+            specific_jobid : JSON.stringify(String(specific_jobid)),//CW_jobids[cavity]5141
+            target_cavity : JSON.stringify(""),
+            designed : JSON.stringify("")
+
+        }, function (plot_items) {   //need to check this is correct or not
+            q_plot = plot_items[xy_powa];
+        });
+    }
+    plot1D_2y_CW(q_plot, CWKeys, location_id,modenum);
     $.ajaxSettings.async = true;
-    plot1D_2y_CW(q_plot[xy_powa], CWKeys, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
     document.getElementById('CW-search').setAttribute('value','1');
     log_print("Ploting finish!");
 };
 
 function xypowa_options_generator(mode){
-    
-    // get the selector in the body
-    let xyPowaSelect = document.getElementById('power-select-CW'); 
-    let cavity = document.getElementById('cavity-select-CW').value.slice(3);
-    
     $.ajaxSettings.async = false;
     let xy_options = {}
-    
-    $.getJSON( '/autoscan1Q/get_xypower',{  
-        specific_jobid : JSON.stringify(String(CW_jobids[cavity])),//CW_jobids[cavity]5141
+    if(mode!=='specific'){
+        if(Object.keys(CW_jobids).length!==0){
+            // get the selector in the body
+            let xyPowaSelect = document.getElementById('power-select-CW'); 
+            let cavity = document.getElementById('cavity-select-CW').value.slice(3);
+            $.getJSON( '/autoscan1Q/get_xypower',{  
+                specific_jobid : JSON.stringify(String(CW_jobids[cavity])),//CW_jobids[cavity]5141
 
-    }, function (xy_powas) {   //need to check this is correct or not
-        xy_options = xy_powas['xy_power']; //list
-    });
-    
-    const opt_num = xy_options.length
-    if (mode=='initialize'){
-        for(let ipt=0; ipt<opt_num; ipt++){
-            let option = document.createElement("option");
-            option.innerHTML = xy_options[ipt]+" dBm";
-            option.setAttribute('value',"xyPower="+xy_options[ipt]);//value = "xyPower=-10"
-            xyPowaSelect.appendChild(option);
-        };
+            }, function (xy_powas) {   //need to check this is correct or not
+                xy_options = xy_powas['xy_power']; //list
+            });
+            
+            const opt_num = xy_options.length
+            if (mode=='initialize'){
+                for(let ipt=0; ipt<opt_num; ipt++){
+                    let option = document.createElement("option");
+                    option.innerHTML = xy_options[ipt]+" dBm";
+                    option.setAttribute('value',"xyPower="+xy_options[ipt]);//value = "xyPower=-10"
+                    xyPowaSelect.appendChild(option);
+                };
+            }else{
+                while (xyPowaSelect.options.length > 0) {
+                    select.remove(0);
+                }
+                for(let ipt=0; ipt<opt_num; ipt++){
+                    let option = document.createElement("option");
+                    option.innerHTML = xy_options[ipt]+" dBm";
+                    option.setAttribute('value',"xyPower="+xy_options[ipt]);//value = "xyPower=-10"
+                    xyPowaSelect.appendChild(option);
+                };
+            }; 
+        }else{
+            alert("Enter Specific JOBID mode!");    // Do nothing!
+        }
     }else{
+        let specific_jobid = document.getElementById('jobid-CW').value;
+        let xyPowaSelect = document.getElementById('power-select-CW'); 
+        $.getJSON( '/autoscan1Q/get_xypower',{  
+            specific_jobid : JSON.stringify(String(specific_jobid)),//CW_jobids[cavity]5141
+
+        }, function (xy_powas) {   //need to check this is correct or not
+            xy_options = xy_powas['xy_power']; //list
+        });
+        const opt_num = xy_options.length
         while (xyPowaSelect.options.length > 0) {
             select.remove(0);
         }
@@ -972,7 +1010,7 @@ function xypowa_options_generator(mode){
             option.setAttribute('value',"xyPower="+xy_options[ipt]);//value = "xyPower=-10"
             xyPowaSelect.appendChild(option);
         };
-    };
+    }
     $.ajaxSettings.async = true;
 };
 
@@ -1017,20 +1055,32 @@ function show_paras(where){
     log_print("Access measurement parameters...")
     let request_jobid = ''
     if(where == 'CS'){
-        request_jobid = String(CS_jobid);//String(CS_jobid);"5108"
-
+        if(document.getElementById('jobid-CS').value===""){
+            request_jobid = String(CS_jobid);//String(CS_jobid);"5108"
+        }else{
+            request_jobid = document.getElementById('jobid-CS').value
+        };
     }else if(where == 'PD'){
-        let cavity_key = document.getElementById('cavity-select-PD').value.slice(3)
-        request_jobid = String(PD_jobids[cavity_key]);//String(PD_jobids[cavity_key]);"5097"
-        
+        if(document.getElementById('jobid-PD').value===""){
+            let cavity_key = document.getElementById('cavity-select-PD').value.slice(3)
+            request_jobid = String(PD_jobids[cavity_key]);//String(PD_jobids[cavity_key]);"5097"
+        }else{
+            request_jobid = document.getElementById('jobid-PD').value
+        }; 
     }else if(where == 'FD'){
-        let cavity_key = document.getElementById('cavity-select-FD').value.slice(3)
-        request_jobid = String(FD_jobids[cavity_key]);//String(FD_jobids[cavity_key]);"5105"
-
+        if(document.getElementById('jobid-FD').value===""){
+            let cavity_key = document.getElementById('cavity-select-FD').value.slice(3)
+            request_jobid = String(FD_jobids[cavity_key]);//String(FD_jobids[cavity_key]);"5105"
+        }else{
+            request_jobid = document.getElementById('jobid-FD').value
+        };
     }else{
-        let cavity_key = document.getElementById('cavity-select-CW').value.slice(3)
-        request_jobid = String(CW_jobids[cavity_key]);//String(CW_jobids[cavity_key]);"5141"
-
+        if(document.getElementById('jobid-CW').value===""){
+            let cavity_key = document.getElementById('cavity-select-CW').value.slice(3)
+            request_jobid = String(CW_jobids[cavity_key]);//String(CW_jobids[cavity_key]);"5141"
+        }else{
+            request_jobid = document.getElementById('jobid-CW').value
+        };
     };
     $.ajaxSettings.async = false;
     let paras_dict = {};
