@@ -316,7 +316,7 @@ label[class='cavity-select-text'] {
     align-items : center;
     justify-content : left;
 }
-#jobid-CS{
+.jobid-input{
     background-color: rgb(187, 185, 194);
     color:rgb(0, 0, 0);
     border: 0.2rem solid rgb(79, 70, 70);
@@ -335,7 +335,7 @@ label[class='cavity-select-text'] {
     vertical-align: middle;
     z-index: 2;
 }
-#jobid-CS:hover{
+.jobid-input:hover{
     border: 0.2rem solid rgb(255, 0, 30);
 }
 #designed-CPW{

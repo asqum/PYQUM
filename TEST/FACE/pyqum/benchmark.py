@@ -1492,14 +1492,13 @@ class AutoScan1Q:
         if jobid == "":
             jobid = Quest_command(self.sparam).cavitysearch(self.dcsweepch)
             plot_ornot = 0
+            self.CS_jobid = jobid
         else:
             plot_ornot = 1
         print("do measurement\n")
-        self.CS_jobid = jobid
         dataframe = Load_From_pyqum(jobid).load()
         CS = CavitySearch(dataframe)
         self.CS_progress = CS.progress
-        print('address: ',self.CS_progress)
         self.cavity_list = CS.do_analysis(self.designed) #model h5 cannot import <- 0818 update, no need it anymore
         if plot_ornot:
             self.CS_plot_items = CS.give_plot_info()
@@ -1514,9 +1513,10 @@ class AutoScan1Q:
         if jobid == '':
             jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cavity_freq],add_comment="with Cavity "+str(cavity_freq))
             plot_ornot = 0
+            self.jobid_dict["PowerDepend"] = jobid
         else:
             plot_ornot = 1
-        self.jobid_dict["PowerDepend"] = jobid
+        
         dataframe = Load_From_pyqum(jobid).load()
         PD = PowerDepend(dataframe)
         self.low_power, self.high_power = PD.do_analysis() #pass
@@ -1531,9 +1531,10 @@ class AutoScan1Q:
         if jobid =="":
             jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_freq],select_powa=self.low_power,add_comment="with Cavity "+str(cavity_freq))
             plot_ornot = 0
+            self.jobid_dict["FluxDepend"] = jobid
         else:
             plot_ornot = 1
-        self.jobid_dict["FluxDepend"] = jobid
+        
         dataframe = Load_From_pyqum(jobid).load()
         FD = FluxDepend(dataframe)
         self.wave = FD.do_analysis(f_bare) #pass
@@ -1548,9 +1549,10 @@ class AutoScan1Q:
         if jobid == "":
             jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"])+'e-6',f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_freq))
             plot_ornot = 0
+            self.jobid_dict["QubitSearch"] = jobid
         else:
             plot_ornot = 1    
-        self.jobid_dict["QubitSearch"] = jobid
+        
         dataframe = Load_From_pyqum(jobid).load()
         CW = QubitFreq_Compa(dataframe)
         self.qubit_info = CW.do_analysis() #examine the input data form is dataframe because Series cannot reshape 

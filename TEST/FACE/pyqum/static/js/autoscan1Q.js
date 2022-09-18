@@ -182,7 +182,7 @@ function start_measure(){
         log_print( "Measurement finish!" );
     });
     // ToSolve: How to show the results on the html?
-    gaussian_fitting(specific_jobid="");
+    gaussian_fitting(designed,specific_jobid="");
     $.ajaxSettings.async = true;
 }
 
@@ -222,7 +222,7 @@ function search_jobids(){
 var cavities_plot = {};
 var CS_overview = {};
 
-function gaussian_fitting(specific_jobid=""){
+function gaussian_fitting(designed="",specific_jobid=""){
     if (specific_jobid===""){
         search_jobids();
         let spinner = document.getElementById("spinner");
@@ -232,7 +232,8 @@ function gaussian_fitting(specific_jobid=""){
         spinner.style.opacity = '1';
         $.getJSON( '/autoscan1Q/plot_result',{  
             measurement_catagories : JSON.stringify(where),
-            specific_jobid : JSON.stringify(String(CS_jobid))   //CS_jobid"5108"
+            specific_jobid : JSON.stringify(String(CS_jobid)),   //CS_jobid"5108"
+            designed : JSON.stringify(String(designed))
 
         }, function (plot_items) {   //need to check this is correct or not
             cavities_plot = plot_items['plot_items'];
@@ -255,7 +256,6 @@ function gaussian_fitting(specific_jobid=""){
         let spinner = document.getElementById("spinner");
         log_print("Start Gaussian fitting wait plz...");
         let where = "CS";
-        var designed = document.getElementById('designed-CPW').value;
         spinner.style.visibility = "visible";
         spinner.style.opacity = '1';
         console.log(designed);
@@ -602,7 +602,7 @@ function plot2D_PD( data, axisKeys, plotId, modenum ) {
 function get_plot2D_PD(){
     log_print("Ploting PowerDependence result...");
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
-    let cavity = document.getElementById('cavity-select-PD').value.slice(3);
+    let specific_jobid = document.getElementById('jobid-PD').value;
     const location_id = "PowerDep-result-plot";
     // check the column name of the dataframe
     let PDKeys = {
@@ -611,21 +611,34 @@ function get_plot2D_PD(){
         y2:[ "Fr" ],
         z: [ "Amplitude" ]
     };
-    $.ajaxSettings.async = false;
     let pd_plot = {};
     let where = "PD";
-    $.getJSON( '/autoscan1Q/plot_result',{  
-        measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify(String(PD_jobids[cavity])),  //PD_jobids[cavity]5097
-        target_cavity : JSON.stringify(cavity)
-    }, function (plot_items) {   //need to check this is correct or not
-        pd_plot = plot_items[cavity];
-    });
-
+    $.ajaxSettings.async = false;
+    if(specific_jobid===""){
+        let cavity = document.getElementById('cavity-select-PD').value.slice(3);
+        $.getJSON( '/autoscan1Q/plot_result',{  
+            measurement_catagories:JSON.stringify(where),
+            specific_jobid : JSON.stringify(String(PD_jobids[cavity])),  //PD_jobids[cavity]5097
+            designed : JSON.stringify(String("")),
+            target_cavity : JSON.stringify(cavity)
+        }, function (plot_items) {   //need to check this is correct or not
+            pd_plot = plot_items[cavity];
+        });
+    }else{
+        $.getJSON( '/autoscan1Q/plot_result',{  
+            measurement_catagories:JSON.stringify(where),
+            specific_jobid : JSON.stringify(String(specific_jobid)),  //PD_jobids[cavity]5097
+            designed : JSON.stringify(""),
+            target_cavity : JSON.stringify("")
+        }, function (plot_items) {   //need to check this is correct or not;
+            pd_plot = plot_items['specify'];
+        });
+    }
     //make up the quantification output
-    $.ajaxSettings.async = true;
+    
 
     plot2D_PD(pd_plot, PDKeys, location_id, modenum);
+    $.ajaxSettings.async = true;
     document.getElementById(location_id).style.display = "block";
     document.getElementById('PD-search').setAttribute('value','1');
     log_print("Ploting finish!");
@@ -725,7 +738,7 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
 function get_plot2D_FD(){
     log_print("Ploting FluxDependence result...");
     let modenum = document.getElementById('dmbutton').value;  //darkmode or not
-    let cavity = document.getElementById('cavity-select-FD').value.slice(3);
+    let specific_jobid = document.getElementById('jobid-FD').value;
     const location_id = "FluxDep-result-plot";
     $.ajaxSettings.async = false;
     let FDKeys = {
@@ -736,13 +749,26 @@ function get_plot2D_FD(){
     };
     let fd_plot = {};
     let where = "FD";
-    $.getJSON( '/autoscan1Q/plot_result',{  
-        measurement_catagories:JSON.stringify(where),
-        specific_jobid : JSON.stringify(String(FD_jobids[cavity])),//FD_jobids[cavity]5105
-        target_cavity : JSON.stringify(cavity)
-    }, function (plot_items) {   //need to check this is correct or not
-        fd_plot = plot_items[cavity];
-    });
+    if (specific_jobid===''){
+        let cavity = document.getElementById('cavity-select-FD').value.slice(3);
+        $.getJSON( '/autoscan1Q/plot_result',{  
+            measurement_catagories:JSON.stringify(where),
+            specific_jobid : JSON.stringify(String(FD_jobids[cavity])),//FD_jobids[cavity]5105
+            target_cavity : JSON.stringify(cavity),
+            designed : JSON.stringify(""),
+        }, function (plot_items) {   //need to check this is correct or not
+            fd_plot = plot_items[cavity];
+        });
+    }else{
+        $.getJSON( '/autoscan1Q/plot_result',{  
+            measurement_catagories:JSON.stringify(where),
+            specific_jobid : JSON.stringify(String(specific_jobid)),//FD_jobids[cavity]5105
+            target_cavity : JSON.stringify(""),
+            designed : JSON.stringify(""),
+        }, function (plot_items) {   //need to check this is correct or not
+            fd_plot = plot_items[cavity];
+        }); 
+    }
     $.ajaxSettings.async = true;
     plot2D_FD(fd_plot, FDKeys, location_id,modenum);
     document.getElementById(location_id).style.display = "block";
@@ -899,7 +925,8 @@ function get_plot1D_CW(){
     $.getJSON( '/autoscan1Q/plot_result',{  
         measurement_catagories:JSON.stringify(where),
         specific_jobid : JSON.stringify(String(CW_jobids[cavity])),//CW_jobids[cavity]5141
-        target_cavity : JSON.stringify(cavity)
+        target_cavity : JSON.stringify(cavity),
+        designed : JSON.stringify("")
 
     }, function (plot_items) {   //need to check this is correct or not
         q_plot = plot_items;

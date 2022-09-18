@@ -146,7 +146,10 @@ def plot_after_jobid():
         print("Construction Finish")
         return json.dumps(CS, cls=NumpyEncoder)
     elif where_plot == "PD":
-        cavity = json.loads(request.args.get('target_cavity'))
+        if json.loads(request.args.get('target_cavity')) != "":
+            cavity = "specify"
+        else:
+            cavity = json.loads(request.args.get('target_cavity'))
         print("PowerDependent start:\n")
         routine.powerdepend(cavity,jobid=specific_id)
         f_bare = float(cavity.split(" ")[0])
@@ -155,7 +158,10 @@ def plot_after_jobid():
         print("Construction Finish")
         return json.dumps(PD, cls=NumpyEncoder)
     elif where_plot == "FD":
-        cavity = json.loads(request.args.get('target_cavity'))
+        if json.loads(request.args.get('target_cavity')) != "":
+            cavity = "specify"
+        else:
+            cavity = json.loads(request.args.get('target_cavity'))
         f_bare = float(cavity.split(" ")[0])
         print("FluxDependent start:\n")
         routine.fluxdepend(cavity,f_bare,jobid=specific_id)
@@ -164,7 +170,10 @@ def plot_after_jobid():
         print("Construction Finish")
         return json.dumps(FD, cls=NumpyEncoder)
     else:
-        cavity = json.loads(request.args.get('target_cavity'))
+        if json.loads(request.args.get('target_cavity')) != "":
+            cavity = "specify"
+        else:
+            cavity = json.loads(request.args.get('target_cavity'))
         print("QubitSearch start:\n")
         routine.qubitsearch(cavity,jobid=specific_id)
         CW = routine.CW_plot_items      #{'xy_power1':{'Targets_value':[],'Targets_Freq':[],'Sub_Frequency':[],'Substrate_value':[]},'xy_power2':{...},...}
