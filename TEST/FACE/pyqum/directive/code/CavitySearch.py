@@ -271,17 +271,29 @@ def find_best_ans(region,voted,fig,designed):
         step+=1
     
     if len(rang)>designed:
-        diff = []
+        up_limit = np.average(fig["UPhase"])+3*np.std(fig["UPhase"])
+        dw_limit = np.average(fig["UPhase"])-3*np.std(fig["UPhase"])
+        checked_limit = []
         for i in range(len(rang)):
             pha = np.array(fig[fig["Frequency"].between(rang[i][0],rang[i][1])]['UPhase'])
-            diff.append([i,np.max(pha)-np.min(pha)])
-        
-        top = sorted(array(diff), key=lambda x:x[1], reverse=True)[:designed]  # big > small
-        final_answer = []
-        for i in top:
-            final_answer.append(rang[int(i[0])])
-    
-        return np.array(final_answer), ori_status    # rang is the final answer    
+            if np.max(pha)>up_limit or np.min(pha)<dw_limit:
+                checked_limit.append(rang[i])
+                
+        if len(checked_limit) <= designed:
+            return np.array(checked_limit), ori_status
+        else:
+            diff = []
+            for i in range(len(checked_limit)):
+                pha = np.array(fig[fig["Frequency"].between(checked_limit[i][0],checked_limit[i][1])]['UPhase'])
+                diff.append([i,np.max(pha)-np.min(pha)])
+
+            top = sorted(array(diff), key=lambda x:x[1], reverse=True)[:designed]  # big > small
+            
+            final_answer = []
+            for i in top:
+                final_answer.append(checked_limit[int(i[0])])
+
+            return np.array(final_answer), ori_status    # rang is the final answer 
     else:
         return np.array(rang), ori_status
 
