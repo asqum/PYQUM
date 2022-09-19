@@ -270,7 +270,7 @@ def find_best_ans(region,voted,fig,designed):
 
         step+=1
     
-    if len(rang)>designed:
+    if len(rang)>designed and designed != 0 :
         up_limit = np.average(fig["UPhase"])+3*np.std(fig["UPhase"])
         dw_limit = np.average(fig["UPhase"])-3*np.std(fig["UPhase"])
         checked_limit = []

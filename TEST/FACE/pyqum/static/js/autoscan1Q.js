@@ -633,7 +633,7 @@ function get_plot2D_PD(){
             designed : JSON.stringify(""),
             target_cavity : JSON.stringify("")
         }, function (plot_items) {   //need to check this is correct or not;
-            pd_plot = plot_items['specify'];
+            pd_plot = plot_items['0000 MHz'];
         });
     }
     //make up the quantification output
@@ -768,7 +768,7 @@ function get_plot2D_FD(){
             target_cavity : JSON.stringify(""),
             designed : JSON.stringify(""),
         }, function (plot_items) {   //need to check this is correct or not
-            fd_plot = plot_items[cavity];
+            fd_plot = plot_items['0000 MHz'];
         }); 
     }
     $.ajaxSettings.async = true;

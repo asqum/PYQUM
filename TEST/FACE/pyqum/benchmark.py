@@ -1449,6 +1449,7 @@ class Quest_command:
     
     def cavitysearch(self,dcsweepch,add_comment=""):
         jobid = char_fresp_new(sparam=self.sparam,freq = "3 to 9 *10000",powa = "0",flux = "OPT,",dcsweepch = "1",comment = "By bot - step1 cavitysearch "+add_comment)
+        print('JOBID: ',jobid)
         return jobid
     def powerdepend(self,select_freq,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
@@ -1483,17 +1484,21 @@ class AutoScan1Q:
         self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
-        self.designed = int(designed)
+        if designed != "":
+            self.designed = int(designed)
+        else:
+            self.designed = 0
         self.CS_progress = 0
         self.id = id(self.CS_progress)
 
         
-    def cavitysearch(self,jobid):
-        if jobid == "":
+    def cavitysearch(self,jobid_check):
+        if jobid_check == "":
             jobid = Quest_command(self.sparam).cavitysearch(self.dcsweepch)
             plot_ornot = 0
             self.CS_jobid = jobid
         else:
+            jobid = jobid_check
             plot_ornot = 1
         print("do measurement\n")
         dataframe = Load_From_pyqum(jobid).load()
@@ -1509,48 +1514,53 @@ class AutoScan1Q:
         self.readout_para["cavity_list"] = self.cavity_list
 
     
-    def powerdepend(self,cavity_freq,jobid):
-        if jobid == '':
+    def powerdepend(self,cavity_freq,jobid_check):
+        if jobid_check == "":
             jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cavity_freq],add_comment="with Cavity "+str(cavity_freq))
             plot_ornot = 0
             self.jobid_dict["PowerDepend"] = jobid
         else:
+            jobid = jobid_check
             plot_ornot = 1
         
         dataframe = Load_From_pyqum(jobid).load()
         PD = PowerDepend(dataframe)
         self.low_power, self.high_power = PD.do_analysis() #pass
         print("Select Power : %f"%self.low_power)
-        self.readout_para[cavity_freq]["low_power"] = self.low_power
-        self.readout_para[cavity_freq]["high_power"] = self.high_power
-        if plot_ornot:
+        if not plot_ornot:
+            self.readout_para[cavity_freq]["low_power"] = self.low_power
+            self.readout_para[cavity_freq]["high_power"] = self.high_power
+        else:	
             self.PD_plot_items = PD.give_plot_info()    # assume the function named `get_plot_items()`
 
 
-    def fluxdepend(self,cavity_freq, f_bare,jobid):
-        if jobid =="":
+    def fluxdepend(self,cavity_freq, f_bare,jobid_check):
+        if jobid_check == "":
             jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_freq],select_powa=self.low_power,add_comment="with Cavity "+str(cavity_freq))
             plot_ornot = 0
             self.jobid_dict["FluxDepend"] = jobid
         else:
+            jobid = jobid_check
             plot_ornot = 1
         
         dataframe = Load_From_pyqum(jobid).load()
         FD = FluxDepend(dataframe)
         self.wave = FD.do_analysis(f_bare) #pass
         print(self.wave)#{"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
-        self.readout_para[cavity_freq]["f_bare"] = self.wave["f_bare"]
-        self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
-        self.readout_para[cavity_freq]["offset"] = self.wave["offset"]
-        if plot_ornot:
+        if not plot_ornot:
+            self.readout_para[cavity_freq]["f_bare"] = self.wave["f_bare"]
+            self.readout_para[cavity_freq]["f_dress"] = self.wave["f_dress"]
+            self.readout_para[cavity_freq]["offset"] = self.wave["offset"]
+        else:
             self.FD_plot_items = FD.give_plot_info()  # assume the function named `get_plot_items()`
     
-    def qubitsearch(self,cavity_freq,jobid):
-        if jobid == "":
+    def qubitsearch(self,cavity_freq,jobid_check):
+        if jobid_check == "":
             jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"])+'e-6',f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_freq))
             plot_ornot = 0
             self.jobid_dict["QubitSearch"] = jobid
         else:
+            jobid = jobid_check
             plot_ornot = 1    
         
         dataframe = Load_From_pyqum(jobid).load()

@@ -56,25 +56,25 @@ def auto_measurement():  # measurement do not plot
     # search(self.quantificationObj)
     routine = AutoScan1Q(sparam=port,dcsweepch = dc_ch,designed=designed_num)
     print("CavitySearch start:\n")
-    routine.cavitysearch(jobid="")
+    routine.cavitysearch("")
     CS = {'answer':routine.total_cavity_list}  #['5487 MHz',...]
     print('CS answer: ',CS)
     PD, FD, CW = {}, {}, {}
     JOBIDs = {'CavitySearch':routine.CS_jobid,'PowerDepend':{},'FluxDepend':{},'QubitSearch':{}}
     for i in routine.total_cavity_list:
         print("PowerDependent start:\n")
-        routine.powerdepend(i,jobid='')
+        routine.powerdepend(i,"")
         f_bare = float(i.split(" ")[0])
         PD[i]={'low_power':routine.readout_para[i]["low_power"],'high_power':routine.readout_para[i]["high_power"]} #need to check
         JOBIDs['PowerDepend'][i] = routine.jobid_dict['PowerDepend']
 
         print("FluxDependent start:\n")
-        routine.fluxdepend(i,f_bare,jobid='')
+        routine.fluxdepend(i,f_bare,"")
         FD[i]={'flux_offset':routine.readout_para[i]["offset"],'f_bare':routine.readout_para[i]["f_bare"],'f_dress':routine.readout_para[i]["f_dress"]}  #need to check
         JOBIDs['FluxDepend'][i] = routine.jobid_dict['FluxDepend']
 
         print("CWsweep start:\n")
-        routine.qubitsearch(i,jobid="")
+        routine.qubitsearch(i,"")
         CW[i]={'q_freq':routine.readout_para[i]["qubit"],'Ec':routine.readout_para[i]["Ec"],'acStark':routine.readout_para[i]["acStark"]} #AutoScan1Q_classfile.py has not complete this part  
         JOBIDs['QubitSearch'][i] = routine.jobid_dict['QubitSearch']
 
@@ -129,8 +129,10 @@ global progress
 # not for measurement but for plot with a specific jobid
 @bp.route('/plot_result',methods=['POST','GET'])
 def plot_after_jobid():
-    specific_id = int(json.loads(request.args.get('specific_jobid')))
-    designed = int(json.loads(request.args.get('designed')))
+    specific_id = json.loads(request.args.get('specific_jobid'))
+    if specific_id != "":
+        specific_id = int(specific_id)
+    designed = json.loads(request.args.get('designed'))
     where_plot = json.loads(request.args.get('measurement_catagories'))
     PD, FD, CW = {}, {}, {}
     print("Construct plot items:\n")
@@ -140,42 +142,42 @@ def plot_after_jobid():
         print("CavitySearch start:\n")
         global progress
         progress = routine.id
-        routine.cavitysearch(jobid=specific_id)
+        routine.cavitysearch(specific_id)
         CS = {'plot_items':routine.CS_plot_items,'overview':routine.CS_overview}  #{'5487 MHz':{'Frequency':[...],'Amplitude':[...],'UPhase':[...]},'~ MHz':{...},...}
                                                                                   #{'Frequency':[...],'Amplitude':[...],'UPhase':[...]}
         print("Construction Finish")
         return json.dumps(CS, cls=NumpyEncoder)
     elif where_plot == "PD":
-        if json.loads(request.args.get('target_cavity')) != "":
-            cavity = "specify"
+        if specific_id != "":
+            cavity = "0000 MHz"
         else:
             cavity = json.loads(request.args.get('target_cavity'))
         print("PowerDependent start:\n")
-        routine.powerdepend(cavity,jobid=specific_id)
+        routine.powerdepend(cavity,specific_id)
         f_bare = float(cavity.split(" ")[0])
         PD[cavity] = routine.PD_plot_items   # {"3D_axis":{"Frequency":[],"Power":[],"Amplitude":[]},"scatter":{'Power':[],'Fr':[]}}
 
         print("Construction Finish")
         return json.dumps(PD, cls=NumpyEncoder)
     elif where_plot == "FD":
-        if json.loads(request.args.get('target_cavity')) != "":
-            cavity = "specify"
+        if specific_id != "":
+            cavity = "0000 MHz"
         else:
             cavity = json.loads(request.args.get('target_cavity'))
         f_bare = float(cavity.split(" ")[0])
         print("FluxDependent start:\n")
-        routine.fluxdepend(cavity,f_bare,jobid=specific_id)
+        routine.fluxdepend(cavity,f_bare,specific_id)
         FD[cavity] = routine.FD_plot_items       # {"3D_axis":{"Frequency":[],"Flux":[],"Amplitude":[]},"scatter":{'Flux':[],'Fr':[]}}
 
         print("Construction Finish")
         return json.dumps(FD, cls=NumpyEncoder)
     else:
-        if json.loads(request.args.get('target_cavity')) != "":
-            cavity = "specify"
+        if specific_id != "":
+            cavity = "0000 MHz"
         else:
             cavity = json.loads(request.args.get('target_cavity'))
         print("QubitSearch start:\n")
-        routine.qubitsearch(cavity,jobid=specific_id)
+        routine.qubitsearch(cavity,specific_id)
         CW = routine.CW_plot_items      #{'xy_power1':{'Targets_value':[],'Targets_Freq':[],'Sub_Frequency':[],'Substrate_value':[]},'xy_power2':{...},...}
 
         print("Construction Finish")
