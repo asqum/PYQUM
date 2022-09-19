@@ -1471,7 +1471,7 @@ class Quest_command:
             raise ValueError("frequency is out of range with "+ select_freq)
         if (select_powa >20) | (select_powa <-60):
             raise ValueError("Power is out of range with "+select_powa)
-        if (select_flux >500e-6) | (select_flux <-500e-6):  # 0915 TypeError: '>' not supported between instances of 'str' and 'float'  
+        if (float(select_flux) >500e-6) | (float(select_flux) <-500e-6):  # 0915 TypeError: '>' not supported between instances of 'str' and 'float'  
             raise ValueError("Flux is out of range with "+select_flux)
         jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,f_dress =f_dress,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
