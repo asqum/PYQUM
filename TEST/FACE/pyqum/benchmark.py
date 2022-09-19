@@ -1455,7 +1455,7 @@ class Quest_command:
         print('check PD freq_range: ',freq_command)
         if (select_freq[0]>12) | (select_freq[1]>12) | (select_freq[0]<2) | (select_freq[1]<2):
             raise ValueError("Frequency is out of range with "+freq_command)
-        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-50 to 10 * 13",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
+        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-50 to 0 * 11",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
         return jobid
     def fluxdepend(self,select_freq,select_powa,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
