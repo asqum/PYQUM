@@ -1,0 +1,43 @@
+[
+	{"id":"SDAWG_1",
+		"type":"DAC",
+		"driver":"DummyDAC",
+		"sub_channel":4,
+	},
+
+	{"id":"SDAWG_2",
+		"type":"DAC",
+		"driver":"DummyDAC",
+		"sub_channel":4,
+	},
+
+	{"id":"SDAWG_3",
+		"type":"DAC",
+		"driver":"DummyDAC",
+		"sub_channel":4,
+	},
+
+	{"id":"DDSLO_1",
+		"type":"SG",
+		"driver":"DummySG",
+		"sub_channel":4,
+	},
+
+	{"id":"ROMixer",
+		"type":"Mixer",
+		"driver":"DummyIQMixer",
+		"IF_freq": 0.017,
+	},
+
+	{"id":"XY1Mixer",
+		"type":"Mixer",
+		"driver":"DummyIQMixer",
+		"IF_freq": 0.079,
+	},
+
+	{"id":"XY2Mixer",
+		"type":"Mixer",
+		"driver":"DummyIQMixer",
+		"IF_freq": 0.12,
+	}	
+]
