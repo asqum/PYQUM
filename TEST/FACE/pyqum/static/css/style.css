@@ -363,6 +363,9 @@ select:focus option:checked {
 .col-5 {
     padding: inherit; width: 5%;
 }
+.col-6 {
+    padding: inherit; width: 6%;
+}
 .col-7 {
     padding: inherit; width: 7%;
 }

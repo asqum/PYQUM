@@ -21,8 +21,8 @@
         <div class="container">
 
             <!-- Pressure row -->
-            <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-10" id='left'><select class='bdr history' name="wday" type="text"></select></div>
+            <div class="row interow"> <!-- NEW ROW of INPUT/SELECT -->
+                <div class="col-10" id='left'><select class='bdr history zoomSelect-interow' name="wday" type="text"></select></div>
 
                 <div class="col-8" id='left'><select class='bdr history' name="P_Ch" type="text">
                     {% for i in range(6) %}
@@ -79,7 +79,9 @@
 
             <!-- Temperature row -->
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-10" id='left'></div>
+                <div class="col-2" id='left'><button class="plusButton-interow" style="color: navy;">-</button></div>
+                <div class="col-2" id='left'><button class="minusButton-interow" style="color: navy;">+</button></div>
+                <div class="col-6" id='left'></div>
 
                 <div class="col-8" id='left'><select class='bdr history' name="T_Ch" type="text" value="5">
                     {% for i in [1,2,3,4,5,6,7] %}

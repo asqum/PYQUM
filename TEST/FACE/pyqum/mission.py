@@ -1883,7 +1883,9 @@ def get_measurementObject( measurementType ):
     measurementObject = {
         'fresp': frequency_response,
         'cwsweep': CW_sweep,
-        'singleqb': single_qubit
+        # for "manipulate" category, the task-name will be aligned between PY and JS: 
+        'Single_Qubit': single_qubit
+        
     }
     return measurementObject[measurementType]()
 
