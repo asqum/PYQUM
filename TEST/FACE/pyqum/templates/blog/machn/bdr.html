@@ -79,9 +79,10 @@
 
             <!-- Temperature row -->
             <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
-                <div class="col-2" id='left'><button class="plusButton-interow" style="color: navy;">-</button></div>
-                <div class="col-2" id='left'><button class="minusButton-interow" style="color: navy;">+</button></div>
-                <div class="col-6" id='left'></div>
+                <div class="col-10" id='left'>
+                    <div class="col-13" id='left'><button class="plusButton-interow" style="color: navy;">-</button></div>
+                    <div class="col-30" id='left'><button class="minusButton-interow" style="color: navy;">+</button></div>
+                </div>
 
                 <div class="col-8" id='left'><select class='bdr history' name="T_Ch" type="text" value="5">
                     {% for i in [1,2,3,4,5,6,7] %}
