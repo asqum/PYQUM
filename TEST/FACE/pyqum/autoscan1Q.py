@@ -125,7 +125,7 @@ def get_results():
     return json.dumps(ast.literal_eval(specifications)["result"], cls=NumpyEncoder)  
 
 
-global progress
+
 # not for measurement but for plot with a specific jobid
 @bp.route('/plot_result',methods=['POST','GET'])
 def plot_after_jobid():
@@ -140,8 +140,6 @@ def plot_after_jobid():
     routine = AutoScan1Q(sparam="",dcsweepch = "",designed=designed)
     if where_plot == "CS":
         print("CavitySearch start:\n")
-        global progress
-        progress = routine.id
         routine.cavitysearch(specific_id)
         CS = {'plot_items':routine.CS_plot_items,'overview':routine.CS_overview}  #{'5487 MHz':{'Frequency':[...],'Amplitude':[...],'UPhase':[...]},'~ MHz':{...},...}
                                                                                   #{'Frequency':[...],'Amplitude':[...],'UPhase':[...]}
@@ -193,8 +191,3 @@ def get_xypower():
     return json.dumps({'xy_power':xy_powa}, cls=NumpyEncoder)
 
 #----------------------------test-------------------------------------------------  
-@bp.route('/get_test',methods=['POST','GET'])
-def get_test():
-    print("check here: ",progress)
-    print('read address:',ctypes.cast(progress, ctypes.py_object).value)
-    return json.dumps({'now':ctypes.cast(progress, ctypes.py_object).value}, cls=NumpyEncoder)

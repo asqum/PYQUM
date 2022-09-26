@@ -1508,11 +1508,10 @@ class AutoScan1Q:
         if plot_ornot:
             self.CS_plot_items = CS.give_plot_info()
             self.CS_overview = CS.overview    # ena scan results
-        #self.cavity_list = {'7116.0 MHz': [7.102, 7.128], '6334.0 MHz': [6.32, 6.346]}
+        else:
+            self.readout_para = {i: {} for i in self.total_cavity_list}
+            self.readout_para["cavity_list"] = self.cavity_list
         self.total_cavity_list = list(self.cavity_list.keys())
-        self.readout_para = {i: {} for i in self.total_cavity_list}
-        self.readout_para["cavity_list"] = self.cavity_list
-
     
     def powerdepend(self,cavity_freq,jobid_check):
         if jobid_check == "":
@@ -1568,7 +1567,7 @@ class AutoScan1Q:
         self.qubit_info = CW.do_analysis() #examine the input data form is dataframe because Series cannot reshape 
         if plot_ornot:
             self.CW_plot_items = CW.plot_items
-        print(self.qubit_info)                                     #0820 update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
+        print(self.qubit_info)                                     #0820update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
 		# 0820 update
         # self.readout_para[cavity_freq]["qubit"] = self.qubit_info['Fq_avg']
         # self.readout_para[cavity_freq]["Ec"] = self.qubit_info['Ec_avg']
