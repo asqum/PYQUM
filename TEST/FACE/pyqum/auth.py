@@ -23,7 +23,7 @@ from pyqum.instrument.reader import inst_designate
 bp = Blueprint(myname, __name__, url_prefix='/auth')
 
 
-from qpu.backend.circuit.api import to_deviceManager
+#from qpu.backend.circuit.api import to_deviceManager
 
 def login_required(view):
     """View decorator that redirects anonymous users to the login page."""
@@ -369,13 +369,13 @@ def usersamples_meal():
 def usersamplesloc_update_qpc_wiring():
     peach = request.args.get('peach')
     qpc_selected = request.args.get('qpc_selected')
-
+    print(qpc_selected)
     # Translate Peach to QPC:
 
 
     # Update QPC-wiring database:
-    instr_organized = to_deviceManager(peach, ["SG","DAC","ADC"])
-    print(instr_organized)
+    # instr_organized = to_deviceManager(peach, ["SG","DAC","ADC"])
+    # print(instr_organized)
     try:
         if int(g.user['management'])>=3:
             for key, val in instr_organized.items(): 
@@ -384,7 +384,8 @@ def usersamplesloc_update_qpc_wiring():
             acting(message)
         else: message = "Clearance not enough"
     except:
-        message = "database error"
+        raise
+        #message = "database error"
 
     return jsonify(message=message)
 

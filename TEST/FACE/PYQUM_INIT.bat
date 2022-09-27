@@ -71,13 +71,13 @@ if exist %config_FQPN% (
 	ECHO Installing pulse_generator
 	pip install -e ..\BETAsite\pulse_generator
 
-	:: asqpu (editable installation, files are in SKILLS)
-	ECHO Installing asqpu
-	pip install -e %root_FQPN%\SKILLS\asqpu
-
 	:: pulse_signal (editable installation, files are in SKILLS)
 	ECHO Installing pulse_signal
 	pip install -e %root_FQPN%\SKILLS\pulse_signal
+
+	:: asqpu (editable installation, files are in SKILLS)
+	ECHO Installing asqpu
+	pip install -e %root_FQPN%\SKILLS\asqpu
 
 	:: state_distinguishability (editable installation, files are in PYQUM)
 	ECHO Installing state_distinguishability

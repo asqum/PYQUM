@@ -159,6 +159,7 @@ def inst_designate(queue, category, designation):
     '''
     db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
     db.row_factory = Row
+    print(queue, category, designation)
     db.execute("UPDATE %s SET designation = ? WHERE category = ?"%queue, (designation,category,))
     db.commit()
     db.close()

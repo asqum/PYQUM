@@ -173,9 +173,11 @@ $('button.user-samples#samples-forward').on('click', function(e) {
 // Update QPC-wiring Configuration:
 $('#sampleloc-update-QPC').on('click', function(e) {
     e.preventDefault();
+    let qpc_list = document.getElementById("qpc-list").value
+    console.log(qpc_list);
     $.getJSON('/auth/user/samplesloc/update/qpc_wiring', {
         peach: $('textarea.user-samples#update[name="loc"]').val(),
-        qpc_selected:$('select.samples#qpc-list').val(),
+        qpc_selected:qpc_list,
     }, function (data) {
         $('.samples > label#registered').empty().append($('<h4 style="color: blue;"></h4>').text(data.message));
     })
