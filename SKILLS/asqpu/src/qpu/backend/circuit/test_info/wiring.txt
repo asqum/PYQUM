@@ -4,7 +4,7 @@
 	"port":"ro_in",
 	"devices":{
 		"DAC":["SDAWG_3-1","SDAWG_3-2"],
-		"SG":["DDSLO_1-1"]
+		"SG":["DDSLO_1"]
 		},
 	"comps":{
 		"IQMixer":{"calibration":(1,90,0,0)}
@@ -12,12 +12,25 @@
 	"freqIF":0.02
 	},
 
+	{"id":"ROI2",
+	"type":"upconversion",
+	"port":"ro_in",
+	"devices":{
+		"DAC":["SDAWG_3-1","SDAWG_3-2"],
+		"SG":["DDSLO_2"]
+		},
+	"comps":{
+		"IQMixer":{"calibration":(1,90,0,0)}
+		},
+	"freqIF":0.03
+	},
+
 	{"id":"XY1",
 	"type":"upconversion",
 	"port":"xy",
 	"devices":{
 		"DAC":["SDAWG_1-1","SDAWG_1-2"],
-		"SG":["DDSLO_2-1"],
+		"SG":["DDSLO_2"],
 		},
 	"comps":{
 		"IQMixer":{"calibration":(1,90,0,0)}
@@ -29,7 +42,7 @@
 	"port":"xy",
 	"devices":{
 		"DAC":["SDAWG_1-3","SDAWG_1-4"],
-		"SG":["DDSLO_2-1"],
+		"SG":["DDSLO_2"],
 		},
 	"comps":{
 		"IQMixer":{"calibration":(1,90,0,0)}

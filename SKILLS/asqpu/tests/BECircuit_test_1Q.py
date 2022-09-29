@@ -4,7 +4,6 @@ from qutip import sigmax, sigmay, sigmaz, basis, qeye, tensor, Qobj
 from qutip_qip.operations import Gate #Measurement in 0.3.X qutip_qip
 from qutip_qip.circuit import QubitCircuit
 import numpy as np
-import qpu.backend.circuit.backendcircuit as bec
 
 import pulse_signal.common_Mathfunc as ps 
 import qpu.backend.circuit.compiler as becc
@@ -17,13 +16,8 @@ rg_x0 = Gate("RX", 0, arg_value= np.pi)
 rg_y0 = Gate("RY", 0, arg_value= np.pi)
 rg_z0 = Gate("RZ", 0, arg_value= 500)
 
-rg_ro1 = Gate("RO", 1 )
-rg_x1 = Gate("RX", 1, arg_value= np.pi)
-rg_y1 = Gate("RY", 1, arg_value= np.pi)
-rg_z1 = Gate("RZ", 1, arg_value= 500)
-
 gate_seq = [
-    rg_x1, rg_x1, rg_y1, rg_y1, rg_x1, rg_z1, rg_ro1
+    rg_x0, rg_x0, rg_y0, rg_y0, rg_x0, rg_z0, rg_ro0
 ]
 circuit = QubitCircuit(1)
 
@@ -64,8 +58,8 @@ print(coeffs.keys())
 # plt.show()
 
 
-mybec = bec.get_test_bec()
-
+mybec = get_test_bec()
+print(mybec.to_qpc())
 #print(mybec.load_coeff(coeffs))
 
 ch_wf = mybec.translate_channel_output(coeffs)

@@ -1,6 +1,7 @@
 from qpu.backend.component.q_component import QComponent
 from qpu.backend.phychannel.physical_channel import PhysicalChannel, UpConversionChannel, DACChannel
 from qpu.backend import phychannel
+from qpu.backend import component
 from pandas import DataFrame
 import abc
 from typing import List, Tuple, Union, Dict
@@ -241,6 +242,40 @@ class BackendCircuit():
 
         return devices_setting_all
 
+    def to_qpc( self ):
+
+        qpc_dict = {}
+        qpc_dict["CH"] = {}
+        qpc_dict["ROLE"] = {}
+        categorys = ["SG","DAC","ADC"]
+        for c in categorys:
+            qpc_dict[c] = []
+            qpc_dict["CH"][c] = []
+            qpc_dict["ROLE"][c] = []
+
+
+
+        for pch in self.channels:
+            
+            pch_qpc = pch.to_qpc()
+            print(pch.name)
+            print(pch_qpc)
+            for c in categorys :
+                if c in pch_qpc.keys():
+                    for pch_instr in pch_qpc[c]:
+                        try:
+                            idx_instr = qpc_dict[c].index(pch_instr)
+                            print(idx_instr)
+                            qpc_dict["CH"][c][idx_instr].extend(pch_qpc["CH"][c])
+                            qpc_dict["ROLE"][c][idx_instr].extend(pch_qpc["ROLE"][c])
+                        except:
+                            qpc_dict[c].append(pch_instr)
+                            qpc_dict["CH"][c].append(pch_qpc["CH"][c])
+                            qpc_dict["ROLE"][c].append(pch_qpc["ROLE"][c])
+
+        return qpc_dict
+
+
 
 
     @property
@@ -275,48 +310,6 @@ class BackendCircuit():
 
 
 
-    # def register_device( self, device ):
-    #     """
-        
-    #     Args:
-    #         device: the type should be "VDevice_abc"
-    #     """
-    #     if isinstance(device,VDevice_abc):
-    #        self._devices.append(device)
-    #     else:
-    #         raise TypeError()
-            
-    # def get_device( self, id:str )->VDevice_abc:
-    #     """
-    #     Get device by its ID.
-    #     """
-    #     for d in self.devices:
-    #         if d == id:
-    #             return d
-    # def get_deviceByType( self, type:str=None )->List[VDevice_abc]:
-    #     """
-    #     Get devices by type, default is all.
-    #     """
-    #     d_list = []
-    #     for channel in self.channels:
-    #         for device in channel.devices:
-    #             if type == None:
-    #                 d_list.append(device)
-    #             elif type == device.func_type:
-    #                 d_list.append(device)
-    #     return d_list
-
-    # def get_IDs_devices( self, type:str=None )->List[str]:
-    #     """
-    #     Get devices id by type, default is all.
-    #     """
-    #     id_list = []
-    #     for device in self.devices:
-    #         if type == None:
-    #             id_list.append(device.id)
-    #         elif type == device.func_type:
-    #             id_list.append(device.id)
-    #     return id_list
 
 
 

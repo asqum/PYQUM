@@ -4,9 +4,10 @@ from qutip import sigmax, sigmay, sigmaz, basis, qeye, tensor, Qobj
 from qutip_qip.operations import Gate #Measurement in 0.3.X qutip_qip
 from qutip_qip.circuit import QubitCircuit
 import numpy as np
-import qpu.backend.circuit.backendcircuit as bec
+import qpu.backend.circuit.test_info as tbec
 import qpu.application as qapp
 
+import qpu.backend.circuit 
 import pulse_signal.common_Mathfunc as ps 
 import qpu.backend.circuit.compiler as becc
 import sys
@@ -43,7 +44,7 @@ print(coeffs.keys())
 # plt.show()
 
 
-mybec = get_test_bec()
+mybec = tbec.get_test_bec()
 
 #print(mybec.load_coeff(coeffs))
 

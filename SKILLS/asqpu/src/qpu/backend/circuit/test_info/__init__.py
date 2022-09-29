@@ -5,8 +5,14 @@ import qpu.backend.circuit.backendcircuit as bec
 import qpu.backend.component as qcp
 from pandas import DataFrame
 
+# import sys
+# sys.path.append(".")
+from pathlib import Path
+
+path = Path(__file__).parent
+
 def read_phych():
-    fo = open("./tests/wiring.txt", "r")
+    fo = open(f"{path}\wiring.txt", "r")
     spec = fo.read()
     fo.close()
     #print(spec)
@@ -19,7 +25,7 @@ def read_phych():
 
 
 def read_qComp():
-    fo = open("./tests/spec.txt", "r")
+    fo = open(f"{path}\spec.txt", "r")
     spec = fo.read()
     fo.close()
     #print(spec)
@@ -31,7 +37,7 @@ def read_qComp():
     return qComps
 
 def read_ChQcomp():
-    fo = open("./tests/ChQComp_relation.txt", "r")
+    fo = open(f"{path}\ChQComp_relation.txt", "r")
     spec = fo.read()
     fo.close()
     #print(spec)
@@ -40,7 +46,7 @@ def read_ChQcomp():
     return DataFrame.from_dict(read_dict)
 
 def read_QReg():
-    fo = open("./tests/qRegister.txt", "r")
+    fo = open(f"{path}\qRegister.txt", "r")
     spec = fo.read()
     fo.close()
     #print(spec)

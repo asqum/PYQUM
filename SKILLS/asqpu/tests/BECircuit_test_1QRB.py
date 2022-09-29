@@ -4,44 +4,23 @@ from qutip import sigmax, sigmay, sigmaz, basis, qeye, tensor, Qobj
 from qutip_qip.operations import Gate #Measurement in 0.3.X qutip_qip
 from qutip_qip.circuit import QubitCircuit
 import numpy as np
-import qpu.backend.circuit.backendcircuit as bec
+import qpu.application as qapp
 
+import qpu.backend.circuit 
 import pulse_signal.common_Mathfunc as ps 
 import qpu.backend.circuit.compiler as becc
 import sys
 sys.path.append("..")
 from BECircuit_fromTestFile import get_test_bec
 
-rg_ro0 = Gate("RO", 0 )
-rg_x0 = Gate("RX", 0, arg_value= np.pi)
-rg_y0 = Gate("RY", 0, arg_value= np.pi)
-rg_z0 = Gate("RZ", 0, arg_value= 500)
+circuit = qapp.get_SQRB_circuit( 1,5 )
 
-rg_ro1 = Gate("RO", 1 )
-rg_x1 = Gate("RX", 1, arg_value= np.pi)
-rg_y1 = Gate("RY", 1, arg_value= np.pi)
-rg_z1 = Gate("RZ", 1, arg_value= 500)
-
-gate_seq = [
-    rg_x1, rg_x1, rg_y1, rg_y1, rg_x1, rg_z1, rg_ro1
-]
-circuit = QubitCircuit(1)
-
-single_qubit = basis(2, 0)
-for gate in gate_seq:
-    circuit.add_gate(gate)
-    #g_qobj = gate.get_compact_qobj()
-    #print( g_qobj )
-    #total_op *= g_qobj
-#print( "Result" )
-#print( total_op )
-
-mycompiler = becc.SQCompiler(1, params={})
+mycompiler = becc.SQCompiler(0, params={})
 #print(mycompiler.gate_compiler)
 
 # raw circuit
 for gate in circuit.gates:
-    print(f"{gate.name} for {gate.targets}")
+    print(f"{gate.name} {gate.arg_value/np.pi} for {gate.targets}")
 
 #     print(gate.name, gate.get_compact_qobj())
 
@@ -64,18 +43,13 @@ print(coeffs.keys())
 # plt.show()
 
 
-mybec = bec.get_test_bec()
+mybec = get_test_bec()
 
 #print(mybec.load_coeff(coeffs))
 
 ch_wf = mybec.translate_channel_output(coeffs)
 d_setting = mybec.devices_setting(coeffs)
 dac_wf = d_setting["DAC"]
-
-import json
-with open('d_setting.txt', 'w') as file:
-    file.write(str(d_setting)) # use `json.loads` to do the reverse
-
 
 for dcategory in d_setting.keys():
     print(dcategory, d_setting[dcategory].keys())

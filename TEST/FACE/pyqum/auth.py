@@ -365,6 +365,11 @@ def usersamples_meal():
         set_status("MSSN", {session['user_name']: dict(sample=sname, queue='', time=0)})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
+import qpu.backend.circuit.backendcircuit as bec
+import qpu.backend.phychannel as pch
+import qpu.backend.component as qcp
+from pandas import DataFrame
+
 @bp.route('/user/samplesloc/update/qpc_wiring', methods=['GET'])
 def usersamplesloc_update_qpc_wiring():
     peach = request.args.get('peach')
@@ -372,10 +377,34 @@ def usersamplesloc_update_qpc_wiring():
     print(qpc_selected)
     # Translate Peach to QPC:
 
+    mybec = bec.BackendCircuit()
+    wiring_info = peach.split("===")
+    print(wiring_info)
+    dict_list = eval(wiring_info[0])
+    channels = []
+    for ch in dict_list:
+        #print(ch)
+        channels.append( pch.from_dict( ch ) )
 
+    mybec._channels = channels
+
+    
+    #mybec._qComps = read_qComp()
+    mybec.qc_relation = DataFrame.from_dict(eval(wiring_info[1]))
+    mybec.q_reg = eval(wiring_info[2])
+    qpc_dict = mybec.to_qpc()
+    instr_organized = {}
+    dict_str = ["CH","ROLE"]
+    for cate, val in qpc_dict.items():
+        if cate in dict_str:
+            destination = str(val).replace("'",'"')
+        else:
+            destination = ",".join(val)
+        instr_organized[cate]=destination
+
+
+    instr_organized["ADC"] = "DIG"
     # Update QPC-wiring database:
-    # instr_organized = to_deviceManager(peach, ["SG","DAC","ADC"])
-    # print(instr_organized)
     try:
         if int(g.user['management'])>=3:
             for key, val in instr_organized.items(): 
