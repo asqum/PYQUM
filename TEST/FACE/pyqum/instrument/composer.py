@@ -8,6 +8,7 @@ from math import trunc, ceil
 from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians, nan, isnan
 from pyqum.instrument.logger import get_status
 import pulse_generator.gate_operation as qos
+
 class pulser:
     '''
     Next generation of Pulse Assembly:\n

@@ -12,15 +12,17 @@ $('input.mani.loaded#sample-name').on('click', function() {
 });
 
 // Get TASK name:
-$('button.mani.access.singleqb').on('click', function() { mani_TASK = 'singleqb' });
-$('button.mani.access.qubits').on('click', function() { mani_TASK = 'qubits' });
+$('button.mani.access.QuCTRL').on('click', function() { 
+    mani_TASK = this.id;
+    console.log("Clicking on " + mani_TASK);
+ });
 
 // Benchmark on click > Loading measurement data into Benchmark:
 $('#mani-to-benchmark').click( function(){
     $.ajaxSettings.async = false;
 
     // listimes_singleqb(); accessdata_singleqb();
-    // $.getJSON(mssnencrpytonian() + '/mssn/singleqb/access', { wmoment: wmoment }, function (data) { console.log("JOBID: " + JSON.stringify(data.JOBID) ); console.log(data); });
+    // $.getJSON(mssnencrpytonian() + '/mssn/QuCTRL/access', { wmoment: wmoment }, function (data) { console.log("JOBID: " + JSON.stringify(data.JOBID) ); console.log(data); });
 
     let quantificationType = ["qfactor_estimation"];
     $.getJSON( '/benchmark/benchmark_getMeasurement', 

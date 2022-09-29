@@ -16,7 +16,7 @@ def get_db():
     is unique for each request and will be reused if this is called
     again.
     """
-    #print("Accessing Database from:\n %s" %current_app.config['DATABASE'])
+    # print("Accessing Database from:\n %s" %current_app.config['DATABASE'])
     if 'db' not in g:
         g.db = sqlite3.connect(
             current_app.config['DATABASE'],

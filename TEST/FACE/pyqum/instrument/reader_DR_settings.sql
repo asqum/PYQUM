@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS "QPC1" (
 );
 DROP TABLE IF EXISTS "MACE";
 CREATE TABLE IF NOT EXISTS "MACE" (
-	"Machine"	TEXT NOT NULL UNIQUE,
+	"Commander"	TEXT NOT NULL UNIQUE,
 	"Skills"	TEXT NOT NULL
 );
 DROP TABLE IF EXISTS "BDR";
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS "BDR" (
 	"Tname"	TEXT NOT NULL
 );
 INSERT INTO "PORT" ("Device","Port") VALUES ('TC',5602),
- ('RTP','http://192.168.1.139	'),
+ ('RTP','http://192.168.1.139'),
  ('MXA',6618),
  ('URL','qum.phys.sinica.edu.tw'),
  ('USRLOG','D:/USRLOG'),
@@ -69,7 +69,9 @@ INSERT INTO "QPC1" ("id","category","designation") VALUES (1,'ROLE','DAC:I1/Q1,X
  (3,'SG','DDSLO_3,DDSLO_1'),
  (4,'DAC','SDAWG_6,SDAWG_4,SDAWG_5'),
  (5,'ADC','SDDIG_2');
-INSERT INTO "MACE" ("Machine","Skills") VALUES ('RSVNA','frequency, power');
+INSERT INTO "MACE" ("Commander","Skills") VALUES ('Acronym','Modular Assembly of Commander (Controllable. Continuous. Companion. Calibration. Computation) Execution'),
+ ('Local Oscillator','Frequency, Power'),
+ ('Random Benchmarking','Type, Sequence-length/m, Random-sampling/n');
 INSERT INTO "BDR" ("Name","LogPath","TPath","Tname") VALUES ('Alice','\\BLUEFORSAS\BlueLogs','','T'),
  ('Bob','\\BLUEFORSAS2\dr_bob','\log-data\192.168.1.188','TEMPERATURE');
 COMMIT;

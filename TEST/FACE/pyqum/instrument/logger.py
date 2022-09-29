@@ -287,7 +287,8 @@ def translate_scpi(Name, instance, a, b):
     # Setting extra perimeter(s) like channel, window, S-param etc.
     prime = ''
     if '_' in action[0]: prime = action[0].split('_')[1]
-    if headers[0]=='': headers[1] += prime # only the first header has this priviledge in this version # PENDING: more than one perimeter / prime (since it precedes parameter)
+    # only the first header has this priviledge in this version #PENDING: more than one perimeter / prime (since it precedes parameter)
+    if headers[0]=='': headers[1] += prime 
     else: headers[0] += prime
 
 

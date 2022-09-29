@@ -207,4 +207,19 @@ $(document).on('click', 'button.plusButton-1', function() {
     select_element.trigger("change");
     console.log("Going FORWARD");
 });
+// Inter-row (Use this for inter-row manipulation of zoomSelect)
+$(document).on('click', 'button.minusButton-interow', function() {
+    var select_element = $('.interow').find(".zoomSelect-interow");
+    var selIndex = select_element.prop('selectedIndex');
+    if (selIndex != 0) { select_element.val(select_element.children('option').eq(selIndex - 1).val()); };
+    select_element.trigger("change");
+    console.log("Going BACK");
+});
+$(document).on('click', 'button.plusButton-interow', function() {
+    var select_element = $('.interow').find(".zoomSelect-interow");
+    var selIndex = select_element.prop('selectedIndex');
+    if (selIndex != select_element.children('option').length - 1) { select_element.val(select_element.children('option').eq(selIndex + 1).val()); };
+    select_element.trigger("change");
+    console.log("Going FORWARD");
+});
 

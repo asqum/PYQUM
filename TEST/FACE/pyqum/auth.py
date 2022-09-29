@@ -242,6 +242,8 @@ def logout():
 def user():
     """Load User Profile and Sample Database"""
     return render_template('auth/user.html')
+
+# Profile Handling:
 @bp.route('/user/profile')
 def userprofile():
 

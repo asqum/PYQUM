@@ -340,9 +340,10 @@ select:focus option:checked {
 .row.label {
     padding: 1px; display: block; margin-top: 15px;
 }
-.row.access {
-    margin-bottom: -10px;
-    margin-top: 8px;
+.col-row-split {
+    margin-bottom: 4px;
+    margin-top: -3px;
+    /* display: inline; */
 }
 .col {
     padding: inherit; 
@@ -361,6 +362,9 @@ select:focus option:checked {
 }
 .col-5 {
     padding: inherit; width: 5%;
+}
+.col-6 {
+    padding: inherit; width: 6%;
 }
 .col-7 {
     padding: inherit; width: 7%;
@@ -471,7 +475,7 @@ a.action {
     font-size: 1.2em;
     padding: 1.5rem 0;
 }
-.container#post {
+.container-post {
     width: 100%;
     border-radius: 5px;
     background-color: white;
@@ -490,6 +494,15 @@ a.action {
 .posts .body {
     font-family: 'Times New Roman', Times, serif;
     font-size: 1.2em;
+}
+
+/* Activity */
+.container-activiy {
+    width: 100%;
+    border-radius: 5px;
+    padding: 8px 8px;
+    /* padding-bottom:1.5rem; */
+    margin-left: 25px;
 }
 
 /* Sliders */

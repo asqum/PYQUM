@@ -20,7 +20,7 @@ bp = Blueprint(myname, __name__) # to create endpoint for {{url_for(blog.XXX)}}
 @bp.route('/')
 def index():
     """render index.html"""
-    return render_template('blog/index.html')
+    return render_template('blog/home/index.html')
 @bp.route('/basecolor')
 def basecolor(): 
     return jsonify(base_color=g.base_color)
@@ -50,6 +50,20 @@ def posts():
         guserid = g.user['id']
 
     return jsonify(posts=posts,guserid=guserid)
+
+@bp.route('/activities/table')
+def activities_table():
+    return render_template('blog/home/activity.html')
+@bp.route('/activities')
+def activities():
+    """Show all the activities, most recent first."""
+    db = get_db()
+    activities = db.execute( 'SELECT u.username, a.startime, a.log FROM activity a JOIN user u ON a.user_id = u.id ORDER BY startime DESC' ).fetchall()
+    close_db()
+    activities = [dict(act) for act in activities] # convert sqlite3.row into list of dictionaries
+    display_limit = 10800
+    if len(activities) > display_limit: activities=activities[::display_limit+1]
+    return jsonify(activities=activities)
 
 def get_post(id, check_author=True):
     """Get a post and its author by id.
@@ -106,7 +120,7 @@ def create():
             close_db()
             return redirect(url_for('blog.index'))
 
-    return render_template('blog/create.html')
+    return render_template('blog/home/create.html')
 
 
 @bp.route('/<int:id>/update', methods=('GET', 'POST'))
@@ -135,7 +149,7 @@ def update(id):
             close_db()
             return redirect(url_for('blog.index'))
 
-    return render_template('blog/update.html', post=post)
+    return render_template('blog/home/update.html', post=post)
 
 
 @bp.route('/<int:id>/delete', methods=('POST',))

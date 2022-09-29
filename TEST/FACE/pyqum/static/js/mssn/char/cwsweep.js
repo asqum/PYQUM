@@ -6,7 +6,7 @@ $(document).ready(function(){
     window.cwsweepcomment = "";
     $('button.char#cwsweep-savecsv').hide();
     $('button.char#cwsweep-savemat').hide();
-    $('div input.cwsweep.notification').hide();
+    $('div input.notification').hide();
 });
 
 // Global variables:
@@ -892,9 +892,9 @@ $('button.char.cwsweep.reset-no').on('click', function () {
 });
 
 // Notification on click:
-$('input.cwsweep.notification').click( function(){
-    var Day = $('input.cwsweep.notification').val().split(' > ')[1];
-    var Moment = $('input.cwsweep.notification').val().split(' > ')[2];
+$('input.notification#CW_Sweep_notification').click( function(){
+    var Day = $('input.notification#CW_Sweep_notification').val().split(' > ')[1];
+    var Moment = $('input.notification#CW_Sweep_notification').val().split(' > ')[2];
     console.log('Day: ' + Day + ', Moment: ' + Moment);
 
     // Setting global Day & Moment index:
