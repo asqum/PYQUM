@@ -1448,16 +1448,20 @@ def mani_QuCTRL_init():
     try: print(Fore.CYAN + "Connected USER(s) for %s's Progress: %s" %(mani_TASK[session['user_name']], c_QuCTRL_progress.keys()))
     except: c_QuCTRL_progress = {}
 
-     # Managing / Initialize user-specific SQ Jobid:
+    # Managing / Initialize user-specific SQ Jobid:
     try: print(Fore.GREEN + "Connected USER(s) for %s's Jobid: %s" %(mani_TASK[session['user_name']], QuCTRL_jobid.keys()))
     except: QuCTRL_jobid = {}
 
-    # Loading Channel-Matrix & Channel-Role based on WIRING-settings
-    DAC_CH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DAC']
-    DAC_Role = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')['DAC']
-    DAC_Which = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'DAC')
+    # Loading Channel-Matrix & Channel-Role based on WIRING-settings for EACH category:
+    # QPC_TYPE = ["DAC", "SG", "DC"] #PENDING: ADC (after FPGA implementation)
+    QPC_TYPE = ["DAC"] #PENDING: ADC (after FPGA implementation)
+    CH_Matrix, Role, Which = {}, {}, {}
+    for category in QPC_TYPE:
+        CH_Matrix[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')[category]
+        Role[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')[category]
+        Which[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], category)
 
-    return jsonify(daylist=M_QuCTRL[session['user_name']].daylist, run_permission=session['run_clearance'], DAC_CH_Matrix=DAC_CH_Matrix, DAC_Role=DAC_Role, DAC_Which=DAC_Which)
+    return jsonify(daylist=M_QuCTRL[session['user_name']].daylist, run_permission=session['run_clearance'], DAC_CH_Matrix=CH_Matrix["DAC"], DAC_Role=Role["DAC"], DAC_Which=Which["DAC"])
 # list task entries based on day picked
 @bp.route('/mani/QuCTRL/time', methods=['GET'])
 def mani_QuCTRL_time():
@@ -1542,7 +1546,7 @@ def char_QuCTRL_export_2dmat():
     print("interaction: %s" %interaction)
     status = None
     if interaction is not None:
-        set_mat(QuCTRL_2Ddata[session['user_name']], '2Dsingleqb[%s].mat'%session['user_name'])
+        set_mat(QuCTRL_2Ddata[session['user_name']], '2D%s[%s].mat'%(mani_TASK[session['user_name']], session['user_name']))
         status = "mat written"
         print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
     return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
@@ -1553,7 +1557,7 @@ def mani_QuCTRL_export_1dcsv():
     print("ifreq: %s" %ifreq)
     status = None
     if ifreq is not None:
-        set_csv(QuCTRL_1Ddata[session['user_name']], '1Dsingleqb[%s].csv'%session['user_name'])
+        set_csv(QuCTRL_1Ddata[session['user_name']], '1D%s[%s].csv'%(mani_TASK[session['user_name']], session['user_name']))
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
     return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))

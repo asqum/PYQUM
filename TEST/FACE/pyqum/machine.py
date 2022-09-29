@@ -72,9 +72,10 @@ def allmxc():
     dr.selectday(-1)
 
     mxcmk=dr.temperaturelog(6)[1][-1]
-    try: mxcmk = int(mxcmk) * 1000 # convert to mK
+    try: mxcmk = round(float(mxcmk) * 1000, 3) # convert to mK
     except(ValueError): pass # in case the sensor is off (giving ~)
 
+    print(Fore.YELLOW + "T6 for %s: %smK" %(device_port("BDR"), mxcmk))
     return jsonify(mxcmk=mxcmk)
 @bp.route('/all/bdr/current/status', methods=['GET'])
 def allbdrcurrentstatus():

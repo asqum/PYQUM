@@ -145,7 +145,7 @@ def inst_order(queue, category='ALL', tabulate=True):
                         inst_list = [{x.split(':')[0]:x.split(':')[1].split(',')} for x in inst_list]
                         inst_list = {instr_type:[instr_chs.split('/') for instr_chs in instr_modules] for instr_config in inst_list for instr_type,instr_modules in instr_config.items()} # {<inst>: <slot-channel> ...}
 
-                    # 2nd version: directly build JSON to save wiring-configuration: e.g. {"DAC": [["I1", "Q1"], ["X1", "Y1", "Z1", "P1"], ["Z2"]], "SG": [["XY1", "XY2"], ["RO1", "PA1"]], "DC": [["ZPA"], ["ZC"]]}
+                    # 2nd version: directly build JSON to save wiring-configuration (for ASQPU): e.g. {"DAC": [["I1", "Q1"], ["X1", "Y1", "Z1", "P1"], ["Z2"]], "SG": [["XY1", "XY2"], ["RO1", "PA1"]], "DC": [["ZPA"], ["ZC"]]}
                     else: inst_list = loads(inst_list)
 
                 else: inst_list = inst_list.split(',') # real-instrument's output: list
@@ -331,7 +331,7 @@ def test():
         printTree(DATA01)
 
     # SQL Database:
-    if False:
+    if True:
         inst_list = inst_order("CHAR0")
         print("inst_list: %s" %inst_list)
         print("CHAR0's DC: %s" %inst_order("CHAR0", 'DC'))
@@ -351,7 +351,7 @@ def test():
         print("RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # MACER
-    if False:
+    if True:
         m = macer("QPC0", "SG")
         m.get_skills()
         print("Commander's Level:\n %s (%s)" %(m.level, m.device_order))
@@ -362,7 +362,7 @@ def test():
         m.close()
 
     # USREPO
-    if True:
+    if False:
         repo = USR_repo("abc")
         print("User-list:\n %s" %repo.list_users())
         repo.check_user()

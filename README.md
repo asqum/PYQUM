@@ -88,6 +88,8 @@ Automatically telling unique story for each sample based on the ````notes```` ta
 
 * Wiring
 
+
+
 * Waveform / Rhythm:
 
   ````
