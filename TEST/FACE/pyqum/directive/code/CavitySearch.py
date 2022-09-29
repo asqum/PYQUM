@@ -401,7 +401,7 @@ def ena_clutch_filter(freq_list):
                 to_remove.append(freq)
     for i in to_remove :
         freq_list.remove(i)
-   
+    freq_list.sort()
     return array(freq_list)
 
 

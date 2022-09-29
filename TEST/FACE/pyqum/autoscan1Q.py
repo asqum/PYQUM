@@ -61,22 +61,27 @@ def auto_measurement():  # measurement do not plot
     print('CS answer: ',CS)
     PD, FD, CW = {}, {}, {}
     JOBIDs = {'CavitySearch':routine.CS_jobid,'PowerDepend':{},'FluxDepend':{},'QubitSearch':{}}
+    c_number = 0
     for i in routine.total_cavity_list:
-        print("PowerDependent start:\n")
+        init(autoreset=True)
+        print("PowerDependent start @ C-%d :\n"%(c_number+1))
+        print(Back.RED+"Check XY-gate ISO port !")
         routine.powerdepend(i,"")
         f_bare = float(i.split(" ")[0])
         PD[i]={'low_power':routine.readout_para[i]["low_power"],'high_power':routine.readout_para[i]["high_power"]} #need to check
         JOBIDs['PowerDepend'][i] = routine.jobid_dict['PowerDepend']
 
-        print("FluxDependent start:\n")
+        print("FluxDependent start @ C-%d :\n"%(c_number+1))
         routine.fluxdepend(i,f_bare,"")
         FD[i]={'flux_offset':routine.readout_para[i]["offset"],'f_bare':routine.readout_para[i]["f_bare"],'f_dress':routine.readout_para[i]["f_dress"]}  #need to check
         JOBIDs['FluxDepend'][i] = routine.jobid_dict['FluxDepend']
 
-        print("CWsweep start:\n")
+        print("CWsweep start @ C-%d :\n"%(c_number+1))
         routine.qubitsearch(i,"")
         CW[i]={'q_freq':routine.readout_para[i]["qubit"],'Ec':routine.readout_para[i]["Ec"],'acStark':routine.readout_para[i]["acStark"]} #AutoScan1Q_classfile.py has not complete this part  
         JOBIDs['QubitSearch'][i] = routine.jobid_dict['QubitSearch']
+    
+        c_number += 1
 
     #jobid = {'CavitySearch':2051,'5487 MHz':{"PowerDepend":1000,"FluxDepend":1001,"QubitSearch":1002},...}
     print("Measurement Finish")
