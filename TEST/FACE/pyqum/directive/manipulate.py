@@ -366,13 +366,25 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
     return
 
-# 3. QPU Operations: (Updated on 2022/09/01, Not online)
+# 3.1 Randomized Benchmarking: (Updated on 2022/10/01, Not online)
 # **********************************************************************************************************************************************************
 @settings(2) # data-density
-def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, renamed_task='user-defined'):
+def RB(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, renamed_task='RB'):
     '''
-    For QPU operations:
-    1. Randomized Benchmarking
+    For Randomized Benchmarking
+    '''
+
+    # Calling QPU -> Dict: {"Category": ["Device-name": ["<parameter>": "<value>"]]}
+    Single_Qubit(owner, tag, corder, comment, dayindex, taskentry, resumepoint, instr, perimeter, renamed_task)
+
+    return
+
+# 3.2 QPU Operations: (Updated on 2022/10/01, Not online)
+# **********************************************************************************************************************************************************
+@settings(2) # data-density
+def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, renamed_task='QPU'):
+    '''
+    For running QPU Circuit
     '''
 
     # Calling QPU -> Dict: {"Category": ["Device-name": ["<parameter>": "<value>"]]}

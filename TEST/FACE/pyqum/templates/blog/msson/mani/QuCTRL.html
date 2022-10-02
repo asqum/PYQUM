@@ -247,13 +247,37 @@
 
                     <!-- 3. Pulse Settings (PENDING: ADJUSTABLE CHANNEL-MATRIX for LO) -->
                     <div class="row">
-                            <!-- DAC Channel Matrix (listified) -->
+                            <!-- EXP Channel Matrix (listified) -->
                             <div class="row perimeter">
-                                <div class="col-16" id='left'><select class="channel-matrix zoomSelect"></select></div>
+                                <div class="col-16" id='left'><select class="exp-channel-matrix zoomSelect"></select></div>
                                 <div class="col-2" id='left'><button class="plusButton">+</button></div>
                                 <div class="col-2" id='left'><button class="minusButton">-</button></div>
                             </div>
-                            <div class="channel-matrix"></div>
+                            <div class="exp-channel-matrix"></div>
+
+                            <!-- DAC Channel Matrix (listified) -->
+                            <div class="row perimeter">
+                                <div class="col-16" id='left'><select class="dac-channel-matrix zoomSelect"></select></div>
+                                <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                                <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                            </div>
+                            <div class="dac-channel-matrix"></div>
+
+                            <!-- SG Channel Matrix (listified) -->
+                            <div class="row perimeter">
+                                <div class="col-16" id='left'><select class="sg-channel-matrix zoomSelect"></select></div>
+                                <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                                <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                            </div>
+                            <div class="sg-channel-matrix"></div>
+
+                            <!-- DC Channel Matrix (listified) -->
+                            <div class="row perimeter">
+                                <div class="col-16" id='left'><select class="dc-channel-matrix zoomSelect"></select></div>
+                                <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                                <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                            </div>
+                            <div class="dc-channel-matrix"></div>
                         
                             <!-- Where Flexible-Parameters 'LEGO' happens: R-JSON -->
                             <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>

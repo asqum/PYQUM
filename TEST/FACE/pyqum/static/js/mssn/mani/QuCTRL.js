@@ -636,7 +636,7 @@ $('select.QuCTRL.setchannels.finite-variable').on('change', function() {
     $('input.QuCTRL.setchannels.' + $('select.QuCTRL.setchannels.finite-variable.pulse-height').val() + '.pulse-height').parent().show();
 });
 // Surfing through Channels One-by-one or Altogether:
-$('select.channel-matrix').on('change', function() {
+$('select.dac-channel-matrix').on('change', function() {
     $("div.row.perimeter.score").hide();
     selected_dach_address = $(this).val();
     if ($(this).val()=="ALL") { $("div.row.perimeter.score").show(); 
@@ -862,24 +862,53 @@ $(function() {
             };
 
             // 3. Pre-arrange Channel-inputs accordingly based on the WIRING-settings:
-            $('select.channel-matrix').empty();
-            $('div.channel-matrix').empty();
+            $('select.dac-channel-matrix').empty();
+            $('div.dac-channel-matrix').empty();
+
+            // EXP:
+            window.Experiment_Parameters = data.Experiment_Parameters
+            window.Experiment_Default_Values = data.Experiment_Default_Values
+            console.log("Experiment_Parameters: " + Experiment_Parameters)
+            // DAC:
             window.DAC_CH_Matrix = data.DAC_CH_Matrix;
             window.DAC_Role = data.DAC_Role;
             window.DAC_Which = data.DAC_Which;
+            // SG:
+            window.SG_CH_Matrix = data.SG_CH_Matrix;
+            window.SG_Role = data.SG_Role;
+            window.SG_Which = data.SG_Which;
+            // DC:
+            window.DC_CH_Matrix = data.DC_CH_Matrix;
+            window.DC_Role = data.DC_Role;
+            window.DC_Which = data.DC_Which;
+            // MAC (specially for SG, DC):
+            window.Mac_Parameters = data.Mac_Parameters
+            window.Mac_Default_Values = data.Mac_Default_Values
+            console.log("DC's Mac_Parameters: " + Mac_Parameters.DC)
+
+            // EXP's MACE user-input:
+
+
+            // DAC's SCORE user-input:
             $.each(DAC_CH_Matrix, function(i,channel_set) {
                 $.each(channel_set, function(j,channel) {
                     let CH_Address = String(i+1) + "-" + String(channel);
-                    $('select.channel-matrix').append($('<option>', { text: DAC_Which[i] + ": " + DAC_Role[i][j] + ": " + CH_Address, value: CH_Address }));
-                    $('div.channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
+                    $('select.dac-channel-matrix').append($('<option>', { text: DAC_Which[i] + ": " + DAC_Role[i][j] + ": " + CH_Address, value: CH_Address }));
+                    $('div.dac-channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
                         .append($('<label>').text( DAC_Which[i] + ": " + DAC_Role[i][j] + ": CHANNEL-" + CH_Address ))));
-                    $('div.channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
+                    $('div.dac-channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
                         .append($('<textarea class="mani QuCTRL SCORE-JSON channel-' + CH_Address + '" type="text" rows="3" cols="13" style="color:red;">').val('ns=60000;'))));
                     if (i!=0 || j!=0) { $("div.row.perimeter.score.CH" + CH_Address).hide(); };
                 });
             });
-            $('select.channel-matrix').append($('<option>', { text: "ALL", value: "ALL" }));
-            window.selected_dach_address = $('select.channel-matrix').val(); // selected DAC-CH-Address for "0. Inserting Pulse"
+            $('select.dac-channel-matrix').append($('<option>', { text: "ALL", value: "ALL" }));
+            window.selected_dach_address = $('select.dac-channel-matrix').val(); // selected DAC-CH-Address for "0. Inserting Pulse"
+
+            // SG's MACE user-input:
+
+
+            // DC's MACE user-input:
+
             
         });
         return false;
