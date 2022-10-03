@@ -49,3 +49,15 @@
     color:rgb(255, 0, 30);
     border: 0.2rem solid rgb(255, 0, 0);
 }
+#sweep-selector{
+    position: absolute;
+    top:10%;
+    right: 25%;
+    border-radius: 1.125rem;
+    font-family: Arial;
+    background-color: rgb(19, 46, 2);
+    color:white;
+    height:37%;
+    width:50%;
+    font-size:1rem;
+}

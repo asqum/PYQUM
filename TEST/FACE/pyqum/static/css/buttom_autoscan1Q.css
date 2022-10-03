@@ -263,6 +263,20 @@
     border: 0.2rem solid rgb(79, 70, 70);
 }
 
+#sweep{
+    position: absolute;
+    top:10%;
+    right:10%;
+    border-radius: 1rem;
+    border: 0.2rem solid rgb(79, 70, 70);
+    background-color: rgb(59, 1, 1);
+    color:white;
+    height:38%;
+    width:10%;
+    font-size:0.8rem;
+}
+
+
 #search-jobid:before,#dmbutton:before,#CS-search:before,#looks-CS:before
 ,.ShowPara:before,.button-run:before,.content-button:before,#Start-measure-but:before,#load-jobid-CW:before {
     content: '';

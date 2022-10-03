@@ -382,3 +382,10 @@ label[class='cavity-select-text'] {
 #jobid-CW:hover{
     border: 0.2rem solid rgb(255, 0, 30);
 }
+.sweep-operation-log{
+    width: 40%;
+    height:7%;
+    position: relative;
+    top:10%;
+    left:28%;
+}
