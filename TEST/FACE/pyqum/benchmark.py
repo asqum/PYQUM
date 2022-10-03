@@ -1410,6 +1410,8 @@ def char_cwsweep_new(sparam,freq,powa,flux,f_bare,f_dress,dcsweepch = "1",commen
     # Check user's current queue status:
     ki = f_dress-f_bare
     f_qubit = f_bare-40**2/ki
+    if (f_qubit>12) | (f_qubit<2):
+            raise ValueError("frequency is out of range with "+ f_qubit)
     if session['run_clearance']:
         print(comment)
         wday = int(-1)
@@ -1509,7 +1511,7 @@ class AutoScan1Q:
             self.CS_plot_items = CS.give_plot_info()
             self.CS_overview = CS.overview    # ena scan results
         else:
-            self.readout_para = {i: {} for i in self.total_cavity_list}
+            self.readout_para = {i: {} for i in self.cavity_list}
             self.readout_para["cavity_list"] = self.cavity_list
         self.total_cavity_list = list(self.cavity_list.keys())
     
