@@ -191,14 +191,16 @@ class macer:
         except: self.level, self.device_order = None, []
 
     def get_skills (self):
+        '''Extract the Commander's Skills
         '''
-        '''
-        self.commander_attributes = self.db.execute('SELECT m.Skills FROM MACE m WHERE m.Commander = ?', (self.commander,)).fetchone()[0]
         self.PARAMETERS, self.DEFAULT_VALUES = [], []
-        for p in self.commander_attributes.split(','):
-            self.PARAMETERS.append(p.split('/')[0])
-            try: self.DEFAULT_VALUES.append(p.split('/')[1])
-            except(IndexError): self.DEFAULT_VALUES += [0]
+        try:
+            self.commander_attributes = self.db.execute('SELECT m.Skills FROM MACE m WHERE m.Commander = ?', (self.commander,)).fetchone()[0]
+            for p in self.commander_attributes.split(','):
+                self.PARAMETERS.append(p.split('/')[0])
+                try: self.DEFAULT_VALUES.append(p.split('/')[1])
+                except(IndexError): self.DEFAULT_VALUES += [0]
+        except: pass
 
         return
 
@@ -216,7 +218,7 @@ class macer:
         '''
         self.mace = mace_command.replace(" ","").replace("\n","").lower() # get rid of multiple spacings & new-lines and also lower the cases
         PAIRS = self.mace.split(",")
-        self.KEYS, self.VALUES = [p.split(':')[0].split('/')[0] for p in PAIRS], [p.split(':')[1] for p in PAIRS]
+        self.KEYS, self.VALUES = [p.split(':')[0] for p in PAIRS], [p.split(':')[1] for p in PAIRS]
 
         return
 

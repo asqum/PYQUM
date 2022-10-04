@@ -1403,8 +1403,13 @@ def mani():
     return render_template("blog/msson/mani.html", samplename=samplename, people=session['people'])
 # endregion
 
-# region: MANI -> 1. Single_Qubit =============================================================================================================================================
-'''Complete 1Q Manipulation'''
+# region: MANI -> Qubit ConTRoL =============================================================================================================================================
+'''Complete Qubit Manipulation:
+    1. Single_Qubit
+    2. Qubits
+    3.1. RB (Randomized Benchmarking)
+    3.2. QPU (Running Quantum Circuit on QPU)
+'''
 @bp.route('/mani/QuCTRL', methods=['GET'])
 def mani_QuCTRL(): 
     return render_template("blog/msson/mani/QuCTRL.html")
