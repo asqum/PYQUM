@@ -70,6 +70,7 @@
     text-align: left;
     cursor: pointer;
     transition: 0.3s;
+    /* color: darkorchid; */
 }
 .tab2 button:hover {
     background-color: rgb(98, 245, 233);

@@ -34,7 +34,7 @@ def Initiate(reset=False, current=False, which=1):
         if current:
             stat = bench.write('H0;F5;M1') #No header; DC current in A; Single sweep
         else:
-            stat = bench.write('H0;F1;M1') #No header; DC current in V; Single sweep
+            stat = bench.write('H0;F1;M1') #No header; DC voltage in V; Single sweep
         bench.read_termination = '\n' #omit termination tag from output 
         bench.timeout = 15000 #set timeout in ms
         set_status(mdlname, dict(state='connected'))
@@ -63,14 +63,15 @@ def output(bench, state=0, channel=''):
         status = 'Error'
     return status
 
-def sweep(bench, wave, channel='', update_settings={}):
+def sweep(bench, wave, channel='', update_settings={}, current=False):
     '''
     Voltage Range (AUTO): R2: 10mV; R3: 100mV; R4: 1V; R5: 10V; R6: 30V
     dummy channel to get along with SDAWG-DC improvisation.
     sweeprate / rising-rate in V/s or A/s (A-mode: 0.000713 A/s, V-mode: 1.37 V/s with 10kOhm-resistor)
     pulsewidth = waiting/staying/settling/stabilization time in sec
     '''
-    settings = dict(sweeprate=0.0007, pulsewidth=77*1e-3)
+    if current: settings = dict(sweeprate=0.000713, pulsewidth=77*1e-3) # A-mode A/s
+    else: settings = dict(sweeprate=1.37, pulsewidth=77*1e-3) # V-mode V/s (~10kOhm resistance)
     settings.update(update_settings)
     sweeprate, pulsewidth = settings['sweeprate'], settings['pulsewidth']
     GPIBspeed = 62 #pts/s
@@ -96,10 +97,10 @@ def sweep(bench, wave, channel='', update_settings={}):
             print("Error setting V")
     return Vdata, SweepTime
 
-def close(bench, reset=False, which=1, sweeprate=0.07):
+def close(bench, reset=False, which=1, current=False):
     if reset:
         previous(bench, True) # log last-applied voltage
-        sweep(bench, "0to0*0", update_settings=dict(sweeprate=sweeprate) ) # return to zero
+        sweep(bench, "0to0*0", current=current) # return to zero
         output(bench, 0) # off output
         set_status(mdlname, dict(config='return to zero-off'))
     else: set_status(mdlname, dict(config='previous'))

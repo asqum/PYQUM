@@ -174,23 +174,34 @@ class macer:
     Based on QPC-Wiring setup, control designated devices according to the MACE-script in R-JSON order 
     Commander in MACE is a Category in QPC-Wiring.
     '''
-    def __init__(self, queue, commander):
+    def __init__(self, queue=None, commander=None):
         self.commander = commander
-
-        # Check Commander's level
+        self.queue = queue
+        # Initiate database:
         self.db = connect(DR_SETTINGS, detect_types=PARSE_DECLTYPES, timeout=1000)
         self.db.row_factory = Row
-        self.level = self.db.execute('SELECT m.Level FROM MACE m WHERE m.Commander = ?', (commander,)).fetchone()[0]
+        self.experiment_list = [dict(x)["Commander"] for x in self.db.execute('SELECT Commander FROM MACE WHERE Level = "Experiment"').fetchall()] # Check Experiment-list
 
-        if self.level == "Device": self.device_order = inst_order(queue, self.commander)
-        else: self.device_order = None
+        # Check Commander's level:
+        try:
+            self.level = self.db.execute('SELECT m.Level FROM MACE m WHERE m.Commander = ?', (commander,)).fetchone()[0]
+            if self.level == "Device": 
+                self.device_order = inst_order(queue, self.commander)
+            else: 
+                self.device_order = []
+        except: self.level, self.device_order = None, []
 
     def get_skills (self):
+        '''Extract the Commander's Skills
         '''
-        '''
-        self.commander_attributes = self.db.execute('SELECT m.Skills FROM MACE m WHERE m.Commander = ?', (self.commander,)).fetchone()[0]
-        for p in self.commander_attributes.split(','):
-            self.DEFAULT_VALUES = p.split('/')
+        self.PARAMETERS, self.DEFAULT_VALUES = [], []
+        try:
+            self.commander_attributes = self.db.execute('SELECT m.Skills FROM MACE m WHERE m.Commander = ?', (self.commander,)).fetchone()[0]
+            for p in self.commander_attributes.replace(" ","").replace("\n","").split(','):
+                self.PARAMETERS.append(p.split('/')[0])
+                try: self.DEFAULT_VALUES.append(p.split('/')[1])
+                except(IndexError): self.DEFAULT_VALUES += ["{%s}"%p[:4]]
+        except: pass
 
         return
 
@@ -208,7 +219,7 @@ class macer:
         '''
         self.mace = mace_command.replace(" ","").replace("\n","").lower() # get rid of multiple spacings & new-lines and also lower the cases
         PAIRS = self.mace.split(",")
-        self.KEYS, self.VALUES = [p.split(':')[0].split('/')[0] for p in PAIRS], [p.split(':')[1] for p in PAIRS]
+        self.KEYS, self.VALUES = [p.split(':')[0] for p in PAIRS], [p.split(':')[1] for p in PAIRS]
 
         return
 
@@ -332,7 +343,7 @@ def test():
         printTree(DATA01)
 
     # SQL Database:
-    if True:
+    if False:
         inst_list = inst_order("CHAR0")
         print("inst_list: %s" %inst_list)
         print("CHAR0's DC: %s" %inst_order("CHAR0", 'DC'))
@@ -361,6 +372,18 @@ def test():
         print("Commander's Keys:\n %s" %m.KEYS)
         print("Commander's Values:\n %s" %m.VALUES)
         m.close()
+
+        Exp = macer()
+        print(Exp.experiment_list)
+        Exp.close()
+
+        Exp = macer(commander="RB")
+        print(Exp.experiment_list)
+        Exp.get_skills()
+        print("Commander's Attributes:\n %s" %Exp.commander_attributes)
+        print("Commander's Parameters:\n %s" %Exp.PARAMETERS)
+        print("Commander's Defaults:\n %s" %Exp.DEFAULT_VALUES)
+        Exp.close()
 
     # USREPO
     if False:
