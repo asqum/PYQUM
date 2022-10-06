@@ -27,7 +27,7 @@ from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAPa
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.reader import inst_order, device_port, macer
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
-from pyqum.directive.manipulate import Single_Qubit, Qubits, QPU
+from pyqum.directive.manipulate import QuCTRL
 
 # Memory handling
 import concurrent.futures
@@ -1431,7 +1431,7 @@ def mani_QuCTRL_init():
     try: print(Fore.BLUE + "Connected MA-USER(s) for %s: %s" %(mani_TASK[session['user_name']], M_QuCTRL.keys()))
     except: M_QuCTRL = {}
     # 'user_name' accessing 'people' data:
-    M_QuCTRL[session['user_name']] = eval("%s(session['people'])"%(mani_TASK[session['user_name']]).split('-')[0])
+    M_QuCTRL[session['user_name']] = eval("QuCTRL(session['people'], renamed_task='%s')"%(mani_TASK[session['user_name']]))
     print(Fore.BLUE + Back.WHITE + "User %s is managing %s's data" %(session['user_name'],session['people']))
 
     # Managing / Initialize user-specific Control Parameters CP:
@@ -1457,7 +1457,7 @@ def mani_QuCTRL_init():
     try: print(Fore.GREEN + "Connected USER(s) for %s's Jobid: %s" %(mani_TASK[session['user_name']], QuCTRL_jobid.keys()))
     except: QuCTRL_jobid = {}
 
-    # Loading SCORE & MACE user-input based on (1) TASK-type or (2) WIRING-settings for EACH category:
+    # Loading SCORE & MACE user-inputs based on (1) TASK-type or (2) WIRING-settings for EACH category:
     QPC_TYPE = ["DAC", "SG", "DC"] #PENDING: ADC (after FPGA implementation)
     Experiment_Parameters, Experiment_Default_Values, CH_Matrix, Role, Which, Mac_Parameters, Mac_Default_Values = [], [], {}, {}, {}, {}, {}
 
@@ -1491,8 +1491,7 @@ def mani_QuCTRL_init():
                 CH_Matrix[category], Role[category], Which[category] = [[]], [[]], []
                 print(Fore.RED + Back.WHITE + "%s NOT PRESENT IN CHANNEL-ROLE, PLS CHECK ON THE WIRING")
     
-    return jsonify(daylist=M_QuCTRL[session['user_name']].daylist, run_permission=session['run_clearance'], DAC_CH_Matrix=CH_Matrix["DAC"], DAC_Role=Role["DAC"], DAC_Which=Which["DAC"],
-                    SG_CH_Matrix=CH_Matrix["SG"], SG_Role=Role["SG"], SG_Which=Which["SG"],DC_CH_Matrix=CH_Matrix["DC"], DC_Role=Role["DC"], DC_Which=Which["DC"],
+    return jsonify(daylist=M_QuCTRL[session['user_name']].daylist, run_permission=session['run_clearance'], CH_Matrix=CH_Matrix, Role=Role, Which=Which,
                     Experiment_Parameters=Experiment_Parameters, Experiment_Default_Values=Experiment_Default_Values, Mac_Parameters=Mac_Parameters, Mac_Default_Values=Mac_Default_Values)
 # list task entries based on day picked
 @bp.route('/mani/QuCTRL/time', methods=['GET'])
@@ -1559,14 +1558,14 @@ def mani_QuCTRL_new():
     # Check user's current queue status:
     if session['run_clearance']:
         wday = int(request.args.get('wday'))
-        if wday < 0: print("Running New %s..." %(mani_TASK))
+        if wday < 0: print("Running New %s..." %(mani_TASK[session['user_name']]))
 
         PERIMETER = json.loads(request.args.get('PERIMETER'))
         CORDER = json.loads(request.args.get('CORDER'))
         comment = request.args.get('comment').replace("\"","")
         
         TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
-        Run_QuCTRL[TOKEN] = Single_Qubit(session['people'], perimeter=PERIMETER, corder=CORDER, comment=comment, tag='', dayindex=wday)
+        Run_QuCTRL[TOKEN] = QuCTRL(session['people'], perimeter=PERIMETER, corder=CORDER, comment=comment, tag='', dayindex=wday, renamed_task=mani_TASK[session['user_name']])
         return jsonify(status=Run_QuCTRL[TOKEN].status)
     else: return show("PLEASE CHECK YOUR RUN-CLEARANCE WITH ABC")
 
@@ -1682,7 +1681,7 @@ def mani_QuCTRL_resume():
         resumepoint = M_QuCTRL[session['user_name']].resumepoint
 
         TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
-        Run_QuCTRL[TOKEN] = Single_Qubit(session['people'], perimeter=perimeter, corder=corder, dayindex=wday, taskentry=wmoment, resumepoint=resumepoint)
+        Run_QuCTRL[TOKEN] = QuCTRL(session['people'], perimeter=perimeter, corder=corder, dayindex=wday, taskentry=wmoment, resumepoint=resumepoint, renamed_task=mani_TASK[session['user_name']])
         return jsonify(resumepoint=str(resumepoint), datasize=str(M_QuCTRL[session['user_name']].datasize), status=Run_QuCTRL[TOKEN].status)
     else: return show()
 @bp.route('/mani/QuCTRL/trackdata', methods=['GET'])

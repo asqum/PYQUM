@@ -24,7 +24,7 @@ window.VdBm_selector2 = 'select.mani.data.QuCTRL#QuCTRL-2d-VdBm';
 window.server_URL = 'http://10.10.90.14:'; //'http://qum.phys.sinica.edu.tw:'
 
 // Parameter, Perimeter & Channel LIST for INITIATING NEW RUN:
-var QuCTRL_Parameters = ['Flux-Bias', 'XY-LO-Frequency', 'RO-LO-Frequency'];
+var QuCTRL_Parameters = [];
 var QuCTRL_Perimeters = ['DIGIHOME', 'IF_ALIGN_KHZ', 'BIASMODE', 'XY-LO-Power', 'RO-LO-Power', 'TRIGGER_DELAY_NS', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE', 'R-JSON']; // SCORE-JSON requires special treatment
 
 // Pull the file from server and send it to user end:
@@ -60,12 +60,31 @@ function Perimeter_Assembler() {
     });
     // 2. Assemble Flexible SCORE-JSON into PERIMETER:
     PERIMETER['SCORE-JSON'] = {}
-    $.each(DAC_CH_Matrix, function(i,channel_set) {
+    $.each(CH_Matrix.DAC, function(i,channel_set) {
         $.each(channel_set, function(j,channel) {
             let CH_Address = String(i+1) + "-" + String(channel); 
             PERIMETER['SCORE-JSON']["CH" + CH_Address] = $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val(); 
         });
     });
+    // 3. Assemble Flexible MACE-JSON into PERIMETER:
+    PERIMETER['MACE-JSON'] = {}
+    // 3.1 SG:
+    $.each(CH_Matrix.SG, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = Which.SG[i] + "-" + String(i+1) + "-" + String(channel); 
+            PERIMETER['MACE-JSON'][CH_Address] = $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val(); 
+        });
+    });
+    // 3.2 DC:
+    $.each(CH_Matrix.DC, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = Which.DC[i] + "-" + String(i+1) + "-" + String(channel); 
+            PERIMETER['MACE-JSON'][CH_Address] = $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val(); 
+        });
+    });
+    // 3.X EXP:
+    PERIMETER['MACE-JSON']["EXP-" + mani_TASK] = $('textarea.mani.QuCTRL.MACE-JSON.EXP-' + mani_TASK).val();
+    
     return PERIMETER;
 };
 function transpose(a) {
@@ -193,13 +212,37 @@ function accessdata_QuCTRL() {
         console.log("Progress: " + data_progress);
 
         // 6. Loading Perimeters for NEW RUN:
+        // 6.0 Predefined Perimeters (PENDING: TO BE MACED SOON):
         $.each(QuCTRL_Perimeters, function(i,perimeter) { $('.mani.config.QuCTRL#' + perimeter).val(data.perimeter[perimeter]); });
-        $.each(DAC_CH_Matrix, function(i,channel_set) {
+        // 6.1 SCORE-JSON Perimeter:
+        $.each(CH_Matrix.DAC, function(i,channel_set) {
             $.each(channel_set, function(j,channel) {
                 let CH_Address = String(i+1) + "-" + String(channel); 
-                $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val(data.perimeter['SCORE-JSON']["CH" + CH_Address]); 
+                try { $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val(data.perimeter['SCORE-JSON']["CH" + CH_Address]); }
+                catch(err) {console.log("Mismatch between Data and QPC-Wiring: " + err)} // PENDING: USE SAVE-PERIMETER TO LOAD PAST WIRING-SETTINGS
             });
         });
+        // 6.2 MACE-JSON-MAC Perimeter:
+        // 6.2.1 SG:
+        $.each(CH_Matrix.SG, function(i,channel_set) {
+            $.each(channel_set, function(j,channel) {
+                let CH_Address = Which.SG[i] + "-" + String(i+1) + "-" + String(channel); 
+                try { $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val(data.perimeter['MACE-JSON'][CH_Address]); }
+                catch(err) {console.log("Mismatch between Data and QPC-Wiring: " + err)} // PENDING: USE SAVE-PERIMETER TO LOAD PAST WIRING-SETTINGS
+            });
+        });
+        // 6.2.2 DC:
+        $.each(CH_Matrix.DC, function(i,channel_set) {
+            $.each(channel_set, function(j,channel) {
+                let CH_Address = Which.DC[i] + "-" + String(i+1) + "-" + String(channel); 
+                try { $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val(data.perimeter['MACE-JSON'][CH_Address]); }
+                catch(err) {console.log("Mismatch between Data and QPC-Wiring: " + err)} // PENDING: USE SAVE-PERIMETER TO LOAD PAST WIRING-SETTINGS
+            });
+        });
+        // 6.X MACE-JSON-EXP Perimeter:
+        try { $('textarea.mani.QuCTRL.MACE-JSON.EXP-' + mani_TASK).val(data.perimeter['MACE-JSON']["EXP-" + mani_TASK]); }
+        catch(err) {console.log("Mismatch between Data and QPC-Wiring: " + err)} // PENDING: USE SAVE-PERIMETER TO LOAD PAST WIRING-SETTINGS
+        // 6.Z Save Perimeters:
         $('select.mani.scheme.QuCTRL#SCHEME_LIST').show();
         $('input.QuCTRL.perimeter-settings.save').show();
 
@@ -610,7 +653,7 @@ function plot_pulses(X,Y,xtitle='sample-point#',mode='lines') {
     Plotly.newPlot('mani-QuCTRL-pulse-check', Trace, layout, {showSendToCloud: true});
 };
 
-// hiding parameter settings when click outside the modal box:
+// Hiding parameter settings when click outside the modal box:
 $('.modal-toggle.new.QuCTRL').on('click', function(e) {
     e.preventDefault();
     $('.modal.new.QuCTRL').toggleClass('is-visible');
@@ -627,6 +670,30 @@ $('.modal-toggle.data-reset.QuCTRL').on('click', function(e) {
     $('.modal.data-reset.QuCTRL').toggleClass('is-visible');
 });
 
+// SURFING through CH & MAC selection:
+// 1. Surfing through DAC-SCOREs One-by-one or Altogether:
+$('select.dac-channel-matrix').on('change', function() {
+    $("div.row.perimeter.score").hide();
+    selected_dach_address = $(this).val();
+    if ($(this).val()=="ALL") { $("div.row.perimeter.score").show(); 
+    } else { $("div.row.perimeter.score.CH" + $(this).val()).show(); };
+    return false;
+});
+// 2. Surfing through SG-MACEs One-by-one or Altogether:
+$('select.sg-channel-matrix').on('change', function() {
+    $("div.row.perimeter.sg-mace").hide();
+    if ($(this).val()=="ALL") { $("div.row.perimeter.sg-mace").show(); 
+    } else { $("div.row.perimeter.sg-mace." + $(this).val()).show(); };
+    return false;
+});
+// 3. Surfing through DC-MACEs One-by-one or Altogether:
+$('select.dc-channel-matrix').on('change', function() {
+    $("div.row.perimeter.dc-mace").hide();
+    if ($(this).val()=="ALL") { $("div.row.perimeter.dc-mace").show(); 
+    } else { $("div.row.perimeter.dc-mace." + $(this).val()).show(); };
+    return false;
+});
+
 // Perimeter setup:
 // Switch between finite and variable
 $('select.QuCTRL.setchannels.finite-variable').on('change', function() {
@@ -635,18 +702,10 @@ $('select.QuCTRL.setchannels.finite-variable').on('change', function() {
     $('input.QuCTRL.setchannels.pulse-height').parent().hide();
     $('input.QuCTRL.setchannels.' + $('select.QuCTRL.setchannels.finite-variable.pulse-height').val() + '.pulse-height').parent().show();
 });
-// Surfing through Channels One-by-one or Altogether:
-$('select.dac-channel-matrix').on('change', function() {
-    $("div.row.perimeter.score").hide();
-    selected_dach_address = $(this).val();
-    if ($(this).val()=="ALL") { $("div.row.perimeter.score").show(); 
-    } else { $("div.row.perimeter.score.CH" + $(this).val()).show(); };
-    return false;
-});
 // Initiate ALL Scores with Pulse-period:
 $("input.QuCTRL.set-period").bind('click', function () {
     var pperiod = $('input.QuCTRL.setchannels.pulse-period').val();
-    $.each(DAC_CH_Matrix, function(i,channel_set) {
+    $.each(CH_Matrix.DAC, function(i,channel_set) {
         $.each(channel_set, function(j,channel) {
             let CH_Address = String(i+1) + "-" + String(channel); 
             $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val("NS=" + pperiod + ";\n"); 
@@ -728,7 +787,7 @@ $('input.QuCTRL.setchannels.check').bind('click', function() {
 
     // accumulate all the scores
     // $.each(Array(4), function(i,v){
-    $.each(DAC_CH_Matrix, function(i,channel_set) {
+    $.each(CH_Matrix.DAC, function(i,channel_set) {
         $.each(channel_set, function(j,channel) {
             let CH_Address = String(i+1) + "-" + String(channel);
             allscores += $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val();
@@ -781,7 +840,7 @@ $('input.QuCTRL.perimeter-settings.load').on('touchend click', function(event) {
         console.log(scheme_name + " " + data.status);
         // """6. Loading Perimeters for NEW RUN:"""
         $.each(QuCTRL_Perimeters, function(i,perimeter) { $('.mani.config.QuCTRL#' + perimeter).val(data.perimeter[perimeter]); });
-        $.each(DAC_CH_Matrix, function(i,channel_set) {
+        $.each(CH_Matrix.DAC, function(i,channel_set) {
             $.each(channel_set, function(j,channel) {
                 let CH_Address = String(i+1) + "-" + String(channel); 
                 $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val(data.perimeter['SCORE-JSON']["CH" + CH_Address]); 
@@ -861,7 +920,7 @@ $(function() {
                 $('select.mani.QuCTRL.wday').append($('<option>', { text: '--New--', value: -1 }));
             };
 
-            // 3. Pre-create SCORE & MACE user-inputs based on the MACE & WIRING-settings:
+            // 3. Pre-build SCORE & MACE user-inputs based on the TASK & WIRING-settings:
             $('select.exp-channel-matrix').empty();
             $('div.exp-channel-matrix').empty();
             $('select.dac-channel-matrix').empty();
@@ -871,92 +930,87 @@ $(function() {
             $('select.dc-channel-matrix').empty();
             $('div.dc-channel-matrix').empty();
 
-            // EXP:
-            window.Experiment_Parameters = data.Experiment_Parameters
-            window.Experiment_Default_Values = data.Experiment_Default_Values
-            console.log("Experiment_Parameters: " + Experiment_Parameters)
-            // DAC:
-            window.DAC_CH_Matrix = data.DAC_CH_Matrix;
-            window.DAC_Role = data.DAC_Role;
-            window.DAC_Which = data.DAC_Which;
-            // SG:
-            window.SG_CH_Matrix = data.SG_CH_Matrix;
-            window.SG_Role = data.SG_Role;
-            window.SG_Which = data.SG_Which;
-            // DC:
-            window.DC_CH_Matrix = data.DC_CH_Matrix;
-            window.DC_Role = data.DC_Role;
-            window.DC_Which = data.DC_Which;
+            // WIRING (DAC, SG, DC):
+            window.CH_Matrix = data.CH_Matrix;
+            window.Role = data.Role;
+            window.Which = data.Which;
             // MAC (specially for SG, DC):
             window.Mac_Parameters = data.Mac_Parameters
             window.Mac_Default_Values = data.Mac_Default_Values
+            // EXP:
+            window.Experiment_Parameters = data.Experiment_Parameters
+            window.Experiment_Default_Values = data.Experiment_Default_Values
+
             console.log("DC's Mac_Parameters: " + Mac_Parameters.DC)
 
             if (Experiment_Parameters.length == 0) {
                 // Lower-level inputs: (Single_Qubit, Qubits)
-                $('div.EXP').hide();
-                $('div.MAC').show();
+                $('.EXP').hide();
+                $('.MAC').show();
                 // 1. DAC's SCORE user-input:
-                $.each(DAC_CH_Matrix, function(i,channel_set) {
+                $.each(CH_Matrix.DAC, function(i,channel_set) {
                     $.each(channel_set, function(j,channel) {
-                        let CH_Address = String(i+1) + "-" + String(channel);
-                        $('select.dac-channel-matrix').append($('<option>', { text: DAC_Which[i] + ": " + DAC_Role[i][j] + ": " + CH_Address, value: CH_Address }));
+                        let CH_Address = String(i+1) + "-" + String(channel); // SCORE is dedicated to DAC as "natural" physical CHANNEL for QPU!
+                        $('select.dac-channel-matrix').append($('<option>', { text: Which.DAC[i] + ": " + Role.DAC[i][j] + ": " + CH_Address, value: CH_Address }));
                         $('div.dac-channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
-                            .append($('<label>').text( DAC_Which[i] + ": " + DAC_Role[i][j] + ": CHANNEL-" + CH_Address ))));
+                            .append($('<label>').text( Which.DAC[i] + ": " + Role.DAC[i][j] + ": CHANNEL-" + CH_Address ))));
                         $('div.dac-channel-matrix').append($("<div class='row perimeter score CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
                             .append($('<textarea class="mani QuCTRL SCORE-JSON channel-' + CH_Address + '" type="text" rows="3" cols="13" style="color:red;">').val('ns=60000;'))));
                         if (i!=0 || j!=0) { $("div.row.perimeter.score.CH" + CH_Address).hide(); };
                     });
                 });
-                $('select.dac-channel-matrix').append($('<option>', { text: "ALL", value: "ALL" }));
+                $('select.dac-channel-matrix').append($('<option>', { text: "ALL DAC (SCORE/CH)", value: "ALL" }));
                 window.selected_dach_address = $('select.dac-channel-matrix').val(); // selected DAC-CH-Address for "0. Inserting Pulse"
 
                 // 2. SG's MACE user-input:
                 if (typeof Mac_Parameters.SG !== "undefined" && Mac_Parameters.SG.length>0) {
                     var SG_Template = "";
                     $.each(Mac_Parameters.SG, function(i,parameter) {
-                        SG_Template += parameter + ": {" + Mac_Default_Values.SG[i] + "}, "});
-                    $.each(SG_CH_Matrix, function(i,channel_set) {
+                        SG_Template += parameter + ": " + Mac_Default_Values.SG[i] + ", "});
+                    $.each(CH_Matrix.SG, function(i,channel_set) {
                         $.each(channel_set, function(j,channel) {
-                            let CH_Address = String(i+1) + "-" + String(channel);
-                            $('select.sg-channel-matrix').append($('<option>', { text: SG_Which[i] + ": " + SG_Role[i][j] + ": " + CH_Address, value: CH_Address }));
-                            $('div.sg-channel-matrix').append($("<div class='row perimeter mace CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
-                                .append($('<label>').text( SG_Which[i] + ": " + SG_Role[i][j] + ": CHANNEL-" + CH_Address ))));
-                            $('div.sg-channel-matrix').append($("<div class='row perimeter mace CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
-                                .append($('<textarea class="mani QuCTRL MACE-JSON channel-' + CH_Address + '" type="text" rows="3" cols="13" style="color:orange;">').val(SG_Template.slice(0,-2)))));
-                            if (i!=0 || j!=0) { $("div.row.perimeter.mace.CH" + CH_Address).hide(); }; // only shows the first option :)
+                            let CH_Address = Which.SG[i] + "-" + String(i+1) + "-" + String(channel);
+                            $('select.sg-channel-matrix').append($('<option>', { text: Which.SG[i] + ": " + Role.SG[i][j] + ": " + CH_Address, value: CH_Address }));
+                            $('div.sg-channel-matrix').append($("<div class='row perimeter sg-mace " + CH_Address + "'>").append($("<div class='col-97' id='left'>")
+                                .append($('<label>').text( Which.SG[i] + ": " + Role.SG[i][j] + ": " + CH_Address ))));
+                            $('div.sg-channel-matrix').append($("<div class='row perimeter sg-mace " + CH_Address + "'>").append($("<div class='col-97' id='left'>")
+                                .append($('<textarea class="mani QuCTRL MACE-JSON channel-' + CH_Address + '" type="text" style="color:darkred;font-weight:600;">').val(SG_Template.slice(0,-2)))));
+                            if (i!=0 || j!=0) { $("div.row.perimeter.sg-mace." + CH_Address).hide(); }; // only shows the first option :)
                         });
                     });
-                    $('select.sg-channel-matrix').append($('<option>', { text: "ALL", value: "ALL" }));
+                    $('select.sg-channel-matrix').append($('<option>', { text: "ALL SG", value: "ALL" }));
                 } else { $('div.MAC.SG').hide(); };
 
                 // 3. DC's MACE user-input:
                 if (typeof Mac_Parameters.DC !== "undefined" && Mac_Parameters.DC.length>0) {
                     var DC_Template = "";
                     $.each(Mac_Parameters.DC, function(i,parameter) {
-                        DC_Template += parameter + ": {" + Mac_Default_Values.DC[i] + "}, "});
-                    $.each(DC_CH_Matrix, function(i,channel_set) {
+                        DC_Template += parameter + ": " + Mac_Default_Values.DC[i] + ", "});
+                    $.each(CH_Matrix.DC, function(i,channel_set) {
                         $.each(channel_set, function(j,channel) {
-                            let CH_Address = String(i+1) + "-" + String(channel);
-                            $('select.dc-channel-matrix').append($('<option>', { text: DC_Which[i] + ": " + DC_Role[i][j] + ": " + CH_Address, value: CH_Address }));
-                            $('div.dc-channel-matrix').append($("<div class='row perimeter mace CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
-                                .append($('<label>').text( DC_Which[i] + ": " + DC_Role[i][j] + ": CHANNEL-" + CH_Address ))));
-                            $('div.dc-channel-matrix').append($("<div class='row perimeter mace CH" + CH_Address + "'>").append($("<div class='col-97' id='left'>")
-                                .append($('<textarea class="mani QuCTRL MACE-JSON channel-' + CH_Address + '" type="text" rows="3" cols="13" style="color:orange;">').val(DC_Template.slice(0,-2)))));
-                            if (i!=0 || j!=0) { $("div.row.perimeter.mace.CH" + CH_Address).hide(); }; // only shows the first option :)
+                            let CH_Address = Which.DC[i] + "-" + String(i+1) + "-" + String(channel);
+                            $('select.dc-channel-matrix').append($('<option>', { text: Which.DC[i] + ": " + Role.DC[i][j] + ": " + CH_Address, value: CH_Address }));
+                            $('div.dc-channel-matrix').append($("<div class='row perimeter dc-mace " + CH_Address + "'>").append($("<div class='col-97' id='left'>")
+                                .append($('<label>').text( Which.DC[i] + ": " + Role.DC[i][j] + ": " + CH_Address ))));
+                            $('div.dc-channel-matrix').append($("<div class='row perimeter dc-mace " + CH_Address + "'>").append($("<div class='col-97' id='left'>")
+                                .append($('<textarea class="mani QuCTRL MACE-JSON channel-' + CH_Address + '" type="text" style="color:darkmagenta;font-weight:600;">').val(DC_Template.slice(0,-2)))));
+                            if (i!=0 || j!=0) { $("div.row.perimeter.dc-mace." + CH_Address).hide(); }; // only shows the first option :)
                         });
                     });
-                    $('select.dc-channel-matrix').append($('<option>', { text: "ALL", value: "ALL" }));
+                    $('select.dc-channel-matrix').append($('<option>', { text: "ALL DC", value: "ALL" }));
                 } else { $('div.MAC.DC').hide(); };
 
             } else {
                 // Higher-level inputs: (RB, QPU)
-                $('div.EXP').show();
-                $('div.MAC').hide();
+                $('.EXP').show();
+                $('.MAC').hide();
                 // 0. EXP's MACE user-input:
-
-                
-            }
+                var EXP_Template = "";
+                $.each(Experiment_Parameters, function(i,parameter) {EXP_Template += parameter + ": " + Experiment_Default_Values[i] + ", "});
+                $('div.exp-channel-matrix').append($("<div class='row perimeter exp-mace'>").append($("<div class='col-97' id='left'>").append($('<label>').text(mani_TASK))));
+                $('div.exp-channel-matrix').append($("<div class='row perimeter exp-mace'>").append($("<div class='col-97' id='left'>")
+                    .append($('<textarea class="mani QuCTRL MACE-JSON EXP-' + mani_TASK + '" type="text" style="color:purple;font-weight:777;">').val(EXP_Template.slice(0,-2)))));
+            };
             
         });
         return false;

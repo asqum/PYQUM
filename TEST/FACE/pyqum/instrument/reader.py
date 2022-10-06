@@ -196,10 +196,10 @@ class macer:
         self.PARAMETERS, self.DEFAULT_VALUES = [], []
         try:
             self.commander_attributes = self.db.execute('SELECT m.Skills FROM MACE m WHERE m.Commander = ?', (self.commander,)).fetchone()[0]
-            for p in self.commander_attributes.split(','):
+            for p in self.commander_attributes.replace(" ","").replace("\n","").split(','):
                 self.PARAMETERS.append(p.split('/')[0])
                 try: self.DEFAULT_VALUES.append(p.split('/')[1])
-                except(IndexError): self.DEFAULT_VALUES += [0]
+                except(IndexError): self.DEFAULT_VALUES += ["{%s}"%p[:4]]
         except: pass
 
         return
