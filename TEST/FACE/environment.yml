@@ -31,3 +31,5 @@ dependencies:
     - nose
     - peakutils
     - typed-ast
+    - qutip
+    - qutip-qip

@@ -178,7 +178,7 @@ def Single_Qubit(owner, tag="", corder={}, comment='', dayindex='', taskentry=0,
         pulseq.song()
         for channel in channel_set:
             DAC[i].prepare_DAC(DAC_instance[i], int(channel), pulseq.totalpoints, update_settings=update_settings)
-            ##JACKY
+            ## JACKY
             print(Fore.BLUE +f"pulseq.totalpoints {pulseq.totalpoints}")
         for channel in channel_set:
             DAC[i].compose_DAC(DAC_instance[i], int(channel), pulseq.music, [], markeroption) # we don't need marker yet initially
@@ -368,12 +368,57 @@ def Qubits(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
 # 3. QPU Operations: (Updated on 2022/09/01, Not online)
 # **********************************************************************************************************************************************************
+import qpu.backend.circuit as bec
+from pandas import DataFrame
+import qpu.backend.phychannel as pch
+import qpu.backend.component as qcp
+from pyqum import get_db, close_db
+
 @settings(2) # data-density
 def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, renamed_task='user-defined'):
+
     '''
     For QPU operations:
     1. Randomized Benchmarking
     '''
+    ## TODO get wiring and spec from database
+    sname = ""
+    db = get_db()
+    sample_cv = db.execute(
+        'SELECT s.id, author_id, samplename, specifications, location, level, description, registered, co_authors, history'
+        ' FROM sample s JOIN user u ON s.author_id = u.id'
+        ' WHERE s.samplename = ?',
+        (sname,)
+    ).fetchone()
+    sample_cv = dict(sample_cv) # convert sqlite3.row into dictionary for this select format
+    close_db()
+    mybec = bec.BackendCircuit()
+    loc = sample_cv["location"]
+    wiring_info = loc.split("===")
+    dict_list = eval(wiring_info[0])
+    channels = []
+    for ch in dict_list:
+        channels.append( pch.from_dict( ch ) )
+
+    mybec._channels = channels
+
+    mybec.qc_relation = DataFrame.from_dict(eval(wiring_info[1]))
+    mybec.q_reg = eval(wiring_info[2])
+    qpc_dict = mybec.to_qpc()
+
+    specs = sample_cv["specifications"]
+    spec_list = eval(specs)
+    qComps = []
+    for qc in spec_list:
+        #print(ch)
+        qComps.append( qcp.from_dict( qc ) )
+    mybec._qComps = qComps
+
+    import qpu.application as qapp
+    d_setting = qapp.get_SQRB_device_setting( mybec, 5, 0, True  ) ## TODO get RB MACER parameters
+    print(d_setting)
+    for dcategory in d_setting.keys():
+        print(dcategory, d_setting[dcategory].keys())
 
     # Calling QPU -> Dict: {"Category": ["Device-name": ["<parameter>": "<value>"]]}
     Single_Qubit(owner, tag, corder, comment, dayindex, taskentry, resumepoint, instr, perimeter, renamed_task)
@@ -381,11 +426,3 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
     return
 
 
-if __name__ == "__main__":
-    
-    #testQPU = create_QPU_by_route("testQPU","Q1,Q2/RO1/I+Q:DAC=SDAWG_6-1+SDAWG_6-2,SG=DDSLO_4,ADC=SDDIG_2;Q1/XY1/I+Q:DAC=SDAWG_4-1+SDAWG_4-2,SG=DDSLO_3;Q1/Z1:DAC=SDAWG_4-3;")
-    for qid in testQPU.get_IDList_PhysicalQubit():
-        print(f"Qubit ID: {qid}")
-        for pchid in list(testQPU.QubitSet[qid].phyCh):
-            pch = testQPU.QubitSet[qid].phyCh[pchid]
-            print(f"channel ID: {pch.id} coupled: {pch.coupled} devices: {pch.device}")
