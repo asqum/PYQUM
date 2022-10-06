@@ -16,6 +16,7 @@ src/qpu/backend/__init__.py
 src/qpu/backend/circuit/__init__.py
 src/qpu/backend/circuit/backendcircuit.py
 src/qpu/backend/circuit/compiler.py
+src/qpu/backend/circuit/test_info/__init__.py
 src/qpu/backend/component/__init__.py
 src/qpu/backend/component/q_component.py
 src/qpu/backend/component/qubit/__init__.py

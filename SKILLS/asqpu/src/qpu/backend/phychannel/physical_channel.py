@@ -175,19 +175,110 @@ class UpConversionChannel( WaveformChannel ):
 
             return qpc_dict
 
-# class DownConversionChannel( PhysicalChannel ):
-#     def __init__( id:str ):
-#         super().__init__( id )
+class DownConversionChannel( PhysicalChannel ):
+    def __init__( self, name:str ):
+        super().__init__( name )
+        self.devices = {
+            "ADC":[None],
+        }
+        self.comps={
+        }
 
-#     def get_dt( self ):
-#         dt = []
-#         for d in self.devices:
-#             if isinstance(d, DAC_abc):
-#                 dt.append(d.get_TimeResolution())
-#         if dt.count(dt[0]) == len(dt):
-#             return dt[0]
-#         else:
-#             raise ValueError("dt are not the same.")
+    
+    def devices_setting( self, points:float, repeat:float )->dict:
+
+        adc_name = self.devices["ADC"][0]
+        adc_out = {
+            adc_name:{
+                "point": points,
+                "repeat": repeat
+            }
+        }
+
+        device_setting = {
+            "ADC": adc_out,
+        }
+        return device_setting
 
 
+    def to_qpc( self ):
+            qpc_dict = {}
+            qpc_dict["CH"] = {}
+            qpc_dict["ROLE"] = {}
+            for d_category in self.devices.keys():
+                qpc_dict[d_category] = []
+                qpc_dict["CH"][d_category] = []
+                qpc_dict["ROLE"][d_category] = []
+            
+            for device_info in self.devices["ADC"]:
+                instr_name = device_info[0]
+                used_ch = int(device_info[1])
+                qpc_dict["ADC"].append(instr_name)   
+                qpc_dict["CH"]["ADC"].append(used_ch)  
+                qpc_dict["ROLE"]["ADC"].append(self.name) 
+                
+
+            return qpc_dict
+
+
+
+class PumpingLine( PhysicalChannel ):
+    def __init__( self, name:str ):
+        super().__init__( name )
+        self.devices = {
+            "DC":[None],
+            "SG":[None],
+        }
+        self.comps={
+            "Bias_T":{}
+        }
+
+    
+    def devices_setting( self, pump_freq:float, pump_power:float, dc_bias:float )->dict:
+
+        dc_name = self.devices["DC"][0]
+        dc_out = {
+            dc_name:{
+                "output": dc_bias,
+            }
+        }
+        sg_name = self.devices["SG"][0]
+        sg_out = {
+            sg_name:{
+                "freq": pump_freq,
+                "power": pump_power,
+            }
+        }
+        device_setting = {
+            "DAC": dc_out,
+            "SG": sg_out
+        }
+        return device_setting
+
+
+    def to_qpc( self ):
+            qpc_dict = {}
+            qpc_dict["CH"] = {}
+            qpc_dict["ROLE"] = {}
+            for d_category in self.devices.keys():
+                qpc_dict[d_category] = []
+                qpc_dict["CH"][d_category] = []
+                qpc_dict["ROLE"][d_category] = []
+            
+            for device_info in self.devices["DC"]:
+                instr_name = device_info[0]
+                used_ch = int(device_info[1])
+                qpc_dict["DC"].append(instr_name)   
+                qpc_dict["CH"]["DC"].append(used_ch)  
+                qpc_dict["ROLE"]["DC"].append(self.name) 
+                
+
+            for device_info in self.devices["SG"]:
+                instr_name = device_info[0]
+                used_ch = int(device_info[1])
+                qpc_dict["SG"].append(instr_name)   
+                qpc_dict["CH"]["SG"].append(used_ch)  
+                qpc_dict["ROLE"]["SG"].append(self.name) 
+
+            return qpc_dict
 
