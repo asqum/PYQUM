@@ -1,4 +1,4 @@
 {
-"channel_id":["ROI1","XY1","XY2","Z1","Z2","Zc"],
-"q_id":["q1","q1","q2","q1","q2","qc"],
+"channel_id":["ROI1","XY1","Z1","Z2","Zc"],
+"q_id":["q1","q1","q1","q2","qc"],
 }

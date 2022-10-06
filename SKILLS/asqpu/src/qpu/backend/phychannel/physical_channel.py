@@ -1,14 +1,8 @@
-from physics_model.complex_system import SingleReadableTransmon
 from typing import List, Tuple
 import sys
 from pulse_signal.digital_mixer import upConversion_IQ, upconversion_LO
-from pulse_signal.waveform import Waveform
 from abc import ABC, abstractproperty, abstractmethod
 from numpy import ndarray
-
-
-
-
 
 
 class PhysicalChannel():
@@ -33,8 +27,14 @@ class PhysicalChannel():
             return self.name == other
         return False
 
-
-
+    def used_instr( self )->dict:
+        instr = {}
+        for k, devices_info in self.devices.items():
+            instr[k] = []
+            for di in devices_info:
+                if di[0] not in instr[k]: instr[k].append(di[0])
+        return instr
+            
 class WaveformChannel( ABC, PhysicalChannel ):
     def __init__( self, name:str, dt:float=1. ):
         super().__init__( name )
@@ -58,9 +58,11 @@ class DACChannel( WaveformChannel ):
 
     def dac_output( self, signal:ndarray )->dict:
 
-        dac_name = self.devices["DAC"][0]
+        dac_info = self.devices["DAC"][0]
+
         dac_out = {}
-        dac_out[dac_name] = signal
+        dac_out[dac_info] = signal
+
         return dac_out
 
     def devices_setting( self, signal:ndarray, )->dict:
@@ -75,19 +77,16 @@ class DACChannel( WaveformChannel ):
         qpc_dict = {}
         qpc_dict["CH"] = {}
         qpc_dict["ROLE"] = {}
+        instr_dict = self.used_instr()
         for d_category in self.devices.keys():
-            qpc_dict[d_category] = []
             qpc_dict["CH"][d_category] = []
             qpc_dict["ROLE"][d_category] = []
 
-        for name in self.devices["DAC"]:
-            device_info = name.split("-")
-            instr_name = device_info[0]
-            used_ch = int(device_info[1])
-            qpc_dict["DAC"].append(instr_name)   
+        for device_info in self.devices["DAC"]:
+            used_ch = device_info[1]
             qpc_dict["CH"]["DAC"].append(used_ch)   
-            qpc_dict["ROLE"]["DAC"].append(self.name)   
-
+            qpc_dict["ROLE"]["DAC"].append(self.name)  
+        qpc_dict.update(instr_dict)
         return qpc_dict
 
 class UpConversionChannel( WaveformChannel ):
@@ -118,17 +117,19 @@ class UpConversionChannel( WaveformChannel ):
         IQMixer = self.comps["IQMixer"]["calibration"]
 
         if type(signalRF) != type(None):
-            signal_I, signal_Q = upConversion_IQ( signalRF, self.freqIF, IQMixer, suppress_leakage=False )
+            signal_I, signal_Q = upConversion_IQ( signalRF, self.freqIF, IQMixer, suppress_leakage=True )
         else:
             signal_I = None
             signal_Q = None
-        dac_name = self.devices["DAC"]
+        dac_info = self.devices["DAC"] 
+
         dac_out = {}
-        dac_out[dac_name[0]] = signal_I
-        dac_out[dac_name[1]] = signal_Q
+        dac_out[dac_info[0]] = signal_I
+        dac_out[dac_info[1]] = signal_Q
 
         return dac_out
 
+    
     def devices_setting( self, signalRF:ndarray, freq_carrier:float )->dict:
 
         sg_name = self.devices["SG"][0]
@@ -154,9 +155,7 @@ class UpConversionChannel( WaveformChannel ):
                 qpc_dict["CH"][d_category] = []
                 qpc_dict["ROLE"][d_category] = []
             
-            for name in self.devices["DAC"]:
-                device_info = name.split("-")
-                print(device_info)
+            for device_info in self.devices["DAC"]:
                 instr_name = device_info[0]
                 used_ch = int(device_info[1])
                 if len(qpc_dict["DAC"]) == 0:
@@ -167,8 +166,7 @@ class UpConversionChannel( WaveformChannel ):
                 qpc_dict["CH"]["DAC"].append(used_ch)   
                 
 
-            for name in self.devices["SG"]:
-                device_info = name.split("-")
+            for device_info in self.devices["SG"]:
                 instr_name = device_info[0]
                 used_ch = int(device_info[1])
                 qpc_dict["SG"].append(instr_name)   

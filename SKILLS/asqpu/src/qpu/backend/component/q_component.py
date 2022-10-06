@@ -6,9 +6,10 @@ class QComponent( ABC ):
     """
     This class is used for record information of a Qubit-Cavity coupling system and operation method.
     """
-    def __init__ ( self, qid:str ):
+    def __init__ ( self, name:str ):
 
-        self.id = qid
+        self.name = name
+        self.tempPars = {}
         #self._ports = []
 
     def __eq__( self, other )->str:

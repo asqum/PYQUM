@@ -383,7 +383,7 @@ def QPU(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepo
 
 if __name__ == "__main__":
     
-    testQPU = create_QPU_by_route("testQPU","Q1,Q2/RO1/I+Q:DAC=SDAWG_6-1+SDAWG_6-2,SG=DDSLO_4,ADC=SDDIG_2;Q1/XY1/I+Q:DAC=SDAWG_4-1+SDAWG_4-2,SG=DDSLO_3;Q1/Z1:DAC=SDAWG_4-3;")
+    #testQPU = create_QPU_by_route("testQPU","Q1,Q2/RO1/I+Q:DAC=SDAWG_6-1+SDAWG_6-2,SG=DDSLO_4,ADC=SDDIG_2;Q1/XY1/I+Q:DAC=SDAWG_4-1+SDAWG_4-2,SG=DDSLO_3;Q1/Z1:DAC=SDAWG_4-3;")
     for qid in testQPU.get_IDList_PhysicalQubit():
         print(f"Qubit ID: {qid}")
         for pchid in list(testQPU.QubitSet[qid].phyCh):

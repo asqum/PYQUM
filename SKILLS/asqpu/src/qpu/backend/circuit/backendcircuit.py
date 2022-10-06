@@ -8,60 +8,6 @@ from typing import List, Tuple, Union, Dict
 
 from numpy import array, logical_and, ndarray
 
-
-
-def control_xy( coeffs_map, target_index ):
-    sx_exist = False
-    sy_exist = False
-    for label in coeffs_map.keys():
-        label_index = int(label[2:])
-        label_action = label[:2]
-        if label_index == target_index:
-            match label_action:
-                    case "sx":
-                        sx_exist = True
-                        sx_coeff = array(coeffs_map[label])
-                    case "sy": 
-                        sy_exist = True
-                        sy_coeff = array(coeffs_map[label])
-                    case _: pass
-    if sx_exist and sy_exist:
-        rf_envelop = sx_coeff +1j*sy_coeff
-        return rf_envelop
-    
-
-def measurement_ro( coeffs_map, target_index ):
-    ro_exist = False
-    for label in coeffs_map.keys():
-        label_index = int(label[2:])
-        label_action = label[:2]
-        if label_index == target_index:
-            match label_action:
-                    case "ro":
-                        ro_exist = True
-                        ro_coeff = array(coeffs_map[label])
-                    case _: pass
-    if ro_exist :
-        rf_envelop = ro_coeff 
-        return rf_envelop
-
-def control_z( coeffs_map, target_index ):
-    z_exist = False
-    for label in coeffs_map.keys():
-        label_index = int(label[2:])
-        label_action = label[:2]
-        if label_index == target_index:
-            match label_action:
-                    case "sz":
-                        z_exist = True
-                        z_coeff = array(coeffs_map[label])
-                    case _: pass
-    if z_exist :
-        rf_envelop = z_coeff 
-        return rf_envelop
-
-
-
 class BackendCircuit():
     """
     紀錄元件specification與使用的channel
@@ -170,75 +116,92 @@ class BackendCircuit():
 
 
     
-    def translate_channel_output( self, coeffs_map:dict ):
+    def translate_channel_output( self, waveform_channel:List ):
         """
-        Input time dependent coeff map from qutip, output is RF envelope signal.
+        Input a list of tuple (qi, port, envelope_rf), with information of qubit from specification to output RF signal ( envelope, carrier frequency and belonged physical channel name ).
         """
-        activated_channels = []
         channel_output = {}
-        
-        for qi, qname in enumerate(self.q_reg["qubit"]):
-            qubit = self.get_qComp(qname)
-            phyCh = self.get_channel_qPort(qname,"xy")
-            if phyCh != None:
-                envelope_rf = control_xy(coeffs_map, qi)
-                freq_carrier = qubit.transition_freq
-                if type(envelope_rf) != type(None):
-                    channel_output[phyCh.name] = (envelope_rf,freq_carrier)
+        register_qN = len(self.q_reg["qubit"])
+        for qi, port, envelope_rf in waveform_channel:
+            if qi >= register_qN:
+                print(f"Only {register_qN} qubit are registered")
+            else:
+                qname = self.q_reg["qubit"][qi]
+                qubit = self.get_qComp(qname)
+                phyCh = self.get_channel_qPort(qname,port)
 
-            phyCh = self.get_channel_qPort(qname,"ro_in")
-            if phyCh != None:
-                envelope_rf = measurement_ro(coeffs_map, qi)
-                freq_carrier = qubit.readout_freq
-                if type(envelope_rf) != type(None):
-                    channel_output[phyCh.name] = (envelope_rf,freq_carrier)
+                match port:
+                    case "xy":
+                        freq_carrier = qubit.tempPars["freq_xy"]
+                        envelope_rf *= qubit.tempPars["XYL"]
+                    case "ro_in":
+                        freq_carrier = qubit.tempPars["freq_ro"]
+                        envelope_rf *= qubit.tempPars["ROL"]
 
-            phyCh = self.get_channel_qPort(qname,"z")
-            if phyCh != None:
-                envelope_rf = control_z(coeffs_map, qi)
-                freq_carrier = 0
-                if type(envelope_rf) != type(None):
-                    channel_output[phyCh.name] = (envelope_rf,freq_carrier)
+                    case "z":
+                        print(qi, port)
+                        freq_carrier = 0
+                        envelope_rf += qubit.tempPars["IDLEZ"]
+
+                    case _:
+                        freq_carrier = 0
+
+                if phyCh.name not in channel_output.keys():
+                    channel_output[phyCh.name] = [(envelope_rf,freq_carrier)]
+                else:
+                    channel_output[phyCh.name].append( (envelope_rf,freq_carrier) )
 
         return channel_output
 
 
-    def devices_setting( self, coeffs_map ):
-        channel_output = self.translate_channel_output(coeffs_map)
+    def devices_setting( self, waveform_channel ):
+        """
+        Translate different RF signal channel( include carrier freqency complex envelope ) to devices setting.
+        
+        Args:
+            waveform_channel ( ): A qutip Gate object.
+        
+        Returns:
+            Instruction (qutip_qip.compiler.instruction.Instruction): An instruction
+            to implement a gate containing the control pulses.
+        """
+        
         devices_setting_all = {
             "DAC":{},
             "SG":{},
         }
+ 
+
+        channel_output = self.translate_channel_output(waveform_channel)
         
         for chname in channel_output.keys():
             phyCh = self.get_channel(chname)
             print("Get setting from channel",chname)
 
+            single_signal = channel_output[chname][0]
             if isinstance(phyCh, UpConversionChannel):
-                envelope_rf = channel_output[chname][0]
-                freq_carrier = channel_output[chname][1]
+                envelope_rf = single_signal[0]
+                freq_carrier = single_signal[1]
                 devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier )
 
             if isinstance(phyCh, DACChannel):
-                envelope_rf = channel_output[chname][0]
-
+                envelope_rf = single_signal[0]
                 devices_output =  phyCh.devices_setting( envelope_rf )
 
-            if "DAC" in devices_output.keys():
-                for dname in devices_output["DAC"].keys():  
-                    dac_output = devices_output["DAC"][dname]
-                    if dname not in devices_setting_all["DAC"].keys():
-                        devices_setting_all["DAC"][dname] = dac_output
-                    else:
-                        if type(dac_output) != type(None):
-                            devices_setting_all["DAC"][dname] += dac_output
+            for category in devices_setting_all.keys():
+                if category in devices_output.keys():
+                    for info, setting in devices_output[category].items():
+                        instr_name = info[0]
+                        channel_idx = info[1]-1
+                        if instr_name not in devices_setting_all[category].keys():
+                            #TODO Assume DAC onlu have 4 channel 
+                            devices_setting_all[category][instr_name] = [[],[],[],[]]
+                        
+                        if type(setting) != type(None):
+                            devices_setting_all[category][instr_name][channel_idx] = setting
                             
-            if "SG" in devices_output.keys():
-                for dname in devices_output["SG"].keys():  
-                    sg_output = devices_output["SG"][dname]
-                    if dname not in devices_setting_all["SG"].keys():
-                        devices_setting_all["SG"][dname] = sg_output
 
+        
 
         return devices_setting_all
 
@@ -256,16 +219,12 @@ class BackendCircuit():
 
 
         for pch in self.channels:
-            
             pch_qpc = pch.to_qpc()
-            print(pch.name)
-            print(pch_qpc)
             for c in categorys :
                 if c in pch_qpc.keys():
                     for pch_instr in pch_qpc[c]:
                         try:
                             idx_instr = qpc_dict[c].index(pch_instr)
-                            print(idx_instr)
                             qpc_dict["CH"][c][idx_instr].extend(pch_qpc["CH"][c])
                             qpc_dict["ROLE"][c][idx_instr].extend(pch_qpc["ROLE"][c])
                         except:

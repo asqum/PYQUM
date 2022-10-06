@@ -5,8 +5,6 @@ from typing import List
 import numpy as np
 from qutip import sigmax, sigmay, sigmaz, basis, qeye, Qobj
 from qutip_qip.circuit import QubitCircuit, Gate
-from qpu.backend.circuit.backendcircuit import BackendCircuit
-from qpu.backend.phychannel.physical_channel import UpConversionChannel
 from typing import List
 
 import qpu.backend.circuit.compiler as becc
@@ -144,7 +142,7 @@ def find_inv_gate_state( state:List[Gate] ):
     return gate_inv
 
 
-def get_SQRB_circuit( target:int, num_gates:int ):
+def get_SQcircuit_random_clifford( target:int, num_gates:int ):
 
     circuit_RB = get_random_clifford( num_gates ) 
 
@@ -156,16 +154,15 @@ def get_SQRB_circuit( target:int, num_gates:int ):
     return circuit_RB
 
 
-def get_SQRB_device_setting( backendcircuit, target:int, num_gates:int ):
+def get_SQRB_device_setting( backendcircuit, num_gates, target:int=0, withRO:bool=False  ):
 
-    circuit_RB = get_SQRB_circuit( target, num_gates ) 
+    d_setting = []
+    circuit_RB = get_SQcircuit_random_clifford( target, num_gates )
+    if withRO:
+        rg_ro = Gate("RO", target )
+        circuit_RB.add_gate(rg_ro)
     mycompiler = becc.SQCompiler(1, params={})
-
-
-    compiled_data = mycompiler.compile(circuit_RB, schedule_mode=False)
-
-
-    d_setting = backendcircuit.devices_setting(circuit_RB)
-
+    waveform_channel = mycompiler.to_waveform(circuit_RB)
+    d_setting = backendcircuit.devices_setting(waveform_channel)
     return d_setting
 

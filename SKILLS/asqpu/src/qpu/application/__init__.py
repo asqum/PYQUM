@@ -1,1 +1,1 @@
-from .singleQ_CliffordRB import get_SQRB_circuit
+from .singleQ_CliffordRB import get_SQRB_device_setting
