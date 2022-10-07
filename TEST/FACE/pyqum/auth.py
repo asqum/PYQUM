@@ -327,42 +327,42 @@ def usersamples_update():
     history = request.args.get('history')
 
     ## TODO test spec
-    mybec = bec.BackendCircuit()
+    # mybec = bec.BackendCircuit()
 
-    wiring_info = loc.split("===")
-    print(wiring_info)
-    dict_list = eval(wiring_info[0])
-    channels = []
-    for ch in dict_list:
-        #print(ch)
-        channels.append( pch.from_dict( ch ) )
+    # wiring_info = loc.split("===")
+    # print(wiring_info)
+    # dict_list = eval(wiring_info[0])
+    # channels = []
+    # for ch in dict_list:
+    #     #print(ch)
+    #     channels.append( pch.from_dict( ch ) )
 
-    mybec._channels = channels
+    # mybec._channels = channels
 
-    mybec.qc_relation = DataFrame.from_dict(eval(wiring_info[1]))
-    mybec.q_reg = eval(wiring_info[2])
-    qpc_dict = mybec.to_qpc()
-    instr_organized = {}
-    dict_str = ["CH","ROLE"]
-    for cate, val in qpc_dict.items():
-        if cate in dict_str:
-            destination = str(val).replace("'",'"')
-        else:
-            destination = ",".join(val)
-        instr_organized[cate]=destination
+    # mybec.qc_relation = DataFrame.from_dict(eval(wiring_info[1]))
+    # mybec.q_reg = eval(wiring_info[2])
+    # qpc_dict = mybec.to_qpc()
+    # instr_organized = {}
+    # dict_str = ["CH","ROLE"]
+    # for cate, val in qpc_dict.items():
+    #     if cate in dict_str:
+    #         destination = str(val).replace("'",'"')
+    #     else:
+    #         destination = ",".join(val)
+    #     instr_organized[cate]=destination
 
-    instr_organized["ADC"] = "DIG"
-    spec_list = eval(specs)
-    qComps = []
-    for qc in spec_list:
-        #print(ch)
-        qComps.append( qcp.from_dict( qc ) )
-    mybec._qComps = qComps
-    import qpu.application as qapp
-    d_setting = qapp.get_SQRB_device_setting( mybec, 5, 0, True  )
-    print(d_setting)
-    for dcategory in d_setting.keys():
-        print(dcategory, d_setting[dcategory].keys())
+    # instr_organized["ADC"] = "DIG"
+    # spec_list = eval(specs)
+    # qComps = []
+    # for qc in spec_list:
+    #     #print(ch)
+    #     qComps.append( qcp.from_dict( qc ) )
+    # mybec._qComps = qComps
+    # import qpu.application as qapp
+    # d_setting = qapp.get_SQRB_device_setting( mybec, 5, 0, True  )
+    # print(d_setting)
+    # for dcategory in d_setting.keys():
+    #     print(dcategory, d_setting[dcategory].keys())
     ## Test end
 
     db = get_db()
@@ -443,8 +443,6 @@ def usersamplesloc_update_qpc_wiring():
             destination = ",".join(val)
         instr_organized[cate]=destination
 
-
-    instr_organized["ADC"] = "DIG"
     # Update QPC-wiring database:
     try:
         if int(g.user['management'])>=3:

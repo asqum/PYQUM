@@ -1480,7 +1480,7 @@ def mani_QuCTRL_init():
                 Role[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')[category]
                 Which[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], category)
                 # For Categories applicable with MACE:
-                if category is not "DAC":
+                if category != "DAC":
                     Mac = macer(commander=category)
                     Mac.get_skills()
                     Mac_Parameters[category] = Mac.PARAMETERS

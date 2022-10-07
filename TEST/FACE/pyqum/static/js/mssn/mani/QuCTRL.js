@@ -71,14 +71,14 @@ function Perimeter_Assembler() {
     // 3.1 SG:
     $.each(CH_Matrix.SG, function(i,channel_set) {
         $.each(channel_set, function(j,channel) {
-            let CH_Address = Which.SG[i] + "-" + String(i+1) + "-" + String(channel); 
+            let CH_Address = "SG-" + String(i+1) + "-" + String(channel); 
             PERIMETER['MACE-JSON'][CH_Address] = $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val(); 
         });
     });
     // 3.2 DC:
     $.each(CH_Matrix.DC, function(i,channel_set) {
         $.each(channel_set, function(j,channel) {
-            let CH_Address = Which.DC[i] + "-" + String(i+1) + "-" + String(channel); 
+            let CH_Address = "DC-" + String(i+1) + "-" + String(channel); 
             PERIMETER['MACE-JSON'][CH_Address] = $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val(); 
         });
     });
@@ -226,7 +226,7 @@ function accessdata_QuCTRL() {
         // 6.2.1 SG:
         $.each(CH_Matrix.SG, function(i,channel_set) {
             $.each(channel_set, function(j,channel) {
-                let CH_Address = Which.SG[i] + "-" + String(i+1) + "-" + String(channel); 
+                let CH_Address = "SG-" + String(i+1) + "-" + String(channel); 
                 try { $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val(data.perimeter['MACE-JSON'][CH_Address]); }
                 catch(err) {console.log("Mismatch between Data and QPC-Wiring: " + err)} // PENDING: USE SAVE-PERIMETER TO LOAD PAST WIRING-SETTINGS
             });
@@ -234,7 +234,7 @@ function accessdata_QuCTRL() {
         // 6.2.2 DC:
         $.each(CH_Matrix.DC, function(i,channel_set) {
             $.each(channel_set, function(j,channel) {
-                let CH_Address = Which.DC[i] + "-" + String(i+1) + "-" + String(channel); 
+                let CH_Address = "DC-" + String(i+1) + "-" + String(channel); 
                 try { $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val(data.perimeter['MACE-JSON'][CH_Address]); }
                 catch(err) {console.log("Mismatch between Data and QPC-Wiring: " + err)} // PENDING: USE SAVE-PERIMETER TO LOAD PAST WIRING-SETTINGS
             });
@@ -969,7 +969,7 @@ $(function() {
                         SG_Template += parameter + ": " + Mac_Default_Values.SG[i] + ", "});
                     $.each(CH_Matrix.SG, function(i,channel_set) {
                         $.each(channel_set, function(j,channel) {
-                            let CH_Address = Which.SG[i] + "-" + String(i+1) + "-" + String(channel);
+                            let CH_Address = "SG-" + String(i+1) + "-" + String(channel);
                             $('select.sg-channel-matrix').append($('<option>', { text: Which.SG[i] + ": " + Role.SG[i][j] + ": " + CH_Address, value: CH_Address }));
                             $('div.sg-channel-matrix').append($("<div class='row perimeter sg-mace " + CH_Address + "'>").append($("<div class='col-97' id='left'>")
                                 .append($('<label>').text( Which.SG[i] + ": " + Role.SG[i][j] + ": " + CH_Address ))));
@@ -988,7 +988,7 @@ $(function() {
                         DC_Template += parameter + ": " + Mac_Default_Values.DC[i] + ", "});
                     $.each(CH_Matrix.DC, function(i,channel_set) {
                         $.each(channel_set, function(j,channel) {
-                            let CH_Address = Which.DC[i] + "-" + String(i+1) + "-" + String(channel);
+                            let CH_Address = "DC-" + String(i+1) + "-" + String(channel);
                             $('select.dc-channel-matrix').append($('<option>', { text: Which.DC[i] + ": " + Role.DC[i][j] + ": " + CH_Address, value: CH_Address }));
                             $('div.dc-channel-matrix').append($("<div class='row perimeter dc-mace " + CH_Address + "'>").append($("<div class='col-97' id='left'>")
                                 .append($('<label>').text( Which.DC[i] + ": " + Role.DC[i][j] + ": " + CH_Address ))));

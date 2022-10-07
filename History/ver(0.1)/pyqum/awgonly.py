@@ -1,4 +1,4 @@
-import requests
+# import requests
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify
 from colorama import init
 init(autoreset=True) #to convert termcolor to wins color

@@ -217,7 +217,7 @@ class macer:
     def execute(self, mace_command):
         '''
         '''
-        self.mace = mace_command.replace(" ","").replace("\n","").lower() # get rid of multiple spacings & new-lines and also lower the cases
+        self.mace = mace_command.replace(" ","").replace("\n","") # get rid of multiple spacings & new-lines and also lower the cases
         PAIRS = self.mace.split(",")
         self.KEYS, self.VALUES = [p.split(':')[0] for p in PAIRS], [p.split(':')[1] for p in PAIRS]
 
@@ -375,6 +375,8 @@ def test():
 
         Exp = macer()
         print(Exp.experiment_list)
+        Exp.execute("a:0, b : 1")
+        print("Mace-Command KEYS: %s, VALUES: %s)" %(Exp.KEYS, Exp.VALUES))
         Exp.close()
 
         Exp = macer(commander="RB")
