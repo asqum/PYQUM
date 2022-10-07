@@ -87,6 +87,7 @@ ax[1].legend()
 
 # Compare signal and envelope
 for instr_name, settings in dac_wf.items():
+    print(instr_name)
     for i, s in enumerate(settings):
         if type(s) != type(None):
             ax[2].plot( s, label=f"{instr_name}-{i+1}" )

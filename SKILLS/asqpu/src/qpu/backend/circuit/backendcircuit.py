@@ -1,5 +1,5 @@
 from qpu.backend.component.q_component import QComponent
-from qpu.backend.phychannel.physical_channel import PhysicalChannel, UpConversionChannel, DACChannel
+from qpu.backend.phychannel.physical_channel import PhysicalChannel, UpConversionChannel, DACChannel, PumpingLine
 from qpu.backend import phychannel
 from qpu.backend import component
 from pandas import DataFrame
@@ -158,11 +158,10 @@ class BackendCircuit():
         Translate different RF signal channel( include carrier freqency complex envelope ) to devices setting.
         
         Args:
-            waveform_channel ( ): A qutip Gate object.
+            waveform_channel ( ): .
         
         Returns:
-            Instruction (qutip_qip.compiler.instruction.Instruction): An instruction
-            to implement a gate containing the control pulses.
+
         """
         
         devices_setting_all = {
@@ -174,20 +173,29 @@ class BackendCircuit():
  
 
         channel_output = self.translate_channel_output(waveform_channel)
-        
-        for chname in channel_output.keys():
-            phyCh = self.get_channel(chname)
-            print("Get setting from channel",chname)
 
-            single_signal = channel_output[chname][0]
-            if isinstance(phyCh, UpConversionChannel):
-                envelope_rf = single_signal[0]
-                freq_carrier = single_signal[1]
-                devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier )
+        for phyCh in self.channels:
+            print("Get setting from channel",phyCh.name)
 
-            if isinstance(phyCh, DACChannel):
-                envelope_rf = single_signal[0]
-                devices_output =  phyCh.devices_setting( envelope_rf )
+                
+            if phyCh.name in channel_output.keys():
+                print("Qubit control channel")
+                phyCh = self.get_channel(phyCh.name)
+                
+                single_signal = channel_output[phyCh.name][0]
+                if isinstance(phyCh, UpConversionChannel):
+                    envelope_rf = single_signal[0]
+                    freq_carrier = single_signal[1]
+                    devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier  )
+
+                if isinstance(phyCh, DACChannel):
+                    envelope_rf = single_signal[0]
+                    devices_output =  phyCh.devices_setting( envelope_rf )
+            else:
+                if isinstance(phyCh, PumpingLine):
+                    print("Pumping channel")
+                    devices_output =  phyCh.devices_setting()
+
 
             for category in devices_setting_all.keys():
                 if category in devices_output.keys():
@@ -195,14 +203,13 @@ class BackendCircuit():
                         instr_name = info[0]
                         channel_idx = info[1]-1
                         if instr_name not in devices_setting_all[category].keys():
-                            #TODO Assume DAC onlu have 4 channel 
+                            #TODO Assume All instr only have 4 channel 
                             devices_setting_all[category][instr_name] = [[],[],[],[]]
                         
                         if type(setting) != type(None):
                             devices_setting_all[category][instr_name][channel_idx] = setting
                             
 
-        
 
         return devices_setting_all
 

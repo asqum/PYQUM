@@ -96,12 +96,15 @@ class UpConversionChannel( WaveformChannel ):
             "DAC":[None,None],
             "SG":[None],
         }
-        self.comps={
-            "IQMixer":{
-                "calibration":(1,90,0,0),
-            }
-        }
-        self.freqIF = 0.08
+        self.paras = {
+            "offset_I": 0,
+            "offset_Q": 0,
+            "amp_balance": 1,
+            "phase_balance": 90,
+
+            "freq_IF" : 0.08,
+            "power_LO" : 10
+        } 
         
     def dac_output( self, signalRF:ndarray )->dict:
         """
@@ -114,10 +117,11 @@ class UpConversionChannel( WaveformChannel ):
 
         # if IQMixer == None: IQMixer = self.comps["IQMixer"]["calibration"]
         # else : IQMixer = self.IQMixer
-        IQMixer = self.comps["IQMixer"]["calibration"]
 
+        IQMixer = (self.paras["amp_balance"],self.paras["phase_balance"],self.paras["offset_I"],self.paras["offset_Q"])
+        freq_IF = self.paras["freq_IF"]
         if type(signalRF) != type(None):
-            signal_I, signal_Q = upConversion_IQ( signalRF, self.freqIF, IQMixer, suppress_leakage=True )
+            signal_I, signal_Q = upConversion_IQ( signalRF, freq_IF, IQMixer, suppress_leakage=True )
         else:
             signal_I = None
             signal_Q = None
@@ -135,7 +139,8 @@ class UpConversionChannel( WaveformChannel ):
         sg_name = self.devices["SG"][0]
         sg_out = {
             sg_name:{
-                "freq": upconversion_LO( freq_carrier, self.freqIF ),
+                "freq": upconversion_LO( freq_carrier, self.paras["freq_IF"] ),
+                "power": self.paras["power_LO"]
             }
         }
         dac_out = self.dac_output(signalRF)
@@ -143,6 +148,7 @@ class UpConversionChannel( WaveformChannel ):
             "DAC": dac_out,
             "SG": sg_out
         }
+        
         return device_setting
 
 
@@ -181,8 +187,15 @@ class DownConversionChannel( PhysicalChannel ):
         self.devices = {
             "ADC":[None],
         }
-        self.comps={
-        }
+        self.paras = {
+            "offset_I": 0,
+            "offset_Q": 0,
+            "amp_balance": 1,
+            "phase_balance": 90,
+
+            "freq_IF" : 0.08,
+            "power_LO" : 10
+        } 
 
     
     def devices_setting( self, points:float, repeat:float )->dict:
@@ -229,28 +242,29 @@ class PumpingLine( PhysicalChannel ):
             "DC":[None],
             "SG":[None],
         }
-        self.comps={
-            "Bias_T":{}
+        self.paras={
+            "freq": 4,
+            "power": 0,            
         }
 
     
-    def devices_setting( self, pump_freq:float, pump_power:float, dc_bias:float )->dict:
+    def devices_setting( self )->dict:
 
         dc_name = self.devices["DC"][0]
         dc_out = {
             dc_name:{
-                "output": dc_bias,
+                "sweep": self.paras["volt_bias"],
             }
         }
         sg_name = self.devices["SG"][0]
         sg_out = {
             sg_name:{
-                "freq": pump_freq,
-                "power": pump_power,
+                "freq": self.paras["freq_pump"],
+                "power": self.paras["power_pump"],
             }
         }
         device_setting = {
-            "DAC": dc_out,
+            "DC": dc_out,
             "SG": sg_out
         }
         return device_setting
