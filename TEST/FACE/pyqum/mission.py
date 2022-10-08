@@ -207,10 +207,16 @@ def all_requeue_job():
             CW_Sweep(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
         elif requeue['task'] == "Single_Qubit":
             print(Fore.YELLOW + "Requeue Single_Qubit for JOB#%s" %jobid)
-            Single_Qubit(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
+            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="Single_Qubit")
         elif requeue['task'] == "Qubits":
             print(Fore.YELLOW + "Requeue Qubits for JOB#%s" %jobid)
-            Qubits(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
+            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="Qubits")
+        elif requeue['task'] == "RB":
+            print(Fore.YELLOW + "Requeue RB for JOB#%s" %jobid)
+            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="RB")
+        elif requeue['task'] == "QPU":
+            print(Fore.YELLOW + "Requeue QPU for JOB#%s" %jobid)
+            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="QPU")
 
         else: print(Fore.RED + "UNKNOWN TASK: %s" %requeue['task'])
         clearance = True

@@ -50,6 +50,17 @@ def get_range(inst, channel=1):
     vrange = inst.recv(1024).decode().split('RANGE')[1]
     inst.send(b'!\n')
     return vrange
+def get_output(inst, channel=1):
+    '''
+    channel: 1-4
+    '''
+    inst.send(('LINK %s\n' %channel).encode())
+    inst.send(b'*OPC?\n')
+    inst.recv(1024).decode()
+    inst.send(b'SOUT?\n')
+    state = int(inst.recv(1024).decode())
+    inst.send(b'!\n')
+    return state
 def set_voltage(inst, voltage, channel=1):
     '''
     voltage in V (type: float)
@@ -74,8 +85,14 @@ def set_voltage(inst, voltage, channel=1):
     inst.send(b'!\n')
     return ready
 
-def sweep(inst, wave, channel='', update_settings={}):
-
+def sweep(inst, voltage, channel, update_settings={}):
+    voltage = float(voltage)
+    if get_output(inst, channel): 
+        output(inst, 0, int(channel)) # have to turn-off output to move up/down the range!
+        set_voltage(inst, voltage, int(channel))
+        output(inst, 1, int(channel)) # turn back on if initially on
+    else:
+        set_voltage(inst, voltage, int(channel))
     return
 
 def output(inst, state, channel=1):
@@ -93,22 +110,28 @@ def output(inst, state, channel=1):
     
     return ready
 
-def close(inst):
+def close(inst, reset=True):
     inst.close()
     return
 
 # =============================================================================================================================================================
 # TEST ZONE:
-def test():
+if __name__ == "__main__":
     v_array = [1e-6, 3e-5, 6e-4, 7e-3, 8e-2, 2e-1, 1, 6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
+    # v_array = [6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
+
+    s = Initiate(2, 'TEST') # DR-1: 1, DR-2: 2
+    channel = 1 # 1: lower, 2: upper stack
+    output(s, 0, channel)
+
     for v in v_array:
-        s = Initiate(2, 'TEST')
-        channel = 2
-        print(set_voltage(s, v, channel))
-        print(get_voltage(s, channel))
-        sleep(3.71)
-        s.close()
+        print("\nsweeping %sV:" %v)
+        sweep(s, v, channel)
+        print("state: %s" %get_output(s, channel))
+        print("reading: %sV" %get_voltage(s, channel))
+        sleep(0.7)
+        
+    output(s, 0, channel)    
+    s.close()
 
-    return
 
-test()

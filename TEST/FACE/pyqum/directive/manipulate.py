@@ -92,15 +92,17 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     queue = get_status("MSSN")[session['user_name']]['queue']
     print(Back.GREEN + Fore.BLUE + "User [%s] is measuring sample [%s] on queue [%s]" %(session['user_name'],sample,queue))
 
-    # Extract Qubit CV:
-    Sample_Backend = get_Qubit_CV(sample)
+    
 
     # Check TASK LEVEL:
     Exp = macer()
     Experiments = Exp.experiment_list
     Exp.close()
-    if renamed_task in Experiments: TASK_LEVEL = "EXP" # EXPERT
-    else: TASK_LEVEL = "MAC" # BASIC / LOW-LEVEL
+    if renamed_task in Experiments: 
+        TASK_LEVEL = "EXP" # EXPERT
+        Sample_Backend = get_Qubit_CV(sample) # Extract Qubit-CV
+    else: 
+        TASK_LEVEL = "MAC" # BASIC / LOW-LEVEL
 
     # Loading Channel-Settings:
     CH_Matrix = inst_order(queue, 'CH')
@@ -115,9 +117,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     except: DC_ROLE_Matrix = [[]]
     
     # Find Address in the Listified Multi-dimensional Matrix as <MODule>-<CHannel>
-    try: RO_addr = find_in_list(DAC_ROLE_Matrix, 'I1')
+    try: RO_addr = find_in_list(DAC_ROLE_Matrix, 'RO')
     except: RO_addr = 'OPT' # Optionized if not present
-    try: XY_addr = find_in_list(DAC_ROLE_Matrix, 'X1')
+    try: XY_addr = find_in_list(DAC_ROLE_Matrix, 'XY')
     except: XY_addr = 'OPT' # Optionized if not present
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
@@ -192,7 +194,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         DC_instance[i] = DC[i].Initiate(which=DC_label[i]) # Only voltage mode (default) available / allowed in QPC
         for channel in channel_set:
             DC[i].sweep(DC_instance[i], str(0), channel=channel)
-            DC[i].output(DC_instance[i], 1)
+            DC[i].output(DC_instance[i], 1, channel)
 
     # SG for [XY, RO]:
     SG_qty = len(instr['SG'])
@@ -316,7 +318,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # Expert EXP Control (Every-loop)
                 Exp = macer(commander=renamed_task)
                 Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
-                d_setting = qapp.get_SQRB_device_setting( Sample_Backend, Exp.VALUES[1], Exp.VALUES[0], True ) ## TODO get RB MACER parameters
+                d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(Exp.VALUES[Exp.KEYS.index("Sequence_length")]), int(Exp.VALUES[Exp.KEYS.index("Qubit_ID")]), True ) ## TODO get RB MACER parameters
                 Exp.close()
                 print(d_setting)
                 for dcategory in d_setting.keys(): print(dcategory, d_setting[dcategory].keys())
@@ -324,12 +326,12 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # 1. Extract MACE-Command for DC:
                 for i, channel_set in enumerate(DC_CH_Matrix):
                     for channel in channel_set:
-                        MACE_DEFINED['DC-%s-%s'%(i+1,channel)] = "sweep:%s" %(d_setting['SG'][instr['SG'][i]][i][channel]['sweep']) # manually assign power for now
+                        MACE_DEFINED['DC-%s-%s'%(i+1,channel)] = "sweep:%s" %(d_setting['SG'][instr['SG'][i]][channel-1]['sweep']) # manually assign power for now
 
                 # 2. Extract MACE-Command for SG:
                 for i, channel_set in enumerate(SG_CH_Matrix):
                     for channel in channel_set:
-                        MACE_DEFINED['SG-%s-%s'%(i+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr['SG'][i]][i][channel]['freq'], 6) # manually assign power for now
+                        MACE_DEFINED['SG-%s-%s'%(i+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr['SG'][i]][channel-1]['freq'], 6) # manually assign power for now
 
 
             # Basic MAC Control (Every-loop)
@@ -344,12 +346,12 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             # 2. MAC's Device: SG
             for i, channel_set in enumerate(SG_CH_Matrix):
                 for channel in channel_set: 
-                    if 'XY' in SG_ROLE_Matrix[i][channel]: Compensate_MHz = XY_Compensate_MHz
-                    elif 'RO' in SG_ROLE_Matrix[i][channel]: Compensate_MHz = RO_Compensate_MHz
+                    if 'XY' in SG_ROLE_Matrix[i][channel-1]: Compensate_MHz = XY_Compensate_MHz
+                    elif 'RO' in SG_ROLE_Matrix[i][channel-1]: Compensate_MHz = RO_Compensate_MHz
                     else: Compensate_MHz = 0
                     Mac = macer()
                     Mac.execute(MACE_DEFINED['SG-%s-%s'%(i+1,channel)])
-                    SG[i].frequency(SG_instance[i], action=['Set_%s'%(channel), str(Mac.VALUES[Mac.KEYS.index("frequency")] + Compensate_MHz/1e3) + "GHz"])
+                    SG[i].frequency(SG_instance[i], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
                     SG[i].power(SG_instance[i], action=['Set_%s'%channel, str(Mac.VALUES[Mac.KEYS.index("power")]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
                     Mac.close()
 
@@ -370,7 +372,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         CH_Pulse_SEQ = pulseq.music
 
                     if TASK_LEVEL == "EXP":
-                        CH_Pulse_SEQ = d_setting['DAC'][instr['DAC'][i_slot_order]][i_slot_order][ch]
+                        CH_Pulse_SEQ = d_setting['DAC'][instr['DAC'][i_slot_order]][ch-1]
 
                     '''
                     NOTE: 
@@ -433,7 +435,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         for i, channel_set in enumerate(SG_CH_Matrix):
             for channel in channel_set: SG[i].rfoutput(SG_instance[i], action=['Set_%s'%channel, 0])
             SG[i].close(SG_instance[i], SG_label[i], False)
-        for i, channel_set in enumerate(DC_CH_Matrix): DC[i].close(DC_instance[i], reset=True, which=DC_label[i])
+        for i, channel_set in enumerate(DC_CH_Matrix): 
+            for channel in channel_set: 
+                DC[i].sweep(DC_instance[i], str(0), channel=channel)
+                DC[i].output(DC_instance[i], 0, channel)
+            DC[i].close(DC_instance[i], reset=True, which=DC_label[i])
 
         if JOBID in g.queue_jobid_list:
             qout(queue, g.queue_jobid_list[0],g.user['username'])

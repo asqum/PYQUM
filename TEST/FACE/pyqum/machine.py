@@ -1001,6 +1001,22 @@ def dc_keithley_vpulse():
     print("t: %s" %t)
     V, I = VI_List[0::2], VI_List[1::2]
     return jsonify(return_width=return_width, V=V, I=I, t=t)
+# SRSDC
+@bp.route('/dc/srsdc', methods=['GET'])
+def dcsrsdc():
+    srsdcstat = request.args.get('srsdcstat')
+    if srsdcstat == 'true':
+        global keith
+        keith = KEIT.Initiate()
+    elif srsdcstat == 'false':
+        KEIT.close(keith, True)
+    return jsonify()
+@bp.route('/dc/srsdc/vset', methods=['GET'])
+def dc_srsdc_vset():
+    vset = float(request.args.get('vset'))
+    
+    
+    return jsonify()
 # endregion
 
 
