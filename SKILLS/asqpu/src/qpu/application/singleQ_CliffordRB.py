@@ -7,8 +7,8 @@ from qutip import sigmax, sigmay, sigmaz, basis, qeye, Qobj
 from qutip_qip.circuit import QubitCircuit, Gate
 from typing import List
 
-import qpu.backend.circuit.compiler as becc
-
+from qpu.backend.circuit.compiler import SQCompiler
+from qpu.backend.circuit.backendcircuit import BackendCircuit
 
 def clifford_gates( target:int )->List:
     """
@@ -154,15 +154,27 @@ def get_SQcircuit_random_clifford( target:int, num_gates:int ):
     return circuit_RB
 
 
-def get_SQRB_device_setting( backendcircuit, num_gates, target:int=0, withRO:bool=False  ):
+def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:int=0, withRO:bool=False  ):
 
     d_setting = []
     circuit_RB = get_SQcircuit_random_clifford( target, num_gates )
     if withRO:
         rg_ro = Gate("RO", target )
         circuit_RB.add_gate(rg_ro)
-    mycompiler = becc.SQCompiler(1, params={})
+    mycompiler = SQCompiler(1, params={})
+    q_name = backendcircuit.q_reg["qubit"][target]
+    print(f"{q_name} get RB sequence." )
+    q_info = backendcircuit.get_qComp(q_name)
+    backendcircuit.total_time = q_info.tempPars["total_time"]
+    mycompiler.params["rxy"] = {}
+    mycompiler.params["rxy"]["dt"] = backendcircuit.dt
+    mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
+
+    mycompiler.params["ro"] = {}
+    mycompiler.params["ro"]["dt"] = backendcircuit.dt
+    mycompiler.params["ro"]["pulse_length"] = q_info.tempPars["ROW"]
     waveform_channel = mycompiler.to_waveform(circuit_RB)
     d_setting = backendcircuit.devices_setting(waveform_channel)
+
     return d_setting
 

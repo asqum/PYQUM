@@ -148,7 +148,6 @@ class UpConversionChannel( WaveformChannel ):
             "DAC": dac_out,
             "SG": sg_out
         }
-        
         return device_setting
 
 

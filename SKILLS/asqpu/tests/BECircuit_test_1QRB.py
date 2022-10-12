@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 
 mybec = get_test_bec()
-
+print(mybec.q_reg)
 for i in range(1):
     d_setting = qapp.get_SQRB_device_setting( mybec, 5, 0, True  )
 

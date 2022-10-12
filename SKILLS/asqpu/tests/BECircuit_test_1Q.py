@@ -11,6 +11,9 @@ import sys
 sys.path.append("..")
 from BECircuit_fromTestFile import get_test_bec
 
+mybec = get_test_bec()
+print(mybec.to_qpc())
+
 rg_ro0 = Gate("RO", 0 )
 rg_x0 = Gate("RX", 0, arg_value= np.pi)
 rg_y0 = Gate("RY", 0, arg_value= np.pi)
@@ -33,6 +36,17 @@ for gate in gate_seq:
 
 mycompiler = becc.SQCompiler(1, params={})
 #print(mycompiler.gate_compiler)
+q_name = mybec.q_reg["qubit"][0]
+print(f"{q_name} get RB sequence." )
+q_info = mybec.get_qComp(q_name)
+mybec.total_time = q_info.tempPars["total_time"]
+mycompiler.params["rxy"] = {}
+mycompiler.params["rxy"]["dt"] = mybec.dt
+mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
+
+mycompiler.params["ro"] = {}
+mycompiler.params["ro"]["dt"] = mybec.dt
+mycompiler.params["ro"]["pulse_length"] = q_info.tempPars["ROW"]
 
 # raw circuit
 for gate in circuit.gates:
@@ -53,8 +67,7 @@ print(coeffs.keys())
 # plt.show()
 
 
-mybec = get_test_bec()
-print(mybec.to_qpc())
+
 #print(mybec.load_coeff(coeffs))
 
 ch_wf = mybec.translate_channel_output(mycompiler.to_waveform(circuit))

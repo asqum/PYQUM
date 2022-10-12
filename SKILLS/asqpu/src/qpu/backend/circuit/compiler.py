@@ -23,10 +23,10 @@ class SQCompiler(GateCompiler):
         super().__init__(num_qubits, params=params)
         self.params = params
         self.gate_compiler = {
-            "RX": self.single_qubit_gate_compiler,
-            "RY": self.single_qubit_gate_compiler,
+            "RX": self.rxy_compiler,
+            "RY": self.rxy_compiler,
             "RZ": self.rz_compiler,
-            "RO": self.single_qubit_measurement_compiler,
+            "RO": self.measurement_compiler,
         }
 
     def generate_pulse(self, gate, tlist, coeff, phase=0.0):
@@ -124,17 +124,17 @@ class SQCompiler(GateCompiler):
     ):
         idling_tlist = []
         if pulse_mode == "continuous":
-
+            point_num = int( -((start_time-last_pulse_time) //-step_size) )
             idling_tlist.append(
                 np.linspace(
-                    last_pulse_time, start_time, int(start_time-last_pulse_time), endpoint=False
+                    last_pulse_time, start_time, point_num, endpoint=False
                 )
             )
         elif pulse_mode == "discrete":
             # idling until the start time
             idling_tlist.append([start_time])
         return np.concatenate(idling_tlist)
-    def single_qubit_gate_compiler(self, gate, args):
+    def rxy_compiler(self, gate, args):
         """Compiles single-qubit gates to pulses.
         
         Args:
@@ -146,20 +146,19 @@ class SQCompiler(GateCompiler):
         """
         
         
-        # gate.arg_value is the rotation angle
-        sampling_point = 30
-        tlist = np.linspace(0,sampling_point,sampling_point, endpoint=False)
-        # gate.arg_value is the rotation angle
-        coeff = ps.DRAGFunc(tlist, *(1,sampling_point/4.,sampling_point/2., 1) ) *gate.arg_value/np.pi
-        # tlist = np.abs(gate.arg_value) / self.params["pulse_amplitude"]
-        #print("compile measurement ",gate.name, tlist)
-        #coeff *= self.params["pulse_amplitude"] *gate.arg_value/np.pi
+        pulse_length = self.params["rxy"]["pulse_length"]
+        dt = self.params["rxy"]["dt"]
+
+        sampling_point = int( -(pulse_length//-dt) )
+        tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
+        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., 1) ) *gate.arg_value/np.pi
+
         if gate.name == "RX":
             return self.generate_pulse(gate, tlist, coeff, phase=0.0)
         elif gate.name == "RY":
             return self.generate_pulse(gate, tlist, coeff, phase=np.pi / 2)
 
-    def single_qubit_measurement_compiler(self, gate, args):
+    def measurement_compiler(self, gate, args):
             """Compiles single-qubit gates to pulses.
             
             Args:
@@ -170,10 +169,13 @@ class SQCompiler(GateCompiler):
                 to implement a gate containing the control pulses.
             """
             
-            sampling_point = 300
-            tlist = np.linspace(0,sampling_point,sampling_point, endpoint=False)
+            pulse_length = self.params["ro"]["pulse_length"]
+            dt = self.params["ro"]["dt"]
 
-            coeff = ps.GERPFunc(tlist, *(1,300,0,15,30/4.) ) 
+            sampling_point = int( -(pulse_length//-dt) )
+            tlist = np.linspace(0,pulse_length,sampling_point, endpoint=False)
+
+            coeff = ps.GERPFunc(tlist, *(1,pulse_length,0,15,30/4.) ) 
 
             pulse_info = [
                 # (control label, coeff)

@@ -9,6 +9,7 @@ class QComponent( ABC ):
     def __init__ ( self, name:str ):
 
         self.name = name
+        ## TODO think about how to store spec
         self.tempPars = {}
         #self._ports = []
 
