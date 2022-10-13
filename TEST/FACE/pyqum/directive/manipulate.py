@@ -10,7 +10,7 @@ from time import time, sleep
 from copy import copy, deepcopy
 from json import loads, dumps
 from numpy import prod, array, mean, ceil, floor, sin, cos
-from numexpr import evaluate as eval
+from numexpr import evaluate
 from flask import session, g
 
 from importlib import import_module as im
@@ -19,6 +19,13 @@ from pyqum.instrument.toolbox import cdatasearch, waveform, find_in_list
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.analyzer import pulse_baseband
 from pyqum.instrument.reader import inst_order, macer
+
+import qpu.application as qapp
+import qpu.backend.circuit.backendcircuit as bec
+from pandas import DataFrame
+import qpu.backend.phychannel as pch
+import qpu.backend.component as qcp
+from pyqum import get_db, close_db
 
 # from asqpu.hardware_information import *
 
@@ -29,6 +36,40 @@ __license__ = "GPL"
 __version__ = "beta3"
 __email__ = "teikhui@phys.sinica.edu.tw"
 __status__ = "development"
+
+
+def get_Qubit_CV (samplename):
+    
+    db = get_db()
+    sample_cv = db.execute(
+        'SELECT s.id, author_id, samplename, specifications, location, level, description, registered, co_authors, history'
+        ' FROM sample s JOIN user u ON s.author_id = u.id'
+        ' WHERE s.samplename = ?',
+        (samplename,)
+    ).fetchone()
+    sample_cv = dict(sample_cv) # convert sqlite3.row into dictionary for this select format
+    close_db()
+    mybec = bec.BackendCircuit()
+    loc = sample_cv["location"]
+    wiring_info = loc.split("===")
+    print(wiring_info[0])
+    dict_list = eval(wiring_info[0])
+    channels = []
+    for ch in dict_list: channels.append( pch.from_dict( ch ) )
+
+    mybec._channels = channels
+    mybec.qc_relation = DataFrame.from_dict(eval(wiring_info[1]))
+    mybec.q_reg = eval(wiring_info[2])
+    
+    specs = sample_cv["specifications"]
+    spec_list = eval(specs)
+    qComps = []
+    for qc in spec_list:
+        #print(ch)
+        qComps.append( qcp.from_dict( qc ) )
+    mybec._qComps = qComps
+
+    return mybec
 
 # Qubit-Control:
 # **********************************************************************************************************************************************************
@@ -44,32 +85,41 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     DATA = STRUCTURE + BUFFER (Thus ALL part of Structure will now participate in measure-loop)
     '''
 
+    Device_Categories = ["DAC", "SG", "DC"] # PENDING: ADC
+
     # User-specific settings in JSON:
     sample = get_status("MSSN")[session['user_name']]['sample']
     queue = get_status("MSSN")[session['user_name']]['queue']
     print(Back.GREEN + Fore.BLUE + "User [%s] is measuring sample [%s] on queue [%s]" %(session['user_name'],sample,queue))
 
+    
+
     # Check TASK LEVEL:
     Exp = macer()
     Experiments = Exp.experiment_list
     Exp.close()
-    if renamed_task in Experiments: TASK_LEVEL = "EXP" # EXPERT
-    else: TASK_LEVEL = "MAC" # BASIC / LOW-LEVEL
+    if renamed_task in Experiments: 
+        TASK_LEVEL = "EXP" # EXPERT
+        Sample_Backend = get_Qubit_CV(sample) # Extract Qubit-CV
+    else: 
+        TASK_LEVEL = "MAC" # BASIC / LOW-LEVEL
 
     # Loading Channel-Settings:
     CH_Matrix = inst_order(queue, 'CH')
     DAC_CH_Matrix = CH_Matrix['DAC']
     SG_CH_Matrix = CH_Matrix['SG']
-    DC_CH_Matrix = CH_Matrix['DC']
+    try: DC_CH_Matrix = CH_Matrix['DC']
+    except: DC_CH_Matrix = [[]]
     ROLE_Matrix = inst_order(queue, 'ROLE')
     DAC_ROLE_Matrix = ROLE_Matrix['DAC']
     SG_ROLE_Matrix = ROLE_Matrix['SG']
-    DC_ROLE_Matrix = ROLE_Matrix['DC']
+    try: DC_ROLE_Matrix = ROLE_Matrix['DC']
+    except: DC_ROLE_Matrix = [[]]
     
     # Find Address in the Listified Multi-dimensional Matrix as <MODule>-<CHannel>
-    try: RO_addr = find_in_list(DAC_ROLE_Matrix, 'I1')
+    try: RO_addr = find_in_list(DAC_ROLE_Matrix, 'RO')
     except: RO_addr = 'OPT' # Optionized if not present
-    try: XY_addr = find_in_list(DAC_ROLE_Matrix, 'X1')
+    try: XY_addr = find_in_list(DAC_ROLE_Matrix, 'XY')
     except: XY_addr = 'OPT' # Optionized if not present
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
@@ -97,9 +147,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     digital_homodyne = perimeter['DIGIHOME']
     ifreqcorrection_kHz = float(perimeter['IF_ALIGN_KHZ'])
     # 1c. Basic perimeter(s): # previously: config = corder['C-Config']
-    biasmode = bool(int(perimeter['BIASMODE']))
-    xypowa = perimeter['XY-LO-Power']
-    ropowa = perimeter['RO-LO-Power']
+    # biasmode = bool(int(perimeter['BIASMODE']))
+    # xypowa = perimeter['XY-LO-Power']
+    # ropowa = perimeter['RO-LO-Power']
     trigger_delay_ns = int(perimeter['TRIGGER_DELAY_NS'])
     recordsum = int(perimeter['RECORD-SUM'])
     recordtime_ns = int(perimeter['RECORD_TIME_NS']) # min:1280ns, step:128ns
@@ -144,7 +194,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         DC_instance[i] = DC[i].Initiate(which=DC_label[i]) # Only voltage mode (default) available / allowed in QPC
         for channel in channel_set:
             DC[i].sweep(DC_instance[i], str(0), channel=channel)
-            DC[i].output(DC_instance[i], 1)
+            DC[i].output(DC_instance[i], 1, channel)
 
     # SG for [XY, RO]:
     SG_qty = len(instr['SG'])
@@ -185,7 +235,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         pulseq.song()
         for channel in channel_set:
             DAC[i].prepare_DAC(DAC_instance[i], int(channel), pulseq.totalpoints, update_settings=update_settings)
-            ##JACKY
+            ## JACKY
             print(Fore.BLUE +f"pulseq.totalpoints {pulseq.totalpoints}")
         for channel in channel_set:
             DAC[i].compose_DAC(DAC_instance[i], int(channel), pulseq.music, [], markeroption) # we don't need marker yet initially
@@ -233,51 +283,81 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             caddress = cdatasearch(i, cstructure)
             print(Fore.BLACK + Back.WHITE + "i: %s, cstructure: %s, caddress: %s" %(i,cstructure,caddress))
 
-            # setting each c-order (From High to Low level of execution):
+            # High level of execution: preparing i-th SCORE & MACE Script
             # ***************************************************************
             SCORE_DEFINED = deepcopy(SCORE_TEMPLATE)
             MACE_DEFINED = deepcopy(MACE_TEMPLATE)
             for j in range(len(cstructure)): # new version: all parameters in R-JSON
-                
+
+                # Reveal R-JSON Parameter-value at j-th:
+                if ">" in structure[j]: # For Locked variables with customized math expression:
+                    math_expression = structure[j].split(">")[1] # Algebraic initially
+                    for R_KEY in structure[j].split(">")[0].replace(" ","").split(","):
+                        math_expression = math_expression.replace( R_KEY, str(R_waveform[R_KEY].data[caddress[structure.index(R_KEY)]]) )
+                    Script_Var_Update = evaluate(math_expression) # evaluate numpy-supported expression
+                    print(Fore.LIGHTBLUE_EX + "STRUCTURE LOCKED AT IDX-%s: %s -> %s -> %s" %(j, structure[j], math_expression, Script_Var_Update))
+                else: # for usual variables
+                    Script_Var_Update = R_waveform[structure[j]].data[caddress[j]]
+
                 if TASK_LEVEL == "MAC":
-                    # 1. DAC's SCORE-UPDATE by R-JSON:
-                    for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
-                        for ch in channel_set:
-                            dach_address = "%s-%s" %(i_slot_order+1,ch)
-                            if ">" in structure[j]: # for locked variables with customized math expression:
-                                math_expression = structure[j].split(">")[1] # Algebraic initially
-                                for R_KEY in structure[j].split(">")[0].replace(" ","").split(","):
-                                    math_expression = math_expression.replace( R_KEY, str(R_waveform[R_KEY].data[caddress[structure.index(R_KEY)]]) )
-                                if not channel_set.index(ch): print(Fore.LIGHTBLUE_EX + "CH-%s: STRUCTURE LOCKED AT IDX-%s: %s -> %s" %(ch, j, structure[j], math_expression))
-                                Score_Var_Update = eval(math_expression) # evaluate numpy-supported expression
-                            else: # for usual variables
-                                Score_Var_Update = R_waveform[structure[j]].data[caddress[j]]
-                            SCORE_DEFINED['CH%s'%dach_address] = SCORE_DEFINED['CH%s'%dach_address].replace("{%s}"%structure[j], str(Score_Var_Update))
+                    # DAC-SCORE-, SG-MACE- and DC-MACE-UPDATE by R-JSON:
+                    CH_Matrix = [DAC_CH_Matrix, SG_CH_Matrix, DC_CH_Matrix]
+                    for dev, ch_matrix in enumerate(CH_Matrix):
+                        for i_slot_order, channel_set in enumerate(ch_matrix):
+                            for ch in channel_set:
+                                dach_address = "%s-%s" %(i_slot_order+1,ch)
+                                if dev==0: SCORE_DEFINED['CH%s'%dach_address] = SCORE_DEFINED['CH%s'%dach_address].replace("{%s}"%structure[j], str(Script_Var_Update))
+                                else: MACE_DEFINED["%s-%s-%s"%(Device_Categories[dev],i_slot_order+1,ch)] =  MACE_DEFINED["%s-%s-%s"%(Device_Categories[dev],i_slot_order+1,ch)].replace("{%s}"%structure[j], str(Script_Var_Update))
 
-                    # 2. SG's MACE-UPDATE by R-JSON:
+                if TASK_LEVEL == "EXP": 
+                    # EXP-MACE-UPDATE by R-JSON:
+                    MACE_DEFINED["EXP-" + renamed_task] = MACE_DEFINED["EXP-" + renamed_task].replace("{%s}"%structure[j], str(Script_Var_Update))
+
+            # Low level:
+            if TASK_LEVEL == "EXP":    
+                # Expert EXP Control (Every-loop)
+                Exp = macer(commander=renamed_task)
+                Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
+                d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(Exp.VALUES[Exp.KEYS.index("Sequence_length")]), int(Exp.VALUES[Exp.KEYS.index("Qubit_ID")]), True ) ## TODO get RB MACER parameters
+                Exp.close()
+                print(d_setting)
+                for dcategory in d_setting.keys(): print(dcategory, d_setting[dcategory].keys())
+
+                # 1. Extract MACE-Command for DC:
+                for i, channel_set in enumerate(DC_CH_Matrix):
+                    for channel in channel_set:
+                        MACE_DEFINED['DC-%s-%s'%(i+1,channel)] = "sweep:%s" %(d_setting['SG'][instr['SG'][i]][channel-1]['sweep']) # manually assign power for now
+
+                # 2. Extract MACE-Command for SG:
+                for i, channel_set in enumerate(SG_CH_Matrix):
+                    for channel in channel_set:
+                        MACE_DEFINED['SG-%s-%s'%(i+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr['SG'][i]][channel-1]['freq'], 6) # manually assign power for now
 
 
-                    # 3. DC's MACE-UPDATE by R-JSON:
-
-                if TASK_LEVEL == "EXP": pass
-                    # 3.x EXP's MACE-UPDATE by R-JSON:
-                    # NOTE: PUT ASQPU HERE
-
-
-            # print(Fore.YELLOW + "DEFINED SCORE-CH1: %s" %(SCORE_DEFINED['CH1']))
-            # IN THE FUTURE: HVI-ROUTINE STARTS HERE:
-
-            
             # Basic MAC Control (Every-loop)
+            # 1. MAC's Device: DC
+            for i, channel_set in enumerate(DC_CH_Matrix):
+                for channel in channel_set:
+                    Mac = macer()
+                    Mac.execute(MACE_DEFINED['DC-%s-%s'%(i+1,channel)])
+                    DC[i].sweep(DC_instance[i], str(Mac.VALUES[Mac.KEYS.index("sweep")]), channel=channel)
+                    Mac.close()
 
-            # 1. DC
-
-
-            # 2. SG
+            # 2. MAC's Device: SG
+            for i, channel_set in enumerate(SG_CH_Matrix):
+                for channel in channel_set: 
+                    if 'XY' in SG_ROLE_Matrix[i][channel-1]: Compensate_MHz = XY_Compensate_MHz
+                    elif 'RO' in SG_ROLE_Matrix[i][channel-1]: Compensate_MHz = RO_Compensate_MHz
+                    else: Compensate_MHz = 0
+                    Mac = macer()
+                    Mac.execute(MACE_DEFINED['SG-%s-%s'%(i+1,channel)])
+                    SG[i].frequency(SG_instance[i], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
+                    SG[i].power(SG_instance[i], action=['Set_%s'%channel, str(Mac.VALUES[Mac.KEYS.index("power")]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
+                    Mac.close()
 
             
             # Basic CHANNEL Control (Pulse Injection)
-            # DAC
+            # 3. CH's Device: DAC
             for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
                 # PENDING: Extract the settings from the machine database instead.
                 if i_slot_order==0: update_settings = dict(Master=True, clearQ=int(bool(len(channel_set)==4)) ) # First-in-line = Master
@@ -292,9 +372,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         CH_Pulse_SEQ = pulseq.music
 
                     if TASK_LEVEL == "EXP":
-                        CH_Pulse_SEQ = ["ASQPU"]
+                        CH_Pulse_SEQ = d_setting['DAC'][instr['DAC'][i_slot_order]][ch-1]
 
-                        
                     '''
                     NOTE: 
                     TKAWG's marker (number(s)) = SDAWG's markeroption
@@ -302,11 +381,10 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     7 for SDAWG: PIN-Switch on MixerBox
                     0 for BOTH: disabled.
                     '''
-                    # PENDING: edittable markeroption instead of just "2":
-                    if (i_slot_order==0) and ("SDAWG" in DAC_type[i_slot_order]): marker = 7
-                    else: marker = 2 # for compatibility with TKAWG
+                    if (i_slot_order==0) and ("SDAWG" in DAC_type[i_slot_order]): marker = 7 # ONLY 1st DAC outputs marker via CH-4 to trigger ADC for RO
+                    else: marker = 2 # for compatibility with TKAWG (outputs 2 markers for each channel)
 
-                    DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), CH_Pulse_SEQ, pulseq.envelope, marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
+                    DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), CH_Pulse_SEQ, [], marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
                     print(Fore.BLUE +f"RUN len(CH_Pulse_SEQ) {len(CH_Pulse_SEQ)}")
 
                 DAC[i_slot_order].ready(DAC_instance[i_slot_order])
@@ -357,7 +435,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         for i, channel_set in enumerate(SG_CH_Matrix):
             for channel in channel_set: SG[i].rfoutput(SG_instance[i], action=['Set_%s'%channel, 0])
             SG[i].close(SG_instance[i], SG_label[i], False)
-        for i, channel_set in enumerate(DC_CH_Matrix): DC[i].close(DC_instance[i], reset=True, which=DC_label[i])
+        for i, channel_set in enumerate(DC_CH_Matrix): 
+            for channel in channel_set: 
+                DC[i].sweep(DC_instance[i], str(0), channel=channel)
+                DC[i].output(DC_instance[i], 0, channel)
+            DC[i].close(DC_instance[i], reset=True, which=DC_label[i])
 
         if JOBID in g.queue_jobid_list:
             qout(queue, g.queue_jobid_list[0],g.user['username'])
@@ -365,12 +447,3 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
     return
 
-
-if __name__ == "__main__":
-    
-    testQPU = create_QPU_by_route("testQPU","Q1,Q2/RO1/I+Q:DAC=SDAWG_6-1+SDAWG_6-2,SG=DDSLO_4,ADC=SDDIG_2;Q1/XY1/I+Q:DAC=SDAWG_4-1+SDAWG_4-2,SG=DDSLO_3;Q1/Z1:DAC=SDAWG_4-3;")
-    for qid in testQPU.get_IDList_PhysicalQubit():
-        print(f"Qubit ID: {qid}")
-        for pchid in list(testQPU.QubitSet[qid].phyCh):
-            pch = testQPU.QubitSet[qid].phyCh[pchid]
-            print(f"channel ID: {pch.id} coupled: {pch.coupled} devices: {pch.device}")

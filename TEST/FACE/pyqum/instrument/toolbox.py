@@ -12,7 +12,7 @@ def flatten(x):
     '''
     result = []
     for el in x:
-        if isinstance(x, collections.Iterable) and not isinstance(el, str): result.extend(flatten(el))
+        if isinstance(x, collections.abc.Iterable) and not isinstance(el, str): result.extend(flatten(el))
         else: result.append(el)
     return result
 def flatten_address(x, start_from=1):
@@ -20,14 +20,14 @@ def flatten_address(x, start_from=1):
     '''
     result = []
     for i,el in enumerate(x):
-        if isinstance(x, collections.Iterable) and not isinstance(el, str): result.extend(["%s-%s" %(i+start_from,y) for y in flatten_address(el)]) # extend and update on the way up
+        if isinstance(x, collections.abc.Iterable) and not isinstance(el, str): result.extend(["%s-%s" %(i+start_from,y) for y in flatten_address(el)]) # extend and update on the way up
         else: result.append(i+start_from) # append at the bottom
     return result
 def find_in_list(str_list, element):
     '''find the address (channel-location) of an element in a non-repeating multi-dimensional list.
     Used in looking for matching role among DAC channels.
     '''
-    return flatten_address(str_list)[flatten(str_list).index(element)]
+    return flatten_address(str_list)[flatten(str_list).index([s for s in flatten(str_list) if element in s][0])]
 
 def cdatasearch(Order, Structure):
     ''' Give the address of the data essentially!
@@ -198,7 +198,7 @@ def pauselog():
 	return log
 
 
-def test():
+if __name__ == "__main__":
     # for i in range(100):
     #     print("decoding data-%s into c-%s and back into %s" 
     #     %(i, cdatasearch(i, [8,7,10,2]), gotocdata(cdatasearch(i, [8,7,10,2]), [8,7,10,2])))
@@ -252,15 +252,12 @@ def test():
 
     # print(normalize_dipeak([0,0,0,-0.3,-0.3,-0.3,0,0]))
 
-    complicated_list = [ [ ['a','b'],['c','d'],['e','f','g'] ], [ 'h',['i','j','k'],['l','m'] ], [ ['n'], ['o','p'] ], ['q'] ]
+    complicated_list = [ [ ['a','b'],['c','d'],['e','f','g'] ], [ 'h',['i','j_RO_','k'],['l','m'] ], [ ['n'], ['o','p'] ], ['q_RO_'] ]
+    # complicated_list = [['SDAWG_3', 'SDAWG_1', 'SDAWG_2'], ['DDSLO_1', 'DDSLO_2'], ['SDAWG_4'], 'SDDIG_1']
     print("UNFlatten complicated_list: %s" %(complicated_list))
     print("Flatten complicated_list: %s" %flatten(complicated_list))
     print("Flatten complicated_list's address: %s" %flatten_address(complicated_list))
-    print("f is located at %s" %find_in_list(complicated_list, 'f'))
-    print(complicated_list[0][2][1])
+    print("RO is located at %s" %find_in_list(complicated_list, 'RO'))
+    print(complicated_list[1][1][1])
 
-    return
-
-
-# test()
 

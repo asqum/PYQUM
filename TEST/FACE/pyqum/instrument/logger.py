@@ -522,7 +522,7 @@ class measurement:
 
             # Estimate data size based on version of your data:
             if 'C-Structure'in self.corder:
-                self.datasize = int(prod([waveform(self.corder[param]).count * waveform(self.corder[param]).inner_repeat  for param in self.corder['C-Structure']], dtype='uint64')) * 2 #data density of 2 due to IQ
+                self.datasize = int(prod([waveform(self.corder[param]).count * waveform(self.corder[param]).inner_repeat  for param in self.corder['C-Structure']], dtype='uint64')) * 2 # data density of 2 due to IQ ## prod([]) = 1.0
             else:
                 self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
 
@@ -539,13 +539,20 @@ class measurement:
                     # EXTRACT "TIME_RESOLUTION_NS" IF AVAILABLE: TOTAL_READ_POINTS = RECORD_TIME_NS / TIME_RESOLUTION_NS
                     if 'TIME_RESOLUTION_NS' in self.perimeter.keys(): TIME_RESOLUTION_NS = int(self.perimeter['TIME_RESOLUTION_NS'])
                     else: TIME_RESOLUTION_NS = 1 # backward-compatible with ALZDG's 1GSPS sampling-rate
-                    self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS']) / TIME_RESOLUTION_NS
-                
+                    self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS']) // TIME_RESOLUTION_NS
+
+            print(Fore.YELLOW + "writtensize: %s, datasize: %s" %(self.writtensize/8, self.datasize))  
             self.data_progress = float(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)
             Last_Corder = [i for i in self.corder.values()][-1] # for the last key of c-order
-            self.data_mismatch = self.writtensize%waveform(Last_Corder).count*waveform(Last_Corder).inner_repeat*8 # counts & inner-repeats
+            
+            try: 
+                self.data_mismatch = self.writtensize%waveform(Last_Corder).count*waveform(Last_Corder).inner_repeat*8 # counts & inner-repeats
+            except(ValueError): 
+                self.data_mismatch = None # PENDING NEW CALCULATION BASED ON R-JSON INCLUSION
+                print(Fore.BLUE + "Empty C-Structure after the introduction of MACE FLEX!")
+
             print(Back.WHITE + Fore.BLACK + "Data starts from %s-byth on the file with size of %sbytes" %(self.datalocation, self.filesize))
             if not self.writtensize%8:
                 self.resumepoint = self.writtensize//8

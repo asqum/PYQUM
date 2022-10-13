@@ -2,13 +2,9 @@ Metadata-Version: 2.1
 Name: pyqum
 Version: 1.0.1
 Summary: Q Measurement App
-Home-page: UNKNOWN
+Home-page: 
 Maintainer: Quela team
 Maintainer-email: qubitcool@gmail.com
 License: BSD
-Platform: UNKNOWN
 Provides-Extra: test
 License-File: LICENSE
-
-UNKNOWN
-

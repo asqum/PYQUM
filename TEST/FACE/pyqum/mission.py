@@ -7,7 +7,6 @@ from os.path import getmtime
 myname = bs(__file__).split('.')[0] # This py-script's name
 
 import json, ast
-from numpy.lib.npyio import loads
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
@@ -208,10 +207,16 @@ def all_requeue_job():
             CW_Sweep(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
         elif requeue['task'] == "Single_Qubit":
             print(Fore.YELLOW + "Requeue Single_Qubit for JOB#%s" %jobid)
-            Single_Qubit(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
+            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="Single_Qubit")
         elif requeue['task'] == "Qubits":
             print(Fore.YELLOW + "Requeue Qubits for JOB#%s" %jobid)
-            Qubits(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
+            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="Qubits")
+        elif requeue['task'] == "RB":
+            print(Fore.YELLOW + "Requeue RB for JOB#%s" %jobid)
+            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="RB")
+        elif requeue['task'] == "QPU":
+            print(Fore.YELLOW + "Requeue QPU for JOB#%s" %jobid)
+            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="QPU")
 
         else: print(Fore.RED + "UNKNOWN TASK: %s" %requeue['task'])
         clearance = True
@@ -1481,7 +1486,7 @@ def mani_QuCTRL_init():
                 Role[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')[category]
                 Which[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], category)
                 # For Categories applicable with MACE:
-                if category is not "DAC":
+                if category != "DAC":
                     Mac = macer(commander=category)
                     Mac.get_skills()
                     Mac_Parameters[category] = Mac.PARAMETERS

@@ -84,6 +84,10 @@ call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
         SET FLASK_ENV=production
         echo Running WEB Production on Simulation
         goto simulation)
+	if /i "%answer:~,2%" EQU "SL" (
+        SET FLASK_ENV=development
+        echo Running WEB Production on Simulation local
+        goto simulation_local)
     goto pyqum
 
 
@@ -123,5 +127,11 @@ call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
     ECHO Environment name: %ENVNAME%
     call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
     python pqrun.py production 5400
+	
+:simulation_local
+    ECHO STARTING APP as Local Web Simulation
+    ECHO Environment name: %ENVNAME%
+    call %CONDAPATH%\Scripts\activate.bat %ENVNAME%
+    python pqrun.py local 5400
 PAUSE
 

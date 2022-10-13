@@ -23,6 +23,8 @@ from pyqum.instrument.reader import inst_designate
 bp = Blueprint(myname, __name__, url_prefix='/auth')
 
 
+#from qpu.backend.circuit.api import to_deviceManager
+
 def login_required(view):
     """View decorator that redirects anonymous users to the login page."""
     @functools.wraps(view)
@@ -323,7 +325,46 @@ def usersamples_update():
     coauthors = request.args.get('coauthors')
     level = request.args.get('level')
     history = request.args.get('history')
-    
+
+    ## TODO test spec
+    # mybec = bec.BackendCircuit()
+
+    # wiring_info = loc.split("===")
+    # print(wiring_info)
+    # dict_list = eval(wiring_info[0])
+    # channels = []
+    # for ch in dict_list:
+    #     #print(ch)
+    #     channels.append( pch.from_dict( ch ) )
+
+    # mybec._channels = channels
+
+    # mybec.qc_relation = DataFrame.from_dict(eval(wiring_info[1]))
+    # mybec.q_reg = eval(wiring_info[2])
+    # qpc_dict = mybec.to_qpc()
+    # instr_organized = {}
+    # dict_str = ["CH","ROLE"]
+    # for cate, val in qpc_dict.items():
+    #     if cate in dict_str:
+    #         destination = str(val).replace("'",'"')
+    #     else:
+    #         destination = ",".join(val)
+    #     instr_organized[cate]=destination
+
+    # instr_organized["ADC"] = "DIG"
+    # spec_list = eval(specs)
+    # qComps = []
+    # for qc in spec_list:
+    #     #print(ch)
+    #     qComps.append( qcp.from_dict( qc ) )
+    # mybec._qComps = qComps
+    # import qpu.application as qapp
+    # d_setting = qapp.get_SQRB_device_setting( mybec, 5, 0, True  )
+    # print(d_setting)
+    # for dcategory in d_setting.keys():
+    #     print(dcategory, d_setting[dcategory].keys())
+    ## Test end
+
     db = get_db()
     try:
         sample_owner = db.execute('SELECT u.id, username FROM sample s JOIN user u ON s.author_id = u.id WHERE s.samplename = ?',(sname,)).fetchone()['username']
@@ -365,16 +406,44 @@ def usersamples_meal():
         set_status("MSSN", {session['user_name']: dict(sample=sname, queue='', time=0)})
     return jsonify(sname=get_status("MSSN")[session['user_name']]['sample'])
 
+import qpu.backend.circuit.backendcircuit as bec
+import qpu.backend.phychannel as pch
+import qpu.backend.component as qcp
+from pandas import DataFrame
+
 @bp.route('/user/samplesloc/update/qpc_wiring', methods=['GET'])
 def usersamplesloc_update_qpc_wiring():
     peach = request.args.get('peach')
     qpc_selected = request.args.get('qpc_selected')
-
+    print(qpc_selected)
     # Translate Peach to QPC:
 
+    mybec = bec.BackendCircuit()
+    wiring_info = peach.split("===")
+    print(wiring_info)
+    dict_list = eval(wiring_info[0])
+    channels = []
+    for ch in dict_list:
+        #print(ch)
+        channels.append( pch.from_dict( ch ) )
+
+    mybec._channels = channels
+
+    
+    #mybec._qComps = read_qComp()
+    mybec.qc_relation = DataFrame.from_dict(eval(wiring_info[1]))
+    mybec.q_reg = eval(wiring_info[2])
+    qpc_dict = mybec.to_qpc()
+    instr_organized = {}
+    dict_str = ["CH","ROLE"]
+    for cate, val in qpc_dict.items():
+        if cate in dict_str:
+            destination = str(val).replace("'",'"')
+        else:
+            destination = ",".join(val)
+        instr_organized[cate]=destination
 
     # Update QPC-wiring database:
-    instr_organized = {"category": "designation"}
     try:
         if int(g.user['management'])>=3:
             for key, val in instr_organized.items(): 
@@ -383,7 +452,8 @@ def usersamplesloc_update_qpc_wiring():
             acting(message)
         else: message = "Clearance not enough"
     except:
-        message = "database error"
+        raise
+        #message = "database error"
 
     return jsonify(message=message)
 
