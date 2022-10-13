@@ -247,14 +247,20 @@ function accessdata_QuCTRL() {
         $('input.QuCTRL.perimeter-settings.save').show();
 
         // 7.1. PERIMETER Statement:
-        var QuCTRL_Channels = [];
-        $.each(Object.keys(data.perimeter['SCORE-JSON']), function(i,val){ QuCTRL_Channels.push(val); });
         var sheet = '';
-        $.each(Object.values(data.perimeter['SCORE-JSON']), function(i,val){
-            sheet += QuCTRL_Channels[i] + ":\n" + val.replaceAll("\n"," ") + "\n\n";
+        Q_JSON = ['SCORE-JSON', 'MACE-JSON']
+        $.each(Q_JSON, function(k, q_json) {
+            var QuCTRL_Channels = [];
+            console.log(q_json + ":\n" + JSON.stringify(data.perimeter[q_json]));
+            $.each(Object.keys(data.perimeter[q_json]), function(i,val){ QuCTRL_Channels.push(val); });
+            $.each(Object.values(data.perimeter[q_json]), function(i,val){ 
+                if (i==0) { sheet += q_json + ":\n"}
+                sheet += QuCTRL_Channels[i] + ":\n" + val.replaceAll("\n"," ") + "\n\n"; 
+            });
         });
+        
         $.each(Object.keys(data.perimeter), function(i,key){
-            if (key!='SCORE-JSON' && key!='R-JSON'){
+            if (key!='SCORE-JSON' && key!='MACE-JSON' && key!='R-JSON'){
                 sheet += key + ": " + Object.values(data.perimeter)[i] + "\n\n";
             }; 
         });
