@@ -253,7 +253,7 @@ class address:
         close_db()
         return connection
 
-class specification:
+class specification: # PENDING: USE SQL DATABASE instead
     '''lookup specifications for each instruments
     '''
     def __init__(self):

@@ -188,63 +188,63 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     # DC for PA:
     DC_qty = len(instr['DC'])
     DC_type, DC_label, DC, DC_instance = [None]*DC_qty, [None]*DC_qty, [None]*DC_qty, [None]*DC_qty
-    for i, channel_set in enumerate(DC_CH_Matrix):
-        [DC_type[i], DC_label[i]] = instr['DC'][i].split('_')
-        DC[i] = im("pyqum.instrument.machine.%s" %DC_type[i])
-        DC_instance[i] = DC[i].Initiate(which=DC_label[i]) # Only voltage mode (default) available / allowed in QPC
+    for i_slot, channel_set in enumerate(DC_CH_Matrix):
+        [DC_type[i_slot], DC_label[i_slot]] = instr['DC'][i_slot].split('_')
+        DC[i_slot] = im("pyqum.instrument.machine.%s" %DC_type[i_slot])
+        DC_instance[i_slot] = DC[i_slot].Initiate(which=DC_label[i_slot]) # Only voltage mode (default) available / allowed in QPC
         for channel in channel_set:
-            DC[i].sweep(DC_instance[i], str(0), channel=channel)
-            DC[i].output(DC_instance[i], 1, channel)
+            DC[i_slot].sweep(DC_instance[i_slot], str(0), channel=channel)
+            DC[i_slot].output(DC_instance[i_slot], 1, channel)
 
     # SG for [XY, RO]:
     SG_qty = len(instr['SG'])
     SG_type, SG_label, SG, SG_instance = [None]*SG_qty, [None]*SG_qty, [None]*SG_qty, [None]*SG_qty
-    for i, channel_set in enumerate(SG_CH_Matrix):
-        [SG_type[i], SG_label[i]] = instr['SG'][i].split('_')
-        SG[i] = im("pyqum.instrument.machine.%s" %SG_type[i])
-        SG_instance[i] = SG[i].Initiate(which=SG_label[i])
+    for i_slot, channel_set in enumerate(SG_CH_Matrix):
+        [SG_type[i_slot], SG_label[i_slot]] = instr['SG'][i_slot].split('_')
+        SG[i_slot] = im("pyqum.instrument.machine.%s" %SG_type[i_slot])
+        SG_instance[i_slot] = SG[i_slot].Initiate(which=SG_label[i_slot])
         for channel in channel_set:
-            SG[i].power(SG_instance[i], action=['Set_%s'%channel, str(-17) + ""]) # UNIT dBm NOT WORKING IN DDSLO
-            SG[i].rfoutput(SG_instance[i], action=['Set_%s'%channel, 1])
+            SG[i_slot].power(SG_instance[i_slot], action=['Set_%s'%channel, str(-17) + ""]) # UNIT dBm NOT WORKING IN DDSLO
+            SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, 1])
 
     # DAC for [RO, XY]:
     DAC_qty = len(instr['DAC'])
     DAC_type, DAC_label, DAC, DAC_instance = [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty
 
-    for i, channel_set in enumerate(DAC_CH_Matrix):
-        [DAC_type[i], DAC_label[i]] = instr['DAC'][i].split('_')
-        DAC[i] = im("pyqum.instrument.machine.%s" %DAC_type[i])
-        DAC_instance[i] = DAC[i].Initiate(which=DAC_label[i])
-        DAC[i].clock(DAC_instance[i], action=['Set', 'EFIXed', CLOCK_HZ])
-        DAC[i].clear_waveform(DAC_instance[i],'all')
-        DAC[i].alloff(DAC_instance[i], action=['Set',1])
+    for i_slot, channel_set in enumerate(DAC_CH_Matrix):
+        [DAC_type[i_slot], DAC_label[i_slot]] = instr['DAC'][i_slot].split('_')
+        DAC[i_slot] = im("pyqum.instrument.machine.%s" %DAC_type[i_slot])
+        DAC_instance[i_slot] = DAC[i_slot].Initiate(which=DAC_label[i_slot])
+        DAC[i_slot].clock(DAC_instance[i_slot], action=['Set', 'EFIXed', CLOCK_HZ])
+        DAC[i_slot].clear_waveform(DAC_instance[i_slot],'all')
+        DAC[i_slot].alloff(DAC_instance[i_slot], action=['Set',1])
         
         # PENDING: Extract the settings from the machine database instead.
-        if i==0: 
+        if i_slot==0: 
             markeroption = 7
             update_settings = dict(Master=True, trigbyPXI=2, markeroption=7) # First-in-line = Master (usually RO giving Trigger through CH-4)
         else: 
             markeroption = 0
             update_settings = dict(Master=False, trigbyPXI=2)
-        print(Fore.CYAN + "%s's setting: %s" %(instr['DAC'][i], update_settings))
+        print(Fore.CYAN + "%s's setting: %s" %(instr['DAC'][i_slot], update_settings))
 
         '''Prepare DAC:'''
-        dt = round(1/float(DAC[i].clock(DAC_instance[i])[1]['SRATe'])/1e-9, 2)
+        dt = round(1/float(DAC[i_slot].clock(DAC_instance[i_slot])[1]['SRATe'])/1e-9, 2)
         pulseq = pulser(dt=dt, clock_multiples=1, score="ns=%s"%ifperiod)
         # pulseq = pulser(dt, clock_multiples=1, score="ns=300000;FLAT/,3000,0.01;")
         pulseq.song()
         for channel in channel_set:
-            DAC[i].prepare_DAC(DAC_instance[i], int(channel), pulseq.totalpoints, update_settings=update_settings)
+            DAC[i_slot].prepare_DAC(DAC_instance[i_slot], int(channel), pulseq.totalpoints, update_settings=update_settings)
             ## JACKY
             print(Fore.BLUE +f"pulseq.totalpoints {pulseq.totalpoints}")
         for channel in channel_set:
-            DAC[i].compose_DAC(DAC_instance[i], int(channel), pulseq.music, [], markeroption) # we don't need marker yet initially
+            DAC[i_slot].compose_DAC(DAC_instance[i_slot], int(channel), pulseq.music, [], markeroption) # we don't need marker yet initially
             print(Fore.BLUE +f"len(pulseq.music) {len(pulseq.music)}")
 
         # Turn on all 4 channels:
-        DAC[i].alloff(DAC_instance[i], action=['Set',0])
-        DAC[i].ready(DAC_instance[i])
-        DAC[i].play(DAC_instance[i])
+        DAC[i_slot].alloff(DAC_instance[i_slot], action=['Set',0])
+        DAC[i_slot].ready(DAC_instance[i_slot])
+        DAC[i_slot].play(DAC_instance[i_slot])
     
     # ADC:
     [ADC_type, ADC_label] = instr['ADC'].split('_')
@@ -324,35 +324,35 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 for dcategory in d_setting.keys(): print(dcategory, d_setting[dcategory].keys())
 
                 # 1. Extract MACE-Command for DC:
-                for i, channel_set in enumerate(DC_CH_Matrix):
+                for i_slot, channel_set in enumerate(DC_CH_Matrix):
                     for channel in channel_set:
-                        MACE_DEFINED['DC-%s-%s'%(i+1,channel)] = "sweep:%s" %(d_setting['SG'][instr['SG'][i]][channel-1]['sweep']) # manually assign power for now
+                        MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)] = "sweep:%s" %(d_setting['SG'][instr['SG'][i_slot]][channel-1]['sweep']) # manually assign power for now
 
                 # 2. Extract MACE-Command for SG:
-                for i, channel_set in enumerate(SG_CH_Matrix):
+                for i_slot, channel_set in enumerate(SG_CH_Matrix):
                     for channel in channel_set:
-                        MACE_DEFINED['SG-%s-%s'%(i+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr['SG'][i]][channel-1]['freq'], 6) # manually assign power for now
+                        MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr['SG'][i_slot]][channel-1]['freq'], 6) # manually assign power for now
 
 
             # Basic MAC Control (Every-loop)
             # 1. MAC's Device: DC
-            for i, channel_set in enumerate(DC_CH_Matrix):
+            for i_slot, channel_set in enumerate(DC_CH_Matrix):
                 for channel in channel_set:
                     Mac = macer()
-                    Mac.execute(MACE_DEFINED['DC-%s-%s'%(i+1,channel)])
-                    DC[i].sweep(DC_instance[i], str(Mac.VALUES[Mac.KEYS.index("sweep")]), channel=channel)
+                    Mac.execute(MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)])
+                    DC[i_slot].sweep(DC_instance[i_slot], str(Mac.VALUES[Mac.KEYS.index("sweep")]), channel=channel)
                     Mac.close()
 
             # 2. MAC's Device: SG
-            for i, channel_set in enumerate(SG_CH_Matrix):
+            for i_slot, channel_set in enumerate(SG_CH_Matrix):
                 for channel in channel_set: 
-                    if 'XY' in SG_ROLE_Matrix[i][channel-1]: Compensate_MHz = XY_Compensate_MHz
-                    elif 'RO' in SG_ROLE_Matrix[i][channel-1]: Compensate_MHz = RO_Compensate_MHz
+                    if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz
+                    elif 'RO' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = RO_Compensate_MHz
                     else: Compensate_MHz = 0
                     Mac = macer()
-                    Mac.execute(MACE_DEFINED['SG-%s-%s'%(i+1,channel)])
-                    SG[i].frequency(SG_instance[i], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
-                    SG[i].power(SG_instance[i], action=['Set_%s'%channel, str(Mac.VALUES[Mac.KEYS.index("power")]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
+                    Mac.execute(MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)])
+                    SG[i_slot].frequency(SG_instance[i_slot], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
+                    SG[i_slot].power(SG_instance[i_slot], action=['Set_%s'%channel, str(Mac.VALUES[Mac.KEYS.index("power")]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
                     Mac.close()
 
             
@@ -432,14 +432,14 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
             DAC[i_slot_order].alloff(DAC_instance[i_slot_order], action=['Set',1])
             DAC[i_slot_order].close(DAC_instance[i_slot_order], which=DAC_label[i_slot_order])
-        for i, channel_set in enumerate(SG_CH_Matrix):
-            for channel in channel_set: SG[i].rfoutput(SG_instance[i], action=['Set_%s'%channel, 0])
-            SG[i].close(SG_instance[i], SG_label[i], False)
-        for i, channel_set in enumerate(DC_CH_Matrix): 
+        for i_slot, channel_set in enumerate(SG_CH_Matrix):
+            for channel in channel_set: SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, 0])
+            SG[i_slot].close(SG_instance[i_slot], SG_label[i_slot], False)
+        for i_slot, channel_set in enumerate(DC_CH_Matrix): 
             for channel in channel_set: 
-                DC[i].sweep(DC_instance[i], str(0), channel=channel)
-                DC[i].output(DC_instance[i], 0, channel)
-            DC[i].close(DC_instance[i], reset=True, which=DC_label[i])
+                DC[i_slot].sweep(DC_instance[i_slot], str(0), channel=channel)
+                DC[i_slot].output(DC_instance[i_slot], 0, channel)
+            DC[i_slot].close(DC_instance[i_slot], reset=True, which=DC_label[i_slot])
 
         if JOBID in g.queue_jobid_list:
             qout(queue, g.queue_jobid_list[0],g.user['username'])

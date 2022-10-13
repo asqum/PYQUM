@@ -87,11 +87,11 @@ def test(detail=True):
             # s.write("*SAV 00,1")
             model(s)
             
-            power(s, action=['Set_', '17.3dbm'])
+            power(s, action=['Set_1', '-17.5dbm'])
             power(s)
-            frequency(s, action=['Set_', '4.175GHz'])
+            frequency(s, action=['Set_1', '3.175GHz'])
             frequency(s)
-            rfoutput(s, action=['Set', 'ON'])
+            rfoutput(s, action=['Set_1', 'ON'])
             rfoutput(s)
             
         else: print(Fore.RED + "Basic IO Test")
@@ -101,4 +101,5 @@ def test(detail=True):
     close(s, 1, reset=state, mode='TEST')
     return
 
-# test()
+if __name__ == "__main__":
+    test()
