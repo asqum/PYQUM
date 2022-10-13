@@ -38,7 +38,7 @@ __email__ = "teikhui@phys.sinica.edu.tw"
 __status__ = "development"
 
 
-def get_Qubit_CV (samplename):
+def get_Qubit_CV (samplename)->bec.BackendCircuit:
     
     db = get_db()
     sample_cv = db.execute(
@@ -68,7 +68,8 @@ def get_Qubit_CV (samplename):
         #print(ch)
         qComps.append( qcp.from_dict( qc ) )
     mybec._qComps = qComps
-
+    # mybec.
+    
     return mybec
 
 # Qubit-Control:
@@ -91,8 +92,6 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     sample = get_status("MSSN")[session['user_name']]['sample']
     queue = get_status("MSSN")[session['user_name']]['queue']
     print(Back.GREEN + Fore.BLUE + "User [%s] is measuring sample [%s] on queue [%s]" %(session['user_name'],sample,queue))
-
-    
 
     # Check TASK LEVEL:
     Exp = macer()
@@ -159,7 +158,12 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     MACE_TEMPLATE = perimeter['MACE-JSON'] # already a DICT
     RJSON = loads(perimeter['R-JSON'].replace("'",'"'))
     # 1e. Derived perimeter(s) from above:
-    ifperiod = pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr], dt=1).totaltime
+    if TASK_LEVEL == "MAC":
+        ifperiod = pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr], dt=1).totaltime
+    if TASK_LEVEL == "EXP":
+        # for i, qubit_id in enumerate(Sample_Backend.q_reg["qubit"]):
+        d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True )
+        ifperiod = d_setting['total_time']
     ##JACKY 
     print(Fore.BLUE +f"totaltime(ifperiod) {ifperiod}")
     print(Fore.BLUE +f"SCORE_TEMPLATE {SCORE_TEMPLATE['CH%s'%RO_addr]}")
@@ -194,7 +198,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         DC_instance[i_slot] = DC[i_slot].Initiate(which=DC_label[i_slot]) # Only voltage mode (default) available / allowed in QPC
         for channel in channel_set:
             DC[i_slot].sweep(DC_instance[i_slot], str(0), channel=channel)
-            DC[i_slot].output(DC_instance[i_slot], 1, channel)
+            # DC[i_slot].output(DC_instance[i_slot], 1, channel)
 
     # SG for [XY, RO]:
     SG_qty = len(instr['SG'])
@@ -205,7 +209,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         SG_instance[i_slot] = SG[i_slot].Initiate(which=SG_label[i_slot])
         for channel in channel_set:
             SG[i_slot].power(SG_instance[i_slot], action=['Set_%s'%channel, str(-17) + ""]) # UNIT dBm NOT WORKING IN DDSLO
-            SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, 1])
+            # SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, 1])
 
     # DAC for [RO, XY]:
     DAC_qty = len(instr['DAC'])
@@ -341,6 +345,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     Mac = macer()
                     Mac.execute(MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)])
                     DC[i_slot].sweep(DC_instance[i_slot], str(Mac.VALUES[Mac.KEYS.index("sweep")]), channel=channel)
+                    DC[i_slot].output(DC_instance[i_slot], int(Mac.VALUES[Mac.KEYS.index("output")]), channel)
                     Mac.close()
 
             # 2. MAC's Device: SG
@@ -353,6 +358,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     Mac.execute(MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)])
                     SG[i_slot].frequency(SG_instance[i_slot], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
                     SG[i_slot].power(SG_instance[i_slot], action=['Set_%s'%channel, str(Mac.VALUES[Mac.KEYS.index("power")]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
+                    SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, int(Mac.VALUES[Mac.KEYS.index("output")])])
                     Mac.close()
 
             
