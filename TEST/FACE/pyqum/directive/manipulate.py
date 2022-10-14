@@ -241,15 +241,15 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         '''Prepare DAC:'''
         dt = round(1/float(DAC[i_slot].clock(DAC_instance[i_slot])[1]['SRATe'])/1e-9, 2)
         pulseq = pulser(dt=dt, clock_multiples=1, score="ns=%s"%ifperiod)
-        # pulseq = pulser(dt, clock_multiples=1, score="ns=300000;FLAT/,3000,0.01;")
         pulseq.song()
+        DAC_total_points, DAC_idle_music = pulseq.totalpoints, pulseq.music
         for channel in channel_set:
-            DAC[i_slot].prepare_DAC(DAC_instance[i_slot], int(channel), pulseq.totalpoints, update_settings=update_settings)
+            DAC[i_slot].prepare_DAC(DAC_instance[i_slot], int(channel), DAC_total_points, update_settings=update_settings)
             ## JACKY
-            print(Fore.BLUE +f"pulseq.totalpoints {pulseq.totalpoints}")
+            print(Fore.BLUE +f"DAC_total_points: {DAC_total_points}")
         for channel in channel_set:
-            DAC[i_slot].compose_DAC(DAC_instance[i_slot], int(channel), pulseq.music, [], markeroption) # we don't need marker yet initially
-            print(Fore.BLUE +f"len(pulseq.music) {len(pulseq.music)}")
+            DAC[i_slot].compose_DAC(DAC_instance[i_slot], int(channel), DAC_idle_music, [], markeroption) # we don't need marker yet initially
+            print(Fore.BLUE +f"len(DAC_idle_music) {len(DAC_idle_music)}")
 
         # Turn on all 4 channels:
         DAC[i_slot].alloff(DAC_instance[i_slot], action=['Set',0])
@@ -330,18 +330,20 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
                 d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), True )
                 Exp.close()
-                print(d_setting)
-                for dcategory in d_setting.keys(): print(dcategory, d_setting[dcategory].keys())
+                print(Fore.YELLOW + "d-setting: %s" %d_setting)
+                for dcategory in d_setting.keys(): 
+                    try: print("Category: %s, Names: %s" %(dcategory, [x for x in d_setting[dcategory].keys()]))
+                    except(AttributeError): print("Category: %s, Value: %s" %(dcategory, d_setting[dcategory]))
 
                 # 1. Extract MACE-Command for DC:
                 for i_slot, channel_set in enumerate(DC_CH_Matrix):
                     for channel in channel_set:
-                        MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)] = "sweep:%s" %(d_setting['SG'][instr['SG'][i_slot]][channel-1]['sweep']) # manually assign power for now
+                        MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)] = "sweep:%s" %(d_setting['DC'][instr['DC'][i_slot]][channel-1]['sweep']) # manually assign power for now
 
                 # 2. Extract MACE-Command for SG:
                 for i_slot, channel_set in enumerate(SG_CH_Matrix):
                     for channel in channel_set:
-                        MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr['SG'][i_slot]][channel-1]['freq'], 6) # manually assign power for now
+                        MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr['SG'][i_slot]][channel-1]['freq'], d_setting['SG'][instr['SG'][i_slot]][channel-1]['power']) # manually assign power for now
 
 
             # Basic MAC Control (Every-loop)
@@ -351,7 +353,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     Mac = macer()
                     Mac.execute(MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)])
                     DC[i_slot].sweep(DC_instance[i_slot], str(Mac.VALUES[Mac.KEYS.index("sweep")]), channel=channel)
-                    DC[i_slot].output(DC_instance[i_slot], int(Mac.VALUES[Mac.KEYS.index("output")]), channel)
+                    if TASK_LEVEL == "MAC": DC[i_slot].output(DC_instance[i_slot], int(Mac.VALUES[Mac.KEYS.index("output")]), channel)
+                    if TASK_LEVEL == "EXP": DC[i_slot].output(DC_instance[i_slot], 1, channel)
                     Mac.close()
 
             # 2. MAC's Device: SG
@@ -364,7 +367,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     Mac.execute(MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)])
                     SG[i_slot].frequency(SG_instance[i_slot], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
                     SG[i_slot].power(SG_instance[i_slot], action=['Set_%s'%channel, str(Mac.VALUES[Mac.KEYS.index("power")]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
-                    SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, int(Mac.VALUES[Mac.KEYS.index("output")])])
+                    if TASK_LEVEL == "MAC": SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, int(Mac.VALUES[Mac.KEYS.index("output")])])
+                    if TASK_LEVEL == "EXP": SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, 1])
                     Mac.close()
 
             
@@ -384,7 +388,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         CH_Pulse_SEQ = pulseq.music
 
                     if TASK_LEVEL == "EXP":
-                        CH_Pulse_SEQ = d_setting['DAC'][instr['DAC'][i_slot_order]][ch-1]
+                        try: CH_Pulse_SEQ = d_setting['DAC'][instr['DAC'][i_slot_order]][ch-1]
+                        except(KeyError): CH_Pulse_SEQ = DAC_idle_music # Idle music for channel not used in Q. Circuit but present in QPC-Wiring (for Qubits segregation)
 
                     '''
                     NOTE: 
@@ -397,10 +402,10 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     else: marker = 2 # for compatibility with TKAWG (outputs 2 markers for each channel)
 
                     DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), CH_Pulse_SEQ, [], marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
-                    print(Fore.BLUE +f"RUN len(CH_Pulse_SEQ) {len(CH_Pulse_SEQ)}")
+                    print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr['DAC'][i_slot_order]} CHANNEL {ch}")
 
                 DAC[i_slot_order].ready(DAC_instance[i_slot_order])
-                print('Waveform from Slot-%s is Ready!'%(i_slot_order+1))
+                print(Fore.GREEN + 'Waveform from DAC-%s (%s) is Ready!'%(i_slot_order+1, instr['DAC'][i_slot_order]))
                 
             # Basic Readout (Buffer Every-loop):
             # ADC 
