@@ -787,34 +787,47 @@ $('input.QuCTRL.adc-timsum.check').bind('click', function() {
 // 2. Check consistency between R-JSON & Score
 $('input.QuCTRL.setchannels.check').bind('click', function() {
     var RJSON = JSON.parse($('textarea.mani.QuCTRL#R-JSON').val());
-    var allscores = '';
+    var all_script = '';
     var allfilled = 1;
     var empty_values = 0;
 
     // accumulate all the scores
-    // $.each(Array(4), function(i,v){
     $.each(CH_Matrix.DAC, function(i,channel_set) {
         $.each(channel_set, function(j,channel) {
             let CH_Address = String(i+1) + "-" + String(channel);
-            allscores += $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val();
+            all_script += $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val();
             allfilled *= $('textarea.mani.QuCTRL.SCORE-JSON.channel-' + CH_Address).val().replaceAll(" ","").replaceAll("\n","").length;
         });
     });
-    allscores = allscores.replaceAll(" ","");
-    console.log("allscores's length: " + allscores.length);
+    $.each(CH_Matrix.SG, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = "SG-" + String(i+1) + "-" + String(channel);
+            all_script += $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val();
+            allfilled *= $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val().replaceAll(" ","").replaceAll("\n","").length;
+        });
+    });
+    $.each(CH_Matrix.DC, function(i,channel_set) {
+        $.each(channel_set, function(j,channel) {
+            let CH_Address = "DC-" + String(i+1) + "-" + String(channel);
+            all_script += $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val();
+            allfilled *= $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val().replaceAll(" ","").replaceAll("\n","").length;
+        });
+    });
+    all_script = all_script.replaceAll(" ","");
+    console.log("all_script's length: " + all_script.length);
 
     // 2.1. Make sure all {variables} in the SCOREs are ALL accounted for in R-JSON:
-    $.each(Object.keys(RJSON), function(i,v) { allscores = allscores.replaceAll("{"+v+"}",""); }); // take out all {R-JSON's keys aka variables}
+    $.each(Object.keys(RJSON), function(i,v) { all_script = all_script.replaceAll("{"+v+"}",""); }); // take out all {R-JSON's keys aka variables}
     // 2.2 Make sure there's NO EMPTY VALUES in R-JSON:
     $.each(Object.values(RJSON), function(i,v) { if (v.replaceAll(" ","").replaceAll(",","")=="") { empty_values += 1 }; });
     console.log("empty_values: " + empty_values);
 
     // VALIDATE RUN based on total absence of unsolicited {stranger}
-    if (allscores.includes("{") || allscores.includes("}") || allfilled==0 || empty_values>0) {
+    if (all_script.includes("{") || all_script.includes("}") || allfilled==0 || empty_values>0) {
         $('input.mani#QuCTRL-run').hide();
         var RJSON_status_color = "red";
         var RJSON_check_status = empty_values + " invalid values\n ALL variables accounted for: " 
-                                    + !Boolean(allscores.includes("{") || allscores.includes("}")) + "\nALL SCOREs filled up: " + Boolean(allfilled);
+                                    + !Boolean(all_script.includes("{") || all_script.includes("}")) + "\nALL SCRIPTs filled up: " + Boolean(allfilled);
     } else {
         $('input.mani#QuCTRL-run').show();
         var RJSON_status_color = "blue";

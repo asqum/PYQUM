@@ -160,23 +160,29 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     # 1e. Derived perimeter(s) from above:
     if TASK_LEVEL == "MAC":
         ifperiod = pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr], dt=1).totaltime
+        print(Fore.BLUE +f"SCORE_TEMPLATE {SCORE_TEMPLATE['CH%s'%RO_addr]}")
     if TASK_LEVEL == "EXP":
         # for i, qubit_id in enumerate(Sample_Backend.q_reg["qubit"]):
         d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True )
         ifperiod = d_setting['total_time']
     ##JACKY 
     print(Fore.BLUE +f"totaltime(ifperiod) {ifperiod}")
-    print(Fore.BLUE +f"SCORE_TEMPLATE {SCORE_TEMPLATE['CH%s'%RO_addr]}")
-
-    RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).IF_MHz_rotation # working with RO-MOD (up or down)
-    XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
-    print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
+    
+    if TASK_LEVEL == "MAC":
+        RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).IF_MHz_rotation # working with RO-MOD (up or down)
+        XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
+        print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
+    if TASK_LEVEL == "EXP":
+        # TODO: Get IF Compensate for RO to do Digital Homodyne
+        RO_Compensate_MHz = 0
+        XY_Compensate_MHz = 0
+    
     skipoints = 0
-    try: 
-        if (digital_homodyne=="i_digital_homodyne" or digital_homodyne=="q_digital_homodyne"): skipoints = int(ceil( 1 / abs(RO_Compensate_MHz) * 1000 ))
-    except: 
-        print(Fore.RED + "WARNING: INFINITE INTEGRATION IS NOT PRACTICAL!")
-    # print(Fore.CYAN + "Skipping first %s point(s)" %skipoints)
+    if TASK_LEVEL == "MAC":
+        if (digital_homodyne=="i_digital_homodyne" or digital_homodyne=="q_digital_homodyne"): 
+            try: skipoints = int(ceil( 1 / abs(RO_Compensate_MHz) * 1000 ))
+            except: print(Fore.RED + "WARNING: INFINITE INTEGRATION IS NOT PRACTICAL!")
+    print(Fore.CYAN + "Skipping first %s point(s)" %skipoints)
 
     # 2a. Basic corder / parameter(s):
     structure = corder['C-Structure'] + [k for k in RJSON.keys()]
@@ -322,7 +328,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # Expert EXP Control (Every-loop)
                 Exp = macer(commander=renamed_task)
                 Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
-                d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(Exp.VALUES[Exp.KEYS.index("Sequence_length")]), int(Exp.VALUES[Exp.KEYS.index("Qubit_ID")]), True ) ## TODO get RB MACER parameters
+                d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), True )
                 Exp.close()
                 print(d_setting)
                 for dcategory in d_setting.keys(): print(dcategory, d_setting[dcategory].keys())
