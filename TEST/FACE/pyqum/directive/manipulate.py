@@ -173,9 +173,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
         print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
     if TASK_LEVEL == "EXP":
-        # TODO: Get IF Compensate for RO to do Digital Homodyne
-        RO_Compensate_MHz = 0
-        XY_Compensate_MHz = 0
+        q_name = Sample_Backend.q_reg["qubit"][0]
+        channel_RO = Sample_Backend.get_channel_qPort( q_name, "ro_in")
+        RO_Compensate_MHz = channel_RO.paras["paras"]["freq_IF"]
+        channel_XY = Sample_Backend.get_channel_qPort( q_name, "xy")
+        XY_Compensate_MHz = channel_XY.paras["paras"]["freq_IF"]
     
     skipoints = 0
     if TASK_LEVEL == "MAC":
