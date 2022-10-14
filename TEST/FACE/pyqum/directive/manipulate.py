@@ -171,19 +171,22 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     if TASK_LEVEL == "MAC":
         RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).IF_MHz_rotation # working with RO-MOD (up or down)
         XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
+        DDC_RO_Compensate_MHz = RO_Compensate_MHz
         print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
     if TASK_LEVEL == "EXP":
+        RO_Compensate_MHz = 0
+        XY_Compensate_MHz = 0
+        # For Digital Down Conversion:
         q_name = Sample_Backend.q_reg["qubit"][0]
         channel_RO = Sample_Backend.get_channel_qPort( q_name, "ro_in")
-        RO_Compensate_MHz = channel_RO.paras["paras"]["freq_IF"]
-        channel_XY = Sample_Backend.get_channel_qPort( q_name, "xy")
-        XY_Compensate_MHz = channel_XY.paras["paras"]["freq_IF"]
+        DDC_RO_Compensate_MHz = channel_RO.paras["freq_IF"] *1000
+        # channel_XY = Sample_Backend.get_channel_qPort( q_name, "xy")
+        # XY_Compensate_MHz = channel_XY.paras["paras"]["freq_IF"]
     
     skipoints = 0
-    if TASK_LEVEL == "MAC":
-        if (digital_homodyne=="i_digital_homodyne" or digital_homodyne=="q_digital_homodyne"): 
-            try: skipoints = int(ceil( 1 / abs(RO_Compensate_MHz) * 1000 ))
-            except: print(Fore.RED + "WARNING: INFINITE INTEGRATION IS NOT PRACTICAL!")
+    if (digital_homodyne=="i_digital_homodyne" or digital_homodyne=="q_digital_homodyne"): 
+        try: skipoints = int(ceil( 1 / abs(DDC_RO_Compensate_MHz) * 1000 ))
+        except: print(Fore.RED + "WARNING: INFINITE INTEGRATION IS NOT PRACTICAL!")
     print(Fore.CYAN + "Skipping first %s point(s)" %skipoints)
 
     # 2a. Basic corder / parameter(s):
@@ -391,7 +394,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
                     if TASK_LEVEL == "EXP":
                         try: CH_Pulse_SEQ = d_setting['DAC'][instr['DAC'][i_slot_order]][ch-1]
-                        except(KeyError): CH_Pulse_SEQ = DAC_idle_music # Idle music for channel not used in Q. Circuit but present in QPC-Wiring (for Qubits segregation)
+                        except(KeyError): 
+                            # NOTE: TO BE ADDED IN D-SETTINGS LATER ON
+                            CH_Pulse_SEQ = DAC_idle_music # Idle music for channel not used in Q. Circuit but present in QPC-Wiring (for Qubits segregation)
 
                     '''
                     NOTE: 
@@ -408,6 +413,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
                 DAC[i_slot_order].ready(DAC_instance[i_slot_order])
                 print(Fore.GREEN + 'Waveform from DAC-%s (%s) is Ready!'%(i_slot_order+1, instr['DAC'][i_slot_order]))
+                # input("STAGE-3 TEST ON RB, PRESS ENTER TO PROCEED: ")
                 
             # Basic Readout (Buffer Every-loop):
             # ADC 
@@ -420,7 +426,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     if digital_homodyne != "original": 
                         for r in range(recordsum):
                             trace_I, trace_Q = DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[0], DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[1]
-                            trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
+                            trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
                             DATA[r,:] = array([trace_I, trace_Q]).reshape(2*TOTAL_POINTS) # back to interleaved IQ-Data
                             if not r%1000: print(Fore.YELLOW + "Shooting %s times" %(r+1))
                     DATA = mean(DATA.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1)
@@ -429,7 +435,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0)
                     if digital_homodyne != "original": 
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
-                        trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
+                        trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
                         DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data
             
             except(ValueError):

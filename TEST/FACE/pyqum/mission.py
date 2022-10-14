@@ -1605,7 +1605,7 @@ def mani_QuCTRL_access():
     # Measurement details:
     wmoment = int(request.args.get('wmoment'))
     samplename=get_status("MSSN")[session['user_name']]['sample']
-    try: JOBID = jobsearch(dict(samplename=samplename, task="Single_Qubit", dateday=M_QuCTRL[session['user_name']].day, wmoment=wmoment))
+    try: JOBID = jobsearch(dict(samplename=samplename, task=mani_TASK[session['user_name']], dateday=M_QuCTRL[session['user_name']].day, wmoment=wmoment))
     except: JOBID = 0 # Old version of data before job-queue implementation
     QuCTRL_jobid[session['user_name']] = JOBID
     M_QuCTRL[session['user_name']].selectmoment(wmoment)
@@ -1647,6 +1647,7 @@ def mani_QuCTRL_access():
         pdata[params] = waveform(corder[params]).data[0:c_QuCTRL_progress[session['user_name']][SQ_CParameters[session['user_name']].index(params)]+1]
     # print("RECORD_TIME_NS's parameter-data: %s" %pdata['RECORD_TIME_NS'])
 
+    print(Fore.LIGHTRED_EX + "CHECK JOBID: %s" %JOBID)
     note = jobsearch(JOBID, mode="note")
 
     histories = get_histories(samplename, str(JOBID))
@@ -1917,14 +1918,14 @@ def get_measurementObject( measurementType ):
         mObj.corder["C-Structure"] = ["Repeat", "Flux-Bias", "XY-Frequency", "XY-Power", "S-Parameter", "IF-Bandwidth", "Frequency", "Power"]
         mObj.corder["Repeat"] = "OPT,"
         return mObj
-    def single_qubit ():
+    def QuCTRL ():
         mObj = M_QuCTRL[session['user_name']]
         return mObj
     measurementObject = {
         'fresp': frequency_response,
         'cwsweep': CW_sweep,
         # for "manipulate" category, the task-name will be aligned between PY and JS: 
-        'Single_Qubit': single_qubit
+        mani_TASK[session['user_name']]: QuCTRL # TODO: Notify alignment with Benchmark (ATTN: Jacky)
         
     }
     return measurementObject[measurementType]()

@@ -177,6 +177,7 @@ $(document).on('click', 'div.buttons a.all-mssn-access', function() {
         // Click on TASK-TAB:
         $('button.access#' + data.tdmpack.task).click();
         // Posting Notification:
+        $('input.notification').hide();
         $('input.notification#' + data.tdmpack.task + '_notification').show().val('JOB #' + jobid + ' > ' + data.tdmpack.dateday + ' > ' + data.tdmpack.wmoment);
     });
     return false;

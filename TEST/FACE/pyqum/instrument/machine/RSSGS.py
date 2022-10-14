@@ -87,7 +87,7 @@ def test(detail=True):
             # s.write("*SAV 00,1")
             model(s)
             
-            power(s, action=['Set_1', '-17.5dbm'])
+            power(s, action=['Set_1', '-37.1dbm'])
             power(s)
             frequency(s, action=['Set_1', '3.175GHz'])
             frequency(s)
