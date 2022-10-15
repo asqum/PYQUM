@@ -247,7 +247,7 @@ def final_check(terget_freq,sub,freq):
 # 給出Ec及狀態,
 def cal_Ec_GHz(target_freq,sub,freq):
     sort_freq = sorted(target_freq,reverse = True)
-    target_freq = final_check(sort_freq,sub,freq)
+    target_freq = final_check(sort_freq,sub,freq)[:3]
 
     if len(target_freq)>1 :
         if len(target_freq)>1:
@@ -476,7 +476,7 @@ class Db_Scan:
         return self.answer
                                                                                          
     def give_result(self):
-        farest = freq2idx(self.target_freq,self.freq)[:3]
+        farest = freq2idx(self.target_freq,self.freq)
         self.plot_items = {
             'Targets':self.sub[farest],
             'Targets_Freq':self.freq[farest],

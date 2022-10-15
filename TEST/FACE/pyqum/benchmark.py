@@ -1372,12 +1372,16 @@ class QubitFreq_Compa:
             with_Ec = rm_empty(power_with_Ec)
             Ec_collector = []
             fq_collector = []
-            for powa in with_Ec:
-                Ec_collector.append(self.fqS[powa][0]-self.fqS[powa][1])
-                fq_collector.append(self.fqS[powa][0])
-            init()    
-            print(Style.BRIGHT+Fore.YELLOW+'After compare different power, there is a ordinary Ec & Fq with average!\n'+Style.RESET_ALL)
-            compa_ans = {'Ec_avg':mean(Ec_collector)*2,'Fq_avg':mean(fq_collector)} 
+            if len(with_Ec) != 0:
+                for powa in with_Ec:
+                    Ec_collector.append(self.fqS[powa][0]-self.fqS[powa][1])
+                    fq_collector.append(self.fqS[powa][0])
+                init()    
+                print(Style.BRIGHT+Fore.YELLOW+'After compare different power, there is a ordinary Ec & Fq with average!\n'+Style.RESET_ALL)
+                compa_ans = {'Ec_avg':mean(Ec_collector)*2,'Fq_avg':mean(fq_collector)}  
+            else:
+                print(Style.BRIGHT+Fore.YELLOW+'After compare different power, there "only exist Fq" with average!\n'+Style.RESET_ALL)
+                compa_ans = {'Ec_avg':array([]),'Fq_avg':mean(high_freq_group)}
         else:
             print(Style.BRIGHT+Fore.YELLOW+'After compare different power, there "only exist Fq" with average!\n'+Style.RESET_ALL)
             compa_ans = {'Ec_avg':array([]),'Fq_avg':mean(high_freq_group)}
