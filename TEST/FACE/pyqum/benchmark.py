@@ -1567,13 +1567,15 @@ class AutoScan1Q:
         dataframe = Load_From_pyqum(jobid).load()
         CW = QubitFreq_Compa(dataframe)
         self.qubit_info = CW.do_analysis() #examine the input data form is dataframe because Series cannot reshape 
-        if plot_ornot:
+        if not plot_ornot:
+            self.readout_para[cavity_freq]["qubit"] = self.qubit_info['Fq_avg']
+            self.readout_para[cavity_freq]["Ec"] = self.qubit_info['Ec_avg']
+            self.readout_para[cavity_freq]["acStark"] = self.qubit_info['acStark_power']
+        else:
             self.CW_plot_items = CW.plot_items
         print(self.qubit_info)                                     #0820update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
 		# 0820 update
-        # self.readout_para[cavity_freq]["qubit"] = self.qubit_info['Fq_avg']
-        # self.readout_para[cavity_freq]["Ec"] = self.qubit_info['Ec_avg']
-        # self.readout_para[cavity_freq]["acStark"] = self.qubit_info['acStark_power']
+        # 
 
 def save_class(item,path = "save.pickle"):
     with open(path, 'wb') as f:

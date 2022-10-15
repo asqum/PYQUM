@@ -196,3 +196,4 @@ def get_xypower():
     return json.dumps({'xy_power':xy_powa}, cls=NumpyEncoder)
 
 #----------------------------test-------------------------------------------------  
+
