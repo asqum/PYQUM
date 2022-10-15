@@ -30,18 +30,39 @@
   <section class="the-box">
     <!--Measurement settings-->
     <div  class="MS-container"  id="MS-content" >
-      <div class="content-title"><h5>Measurement Settings</h5>
-        <label for="name" class="set-pad">
-          <div id="dc-channel">•DC-Channel:</div>
-          <input id="dc-channel-inp" value="1">
-          <div id="CPW-num">•Designed CPW numbers:</div>
-          <input id="CPw-num-inp" placeholder="OPT">
-          <div id="port">•Measurement port:</div>
-          <input id="port-inp" value="S21,">
-          <button type="submit" id="Start-measure-but">Start</button>
+      <div class="content-title">
+        <label>Measurement Settings
+        <button type="submit" id="Start-CS-but">Initialize</button>
         </label>
       </div>
+      
+      <div class="set-pad">
+        <label id="CPw-num-text">Designed CPW Number:<input id="CPw-num-inp" placeholder="3"/></label>
+        
+        <label id="port-text">I/O Port:<input id="port-inp" placeholder="S21," /></label>
 
+        <label id="permission-text">Permission:<input id="permission-inp" placeholder="Enforce" /></label>
+
+        <label id="scanmode-text">Mode:
+          <select id="scan-mode">
+            <option>Qubits</option>
+            <option>Cavities</option>
+          </select>
+        </label>
+    
+      </div>
+      
+
+      <div id="measure-pad">   
+        
+        <button id="get-cav-status">History</button>
+        <label id="measure-text">Target:
+          <select id="cavity-select-MS"></select>
+        </label>
+        <label id="dc-channel-text" >DC-Chennel:<input id="dc-channel-inp" placeholder="1"/></label>
+        <button id="Start-measure-but">Measure</button>
+      </div>
+      
       <h3 class="sub-content-title">Measurement Results</h3>
       <div class="sectitle"><div id="result" style="display:none;"></div></div>
     </div>

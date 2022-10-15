@@ -65,77 +65,107 @@ body {
 .set-pad{
     position:absolute;
     top:20%;
+    left:0;
+    width:100%;
+    height:10%;
+    text-align: center;
+}
+#measure-pad{
+    position:absolute;
+    top:30%;
     right:0;
     width:100%;
-    height:50%;
+    height:10%;
+    text-align: center;
 }
-#dc-channel{
-    position:absolute;
-    left:-60%;
-    top:170%;
+#dc-channel-text{
+    position:relative;
+    left:3%;
     font-size:1.2rem;
-    width:30%;
+
+    width:50%;
+    text-align: left;
 }
+
 #dc-channel-inp{
-    position:absolute;
+    
     border:0 none;
     background:rgb(146, 146, 146);
-    left: -30%;
-    top:260%;
     border-radius: 0.4rem;
-    width:15%;
-    height:70%;
+    width:5%;
+    height:40%;
     font-size: 1.2rem;
     text-align: center;
 }
-#CPW-num{
-    position:absolute;
-    left:-5%;
-    top:170%;
+#CPW-num-text{
+    position:relative;
+    right:6%;
     font-size:1.2rem;
-    width:45%;
+    width:55%;
+    text-align: left;
 }
 #CPW-num-inp{
-    position:absolute;
+    
     border:0 none;
     background:rgb(146, 146, 146);
-    left:43%;
-    top:260%;
+
     border-radius: 0.4rem;
-    width:15%;
-    height:70%;
+    width:5%;
+    height:30%;
     font-size: 1.2rem;
     text-align: center;
 }
-#port{
-    position:absolute;
-    left:65%;
-    top:170%;
+#port-text{
+    position:relative;
+    
     font-size:1.2rem;
-    width:40%;
+    width:30%;
+    text-align: left;
 }
 #port-inp{
-    position:absolute;
+    
     border:0 none;
     background:rgb(146, 146, 146);
-    left: 105%;
-    top:260%;
+    
     border-radius: 0.4rem;
-    width:15%;
-    height:70%;
+    width:5%;
+    height:30%;
     font-size: 1.2rem;
     text-align: center;
 }
 #dc-channel-inp:hover,#CPW-num-inp:hover,#port-inp:hover {
     border: 0.2rem solid rgb(255, 0, 30);
 }
+
+#permission-text{
+    position:relative;
+    left:3%;
+    font-size:1.2rem;
+    width:35%;
+    text-align: left; 
+    color:red;
+}
+#permission-inp{
+    /*border:0.25rem solid rgb(255, 0, 30);*/
+    background:rgb(146, 146, 146);
+    border-radius: 0.4rem;
+    width:5%; 
+    height:30%;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+#permission-inp:hover{
+    border: 0.2rem solid rgb(68, 255, 0);
+}
+
 .sectitle{
     position:relative;
-    top:23%;
+    top:25%;
     left:0%;
     font-size:1.4rem;
     width:75%;
-    height:65%;
+    height:55%;
     text-align: center;
 }
 #result{
@@ -143,18 +173,18 @@ body {
     top:0.5%;
     left:15%;
     width:100%;
-    height:75%;
+    height:80%;
     text-align: left;  
     border: 0.2rem solid rgb(255, 198, 198);
+    font-size: 1rem;
 }
 .sub-content-title{
     position:relative;
-    top:23%;
+    top:27%;
     left:40%;
     font-size:1.4rem;
     width: 30%;
 }
-
 input[id='jobID-CS'] {
     background:#ccc; 
     border:0 none;
@@ -381,11 +411,4 @@ label[class='cavity-select-text'] {
 }
 #jobid-CW:hover{
     border: 0.2rem solid rgb(255, 0, 30);
-}
-.sweep-operation-log{
-    width: 40%;
-    height:7%;
-    position: relative;
-    top:10%;
-    left:28%;
 }
