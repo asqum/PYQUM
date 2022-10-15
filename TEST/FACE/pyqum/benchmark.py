@@ -1478,7 +1478,8 @@ class Quest_command:
             raise ValueError("Flux is out of range with "+select_flux)
         jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,f_dress =f_dress,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
-
+# first version
+'''
 class AutoScan1Q:
     def __init__(self,sparam="S21,",dcsweepch = "1",designed=""):
         self.jobid_dict = {"PowerDepend":0,"FluxDepend":0,"QubitSearch":0}
@@ -1576,7 +1577,7 @@ class AutoScan1Q:
         print(self.qubit_info)                                     #0820update QubitFreq_Compa.do_analysis() return form: {'Ec_avg':Float_Number or array([]),'Fq_avg':Float_Number,'acStark_power':array([poerw_1,...]) or array([]) }
 		# 0820 update
         # 
-
+'''
 def save_class(item,path = "save.pickle"):
     with open(path, 'wb') as f:
         dump(item, f)
@@ -1599,3 +1600,122 @@ def load_class(path = "save.pickle"):
     # id = int(input("id? : "))
     # pyqum_path,task = jobid_search_pyqum(id)
     # amp_data,jobid  = pyqum_load_data(pyqum_path)
+
+# second version
+from sqlite3 import connect
+from pandas import read_sql_query
+import ast
+sql_path = r'C:\Users\ASQUM\HODOR\CONFIG\pyqum.sqlite'
+class AutoScan1Q:
+    def __init__(self,sparam="S21,",dcsweepch = "1",designed=""):
+        self.jobid_dict = {"PowerDepend":0,"FluxDepend":0,"QubitSearch":0}
+        self.CS_jobid = 0
+        self.readout_para = {}
+        self.sparam = sparam
+        self.dcsweepch = dcsweepch
+        if designed != "":
+            self.designed = int(designed)
+        else:
+            self.designed = 0
+
+
+    def write_specification(specifications):
+        db = connect(sql_path)
+        samplename = get_status("MSSN")[session['user_name']]['sample']
+        # samplename = "2QAS-19-3"
+        db.execute('UPDATE sample SET specifications = ? WHERE samplename = ?', (specifications,samplename))
+        db.commit()
+        db.close()
+
+    def read_specification(self):
+        connection = connect(sql_path)
+        sample = read_sql_query("SELECT * FROM sample", connection)
+        samplename = get_status("MSSN")[session['user_name']]['sample']
+        # samplename = "2QAS-19-3"
+        specifications = sample[sample['samplename']==samplename]['specifications'].iloc[0]
+        if specifications != "":
+            spec_dict = ast.literal_eval(specifications)
+            step_list = spec_dict["step"].split("-")
+            if self.sparam == "" and self.dcsweepch == "":
+                self.sparam = spec_dict["wiring"]["I/O"]
+                self.dcsweepch = spec_dict["wiring"]["dc_chennel"]
+                self.cavity_list = spec_dict["results"]["CavitySearch"]["region"]
+
+
+        else:
+            spec_dict = {}
+            step_list = []
+        return spec_dict, step_list
+
+        
+    def cavitysearch(self,jobid_check):
+        if jobid_check == "":
+            jobid = Quest_command(self.sparam).cavitysearch(self.dcsweepch)
+            plot_ornot = 0
+            self.CS_jobid = jobid
+        else:
+            jobid = jobid_check
+            plot_ornot = 1
+        print("do measurement\n")
+        dataframe = Load_From_pyqum(jobid).load()
+        CS = CavitySearch(dataframe)
+        
+        self.cavity_list = CS.do_analysis(self.designed) #model h5 cannot import <- 0818 update, no need it anymore
+        self.total_cavity_list = list(self.cavity_list.keys())
+        if plot_ornot:
+            self.CS_plot_items = CS.give_plot_info()
+            self.CS_overview = CS.overview    # ena scan results
+
+
+        
+    
+    def powerdepend(self,cavity_freq,jobid_check):
+        if jobid_check == "":
+            jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cavity_freq],add_comment="with Cavity "+str(cavity_freq))
+            plot_ornot = 0
+            self.jobid_dict["PowerDepend"] = jobid
+        else:
+            jobid = jobid_check
+            plot_ornot = 1
+        
+        dataframe = Load_From_pyqum(jobid).load()
+        PD = PowerDepend(dataframe)
+        self.low_power, self.high_power = PD.do_analysis() #pass
+        print("Select Power : %f"%self.low_power)
+        if plot_ornot:	
+            self.PD_plot_items = PD.give_plot_info()    # assume the function named `get_plot_items()`
+
+
+    def fluxdepend(self,cavity_freq, f_bare,jobid_check):
+        if jobid_check == "":
+            jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_freq],select_powa=self.low_power,add_comment="with Cavity "+str(cavity_freq))
+            plot_ornot = 0
+            self.jobid_dict["FluxDepend"] = jobid
+        else:
+            jobid = jobid_check
+            plot_ornot = 1
+        
+        dataframe = Load_From_pyqum(jobid).load()
+        FD = FluxDepend(dataframe)
+        self.wave = FD.do_analysis(f_bare) #pass
+        print(self.wave)#{"f_dress":float(f_dress/1000),"f_bare":float(f_bare/1000),"f_diff":float((f_dress-f_bare)/1000),"offset":float(offset),"period":float(period)}
+        
+        if plot_ornot:	
+            self.FD_plot_items = FD.give_plot_info()  # assume the function named `get_plot_items()`
+    
+    def qubitsearch(self,cavity_freq,jobid_check):
+        if jobid_check == "":
+            jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"])+'e-6',f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_freq))
+            plot_ornot = 0
+            self.jobid_dict["QubitSearch"] = jobid
+        else:
+            jobid = jobid_check
+            plot_ornot = 1    
+        
+        dataframe = Load_From_pyqum(jobid).load()
+        CW = QubitFreq_Compa(dataframe)
+        self.qubit_info = CW.do_analysis() #examine the input data form is dataframe because Series cannot reshape 
+
+        if plot_ornot:	
+            self.CW_plot_items = CW.plot_items
+        print(self.qubit_info) 
