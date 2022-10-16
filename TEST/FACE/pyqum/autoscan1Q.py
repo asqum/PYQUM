@@ -138,7 +138,7 @@ def measure_procedure():
                 first_run = 1
     
     specifications,_ = routine.read_specification()
-    return json.dumps(specifications["results"], cls=NumpyEncoder)
+    return json.dumps({"results":specifications["results"],"jobids":specifications["JOBIDs"]}, cls=NumpyEncoder)
 
 
 

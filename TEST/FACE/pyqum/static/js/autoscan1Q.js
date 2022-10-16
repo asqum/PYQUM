@@ -9,6 +9,8 @@ $(document).ready(function(){
     MS_process.addEventListener('click' , measure);
     var get_cav_status_process = document.getElementById("get-cav-status");
     get_cav_status_process.addEventListener('click' , get_cav_status);
+    var measure_but_abler = document.getElementById("scan-mode");
+    measure_but_abler.addEventListener('change' , able_disable_measure_button());
     //hash to the MS window
     var showcontent_MS = document.getElementById("showcontent-MS");
     showcontent_MS.addEventListener('click' , show_content_MS);
@@ -164,7 +166,15 @@ function reset_address(){
     history.go(0);
 };
 
-
+function able_disable_measure_button(){
+    let scan_mode = document.getElementById("scan-mode").value;
+    const measure_but = document.getElementById("Start-measure-but");
+    if(scan_mode == "Qubits"){
+        measure_but.disabled = false;
+    }else{
+        measure_but.disabled = true;
+    };
+};
 
 //-----------------Measurement settings-------------------
 
@@ -183,7 +193,7 @@ function get_cav_status(){
 var cs_result_set = {};
 var CS_jobid = 0;
 var PD_jobids = {}; //{'5487 MHz':5050,...}
-var FD_jobids = {}; // smae above
+var FD_jobids = {}; // same above
 var CW_jobids = {}; // same above
 
 
@@ -231,8 +241,6 @@ function initialize_cs(){
     cs_ploting(specific_jobid="");
     if(scan_mode == 'Cavities'){
         measure();
-        const measure_but = document.getElementById("Start-measure-but");
-        measure_but.disabled = true;
     };
     document.getElementById('permission-text').reset()
     $.ajaxSettings.async = true;
@@ -251,7 +259,9 @@ function measure(){
         target: JSON.stringify(target_cav),
         dc_chennel: JSON.stringify(dc_ch),
     }, function (measure_result) {   //need to check this is correct or not
-        final_result_set = measure_result;
+        final_result_set = measure_result["results"];
+        jobid_set = measure_result["jobids"];
+        jobids_classifier(jobids_set);
         document.getElementById('permission-text').reset()
         log_print( "Measurement finish!" );
     });
@@ -259,6 +269,12 @@ function measure(){
     $.ajaxSettings.async = true;
 }
 
+function jobids_classifier(jobids_set){
+    CS_jobid = jobids_set['CavitySearch']
+    PD_jobids = jobids_set['PowerDepend']
+    FD_jobids = jobids_set['FluxDepend']
+    CW_jobids = jobids_set['QubitSearch']
+}
 
 
 
@@ -271,10 +287,7 @@ function search_jobids(){
     log_print("JOBIDs Loading...");
     $.getJSON( '/autoscan1Q/get_jobid',{  
     }, function (JOBIDs){
-        CS_jobid = JOBIDs['CavitySearch']
-        PD_jobids = JOBIDs['PowerDepend']
-        FD_jobids = JOBIDs['FluxDepend']
-        CW_jobids = JOBIDs['QubitSearch'] 
+        jobids_classifier(JOBIDs)
     });
     log_print("Results Loading...");
     $.getJSON( '/autoscan1Q/get_results',{  
