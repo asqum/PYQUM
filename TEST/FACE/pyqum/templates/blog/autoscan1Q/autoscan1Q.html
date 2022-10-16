@@ -14,6 +14,7 @@
 <header>
   <h1 class="title">SingleQubit Automated Measurement Report</h1>
   <div id="status">Status NOW:<span id="progress_report_block">Welcome!</span></div>
+  <form id="permission-text">Permission:<input id="permission-inp" placeholder="Enforce" /></form>
   <div class="loading" id="spinner" style="visibility:hidden;">Loading&#8230;</div>
   <button class='refresh-button' id="refresh">🔄</button>
   <button id="dmbutton" class="button-d" value="0">Dark</button>
@@ -41,8 +42,6 @@
         
         <label id="port-text">I/O Port:<input id="port-inp" placeholder="S21," /></label>
 
-        <label id="permission-text">Permission:<input id="permission-inp" placeholder="Enforce" /></label>
-
         <label id="scanmode-text">Mode:
           <select id="scan-mode">
             <option>Qubits</option>
@@ -62,7 +61,7 @@
         <label id="dc-channel-text" >DC-Chennel:<input id="dc-channel-inp" placeholder="1"/></label>
         <button id="Start-measure-but">Measure</button>
       </div>
-      
+
       <h3 class="sub-content-title">Measurement Results</h3>
       <div class="sectitle"><div id="result" style="display:none;"></div></div>
     </div>

@@ -134,29 +134,30 @@ body {
     text-align: center;
 }
 #dc-channel-inp:hover,#CPW-num-inp:hover,#port-inp:hover {
-    border: 0.2rem solid rgb(255, 0, 30);
+    border: 0.1rem solid rgb(255, 0, 30);
 }
 
 #permission-text{
-    position:relative;
-    left:3%;
+    position:fixed;
+    top:13%;
+    left:1%;
     font-size:1.2rem;
-    width:35%;
+    width:25%;
     text-align: left; 
     color:red;
 }
 #permission-inp{
-    /*border:0.25rem solid rgb(255, 0, 30);*/
+    border:0 none;
     background:rgb(146, 146, 146);
     border-radius: 0.4rem;
-    width:5%; 
+    width:44%; 
     height:30%;
     font-size: 1.2rem;
     text-align: center;
 }
 
 #permission-inp:hover{
-    border: 0.2rem solid rgb(68, 255, 0);
+    border: 0.1rem solid rgb(68, 255, 0);
 }
 
 .sectitle{

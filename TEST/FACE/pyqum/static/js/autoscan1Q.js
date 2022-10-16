@@ -12,7 +12,7 @@ $(document).ready(function(){
     var refresh= document.getElementById("refresh");
     refresh.addEventListener('click' , reset_address);
     var search_process = document.getElementById("search-jobid");
-    search_process.addEventListener('click' ,function(){gaussian_fitting(designed="",specific_jobid="");});//gaussian_fitting
+    search_process.addEventListener('click' ,search_jobids);//gaussian_fitting
     // 畫出baseline
     var fig_CS = document.getElementById("CS-search");
     fig_CS.addEventListener('click' , get_plot1D_CS);
@@ -105,7 +105,7 @@ function darkMode() {
     };
     dark_plot();
     if(document.getElementById('search-jobid').value==='1'){
-        generate_result_span(cavities_plot); 
+        generate_result_span(); 
     };
 };
 
@@ -141,6 +141,9 @@ function show_content(but_id,content_id){
         window.location.hash = "#"+content_id;
     };
 };
+function show_content_MS(){
+    window.location.hash = "#MS-content";
+}
 
 //重置量測參數
 function reset_paras(where){
@@ -163,11 +166,15 @@ function reset_address(){
 
 
 // results container
-var final_result_set = {};
+var cs_result_set = {};
+var CS_jobid = 0;
+var PD_jobids = {}; //{'5487 MHz':5050,...}
+var FD_jobids = {}; // smae above
+var CW_jobids = {}; // same above
 
 
 // measurement settings
-
+/*
 // work independently
 function start_measure(){
     $.ajaxSettings.async = false;
@@ -188,23 +195,60 @@ function start_measure(){
     gaussian_fitting(designed,specific_jobid="");
     $.ajaxSettings.async = true;
 }
-
-
-function show_content_MS(){
-    window.location.hash = "#MS-content";
+*/
+// do cavitysearch to initialize first
+function initialize_cs(){
+    $.ajaxSettings.async = false;
+    log_print("Start CavitySearch by Bot ")
+    let port = document.getElementById('port-inp').value;
+    let designed = document.getElementById('CPw-num-inp').value;
+    let permission = document.getElementById('permission-inp').value;
+    let scan_mode = document.getElementById("scan-mode").value;
+    $.getJSON( '/autoscan1Q/initialize-CS',{  
+        access: JSON.stringify(permission),
+        inout_port: JSON.stringify(port), 
+        designed: JSON.stringify(designed),
+        mode: JSON.stringify(scan_mode),
+    }, function (measure_result) {   //need to check this is correct or not
+        cs_result_set = measure_result["answer"];
+        CS_jobid = measure_result["jobid"]
+        log_print( "Measurement finish!" );
+    });
+    cs_ploting(specific_jobid="");
+    document.getElementById('permission-text').reset()
+    $.ajaxSettings.async = true;
 }
+
+var final_result_set = {};
+// PD,FD,2tone by a select cavity
+function measure(){
+    $.ajaxSettings.async = false;
+    let dc_ch = document.getElementById('dc-channel-inp').value;
+    let permission = document.getElementById('permission-inp').value;
+    let target_cav = document.getElementById("cavity-select-MS").value.slice(3);
+    log_print("Start Measure by Bot ")
+    $.getJSON( '/autoscan1Q/MeasureByCavity',{  
+        access: JSON.stringify(permission),
+        target: JSON.stringify(target_cav),
+        dc_chennel: JSON.stringify(dc_ch),
+    }, function (measure_result) {   //need to check this is correct or not
+        final_result_set = measure_result;
+        document.getElementById('permission-text').reset()
+        log_print( "Measurement finish!" );
+    });
+    generate_result_span();
+    $.ajaxSettings.async = true;
+}
+
+
+
 
 //---------------------Search JOBID--------------------------
 // do first 
 
-
-var CS_jobid = 0;
-var PD_jobids = {}; //{'5487 MHz':5050,...}
-var FD_jobids = {}; // smae above
-var CW_jobids = {}; // same above
-
-
 function search_jobids(){
+    let cpw_num = document.getElementById('CPw-num-inp').value;
+    final_result_set = {};
     log_print("JOBIDs Loading...");
     $.getJSON( '/autoscan1Q/get_jobid',{  
     }, function (JOBIDs){
@@ -218,42 +262,44 @@ function search_jobids(){
     }, function (results){
         final_result_set = results;
     });
-    genopt (PD_jobids);
+    genopt (PD_jobids,mode="ordinary");
     document.getElementById('search-jobid').setAttribute('value','1')
+    cs_ploting(designed=cpw_num);
 };
 
 var cavities_plot = {};
 var CS_overview = {};
 
-function gaussian_fitting(designed="",specific_jobid=""){
+function cs_ploting(designed="",specific_jobid=""){
     if (specific_jobid===""){
         let spinner = document.getElementById("spinner");
-        log_print("Start Gaussian fitting wait plz...");
+        log_print("Construct figure wait plz...");
         let where = "CS";
         spinner.style.visibility = "visible";
         spinner.style.opacity = '1';
-        search_jobids();
+        // search_jobids();
         $.getJSON( '/autoscan1Q/plot_result',{  
             measurement_catagories : JSON.stringify(where),
             specific_jobid : JSON.stringify(String(CS_jobid)),   //CS_jobid"5108"
-            designed : JSON.stringify(String(Object.keys(PD_jobids).length))
+            designed : JSON.stringify(designed)
 
         }, function (plot_items) {   //need to check this is correct or not
             cavities_plot = plot_items['plot_items'];
             CS_overview = plot_items['overview'];
-            genopt (cavities_plot);
+            genopt (cavities_plot,"ordinary");
+            genopt (cavities_plot,"MS_operation");
         })
         .done(function(plot_items) {
             spinner.style.visibility = "hidden";
             spinner.style.opacity = '0';
-            log_print("Gaussian fitting finish!");
+            log_print("Constructing finish!");
             generate_result_span();
         })
         .fail(function(jqxhr, textStatus, error){
             spinner.style.visibility = "hidden";
             spinner.style.opacity = '0';
             log_print("Somewhere missing...");
-            alert("Gaussian fitting mixing!");
+            alert("Constructing missing!");
         });
     }else{
         let spinner = document.getElementById("spinner");
@@ -269,18 +315,18 @@ function gaussian_fitting(designed="",specific_jobid=""){
         }, function (plot_items) {   //need to check this is correct or not
             cavities_plot = plot_items['plot_items'];
             CS_overview = plot_items['overview'];
-            genopt (cavities_plot);
+            genopt (cavities_plot,mode="ordinary");
         })
         .done(function(plot_items) {
             spinner.style.visibility = "hidden";
             spinner.style.opacity = '0';
-            log_print("Gaussian fitting finish!");
+            log_print("Constructing finish!");
         })
         .fail(function(jqxhr, textStatus, error){
             spinner.style.visibility = "hidden";
             spinner.style.opacity = '0';
             log_print("Somewhere missing...");
-            alert("Gaussian fitting mixing!");
+            alert("Constructing missing!");
         });
     }
 }
@@ -292,8 +338,19 @@ function gaussian_fitting(designed="",specific_jobid=""){
 
 
 // generate the options in the select id
-function generate_options(id,data,cata){
-    // get the selector in the body
+function generate_options(id,data,cata,mode){
+    if(mode=="MS_operation"){
+        let CavitySelect = document.getElementById(id); 
+        let result_keys =  Object.keys(data)
+        const opt_num = Object.keys(data).length
+        for(let ipt=0; ipt<opt_num; ipt++){
+            let option = document.createElement("option");
+            option.innerHTML = result_keys[ipt]+"-C"+String(ipt+1);
+            option.setAttribute('value',"CW#"+result_keys[ipt]+"-"+String(ipt+1));//value = CS-5487 MHz
+            CavitySelect.appendChild(option);
+          };
+    }else{
+        // get the selector in the body
       let CavitySelect = document.getElementById(id); 
       let result_keys =  Object.keys(data)
       const opt_num = Object.keys(data).length
@@ -305,22 +362,34 @@ function generate_options(id,data,cata){
           option.setAttribute('value',cata+result_keys[ipt]);//value = CS-5487 MHz
           CavitySelect.appendChild(option);
         };
+    } 
 };
 
 
 // after we have the cavities, generate the correspond options in the next steps which needs to select the cavity.
-function genopt (data) {
-    let selectors = ['cavity-select-CS','cavity-select-PD','cavity-select-FD','cavity-select-CW']
-    let catagories = ['CS-','PD-','FD-','CW-']
-    const detected_num = Object.keys(data).length;
-    if(detected_num>0){
-        for(let i=0;i<selectors.length;i++){
-            document.getElementById(selectors[i]).options.length = 0; //清除舊options
-            generate_options(selectors[i],data,catagories[i]);
-        };   
+function genopt (data,mode) {
+    if(mode=="MS_operation"){
+        const detected_num = Object.keys(data).length;
+        if(detected_num>0){
+            document.getElementById("cavity-select-MS").options.length = 0; //清除舊options
+            generate_options("cavity-select-MS",data,"",mode);      
+        }else{
+            alert("WARNING!!\nNo cavity is detected!");
+        };
     }else{
-        alert("WARNING!!\nNo cavity is detected!");
-    };   
+        let selectors = ['cavity-select-CS','cavity-select-PD','cavity-select-FD','cavity-select-CW']
+        let catagories = ['CS-','PD-','FD-','CW-']
+        const detected_num = Object.keys(data).length;
+        if(detected_num>0){
+            for(let i=0;i<selectors.length;i++){
+                document.getElementById(selectors[i]).options.length = 0; //清除舊options
+                generate_options(selectors[i],data,catagories[i],mode);
+            };   
+        }else{
+            alert("WARNING!!\nNo cavity is detected!");
+        };
+    }
+  
 };
 
 

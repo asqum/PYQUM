@@ -1453,7 +1453,7 @@ class Quest_command:
                 raise
         else: pass
     
-    def cavitysearch(self,dcsweepch,add_comment=""):
+    def cavitysearch(self,add_comment=""):
         jobid = char_fresp_new(sparam=self.sparam,freq = "3 to 9 *10000",powa = "0",flux = "OPT,",dcsweepch = "1",comment = "By bot - step1 cavitysearch "+add_comment)
         print('JOBID: ',jobid)
         return jobid
@@ -1641,8 +1641,7 @@ class AutoScan1Q:
             spec_dict = ast.literal_eval(specifications)
             step_list = spec_dict["step"].split("-")
             if self.sparam == "" and self.dcsweepch == "":
-                self.sparam = spec_dict["wiring"]["I/O"]
-                self.dcsweepch = spec_dict["wiring"]["dc_chennel"]
+                self.sparam = spec_dict["I/O"]
                 self.cavity_list = spec_dict["results"]["CavitySearch"]["region"]
 
 
@@ -1654,21 +1653,33 @@ class AutoScan1Q:
         
     def cavitysearch(self,jobid_check):
         if jobid_check == "":
-            jobid = Quest_command(self.sparam).cavitysearch(self.dcsweepch)
+            jobid = Quest_command(self.sparam).cavitysearch()
             plot_ornot = 0
             self.CS_jobid = jobid
         else:
-            jobid = jobid_check
+            jobid = jobid_check   
+            speci = self.read_specification()
+            if speci != {}:
+                self.designed = int(speci["CPW"])
+            else:
+                print("No designed CPW number record input manually plz!")
             plot_ornot = 1
-        print("do measurement\n")
-        dataframe = Load_From_pyqum(jobid).load()
-        CS = CavitySearch(dataframe)
+        if self.designed != 0 :
+            print("do measurement\n")
+            dataframe = Load_From_pyqum(jobid).load()
+            CS = CavitySearch(dataframe)
         
-        self.cavity_list = CS.do_analysis(self.designed) #model h5 cannot import <- 0818 update, no need it anymore
-        self.total_cavity_list = list(self.cavity_list.keys())
-        if plot_ornot:
-            self.CS_plot_items = CS.give_plot_info()
-            self.CS_overview = CS.overview    # ena scan results
+            self.cavity_list = CS.do_analysis(self.designed) #model h5 cannot import <- 0818 update, no need it anymore
+            self.total_cavity_list = list(self.cavity_list.keys())
+            if plot_ornot:
+                self.CS_plot_items = CS.give_plot_info()
+                self.CS_overview = CS.overview    # ena scan results
+        else:
+            self.cavity_list = {} #model h5 cannot import <- 0818 update, no need it anymore
+            self.total_cavity_list = []
+            if plot_ornot:
+                self.CS_plot_items = {}
+                self.CS_overview = {}    # ena scan results
 
 
         

@@ -47,14 +47,14 @@ class NumpyEncoder(json.JSONEncoder):
 #----------------main-----------------------
 @bp.route('/initialize-CS',methods=['POST','GET'])
 def CS_initialize():
-    dc_ch = json.loads(request.args.get('dc_channel'))
     port = json.loads(request.args.get('inout_port'))
     designed_num = json.loads(request.args.get('designed'))
     permission = json.loads(request.args.get('access'))
+    mode = json.loads(request.args.get('mode'))
     
-    specifications = {"CPW":designed_num,"wiring":{"I/O":port,"dc_chennel":dc_ch},"results":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"JOBIDs":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"step":"0"}
+    specifications = {"mode":mode,"CPW":designed_num,"I/O":port,"results":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"JOBIDs":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"step":"0"}
 
-    routine = AutoScan1Q(sparam=port,dcsweepch = dc_ch,designed=designed_num,target_cav="")
+    routine = AutoScan1Q(sparam=port,dcsweepch ="",designed=designed_num,target_cav="")
     old_spec,_ = routine.read_specification()
     if permission == "Enforce" or old_spec == {} :    #history == "" :   #將強制執行量測將結果寫入資料庫（覆蓋）
         print("CavitySearch start:\n")
@@ -66,23 +66,23 @@ def CS_initialize():
         routine.write_specification(specifications)
 
     specifications,_ = routine.read_specification()
-    return json.dumps(specifications["results"]["CavitySearch"]["answer"], cls=NumpyEncoder)
+    return json.dumps({"answer":specifications["results"]["CavitySearch"]["answer"],"jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
 
 
 @bp.route('/MeasureByCavity',methods=['POST','GET'])
 def measure_procedure():
-
+    dc_ch = json.loads(request.args.get('dc_chennel'))
     permission = json.loads(request.args.get('access'))
-    scan_mode = json.loads(request.args.get('scan_mode'))
     target_cav = json.loads(request.args.get('target'))
     cavity = target_cav.split("-")[0]
     c_number = target_cav.split("-")[1]
-    routine = AutoScan1Q(sparam="",dcsweepch = "",designed="",target_cav=cavity)
+    routine = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="",target_cav=cavity)
 
 
 
     # power dep. part
     specifications,history = routine.read_specification() #讀取資料庫,必有cavity_region
+    scan_mode = specifications["mode"]
     part = history[0] # if "1" cavitysearch finished, "2" powerdepend finished, ....
     first_run = 0
 
