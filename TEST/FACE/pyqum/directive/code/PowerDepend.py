@@ -99,8 +99,8 @@ def cloc(label_new):
                 min_1 = i
 #     print(min_0,min_1,min_2)
     if min_0<min_1:
-        min_0 = min_2-1
+        min_0 = min_2-2
     else:
-        min_1 = min_2-1
+        min_1 = min_2-2
     return min_0,min_1
 

@@ -1471,14 +1471,14 @@ class Quest_command:
             raise ValueError("Frequency is out of range with "+freq_command)
         if (select_powa >20) | (select_powa <-60):
             raise ValueError("Power is out of range with "+select_powa)
-        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-500e-6 to 500e-6 * 50",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
+        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-0.2 to 0.2 * 50",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
         return jobid
     def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,f_dress,dcsweepch,add_comment):
         if (select_freq>12) | (select_freq<2):
             raise ValueError("frequency is out of range with "+ select_freq)
         if (select_powa >20) | (select_powa <-60):
             raise ValueError("Power is out of range with "+select_powa)
-        if (float(select_flux) >500e-6) | (float(select_flux) <-500e-6):  # 0915 TypeError: '>' not supported between instances of 'str' and 'float'  
+        if (float(select_flux) >0.2) | (float(select_flux) <-0.2):  # 0915 TypeError: '>' not supported between instances of 'str' and 'float'  
             raise ValueError("Flux is out of range with "+select_flux)
         jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,f_dress =f_dress,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
