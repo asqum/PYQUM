@@ -5,7 +5,7 @@ from pyqum.instrument.logger import  get_status
 from sqlite3 import connect
 from pandas import read_sql_query
 import json
-from numpy import ndarray,mean,array
+from numpy import ndarray,mean,array,arange
 from colorama import init, Fore, Back, Style
 import ast
 import ctypes
@@ -71,67 +71,71 @@ def CS_initialize():
 
 @bp.route('/MeasureByCavity',methods=['POST','GET'])
 def measure_procedure():
-    dc_ch = json.loads(request.args.get('dc_chennel'))
-    permission = json.loads(request.args.get('access'))
-    target_cav = json.loads(request.args.get('target'))
-    cavity = target_cav.split("-")[0]
-    c_number = target_cav.split("-")[1]
-    routine = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="",target_cav=cavity)
-
-
-
-    # power dep. part
     specifications,history = routine.read_specification() #讀取資料庫,必有cavity_region
     scan_mode = specifications["mode"]
     part = history[0] # if "1" cavitysearch finished, "2" powerdepend finished, ....
     first_run = 0
 
-    if permission == "Enforce" or (part == "1" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
-        print("PowerDependent start @ C-%d :\n"%c_number)
-
-        routine.powerdepend(cavity,"")
-        specifications["results"]["PowerDepend"][cavity]["low_power"] = routine.low_power
-        specifications["JOBIDs"]["PowerDepend"][cavity] = routine.jobid_dict["PowerDepend"]
-        specifications["step"] = "2-"+str(c_number)
-        routine.write_specification(specifications)
-
-        first_run = 1
-
+    dc_ch = json.loads(request.args.get('dc_chennel'))
+    permission = json.loads(request.args.get('access'))
+    target_cav = json.loads(request.args.get('target'))
     if scan_mode == "Qubits":
-        
-        # flux dep. part
-        if permission == "Enforce" or (part == "2" and first_run == 0) or first_run != 0:
-            print("FluxDependent start @ C-%d :\n"%c_number)
-            specifications,_ = routine.read_specification() #讀取資料庫
-            routine.low_power = specifications["results"]["PowerDepend"][cavity]["low_power"]   #若從這開始，routine中沒有low_power的變數
-            
-            routine.fluxdepend(cavity,float(cavity.split(" ")[0]),"")  
-            specifications["results"]["FluxDepend"][cavity]["f_bare"] = routine.wave["f_bare"]
-            specifications["results"]["FluxDepend"][cavity]["f_dress"] = routine.wave["f_dress"]
-            specifications["results"]["FluxDepend"][cavity]["offset"] = routine.wave["offset"]
-            specifications["JOBIDs"]["FluxDepend"][cavity] = routine.jobid_dict["FluxDepend"]
-            specifications["step"] = "3-"+str(c_number)
+        cavitys = [target_cav.split("-")[0]]
+        c_numbers = [target_cav.split("-")[1]]
+    else:
+        cavitys = specifications["results"]["CavitySearch"]["answer"]
+        c_numbers = arange(1,len(cavitys)+1,1)
+
+    for i in range(len(cavitys)):
+        routine = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="")
+
+        # power dep. part
+        if permission == "Enforce" or (part == "1" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
+            print("PowerDependent start @ C-%d :\n"%c_numbers[i])
+
+            routine.powerdepend(cavitys[i],"")
+            specifications["results"]["PowerDepend"][cavitys[i]]["low_power"] = routine.low_power
+            specifications["JOBIDs"]["PowerDepend"][cavitys[i]] = routine.jobid_dict["PowerDepend"]
+            specifications["step"] = "2-"+str(c_numbers[i])
             routine.write_specification(specifications)
 
             first_run = 1
-        
-        # 2tone part
-        if permission == "Enforce" or (part == "3" and first_run == 0) or first_run != 0:
-            print("CWsweep start @ C-%d :\n"%c_number)
-            specifications,_ = routine.read_specification() #讀取資料庫
-            #補充可能沒有的參數（以此開始時）
-            routine.low_power = specifications["results"]["PowerDepend"][cavity]["low_power"]
-            routine.wave = {"f_bare":specifications["results"]["FluxDepend"][cavity]["f_bare"],"f_dress":specifications["results"]["FluxDepend"][cavity]["f_dress"],"offset":specifications["results"]["FluxDepend"][cavity]["offset"]}
-            
-            routine.qubitsearch(cavity,"")
-            specifications["results"]["QubitSearch"][cavity]["qubit"] = routine.qubit_info['Fq_avg']
-            specifications["results"]["QubitSearch"][cavity]["Ec"] = routine.qubit_info['Ec_avg']
-            specifications["results"]["QubitSearch"][cavity]["acStark"] = routine.qubit_info['acStark_power']
-            specifications["JOBIDs"]["QubitSearch"][cavity] = routine.jobid_dict["QubitSearch"]
-            specifications["step"] = "4-"+str(c_number)
-            routine.write_specification(specifications)
 
-            first_run = 1
+        if scan_mode == "Qubits":
+            
+            # flux dep. part
+            if permission == "Enforce" or (part == "2" and first_run == 0) or first_run != 0:
+                print("FluxDependent start @ C-%d :\n"%c_numbers[i])
+                specifications,_ = routine.read_specification() #讀取資料庫
+                routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["low_power"]   #若從這開始，routine中沒有low_power的變數
+                
+                routine.fluxdepend(cavitys[i],float(cavitys[i].split(" ")[0]),"")  
+                specifications["results"]["FluxDepend"][cavitys[i]]["f_bare"] = routine.wave["f_bare"]
+                specifications["results"]["FluxDepend"][cavitys[i]]["f_dress"] = routine.wave["f_dress"]
+                specifications["results"]["FluxDepend"][cavitys[i]]["offset"] = routine.wave["offset"]
+                specifications["JOBIDs"]["FluxDepend"][cavitys[i]] = routine.jobid_dict["FluxDepend"]
+                specifications["step"] = "3-"+str(c_numbers[i])
+                routine.write_specification(specifications)
+
+                first_run = 1
+            
+            # 2tone part
+            if permission == "Enforce" or (part == "3" and first_run == 0) or first_run != 0:
+                print("CWsweep start @ C-%d :\n"%c_numbers[i])
+                specifications,_ = routine.read_specification() #讀取資料庫
+                #補充可能沒有的參數（以此開始時）
+                routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["low_power"]
+                routine.wave = {"f_bare":specifications["results"]["FluxDepend"][cavitys[i]]["f_bare"],"f_dress":specifications["results"]["FluxDepend"][cavitys[i]]["f_dress"],"offset":specifications["results"]["FluxDepend"][cavitys[i]]["offset"]}
+                
+                routine.qubitsearch(cavitys[i],"")
+                specifications["results"]["QubitSearch"][cavitys[i]]["qubit"] = routine.qubit_info['Fq_avg']
+                specifications["results"]["QubitSearch"][cavitys[i]]["Ec"] = routine.qubit_info['Ec_avg']
+                specifications["results"]["QubitSearch"][cavitys[i]]["acStark"] = routine.qubit_info['acStark_power']
+                specifications["JOBIDs"]["QubitSearch"][cavitys[i]] = routine.jobid_dict["QubitSearch"]
+                specifications["step"] = "4-"+str(c_numbers[i])
+                routine.write_specification(specifications)
+
+                first_run = 1
     
     specifications,_ = routine.read_specification()
     return json.dumps(specifications["results"], cls=NumpyEncoder)
@@ -293,3 +297,22 @@ def get_xypower():
 
 #----------------------------test-------------------------------------------------  
 
+@bp.route('/get_cavity_status',methods=['POST','GET'])
+def get_measure_status():
+    routine = AutoScan1Q(sparam="",dcsweepch = "",designed="",target_cav="")
+    _,history = routine.read_specification()
+    if len(history) != 0:
+        part = history[0]
+        cav_number = history[-1]
+        if part == "1":
+            step = "CavitySearch "
+        elif part == "2":
+            step = "PowerDependence "
+        elif part == "3":
+            step = "FluxDependence "
+        else:
+            step = "2Tone "
+        
+        return json.dumps({"status":step+"completed @ C-"+cav_number}, cls=NumpyEncoder)
+    else:
+        return json.dumps({"status":"New chip!"}, cls=NumpyEncoder)

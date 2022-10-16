@@ -3,8 +3,12 @@ $(document).ready(function(){
     var dark = document.getElementById("dmbutton");
     dark.addEventListener('click' , darkMode);
     //start auto measurement
+    var CS_process = document.getElementById("Start-CS-but");
+    CS_process.addEventListener('click' , initialize_cs);
     var MS_process = document.getElementById("Start-measure-but");
-    MS_process.addEventListener('click' , start_measure);
+    MS_process.addEventListener('click' , measure);
+    var get_cav_status_process = document.getElementById("get-cav-status");
+    get_cav_status_process.addEventListener('click' , get_cav_status);
     //hash to the MS window
     var showcontent_MS = document.getElementById("showcontent-MS");
     showcontent_MS.addEventListener('click' , show_content_MS);
@@ -164,6 +168,16 @@ function reset_address(){
 
 //-----------------Measurement settings-------------------
 
+function get_cav_status(){
+    $.ajaxSettings.async = false;
+    $.getJSON( '/autoscan1Q/get_cavity_status',{  
+    }, function (status) {   //need to check this is correct or not
+        let status_text = status["status"]
+        log_print(status_text);
+    });
+    $.ajaxSettings.async = true;
+};
+
 
 // results container
 var cs_result_set = {};
@@ -215,6 +229,11 @@ function initialize_cs(){
         log_print( "Measurement finish!" );
     });
     cs_ploting(specific_jobid="");
+    if(scan_mode == 'Cavities'){
+        measure();
+        const measure_but = document.getElementById("Start-measure-but");
+        measure_but.disabled = true;
+    };
     document.getElementById('permission-text').reset()
     $.ajaxSettings.async = true;
 }
