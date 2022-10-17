@@ -575,7 +575,7 @@ function get_plot1D_CS(){
         document.getElementById('CS-search').setAttribute('value','1');
         log_print("Ploting finish!");
     }else{
-        gaussian_fitting(designed=document.getElementById('designed-CPW').value,specific_jobid);
+        cs_ploting(designed=document.getElementById('designed-CPW').value,specific_jobid);
         let modenum = document.getElementById('dmbutton').value;  // get darkmode or not
         const location_id = "CavitySearch-result-plot";
         let ampPhaseKeys = {

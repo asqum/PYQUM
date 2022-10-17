@@ -1464,14 +1464,14 @@ class Quest_command:
             raise ValueError("Frequency is out of range with "+freq_command)
         jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-50 to 0 * 11",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
         return jobid
-    def fluxdepend(self,select_freq,select_powa,add_comment=""):
+    def fluxdepend(self,select_freq,select_powa,dc_ch,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
         print('check FD freq_range: ',freq_command)
         if (select_freq[0]>12) | (select_freq[1]>12) | (select_freq[0]<2) | (select_freq[1]<2):
             raise ValueError("Frequency is out of range with "+freq_command)
         if (select_powa >20) | (select_powa <-60):
             raise ValueError("Power is out of range with "+select_powa)
-        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-0.2 to 0.2 * 50",dcsweepch = "1",comment = "By bot - step3 flux dependent "+add_comment)
+        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-0.2 to 0.2 * 50",dcsweepch=dc_ch,comment = "By bot - step3 flux dependent "+add_comment)
         return jobid
     def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,f_dress,dcsweepch,add_comment):
         if (select_freq>12) | (select_freq<2):
@@ -1701,9 +1701,9 @@ class AutoScan1Q:
             self.PD_plot_items = PD.give_plot_info()    # assume the function named `get_plot_items()`
 
 
-    def fluxdepend(self,cavity_freq, f_bare,jobid_check):
+    def fluxdepend(self,cavity_freq,f_bare,jobid_check):
         if jobid_check == "":
-            jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_freq],select_powa=self.low_power,add_comment="with Cavity "+str(cavity_freq))
+            jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_freq],select_powa=self.low_power,dc_ch=self.dcsweepch,add_comment="with Cavity "+str(cavity_freq))
             plot_ornot = 0
             self.jobid_dict["FluxDepend"] = jobid
         else:
