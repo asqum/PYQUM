@@ -1131,7 +1131,8 @@ class CavitySearch:
         x = ena_clutch_filter(list(set(poopoo_filter(array(nearest),self.info['Comparison_fig']))))    # 1D array contain tip freq [freq1,freq2,...]
         self.give_region(x,designed_CPW_num)
 
-    # to call below do analysis                     
+    # to call below do analysis  
+    '''                   
     def do_analysis(self,designed_CPW_num): 
         self.make_amp_uph_from_IQ()
         self.strong_slice()
@@ -1150,6 +1151,49 @@ class CavitySearch:
         self.amp_pha_compa(designed_CPW_num)
 
         return self.final_answer  # return out {'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
+    '''
+    def do_analysis(self,data,designed):   
+        self.make_amp_uph_from_IQ(data)
+        peak = []
+        fig_copy = self.info['Comparison_fig']
+        while designed > 0 :
+            
+            up_lim = np.average(fig_copy["UPhase"])+2*np.std(fig_copy["UPhase"])
+            bt_lim = np.average(fig_copy["UPhase"])-2*np.std(fig_copy["UPhase"])
+            avg = np.average(fig_copy["UPhase"])
+            target = fig_copy["UPhase"].tolist()
+            
+            if max(target) < up_lim:
+                if designed >0 and min(target) > bt_lim:
+                    min_idx = target.index(min(target))
+                    for i in peak:
+                        if abs(fig_copy['Frequency'][min_idx] - i ) > 0.05:   # 超過 50MHz 視為不同peak
+                            peak.append(fig_copy['Frequency'][min_idx])
+                            idx_within_60MHz = int(0.06/self.info["p2p_freq"])
+                            for i in range(min_idx-int(idx_within_60MHz/2),min_idx+int(idx_within_60MHz/2),1):
+                                target[i] = avg
+
+                            revised = fig_copy.drop(columns=["UPhase"])
+                            uphase = Series(target)
+                            fig_copy = concat([revised,uphase],axis=1) 
+                            fig_copy.columns = ['Frequency','Amplitude','UPhase']
+                            designed -= 1
+                        
+            else:
+                max_idx = target.index(max(target))
+                peak.append(fig_copy['Frequency'][max_idx])
+                idx_within_60MHz = int(0.06/self.info["p2p_freq"])
+                for i in range(max_idx-int(idx_within_60MHz/2),max_idx+int(idx_within_60MHz/2),1):
+                    target[i] = avg
+
+                revised = fig_copy.drop(columns=["UPhase"])
+                uphase = Series(target)
+                fig_copy = concat([revised,uphase],axis=1) 
+                fig_copy.columns = ['Frequency','Amplitude','UPhase']
+                designed -= 1
+        peak.sort()
+        self.give_region(peak)
+        return self.final_answer
         
     #to call below send arrays to js plotly            
     def give_plot_info(self):
