@@ -71,8 +71,9 @@ def CS_initialize():
 
 @bp.route('/MeasureByCavity',methods=['POST','GET'])
 def measure_procedure():
-    specifications,history = routine.read_specification() #讀取資料庫,必有cavity_region
-    scan_mode = specifications["mode"]
+    x =  AutoScan1Q(sparam="",dcsweepch = "",designed="")
+    speci,history = x.read_specification() #讀取資料庫,必有cavity_region
+    scan_mode = speci["mode"]
     part = history[0] # if "1" cavitysearch finished, "2" powerdepend finished, ....
     first_run = 0
 
@@ -83,18 +84,19 @@ def measure_procedure():
         cavitys = [target_cav.split("-")[0]]
         c_numbers = [target_cav.split("-")[1]]
     else:
-        cavitys = specifications["results"]["CavitySearch"]["answer"]
+        cavitys = speci["results"]["CavitySearch"]["answer"]
         c_numbers = arange(1,len(cavitys)+1,1)
 
     for i in range(len(cavitys)):
         routine = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="")
-
+        specifications,history = routine.read_specification()
         # power dep. part
         if permission == "Enforce" or (part == "1" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
-            print("PowerDependent start @ C-%d :\n"%c_numbers[i])
+            print("PowerDependent start @ C-%d :\n"%int(c_numbers[i]))
 
             routine.powerdepend(cavitys[i],"")
-            specifications["results"]["PowerDepend"][cavitys[i]]["low_power"] = routine.low_power
+            specifications["results"]["PowerDepend"][cavitys[i]] = {} 
+            specifications["results"]["PowerDepend"][cavitys[i]]["dress_power(dBm)"]= routine.low_power
             specifications["JOBIDs"]["PowerDepend"][cavitys[i]] = routine.jobid_dict["PowerDepend"]
             specifications["step"] = "2-"+str(c_numbers[i])
             routine.write_specification(specifications)
@@ -110,6 +112,7 @@ def measure_procedure():
                 routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["low_power"]   #若從這開始，routine中沒有low_power的變數
                 
                 routine.fluxdepend(cavitys[i],float(cavitys[i].split(" ")[0]),"")  
+                specifications["results"]["FluxDepend"][cavitys[i]] = {}
                 specifications["results"]["FluxDepend"][cavitys[i]]["f_bare"] = routine.wave["f_bare"]
                 specifications["results"]["FluxDepend"][cavitys[i]]["f_dress"] = routine.wave["f_dress"]
                 specifications["results"]["FluxDepend"][cavitys[i]]["offset"] = routine.wave["offset"]
@@ -299,7 +302,7 @@ def get_xypower():
 
 @bp.route('/get_cavity_status',methods=['POST','GET'])
 def get_measure_status():
-    routine = AutoScan1Q(sparam="",dcsweepch = "",designed="",target_cav="")
+    routine = AutoScan1Q(sparam="",dcsweepch = "",designed="")
     _,history = routine.read_specification()
     if len(history) != 0:
         part = history[0]

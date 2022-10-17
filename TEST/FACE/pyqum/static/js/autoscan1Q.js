@@ -81,6 +81,7 @@ function generate_result_span(){
     let result_block = document.getElementById("result");
     result_block.innerHTML = "";
   // generate the options in the select
+    
     for(let ipt=0; ipt<cavity.length; ipt++){
         let div = document.createElement("div");
         div.innerHTML = cavity[ipt]+": "+final_result_set['PD'][cavity[ipt]]+","+final_result_set['FD'][cavity[ipt]]+","+final_result_set['CW'][cavity[ipt]];
@@ -325,7 +326,7 @@ function cs_ploting(designed="",specific_jobid=""){
             spinner.style.visibility = "hidden";
             spinner.style.opacity = '0';
             log_print("Constructing finish!");
-            generate_result_span();
+            // generate_result_span();
         })
         .fail(function(jqxhr, textStatus, error){
             spinner.style.visibility = "hidden";

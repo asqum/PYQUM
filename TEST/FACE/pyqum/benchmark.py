@@ -1150,8 +1150,8 @@ class CavitySearch:
 
         return self.final_answer  # return out {'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
     '''
-    def do_analysis(self,data,designed):   
-        self.make_amp_uph_from_IQ(data)
+    def do_analysis(self,designed):   
+        self.make_amp_uph_from_IQ()
         peak = []
         fig_copy = self.info['Comparison_fig']
         while designed > 0 :
@@ -1665,12 +1665,12 @@ class AutoScan1Q:
             self.designed = 0
 
 
-    def write_specification(specifications):
+    def write_specification(self,specifications):
         db = connect(sql_path)
         samplename = get_status("MSSN")[session['user_name']]['sample']
         # samplename = "2QAS-19-3"
-		print("Check: ",samplename)
-        db.execute('UPDATE sample SET specifications = ? WHERE samplename = ?', (specifications,samplename))
+        print("Check: ",samplename)
+        db.execute('UPDATE sample SET specifications = ? WHERE samplename = ?', (str(specifications).replace("\'","\""),samplename))
         db.commit()
         db.close()
 
@@ -1701,7 +1701,7 @@ class AutoScan1Q:
             self.CS_jobid = jobid
         else:
             jobid = jobid_check   
-            speci = self.read_specification()
+            speci,_ = self.read_specification()
             if speci != {}:
                 self.designed = int(speci["CPW"])
             else:
