@@ -1627,6 +1627,7 @@ class AutoScan1Q:
         db = connect(sql_path)
         samplename = get_status("MSSN")[session['user_name']]['sample']
         # samplename = "2QAS-19-3"
+		print("Check: ",samplename)
         db.execute('UPDATE sample SET specifications = ? WHERE samplename = ?', (specifications,samplename))
         db.commit()
         db.close()

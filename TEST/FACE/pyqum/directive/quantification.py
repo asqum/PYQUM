@@ -48,7 +48,7 @@ from scipy.io import savemat
 # from ccavity_search.cavity_search import search
 import pandas as pd
 import numpy as np
-from keras.models import load_model
+#from keras.models import load_model
 
 # fidelity
 from sklearn.cluster import KMeans

@@ -54,7 +54,7 @@ def CS_initialize():
     
     specifications = {"mode":mode,"CPW":designed_num,"I/O":port,"results":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"JOBIDs":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"step":"0"}
 
-    routine = AutoScan1Q(sparam=port,dcsweepch ="",designed=designed_num,target_cav="")
+    routine = AutoScan1Q(sparam=port,dcsweepch ="",designed=designed_num)
     old_spec,_ = routine.read_specification()
     if permission == "Enforce" or old_spec == {} :    #history == "" :   #將強制執行量測將結果寫入資料庫（覆蓋）
         print("CavitySearch start:\n")

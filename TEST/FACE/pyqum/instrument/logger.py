@@ -247,7 +247,6 @@ class address:
         '''return total connection(s) based on instrument-list given'''
         db = get_db()
         connection = 0
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         print(Fore.CYAN + "instr_list: %s" %instr_list)
         for mach in flatten(instr_list):
             print(mach)
