@@ -19,7 +19,8 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 
 # Load instruments
 from pyqum import get_db, close_db
-from pyqum.instrument.machine import YOKO, KEIT, ALZDG
+try: from pyqum.instrument.machine import YOKO, KEIT, ALZDG
+except: print(Fore.RED + Back.WHITE + "Some Drivers Missing... Entering Virtual Mode.")
 from pyqum.instrument.dilution import bluefors
 from pyqum.instrument.toolbox import match, waveform, pauselog
 from pyqum.instrument.analyzer import IQAParray, pulse_baseband, UnwraPhase
@@ -51,7 +52,7 @@ def all():
     current_usr = session['user_name']
     try: Bob_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("TC"))
     except: abort(404)
-    try: Scope_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("RTP"))
+    try: Scope_Address="%s"%(device_port("RTP"))
     except: abort(404)
     try: MXA_Address="http://qum.phys.sinica.edu.tw:%s/"%(device_port("MXA"))
     except: abort(404)
@@ -66,27 +67,34 @@ def allsetmachine():
     return jsonify()
 @bp.route('/all/mxc', methods=['GET'])
 def allmxc():
-    # DR-specific T6 to be appended at the bottomline of measurement comment:
-    DR_platform = int(get_status("WEB")['port']) - 5300
-    DR_list = ["Alice", "Bob"]
-    dr = bluefors(designation=DR_list[DR_platform-1])
+    '''DR-specific T6 to be appended at the bottomline of measurement comment:'''
+    dr = bluefors(designation=device_port("BDR"))
     dr.selectday(-1)
 
-    # PENDING: use other route to display all BDR status, maybe in BDR pages itself
-    # Logging Latest Key-Readings for ALL
-    # latestbdr = {}
-    # for i in range(6):
-    # 	latestbdr.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
-    # for i in [1,2,5,6,7]:
-    # 	latestbdr.update({"T%s"%(i):dr.temperaturelog(i)[1][-1]})
-    # for i in range(21):
-    # 	latestbdr.update({"V%s"%(i+1):dr.channellog('v%s'%(i+1))[1][-1]})
-    # latestbdr.update({"Pulse-Tube":dr.channellog("pulsetube")[1][-1]})
-    # latestbdr.update({"Flow":dr.flowmeterlog()[1][-1]})
-    # set_status("BDR", latestbdr)
-    # log = pauselog() #disable logging (NOT applicable on Apache)
+    mxcmk=dr.temperaturelog(6)[1][-1]
+    try: mxcmk = round(float(mxcmk) * 1000, 3) # convert to mK
+    except(ValueError): pass # in case the sensor is off (giving ~)
 
-    return jsonify(mxcmk=dr.temperaturelog(6)[1][-1]*1000)
+    print(Fore.YELLOW + "T6 for %s: %smK" %(device_port("BDR"), mxcmk))
+    return jsonify(mxcmk=mxcmk)
+@bp.route('/all/bdr/current/status', methods=['GET'])
+def allbdrcurrentstatus():
+    '''Display all BDR current status: Logging Latest Key-Readings for ALL'''
+    dr = bluefors(designation=device_port("BDR"))
+    dr.selectday(-1)
+    
+    latestbdr = {}
+    for i in range(6):
+        latestbdr.update({"P%s"%(i+1):dr.pressurelog(i+1)[1][-1]})
+    for i in [1,2,5,6,7]:
+        latestbdr.update({"T%s"%(i):dr.temperaturelog(i)[1][-1]})
+    for i in range(21):
+        latestbdr.update({"V%s"%(i+1):dr.channellog('v%s'%(i+1))[1][-1]})
+    latestbdr.update({"Pulse-Tube":dr.channellog("pulsetube")[1][-1]})
+    latestbdr.update({"Flow":dr.flowmeterlog()[1][-1]})
+    set_status("BDR", latestbdr)
+
+    return jsonify(latestbdr=latestbdr)
 # endregion
 
 # region: SG (user-specific, Generalized)
@@ -993,14 +1001,29 @@ def dc_keithley_vpulse():
     print("t: %s" %t)
     V, I = VI_List[0::2], VI_List[1::2]
     return jsonify(return_width=return_width, V=V, I=I, t=t)
+# SRSDC
+@bp.route('/dc/srsdc', methods=['GET'])
+def dcsrsdc():
+    srsdcstat = request.args.get('srsdcstat')
+    if srsdcstat == 'true':
+        global keith
+        keith = KEIT.Initiate()
+    elif srsdcstat == 'false':
+        KEIT.close(keith, True)
+    return jsonify()
+@bp.route('/dc/srsdc/vset', methods=['GET'])
+def dc_srsdc_vset():
+    vset = float(request.args.get('vset'))
+    
+    
+    return jsonify()
 # endregion
 
 
 # Download File:
 @bp.route('/uploads/<path:filename>', methods=['GET', 'POST'])
 def download(filename):
-    Servers = ['ASQUM', 'ASQUM_2']
-    uploads = "C:/Users/%s/HODOR/CONFIG/PORTAL" %(Servers[int(get_status("WEB")['port']) - 5300 -1])
+    uploads = device_port("PORTAL") # The path is now stored in the SQL Database
     print(Fore.GREEN + "User %s is downloading %s from %s" %(session['user_name'], filename, uploads))
     acting("Downloading %s from %s" %(filename, uploads))
     return send_from_directory(directory=uploads, path=filename)

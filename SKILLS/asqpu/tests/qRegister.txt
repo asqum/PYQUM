@@ -1,0 +1,5 @@
+{
+"qubit":["q1"],
+"coupler":["qc"],
+"dummy":["q2"],
+}

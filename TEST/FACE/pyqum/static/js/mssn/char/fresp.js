@@ -8,7 +8,7 @@ $(document).ready(function(){
     window.frespcomment = "";
     $('button.char#fresp-savecsv').hide();
     $('button.char#fresp-savemat').hide();
-    $('div input.fresp.notification').hide();
+    $('div input.notification').hide();
 });
 
 // Global variables:
@@ -682,9 +682,9 @@ $('button.char.fresp.reset-no').on('click', function () {
 });
 
 // Notification on click:
-$('input.fresp.notification').click( function(){
-    var Day = $('input.fresp.notification').val().split(' > ')[1];
-    var Moment = $('input.fresp.notification').val().split(' > ')[2];
+$('input.notification#F_Response_notification').click( function(){
+    var Day = $('input.notification#F_Response_notification').val().split(' > ')[1];
+    var Moment = $('input.notification#F_Response_notification').val().split(' > ')[2];
     console.log('Day: ' + Day + ', Moment: ' + Moment);
 
     // Setting global Day & Moment index:

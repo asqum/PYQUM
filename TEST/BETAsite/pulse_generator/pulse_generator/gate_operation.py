@@ -225,6 +225,10 @@ class PulseBuilder():
         return self.waveform
 
     def convert_XYtoIQ( self, IQMixerChannel=None ):
+        '''
+        The Key for the whole Pulse-Builder. 
+        Back compatible to purely / independently / stand-alone "I" or "Q" mode
+        '''
         envelope = self.waveform["data"] 
         absoluteTime = get_timeAxis(self.waveform)
 
@@ -255,6 +259,8 @@ class PulseBuilder():
         return self.waveform
 
 class QubitOperationSequence():
+    '''Orchestrating sequences of Qubit-operation
+    '''
 
     def __init__( self, sequencePts, dt ):
         self.dt = dt
@@ -298,8 +304,6 @@ class QubitOperationSequence():
             self.operation = [op]
             print("Too much operation, clean all sequense")
             
-
-    
     def generate_sequenceWaveform( self, mixerInfo=None, firstOperationIdx=None ):
 
         allXYPulse = array([])

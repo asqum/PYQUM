@@ -14,24 +14,26 @@
             <input class='mani loaded' id='sample-name' type='submit' value={{ samplename }}></input>
             <input class='mani people' id='sample-owner' type='submit' value={{ people }}></input>
             <a href="/benchmark">
-                <input class='mani benchmark' name='singleqb-benchmark' type="submit" value="Benchmark" id="mani-to-benchmark"/>
+                <input class='mani benchmark' type="submit" value="Benchmark" id="mani-to-benchmark"/>
             </a>
-            <button class='mani access singleqb'>Single-Q</button>
-            <button class='mani access qubits'>Qubits</button>
+
+            <button class='mani access QuCTRL' id="Single_Qubit">Single_Qubit</button>
+            <button class='mani access QuCTRL' id="Qubits">Qubits</button>
+
+            <button class='mani access QuCTRL' id="RB" style="font-weight:713;">RB</button>
+            <button class='mani access QuCTRL' id="QPU" style="font-weight:713;">QPU</button>
             
         </div>
 
         <script>
             $(function(){
-                $("div.manicontent.singleqb").load("{{ url_for('mission.mani_singleqb') }}");
-                $("div.manicontent.qubits").load("{{ url_for('mission.mani_qubits') }}");
-                
+                // doesn't work inside mani.js
+                $("div.manicontent.QuCTRL").load("{{ url_for('mission.mani_QuCTRL') }}");
             });
         </script>
         
         <!-- page content based on button clicked -->
-        <div class="manicontent singleqb"></div>
-        <div class="manicontent qubits"></div>
+        <div class="manicontent QuCTRL"></div>
         
     </div>
 

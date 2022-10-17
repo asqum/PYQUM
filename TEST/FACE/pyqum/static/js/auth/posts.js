@@ -7,7 +7,7 @@ $(document).ready(function(){
         console.log(data.posts);
         $.each(data.posts, function(i,value) {
             $('div.posts').append(
-                "<div class='container' id='post'>" +
+                "<div class='container-post'>" +
                     "<div class='row'>" +
                         "<div class='title'>" + value['title'] + "</div>" +
                     "</div>" +

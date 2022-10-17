@@ -46,7 +46,8 @@ def model(card, action=['Get', '']):
 def frequency(card, action=['Get', '']):
     '''This command sets the RF output frequency of the synthesizer.
         [:DDS[1]|2]:FREQuency <val>[<unit>] ex. :DDS1:FREQ 6GHZ
-        action=['Set','6GHz']'''
+        Example: action=['Set_<CH>','6GHz']
+        '''
     SCPIcore = ':DDS:FREQUENCY' 
     return mdlname, card, SCPIcore, action
 
@@ -57,6 +58,7 @@ def power(card, action=['Get', '']):
         The query returns the maximum or minimum allowable power level if the optional MAXimum or MINimum are used.
         [:DDS[1]|2]:POWer <val> (unit will cause illusional error!!!)
         [:DDS[1]|2]:POWer? [MAXimum|MINimum] => EX: ['Get','MAX']
+        Example: action=['Set_<CH>','-13.7']
     '''
     SCPIcore = ':DDS:POWER'
     return mdlname, card, SCPIcore, action
@@ -76,7 +78,8 @@ def rfoutput(card, action=['Get', '']):
     '''This command enables or disables the RF output of the synthesizer.
         [:DDS[1]|2]:OUTPut[:STATe] ON|OFF|1|0 
         ex. :DDS2:OUTP OFF The preceding example disables the RF output of synthesizer channel #2.
-        action=['Set','OFF']'''
+        Example: action=['Set_<CH>','OFF']
+        '''
     SCPIcore = ':DDS:OUTPUT:STATE'
     return mdlname, card, SCPIcore, action
 

@@ -1,0 +1,35 @@
+[
+	{"id":"q1",
+	"type":"qubit",
+	"freq_xy":4,
+	"XYL":0.2,
+	"XYW":30,
+	"freq_ro":6.5,
+	"ROL":0.02,
+	"ROW":2000,
+	"IDLEZ":0.15,
+	"Ec":0.2,
+	"total_time":20000,
+	},
+
+	{"id":"q2",	
+	"type":"qubit",
+	"freq_xy":4.2,
+	"XYL":0.2,
+	"XYW":30,
+	"freq_ro":6.4,
+	"ROL":0.02,
+	"ROW":2000,
+	"IDLEZ":0.1,
+	"Ec":0.2,
+	"total_time":20000,
+	},
+	
+	{"id":"qc",
+	"type":"coupler",
+	"freq_xy":5,
+	"coupling_z":0.12,
+	"power_ro":0.2,
+	"freq_ro":4.4}
+
+]

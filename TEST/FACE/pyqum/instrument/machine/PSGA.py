@@ -161,3 +161,9 @@ def test(bench, detail=True):
     # close(s, reset=state)
     return 'Success'
 
+
+if __name__ == "__main__":
+    bench = Initiate(2, 'TEST')
+    test(bench)
+    close(bench, 2, mode='TEST')
+

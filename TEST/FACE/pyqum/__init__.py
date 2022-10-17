@@ -39,6 +39,7 @@ def init_db():
     db = get_db()
     with current_app.open_resource('authschema.sql') as f:
         db.executescript(f.read().decode('utf8'))
+        print(Fore.YELLOW + "Database Built")
 
 @click.command('init-db')
 @with_appcontext

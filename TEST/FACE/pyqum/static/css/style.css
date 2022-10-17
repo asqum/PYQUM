@@ -121,6 +121,7 @@ input, select, textarea {
 input:focus, textarea:focus {
 	border: solid 3px #77bde0;	
 }
+
 /* additional customization just for textarea */
 textarea {
 	height: 100px;	
@@ -153,6 +154,13 @@ textarea.wiring-designation {
     height: 73px;
     margin-top: -5px;
 }
+textarea.PeaCH:focus {
+    height: 713px;
+}
+textarea.Specifications:focus {
+    height: 317px;
+}
+
 label.parameter {
     word-wrap: break-word;
     /* y-up x-right y-down x-left -> Clock-wise! */
@@ -353,9 +361,10 @@ select:focus option:checked {
 .row.label {
     padding: 1px; display: block; margin-top: 15px;
 }
-.row.access {
-    margin-bottom: -10px;
-    margin-top: 8px;
+.col-row-split {
+    margin-bottom: 4px;
+    margin-top: -3px;
+    /* display: inline; */
 }
 .col {
     padding: inherit; 
@@ -374,6 +383,9 @@ select:focus option:checked {
 }
 .col-5 {
     padding: inherit; width: 5%;
+}
+.col-6 {
+    padding: inherit; width: 6%;
 }
 .col-7 {
     padding: inherit; width: 7%;
@@ -484,7 +496,7 @@ a.action {
     font-size: 1.2em;
     padding: 1.5rem 0;
 }
-.container#post {
+.container-post {
     width: 100%;
     border-radius: 5px;
     background-color: white;
@@ -503,6 +515,15 @@ a.action {
 .posts .body {
     font-family: 'Times New Roman', Times, serif;
     font-size: 1.2em;
+}
+
+/* Activity */
+.container-activiy {
+    width: 100%;
+    border-radius: 5px;
+    padding: 8px 8px;
+    /* padding-bottom:1.5rem; */
+    margin-left: 25px;
 }
 
 /* Sliders */

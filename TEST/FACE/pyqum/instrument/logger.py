@@ -37,8 +37,8 @@ __status__ = "development"
 pyfilename = inspect.getfile(inspect.currentframe()) # current pyscript filename (usually with path)
 MAIN_PATH = Path(pyfilename).parents[7] / "HODOR" / "CONFIG"
 INSTR_PATH = MAIN_PATH / "INSTLOG"
-USR_PATH = MAIN_PATH / "USRLOG"
-PORTAL_PATH = MAIN_PATH / "PORTAL"
+USR_PATH = Path(device_port("USRLOG"))
+PORTAL_PATH = Path(device_port("PORTAL"))
 ADDRESS_PATH = MAIN_PATH / "Address"
 SPECS_PATH = MAIN_PATH / "SPECS"
 ANALYSIS_PATH = PORTAL_PATH / "ANALYSIS"
@@ -247,13 +247,15 @@ class address:
         '''return total connection(s) based on instrument-list given'''
         db = get_db()
         connection = 0
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         print(Fore.CYAN + "instr_list: %s" %instr_list)
         for mach in flatten(instr_list):
+            print(mach)
             connection += int(db.execute('''SELECT connected FROM machine WHERE codename = ?''', (mach,) ).fetchone()['connected'])
         close_db()
         return connection
 
-class specification:
+class specification: # PENDING: USE SQL DATABASE instead
     '''lookup specifications for each instruments
     '''
     def __init__(self):
@@ -287,7 +289,8 @@ def translate_scpi(Name, instance, a, b):
     # Setting extra perimeter(s) like channel, window, S-param etc.
     prime = ''
     if '_' in action[0]: prime = action[0].split('_')[1]
-    if headers[0]=='': headers[1] += prime # only the first header has this priviledge in this version # PENDING: more than one perimeter / prime (since it precedes parameter)
+    # only the first header has this priviledge in this version #PENDING: more than one perimeter / prime (since it precedes parameter)
+    if headers[0]=='': headers[1] += prime 
     else: headers[0] += prime
 
 
@@ -521,7 +524,7 @@ class measurement:
 
             # Estimate data size based on version of your data:
             if 'C-Structure'in self.corder:
-                self.datasize = int(prod([waveform(self.corder[param]).count * waveform(self.corder[param]).inner_repeat  for param in self.corder['C-Structure']], dtype='uint64')) * 2 #data density of 2 due to IQ
+                self.datasize = int(prod([waveform(self.corder[param]).count * waveform(self.corder[param]).inner_repeat  for param in self.corder['C-Structure']], dtype='uint64')) * 2 # data density of 2 due to IQ ## prod([]) = 1.0
             else:
                 self.datasize = prod([waveform(x).count * waveform(x).inner_repeat for x in self.corder.values()]) * self.datadensity
 
@@ -538,13 +541,20 @@ class measurement:
                     # EXTRACT "TIME_RESOLUTION_NS" IF AVAILABLE: TOTAL_READ_POINTS = RECORD_TIME_NS / TIME_RESOLUTION_NS
                     if 'TIME_RESOLUTION_NS' in self.perimeter.keys(): TIME_RESOLUTION_NS = int(self.perimeter['TIME_RESOLUTION_NS'])
                     else: TIME_RESOLUTION_NS = 1 # backward-compatible with ALZDG's 1GSPS sampling-rate
-                    self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS']) / TIME_RESOLUTION_NS
-                
+                    self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS']) // TIME_RESOLUTION_NS
+
+            print(Fore.YELLOW + "writtensize: %s, datasize: %s" %(self.writtensize/8, self.datasize))  
             self.data_progress = float(self.writtensize / (self.datasize*8) * 100)
             self.data_complete = (self.datasize*8==self.writtensize)
             self.data_overflow = (self.datasize*8<self.writtensize)
             Last_Corder = [i for i in self.corder.values()][-1] # for the last key of c-order
-            self.data_mismatch = self.writtensize%waveform(Last_Corder).count*waveform(Last_Corder).inner_repeat*8 # counts & inner-repeats
+            
+            try: 
+                self.data_mismatch = self.writtensize%waveform(Last_Corder).count*waveform(Last_Corder).inner_repeat*8 # counts & inner-repeats
+            except(ValueError): 
+                self.data_mismatch = None # PENDING NEW CALCULATION BASED ON R-JSON INCLUSION
+                print(Fore.BLUE + "Empty C-Structure after the introduction of MACE FLEX!")
+
             print(Back.WHITE + Fore.BLACK + "Data starts from %s-byth on the file with size of %sbytes" %(self.datalocation, self.filesize))
             if not self.writtensize%8:
                 self.resumepoint = self.writtensize//8
@@ -842,7 +852,7 @@ def qout(queue,jobid,username):
     '''Queue out without a Job'''
     jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
     close_db()
-    if int(g.user['management'])>=7 or ( (int(g.user['measurement'])>0) and (username==jobrunner) ):
+    if ( (int(g.user['measurement'])>0) and (username==jobrunner) ) or int(g.user['management'])>=7:
         try:
             db = get_db()
             db.execute('DELETE FROM %s WHERE job_id = %s' %(queue,jobid))

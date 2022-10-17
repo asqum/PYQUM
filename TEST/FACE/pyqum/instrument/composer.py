@@ -8,6 +8,7 @@ from math import trunc, ceil
 from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians, nan, isnan
 from pyqum.instrument.logger import get_status
 import pulse_generator.gate_operation as qos
+
 class pulser:
     '''
     Next generation of Pulse Assembly:\n
@@ -265,9 +266,9 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-91/; Flat/,10,0; drag/,30,0.5;',clock_multiples=1)
+    xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-91/; Flat/,10,0; drag/4/-0.8/0,300,0.5;',clock_multiples=1)
     xyi.song()
-    xyq = pulser(dt=.5,score='ns=500/1,mhz=Q/-91/; Flat/,10,0; drag/,30,0.5;',clock_multiples=1)
+    xyq = pulser(dt=.5,score='ns=500/1,mhz=Q/-91/; Flat/,10,0; drag/4/-0.8/0,300,0.5;',clock_multiples=1)
     xyq.song()
 
     cz = pulser(dt=.5,score='ns=500;Flat/,10,0.5;',clock_multiples=1)

@@ -5,7 +5,7 @@ from os.path import basename as bs
 from os.path import getmtime
 myname = bs(__file__).split('.')[0] # This py-script's name
 
-import requests, json
+import json
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
 from werkzeug.security import check_password_hash
 from numpy import array, unwrap, mean, trunc

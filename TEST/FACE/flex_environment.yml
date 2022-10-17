@@ -1,0 +1,35 @@
+name: PYQUM-server-offline
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip=22.2.2
+  - scrypt
+  - colorama
+  - hdf5
+  - matplotlib
+  - numpy
+  - pandas
+  - pillow
+  - flask
+  - pyvisa
+  - scipy
+  - si-prefix
+  - sqlite
+  - wrapt
+  - pytables
+  - scikit-learn
+  - numba
+  - pip:
+    # - atsapi==7.1.5
+    - flask-ext
+    - flask-noextref
+    - keyboard
+    # - keysightsd1==3.2.52
+    - nidaqmx
+    - nose
+    - peakutils
+    - typed-ast
+    - qutip
+    - qutip-qip

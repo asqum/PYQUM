@@ -1677,6 +1677,7 @@ pyqum/static/js/jquery.CongelarFilaColumna.js
 pyqum/static/js/jquery.min.js
 pyqum/static/js/jquerysession.js
 pyqum/static/js/plotly-latest.min.js
+pyqum/static/js/auth/activities.js
 pyqum/static/js/auth/measurement.js
 pyqum/static/js/auth/posts.js
 pyqum/static/js/auth/profile.js
@@ -1718,8 +1719,8 @@ pyqum/static/js/mssn/mssn.js
 pyqum/static/js/mssn/char/cwsweep.js
 pyqum/static/js/mssn/char/fresp.js
 pyqum/static/js/mssn/char/sqepulse.js
-pyqum/static/js/mssn/mani/qubits.js
-pyqum/static/js/mssn/mani/singleqb.js
+pyqum/static/js/mssn/mani/QuCTRL.js
+pyqum/static/js/mssn/mani/ancillary_00.js
 pyqum/static/ui/jquery-ui.css
 pyqum/static/ui/jquery-ui.js
 pyqum/static/ui/jquery-ui.min.css
@@ -1735,9 +1736,6 @@ pyqum/templates/auth/profile.html
 pyqum/templates/auth/register.html
 pyqum/templates/auth/samples.html
 pyqum/templates/auth/user.html
-pyqum/templates/blog/create.html
-pyqum/templates/blog/index.html
-pyqum/templates/blog/update.html
 pyqum/templates/blog/benchmark/autoflux.html
 pyqum/templates/blog/benchmark/benchmark.html
 pyqum/templates/blog/benchmark/common_fitting.html
@@ -1760,6 +1758,10 @@ pyqum/templates/blog/dsply/game01.html
 pyqum/templates/blog/dsply/test.html
 pyqum/templates/blog/guide/calculate.html
 pyqum/templates/blog/guide/guide.html
+pyqum/templates/blog/home/activity.html
+pyqum/templates/blog/home/create.html
+pyqum/templates/blog/home/index.html
+pyqum/templates/blog/home/update.html
 pyqum/templates/blog/machn/adc.html
 pyqum/templates/blog/machn/all.html
 pyqum/templates/blog/machn/bdr.html
@@ -1776,5 +1778,4 @@ pyqum/templates/blog/msson/mission.html
 pyqum/templates/blog/msson/char/cwsweep.html
 pyqum/templates/blog/msson/char/fresp.html
 pyqum/templates/blog/msson/char/sqepulse.html
-pyqum/templates/blog/msson/mani/qubits.html
-pyqum/templates/blog/msson/mani/singleqb.html
+pyqum/templates/blog/msson/mani/QuCTRL.html

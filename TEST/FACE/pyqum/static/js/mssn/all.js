@@ -1,5 +1,4 @@
 var qsystem = $('select.all.mssn.queue').val();
-var TASK = {'F_Response': 'fresp', 'CW_Sweep': "cwsweep", 'Single_Qubit': "singleqb"}; //Translation of names between Python and JS
 
 //when page is loading:
 $(document).ready(function(){
@@ -60,6 +59,7 @@ function qumjob() {
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/job', {
         queue: qsystem,
     }, function (data) {
+        if (data.jobs_with_errors!='') { $('h3.all-mssn-warning').text("Jobs with errors: " + data.jobs_with_errors); };
         $('div.row.all-job-by-sample').empty().append('<div class="col-20" id="left"><label class="parameter">' + data.update_count + '/' + data.Job_count + '/' + data.maxlist + ' JOB(s) WITH SAMPLE: </label></div>' + 
                                                         '<div class="col-20" id="left"><div class="buttons"><a class="all-mssn btn green">' + data.samplename + '</a></div></div>');
         console.log("user: " + data.loginuser);
@@ -168,18 +168,17 @@ $(document).on('click', 'div.buttons a.all-mssn-access', function() {
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/access/job', {
         jobid: jobid
     }, function(data) {
-        console.log('task: ' + TASK[data.tdmpack.task] + ', day: ' + data.tdmpack.dateday + ', moment: ' + data.tdmpack.wmoment + ', queue: ' + data.tdmpack.queue);
+        console.log('task: ' + data.tdmpack.task + ', day: ' + data.tdmpack.dateday + ', moment: ' + data.tdmpack.wmoment + ', queue: ' + data.tdmpack.queue);
         // Click on MSSN-TAB:
         $('.mssn button.tablinks').removeClass('active');
         $('.mssn button.tablinks#' + data.tdmpack.queue + '-tab').addClass('active');
         $('.mssn div.tabcontent').hide();
         $('.mssn div.tabcontent#' + data.tdmpack.queue.replace(/\d+/g, '')).show(); // remove any digits from the string
         // Click on TASK-TAB:
-        $('button.access.' + TASK[data.tdmpack.task]).click();
+        $('button.access#' + data.tdmpack.task).click();
         // Posting Notification:
-        $('input.' + TASK[data.tdmpack.task] + '.notification').show().val('JOB #' + jobid + ' > ' + data.tdmpack.dateday + ' > ' + data.tdmpack.wmoment);
-        // // Clicking on it:
-        // $('input.' + TASK[data.tdmpack.task] + '.notification').trigger('click'); PENDING: Hearing the list-day EVENT before clicking!
+        $('input.notification').hide();
+        $('input.notification#' + data.tdmpack.task + '_notification').show().val('JOB #' + jobid + ' > ' + data.tdmpack.dateday + ' > ' + data.tdmpack.wmoment);
     });
     return false;
 });
