@@ -1103,9 +1103,8 @@ class CavitySearch:
                 if region[i][0] == j[0] and region[i][1] == j[1] :
                     self.final_answer[i] = region[i]
         
-    def give_region(self,x,designed_CPW_num):
-    
-        for tip_freq in x: 
+    def give_region(self,peak_list):
+        for tip_freq in peak_list: 
             freq = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Frequency']
             amp = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Amplitude']
             pha = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['UPhase']
@@ -1115,8 +1114,7 @@ class CavitySearch:
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
             self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-5*avg_FWHM,tip_freq+5*avg_FWHM]
-
-        self.zscore_filter(self.region,designed_CPW_num) #{'5487 MHz':[freq_start,freq_end],'... MHz':[...],....}
+        self.final_answer = self.region
         
     def amp_pha_compa(self,designed_CPW_num):
         amp_loc_array = list(self.peak_amp)
