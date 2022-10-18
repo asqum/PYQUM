@@ -67,10 +67,6 @@ if exist %config_FQPN% (
 	ECHO Installing qspp
 	pip install -e ..\BETAsite\Signal_Processing
 
-	:: pulse_generator (editable installation, files are in PYQUM)
-	ECHO Installing pulse_generator
-	pip install -e ..\BETAsite\pulse_generator
-
 	:: pulse_signal (editable installation, files are in SKILLS)
 	ECHO Installing pulse_signal
 	pip install -e %root_FQPN%\SKILLS\pulse_signal
