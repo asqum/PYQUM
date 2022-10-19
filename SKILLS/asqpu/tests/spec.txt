@@ -6,7 +6,7 @@
 	"XYW":30,
 	"freq_ro":6.5,
 	"ROL":0.02,
-	"ROW":2000,
+	"ROW":5000,
 	"IDLEZ":0.15,
 	"Ec":0.2,
 	"total_time":20000,
