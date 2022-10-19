@@ -1154,15 +1154,15 @@ class CavitySearch:
         self.make_amp_uph_from_IQ()
         peak = []
         fig_copy = self.info['Comparison_fig']
+        up_lim = abs(np.average(fig_copy["UPhase"])+2*np.std(fig_copy["UPhase"]))
+        bt_lim = abs(np.average(fig_copy["UPhase"])-2*np.std(fig_copy["UPhase"]))
+        avg = np.average(fig_copy["UPhase"])
         while designed > 0 :
             
-            up_lim = np.average(fig_copy["UPhase"])+2*np.std(fig_copy["UPhase"])
-            bt_lim = np.average(fig_copy["UPhase"])-2*np.std(fig_copy["UPhase"])
-            avg = np.average(fig_copy["UPhase"])
             target = fig_copy["UPhase"].tolist()
             
-            if max(target) < up_lim:
-                if designed >0 and min(target) > bt_lim:
+            if abs(max(target)) < up_lim:
+                if designed >0 and abs(min(target)) > bt_lim:
                     min_idx = target.index(min(target))
                     for i in peak:
                         if abs(fig_copy['Frequency'][min_idx] - i ) > 0.05:   # 超過 50MHz 視為不同peak
