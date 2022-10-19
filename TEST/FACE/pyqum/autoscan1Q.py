@@ -303,7 +303,7 @@ def get_xypower():
 @bp.route('/get_cavity_status',methods=['POST','GET'])
 def get_measure_status():
     routine = AutoScan1Q(sparam="",dcsweepch = "",designed="")
-    _,history = routine.read_specification()
+    specifications,history = routine.read_specification()
     if len(history) != 0:
         part = history[0]
         cav_number = history[-1]
@@ -316,6 +316,30 @@ def get_measure_status():
         else:
             step = "2Tone "
         
-        return json.dumps({"status":step+"completed @ C-"+cav_number}, cls=NumpyEncoder)
+        return json.dumps({"status":step+"completed @ C-"+cav_number,"cavity_list":specifications["results"]["CavitySearch"]["region"]}, cls=NumpyEncoder)
     else:
-        return json.dumps({"status":"New chip!"}, cls=NumpyEncoder)
+        return json.dumps({"status":"New chip!","cavity_list":{}}, cls=NumpyEncoder)
+
+
+# when change darkmode the result area change too, give the infomation already write in the database
+@bp.route('/give_done_info',methods=['POST','GET'])
+def give_done_info():
+    routine = AutoScan1Q(sparam="",dcsweepch = "",designed="")
+    specifications,history = routine.read_specification()
+    objects = specifications["results"]["CavitySearch"]["answer"]  #list ['1234 MHz', ...]
+    parts = specifications["results"].keys()    #list ["CavitySearch","PowerDepend","FluxDepend","QubitSearch"]
+
+    done_info_dict = {}
+    for cav in objects:
+        done_info_dict[cav] = {}
+        for part in parts:
+            if part != "CavitySearch":
+                if cav in specifications["results"][part].keys():
+                    done_info_dict[cav][part] = specifications["results"][part][cav]
+                else:
+                    done_info_dict[cav][part] = {}
+    
+    return json.dumps(done_info_dict, cls=NumpyEncoder)
+                    
+
+

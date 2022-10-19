@@ -73,21 +73,31 @@ function log_print(text){
 }
 
 // generate the spans in results with div tag input a dictionary  (naked check OK)
-function generate_result_span(){  
-    results = cavities_plot;
+var record_set = {};
+function generate_result_span(mode){  
+    if(mode==""){
+        record_set = final_result_set;     // cavity freq list ['5487 MHz',...];
+    }else{
+        $.getJSON( '/autoscan1Q/give_done_info',{  
+        }, function (record) {   //need to check this is correct or not
+            record_set = record;
+        });
+    };
+    let cavities = Object.keys(record_set)
+
   // get the selector in the body
     let dm_mode = document.getElementById("dmbutton").value;
-    let cavity = Object.keys(results);     // cavity freq list ['5487 MHz',...];
     let result_block = document.getElementById("result");
     result_block.innerHTML = "";
   // generate the options in the select
-    
-    for(let ipt=0; ipt<cavity.length; ipt++){
+
+    for(let ipt=0; ipt<cavities.length; ipt++){
         let div = document.createElement("div");
-        div.innerHTML = cavity[ipt]+": "+final_result_set['PD'][cavity[ipt]]+","+final_result_set['FD'][cavity[ipt]]+","+final_result_set['CW'][cavity[ipt]];
-        div.setAttribute('value','result'+cavity[ipt]);//String(Number(result_keys[ipt])*1000)+' MHz'
+        div.innerHTML = cavities[ipt]+": "+record_set['PowerDepend'][cavities[ipt]]+","+record_set['FluxDepend'][cavities[ipt]]+","+record_set['QubitSearch'][cavities[ipt]];
+        div.setAttribute('value','result'+cavities[ipt]);//String(Number(result_keys[ipt])*1000)+' MHz'
         result_block.appendChild(div);
     };
+  
     if(dm_mode==0){
       result_block.style.backgroundColor = "rgb(248, 218, 218)";
       result_block.style.color = "#000";
@@ -112,7 +122,7 @@ function darkMode() {
     };
     dark_plot();
     if(document.getElementById('search-jobid').value==='1'){
-        generate_result_span(); 
+        generate_result_span(mode="tempt"); 
     };
 };
 
@@ -183,8 +193,10 @@ function get_cav_status(){
     $.ajaxSettings.async = false;
     $.getJSON( '/autoscan1Q/get_cavity_status',{  
     }, function (status) {   //need to check this is correct or not
-        let status_text = status["status"]
+        let status_text = status["status"];
+        let cavity_info = status["cavity_list"];
         log_print(status_text);
+        genopt (cavity_info,"MS_operation");   // generate the cavity options to measure independ.
     });
     $.ajaxSettings.async = true;
 };
@@ -266,7 +278,7 @@ function measure(){
         document.getElementById('permission-text').reset()
         log_print( "Measurement finish!" );
     });
-    generate_result_span();
+    generate_result_span(mode="");
     $.ajaxSettings.async = true;
 }
 
@@ -298,6 +310,7 @@ function search_jobids(){
     genopt (PD_jobids,mode="ordinary");
     document.getElementById('search-jobid').setAttribute('value','1')
     cs_ploting(designed=cpw_num);
+    generate_result_span(mode="");
 };
 
 var cavities_plot = {};
@@ -326,7 +339,7 @@ function cs_ploting(designed="",specific_jobid=""){
             spinner.style.visibility = "hidden";
             spinner.style.opacity = '0';
             log_print("Constructing finish!");
-            // generate_result_span();
+            
         })
         .fail(function(jqxhr, textStatus, error){
             spinner.style.visibility = "hidden";
