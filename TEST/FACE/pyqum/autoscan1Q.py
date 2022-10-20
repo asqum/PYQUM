@@ -316,9 +316,9 @@ def get_measure_status():
         else:
             step = "2Tone "
         
-        return json.dumps({"status":step+"completed @ C-"+cav_number,"cavity_list":specifications["results"]["CavitySearch"]["region"]}, cls=NumpyEncoder)
+        return json.dumps({"status":step+"completed @ C-"+cav_number,"cavity_list":specifications["results"]["CavitySearch"]["region"],"CS-jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
     else:
-        return json.dumps({"status":"New chip!","cavity_list":{}}, cls=NumpyEncoder)
+        return json.dumps({"status":"New chip!","cavity_list":{},"CS-jobid":{}}, cls=NumpyEncoder)
 
 
 # when change darkmode the result area change too, give the infomation already write in the database

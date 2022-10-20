@@ -195,8 +195,9 @@ function get_cav_status(){
     }, function (status) {   //need to check this is correct or not
         let status_text = status["status"];
         let cavity_info = status["cavity_list"];
+        CS_jobid = status["CS-jobid"];
         log_print(status_text);
-        genopt (cavity_info,"MS_operation");   // generate the cavity options to measure independ.
+        cs_ploting(specific_jobid="");   // generate the cavity options to measure independ.
     });
     $.ajaxSettings.async = true;
 };
