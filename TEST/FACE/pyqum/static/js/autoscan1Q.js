@@ -188,6 +188,13 @@ function able_disable_measure_button(){
 };
 
 //-----------------Measurement settings-------------------
+// results container
+var cs_result_set = {};
+var CS_jobid = 0;
+var PD_jobids = {}; //{'5487 MHz':5050,...}
+var FD_jobids = {}; // same above
+var CW_jobids = {}; // same above
+
 
 function get_cav_status(){
     $.ajaxSettings.async = false;
@@ -196,20 +203,14 @@ function get_cav_status(){
         let status_text = status["status"];
         let cavity_info = status["cavity_list"];
         CS_jobid = status["CS-jobid"];
+        genopt (cavity_info,"ordinary");
+        genopt (cavity_info,"MS_operation");
         log_print(status_text);
-        cs_ploting(specific_jobid="");   // generate the cavity options to measure independ.
+        
     });
+    //cs_ploting(specific_jobid="");   generate the cavity options to measure independ.
     $.ajaxSettings.async = true;
 };
-
-
-// results container
-var cs_result_set = {};
-var CS_jobid = 0;
-var PD_jobids = {}; //{'5487 MHz':5050,...}
-var FD_jobids = {}; // same above
-var CW_jobids = {}; // same above
-
 
 // measurement settings
 /*
@@ -308,7 +309,7 @@ function search_jobids(){
     }, function (results){
         final_result_set = results;
     });
-    genopt (PD_jobids,mode="ordinary");
+    get_cav_status();
     document.getElementById('search-jobid').setAttribute('value','1')
     cs_ploting(designed=cpw_num);
     generate_result_span(mode="");
@@ -333,8 +334,6 @@ function cs_ploting(designed="",specific_jobid=""){
         }, function (plot_items) {   //need to check this is correct or not
             cavities_plot = plot_items['plot_items'];
             CS_overview = plot_items['overview'];
-            genopt (cavities_plot,"ordinary");
-            genopt (cavities_plot,"MS_operation");
         })
         .done(function(plot_items) {
             spinner.style.visibility = "hidden";
@@ -362,7 +361,6 @@ function cs_ploting(designed="",specific_jobid=""){
         }, function (plot_items) {   //need to check this is correct or not
             cavities_plot = plot_items['plot_items'];
             CS_overview = plot_items['overview'];
-            genopt (cavities_plot,mode="ordinary");
         })
         .done(function(plot_items) {
             spinner.style.visibility = "hidden";
