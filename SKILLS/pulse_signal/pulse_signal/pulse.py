@@ -6,59 +6,15 @@ from numpy import ndarray, complex128, issubdtype
 # Array
 from numpy import array, linspace, empty, append
 # Math
-from numpy import cos, sin, exp, arctan2, radians, sign
+from numpy import cos, sin, exp, arctan2, radians, sign, sqrt
 # const
 from numpy import pi
 
-from typing import Tuple
+from typing import List, Tuple
 from .common_Mathfunc import gaussianFunc, DRAGFunc
 from .waveform import Waveform
-from .digital_mixer import upConversion_IQ
+from .digital_mixer import upConversion_IQ, upConversion_RF
 
-class QAM():
-    """
-    Quadrature amplitude modulation (QAM)
-
-    """
-    def __init__ ( self ):
-        self.carrierFrequency = None
-        self.envelope = array([[None],[None]])
-
-
-
-    @property
-    def inphase ( self )->ndarray:
-        """ In-phase component I(t)."""
-        return self.envelope[0]
-    @inphase.setter
-    def inphase ( self, value:ndarray ):
-        self.envelope[0] = value
-
-    @property
-    def quadrature ( self )->ndarray:
-        """ Quadrature component Q(t)."""
-        return self.envelope[1]
-    @quadrature.setter
-    def duration ( self, value:ndarray ):
-        self.envelope[1] = value
-
-
-    def SSB( self, freqIF:float, IQMixer:tuple=(1,90,0,0) )->Tuple[ndarray,ndarray,float]:
-        """
-        For the pulse is generate by IQMixer
-        For a given dt and t0, calculate the I/Q for IQmixer. \n
-
-        IFFreq: The Intermediate frequency of I/Q ( Unit in dt ) \n
-        IQMixer: The parametrs for calibrate IQmixer\n
-            p1: I/Q Amplitude Balance ( dimensionless ratio )\n
-            p2: Phase Balance ( unit in angle )\n
-            p3: I offset\n
-            p4: Q offset\n
-        The LO frequency should be RF-IF (RF is carrier frequency)
-        """
-        signal_I, signal_Q = upConversion_IQ( self.envelope, freqIF, IQMixer)
-        freq_LO = self.carrierFrequency - freqIF
-        return signal_I, signal_Q, freq_LO
 
 
 class Pulse():
@@ -118,7 +74,7 @@ class Pulse():
 
         time = envelope.get_xAxis()
         envelope.Y = self.envelopeFunc( time, *self.parameters )
-        
+        envelope.Y = exp(1j*self.carrierPhase) *envelope.Y
         return envelope
 
     def generate_signal( self, t0:float, dt:float )->Waveform:
@@ -128,11 +84,7 @@ class Pulse():
         signal = Waveform(envelope.x0, envelope.dx, empty(envelope.Y.shape[-1]))
         time = envelope.get_xAxis()
         if issubdtype(envelope.Y.dtype,complex):
-            phase_I = 2.*pi*self.carrierFrequency*time +self.carrierPhase
-            phase_Q = phase_I +pi/2
-            LO_I = cos( phase_I )
-            LO_Q = cos( phase_Q )
-            signal.Y = envelope.Y.real*LO_I +envelope.Y.imag*LO_Q
+            signal.Y = upConversion_RF( envelope.Y.real, envelope.Y.imag, self.carrierFrequency )
         else:
             signal.Y = envelope.Y*cos( 2.*pi*self.carrierFrequency*time +self.carrierPhase)
 
@@ -158,6 +110,54 @@ class Pulse():
         freq_LO = self.carrierFrequency - IFFreq
         return signal_I, signal_Q, freq_LO
 
+class QAM():
+    """
+    Quadrature amplitude modulation (QAM)
+    In-phase component I(t) is real part of envelope.
+    Quadrature component Q(t) is imag part of envelope
+    """
+    def __init__ ( self, dt:float = 1 ):
+        self.carrierFrequency = None
+        self.envelope = array([[]])
+        self.dt = dt
+
+    @property
+    def amplitude ( self )->ndarray:
+        """ Quadrature component Q(t)."""
+        return sqrt(self.envelope[0]**2+self.envelope[1]**2)
+
+    def import_pulseSequence( self, pulses:List[Pulse], dt:float = None ):
+
+        if dt == None: dt = self.dt
+        envelope_RF = array([])
+        for pulse in pulses:
+            self.carrierFrequency = pulse.carrierFrequency
+            new_envelope = pulse.generate_envelope( 0, dt ).Y
+            envelope_RF = append( envelope_RF, new_envelope, axis=0 )
+        self.envelope = envelope_RF
+        return envelope_RF
+        
+    def SSB( self, freqIF:float, envelope_RF:ndarray = None, dt:float = None, IQMixer:tuple=(1,90,0,0) )->Tuple[ndarray,ndarray,float]:
+        """
+        For the pulse is generate by IQMixer
+        For a given dt and t0, calculate the I/Q for IQmixer. \n
+
+        IFFreq: The Intermediate frequency of I/Q ( Unit in dt ) \n
+        IQMixer: The parametrs for calibrate IQmixer\n
+            p1: I/Q Amplitude Balance ( dimensionless ratio )\n
+            p2: Phase Balance ( unit in angle )\n
+            p3: I offset\n
+            p4: Q offset\n
+        The LO frequency should be RF-IF (RF is carrier frequency)
+        """
+        if dt == None: dt = self.dt
+        if envelope_RF == None: envelope_RF = self.envelope
+        signal_I, signal_Q = upConversion_IQ( envelope_RF, freqIF*dt, IQMixer=IQMixer )
+        if self.carrierFrequency != None:
+            freq_LO = self.carrierFrequency - freqIF
+            return signal_I, signal_Q, freq_LO
+        else: # Do not care carrier frequency
+            return signal_I, signal_Q
 
 
 

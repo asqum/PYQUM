@@ -1,7 +1,6 @@
 
 from argparse import Action
 from typing import List
-#from pulse_generator.pulse import Pulse
 import numpy as np
 from qutip import sigmax, sigmay, sigmaz, basis, qeye, Qobj
 from qutip_qip.circuit import QubitCircuit, Gate

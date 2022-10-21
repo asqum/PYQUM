@@ -34,9 +34,7 @@ def upConversion_IQ( envelope_RF:ndarray, freq_IF:float, IQMixer:Tuple=(1,90,0,0
     phaseBalance = IQMixer[1]
     offsetI = IQMixer[2]
     offsetQ = IQMixer[3]
-
     time = array(range(len(envelope_RF)))
-
     LOShiftSign = sign(sin(radians(phaseBalance)))
     
     envelopeIQ = abs( envelope_RF )
