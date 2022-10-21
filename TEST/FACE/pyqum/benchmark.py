@@ -1249,8 +1249,8 @@ class FluxDepend:
         print("{:<36}".format("Final_dressed cavity frquency"), " : " , "{:>8.2f}".format(float(f_dress)) ,"MHz")
         print("{:<36}".format("Final_bare cavity frquency"), " : " , "{:>8.2f}".format(float(f_bare)) ,"MHz")
         print("{:<36}".format("Final_dressed cavity frquency diff."), " : " , "{:>8.2f}".format(float(f_dress-f_bare)) ,"MHz")
-        print("{:<36}".format("Final_offset")," : ","{:>8.2f}".format(float(offset)),"uA")
-        print("{:<36}".format("Final_period")," : ","{:>8.2f}".format(float(period)),"uA")
+        print("{:<36}".format("Final_offset")," : ","{:>8.2f}".format(float(offset)),"V")
+        print("{:<36}".format("Final_period")," : ","{:>8.2f}".format(float(period)),"V")
     #     if plot:
     #         import matplotlib.pyplot as plt
     #         from numpy import linspace
@@ -1261,7 +1261,7 @@ class FluxDepend:
     #         plt.scatter(self.valid['flux'],f_qubit,color='r', marker='*',label='f_qubit')
     #         x = linspace(self.valid['flux'].min(),self.valid['flux'].max(),200)
     #         plt.plot(x, res["fitfunc"](x), "r-", label="fit curve", linewidth=2)
-    #         plt.xlabel("Flux : uA")
+    #         plt.xlabel("Flux : V")
     #         plt.ylabel("Freq : MHz")
     #         # plt.ylim(self.valid['fr'].min()-.20,self.valid['fr'].max()+.20)
     #         plt.legend()
