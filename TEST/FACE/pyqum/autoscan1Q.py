@@ -107,9 +107,9 @@ def measure_procedure():
             
             # flux dep. part
             if permission == "Enforce" or (part == "2" and first_run == 0) or first_run != 0:
-                print("FluxDependent start @ C-%d :\n"%c_numbers[i])
+                print("FluxDependent start @ C-%d :\n"%int(c_numbers[i]))
                 specifications,_ = routine.read_specification() #讀取資料庫
-                routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["low_power"]   #若從這開始，routine中沒有low_power的變數
+                routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["dress_power(dBm)"]   #若從這開始，routine中沒有low_power的變數
                 
                 routine.fluxdepend(cavitys[i],float(cavitys[i].split(" ")[0]),"")  
                 specifications["results"]["FluxDepend"][cavitys[i]] = {}
@@ -124,10 +124,10 @@ def measure_procedure():
             
             # 2tone part
             if permission == "Enforce" or (part == "3" and first_run == 0) or first_run != 0:
-                print("CWsweep start @ C-%d :\n"%c_numbers[i])
+                print("CWsweep start @ C-%d :\n"%int(c_numbers[i]))
                 specifications,_ = routine.read_specification() #讀取資料庫
                 #補充可能沒有的參數（以此開始時）
-                routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["low_power"]
+                routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["dress_power(dBm)"]
                 routine.wave = {"f_bare":specifications["results"]["FluxDepend"][cavitys[i]]["f_bare"],"f_dress":specifications["results"]["FluxDepend"][cavitys[i]]["f_dress"],"offset":specifications["results"]["FluxDepend"][cavitys[i]]["offset"]}
                 
                 routine.qubitsearch(cavitys[i],"")

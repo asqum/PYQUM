@@ -1113,7 +1113,7 @@ class CavitySearch:
             pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-5*avg_FWHM,tip_freq+5*avg_FWHM]
+            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-3*avg_FWHM,tip_freq+3*avg_FWHM]
         self.final_answer = self.region
         
     def amp_pha_compa(self,designed_CPW_num):
@@ -1683,7 +1683,7 @@ class AutoScan1Q:
         if specifications != "":
             spec_dict = ast.literal_eval(specifications)
             step_list = spec_dict["step"].split("-")
-            if self.sparam == "" and self.dcsweepch == "":
+            if self.sparam == "":
                 self.sparam = spec_dict["I/O"]
                 self.cavity_list = spec_dict["results"]["CavitySearch"]["region"]
 
@@ -1715,6 +1715,8 @@ class AutoScan1Q:
             self.cavity_list = CS.do_analysis(self.designed) #model h5 cannot import <- 0818 update, no need it anymore
             self.total_cavity_list = list(self.cavity_list.keys())
             if plot_ornot:
+                specifications,_ = self.read_specification()
+                CS.final_answer = specifications["results"]["CavitySearch"]["region"]
                 self.CS_plot_items = CS.give_plot_info()
                 self.CS_overview = CS.overview    # ena scan results
         else:

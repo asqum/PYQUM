@@ -18,7 +18,7 @@ class BackendCircuit():
         #self._actions = []        
         self._devices = []
         self.total_time = 5000
-        self.dt = 0.5
+        self.dt = 1
         self.q_reg = None      
 
     def register_qComp( self, qcomp:QComponent ):
