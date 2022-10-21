@@ -1454,20 +1454,23 @@ def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot"):
     else: return show()
 def char_cwsweep_new(sparam,freq,powa,flux,f_bare,f_dress,dcsweepch = "1",comment = "By bot"):
     # Check user's current queue status:
-    ki = f_dress-f_bare
-    f_qubit = f_bare-40**2/ki
+    print("f_dress: ",f_dress)
+    print("f_bare: ",f_bare)
+    ki = (f_dress-f_bare)*1000
+    f_qubit = (1000*(f_bare)-40**2/ki)/1000
+    print("Check F_q: ",f_qubit)
     if (f_qubit>12) | (f_qubit<2):
             raise ValueError("frequency is out of range with "+ str(f_qubit))
     if session['run_clearance']:
         print(comment)
         wday = int(-1)
         sparam = sparam   #S-Parameter
-        ifb = "100"     #IF-Bandwidth (Hz)
+        ifb = "30"     #IF-Bandwidth (Hz)
         freq = freq  #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
-        xyfreq = "{} to {} * 400".format(f_qubit-1,f_qubit+1)#"OPT,"
-        xypowa = "0 -10 -20 -30 r 10"#"OPT,"
+        xyfreq = "{} to {} * 200".format(f_qubit-1,f_qubit+1)#"OPT,"
+        xypowa = "-10 -20 -30 r 10"#"OPT,"
         PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', 'sg-locked': '{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":0}'} # DC=YOKO
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         comment = comment.replace("\"","")+str(CORDER) #comment
@@ -1686,9 +1689,9 @@ class AutoScan1Q:
             if self.sparam == "" or where == "PD":
                 self.sparam = spec_dict["I/O"]
                 self.cavity_list = spec_dict["results"]["CavitySearch"]["region"]
-                if where == "FD" or where == "CW":
-                    self.low_power = spec_dict["results"]["PowerDepend"][target_cav]["dress_power(dBm)"]
-                    self.wave = {"f_bare":spec_dict["results"]["FluxDepend"][target_cav]["f_bare"],"f_dress":spec_dict["results"]["FluxDepend"][target_cav]["f_dress"],"offset":spec_dict["results"]["FluxDepend"][target_cav]["offset"]}
+            if where == "FD" or where == "CW":
+                self.low_power = spec_dict["results"]["PowerDepend"][target_cav]["dress_power(dBm)"]
+                self.wave = {"f_bare":spec_dict["results"]["FluxDepend"][target_cav]["f_bare"],"f_dress":spec_dict["results"]["FluxDepend"][target_cav]["f_dress"],"offset":spec_dict["results"]["FluxDepend"][target_cav]["offset"]}
         else:
             spec_dict = {}
             step_list = []
@@ -1766,7 +1769,7 @@ class AutoScan1Q:
     
     def qubitsearch(self,cavity_freq,jobid_check):
         if jobid_check == "":
-            jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"])+'e-6',f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_freq))
+            jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"]),f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_freq))
             plot_ornot = 0
             self.jobid_dict["QubitSearch"] = jobid
         else:

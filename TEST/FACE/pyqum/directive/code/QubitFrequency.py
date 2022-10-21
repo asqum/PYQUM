@@ -280,7 +280,7 @@ def freq2idx(target_freq,freq):
 
 
 def Find_eps(inp_db):
-    data = np.array(inp_db)
+    data = np.array(inp_db)      # error here
     neighbors = int(data.shape[0]*0.5)
     nbrs = NearestNeighbors(n_neighbors=neighbors ).fit(data)
     distances, indices = nbrs.kneighbors(data)
