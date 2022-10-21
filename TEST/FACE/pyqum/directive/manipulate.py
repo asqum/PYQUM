@@ -9,7 +9,7 @@ mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, Y
 from time import time, sleep
 from copy import copy, deepcopy
 from json import loads, dumps
-from numpy import prod, array, mean, ceil, floor, sin, cos
+from numpy import prod, array, mean, ceil
 from numexpr import evaluate
 from flask import session, g
 
@@ -100,6 +100,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     if renamed_task in Experiments: 
         TASK_LEVEL = "EXP" # EXPERT
         Sample_Backend = get_Qubit_CV(sample) # Extract Qubit-CV
+        Sample_Backend.dt = 1
     else: 
         TASK_LEVEL = "MAC" # BASIC / LOW-LEVEL
 
@@ -335,7 +336,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
                 d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), True )
                 Exp.close()
+                # DEBUG (1)
                 print(Fore.YELLOW + "d-setting: %s" %d_setting)
+                # DEBUG (2)
                 for dcategory in d_setting.keys(): 
                     try: print("Category: %s, Names: %s" %(dcategory, [x for x in d_setting[dcategory].keys()]))
                     except(AttributeError): print("Category: %s, Value: %s" %(dcategory, d_setting[dcategory]))

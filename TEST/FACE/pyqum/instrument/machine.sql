@@ -1,0 +1,43 @@
+BEGIN TRANSACTION;
+DROP TABLE IF EXISTS "machine";
+CREATE TABLE IF NOT EXISTS "machine" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"codename"	TEXT NOT NULL UNIQUE,
+	"since"	DATE NOT NULL DEFAULT CURRENT_DATE,
+	"user_id"	INTEGER,
+	"connected"	BOOL NOT NULL,
+	"address"	TEXT NOT NULL UNIQUE,
+	"BDR"	INTEGER NOT NULL,
+	"model"	TEXT NOT NULL,
+	"owner"	TEXT NOT NULL,
+	"category"	TEXT NOT NULL,
+	"sequence"	INTEGER,
+	"system"	TEXT,
+	"driver"	TEXT,
+	"note"	TEXT,
+	"family"	TEXT NOT NULL,
+	"online"	INTEGER,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("system") REFERENCES "queue"("system"),
+	FOREIGN KEY("user_id") REFERENCES "user"("id")
+);
+INSERT INTO "machine" ("id","codename","since","user_id","connected","address","BDR","model","owner","category","sequence","system","driver","note","family","online") VALUES (1,'SDDIG_1','2021-08-03',1,0,'1::17',2,'KeySight SD1','CCD','ADC',NULL,NULL,NULL,'{"TIME_RESOLUTION_NS":2}','modular',NULL),
+ (2,'SDDIG_2','2021-08-03',1,0,'2::17',2,'KeySight SD1','CCD','ADC',NULL,NULL,NULL,'{"TIME_RESOLUTION_NS":2}','modular',NULL),
+ (3,'ENAB_1','2021-05-28',15,0,'TCPIP0::192.168.1.49::INSTR',2,'KeySight E5080B','CCD','NA',NULL,NULL,NULL,NULL,'benchtop',NULL),
+ (4,'RSSGS_1','2021-06-18',20,0,'TCPIP0::192.168.1.24::INSTR',2,'Rohde&Schwarz SGS100A','CCD','SG',NULL,NULL,NULL,NULL,'benchtop',NULL),
+ (5,'MXA_1','2021-04-06',19,0,'TCPIP0::192.168.1.20::INSTR',2,'KeySight N9020B','CCD','SA',NULL,NULL,NULL,NULL,'benchtop',NULL),
+ (6,'SDAWG_1','2021-05-28',1,0,'1::3',2,'KeySight SD1','CCD','DAC',NULL,NULL,NULL,'{"CLOCK_HZ":1e9}','modular',NULL),
+ (7,'SDAWG_3','2021-06-17',1,0,'1::7',2,'KeySight SD1','CCD','DAC',NULL,NULL,NULL,'{"CLOCK_HZ":1e9}','modular',NULL),
+ (8,'SDAWG_2','2021-06-17',1,0,'1::5',2,'KeySight SD1','CCD','DAC',NULL,NULL,NULL,'{"CLOCK_HZ":1e9}','modular',NULL),
+ (9,'DDSLO_1','2021-08-03',1,0,'TCPIP0::localhost::hislip1::INSTR',2,'KeySight M9347A','CCD','SG',NULL,NULL,NULL,NULL,'modular',NULL),
+ (10,'DDSLO_2','2021-08-03',1,0,'TCPIP0::localhost::hislip2::INSTR',2,'KeySight M9347A','CCD','SG',NULL,NULL,NULL,NULL,'modular',NULL),
+ (11,'DUMMY_1','2021-08-27',1,0,'dummy',2,'QUM','CCD','OPT',NULL,NULL,NULL,NULL,'benchtop',NULL),
+ (12,'SDAWG_4','2021-09-23',1,0,'2::4',2,'KeySight SD1','CCD','DAC',NULL,NULL,NULL,'{"CLOCK_HZ":1e9}','modular',NULL),
+ (13,'SDAWG_5','2021-09-23',19,0,'2::6',2,'KeySight SD1','CCD','DAC',NULL,NULL,NULL,'{"CLOCK_HZ":1e9}','modular',NULL),
+ (14,'SDAWG_6','2021-09-23',1,0,'2::8',2,'KeySight SD1','CCD','DAC',NULL,NULL,NULL,'{"CLOCK_HZ":1e9}','modular',NULL),
+ (15,'DDSLO_3','2021-09-23',1,0,'TCPIP0::localhost::hislip3::INSTR',2,'KeySight M9347A','CCD','SG',NULL,NULL,NULL,NULL,'modular',NULL),
+ (16,'DDSLO_4','2021-09-23',1,0,'TCPIP0::localhost::hislip4::INSTR',2,'KeySight M9347A','CCD','SG',NULL,NULL,NULL,NULL,'modular',NULL),
+ (17,'RSSGS_2','2022-01-30',20,0,'TCPIP0::192.168.1.9::INSTR',2,'Rohde&Schwarz SGS100A','CCD','SG',NULL,NULL,NULL,NULL,'benchtop',NULL),
+ (18,'RSVNA_1','2022-05-28',15,0,'TCPIP0::192.168.1.249::INSTR',2,'Rohde&Schwarz ZNB','CCD','NA',NULL,NULL,NULL,'{"FreqRange":"100kHz-20GHz"}','benchtop',NULL),
+ (19,'SRSDC_1','2022-10-08',1,0,'192.168.1.45:8888',0,'Stanford Research Systems','CCD','DC',NULL,NULL,NULL,NULL,'modular',NULL);
+COMMIT;

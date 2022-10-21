@@ -17,6 +17,7 @@ from random import random
 import numba as nb
 from importlib import import_module as im
 from copy import deepcopy
+from numexpr import evaluate
 
 from pyqum import get_db, close_db
 from pyqum.instrument.logger import get_histories, get_mat_history, get_status, set_mat_history, set_status, set_mat, set_csv, clocker, mac_for_ip, lisqueue, lisjob, \
@@ -26,7 +27,8 @@ from pyqum.instrument.analyzer import IQAP, UnwraPhase, pulseresp_sampler, IQAPa
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.reader import inst_order, device_port, macer
 from pyqum.directive.characterize import F_Response, CW_Sweep, SQE_Pulse
-from pyqum.directive.manipulate import QuCTRL
+from pyqum.directive.manipulate import QuCTRL, get_Qubit_CV
+import qpu.application as qapp
 
 # Memory handling
 import concurrent.futures
@@ -1421,7 +1423,7 @@ def mani_QuCTRL():
 # Initialize and list days specific to task
 @bp.route('/mani/QuCTRL/init', methods=['GET'])
 def mani_QuCTRL_init():
-    global mani_TASK, Run_QuCTRL, M_QuCTRL, SQ_CParameters, QuCTRL_1Ddata, QuCTRL_2Ddata, c_QuCTRL_structure, c_QuCTRL_progress, QuCTRL_jobid
+    global mani_TASK, Run_QuCTRL, M_QuCTRL, SQ_CParameters, QuCTRL_1Ddata, QuCTRL_2Ddata, c_QuCTRL_structure, c_QuCTRL_progress, QuCTRL_jobid, TASK_LEVEL
 
     # Managing / Initialize user-specific Manipulation-Task for QuCTRL:
     try: print(Fore.GREEN + "Connected TASK-USER(s) for QuCTRL: %s" %mani_TASK.keys())
@@ -1462,6 +1464,10 @@ def mani_QuCTRL_init():
     try: print(Fore.GREEN + "Connected USER(s) for %s's Jobid: %s" %(mani_TASK[session['user_name']], QuCTRL_jobid.keys()))
     except: QuCTRL_jobid = {}
 
+    # Managing / Initialize user-specific TASK LEVEL for QuCTRL:
+    try: print(Fore.GREEN + "Connected TASK-LEVEL-USER(s) for QuCTRL: %s" %TASK_LEVEL.keys())
+    except: TASK_LEVEL = {}
+
     # Loading SCORE & MACE user-inputs based on (1) TASK-type or (2) WIRING-settings for EACH category:
     QPC_TYPE = ["DAC", "SG", "DC"] #PENDING: ADC (after FPGA implementation)
     Experiment_Parameters, Experiment_Default_Values, CH_Matrix, Role, Which, Mac_Parameters, Mac_Default_Values = [], [], {}, {}, {}, {}, {}
@@ -1471,6 +1477,7 @@ def mani_QuCTRL_init():
     Exp.close()
 
     if mani_TASK[session['user_name']] in Experiments:
+        TASK_LEVEL[session['user_name']] = "EXP"
         # loading Experiment aligned with TASK but not Devices (Mac):
         Exp = macer(commander=mani_TASK[session['user_name']])
         Exp.get_skills()
@@ -1479,6 +1486,7 @@ def mani_QuCTRL_init():
         Exp.close()
 
     else: 
+        TASK_LEVEL[session['user_name']] = "MAC"
         # loading Devices (Mac) for non-customized experiments like Single_Qubit, Qubits
         for category in QPC_TYPE:
             try:
@@ -1517,8 +1525,11 @@ def mani_QuCTRL_check_timsum():
 @bp.route('/mani/QuCTRL/check/pulses', methods=['GET'])
 def mani_QuCTRL_check_pulses():
     perimeter = json.loads(request.args.get('PERIMETER'))
-    # Extract Pulse-settings ONLY:
-    SCORE_TEMPLATE = perimeter['SCORE-JSON'] # already a DICT
+    Pulse_Preview = dict()
+
+    # Extract Pulse-related Settings ONLY:
+    SCORE_TEMPLATE = perimeter['SCORE-JSON']
+    MACE_TEMPLATE = perimeter['MACE-JSON']
     RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
     rjson_struct = [k for k in RJSON.keys()]
 
@@ -1529,33 +1540,53 @@ def mani_QuCTRL_check_pulses():
     # Loading Channel-Matrix & Channel-Role based on WIRING-settings
     DACH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DAC']
 
-    # DAC's SCORE-UPDATE:
-    Pulse_Preview = dict()
+    # UPDATE EVERY {R}
     SCORE_DEFINED = deepcopy(SCORE_TEMPLATE)
+    MACE_DEFINED = deepcopy(MACE_TEMPLATE)
     for j in range(len(rjson_struct)):
+        if ">" in rjson_struct[j]: # For Locked variables with customized math expression:
+            math_expression = rjson_struct[j].split(">")[1] # Algebraic initially
+            for R_KEY in rjson_struct[j].split(">")[0].replace(" ","").split(","):
+                math_expression = math_expression.replace( R_KEY, str( max(R_waveform[R_KEY].data, key=abs) ) ) # PICK THE MAX PARAMETER VALUE!
+            Script_Var_Update = evaluate(math_expression) # evaluate numpy-supported expression
+            print(Fore.LIGHTBLUE_EX + "STRUCTURE LOCKED AT IDX-%s: %s -> %s -> %s" %(j, rjson_struct[j], math_expression, Script_Var_Update))
+        else: # for usual variables
+            Script_Var_Update = max(R_waveform[rjson_struct[j]].data)
+                    
+        if TASK_LEVEL[session['user_name']] == "MAC":
+            for i_slot_order, channel_set in enumerate(DACH_Matrix):
+                for ch in channel_set:
+                    dach_address = "%s-%s" %(i_slot_order+1,ch)
+                    SCORE_DEFINED['CH%s'%dach_address] = SCORE_DEFINED['CH%s'%dach_address].replace("{%s}"%rjson_struct[j], str(Script_Var_Update))
+                    
+        if TASK_LEVEL[session['user_name']] == "EXP": 
+            MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]] = MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]].replace("{%s}"%rjson_struct[j], str(Script_Var_Update))
+        
+    # Compose WAVEFORM from INSTANTIATED SCORE / MACE COMMANDS:
+    if TASK_LEVEL[session['user_name']] == "MAC":
         for i_slot_order, channel_set in enumerate(DACH_Matrix):
             for ch in channel_set:
                 dach_address = "%s-%s" %(i_slot_order+1,ch)
-                if ">" in rjson_struct[j]: # for locked variables with customized math expression:
-                    math_expression = rjson_struct[j].split(">")[1] # Algebraic initially
-                    for R_KEY in rjson_struct[j].split(">")[0].replace(" ","").split(","):
-                        math_expression = math_expression.replace( R_KEY, str( max(R_waveform[R_KEY].data, key=abs) ) )
-                    if not channel_set.index(ch): print(Fore.LIGHTBLUE_EX + "CH-%s: STRUCTURE LOCKED AT IDX-%s: %s -> %s" %(ch, j, rjson_struct[j], math_expression))
-                    Score_Var_Update = eval(math_expression) # evaluate pure Arithmetic in the end
-                else: # for usual variables
-                    Score_Var_Update = max(R_waveform[rjson_struct[j]].data)
-                SCORE_DEFINED['CH%s'%dach_address] = SCORE_DEFINED['CH%s'%dach_address].replace("{%s}"%rjson_struct[j], str(Score_Var_Update))
-                
-    # Convert into wave-data:
-    for i_slot_order, channel_set in enumerate(DACH_Matrix):
-        for ch in channel_set:
-            dach_address = "%s-%s" %(i_slot_order+1,ch)
-            pulseq = pulser(dt=1, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address]) # take dt as a unit-sample (1ns)
-            if not i_slot_order: T_samples = pulseq.totaltime
-            pulseq.song()
-            Pulse_Preview['CH%s'%dach_address] = list(pulseq.music)
-            # print("%s: %s" %(dach_address, SCORE_DEFINED['CH%s'%dach_address]))
+                pulseq = pulser(dt=1, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address]) # take dt as a unit-sample (1ns)
+                if not i_slot_order: T_samples = pulseq.totaltime
+                pulseq.song()
+                Pulse_Preview['CH%s'%dach_address] = list(pulseq.music)
 
+    if TASK_LEVEL[session['user_name']] == "EXP": 
+        Exp = macer(commander=mani_TASK[session['user_name']])
+        Exp.execute(MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]])
+        Sample_Backend = get_Qubit_CV(get_status("MSSN")[session['user_name']]['sample'])
+        d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), True )
+        Exp.close()
+        dac_wf = d_setting["DAC"]
+        T_samples = d_setting['total_time']
+        # Compare signal and envelope
+        for instr_name, settings in dac_wf.items():
+            for i, s in enumerate(settings):
+                if type(s) != type(None):
+                    Pulse_Preview[f"{instr_name}-{i+1}"] = list(s)
+                    print(Fore.WHITE + "s: %s" %s)
+        
     return jsonify(T_samples=T_samples, Pulse_Preview=Pulse_Preview)
 # run NEW measurement:
 @bp.route('/mani/QuCTRL/new', methods=['GET'])
