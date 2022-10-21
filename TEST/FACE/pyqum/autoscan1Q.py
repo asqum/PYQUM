@@ -89,7 +89,7 @@ def measure_procedure():
 
     for i in range(len(cavitys)):
         routine = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="")
-        specifications,history = routine.read_specification()
+        specifications,history = routine.read_specification(where = "PD")
         # power dep. part
         if permission == "Enforce" or (part == "1" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
             print("PowerDependent start @ C-%d :\n"%int(c_numbers[i]))
@@ -108,9 +108,8 @@ def measure_procedure():
             # flux dep. part
             if permission == "Enforce" or (part == "2" and first_run == 0) or first_run != 0:
                 print("FluxDependent start @ C-%d :\n"%int(c_numbers[i]))
-                specifications,_ = routine.read_specification() #讀取資料庫
-                routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["dress_power(dBm)"]   #若從這開始，routine中沒有low_power的變數
-                
+                specifications,_ = routine.read_specification(where = "FD",target_cav=cavitys[i]) #讀取資料庫
+
                 routine.fluxdepend(cavitys[i],float(cavitys[i].split(" ")[0]),"")  
                 specifications["results"]["FluxDepend"][cavitys[i]] = {}
                 specifications["results"]["FluxDepend"][cavitys[i]]["f_bare"] = routine.wave["f_bare"]
@@ -125,11 +124,8 @@ def measure_procedure():
             # 2tone part
             if permission == "Enforce" or (part == "3" and first_run == 0) or first_run != 0:
                 print("CWsweep start @ C-%d :\n"%int(c_numbers[i]))
-                specifications,_ = routine.read_specification() #讀取資料庫
+                specifications,_ = routine.read_specification(where = "CW",target_cav=cavitys[i]) #讀取資料庫
                 #補充可能沒有的參數（以此開始時）
-                routine.low_power = specifications["results"]["PowerDepend"][cavitys[i]]["dress_power(dBm)"]
-                routine.wave = {"f_bare":specifications["results"]["FluxDepend"][cavitys[i]]["f_bare"],"f_dress":specifications["results"]["FluxDepend"][cavitys[i]]["f_dress"],"offset":specifications["results"]["FluxDepend"][cavitys[i]]["offset"]}
-                
                 routine.qubitsearch(cavitys[i],"")
                 specifications["results"]["QubitSearch"][cavitys[i]]["qubit"] = routine.qubit_info['Fq_avg']
                 specifications["results"]["QubitSearch"][cavitys[i]]["Ec"] = routine.qubit_info['Ec_avg']

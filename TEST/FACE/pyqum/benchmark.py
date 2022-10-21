@@ -1113,7 +1113,7 @@ class CavitySearch:
             pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-3*avg_FWHM,tip_freq+3*avg_FWHM]
+            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-2*avg_FWHM,tip_freq+2*avg_FWHM]
         self.final_answer = self.region
         
     def amp_pha_compa(self,designed_CPW_num):
@@ -1457,7 +1457,7 @@ def char_cwsweep_new(sparam,freq,powa,flux,f_bare,f_dress,dcsweepch = "1",commen
     ki = f_dress-f_bare
     f_qubit = f_bare-40**2/ki
     if (f_qubit>12) | (f_qubit<2):
-            raise ValueError("frequency is out of range with "+ f_qubit)
+            raise ValueError("frequency is out of range with "+ str(f_qubit))
     if session['run_clearance']:
         print(comment)
         wday = int(-1)
@@ -1504,7 +1504,7 @@ class Quest_command:
         print('check PD freq_range: ',freq_command)
         if (select_freq[0]>12) | (select_freq[1]>12) | (select_freq[0]<2) | (select_freq[1]<2):
             raise ValueError("Frequency is out of range with "+freq_command)
-        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-50 to 0 * 11",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
+        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-70 to -10 * 13",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
         return jobid
     def fluxdepend(self,select_freq,select_powa,dc_ch,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
@@ -1674,7 +1674,7 @@ class AutoScan1Q:
         db.commit()
         db.close()
 
-    def read_specification(self):
+    def read_specification(self,where="",target_cav=""):
         connection = connect(sql_path)
         sample = read_sql_query("SELECT * FROM sample", connection)
         samplename = get_status("MSSN")[session['user_name']]['sample']
@@ -1683,11 +1683,12 @@ class AutoScan1Q:
         if specifications != "":
             spec_dict = ast.literal_eval(specifications)
             step_list = spec_dict["step"].split("-")
-            if self.sparam == "":
+            if self.sparam == "" or where == "PD":
                 self.sparam = spec_dict["I/O"]
                 self.cavity_list = spec_dict["results"]["CavitySearch"]["region"]
-
-
+                if where == "FD" or where == "CW":
+                    self.low_power = spec_dict["results"]["PowerDepend"][target_cav]["dress_power(dBm)"]
+                    self.wave = {"f_bare":spec_dict["results"]["FluxDepend"][target_cav]["f_bare"],"f_dress":spec_dict["results"]["FluxDepend"][target_cav]["f_dress"],"offset":spec_dict["results"]["FluxDepend"][target_cav]["offset"]}
         else:
             spec_dict = {}
             step_list = []
