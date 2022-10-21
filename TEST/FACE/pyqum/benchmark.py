@@ -1215,9 +1215,9 @@ class PowerDepend:
         label_new = outlier_detect(self.data,label)
         power_0,power_1 = cloc(label_new)
         print("power : "+"{:.2f}".format(self.data[:, 0][power_0])+"{:<7}".format(' dBm ; ')+
-            "fr : "+"{:.2f}".format(self.data[:, 1][power_0])+"{:<7}".format(' MHz ; \n')+
+            "fr : "+"{:.2f}".format(median(self.data[:, 1][label_new ==0]))+"{:<7}".format(' MHz ; \n')+
             "power : "+"{:.2f}".format(self.data[:, 0][power_1])+"{:<7}".format(' dBm ; ')+
-            "fr : "+"{:.2f}".format(self.data[:, 1][power_1])+"{:<7}".format(' MHz ; '))
+            "fr : "+"{:.2f}".format(median(self.data[:, 1][label_new ==2]))+"{:<7}".format(' MHz ; \n')
         self.low_power = min(self.data[:, 0][power_0],self.data[:, 0][power_1])
         self.high_power = max(self.data[:, 0][power_0],self.data[:, 0][power_1])
         return self.low_power, self.high_power
