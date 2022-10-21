@@ -57,12 +57,13 @@ def outlier_detect(data,label):
     iteration = 3
     threshold = 1.5
     IQR_end = 0.006
+    upquantile,lowquantile=.4,.6
     for i in range(iteration):
-        Q1_0 = quantile(data[:,1][label==class0_label],.25)
-        Q3_0 = quantile(data[:,1][label==class0_label],.75)
+        Q1_0 = quantile(data[:,1][label==class0_label],upquantile)
+        Q3_0 = quantile(data[:,1][label==class0_label],lowquantile)
         IQR_0 = Q3_0 - Q1_0
-        Q1_1 = quantile(data[:,1][label==class1_label],.25)
-        Q3_1 = quantile(data[:,1][label==class1_label],.75)
+        Q1_1 = quantile(data[:,1][label==class1_label],upquantile)
+        Q3_1 = quantile(data[:,1][label==class1_label],lowquantile)
         IQR_1 = Q3_1 - Q1_1
         print("IQR :"+"{:.4f}".format(IQR_0)+" ; "+"{:.4f}".format(IQR_1))
         for i in range(len(label)):
