@@ -39,7 +39,7 @@ def flux_load_data(data):
         port1.autofit()
         fr.append(port1.fitresults['fr'])
     df1.insert(loc=0, column='fr', value = array(fr)*10**3)
-    df1.insert(loc=0, column='flux', value = data["Flux-Bias"].unique()*10**6)
+    df1.insert(loc=0, column='flux', value = data["Flux-Bias"].unique())
     #---------------drop the outward data---------------
     f_min,f_max = min(data["Frequency"].unique())*1000,max(data["Frequency"].unique())*1000
     valid = df1[(df1['fr']>= f_min)&(df1['fr']<= f_max)]
