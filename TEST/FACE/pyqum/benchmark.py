@@ -1655,11 +1655,9 @@ from sqlite3 import connect
 from pandas import read_sql_query
 import ast
 sql_path = r'C:\Users\ASQUM\HODOR\CONFIG\pyqum.sqlite'
+# bare check OK!
 class AutoScan1Q:
     def __init__(self,sparam="S21,",dcsweepch = "1",designed=""):
-        self.jobid_dict = {"PowerDepend":0,"FluxDepend":0,"QubitSearch":0}
-        self.CS_jobid = 0
-        self.readout_para = {}
         self.sparam = sparam
         self.dcsweepch = dcsweepch
         if designed != "":
@@ -1686,12 +1684,19 @@ class AutoScan1Q:
         if specifications != "":
             spec_dict = ast.literal_eval(specifications)
             step_list = spec_dict["step"].split("-")
-            if self.sparam == "" or where == "PD":
+            if where == "PD":
                 self.sparam = spec_dict["I/O"]
                 self.cavity_list = spec_dict["results"]["CavitySearch"]["region"]
-            if where == "FD" or where == "CW":
+            if where == "FD":
+                self.sparam = spec_dict["I/O"]
+                self.cavity_list = spec_dict["results"]["CavitySearch"]["region"]
+                self.low_power = spec_dict["results"]["PowerDepend"][target_cav]["dress_power(dBm)"]
+            if where == "CW":
+                self.sparam = spec_dict["I/O"]
+                self.cavity_list = spec_dict["results"]["CavitySearch"]["region"]
                 self.low_power = spec_dict["results"]["PowerDepend"][target_cav]["dress_power(dBm)"]
                 self.wave = {"f_bare":spec_dict["results"]["FluxDepend"][target_cav]["f_bare"],"f_dress":spec_dict["results"]["FluxDepend"][target_cav]["f_dress"],"offset":spec_dict["results"]["FluxDepend"][target_cav]["offset"]}
+
         else:
             spec_dict = {}
             step_list = []
@@ -1700,9 +1705,15 @@ class AutoScan1Q:
         
     def cavitysearch(self,jobid_check):
         if jobid_check == "":
-            jobid = Quest_command(self.sparam).cavitysearch()
+            record_dict,_ = self.read_specification(where="CS")
+            if record_dict["JOBIDs"]["CavitySearch"] == {}:
+                jobid = Quest_command(self.sparam).cavitysearch()
+                record_dict["JOBIDs"]["CavitySearch"] = jobid   # save first after measuring
+                record_dict["step"] = "1-1_50%"
+                self.write_specification(record_dict)
+            else:
+                jobid = record_dict["JOBIDs"]["CavitySearch"]
             plot_ornot = 0
-            self.CS_jobid = jobid
         else:
             jobid = jobid_check   
             speci,_ = self.read_specification()
@@ -1734,10 +1745,18 @@ class AutoScan1Q:
         
     
     def powerdepend(self,cavity_freq,jobid_check):
+        cav_MHz = cavity_freq.split("-")[0]
+        cav_label = cavity_freq.split("-")[-1]
         if jobid_check == "":
-            jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cavity_freq],add_comment="with Cavity "+str(cavity_freq))
+            record_dict,_ = self.read_specification(where="PD")
+            if cav_MHz not in record_dict["JOBIDs"]["PowerDepnd"].keys():
+                jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cav_MHz],add_comment="with Cavity "+str(cav_MHz))
+                record_dict["JOBIDs"]["PowerDepend"][cav_MHz] = jobid   # save first after measuring
+                record_dict["step"] = f"2-{cav_label}_50%"
+                self.write_specification(record_dict)
+            else:
+                jobid = record_dict["JOBIDs"]["PowerDepnd"][cav_MHz]
             plot_ornot = 0
-            self.jobid_dict["PowerDepend"] = jobid
         else:
             jobid = jobid_check
             plot_ornot = 1
@@ -1751,10 +1770,19 @@ class AutoScan1Q:
 
 
     def fluxdepend(self,cavity_freq,f_bare,jobid_check):
+        cav_MHz = cavity_freq.split("-")[0]
+        cav_label = cavity_freq.split("-")[-1]
         if jobid_check == "":
-            jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cavity_freq],select_powa=self.low_power,dc_ch=self.dcsweepch,add_comment="with Cavity "+str(cavity_freq))
+            record_dict,_ = self.read_specification(where = "FD",target_cav=cav_MHz)
+            if cav_MHz not in record_dict["JOBIDs"]["FluxDepnd"].keys():
+                jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cav_MHz],select_powa=self.low_power,dc_ch=self.dcsweepch,add_comment="with Cavity "+str(cav_MHz))
+                record_dict["JOBIDs"]["FluxDepend"][cav_MHz] = jobid   # save first after measuring
+                record_dict["step"] = f"3-{cav_label}_50%"
+                self.write_specification(record_dict)
+            else:
+                jobid = record_dict["JOBIDs"]["FluxDepnd"][cav_MHz]
             plot_ornot = 0
-            self.jobid_dict["FluxDepend"] = jobid
+
         else:
             jobid = jobid_check
             plot_ornot = 1
@@ -1768,10 +1796,19 @@ class AutoScan1Q:
             self.FD_plot_items = FD.give_plot_info()  # assume the function named `get_plot_items()`
     
     def qubitsearch(self,cavity_freq,jobid_check):
+        cav_MHz = cavity_freq.split("-")[0]
+        cav_label = cavity_freq.split("-")[-1]
         if jobid_check == "":
-            jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"]),f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cavity_freq))
+            record_dict,_ = self.read_specification(where = "CW",target_cav=cav_MHz)
+            if cav_MHz  not in record_dict["JOBIDs"]["QubitSearch"].keys():
+                jobid = Quest_command(self.sparam).qubitsearch(select_freq=self.wave["f_dress"],select_powa=self.low_power,select_flux=str(self.wave["offset"]),f_bare = self.wave["f_bare"],f_dress = self.wave["f_dress"],dcsweepch = self.dcsweepch,add_comment="with Cavity "+str(cav_MHz))
+                record_dict["JOBIDs"]["QubitSearch"][cav_MHz] = jobid   # save first after measuring
+                record_dict["step"] = f"4-{cav_label}_50%"
+                self.write_specification(record_dict)
+            else:
+                jobid = record_dict["JOBIDs"]["QubitSearch"][cav_MHz]
             plot_ornot = 0
-            self.jobid_dict["QubitSearch"] = jobid
+            
         else:
             jobid = jobid_check
             plot_ornot = 1    

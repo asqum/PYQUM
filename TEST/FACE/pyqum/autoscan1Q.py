@@ -45,25 +45,27 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 #----------------main-----------------------
-@bp.route('/initialize-CS',methods=['POST','GET'])
-def CS_initialize():
+@bp.route('/initialize-CS',methods=['POST','GET'])  
+def CS_initialize():  # bare check OK!
     port = json.loads(request.args.get('inout_port'))
     designed_num = json.loads(request.args.get('designed'))
     permission = json.loads(request.args.get('access'))
     mode = json.loads(request.args.get('mode'))
     
-    specifications = {"mode":mode,"CPW":designed_num,"I/O":port,"results":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"JOBIDs":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"step":"0"}
-
+    # initialize the database specifications
+    init_speci = {"mode":mode,"CPW":designed_num,"I/O":port,"results":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"JOBIDs":{"CavitySearch":{},"PowerDepend":{},"FluxDepend":{},"QubitSearch":{}},"step":"0"}
     routine = AutoScan1Q(sparam=port,dcsweepch ="",designed=designed_num)
+    #read and going forward
     old_spec,_ = routine.read_specification()
     if permission == "Enforce" or old_spec == {} :    #history == "" :   #將強制執行量測將結果寫入資料庫（覆蓋）
+        routine.write_specification(init_speci)    #initialize the format to save the jobid first after measuring
         print("CavitySearch start:\n")
-        routine.cavitysearch(jobid_check="")
+        routine.cavitysearch(jobid_check="")   # after measuring jobid save first
+        specifications,_ = routine.read_specification()
         specifications["results"]["CavitySearch"]["answer"] = routine.total_cavity_list   #["1234 MHz",...]
         specifications["results"]["CavitySearch"]["region"] = routine.cavity_list 
-        specifications["JOBIDs"]["CavitySearch"] = routine.CS_jobid
-        specifications["step"]="1-1"
-        routine.write_specification(specifications)
+        specifications["step"]="1-1_100%"
+        routine.write_specification(init_speci)
 
     specifications,_ = routine.read_specification()
     return json.dumps({"answer":specifications["results"]["CavitySearch"]["answer"],"jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
@@ -72,7 +74,7 @@ def CS_initialize():
 @bp.route('/MeasureByCavity',methods=['POST','GET'])
 def measure_procedure():
     x =  AutoScan1Q(sparam="",dcsweepch = "",designed="")
-    speci,history = x.read_specification() #讀取資料庫,必有cavity_region
+    speci,history = x.read_specification("read_only") #read record to check where to start and wihch type the chip is (qubit or cavity only) 
     scan_mode = speci["mode"]
     part = history[0] # if "1" cavitysearch finished, "2" powerdepend finished, ....
     first_run = 0
@@ -81,62 +83,63 @@ def measure_procedure():
     permission = json.loads(request.args.get('access'))
     target_cav = json.loads(request.args.get('target'))
     if scan_mode == "Qubits":
-        cavitys = [target_cav.split("-")[0]]
-        c_numbers = [target_cav.split("-")[1]]
+        cavitys = [target_cav]   #["1234 MHz-1", ...]
     else:
-        cavitys = speci["results"]["CavitySearch"]["answer"]
-        c_numbers = arange(1,len(cavitys)+1,1)
+        cavs = speci["results"]["CavitySearch"]["answer"]
+        c_labels = arange(1,len(cavitys)+1,1)
+        cavitys = []
+        for ipt in range(len(cavs)):
+            cavitys.append(str(cavs[ipt])+"-"+str(c_labels[ipt]))
+        
 
     for i in range(len(cavitys)):
         routine = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="")
-        specifications,history = routine.read_specification(where = "PD")
-        # power dep. part
+    
+        # power dep. part (bare chech OK!)
         if permission == "Enforce" or (part == "1" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
-            print("PowerDependent start @ C-%d :\n"%int(c_numbers[i]))
-
+            print("PowerDependent start @ C-%d :\n"%int(cavitys[i].split("-")[-1]))
             routine.powerdepend(cavitys[i],"")
-            specifications["results"]["PowerDepend"][cavitys[i]] = {} 
-            specifications["results"]["PowerDepend"][cavitys[i]]["dress_power(dBm)"]= routine.low_power
-            specifications["JOBIDs"]["PowerDepend"][cavitys[i]] = routine.jobid_dict["PowerDepend"]
-            specifications["step"] = "2-"+str(c_numbers[i])
+            specifications,_ = routine.read_specification(where = "write_only")   # read the speci contains jobid and step record to keep writing 
+            specifications["results"]["PowerDepend"][cavitys[i].split("-")[0]] = {} 
+            specifications["results"]["PowerDepend"][cavitys[i].split("-")[0]]["dress_power(dBm)"]= routine.low_power
+            specifications["step"] = "2-"+str(cavitys[i].split("-")[-1])+"_100%"
             routine.write_specification(specifications)
 
             first_run = 1
 
         if scan_mode == "Qubits":
             
-            # flux dep. part
+            # flux dep. part (bare check OK!)
             if permission == "Enforce" or (part == "2" and first_run == 0) or first_run != 0:
-                print("FluxDependent start @ C-%d :\n"%int(c_numbers[i]))
-                specifications,_ = routine.read_specification(where = "FD",target_cav=cavitys[i]) #讀取資料庫
-
-                routine.fluxdepend(cavitys[i],float(cavitys[i].split(" ")[0]),"")  
-                specifications["results"]["FluxDepend"][cavitys[i]] = {}
-                specifications["results"]["FluxDepend"][cavitys[i]]["f_bare"] = routine.wave["f_bare"]
-                specifications["results"]["FluxDepend"][cavitys[i]]["f_dress"] = routine.wave["f_dress"]
-                specifications["results"]["FluxDepend"][cavitys[i]]["offset"] = routine.wave["offset"]
-                specifications["JOBIDs"]["FluxDepend"][cavitys[i]] = routine.jobid_dict["FluxDepend"]
-                specifications["step"] = "3-"+str(c_numbers[i])
+                print("FluxDependent start @ C-%d :\n"%int(cavitys[i].split("-")[-1]))
+    
+                routine.fluxdepend(cavitys[i],float(cavitys[i].split(" ")[0]),"") 
+                specifications,_ = routine.read_specification(where = "write_only") 
+                specifications["results"]["FluxDepend"][cavitys[i].split("-")[0]] = {}
+                specifications["results"]["FluxDepend"][cavitys[i].split("-")[0]]["f_bare"] = routine.wave["f_bare"]
+                specifications["results"]["FluxDepend"][cavitys[i].split("-")[0]]["f_dress"] = routine.wave["f_dress"]
+                specifications["results"]["FluxDepend"][cavitys[i].split("-")[0]]["offset"] = routine.wave["offset"]
+                specifications["step"] = "3-"+str(cavitys[i].split("-")[-1])+"_100%"
                 routine.write_specification(specifications)
 
                 first_run = 1
             
-            # 2tone part
+            # 2tone part (bare check OK!)
             if permission == "Enforce" or (part == "3" and first_run == 0) or first_run != 0:
-                print("CWsweep start @ C-%d :\n"%int(c_numbers[i]))
-                specifications,_ = routine.read_specification(where = "CW",target_cav=cavitys[i]) #讀取資料庫
+                print("CWsweep start @ C-%d :\n"%int(cavitys[i].split("-")[-1]))
+                
                 #補充可能沒有的參數（以此開始時）
                 routine.qubitsearch(cavitys[i],"")
-                specifications["results"]["QubitSearch"][cavitys[i]]["qubit"] = routine.qubit_info['Fq_avg']
-                specifications["results"]["QubitSearch"][cavitys[i]]["Ec"] = routine.qubit_info['Ec_avg']
-                specifications["results"]["QubitSearch"][cavitys[i]]["acStark"] = routine.qubit_info['acStark_power']
-                specifications["JOBIDs"]["QubitSearch"][cavitys[i]] = routine.jobid_dict["QubitSearch"]
-                specifications["step"] = "4-"+str(c_numbers[i])
+                specifications,_ = routine.read_specification(where = "write_only") #讀取資料庫
+                specifications["results"]["QubitSearch"][cavitys[i].split("-")[0]]["qubit"] = routine.qubit_info['Fq_avg']
+                specifications["results"]["QubitSearch"][cavitys[i].split("-")[0]]["Ec"] = routine.qubit_info['Ec_avg']
+                specifications["results"]["QubitSearch"][cavitys[i].split("-")[0]]["acStark"] = routine.qubit_info['acStark_power']
+                specifications["step"] = "4-"+str(cavitys[i].split("-")[-1])+"_100%"
                 routine.write_specification(specifications)
 
                 first_run = 1
     
-    specifications,_ = routine.read_specification()
+    specifications,_ = routine.read_specification(where="read_only")
     return json.dumps({"results":specifications["results"],"jobids":specifications["JOBIDs"]}, cls=NumpyEncoder)
 
 
@@ -302,7 +305,8 @@ def get_measure_status():
     specifications,history = routine.read_specification()
     if len(history) != 0:
         part = history[0]
-        cav_number = history[-1]
+        cav_number = history[-1].split("_")[0]
+        measORanal = history[-1].split("_")[-1]  # measure complete: 50%, analysis complete: 100% 
         if part == "1":
             step = "CavitySearch "
         elif part == "2":
@@ -311,8 +315,10 @@ def get_measure_status():
             step = "FluxDependence "
         else:
             step = "2Tone "
-        
-        return json.dumps({"status":step+"completed @ C-"+cav_number,"cavity_list":specifications["results"]["CavitySearch"]["region"],"CS-jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
+        if measORanal == "100%":
+            return json.dumps({"status":step+"completed @ C-"+cav_number,"cavity_list":specifications["results"]["CavitySearch"]["region"],"CS-jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
+        else:
+            return json.dumps({"status":"C-"+cav_number+" measure completed @ "+step,"cavity_list":specifications["results"]["CavitySearch"]["region"],"CS-jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
     else:
         return json.dumps({"status":"New chip!","cavity_list":{},"CS-jobid":{}}, cls=NumpyEncoder)
 
