@@ -316,7 +316,7 @@ def get_measure_status():
         else:
             step = "2Tone "
         if measORanal == "100%":
-            return json.dumps({"status":step+"completed @ C-"+cav_number,"cavity_list":specifications["results"]["CavitySearch"]["region"],"CS-jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
+            return json.dumps({"status":"C-"+cav_number+" analyze completed @ "+step,"cavity_list":specifications["results"]["CavitySearch"]["region"],"CS-jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
         else:
             return json.dumps({"status":"C-"+cav_number+" measure completed @ "+step,"cavity_list":specifications["results"]["CavitySearch"]["region"],"CS-jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
     else:

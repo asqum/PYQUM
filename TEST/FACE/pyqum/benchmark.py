@@ -1717,6 +1717,7 @@ class AutoScan1Q:
         else:
             jobid = jobid_check   
             speci,_ = self.read_specification()
+
             if speci != {}:
                 self.designed = int(speci["CPW"])
             else:
@@ -1731,7 +1732,8 @@ class AutoScan1Q:
             self.total_cavity_list = list(self.cavity_list.keys())
             if plot_ornot:
                 specifications,_ = self.read_specification()
-                CS.final_answer = specifications["results"]["CavitySearch"]["region"]
+                if jobid == specifications["JOBIDs"]["CavitySearch"] :
+                    CS.final_answer = specifications["results"]["CavitySearch"]["region"]
                 self.CS_plot_items = CS.give_plot_info()
                 self.CS_overview = CS.overview    # ena scan results
         else:
