@@ -93,7 +93,13 @@ def work_func(idx_list,sub_array,threshold):
 def find_tip(idx_list,sub_array):
     true_up = []
     true_down = []
-    for i in idx_list:
+
+    filt = []
+    for i in idx_list :
+        if i < sub_array.shape[0]-1 and i > 1:
+            filt.append(i)
+    
+    for i in filt:
         left_slope = sub_array[i]-sub_array[i-1]
         right_slope = sub_array[i+1]-sub_array[i]
         if left_slope*right_slope < 0 :

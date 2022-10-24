@@ -91,11 +91,22 @@ def measure_procedure():
         cavitys = []
         for ipt in range(len(cavs)):
             cavitys.append(str(cavs[ipt])+"-"+str(c_labels[ipt]))
+    
+    
+
         
 
     for i in range(len(cavitys)):
         routine = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="")
-    
+        if permission == "Enforce":
+            specifications,_ = routine.read_specification(where = "write_only")
+            specifications["JOBIDs"]["PowerDepend"].pop(cavitys[i].split("-")[0],None)
+            specifications["JOBIDs"]["FluxDepend"].pop(cavitys[i].split("-")[0],None)
+            specifications["JOBIDs"]["QubitSearch"].pop(cavitys[i].split("-")[0],None)
+            routine.write_specification(specifications)
+
+
+
         # power dep. part (bare chech OK!)
         if permission == "Enforce" or (part == "1" and first_run == 0) or (part == "4" and process=="100%" and first_run == 0) or (part == "2" and process=="50%" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
             print("PowerDependent start @ C-%d :\n"%int(cavitys[i].split("-")[-1]))

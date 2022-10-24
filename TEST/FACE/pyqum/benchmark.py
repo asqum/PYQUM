@@ -1113,7 +1113,7 @@ class CavitySearch:
             pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-2*avg_FWHM,tip_freq+2*avg_FWHM]
+            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-3*avg_FWHM,tip_freq+3*avg_FWHM]
         self.final_answer = self.region
         
     def amp_pha_compa(self,designed_CPW_num):
@@ -1457,7 +1457,7 @@ def char_cwsweep_new(sparam,freq,powa,flux,f_bare,f_dress,dcsweepch = "1",commen
     print("f_dress: ",f_dress)
     print("f_bare: ",f_bare)
     ki = (f_dress-f_bare)*1000
-    f_qubit = (1000*(f_bare)-40**2/ki)/1000
+    f_qubit = (1000*(f_bare)-45**2/ki)/1000
     print("Check F_q: ",f_qubit)
     if (f_qubit>12) | (f_qubit<2):
             raise ValueError("frequency is out of range with "+ str(f_qubit))
@@ -1469,7 +1469,7 @@ def char_cwsweep_new(sparam,freq,powa,flux,f_bare,f_dress,dcsweepch = "1",commen
         freq = freq  #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
-        xyfreq = "{} to {} * 200".format(f_qubit-1,f_qubit+1)#"OPT,"
+        xyfreq = "{} to {} * 300".format(f_qubit-1.5,f_qubit+1.5)#"OPT,"
         xypowa = "-10 -20 -30 r 10"#"OPT,"
         PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', 'sg-locked': '{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":0}'} # DC=YOKO
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
@@ -1515,16 +1515,16 @@ class Quest_command:
         if (select_freq[0]>12) | (select_freq[1]>12) | (select_freq[0]<2) | (select_freq[1]<2):
             raise ValueError("Frequency is out of range with "+freq_command)
         if (select_powa >20) | (select_powa <-60):
-            raise ValueError("Power is out of range with "+select_powa)
+            raise ValueError("Power is out of range with "+str(select_powa))
         jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = select_powa,flux = "-0.2 to 0.2 * 50",dcsweepch=dc_ch,comment = "By bot - step3 flux dependent "+add_comment)
         return jobid
     def qubitsearch(self,select_freq,select_powa,select_flux,f_bare,f_dress,dcsweepch,add_comment):
         if (select_freq>12) | (select_freq<2):
-            raise ValueError("frequency is out of range with "+ select_freq)
+            raise ValueError("frequency is out of range with "+ str(select_freq))
         if (select_powa >20) | (select_powa <-60):
-            raise ValueError("Power is out of range with "+select_powa)
+            raise ValueError("Power is out of range with "+str(select_powa))
         if (float(select_flux) >0.2) | (float(select_flux) <-0.2):  # 0915 TypeError: '>' not supported between instances of 'str' and 'float'  
-            raise ValueError("Flux is out of range with "+select_flux)
+            raise ValueError("Flux is out of range with "+str(select_flux))
         jobid = char_cwsweep_new(sparam=self.sparam,freq = select_freq, powa = select_powa, flux = select_flux, f_bare = f_bare,f_dress =f_dress,dcsweepch = dcsweepch,comment = "By bot - step4 qubit search "+add_comment)
         return jobid
 # first version
