@@ -232,6 +232,8 @@ def command_analytic(selectdata,corder,datadensity):
         if waveform(corder[i]).count !=1:
             x = append(x,i)
             x_len = append(x_len,waveform(corder[i]).count)
+            if waveform(corder[i]).inner_repeat !=1:
+                r = append(r,i)
         elif waveform(corder[i]).inner_repeat !=1:
             r = append(r,i)
         else:
@@ -264,7 +266,7 @@ def pyqum_load_data(pyqum_path):
     tidy_data = concat([df_label,df_data],axis =1)
     df_amp =DataFrame(sqrt(tidy_data['I']**2+tidy_data['Q']**2), columns = ['Amp'])
     amp_data = concat([tidy_data,df_amp],axis =1)
-    
+    amp_data = amp_data.astype(float)
     return amp_data,jobid
 
 # if __name__ == "__main__":
