@@ -404,7 +404,7 @@ def check_acStark_power(powa_status,fqS,high_freq_group):  #inputs dict, dict, a
     for powa in only_one_powa:
         if fqS[powa][0] in high_freq_group:
             acStark_power.append(int(powa))
-    return np.array(acStark_power)
+    return acStark_power
  
 
 

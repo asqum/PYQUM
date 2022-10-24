@@ -1270,7 +1270,7 @@ class FluxDepend:
     def give_plot_info(self):
         plot_items = {
 			'Frequency':array(self.dataframe['Frequency']),
-			'Flux':array(self.dataframe['Flux-Bias'])*1e6,
+			'Flux':array(self.dataframe['Flux-Bias']),
 			'Amplitude':array(self.dataframe['Amp'])
 		}
         plot_scatter = {
@@ -1346,7 +1346,7 @@ class QubitFreq_Scan:
         return self.answer
                                                                                          
     def give_result(self):
-        farest = freq2idx(self.target_freq,self.freq)[:3]
+        farest = freq2idx(self.target_freq,self.freq)
         self.plot_items = {
             'Targets_value':array(self.sub[farest]),
             'Targets_Freq':array(self.freq[farest]),
@@ -1380,7 +1380,7 @@ class QubitFreq_Compa:
             self.fqS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.target_freq
             self.ecS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.Ec
             self.stS[str(powa_df['XY-Power'].unique()[0])] = FQ_db.status
-            self.plot_items[str(powa_df['XY-Power'].unique()[0])]= FQ_db.plot_items
+            self.plot_items[str(int(powa_df['XY-Power'].unique()[0]))]= FQ_db.plot_items
     
     def compa(self):
         y = []    # frequency set
@@ -1423,10 +1423,10 @@ class QubitFreq_Compa:
                 compa_ans = {'Ec_avg':mean(Ec_collector)*2,'Fq_avg':mean(fq_collector)}  
             else:
                 print(Style.BRIGHT+Fore.YELLOW+'After compare different power, there "only exist Fq" with average!\n'+Style.RESET_ALL)
-                compa_ans = {'Ec_avg':array([]),'Fq_avg':mean(high_freq_group)}
+                compa_ans = {'Ec_avg':[],'Fq_avg':mean(high_freq_group)}
         else:
             print(Style.BRIGHT+Fore.YELLOW+'After compare different power, there "only exist Fq" with average!\n'+Style.RESET_ALL)
-            compa_ans = {'Ec_avg':array([]),'Fq_avg':mean(high_freq_group)}
+            compa_ans = {'Ec_avg':[],'Fq_avg':mean(high_freq_group)}
         
         compa_ans['acStark_power'] = check_acStark_power(self.stS,self.fqS,high_freq_group)
         
@@ -1751,13 +1751,13 @@ class AutoScan1Q:
         cav_label = cavity_freq.split("-")[-1]
         if jobid_check == "":
             record_dict,_ = self.read_specification(where="PD")
-            if cav_MHz not in record_dict["JOBIDs"]["PowerDepnd"].keys():
+            if cav_MHz not in record_dict["JOBIDs"]["PowerDepend"].keys():
                 jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cav_MHz],add_comment="with Cavity "+str(cav_MHz))
                 record_dict["JOBIDs"]["PowerDepend"][cav_MHz] = jobid   # save first after measuring
                 record_dict["step"] = f"2-{cav_label}_50%"
                 self.write_specification(record_dict)
             else:
-                jobid = record_dict["JOBIDs"]["PowerDepnd"][cav_MHz]
+                jobid = record_dict["JOBIDs"]["PowerDepend"][cav_MHz]
             plot_ornot = 0
         else:
             jobid = jobid_check
@@ -1776,13 +1776,13 @@ class AutoScan1Q:
         cav_label = cavity_freq.split("-")[-1]
         if jobid_check == "":
             record_dict,_ = self.read_specification(where = "FD",target_cav=cav_MHz)
-            if cav_MHz not in record_dict["JOBIDs"]["FluxDepnd"].keys():
+            if cav_MHz not in record_dict["JOBIDs"]["FluxDepend"].keys():
                 jobid = Quest_command(self.sparam).fluxdepend(select_freq=self.cavity_list[cav_MHz],select_powa=self.low_power,dc_ch=self.dcsweepch,add_comment="with Cavity "+str(cav_MHz))
                 record_dict["JOBIDs"]["FluxDepend"][cav_MHz] = jobid   # save first after measuring
                 record_dict["step"] = f"3-{cav_label}_50%"
                 self.write_specification(record_dict)
             else:
-                jobid = record_dict["JOBIDs"]["FluxDepnd"][cav_MHz]
+                jobid = record_dict["JOBIDs"]["FluxDepend"][cav_MHz]
             plot_ornot = 0
 
         else:

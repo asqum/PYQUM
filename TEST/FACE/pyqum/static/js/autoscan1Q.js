@@ -83,7 +83,8 @@ function generate_result_span(mode){
             record_set = record;
         });
     };
-    let cavities = Object.keys(record_set)
+    
+    let cavities = record_set["CavitySearch"]["answer"];
 
   // get the selector in the body
     let dm_mode = document.getElementById("dmbutton").value;
@@ -93,7 +94,7 @@ function generate_result_span(mode){
 
     for(let ipt=0; ipt<cavities.length; ipt++){
         let div = document.createElement("div");
-        div.innerHTML = cavities[ipt]+": "+record_set['PowerDepend'][cavities[ipt]]+","+record_set['FluxDepend'][cavities[ipt]]+","+record_set['QubitSearch'][cavities[ipt]];
+        div.innerHTML = cavities[ipt]+": "+JSON.stringify(record_set['PowerDepend'][cavities[ipt]])+","+JSON.stringify(record_set['FluxDepend'][cavities[ipt]])+","+JSON.stringify(record_set['QubitSearch'][cavities[ipt]]);
         div.setAttribute('value','result'+cavities[ipt]);//String(Number(result_keys[ipt])*1000)+' MHz'
         result_block.appendChild(div);
     };
@@ -264,7 +265,7 @@ function initialize_cs(){
 var final_result_set = {};
 // PD,FD,2tone by a select cavity
 function measure(){
-    $.ajaxSettings.async = false;
+    // $.ajaxSettings.async = false;
     let dc_ch = document.getElementById('dc-channel-inp').value;
     let permission = document.getElementById('permission-inp').value;
     let target_cav = document.getElementById("cavity-select-MS").value.slice(3);
@@ -281,7 +282,7 @@ function measure(){
         log_print( "Measurement finish!" );
     });
     generate_result_span(mode="");
-    $.ajaxSettings.async = true;
+    // $.ajaxSettings.async = true;
 }
 
 function jobids_classifier(jobids_set){
@@ -299,6 +300,7 @@ function jobids_classifier(jobids_set){
 function search_jobids(){
     let cpw_num = document.getElementById('CPw-num-inp').value;
     final_result_set = {};
+    $.ajaxSettings.async = false;
     log_print("JOBIDs Loading...");
     $.getJSON( '/autoscan1Q/get_jobid',{  
     }, function (JOBIDs){
@@ -308,11 +310,13 @@ function search_jobids(){
     $.getJSON( '/autoscan1Q/get_results',{  
     }, function (results){
         final_result_set = results;
+        
     });
     get_cav_status();
     document.getElementById('search-jobid').setAttribute('value','1')
     cs_ploting(designed=cpw_num);
     generate_result_span(mode="");
+    $.ajaxSettings.async = true;
 };
 
 var cavities_plot = {};
@@ -739,6 +743,7 @@ function get_plot2D_PD(){
             target_cavity : JSON.stringify(cavity)
         }, function (plot_items) {   //need to check this is correct or not
             pd_plot = plot_items[cavity];
+            console.log(plot_items)
         });
     }else{
         $.getJSON( '/autoscan1Q/plot_result',{  
@@ -823,7 +828,7 @@ function plot2D_FD( data, axisKeys, plotId, modenum ) {
         },
         xaxis:{
             title: {
-                text:'Flux (µA)',
+                text:'Flux (V)',
                 font:{size:25}
             },
             zeroline: false,

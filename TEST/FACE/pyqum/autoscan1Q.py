@@ -65,7 +65,7 @@ def CS_initialize():  # bare check OK!
         specifications["results"]["CavitySearch"]["answer"] = routine.total_cavity_list   #["1234 MHz",...]
         specifications["results"]["CavitySearch"]["region"] = routine.cavity_list 
         specifications["step"]="1-1_100%"
-        routine.write_specification(init_speci)
+        routine.write_specification(specifications)
 
     specifications,_ = routine.read_specification()
     return json.dumps({"answer":specifications["results"]["CavitySearch"]["answer"],"jobid":specifications["JOBIDs"]["CavitySearch"]}, cls=NumpyEncoder)
@@ -78,6 +78,7 @@ def measure_procedure():
     scan_mode = speci["mode"]
     part = history[0] # if "1" cavitysearch finished, "2" powerdepend finished, ....
     first_run = 0
+    process = history[-1].split("_")[-1]
 
     dc_ch = json.loads(request.args.get('dc_chennel'))
     permission = json.loads(request.args.get('access'))
@@ -96,7 +97,7 @@ def measure_procedure():
         routine = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="")
     
         # power dep. part (bare chech OK!)
-        if permission == "Enforce" or (part == "1" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
+        if permission == "Enforce" or (part == "1" and first_run == 0) or (part == "4" and process=="100%" and first_run == 0) or (part == "2" and process=="50%" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
             print("PowerDependent start @ C-%d :\n"%int(cavitys[i].split("-")[-1]))
             routine.powerdepend(cavitys[i],"")
             specifications,_ = routine.read_specification(where = "write_only")   # read the speci contains jobid and step record to keep writing 
@@ -110,7 +111,7 @@ def measure_procedure():
         if scan_mode == "Qubits":
             
             # flux dep. part (bare check OK!)
-            if permission == "Enforce" or (part == "2" and first_run == 0) or first_run != 0:
+            if permission == "Enforce" or (part == "2" and first_run == 0) or (part == "3" and process=="50%" and first_run == 0) or first_run != 0:
                 print("FluxDependent start @ C-%d :\n"%int(cavitys[i].split("-")[-1]))
     
                 routine.fluxdepend(cavitys[i],float(cavitys[i].split(" ")[0]),"") 
@@ -125,12 +126,13 @@ def measure_procedure():
                 first_run = 1
             
             # 2tone part (bare check OK!)
-            if permission == "Enforce" or (part == "3" and first_run == 0) or first_run != 0:
+            if permission == "Enforce" or (part == "3" and first_run == 0) or (part == "4" and process=="50%" and first_run == 0) or first_run != 0:
                 print("CWsweep start @ C-%d :\n"%int(cavitys[i].split("-")[-1]))
                 
                 #補充可能沒有的參數（以此開始時）
                 routine.qubitsearch(cavitys[i],"")
                 specifications,_ = routine.read_specification(where = "write_only") #讀取資料庫
+                specifications["results"]["QubitSearch"][cavitys[i].split("-")[0]] = {}
                 specifications["results"]["QubitSearch"][cavitys[i].split("-")[0]]["qubit"] = routine.qubit_info['Fq_avg']
                 specifications["results"]["QubitSearch"][cavitys[i].split("-")[0]]["Ec"] = routine.qubit_info['Ec_avg']
                 specifications["results"]["QubitSearch"][cavitys[i].split("-")[0]]["acStark"] = routine.qubit_info['acStark_power']
@@ -138,8 +140,8 @@ def measure_procedure():
                 routine.write_specification(specifications)
 
                 first_run = 1
-    
-    specifications,_ = routine.read_specification(where="read_only")
+    y = AutoScan1Q(sparam="",dcsweepch = dc_ch,designed="")
+    specifications,_ = y.read_specification(where="read_only")
     return json.dumps({"results":specifications["results"],"jobids":specifications["JOBIDs"]}, cls=NumpyEncoder)
 
 
@@ -253,7 +255,7 @@ def plot_after_jobid():
         print("Construction Finish")
         return json.dumps(CS, cls=NumpyEncoder)
     elif where_plot == "PD":
-        if specific_id != "":
+        if specific_id == "":
             cavity = "0000 MHz"
         else:
             cavity = json.loads(request.args.get('target_cavity'))
@@ -265,7 +267,7 @@ def plot_after_jobid():
         print("Construction Finish")
         return json.dumps(PD, cls=NumpyEncoder)
     elif where_plot == "FD":
-        if specific_id != "":
+        if specific_id == "":
             cavity = "0000 MHz"
         else:
             cavity = json.loads(request.args.get('target_cavity'))
@@ -277,14 +279,13 @@ def plot_after_jobid():
         print("Construction Finish")
         return json.dumps(FD, cls=NumpyEncoder)
     else:
-        if specific_id != "":
+        if specific_id == "":
             cavity = "0000 MHz"
         else:
             cavity = json.loads(request.args.get('target_cavity'))
         print("QubitSearch start:\n")
         routine.qubitsearch(cavity,specific_id)
         CW = routine.CW_plot_items      #{'xy_power1':{'Targets_value':[],'Targets_Freq':[],'Sub_Frequency':[],'Substrate_value':[]},'xy_power2':{...},...}
-
         print("Construction Finish")
         return json.dumps(CW, cls=NumpyEncoder)
 
@@ -340,6 +341,8 @@ def give_done_info():
                     done_info_dict[cav][part] = specifications["results"][part][cav]
                 else:
                     done_info_dict[cav][part] = {}
+
+    print("done info: ",done_info_dict)
     
     return json.dumps(done_info_dict, cls=NumpyEncoder)
                     
