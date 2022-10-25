@@ -44,8 +44,8 @@ def upConversion_IQ( envelope_RF:ndarray, freq_IF:float, IQMixer:Tuple=(1,90,0,0
     phi_Q = phi_envelope -LOShiftSign*pi/2
     phi_I = phi_Q -radians(phaseBalance) +pi
 
-    signal_I = envelopeI *cos( 2. *pi *freq_IF *time +phi_I) -offsetI
-    signal_Q = envelopeQ *cos( 2. *pi *freq_IF *time +phi_Q) -offsetQ
+    signal_I = envelopeI *cos( 2. *pi *freq_IF *time +phi_I)
+    signal_Q = envelopeQ *cos( 2. *pi *freq_IF *time +phi_Q)
     if suppress_leakage:
         signal_I, signal_Q = leakage_suppress(signal_I,signal_Q,IQMixer)
 
