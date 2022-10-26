@@ -123,6 +123,9 @@ class BackendCircuit():
         """
         channel_output = {}
         register_qN = len(self.q_reg["qubit"])
+
+
+
         for qi, port, envelope_rf in waveform_channel:
             if qi >= register_qN:
                 print(f"Only {register_qN} qubit are registered")
@@ -141,7 +144,7 @@ class BackendCircuit():
 
                     case "z":
                         freq_carrier = 0
-                        envelope_rf += qubit.tempPars["IDLEZ"]
+                        # envelope_rf += qubit.tempPars["IDLEZ"]
 
                     case _:
                         freq_carrier = 0
@@ -150,7 +153,17 @@ class BackendCircuit():
                     channel_output[phyCh.name] = [(envelope_rf,freq_carrier)]
                 else:
                     channel_output[phyCh.name].append( (envelope_rf,freq_carrier) )
-
+        
+        for ch_name, q_name in zip(self.qc_relation["channel_id"],self.qc_relation["q_id"]):
+            
+            phyCh = self.get_channel(ch_name)
+            qubit = self.get_qComp(q_name)
+            if phyCh.port == "z" and "IDLEZ" in qubit.tempPars.keys(): # shift Z 
+                print(ch_name, q_name )
+                if ch_name in channel_output.keys():
+                    channel_output[ch_name][0] += qubit.tempPars["IDLEZ"]
+                else: # If the Z line is not used but reguster in cq_relation
+                    channel_output[ch_name] = [(zeros(self.total_point())+qubit.tempPars["IDLEZ"],0)]
         return channel_output
 
 
@@ -186,12 +199,16 @@ class BackendCircuit():
                 single_signal = channel_output[phyCh.name][0]
 
                 ## TODO assume all AWG share same output point num
+                channel_delay = phyCh.paras["delay"]
+                point_delay = int( -(channel_delay//-self.dt) )
                 envelope_rf = single_signal[0]
                 point_rf = envelope_rf.shape[-1]
-                point_buffer = self.total_time - point_rf
+                point_buffer = self.total_point() -point_rf -point_delay
                 if point_buffer>0:
                     envelope_rf = append( zeros(point_buffer), envelope_rf )
-
+                    envelope_rf = append( envelope_rf, zeros(point_delay) )
+                else:
+                    print("waveform too many points.")
                 if isinstance(phyCh, UpConversionChannel):
                     freq_carrier = single_signal[1]
                     devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier  )
@@ -249,7 +266,8 @@ class BackendCircuit():
 
         return qpc_dict
 
-
+    def total_point( self ):
+        return int( -(self.total_time//-self.dt) )
 
 
     @property
@@ -274,12 +292,7 @@ class BackendCircuit():
     def qc_relation( self, value:DataFrame):
         self._qc_relation = value
 
-    @property
-    def qa_relation( self )->DataFrame:
-        return self._qa_relation
-    @qa_relation.setter
-    def qa_relation( self, value:DataFrame):
-        self._qa_relation = value
+
 
 
 

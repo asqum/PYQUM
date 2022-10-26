@@ -1,6 +1,7 @@
 
 from argparse import Action
 from typing import List
+#from pulse_generator.pulse import Pulse
 import numpy as np
 from qutip import sigmax, sigmay, sigmaz, basis, qeye, Qobj
 from qutip_qip.circuit import QubitCircuit, Gate
@@ -160,16 +161,11 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     if withRO:
         rg_ro = Gate("RO", target )
         circuit_RB.add_gate(rg_ro)
-
-
     mycompiler = SQCompiler(1, params={})
-
-
     q_name = backendcircuit.q_reg["qubit"][target]
     print(f"{q_name} get RB sequence." )
     q_info = backendcircuit.get_qComp(q_name)
     backendcircuit.total_time = q_info.tempPars["total_time"]
-
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
@@ -177,12 +173,8 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt
     mycompiler.params["ro"]["pulse_length"] = q_info.tempPars["ROW"]
-
-
     waveform_channel = mycompiler.to_waveform(circuit_RB)
-    
     d_setting = backendcircuit.devices_setting(waveform_channel)
-    d_setting['total_time'] = q_info.tempPars["total_time"]
 
     return d_setting
 

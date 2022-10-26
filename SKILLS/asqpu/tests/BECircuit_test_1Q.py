@@ -12,6 +12,7 @@ sys.path.append("..")
 from BECircuit_fromTestFile import get_test_bec
 
 mybec = get_test_bec()
+mybec.dt = 0.2
 print(mybec.to_qpc())
 
 rg_ro0 = Gate("RO", 0 )

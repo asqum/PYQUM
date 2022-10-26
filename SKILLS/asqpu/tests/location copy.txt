@@ -14,9 +14,7 @@
         "phase_balance": 90, 
 
         "freq_IF":0.02,
-        "power_LO":6,
-
-		"delay": 0
+        "power_LO":6
         }
 	},
 
@@ -34,9 +32,7 @@
         "amp_balance": 1,
         "phase_balance": 90, 
         "freq_IF":0.12,
-        "power_LO":23,
-
-		"delay": 280
+        "power_LO":23
         }
 	},
 
@@ -49,7 +45,6 @@
 		},
 
     "paras":{
-		"delay": 280
         }
 	},
 
@@ -60,7 +55,6 @@
 		"DAC":[("SDAWG_2",2)],
 		},
     "paras":{
-		"delay": 0
         }
 	},
 
@@ -72,7 +66,6 @@
 		},
 
     "paras":{
-		"delay": 0
         }
 	},
 
@@ -90,9 +83,7 @@
         "phase_balance": 90, 
                
         "freq_IF":0.02,
-        "power_LO":10,
-
-		"delay": 0
+        "power_LO":10
         }
 	},
 
