@@ -15,6 +15,7 @@ class PhysicalChannel():
         self.name = name
         self.devices = {}
         self.port = None
+        self.paras={}
         #self.pulse_sequence = []
 
     def __contains__( self )->str:

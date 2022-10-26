@@ -4,8 +4,11 @@ from qpu.backend.component.qubit.transmon import Transmon
 
 def from_dict( info:dict )->QComponent:
     if info["type"] == "qubit":
+
         qubitObj = Transmon(info["id"])
+        print(f"read {qubitObj.name} spec")
         qubitObj.tempPars = info
+        print(f"{info}")
         # qubitObj.transition_freq = info["freq_xy"]
         # qubitObj.sensitivity_RF = info["coupling_xy"]
         # qubitObj.sensitivity_flux = info["coupling_z"]
