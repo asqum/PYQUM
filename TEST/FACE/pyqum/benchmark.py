@@ -1109,11 +1109,16 @@ class CavitySearch:
             amp = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Amplitude']
             pha = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['UPhase']
             
-            amp_tip_idx,FWHM_amp = peak_info(amp,self.info['p2p_freq'])  # unit: GHz
-            pha_tip_idx,FWHM_pha = peak_info(pha,self.info['p2p_freq'])
+            amp_tip_idx,FWHM_amp_idx = peak_info(amp,self.info['p2p_freq'])  # unit: GHz
+            pha_tip_idx,FWHM_pha_idx = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
-            avg_FWHM = 0.5*(FWHM_amp*self.info['p2p_freq']+FWHM_pha*self.info['p2p_freq'])
-            self.region['%d MHz'%(avg_tip_idx*1000)] = [tip_freq-3*avg_FWHM,tip_freq+3*avg_FWHM]
+            max_FWHM = max([FWHM_amp_idx,FWHM_pha_idx])*self.info['p2p_freq']
+            amp_start = amp[amp_tip_idx] - 3.5*max_FWHM
+            amp_end = amp[amp_tip_idx] + 3.5*max_FWHM
+            pha_start = pha[pha_tip_idx] - 3.5*max_FWHM
+            pha_end = pha[pha_tip_idx] + 3.5*max_FWHM
+
+            self.region['%d MHz'%(avg_tip_idx*1000)] = [min([amp_start,pha_start]),max([amp_end,pha_end])]
         self.final_answer = self.region
         
     def amp_pha_compa(self,designed_CPW_num):
