@@ -15,8 +15,8 @@ class QComponent( ABC ):
 
     def __eq__( self, other )->str:
         if isinstance(other, QComponent):
-            return self.id == other.id
+            return self.name == other.name
         if isinstance(other, str):
-            return self.id == other
+            return self.name == other
         return False
 

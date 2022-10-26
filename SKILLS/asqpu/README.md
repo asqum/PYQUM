@@ -8,4 +8,4 @@ Academia Sinica Quantum Processing Units
 
 A python project to record the specification of the components in the quantum processing unit (QPU), and transpilation mathematical calculation to physical RF pulse for the quantum circuit and manage the instruments generating the pulses.  
 
-Need another packge "pulse signal" https://github.com/shiau109/pulse_signal in my other repository.
+Need another packge "pulse generator" https://github.com/shiau109/pulse_generator in my other repository.
