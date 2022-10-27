@@ -258,9 +258,19 @@ if __name__ == "__main__":
     roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-29/; Flat/,40,0; gerp/,400,0.2;',clock_multiples=1)
     roq.song()
 
+    pulsedata = roi.music
+    shrinkage = 3
+    first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][0], where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][-1]
+    print(first_rising_edge, last_falling_edge)
+    last_falling_edge = first_rising_edge + int(ceil((last_falling_edge - first_rising_edge)/shrinkage))
+    print(first_rising_edge, last_falling_edge)
+    
     plot1 = plt.figure(1)
-    plt.plot(xyi.timeline, xyi.envelope, label="xyi")
-    plt.plot(xyq.timeline, xyq.envelope, label="xyq")
+    plt.plot(xyi.timeline, xyi.envelope, label="xyx")
+    plt.plot(xyq.timeline, xyq.envelope, label="xyy")
+    plt.plot(roi.timeline, roi.envelope, label="rox")
+    plt.plot(roq.timeline, roq.envelope, label="roy")
+
     plt.title("XY envelope")
     plt.legend()
     plot2 = plt.figure(2)

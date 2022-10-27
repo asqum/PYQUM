@@ -165,6 +165,7 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     q_name = backendcircuit.q_reg["qubit"][target]
     print(f"{q_name} get RB sequence." )
     q_info = backendcircuit.get_qComp(q_name)
+    print(f"dt={backendcircuit.dt}")
     backendcircuit.total_time = q_info.tempPars["total_time"]
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
@@ -175,6 +176,6 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["ro"]["pulse_length"] = q_info.tempPars["ROW"]
     waveform_channel = mycompiler.to_waveform(circuit_RB)
     d_setting = backendcircuit.devices_setting(waveform_channel)
-
+    d_setting["total_time"] = backendcircuit.total_time
     return d_setting
 

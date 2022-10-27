@@ -18,7 +18,7 @@ class BackendCircuit():
         #self._actions = []        
         self._devices = []
         self.total_time = 5000
-        self.dt = 0.5
+        self.dt = 1
         self.q_reg = None      
 
     def register_qComp( self, qcomp:QComponent ):
@@ -204,11 +204,13 @@ class BackendCircuit():
                 envelope_rf = single_signal[0]
                 point_rf = envelope_rf.shape[-1]
                 point_buffer = self.total_point() -point_rf -point_delay
+                
                 if point_buffer>0:
                     envelope_rf = append( zeros(point_buffer), envelope_rf )
                     envelope_rf = append( envelope_rf, zeros(point_delay) )
                 else:
                     print("waveform too many points.")
+                print(envelope_rf.shape)
                 if isinstance(phyCh, UpConversionChannel):
                     freq_carrier = single_signal[1]
                     devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier  )

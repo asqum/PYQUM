@@ -180,7 +180,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         # For Digital Down Conversion:
         q_name = Sample_Backend.q_reg["qubit"][0]
         channel_RO = Sample_Backend.get_channel_qPort( q_name, "ro_in")
-        DDC_RO_Compensate_MHz = channel_RO.paras["freq_IF"] *1000
+        DDC_RO_Compensate_MHz = -channel_RO.paras["freq_IF"] *1000
         # channel_XY = Sample_Backend.get_channel_qPort( q_name, "xy")
         # XY_Compensate_MHz = channel_XY.paras["paras"]["freq_IF"]
     
@@ -410,6 +410,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     '''
                     if (i_slot_order==0) and ("SDAWG" in DAC_type[i_slot_order]): marker = 7 # ONLY 1st DAC outputs marker via CH-4 to trigger ADC for RO
                     else: marker = 2 # for compatibility with TKAWG (outputs 2 markers for each channel)
+
+                    print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr['DAC'][i_slot_order]} CHANNEL {ch} {i_slot_order} {channel_set}")
 
                     DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), CH_Pulse_SEQ, [], marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
                     print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr['DAC'][i_slot_order]} CHANNEL {ch}")
