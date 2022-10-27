@@ -1401,7 +1401,7 @@ $('button.mani#QuCTRL-savecsv').on('click', function() {
 
     $.getJSON(mssnencrpytonian() + '/mssn/mani/QuCTRL/export/1dcsv', {
         // merely for security screening purposes
-        ifreq: $('select.mani.QuCTRL#RO-LO-Frequency').val()
+        interaction: $('textarea.mani.QuCTRL.note#QuCTRL-interaction').val()
     }, function (data) {
         console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
         pull_n_send(data.server_URL, data.qumport, data.user_name, filename='1D'+mani_TASK+'.csv');
@@ -1417,7 +1417,7 @@ $('button.mani#QuCTRL-savemat').on('click', function() {
 
     $.getJSON(mssnencrpytonian() + '/mssn/mani/QuCTRL/export/2dmat', {
         // merely for security screening purposes
-        interaction: $('select.mani.QuCTRL#RO-LO-Frequency').val()
+        interaction: $('textarea.mani.QuCTRL.note#QuCTRL-interaction').val()
     }, function (data) {
         console.log("STATUS: " + data.status + ", URL: " + data.server_URL + ", PORT: " + data.qumport);
         pull_n_send(data.server_URL, data.qumport, data.user_name, filename='2D'+mani_TASK+'.mat');

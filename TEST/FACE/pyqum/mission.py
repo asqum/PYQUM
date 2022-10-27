@@ -1620,10 +1620,10 @@ def char_QuCTRL_export_2dmat():
 # export to csv
 @bp.route('/mani/QuCTRL/export/1dcsv', methods=['GET'])
 def mani_QuCTRL_export_1dcsv():
-    ifreq = request.args.get('ifreq') # merely for security reason to block out unsolicited visits by return None from this request
-    print("ifreq: %s" %ifreq)
+    interaction = request.args.get('interaction') # merely for security reason to block out unsolicited visits by return None from this request
+    print("interaction: %s" %interaction)
     status = None
-    if ifreq is not None:
+    if interaction is not None:
         set_csv(QuCTRL_1Ddata[session['user_name']], '1D%s[%s].csv'%(mani_TASK[session['user_name']], session['user_name']))
         status = "csv written"
         print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
