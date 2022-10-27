@@ -17,6 +17,7 @@ function acquire_play(callback) {
         recordtime: $('input.adc.settings[name="recordtime-scale"]').val(), recordtimeunit: $('input.adc.settings[name="recordtime-unit"]').val(),
         recordsum: $('input.adc.settings[name="recordsum-scale"]').val(), recordbuff: $('input.adc.settings[name="recordbuff-scale"]').val(),
         fullscale: $('select.adc.settings.configure.full-scale').val(), iqpair: $('input.adc.settings.SDDIG.IQ-pair').val(),
+        FPGA: $('input.adc.settings.FPGA[name="FPGA"]').is(':checked')?1:0,
     }, function (data) {
         window.recordsum = data.recordsPerBuff*data.buffersPerAcq
         $('input.adc.settings[name="recordtime-scale"]').val(data.recordtime_ns);
@@ -299,6 +300,7 @@ $('button.adc#configureboard').bind('click', function () {
         recordtime: $('input.adc.settings[name="recordtime-scale"]').val(), recordtimeunit: $('input.adc.settings[name="recordtime-unit"]').val(),
         recordsum: $('input.adc.settings[name="recordsum-scale"]').val(), recordbuff: $('input.adc.settings[name="recordbuff-scale"]').val(),
         PXI: $('select.adc.settings.configure.PXI-trigger').val(), fullscale: $('select.adc.settings.configure.full-scale').val(),
+        FPGA: $('input.adc.settings.FPGA[name="FPGA"]').is(':checked')?1:0,
     }, function (data) {
         $('.adc.settings.configure').removeClass('getvalue').addClass('setvalue');
     })
@@ -377,9 +379,11 @@ $('input.adc.data.signal').on('change', function () {
 
 // ReConfigure Board if Record-time (Total-points) and Record-sum (Number of Cycles) had changed:
 $('input.adc.settings.records').on('change', function () {
-    if (adctype=='SDDIG') {
-        $('button.adc#acquiredata').hide();
-    };
+    if (adctype=='SDDIG') { $('button.adc#acquiredata').hide(); };
+});
+// ReConfigure Board if toggle FPGA:
+$('input.adc.settings.FPGA[name="FPGA"]').on('change', function () {
+    if (adctype=='SDDIG') { $('button.adc#acquiredata').hide(); };
 });
 
 // LIVE update

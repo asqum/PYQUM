@@ -8,6 +8,7 @@ from numpy import zeros, ceil, where
 from pyqum.instrument.logger import address, set_status
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.toolbox import normalize_dipeak
+from pyqum.instrument.analyzer import curve
 
 # SD1 Libraries
 import sys
@@ -260,9 +261,10 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
     clearQ: MUST be used when ALL channels are FULLY assigned.
     '''
     # 1. Loading the settings:
-    settings=dict(clearQ=0, Master=True, PINSW=False) # default settings for SDAWG
+    settings=dict(clearQ=1, Master=True, PINSW=False) # default settings for SDAWG
     settings.update(update_settings)
     clearQ, Master, PINSW = int(settings['clearQ']), settings['Master'], settings['PINSW']
+    # PENDING: ADDING TRIGGER DELAY (+/-)
 
     channelist= [channel]
     if int(markeroption)==7: channelist.append(4)
@@ -285,6 +287,8 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
             pulsedata = mkr_array
 
         if clearQ: 
+            # NOTE: clearQ seems to solve the RELOAD issues of waveforms that's shorter than 16us!
+            # Hence in General, it should be a good practice to clearQ by defaults anyway.
             module.AWGstop(channel)
             module.AWGflush(channel) # Clear queue TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT
             print(Fore.CYAN + "Clearing CH%s's queue for good alignment of ALL 4 channels" %(channel))
@@ -292,7 +296,8 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
         resendWaveform(module, waveform_id, pulsedata)
         
         if clearQ:
-            # NOTE: TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT, step-2 are just repetitions of step-5 respectively from the "prepare_DAC".
+            # NOTE: TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT, BUT ONLY WORKS IN SLAVE, NOT MASTER!
+            # Step-2 are just repetitions of step-5 respectively from the "prepare_DAC".
             # 2. Queue-up waveform(s):
             if Master: trigMode, markerMode = 0, keysightSD1.SD_MarkerModes.EVERY_CYCLE # Master / Commander / Default.
             else: trigMode, markerMode = keysightSD1.SD_TriggerModes.EXTTRIG, 0 # Follow orders from Master-Card.
@@ -346,16 +351,79 @@ def close(module, which, reset=True, mode='DATABASE'):
     return status
 
 
+def setDAC(dac, channel, dataArray):
+    '''adopted from Quantaser (2022/10/27)
+    '''
+    dac.waveformFlush()
+    # waveshape:
+    dac.channelWaveShape(channel, keysightSD1.SD_Waveshapes.AOU_AWG)
+    dac.channelWaveShape(4, keysightSD1.SD_Waveshapes.AOU_AWG)
+    # sourcelevel:
+    dac.channelAmplitude(channel, 1.5)
+    dac.channelAmplitude(4, 1.5)
+    # AWGqueueConfig
+    dac.AWGqueueConfig(channel, 1) # 1: cyclic mode
+    dac.AWGqueueConfig(4, 1)
+    # configureExternalTrigger:
+    dac.AWGtriggerExternalConfig(channel, int(4002), keysightSD1.SD_TriggerBehaviors.TRIGGER_FALL, 1)
+    dac.AWGtriggerExternalConfig(4, int(4002), keysightSD1.SD_TriggerBehaviors.TRIGGER_FALL, 1)
+
+    # Preloading Predefined Waveform
+    dataWave1 = keysightSD1.SD_Wave()
+    trigWave = keysightSD1.SD_Wave()
+    
+    # sendWaveform, queueWaveform:
+    dataWave1.newFromArrayDouble(keysightSD1.SD_WaveformTypes.WAVE_ANALOG, zeros(len(dataArray)).tolist())
+    dac.waveformLoad(dataWave1,channel)
+    dac.AWGqueueWaveform(channel,channel, 0, 0, 0,0)
+    dac.triggerIOconfig(0)
+    dac.AWGqueueMarkerConfig(nAWG=channel, markerMode=keysightSD1.SD_MarkerModes.EVERY_CYCLE, trgPXImask=4, trgIOmask=1, value=0, syncMode=1,
+                                    length=731, delay=0)
+    
+    trigWave.newFromArrayDouble(keysightSD1.SD_WaveformTypes.WAVE_ANALOG, zeros(len(dataArray)).tolist())
+    dac.waveformLoad(trigWave, 4)
+    dac.AWGqueueWaveform(4,4, 0, 0, 0,0)
+    dac.triggerIOconfig(0)
+    dac.AWGqueueMarkerConfig(nAWG=4, markerMode=keysightSD1.SD_MarkerModes.EVERY_CYCLE, trgPXImask=4, trgIOmask=1, value=0, syncMode=1,
+                                    length=731, delay=0)
+
+def genWave(dac, channel, dataArray):
+    '''adopted from Quantaser (2022/10/27)
+    '''
+    dataWave1 = keysightSD1.SD_Wave()
+    trigWave = keysightSD1.SD_Wave()
+
+    trigArray = zeros(len(dataArray))
+    trigArray[0:100] = 1
+    # curve(range(len(trigArray)), trigArray, '', '', '')
+
+    # resendWaveform:
+    dac.AWGstop(channel)
+    dac.AWGflush(channel)
+    dataWave1.newFromArrayDouble(keysightSD1.SD_WaveformTypes.WAVE_ANALOG, dataArray.tolist())
+    dac.waveformReLoad(dataWave1,channel)
+    dac.AWGqueueWaveform(channel,channel, 0, 0, 0,0)
+
+    dac.AWGstop(4)
+    dac.AWGflush(4)
+    trigWave.newFromArrayDouble(keysightSD1.SD_WaveformTypes.WAVE_ANALOG, trigArray.tolist())
+    dac.waveformReLoad(trigWave, 4)
+    dac.AWGqueueWaveform(4,4, 0, 0, 0,0)
+
+
 # Test Zone
 if __name__ == "__main__":
     # DAC_MATRIX = [[1,2,3,4],[1,2,3,4]] # WITHIN 100ns ALIGNMENT
-    DAC_MATRIX = [[1,2],[1,2,3,4]] # PERFECTO ALIGNMENT
+    DAC_MATRIX = [[1,3],[1,2,3,4]] # PERFECTO ALIGNMENT (CURRENT CONFIGURATION)
+    # DAC_MATRIX = [[3]]
     DAC_LABEL = [3, 1]
     Master = [True, False]
     markeroption = [7, 0]
+    # markeroption = [0, 0]
     Prep_settings = [dict(Master=True, trigbyPXI=2, markeroption=7), dict(Master=False, trigbyPXI=2)]
     marker = [7, 2]
     M = [None]*len(DAC_MATRIX)
+    pulsation_time = 7000
 
     for i, channel_set in enumerate(DAC_MATRIX):
         print("channel_set for slot-%s: %s" %(i+1,channel_set))
@@ -369,7 +437,7 @@ if __name__ == "__main__":
         # Initiate PulseQ:
         dt = round(1/float(clock(M[i])[1]['SRATe'])/1e-9, 2)
         # print("Source: %s, Sampling rate: %s, dt: %s"%(clock(M[i])[1]['SOURce'], clock(M[i])[1]['SRATe'], dt))
-        pulseq = pulser(dt, clock_multiples=1, score="ns=50000;")
+        pulseq = pulser(dt, clock_multiples=1, score="ns=%s;"%(pulsation_time))
         pulseq.song()
         # pulseq = pulser(dt, clock_multiples=1, score="ns=%s"%pulseq.totaltime)
         # pulseq.song()
@@ -387,7 +455,7 @@ if __name__ == "__main__":
         play(M[i])
     
     # Running Multiple WAVEs:
-    for waveth,pulse_width in enumerate([1000,1700]):
+    for waveth,pulse_width in enumerate([1000,1300,1700,1900,2400,2600]):
         # stop(M[0]) # suggested by NCHU (YuHan)
         # stop(M[1]) # suggested by NCHU (YuHan)
         input("Any key to RUN %sth WAVE: "%(waveth+1))
@@ -395,9 +463,9 @@ if __name__ == "__main__":
             print("Playing CH-%s for slot-%s" %(channel_set,i+1))
             for ch in channel_set:
                 # RE-COMPOSITION:
-                pulseq = pulser(dt, clock_multiples=1, score="ns=50000,mhz=I/-17/ro1i-17;FLAT/,%s,0.1;" %pulse_width)
+                pulseq = pulser(dt, clock_multiples=1, score="ns=%s,mhz=I/-17/ro1i-17;FLAT/,%s,0.1;" %(pulsation_time, pulse_width))
                 pulseq.song()
-                compose_DAC(M[i], int(ch), pulseq.music, pulseq.envelope, marker[i], update_settings=dict(Master=Master[i], clearQ=int(bool(len(channel_set)==4))))
+                compose_DAC(M[i], int(ch), pulseq.music, pulseq.envelope, marker[i], update_settings=dict(Master=Master[i]))
                 print(Fore.BLUE + "Running %s data-points" %pulseq.totalpoints)
             ready(M[i])
 

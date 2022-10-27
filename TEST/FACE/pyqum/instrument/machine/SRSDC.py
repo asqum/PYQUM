@@ -110,9 +110,16 @@ def output(inst, state, channel=1):
     
     return ready
 
-def close(inst, reset=True):
-    inst.close()
-    return
+def close(inst, reset=True, which=1):
+    try:
+        inst.close()
+        status = "Success"
+        ad = address()
+        ad.update_machine(0, "%s_%s"%(mdlname,which))
+    except: status = "Error"
+    set_status(mdlname, dict(state='disconnected'))
+    print(Back.WHITE + Fore.BLACK + "%s-%s's connection Closed" %(mdlname,which))
+    return status
 
 # =============================================================================================================================================================
 # TEST ZONE:
@@ -132,6 +139,6 @@ if __name__ == "__main__":
         sleep(0.7)
         
     output(s, 0, channel)    
-    s.close()
+    s.close(s)
 
 

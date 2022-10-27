@@ -425,16 +425,18 @@ def adcconnect():
 def adcconfigureboard():
     adctag, adctype = '%s:%s' %(request.args.get('adcname'),session['user_name']), request.args.get('adctype')
     trigdelay, trigdelayunit = request.args.get('trigdelay'), request.args.get('trigdelayunit')[0]
+    FPGA = request.args.get('FPGA')
     
     # PENDING: EXTRACT & STORE MACHINE's SPEC IN DATABASE (Sampling-rate etc.)
 
     update_items = dict( triggerDelay_sec=si_parse(trigdelay+trigdelayunit), TOTAL_POINTS=round(int(request.args.get('recordtime'))/2), NUM_CYCLES=int(request.args.get('recordsum')), \
-                            PXI=int(request.args.get('PXI')), FULL_SCALE=float(request.args.get('fullscale')) )
+                            PXI=int(request.args.get('PXI')), FULL_SCALE=float(request.args.get('fullscale')), FPGA=int(FPGA) )
     dt_ns = ADC[adctype].ConfigureBoard(adcboard[adctag], update_items)
     update_items.update(trigdelay=trigdelay)
     set_status(request.args.get('adcname').split('-')[0], update_items, request.args.get('adcname').split('-')[1])
 
-    status = "Configure Board Successfully: %s-ns per point." %dt_ns
+    # print(Fore.YELLOW + "configureboard: FPGA: %s" %(FPGA))
+    status = "Configure Board Successfully: %s-ns/point, FPGA: %s" %(dt_ns, adcboard[adctag].FPGA)
     return jsonify(message=status)
 @bp.route('/adc/acquiredata', methods=['GET'])
 def adcacquiredata():
@@ -442,8 +444,9 @@ def adcacquiredata():
     recordtime = si_parse(request.args.get('recordtime') + request.args.get('recordtimeunit')[0])
     recordsum = int(request.args.get('recordsum'))
     recordbuff = int(request.args.get('recordbuff')) # default: 32MB
+    FPGA = request.args.get('FPGA')
 
-    update_items = dict(OPT_DMA_Buffer_Size=recordbuff, FULL_SCALE=float(request.args.get('fullscale')), IQ_PAIR=[int(x) for x in request.args.get('iqpair').split(',')])
+    update_items = dict(OPT_DMA_Buffer_Size=recordbuff, FULL_SCALE=float(request.args.get('fullscale')), IQ_PAIR=[int(x) for x in request.args.get('iqpair').split(',')], FPGA=int(FPGA))
     [DATA, transferTime_sec, recordsPerBuff, buffersPerAcq] = ADC[adctype].AcquireData(adcboard[adctag], recordtime, recordsum, update_items)
     update_items.update(recordtime=request.args.get('recordtime'),recordsum=recordsum)
     set_status(request.args.get('adcname').split('-')[0], update_items, request.args.get('adcname').split('-')[1])
@@ -455,6 +458,8 @@ def adcacquiredata():
     t_data[adctag] = list(1 / ADC[adctype].sampling_rate(adcboard[adctag]) * linspace(1, len(DATA[0,:,0]), len(DATA[0,:,0])))
     TIME_RESOLUTION_NS = round(1 / ADC[adctype].sampling_rate(adcboard[adctag]) / 1e-9)
     recordtime_ns = TIME_RESOLUTION_NS * len(DATA[0,:,0])
+    
+    print(Fore.GREEN + "acquiredata: FPGA: %s(module: %s)" %(FPGA, adcboard[adctag].FPGA))
     print(Fore.GREEN + "Data-type: %s" %DATA.dtype) # numpy default: float64 (But we adapted to float32 for Quadro-GPU sake!)
     return jsonify(recordtime_ns=recordtime_ns, transferTime_sec=si_format(transferTime_sec,1), recordsPerBuff=recordsPerBuff, buffersPerAcq=buffersPerAcq)
 @bp.route('/adc/playdata', methods=['GET'])
@@ -467,7 +472,7 @@ def adcplaydata():
     print(Fore.GREEN + "Signal Processing: %s" %signal_processing)
     tracenum = int(request.args.get('tracenum'))
     # data post-processing:
-    if average: # NOTE: CUDA-averaging speed is bottlenecked by the Data Transfer Rate between GPU's and CPU's associated memory.
+    if average or adcboard[adctag].FPGA: # NOTE: CUDA-averaging speed is bottlenecked by the Data Transfer Rate between GPU's and CPU's associated memory.
         trace_I = mean(I_data[adctag][:,:], 0)
         trace_Q = mean(Q_data[adctag][:,:], 0)
     else:
