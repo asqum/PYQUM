@@ -16,7 +16,7 @@
         "freq_IF":0.02,
         "power_LO":6,
 
-		"delay": 0
+		"delay": 100
         }
 	},
 
@@ -36,7 +36,7 @@
         "freq_IF":0.12,
         "power_LO":23,
 
-		"delay": 280
+		"delay": 380
         }
 	},
 
@@ -49,7 +49,7 @@
 		},
 
     "paras":{
-		"delay": 280
+		"delay": 380
         }
 	},
 
@@ -60,7 +60,7 @@
 		"DAC":[("SDAWG_2",2)],
 		},
     "paras":{
-		"delay": 0
+		"delay": 280
         }
 	},
 
