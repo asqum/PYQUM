@@ -252,11 +252,13 @@ function accessdata_QuCTRL() {
         $.each(Q_JSON, function(k, q_json) {
             var QuCTRL_Channels = [];
             console.log(q_json + ":\n" + JSON.stringify(data.perimeter[q_json]));
-            $.each(Object.keys(data.perimeter[q_json]), function(i,val){ QuCTRL_Channels.push(val); });
-            $.each(Object.values(data.perimeter[q_json]), function(i,val){ 
-                if (i==0) { sheet += q_json + ":\n"}
-                sheet += QuCTRL_Channels[i] + ":\n" + val.replaceAll("\n"," ") + "\n\n"; 
-            });
+            if (typeof data.perimeter[q_json] != "undefined") {
+                $.each(Object.keys(data.perimeter[q_json]), function(i,val){ QuCTRL_Channels.push(val); });
+                $.each(Object.values(data.perimeter[q_json]), function(i,val){ 
+                    if (i==0) { sheet += q_json + ":\n"}
+                    sheet += QuCTRL_Channels[i] + ":\n" + val.replaceAll("\n"," ") + "\n\n"; 
+                });
+            } else { console.log("BACKWARD-COMPATIBLE: " + q_json + " NOT present in previous version :)"); }
         });
         
         $.each(Object.keys(data.perimeter), function(i,key){
