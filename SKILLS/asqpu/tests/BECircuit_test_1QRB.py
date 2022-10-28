@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 mybec = get_test_bec()
 print(mybec.q_reg)
 for i in range(1):
-    d_setting = qapp.get_SQRB_device_setting( mybec, 5, 0, True  )
+    d_setting = qapp.get_SQRB_device_setting( mybec, 5, 0, withRO=True  )
 
 
     #print(mybec.load_coeff(coeffs))
@@ -27,7 +27,8 @@ for i in range(1):
 
     dac_wf = d_setting["DAC"]
     for dcategory in d_setting.keys():
-        print(dcategory, d_setting[dcategory].keys())
+        try:print(dcategory, d_setting[dcategory].keys())
+        except: print(dcategory,d_setting[dcategory])
     # Plot setting
     fig, ax = plt.subplots(1,1,sharex=True)
 

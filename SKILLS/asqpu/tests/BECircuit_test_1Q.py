@@ -12,16 +12,16 @@ sys.path.append("..")
 from BECircuit_fromTestFile import get_test_bec
 
 mybec = get_test_bec()
-mybec.dt = 0.2
+mybec.dt = 0.5
 print(mybec.to_qpc())
 
 rg_ro0 = Gate("RO", 0 )
 rg_x0 = Gate("RX", 0, arg_value= np.pi)
 rg_y0 = Gate("RY", 0, arg_value= np.pi)
 rg_z0 = Gate("RZ", 0, arg_value= 500)
-
+idle_gate = Gate("IDLE", 0, arg_value= 1000)
 gate_seq = [
-    rg_x0, rg_x0, rg_y0, rg_x0, rg_ro0
+    rg_x0, idle_gate, rg_y0, rg_ro0
 ]
 circuit = QubitCircuit(2)
 

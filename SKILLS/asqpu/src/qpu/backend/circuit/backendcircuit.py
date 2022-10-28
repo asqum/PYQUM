@@ -161,7 +161,8 @@ class BackendCircuit():
             if phyCh.port == "z" and "IDLEZ" in qubit.tempPars.keys(): # shift Z 
                 print(ch_name, q_name )
                 if ch_name in channel_output.keys():
-                    channel_output[ch_name][0] += qubit.tempPars["IDLEZ"]
+                    print(type(channel_output[ch_name][0][0]), qubit.tempPars["IDLEZ"] )
+                    channel_output[ch_name][0] = (channel_output[ch_name][0][0] +qubit.tempPars["IDLEZ"],0)
                 else: # If the Z line is not used but reguster in cq_relation
                     channel_output[ch_name] = [(zeros(self.total_point())+qubit.tempPars["IDLEZ"],0)]
         return channel_output

@@ -27,6 +27,7 @@ class SQCompiler(GateCompiler):
             "RY": self.rxy_compiler,
             "RZ": self.rz_compiler,
             "RO": self.measurement_compiler,
+            "IDLE": self.idle_compiler,
         }
 
     def generate_pulse(self, gate, tlist, coeff, phase=0.0):
@@ -45,11 +46,9 @@ class SQCompiler(GateCompiler):
 
         new_coeff = np.exp(1j*phase)*coeff
         pulse_info = [
-            # (control label, coeff)
             ("sx" + str(gate.targets[0]), new_coeff.real),
             ("sy" + str(gate.targets[0]), new_coeff.imag),
         ]
-        #print(tlist)
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     def _concatenate_pulses(
         self, pulse_instructions, scheduled_start_time, num_controls
@@ -159,56 +158,66 @@ class SQCompiler(GateCompiler):
             return self.generate_pulse(gate, tlist, coeff, phase=np.pi / 2)
 
     def measurement_compiler(self, gate, args):
-            """Compiles single-qubit gates to pulses.
-            
-            Args:
-                gate (qutip_qip.circuit.Gate): A qutip Gate object.
-            
-            Returns:
-                Instruction (qutip_qip.compiler.instruction.Instruction): An instruction
-                to implement a gate containing the control pulses.
-            """
-            
-            pulse_length = self.params["ro"]["pulse_length"]
-            dt = self.params["ro"]["dt"]
+        """Compiles single-qubit gates to pulses.
+        
+        Args:
+            gate (qutip_qip.circuit.Gate): A qutip Gate object.
+        
+        Returns:
+            Instruction (qutip_qip.compiler.instruction.Instruction): An instruction
+            to implement a gate containing the control pulses.
+        """
+        
+        pulse_length = self.params["ro"]["pulse_length"]
+        dt = self.params["ro"]["dt"]
 
-            sampling_point = int( -(pulse_length//-dt) )
-            tlist = np.linspace(0,pulse_length,sampling_point, endpoint=False)
+        sampling_point = int( -(pulse_length//-dt) )
+        tlist = np.linspace(0,pulse_length,sampling_point, endpoint=False)
 
-            coeff = ps.GERPFunc(tlist, *(1,pulse_length,0,15,30/4.) ) 
+        coeff = ps.GERPFunc(tlist, *(1,pulse_length,0,15,30/4.) ) 
 
-            pulse_info = [
-                # (control label, coeff)
-                ("ro" + str(gate.targets[0]), coeff)
-            ]
-            #print("compile measurement ",gate.name, tlist)
-            return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
+        pulse_info = [
+            ("ro" + str(gate.targets[0]), coeff)
+        ]
+        return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
 
 
     def rz_compiler(self, gate, args):
-            """Compiles single-qubit gates to pulses.
-            
-            Args:
-                gate (qutip_qip.circuit.Gate): A qutip Gate object.
-            
-            Returns:
-                Instruction (qutip_qip.compiler.instruction.Instruction): An instruction
-                to implement a gate containing the control pulses.
-            """
-            
-            sampling_point = gate.arg_value
-            tlist = np.linspace(0,sampling_point,sampling_point, endpoint=False)
-            # gate.arg_value is the rotation angle
-            coeff = ps.GERPFunc(tlist, *(1,sampling_point,0,15,30/4.) )
-            # tlist = np.abs(gate.arg_value) / self.params["pulse_amplitude"]
-            #coeff *= self.params["pulse_amplitude"] *gate.arg_value/np.pi
-            pulse_info = [
-                # (control label, coeff)
-                ("sz" + str(gate.targets[0]), coeff)
-            ]
-            #print("compile measurement ",gate.name, tlist)
-            return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
+        """Compiles single-qubit gates to pulses.
+        
+        Args:
+            gate (qutip_qip.circuit.Gate): A qutip Gate object.
+        
+        Returns:
+            Instruction (qutip_qip.compiler.instruction.Instruction): An instruction
+            to implement a gate containing the control pulses.
+        """
+        
+        sampling_point = gate.arg_value
+        tlist = np.linspace(0,sampling_point,sampling_point, endpoint=False)
+        coeff = ps.GERPFunc(tlist, *(1,sampling_point,0,15,30/4.) )
 
+        pulse_info = [
+            ("sz" + str(gate.targets[0]), coeff)
+        ]
+        return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
+
+    def idle_compiler( self, gate, args ):
+
+        dt = self.params["rxy"]["dt"]
+        idle_time = gate.arg_value
+        idle_point = int( -(idle_time//-dt) )
+        if idle_point>0:
+            tlist = np.linspace(0,idle_time,idle_point, endpoint=False)
+            coeff = ps.constFunc(tlist, 0 )
+            pulse_info = [
+                # ("sz" + str(gate.targets[0]), coeff),
+                ("sx" + str(gate.targets[0]), coeff),
+                ("sy" + str(gate.targets[0]), coeff)
+            ]
+            return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
+        else:
+            return []
 
     def to_waveform( self, circuit:QubitCircuit ):
 
@@ -285,3 +294,27 @@ def control_z( coeffs_map, target_index ):
         return rf_envelop
     return None
 
+def compiler_template(self, gate, args):
+        """Compiles single-qubit gates to pulses.
+        
+        Args:
+            gate (qutip_qip.circuit.Gate): A qutip Gate object.
+        
+        Returns:
+            Instruction (qutip_qip.compiler.instruction.Instruction): An instruction
+            to implement a gate containing the control pulses.
+        """
+        
+        pulse_length = self.params["ro"]["pulse_length"]
+        dt = self.params["ro"]["dt"]
+
+        sampling_point = int( -(pulse_length//-dt) )       
+
+        tlist = np.linspace(0,sampling_point,sampling_point, endpoint=False)
+
+        coeff = ps.GERPFunc(tlist, *(1,sampling_point,0,15,30/4.) )
+        pulse_info = [
+            # (control label, coeff)
+            ("sz" + str(gate.targets[0]), coeff)
+        ]
+        return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
