@@ -120,14 +120,46 @@ class waveform:
                         pass
                 else: self.data.append(float(cmd))     
 
-def variable(i,change_list,corder):
-    try:
-        tmp = split('[to*]',waveform(corder[change_list[i]]).command)
-        out = list(linspace(float(tmp[0]), float(tmp[2]), int(tmp[3])+1))
-    except:
-        out = split(' ',waveform(corder[change_list[i]]).command)
+# c-structure, rjson,readoutype
+def command_in_dict(command,dic):
+    '''
+    command_in_dict(command,dic): 
+    command is the output dictionary form
+    dic is the raw data dictionary
+    '''
+    for i in dic:
+        if i == 'C-Structure':
+            continue
+        if waveform(dic[i]).count !=1:
+            command['change'] = append(command['change'],i)
+            command['change_command'] = append(command['change_command'],waveform(dic[i]).command)
+            command['change_len'] = append(command['change_len'],waveform(dic[i]).count)
+            if waveform(dic[i]).inner_repeat !=1:
+                command['repeat'] = append(command['repeat'],i)
+                command['repeat_command'] = append(command['repeat_command'],waveform(dic[i]).inner_repeat)
+        elif waveform(dic[i]).inner_repeat !=1:
+            command['repeat'] = append(command['repeat'],i)
+            command['repeat_command'] = append(command['repeat_command'],waveform(dic[i]).inner_repeat)
+        else:
+            command['parameter'] = append(command['parameter'],i)
+    return command
+
+def repeat_mean(data,repeat,repeat_command):return data.reshape((-1,int(repeat_command[0]))).mean(axis=1)
+def construct_layer(where,change_command,change_list_len):
+    repeat, group = multiply_except_self(where, change_list_len)
+#     print(repeat,group)
+    out = seperate(where,change_command)*int(repeat)
+    out.sort()
+    out = out*int(group)
     return out
 
+def seperate(idx,change_command):
+    try:
+        tmp = split('[to*]',change_command[idx])
+        out = list(linspace(float(tmp[0]), float(tmp[2]), int(tmp[3])+1))
+    except:
+        out = split(' ',change_command[idx])
+    return out
 def multiply_except_self(where, alist):
     repeat, group = 1,1
     for i in range(len(alist)):
@@ -137,21 +169,57 @@ def multiply_except_self(where, alist):
             group*=alist[i]
     return repeat, group
 
-def construct_layer(where,change_list,change_list_len,corder):
-    if len(change_list)==1:
-        out = variable(where,change_list,corder)
-        out.sort()
-    else:
-        repeat, group = multiply_except_self(where, change_list_len)
-        out = variable(where,change_list,corder)*int(repeat)
-        out.sort()
-        out = out*int(group)
-    return out
+def command_analytic(selectdata,corder, perimeter,datadensity):
+    command = {'change':[],'change_command':[], 'repeat':[], 'repeat_command':[], 'parameter':[], 'change_len':[]}
 
-def repeatable(data,repeatlist,corder):
-    repeat_len = waveform(corder[repeatlist[0]]).inner_repeat
-    mean_data = data.reshape((-1,repeat_len)).mean(axis=1)
-    return mean_data
+    print("C-order :")
+    for key, value in corder.items():
+        print('\t',key, ' : ', value)
+    command = command_in_dict(command,corder)
+
+    if 'READOUTYPE' in perimeter.keys():
+        print("R-JSON :")
+        RJSON = literal_eval(perimeter['R-JSON'])
+        command =command_in_dict(command,RJSON)
+        for key, value in RJSON.items():
+            print('\t',key, ' : ', value)
+        if perimeter['READOUTYPE'] == 'continuous':
+            time_unit = int(perimeter['TIME_RESOLUTION_NS'])
+            time_ns = int(perimeter['RECORD_TIME_NS'])
+            print('RECORD_TIME_NS : ',time_ns)
+            print('TIME_RESOLUTION_NS : ',time_unit)
+            print('RECORD_TIME_dot : ',int(time_ns/time_unit))
+            command['change'] = append(command['change'],'RECORD_TIME_NS')
+            command['change_command'] = append(command['change_command'],str(1*time_unit)+'to'+str(time_ns)+'*'+str(int(time_ns/time_unit)-1))
+            command['change_len'] = append(command['change_len'],int(time_ns/time_unit))
+        if perimeter['READOUTYPE'] == 'one-shot':
+            shot = int(perimeter['RECORD-SUM'])
+            print('RECORD-SUM : ',shot)
+            command['change'] = append(command['change'],'RECORD-SUM')
+            command['change_command'] = append(command['change_command'],'1to'+str(shot)+'*'+str(shot))
+            command['change_len'] = append(command['change_len'],shot)
+
+    print("Change : \n\t",command['change'])
+    print("Change command : \n\t",command['change_command'])
+    print("Repeat : \n\t",command['repeat'])
+    print("Repeat_command : \n\t",command['repeat_command'])
+    print("Unchange : \n\t",command['parameter'])
+    print("\n")
+
+    selectdata_i_data = selectdata[::datadensity]
+    selectdata_q_data = selectdata[1::datadensity]
+    while len(command['repeat'])!=0:
+        selectdata_i_data = repeat_mean(selectdata_i_data,command['repeat'],command['repeat_command'])
+        selectdata_q_data = repeat_mean(selectdata_q_data,command['repeat'],command['repeat_command'])
+        command['repeat'] = delete(command['repeat'],0)
+        command['repeat_command'] = delete(command['repeat_command'],0)
+
+    df = DataFrame()
+    for i in range(len(command['change'])):
+        df1 = DataFrame(construct_layer(i,command['change_command'],command['change_len']), columns = [command['change'][i]])
+        df = concat([df,df1],axis =1)
+    df_label = df
+    return selectdata_i_data,selectdata_q_data, df_label
         
 def jobid_search_pyqum(id):
     # --------------Search Path --------------
@@ -203,16 +271,30 @@ def load_rawdata(pyqum_path):
     file_label = literal_eval(dict_str)
     # print(file_label)
     corder = file_label['c-order']
-    print("C-order : \n"+str(corder))
-    print("\nComment : \n"+str(file_label['comment']))
+#     print("C-order : \n"+str(corder))
+    print("Comment : \n"+str(file_label['comment']))
     # --------------load Perimeter --------------
     try: perimeter = file_label['perimeter']
     except(KeyError): perimeter = {}
-    print("\nperimeter : \n"+str(perimeter))
+#     print("\nperimeter : \n"+str(perimeter))
     try: jobid = perimeter['jobid']
     except(KeyError): jobid = 0
-    store_shape = array([waveform(x).count * waveform(x).inner_repeat for x in corder.values()])
+    
+    store_shape = array([waveform(corder[x]).count * waveform(corder[x]).inner_repeat for x in corder if x != 'C-Structure' ])
     cdatasize = int(prod(store_shape, dtype='uint64')) * file_label['data-density'] #data density of 2 due to IQ
+    
+    if 'READOUTYPE' in perimeter.keys():
+        RJSON = literal_eval(perimeter['R-JSON'])
+        RJSON_shape = array([waveform(x).count * waveform(x).inner_repeat for x in RJSON.values()])
+        cdatasize*=int(prod(RJSON_shape, dtype='uint64'))
+        if perimeter['READOUTYPE'] == 'continuous':
+            time_unit = int(perimeter['TIME_RESOLUTION_NS'])
+            time_ns = int(perimeter['RECORD_TIME_NS'])
+            cdatasize*=int(time_ns/time_unit)
+        if perimeter['READOUTYPE'] == 'one-shot':
+            shot = int(perimeter['RECORD-SUM'])
+            cdatasize*=shot
+            
     print("\nC-order Data size: \n%s" %cdatasize)
     print("Select Data length: \n%s" %len(selectdata))   
     # --------------Check data integrity --------------
@@ -222,44 +304,11 @@ def load_rawdata(pyqum_path):
     else:
         print("examine pyqum data")
     
-    return selectdata, corder, jobid, file_label['data-density']
+    return selectdata, corder,perimeter, jobid, file_label['data-density']
 
-def command_analytic(selectdata,corder,datadensity):
-    C_structure = [i for i in corder]
-    print("C-order : ",C_structure)
-    x,r,parameter,x_len = [],[],[],[]
-    for i in corder:
-        if waveform(corder[i]).count !=1:
-            x = append(x,i)
-            x_len = append(x_len,waveform(corder[i]).count)
-            if waveform(corder[i]).inner_repeat !=1:
-                r = append(r,i)
-        elif waveform(corder[i]).inner_repeat !=1:
-            r = append(r,i)
-        else:
-            parameter = append(parameter,i)
-    print("Change : ",x)
-    print("Repeat : ",r)
-    print("Unchange : ",parameter)
-    print("\n")
-    selectdata_i_data = selectdata[::datadensity]
-    selectdata_q_data = selectdata[1::datadensity]
-    while len(r)!=0:
-        selectdata_i_data = repeatable(selectdata_i_data,r,corder)
-        selectdata_q_data = repeatable(selectdata_q_data,r,corder)
-        r = delete(r,0)
-    if len(x)==1:
-        df_label = DataFrame(construct_layer(0,x,x_len,corder), columns = [x[0]])
-    else:
-        df = DataFrame()
-        for i in range(len(x)):
-            df1 = DataFrame(construct_layer(i,x,x_len,corder), columns = [x[i]])
-            df = concat([df,df1],axis =1)
-        df_label = df
-    return selectdata_i_data,selectdata_q_data, df_label
 def pyqum_load_data(pyqum_path):
-    selectdata, corder, jobid, datadensity = load_rawdata(pyqum_path)
-    mean_i_data, mean_q_data, df_label = command_analytic(selectdata,corder,datadensity)
+    selectdata, corder, perimeter, jobid, datadensity = load_rawdata(pyqum_path)
+    mean_i_data, mean_q_data, df_label = command_analytic(selectdata,corder, perimeter,datadensity)
     df_i = DataFrame(mean_i_data, columns = ['I'])
     df_q = DataFrame(mean_q_data, columns = ['Q'])
     df_data = concat([df_i,df_q],axis =1)
