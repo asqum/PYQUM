@@ -262,7 +262,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
     '''
     # 1. Loading the settings:
     # NOTE: default settings for SDAWG: clearQ=1 so that short waveform can be played individually for testing purposes on the Machine page.
-    settings=dict(clearQ=1, Master=True, PINSW=False, trigbyPXI=2)
+    settings=dict(clearQ=0, Master=True, PINSW=False, trigbyPXI=2)
     settings.update(update_settings)
     clearQ, Master, PINSW, trigbyPXI = int(settings['clearQ']), settings['Master'], settings['PINSW'], settings['trigbyPXI']
     # PENDING: ADDING TRIGGER DELAY (+/-)
