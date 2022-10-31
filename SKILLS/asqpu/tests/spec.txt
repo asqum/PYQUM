@@ -27,9 +27,8 @@
 	
 	{"id":"qc",
 	"type":"coupler",
-	"freq_xy":5,
-	"coupling_z":0.12,
-	"power_ro":0.2,
-	"freq_ro":4.4}
+	"IDLEZ":0.05,
+	"total_time":20000
+	}
 
 ]
