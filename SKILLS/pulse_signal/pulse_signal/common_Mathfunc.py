@@ -105,14 +105,15 @@ def DRAGFunc ( t, *p )->ndarray:
     p[3]: derivative Gaussian amplitude ratio \n
     """
     gaussParas = (p[0],p[1],p[2])
-    return gaussianFunc( t, *gaussParas )+ 1j*p[3]*derivativeGaussianFunc( t, *gaussParas )
+    return gaussianFunc( t, *gaussParas ) -1j*p[3]*derivativeGaussianFunc( t, *gaussParas )
 
 if __name__ == '__main__':
     from numpy import linspace
     import matplotlib.pyplot as plt
     
 
-    x = linspace(0,300,1000)
-    p = (1,200,0,30,30/2)
-    plt.plot(x,GERPFunc(x,*p))
+    x = linspace(0,40,1000)
+    p = (1,15,20)
+    plt.plot(x,gaussianFunc(x,*p))
+    plt.plot(x,derivativeGaussianFunc(x,*p))
     plt.show()
