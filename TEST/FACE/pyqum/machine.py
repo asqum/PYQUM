@@ -296,7 +296,12 @@ def dacsetchannels():
     dactag, dactype, Channel = '%s:%s' %(request.args.get('dacname'),session['user_name']), request.args.get('dactype'), int(request.args.get('Channel'))
     score, master = request.args.get('score'), bool(int(request.args.get('master')))
     maxlevel = si_parse(request.args.get('maxlvl') + request.args.get('maxlvlunit').split("Vpp")[0])
-    trigbyPXI, markerdelay, markeroption = int(request.args.get('trigbyPXI')), int(request.args.get('markerdelay')), int(request.args.get('markeroption'))
+    trigbyPXI, markerdelay, markeroption = int(request.args.get('trigbyPXI')), int(request.args.get('markerdelay')), request.args.get('markeroption')
+
+    # Extract PINSW option from markeroption:
+    markeroption = int(markeroption.split("-")[0])
+    try: PINSW = bool(int(markeroption.split("-")[1]))
+    except: PINSW = False
 
     # PULSE ASSEMBLY:
     dt = round(1/float(DAC[dactype].clock(DAC_handle[dactag])[1]['SRATe'])/1e-9, 2)
@@ -307,7 +312,7 @@ def dacsetchannels():
     if dactype=="TKAWG": New = True
     elif dactype=="SDAWG": New = not bool(int(request.args.get('resend')))
     if New: DAC[dactype].prepare_DAC(DAC_handle[dactag], Channel, pulseq.totalpoints, maxlevel, dict(Master=master, trigbyPXI=trigbyPXI, markerdelay=markerdelay, markeroption=markeroption))
-    DAC[dactype].compose_DAC(DAC_handle[dactag], Channel, pulseq.music, pulseq.envelope, markeroption)
+    DAC[dactype].compose_DAC(DAC_handle[dactag], Channel, pulseq.music, pulseq.envelope, markeroption, dict(PINSW=PINSW, clearQ=int(request.args.get('clearQ'))))
 
     update_items = {'SCORE-%s'%Channel: score, 'master': int(master), 'trigbyPXI': trigbyPXI, 'markerdelay': markerdelay, 'markeroption-ch%s'%Channel: markeroption}
     set_status(request.args.get('dacname').split('-')[0], update_items, request.args.get('dacname').split('-')[1])

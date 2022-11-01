@@ -28,10 +28,9 @@ class SD_AINAVE(keysightSD1.SD_AIN):
         '''
         if int(FPGA_LEVEL)==0:
             self.FPGA = False
-            error = self.FPGAload(str(M3102_PATH))
-            if error !=0: 
-                raise RuntimeError("Required Firmware version of 02.03")
-                raise FileNotFoundError("Original bitfile load error: M3102A.k7z not found in %s" %str(M3102_PATH))
+            try: self.FPGAload(str(M3102_PATH))
+            except(RuntimeError): print("Required Firmware version of 02.03")
+            except(FileNotFoundError): print("Original bitfile load error: M3102A.k7z not found in %s" %str(M3102_PATH))
             return
 
         if int(FPGA_LEVEL)==1:

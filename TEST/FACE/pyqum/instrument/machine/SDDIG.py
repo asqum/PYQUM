@@ -59,8 +59,11 @@ def ConfigureBoard(module, update_settings={}):
 
     # 1. FPGA: SELECT LEVEL
     stage, now = clocker()
-    if FPGA: module.loadAVEBitFile(FPGA)
-    else: module.loadAVEBitFile()
+    if FPGA: 
+        module.loadAVEBitFile(FPGA)
+        print(Fore.GREEN + "FPGA ENABLED: LEVEL-%s"%FPGA)
+    else: 
+        module.loadAVEBitFile()
 
     dt_s = 1 / sampling_rate(module)
     for DAQ_CH in range(4):

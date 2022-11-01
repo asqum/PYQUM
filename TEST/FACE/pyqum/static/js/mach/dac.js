@@ -2,6 +2,7 @@
 $(document).ready(function(){
     $('div.daccontent').hide();
     $('div.daccontent.settings').show();
+    $('input.dac.clearQ.waveform').prop( "checked", true ); //default clearQ=1 so that short waveform can be played individually for testing purposes on the Machine page.
     // Globals:
     window.music =[[0],[0],[0],[0]]; 
     window.musicname = [];
@@ -63,6 +64,7 @@ function dac_set_channel(callback) {
         trigbyPXI: $('select.dac.settings.trigbyPXI').val(),
         markerdelay: $('input.dac.scale.settings.markerdelay').val(),
         markeroption: $('select.dac.setchannels.marker-option').val(),
+        clearQ: $('input.dac.clearQ.waveform').is(':checked')?1:0,
     }, function (data) {
         console.log("Waveform CH-" + Channel + " injected.");
         musicname[parseInt(Channel)-1] = "CH-" + Channel;

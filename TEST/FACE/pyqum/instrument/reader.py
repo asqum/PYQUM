@@ -143,7 +143,11 @@ def inst_order(queue, category='ALL', tabulate=True):
                         inst_list = inst_list.replace(' ','') # allow spaces for this version as well
                         inst_list = inst_list.split('>>')
                         inst_list = [{x.split(':')[0]:x.split(':')[1].split(',')} for x in inst_list]
-                        inst_list = {instr_type:[instr_chs.split('/') for instr_chs in instr_modules] for instr_config in inst_list for instr_type,instr_modules in instr_config.items()} # {<inst>: <slot-channel> ...}
+
+                        try: # For CH category:
+                            inst_list = {instr_type:[[int(ch) for ch in instr_chs.split('/')] for instr_chs in instr_modules] for instr_config in inst_list for instr_type,instr_modules in instr_config.items()} # {<inst>: <slot-channel> ...}
+                        except: # For ROLE category:
+                            inst_list = {instr_type:[instr_chs.split('/') for instr_chs in instr_modules] for instr_config in inst_list for instr_type,instr_modules in instr_config.items()} # {<inst>: <slot-channel> ...}
 
                     # 2nd version: directly build JSON to save wiring-configuration (for ASQPU): e.g. {"DAC": [["I1", "Q1"], ["X1", "Y1", "Z1", "P1"], ["Z2"]], "SG": [["XY1", "XY2"], ["RO1", "PA1"]], "DC": [["ZPA"], ["ZC"]]}
                     else: inst_list = loads(inst_list)
@@ -343,7 +347,7 @@ def test():
         printTree(DATA01)
 
     # SQL Database:
-    if False:
+    if True:
         inst_list = inst_order("CHAR0")
         print("inst_list: %s" %inst_list)
         print("CHAR0's DC: %s" %inst_order("CHAR0", 'DC'))
@@ -358,8 +362,8 @@ def test():
         # inst_designate("CHAR0","DC","SDAWG_3")
         from pyqum.instrument.toolbox import find_in_list
         DACH_Role = inst_order("QPC0", 'ROLE')['DAC']
-        RO_addr = find_in_list(DACH_Role, 'I1')
-        XY_addr = find_in_list(DACH_Role, 'X1')
+        RO_addr = find_in_list(DACH_Role, 'RO')
+        XY_addr = find_in_list(DACH_Role, 'XY')
         print("RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # MACER

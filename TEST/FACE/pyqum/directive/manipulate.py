@@ -143,6 +143,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     # 1a. Instruments' specs:
     TIME_RESOLUTION_NS = int(perimeter['TIME_RESOLUTION_NS'])
     CLOCK_HZ = float(perimeter['CLOCK_HZ'])
+    FPGA = 0
     # 1b. DSP perimeter(s)
     digital_homodyne = perimeter['DIGIHOME']
     ifreqcorrection_kHz = float(perimeter['IF_ALIGN_KHZ'])
@@ -154,6 +155,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     recordsum = int(perimeter['RECORD-SUM'])
     recordtime_ns = int(perimeter['RECORD_TIME_NS']) # min:1280ns, step:128ns
     readoutype = perimeter['READOUTYPE']
+    if readoutype in ["rt-wfm-ave"]: FPGA = 1
     # 1d. SCORE-, MACE- & R-JSON perimeters:
     SCORE_TEMPLATE = perimeter['SCORE-JSON'] # already a DICT
     MACE_TEMPLATE = perimeter['MACE-JSON'] # already a DICT
@@ -206,11 +208,14 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     DC_type, DC_label, DC, DC_instance = [None]*DC_qty, [None]*DC_qty, [None]*DC_qty, [None]*DC_qty
     for i_slot, channel_set in enumerate(DC_CH_Matrix):
         [DC_type[i_slot], DC_label[i_slot]] = instr['DC'][i_slot].split('_')
-        DC[i_slot] = im("pyqum.instrument.machine.%s" %DC_type[i_slot])
-        DC_instance[i_slot] = DC[i_slot].Initiate(which=DC_label[i_slot]) # Only voltage mode (default) available / allowed in QPC
-        for channel in channel_set:
-            DC[i_slot].sweep(DC_instance[i_slot], str(0), channel=channel)
-            # DC[i_slot].output(DC_instance[i_slot], 1, channel)
+        if "DUMMY" in DC_type[i_slot]: 
+            pass
+        else:
+            DC[i_slot] = im("pyqum.instrument.machine.%s" %DC_type[i_slot])
+            DC_instance[i_slot] = DC[i_slot].Initiate(which=DC_label[i_slot]) # Only voltage mode (default) available / allowed in QPC
+            for channel in channel_set:
+                DC[i_slot].sweep(DC_instance[i_slot], str(0), channel=channel)
+                # DC[i_slot].output(DC_instance[i_slot], 1, channel)
 
     # SG for [XY, RO]:
     SG_qty = len(instr['SG'])
@@ -254,7 +259,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             ## JACKY
             print(Fore.BLUE +f"DAC_total_points: {DAC_total_points}")
         for channel in channel_set:
-            DAC[i_slot].compose_DAC(DAC_instance[i_slot], int(channel), DAC_idle_music, [], markeroption) # we don't need marker yet initially
+            # NOTE: TKAWG: we don't need the right marker yet initially.
+            # NOTE: SDAWG: default clearQ doesn't matter much for pre-composition.
+            DAC[i_slot].compose_DAC(DAC_instance[i_slot], int(channel), DAC_idle_music, [], markeroption)
             print(Fore.BLUE +f"len(DAC_idle_music) {len(DAC_idle_music)}")
 
         # Turn on all 4 channels:
@@ -268,17 +275,20 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     adca = ADC.Initiate(which=ADC_label)
     '''Prepare ADC:'''
     TOTAL_POINTS = round(recordtime_ns / TIME_RESOLUTION_NS)
-    update_items = dict( triggerDelay_sec=trigger_delay_ns*1e-9, TOTAL_POINTS=TOTAL_POINTS, NUM_CYCLES=recordsum, PXI=-13 ) # HARDWIRED to receive trigger from the front-panel EXT.
+    update_items = dict( triggerDelay_sec=trigger_delay_ns*1e-9, TOTAL_POINTS=TOTAL_POINTS, NUM_CYCLES=recordsum, PXI=-13, FPGA=FPGA ) # HARDWIRED to receive trigger from the front-panel EXT.
     ADC.ConfigureBoard(adca, update_items)
     
 
     # Buffer-size for lowest-bound data-collecting instrument:
-    if readoutype == 'one-shot': # for fidelity measurement
+    if readoutype in ['one-shot']: # along record sum (for fidelity measurement)
         buffersize = recordsum * 2 # data-density of 2 due to IQ
         print("Buffer-size: %s" %buffersize)
-    else: # by default we usually take average
+    elif readoutype in ["continuous", "rt-wfm-ave"]: # along record time (default, FPGA-enhanced)
         buffersize = TOTAL_POINTS * 2 # data-density of 2 due to IQ
         print("Buffer-size: %s" %buffersize)
+    else:
+        print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
+
     # Total data points to be saved into file:
     datasize = int(prod([waveform(corder[param]).count for param in structure], dtype='uint64')) * buffersize
     print("data size: %s" %datasize)
@@ -294,7 +304,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     measure_loop = range(resumepoint//buffersize,datasize//buffersize) # saving chunck by chunck improves speed a lot!
     while True:
         for i in measure_loop:
-            print(Back.BLUE + Fore.WHITE + 'measure single-qubit %s/%s' %(i+1,datasize//buffersize))
+            print(Back.BLUE + Fore.WHITE + 'Measuring %s %s/%s' %(renamed_task, i+1, datasize//buffersize))
             # determining the index-locations for each parameters, i.e. the address at any instance
             caddress = cdatasearch(i, cstructure)
             print(Fore.BLACK + Back.WHITE + "i: %s, cstructure: %s, caddress: %s" %(i,cstructure,caddress))
@@ -334,7 +344,12 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # Expert EXP Control (Every-loop)
                 Exp = macer(commander=renamed_task)
                 Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
-                d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), True )
+
+                match renamed_task:
+                    case "DD": d_setting = qapp.get_SQDD_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Echo_times")])), float(Exp.VALUES[Exp.KEYS.index("Free_Evolution_ns")]), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+                    case "RB": d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+                    case _: print(Fore.WHITE + Back.RED + "TASK NOT VALID")
+
                 Exp.close()
                 # DEBUG (1)
                 print(Fore.YELLOW + "d-setting: %s" %d_setting)
@@ -357,13 +372,16 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             # Basic MAC Control (Every-loop)
             # 1. MAC's Device: DC
             for i_slot, channel_set in enumerate(DC_CH_Matrix):
-                for channel in channel_set:
-                    Mac = macer()
-                    Mac.execute(MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)])
-                    DC[i_slot].sweep(DC_instance[i_slot], str(Mac.VALUES[Mac.KEYS.index("sweep")]), channel=channel)
-                    if TASK_LEVEL == "MAC": DC[i_slot].output(DC_instance[i_slot], int(Mac.VALUES[Mac.KEYS.index("output")]), channel)
-                    if TASK_LEVEL == "EXP": DC[i_slot].output(DC_instance[i_slot], 1, channel)
-                    Mac.close()
+                if "DUMMY" in DC_type[i_slot]: 
+                    pass
+                else:
+                    for channel in channel_set:
+                        Mac = macer()
+                        Mac.execute(MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)])
+                        DC[i_slot].sweep(DC_instance[i_slot], str(Mac.VALUES[Mac.KEYS.index("sweep")]), channel=channel)
+                        if TASK_LEVEL == "MAC": DC[i_slot].output(DC_instance[i_slot], int(Mac.VALUES[Mac.KEYS.index("output")]), channel)
+                        if TASK_LEVEL == "EXP": DC[i_slot].output(DC_instance[i_slot], 1, channel)
+                        Mac.close()
 
             # 2. MAC's Device: SG
             for i_slot, channel_set in enumerate(SG_CH_Matrix):
@@ -385,7 +403,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             for i_slot_order, channel_set in enumerate(DAC_CH_Matrix):
                 # PENDING: Extract the settings from the machine database instead.
                 if i_slot_order==0: update_settings = dict(Master=True, clearQ=int(bool(len(channel_set)==4)) ) # First-in-line = Master
-                else: update_settings = dict(Master=False, clearQ=int(bool(len(channel_set)==4)) ) # NOTE: manually write stalking-envelop-SCORE for CH4 to drive PIN-SWITCH
+                else: update_settings = dict(Master=False, clearQ=int(bool(len(channel_set)==4)) ) # NOTE: please manually write stalking-envelop-SCORE for CH4 to drive PIN-SWITCH
 
                 for ch in channel_set:
                     
@@ -422,11 +440,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 
             # Basic Readout (Buffer Every-loop):
             # ADC 
-            DATA = ADC.AcquireData(adca, recordtime_ns*1e-9, recordsum)[0]
+            DATA = ADC.AcquireData(adca, recordtime_ns*1e-9, recordsum, update_settings=dict(FPGA=FPGA) )[0]
             # POST PROCESSING
             try:
                 # TIME EVOLUTION / FIDELITY TEST:
-                if readoutype == 'one-shot':
+                if readoutype in ['one-shot']:
                     DATA = DATA.reshape([recordsum,TOTAL_POINTS*2])
                     if digital_homodyne != "original": 
                         for r in range(recordsum):
@@ -436,12 +454,17 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                             if not r%1000: print(Fore.YELLOW + "Shooting %s times" %(r+1))
                     DATA = mean(DATA.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1)
                     print(Fore.BLUE + "DATA of size %s is ready to be saved" %len(DATA))
-                else: # by default
-                    DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0)
+                elif readoutype in ["continuous", "rt-wfm-ave"]: # by default
+                    
+                    if FPGA==1: DATA = DATA.reshape([TOTAL_POINTS*2]) # average was done on FPGA (real-time)
+                    else: DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0) # average was done on CPU
+
                     if digital_homodyne != "original": 
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
                         trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
                         DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data
+                else:
+                    print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
             
             except(ValueError):
                 # raise # PENDING: UPDATE TIMSUM MISMATCH LIST
@@ -466,10 +489,13 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             for channel in channel_set: SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, 0])
             SG[i_slot].close(SG_instance[i_slot], SG_label[i_slot], False)
         for i_slot, channel_set in enumerate(DC_CH_Matrix): 
-            for channel in channel_set: 
-                DC[i_slot].sweep(DC_instance[i_slot], str(0), channel=channel)
-                DC[i_slot].output(DC_instance[i_slot], 0, channel)
-            DC[i_slot].close(DC_instance[i_slot], reset=True, which=DC_label[i_slot])
+            if "DUMMY" in DC_type[i_slot]: 
+                pass
+            else:
+                for channel in channel_set: 
+                    DC[i_slot].sweep(DC_instance[i_slot], str(0), channel=channel)
+                    DC[i_slot].output(DC_instance[i_slot], 0, channel)
+                DC[i_slot].close(DC_instance[i_slot], reset=True, which=DC_label[i_slot])
 
         if JOBID in g.queue_jobid_list:
             qout(queue, g.queue_jobid_list[0],g.user['username'])

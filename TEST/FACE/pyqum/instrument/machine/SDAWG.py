@@ -261,7 +261,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
     clearQ: MUST be used when ALL channels are FULLY assigned.
     '''
     # 1. Loading the settings:
-    # NOTE: default settings for SDAWG: clearQ=1 so that short waveform can be played individually for testing purposes on the Machine page.
+    # NOTE: default settings for SDAWG: clearQ=0 to avoid inconsistent delay between Master & Slave for each run in "manipulate"
     settings=dict(clearQ=0, Master=True, PINSW=False, trigbyPXI=2)
     settings.update(update_settings)
     clearQ, Master, PINSW, trigbyPXI = int(settings['clearQ']), settings['Master'], settings['PINSW'], settings['trigbyPXI']
