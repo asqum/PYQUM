@@ -147,10 +147,11 @@ class SQCompiler(GateCompiler):
         
         pulse_length = self.params["rxy"]["pulse_length"]
         dt = self.params["rxy"]["dt"]
-
+        anharmonicity = self.params["anharmonicity"]
+        a_weight = self.params["a_weight"]
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., 1) ) *gate.arg_value/np.pi
+        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., a_weight/anharmonicity) ) *gate.arg_value/np.pi
 
         if gate.name == "RX":
             return self.generate_pulse(gate, tlist, coeff, phase=0.0)

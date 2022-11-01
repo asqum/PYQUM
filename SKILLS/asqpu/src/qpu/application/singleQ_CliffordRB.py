@@ -170,6 +170,8 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
+    mycompiler.params["anharmonicity"] = q_info.tempPars["anharmonicity"]
+    mycompiler.params["a_weight"] = q_info.tempPars["a_weight"]
 
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt

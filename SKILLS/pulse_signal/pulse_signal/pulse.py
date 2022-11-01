@@ -84,7 +84,7 @@ class Pulse():
         signal = Waveform(envelope.x0, envelope.dx, empty(envelope.Y.shape[-1]))
         time = envelope.get_xAxis()
         if issubdtype(envelope.Y.dtype,complex):
-            signal.Y = upConversion_RF( envelope.Y.real, envelope.Y.imag, self.carrierFrequency )
+            signal.Y = upConversion_RF( envelope.Y.real, envelope.Y.imag, self.carrierFrequency*dt )
         else:
             signal.Y = envelope.Y*cos( 2.*pi*self.carrierFrequency*time +self.carrierPhase)
 

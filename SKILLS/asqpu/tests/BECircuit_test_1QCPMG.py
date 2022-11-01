@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 mybec = get_test_bec()
 print(mybec.q_reg)
 
-d_setting = qapp.get_SQDD_device_setting( mybec, 0, 100, withRO=True  )
+d_setting = qapp.get_SQDD_device_setting( mybec, 5, 100, withRO=True  )
 
 
 

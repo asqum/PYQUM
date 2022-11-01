@@ -65,10 +65,14 @@ def get_SQDD_device_setting( backendcircuit:BackendCircuit, echo_times, free_evo
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
+    mycompiler.params["anharmonicity"] = q_info.tempPars["anharmonicity"]
+    mycompiler.params["a_weight"] = q_info.tempPars["a_weight"]
 
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt
     mycompiler.params["ro"]["pulse_length"] = q_info.tempPars["ROW"]
+
+
     waveform_channel = mycompiler.to_waveform(qc)
     d_setting = backendcircuit.devices_setting(waveform_channel)
     d_setting["total_time"] = backendcircuit.total_time
