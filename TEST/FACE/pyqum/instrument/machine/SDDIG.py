@@ -120,7 +120,10 @@ def AcquireData(module, recordtime_s, recordsum, update_settings={}):
         else: readPoints = module.DAQread(DAQ_CH, recordsum*TOTAL_POINTS, READ_TIMEOUT)
         print(Fore.YELLOW + "Total points read by CH-{}: {}".format(DAQ_CH, readPoints.size))
         # convert binary data to voltage
+
         DATA_V[index] = FULL_SCALE * ( readPoints / 2**(14+1))
+        # DATA_V[index] = readPoints #RAW-DIGITS
+
     # STOP DAQ
     module.DAQstopMultiple(DAQmask)
 

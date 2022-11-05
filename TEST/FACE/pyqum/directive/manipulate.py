@@ -166,7 +166,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         print(Fore.BLUE +f"SCORE_TEMPLATE {SCORE_TEMPLATE['CH%s'%RO_addr]}")
     if TASK_LEVEL == "EXP":
         # for i, qubit_id in enumerate(Sample_Backend.q_reg["qubit"]):
-        d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True )
+        d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True ) # PENDING: MORE unified function from ASQPU?
         ifperiod = d_setting['total_time']
     ##JACKY 
     print(Fore.BLUE +f"totaltime(ifperiod) {ifperiod}")
@@ -345,10 +345,16 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 Exp = macer(commander=renamed_task)
                 Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
 
+                # MATCHING EXP-TASK FOR ASQPU API:
                 match renamed_task:
-                    case "DD": d_setting = qapp.get_SQDD_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Echo_times")])), float(Exp.VALUES[Exp.KEYS.index("Free_Evolution_ns")]), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
-                    case "RB": d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
-                    case _: print(Fore.WHITE + Back.RED + "TASK NOT VALID")
+                    case "DD": 
+                        '''MACE-Skills: Qubit_ID/0, Echo_times, Free_Evolution_ns'''
+                        d_setting = qapp.get_SQDD_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Echo_times")])), float(Exp.VALUES[Exp.KEYS.index("Free_Evolution_ns")]), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+                    case "RB": 
+                        '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
+                        d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+                    case _: 
+                        print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
 
                 Exp.close()
                 # DEBUG (1)

@@ -176,7 +176,7 @@ $(document).on('click', 'div.buttons a.all-mssn-access', function() {
         $('.mssn div.tabcontent#' + data.tdmpack.queue.replace(/\d+/g, '')).show(); // remove any digits from the string
         // Click on TASK-TAB:
         $('button.access#' + data.tdmpack.task).click();
-        // Posting Notification:
+        // Posting Notification: (PENDING: AUTO Generate a notification bar to avoid the need to manually add task to QuCTRL.html)
         $('input.notification').hide();
         $('input.notification#' + data.tdmpack.task + '_notification').show().val('JOB #' + jobid + ' > ' + data.tdmpack.dateday + ' > ' + data.tdmpack.wmoment);
     });

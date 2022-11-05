@@ -207,20 +207,15 @@ def all_requeue_job():
         elif requeue['task'] == "CW_Sweep":
             print(Fore.YELLOW + "Requeue CW_Sweep for JOB#%s" %jobid)
             CW_Sweep(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']))
-        elif requeue['task'] == "Single_Qubit":
-            print(Fore.YELLOW + "Requeue Single_Qubit for JOB#%s" %jobid)
-            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="Single_Qubit")
-        elif requeue['task'] == "Qubits":
-            print(Fore.YELLOW + "Requeue Qubits for JOB#%s" %jobid)
-            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="Qubits")
-        elif requeue['task'] == "RB":
-            print(Fore.YELLOW + "Requeue RB for JOB#%s" %jobid)
-            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="RB")
-        elif requeue['task'] == "QPU":
-            print(Fore.YELLOW + "Requeue QPU for JOB#%s" %jobid)
-            QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task="QPU")
 
-        else: print(Fore.RED + "UNKNOWN TASK: %s" %requeue['task'])
+        # Flexible task for QuCTRL:
+        else:
+            try:
+                print(Fore.YELLOW + "Requeue QuCTRL's %s for JOB#%s" %(requeue['task'], jobid))
+                QuCTRL(session['people'], corder=ast.literal_eval(requeue['parameter']), comment=requeue['comment'], tag=requeue['tag'], dayindex=-1, perimeter=ast.literal_eval(requeue['perimeter']), renamed_task=requeue['task'])
+            except:
+                print(Fore.RED + "UNKNOWN TASK?")
+        
         clearance = True
     else: 
         requeue = {}
@@ -1576,7 +1571,18 @@ def mani_QuCTRL_check_pulses():
         Exp = macer(commander=mani_TASK[session['user_name']])
         Exp.execute(MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]])
         Sample_Backend = get_Qubit_CV(get_status("MSSN")[session['user_name']]['sample'])
-        d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), True )
+
+        # MATCHING EXP-TASK:
+        match mani_TASK[session['user_name']]:
+            case "DD": 
+                '''MACE-Skills: Qubit_ID/0, Echo_times, Free_Evolution_ns'''
+                d_setting = qapp.get_SQDD_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Echo_times")])), float(Exp.VALUES[Exp.KEYS.index("Free_Evolution_ns")]), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+            case "RB": 
+                '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
+                d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+            case _: 
+                print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
+
         Exp.close()
         dac_wf = d_setting["DAC"]
         T_samples = d_setting['total_time']

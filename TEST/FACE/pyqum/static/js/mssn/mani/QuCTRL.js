@@ -793,7 +793,8 @@ $('input.QuCTRL.setchannels.check').bind('click', function() {
     var allfilled = 1;
     var empty_values = 0;
 
-    // accumulate all the scores
+    // Accumulate all the SCOREs & MACEs:
+    // MAC-LEVEL:
     $.each(CH_Matrix.DAC, function(i,channel_set) {
         $.each(channel_set, function(j,channel) {
             let CH_Address = String(i+1) + "-" + String(channel);
@@ -815,11 +816,15 @@ $('input.QuCTRL.setchannels.check').bind('click', function() {
             allfilled *= $('textarea.mani.QuCTRL.MACE-JSON.channel-' + CH_Address).val().replaceAll(" ","").replaceAll("\n","").length;
         });
     });
-    all_script = all_script.replaceAll(" ","");
+    // EXP-LEVEL:
+    all_script += $('textarea.mani.QuCTRL.MACE-JSON.EXP-' + mani_TASK).val();
+    
+    all_script = all_script.replaceAll(" ","").replaceAll("\n","");
     console.log("all_script's length: " + all_script.length);
 
     // 2.1. Make sure all {variables} in the SCOREs are ALL accounted for in R-JSON:
     $.each(Object.keys(RJSON), function(i,v) { all_script = all_script.replaceAll("{"+v+"}",""); }); // take out all {R-JSON's keys aka variables}
+    console.log("ALL variables accounted for: " + !Boolean(all_script.includes("{") || all_script.includes("}")));
     // 2.2 Make sure there's NO EMPTY VALUES in R-JSON:
     $.each(Object.values(RJSON), function(i,v) { if (v.replaceAll(" ","").replaceAll(",","")=="") { empty_values += 1 }; });
     console.log("empty_values: " + empty_values);
