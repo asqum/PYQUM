@@ -16,19 +16,19 @@ Requirements:
 from zhinst.toolkit import Session, SHFQAChannelMode
 
 session = Session("localhost")
-device = session.connect_device("DEV12139")
+device = session.connect_device("DEV12131")
 
 # In[2] Device configuration
 
 import numpy as np
-number_of_qubits = 4
+number_of_qubits = 1
 
 # configure qa channels
-qachannel_center_frequency = 1.2e9
-qachannel_power_in = 5
-qachannel_power_out = 0
+qachannel_center_frequency = 6.5e9
+qachannel_power_in = -50
+qachannel_power_out = -30
 
-max_amplitude_readout = 1 / number_of_qubits * 0.98
+max_amplitude_readout = (1/3.333) / number_of_qubits # for multiplexed readout
 
 device.qachannels[0].configure_channel(
     center_frequency=qachannel_center_frequency,
@@ -39,8 +39,8 @@ device.qachannels[0].configure_channel(
 
 # configure sg channels
 sgchannel_number = list(range(number_of_qubits))
-sgchannel_center_frequency = [1.7e9, 1.7e9, 1.2e9, 1.2e9]
-sgchannel_power_out = [0] * number_of_qubits
+sgchannel_center_frequency = [3.9e9] # depends on number of qubits
+sgchannel_power_out = [-13] * number_of_qubits
 sgchannel_trigger_input = 0
 
 with device.set_transaction():
@@ -53,7 +53,7 @@ with device.set_transaction():
     device.qachannels[0].triggers[0].level(1)
     for qubit in range(number_of_qubits):
         sg_channel = sgchannel_number[qubit]
-        synth_channel = int(np.floor(sg_channel / 2)) + 1
+        synth_channel = int(np.floor(sg_channel / 2)) + 1  # shared channel for LO synthesizers
         device.synthesizers[synth_channel].centerfreq(
             sgchannel_center_frequency[qubit]
         )
@@ -68,17 +68,17 @@ with device.set_transaction():
 
 # Generate readout pulses and weights
 readout_pulse_duration_qubit_spectroscopy = 2e-6
-qubit_readout_frequencies =[407e6,130e6,-570e6,-157.5e6,-352e6]
-qubit_readout_amplitudes = [max_amplitude_readout] * 5
-propagation_delay = 240e-9
-num_sweep_steps_qubit_spectroscopy = 6 #1000
-integration_time_qubit_spectroscopy = 20e-6 # 20e-3
-max_drive_strength=[1,1,0.5,0.5,0.5]
+qubit_readout_frequencies =[-100.3249e6]
+qubit_readout_amplitudes = [max_amplitude_readout] * 1
+propagation_delay = 324e-9
+num_sweep_steps_qubit_spectroscopy = 100 #1000
+integration_time_qubit_spectroscopy = 50e-3 # 20e-3 # the higher the better
+max_drive_strength=[1]
 qubit_drive_frequency = [0] * number_of_qubits
 
-min_max_frequencies=[[-150e6,0e6],[150e6,350e6],[-50e6,00e6],[200e6,400e6],[25e6,100e6]]
+min_max_frequencies=[[-50e6,50e6]]
 
-from shfqc_helper import generate_flat_top_gaussian
+from shfqc_helper import generate_flat_top_gaussian, voltage_to_power_dBm
 import numpy as np
 from zhinst.utils.shfqa import SHFQA_SAMPLING_FREQUENCY
 
@@ -88,7 +88,7 @@ readout_pulses = generate_flat_top_gaussian(
     pulse_duration=readout_pulse_duration_qubit_spectroscopy,
     rise_fall_time=5e-9,
     sampling_rate=SHFQA_SAMPLING_FREQUENCY,
-    scaling=0.95,
+    scaling=1,
 )
 
 weights = {}
@@ -202,10 +202,10 @@ for qubit in range(number_of_qubits):
 
 repetitions = num_sweep_steps_qubit_spectroscopy
 device.system.internaltrigger.repetitions(num_sweep_steps_qubit_spectroscopy)
-device.system.internaltrigger.holdoff(2024e-9*averages_per_sweep_step+2024e-9) # rabi sequence repetition rate
+device.system.internaltrigger.holdoff(2024e-9*averages_per_sweep_step+2024e-9) # spec sequence repetition rate # to align with playZero(4048)
 device.system.internaltrigger.enable(1)
 
-readout_results = device.qachannels[0].readout.read(timeout = 100)
+readout_results = device.qachannels[0].readout.read(timeout = 100) # in seconds
 
 # Reset AWG CW output
 for qubit in range(number_of_qubits):
@@ -218,10 +218,12 @@ import numpy as np
 
 for qubit in range(number_of_qubits):
     x_axis = np.linspace(min_max_frequencies[qubit][0],min_max_frequencies[qubit][1],num_sweep_steps_qubit_spectroscopy)/10**6
+    # y_axis = np.abs(readout_results[qubit])
+    y_axis = voltage_to_power_dBm(np.abs(readout_results[qubit]))
 
     fig3, axs = plt.subplots(1, 2, figsize=(24,10))
     fig3.suptitle(f"Qubit {qubit+1}", fontsize=30)
-    axs[0].plot(x_axis, np.abs(readout_results[qubit]))
+    axs[0].plot(x_axis, y_axis)
     axs[0].set_title("amplitude [dBm]", fontsize=20)
     axs[0].set_xlabel("qubit drive frequency [MHz]", fontsize=20)
     axs[0].set_ylabel("amplitude [A.U.]", fontsize=20)

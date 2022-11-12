@@ -18,7 +18,7 @@ Requirements:
 from zhinst.toolkit import Session, SHFQAChannelMode, Waveforms
 
 session = Session('localhost')
-device = session.connect_device("DEV12139")
+device = session.connect_device("DEV12131")
 
 # In[2] Rabi Sequence parameter configuration
 
@@ -55,6 +55,8 @@ with device.set_transaction():
     device.sgchannels[SG_CHANNEL].marker.source(0) # set SG channel marker output to AWG sequencer trigger 1
     # Set trigger source
     device.sgchannels[SG_CHANNEL].awg.auxtriggers[0].channel(8) # set SG channel trigger source to internal trigger
+
+input("press enter to proceed")
 
 # In[5] Load SG sequencer code
 
@@ -148,6 +150,8 @@ device.sgchannels[SG_CHANNEL].awg.commandtable.upload_to_device(ct)
 # In[7] Run the SG sequencer
 
 device.sgchannels[SG_CHANNEL].awg.enable_sequencer(single=True)
+
+input("press enter to proceed")
 
 # In[8] Configure QA channel inputs and outputs
 
@@ -260,6 +264,8 @@ while(1)
 device.qachannels[QA_CHANNEL_INDEX].generator.load_sequencer_program(seqc_program)
 device.qachannels[QA_CHANNEL_INDEX].generator.enable_sequencer(single=True)
 
+input("press enter to proceed")
+
 # In[12] Run the measurement
 
 # results = []
@@ -271,7 +277,7 @@ device.system.internaltrigger.holdoff(100e-6) # rabi sequence repetition rate
 device.system.internaltrigger.enable(1)
 
 # Start a measurement
-# device.scopes[SCOPE_CHANNEL].run(single=True)
+device.scopes[SCOPE_CHANNEL].run(single=True)
 
 
 # # get results to calculate weights and plot data

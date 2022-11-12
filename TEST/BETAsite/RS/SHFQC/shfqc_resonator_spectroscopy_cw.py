@@ -14,15 +14,15 @@ Requirements:
 from zhinst.toolkit import Session, SHFQAChannelMode
 
 session = Session("localhost")
-device = session.connect_device("DEV12139")
+device = session.connect_device("DEV12131")
 
 # In[2] Parameter
 
-qachannel_center_frequency = 7.1e9
-qachannel_power_in = 5
-qachannel_power_out = 0
+qachannel_center_frequency = 6.5e9
+qachannel_power_in = -50
+qachannel_power_out = -30
 
-max_amplitude_readout = 1
+max_amplitude_readout = 1/3
 
 # In[3] Device configuration
 
@@ -42,8 +42,8 @@ sweeper.rf.center_freq(qachannel_center_frequency)
 sweeper.rf.input_range(qachannel_power_in)
 sweeper.rf.output_range(qachannel_power_out)
 
-sweeper.sweep.start_freq(-700e6)
-sweeper.sweep.stop_freq(700e6)
+sweeper.sweep.start_freq(-102.5e6)
+sweeper.sweep.stop_freq(-97.5e6)
 sweeper.sweep.num_points(1001)
 sweeper.sweep.mapping("linear")
 sweeper.sweep.oscillator_gain(max_amplitude_readout)

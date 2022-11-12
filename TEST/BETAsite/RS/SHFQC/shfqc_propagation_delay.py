@@ -15,15 +15,15 @@ Requirements:
 from zhinst.toolkit import Session, SHFQAChannelMode
 
 session = Session("localhost")
-device = session.connect_device("DEV12139")
+device = session.connect_device("DEV12131")
 
 # In[2] Parameter
 
-qachannel_center_frequency = 4.1e9
-qachannel_power_in = 5
-qachannel_power_out = 0
+qachannel_center_frequency = 6.4e9
+qachannel_power_in = -40
+qachannel_power_out = -30
 
-max_amplitude_readout = 0.8
+max_amplitude_readout = 1
 
 # In[3] Device configuration
 

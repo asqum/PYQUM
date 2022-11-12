@@ -15,22 +15,22 @@ Requirements:
 from zhinst.toolkit import Session, SHFQAChannelMode
 
 session = Session("localhost")
-device = session.connect_device("DEV12139")
+device = session.connect_device("DEV12131")
 
 # In[2] Parameter
 
-number_of_qubits = 3
+number_of_qubits = 1
 
-qachannel_center_frequency = 7.1e9
-qachannel_power_in = 5
-qachannel_power_out = 0
+qachannel_center_frequency = 6.4e9
+qachannel_power_in = -50
+qachannel_power_out = -30
 
-max_amplitude_readout = 1 / number_of_qubits * 0.98
+max_amplitude_readout = 1 / number_of_qubits # * 0.98
 
 # Sweep Parameter
-qubit_readout_frequencies = [125e6, 402e6, -570e6, -157.5e6, -352e6]
-qubit_readout_widths = [20e6, 20e6, 20e6, 20e6, 20e6]
-number_amplitude_values = 3
+qubit_readout_frequencies = [-1e6]
+qubit_readout_widths = [4e6]
+number_amplitude_values = 20
 average_factor = 1e-6 # if set to 1, scales averages with amplitude
 
 # In[3] Device configuration
@@ -52,9 +52,9 @@ sweeper.rf.center_freq(qachannel_center_frequency)
 sweeper.rf.input_range(qachannel_power_in)
 sweeper.rf.output_range(qachannel_power_out)
 
-sweeper.sweep.start_freq(-700e6)
-sweeper.sweep.stop_freq(700e6)
-sweeper.sweep.num_points(1001)
+# sweeper.sweep.start_freq(-700e6)
+# sweeper.sweep.stop_freq(700e6)
+sweeper.sweep.num_points(3001)
 sweeper.sweep.mapping("linear")
 sweeper.sweep.oscillator_gain(max_amplitude_readout)
 sweeper.sweep.mode(True)
@@ -124,7 +124,7 @@ for qubit in range(number_of_qubits):
     slope_array = np.zeros((number_amplitude_values, num_points))
 
     for amp_ind, amplitude in enumerate(relative_amplitude_values):
-        spec_path = resonator_spectrum_data["qubits"][qubit][qubit*3+amp_ind]
+        spec_path = resonator_spectrum_data["qubits"][qubit][qubit*number_of_qubits+amp_ind]
         spec_path_props = spec_path["properties"]
 
         z_data[amp_ind] = spec_path["vector"]
@@ -142,3 +142,4 @@ for qubit in range(number_of_qubits):
     plt.xlabel('Frequency (Hz)')
     plt.colorbar()
 
+    plt.show()

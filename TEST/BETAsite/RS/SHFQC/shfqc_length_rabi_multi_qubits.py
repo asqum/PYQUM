@@ -18,12 +18,12 @@ Requirements:
 from zhinst.toolkit import Session, SHFQAChannelMode
 
 session = Session('localhost')
-device = session.connect_device("DEV12139")
+device = session.connect_device("DEV12131")
 
 # In[2] Device configuration
 
 import numpy as np
-number_of_qubits = 5
+number_of_qubits = 1 #5
 
 # configure QA channel
 
@@ -31,9 +31,9 @@ qachannel_number = 0
 # qachannel_center_frequency = 7.1e9
 # qachannel_power_in = -50
 # qachannel_power_out = -30
-qachannel_center_frequency = 1.5e9
-qachannel_power_in = 0
-qachannel_power_out = -5
+qachannel_center_frequency = 6.5e9
+qachannel_power_in = -50
+qachannel_power_out = -30
 
 device.qachannels[qachannel_number].configure_channel(
     center_frequency=qachannel_center_frequency,
@@ -56,10 +56,10 @@ device.qachannels[qachannel_number].triggers[0].level(1) # 1V
 
 # configure SG channels
 sgchannel_number = list(range(number_of_qubits))
-sgchannel_center_frequency = [1e9, 1e9, 1.4e9, 1.4e9, 1.6e9] # 2 adjacent channels share one center freq
+sgchannel_center_frequency = [4e9] #[1e9, 1e9, 1.4e9, 1.4e9, 1.6e9] # 2 adjacent channels share one center freq
 
 #sgchannel_power_out = [10] * number_of_qubits
-sgchannel_power_out = [0] * number_of_qubits
+sgchannel_power_out = [-17] * number_of_qubits
 #sgchannel_trigger_input = 0
 
 # configure sg channels
@@ -82,34 +82,34 @@ with device.set_transaction():
 
 # define parameters
 
-qubit_drive_frequency=[100e6, 200e6, -100e6, 100e6, 100e6]
-qubit_T1_time = [50e-6, 50e-6, 50e-6, 50e-6, 50e-6]
-qubit_single_gate_time = [16e-9, 16e-9, 16e-9, 16e-9, 16e-9]
+qubit_drive_frequency=[-103.51e6]
+qubit_T1_time = [5e-6]
+qubit_single_gate_time = [16e-9] #[16e-9, 16e-9, 16e-9, 16e-9, 16e-9]
 #max_drive_strength = [1, 1, 1, 1, 1]
 
-qubit_readout_frequencies=[407e6,130e6,-570e6,-157.5e6,-352e6]
+qubit_readout_frequencies=[-100.3249e6]
 readout_pulse_duration=  2e-6
-max_amplitude_readout = 1 / number_of_qubits * 0.98
-qubit_readout_amplitudes = [max_amplitude_readout] * 5
+max_amplitude_readout = (1/3.333) / number_of_qubits #* 0.98
+qubit_readout_amplitudes = [max_amplitude_readout] * number_of_qubits
 
-#wait_factor_in_T1 = 5
-wait_factor_in_T1 = 0.05 # for scope test
+wait_factor_in_T1 = 5
+# wait_factor_in_T1 = 0.05 # for scope test
 # Readout line propagation delay
-propagation_delay= 240e-9
+propagation_delay= 324e-9
 # Readout line reference delay
 ref_delay = 40e-9
 
 PULSE_RISE_FALL_TIME = 16e-9
 START_PULSE_DURATION = 16e-9 # multiples of 8 ns
-STEP_PULSE_DURATION = 16e-9 # 8 ns resolution
+STEP_PULSE_DURATION = 8e-9 # 8 ns resolution
 
 SHFSG_SAMPLING_FREQUENCY = 2e9
 
-num_steps_rabi_experiment = 10
+num_steps_rabi_experiment = 40
 #num_averages_rabi_experiment = 2 ** 12
-num_averages_rabi_experiment = 2 ** 2
+num_averages_rabi_experiment = 6400 #2 ** 16
 
-pulse_amp = [1, 1, 1, 1, 1]
+pulse_amp = [1] #[1, 1, 1, 1, 1]
 pulse_rise_fall_len = int(np.ceil((PULSE_RISE_FALL_TIME * SHFSG_SAMPLING_FREQUENCY)/16)*16)
 start_pulse_len = int(np.ceil((START_PULSE_DURATION * SHFSG_SAMPLING_FREQUENCY)/16)*16)
 step_pulse_len = int(np.ceil((STEP_PULSE_DURATION * SHFSG_SAMPLING_FREQUENCY)/16)*16)
@@ -292,11 +292,11 @@ for qubit in range(number_of_qubits):
     waitDigTrigger(1);
     setTrigger(1);  // Send marker to scope for scope trigger
     setTrigger(0);
-    resetOscPhase();
+    // resetOscPhase();
     
     repeat ({num_averages_rabi_experiment}) {{
         for (i = 0; i < {num_steps_rabi_experiment}; i++){{
-        
+        resetOscPhase();
         
         executeTableEntry(0);
         playHold({start_pulse_len}+i*{step_pulse_len});

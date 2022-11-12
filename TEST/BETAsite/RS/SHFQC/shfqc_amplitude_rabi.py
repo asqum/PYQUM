@@ -18,7 +18,7 @@ Requirements:
 from zhinst.toolkit import Session, SHFQAChannelMode, Waveforms
 
 session = Session('localhost')
-device = session.connect_device("DEV12139")
+device = session.connect_device("DEV12131")
 
 # In[2] Rabi Sequence parameter configuration
 
@@ -150,6 +150,8 @@ device.qachannels[QA_CHANNEL_INDEX].configure_channel(
 device.qachannels[QA_CHANNEL_INDEX].input.on(1)
 device.qachannels[QA_CHANNEL_INDEX].output.on(1)
 
+input("press enter to proceed")
+
 # In[9] Configure QA scope
 
 SCOPE_CHANNEL = 0
@@ -244,6 +246,8 @@ while(1)
 device.qachannels[QA_CHANNEL_INDEX].generator.load_sequencer_program(seqc_program)
 device.qachannels[QA_CHANNEL_INDEX].generator.enable_sequencer(single=True)
 
+input("press enter to proceed")
+
 # In[12] Run the measurement
 
 # results = []
@@ -253,6 +257,8 @@ device.system.internaltrigger.enable(0)
 device.system.internaltrigger.repetitions(1e9)
 device.system.internaltrigger.holdoff(200e-6) # rabi sequence repetition rate
 device.system.internaltrigger.enable(1)
+
+input("press enter to proceed")
 
 # Start a measurement
 # device.scopes[SCOPE_CHANNEL].run(single=True)
