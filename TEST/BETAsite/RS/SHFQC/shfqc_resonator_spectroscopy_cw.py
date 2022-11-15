@@ -12,9 +12,21 @@ Requirements:
 # In[1]
 
 from zhinst.toolkit import Session, SHFQAChannelMode
+import zhinst.utils
+import zhinst.core
 
-session = Session("localhost")
-device = session.connect_device("DEV12131")
+# apilevel_example = 6 
+# (daq, dev, _) = zhinst.utils.create_api_session( 
+#     'shfqc-DEV12131', apilevel_example, server_host="localhost", server_port=8004 
+#     ) 
+# daq.connect()
+
+daq = zhinst.core.ziDAQServer('localhost', 8004, 6)
+session = Session("127.0.0.1", server_port=8004, connection=daq)
+print("devices: " + session.daq_server.getString("/zi/devices"))
+device = session.connect_device('DEV12131')
+
+
 
 # In[2] Parameter
 
