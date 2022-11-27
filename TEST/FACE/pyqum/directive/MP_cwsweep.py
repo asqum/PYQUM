@@ -63,12 +63,13 @@ def assembler_xyfreq_repeat(args):
     return I, Q, Amp, P
 
 # B. NEW data taking method ONLY requires the following: (using vectorized (faster) averaging against Power-Repeat)
+# NOTE: Parameter order: irepeat, ifluxbias, ixyfreq, ixypowa, isparam, iifb, ifreq
 # B1. y: xyfreq, x: fluxbias (NEW: Directly Vectorize then Mean along power-repeat)
 def assembler_xyfreq_fluxbias(args):
     (y,x) = args
-    c_addresses_head, c_addresses_body = ones([powa_repeat,1])*array([int(irepeat),x,y,int(ixypowa),int(isparam),int(iifb),int(ifreq)]), ones([powa_repeat,1])*array([]) # repeated constants # A + [] = A
+    c_addresses_head = ones([powa_repeat,1])*array([int(irepeat),x,y,int(ixypowa),int(isparam),int(iifb),int(ifreq)])
     c_addresses_tail_I, c_addresses_tail_Q = 2 * ((ones([1,1])*arange(powa_repeat)).T + int(ipowa) * powa_repeat), 2 * ((ones([1,1])*arange(powa_repeat)).T + int(ipowa) * powa_repeat) + 1
-    c_addresses_I, c_addresses_Q = concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_I), axis=1), concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_Q), axis=1) # 2D stack of c-addresses
+    c_addresses_I, c_addresses_Q = concatenate((c_addresses_head, c_addresses_tail_I), axis=1), concatenate((c_addresses_head, c_addresses_tail_Q), axis=1) # 2D stack of c-addresses
     I, Q = mean(selectedata[gotocdata(c_addresses_I, c_cwsweep_structure)]), mean(selectedata[gotocdata(c_addresses_Q, c_cwsweep_structure)])
     Amp,P = IQAP(I,Q)
     return I, Q, Amp, P
@@ -89,7 +90,7 @@ def assembler_freq_fluxbias(args):
 # B3. y: xypowa, x: xyfreq (NEW: Directly Vectorize then Mean along power-repeat)
 def assembler_xypowa_xyfreq(args):
     (y,x) = args
-    c_addresses_head, c_addresses_body = ones([powa_repeat,1])*array([int(irepeat),int(ifluxbias),x,y,int(isparam),int(iifb),int(ifreq)]), ones([powa_repeat,1])*array([]) # repeated constants # A + [] = A
+    c_addresses_head, c_addresses_body = ones([powa_repeat,1])*array([int(irepeat),int(ifluxbias),x,y,int(isparam),int(iifb),int(ifreq)]), ones([powa_repeat,1])*array([]) # repeated constants # A + [] = A (PENDING: to be removed: redundancy)
     c_addresses_tail_I, c_addresses_tail_Q = 2 * ((ones([1,1])*arange(powa_repeat)).T + int(ipowa) * powa_repeat), 2 * ((ones([1,1])*arange(powa_repeat)).T + int(ipowa) * powa_repeat) + 1
     c_addresses_I, c_addresses_Q = concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_I), axis=1), concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_Q), axis=1) # 2D stack of c-addresses
     I, Q = mean(selectedata[gotocdata(c_addresses_I, c_cwsweep_structure)]), mean(selectedata[gotocdata(c_addresses_Q, c_cwsweep_structure)])
@@ -123,6 +124,48 @@ def assembler_powa_xyfreq(args):
 def assembler_powa_freq(args):
     (y,x) = args
     c_addresses_head, c_addresses_body = ones([powa_repeat,1])*array([int(irepeat),int(ifluxbias),int(ixyfreq),int(ixypowa),int(isparam),int(iifb),x]), ones([powa_repeat,1])*array([]) # repeated constants # A + [] = A
+    c_addresses_tail_I, c_addresses_tail_Q = 2 * ((ones([1,1])*arange(powa_repeat)).T + y * powa_repeat), 2 * ((ones([1,1])*arange(powa_repeat)).T + y * powa_repeat) + 1
+    c_addresses_I, c_addresses_Q = concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_I), axis=1), concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_Q), axis=1) # 2D stack of c-addresses
+    I, Q = mean(selectedata[gotocdata(c_addresses_I, c_cwsweep_structure)]), mean(selectedata[gotocdata(c_addresses_Q, c_cwsweep_structure)])
+    Amp,P = IQAP(I,Q)
+    return I, Q, Amp, P
+
+# NOTE: starting below is for JPA measurement:
+# NOTE: Parameter order: [int(irepeat),int(ifluxbias),int(ixyfreq),int(ixypowa),int(isparam),int(iifb),int(ifreq)] 
+# B7. y: freq, x: xypowa (NEW: Directly Vectorize then Mean along power-repeat)
+def assembler_freq_xypowa(args):
+    (y,x) = args
+    c_addresses_head, c_addresses_body = ones([powa_repeat,1])*array([int(irepeat),int(ifluxbias),int(ixyfreq),x,int(isparam),int(iifb),y]), ones([powa_repeat,1])*array([]) # repeated constants # A + [] = A (to be removed: redundancy)
+    c_addresses_tail_I, c_addresses_tail_Q = 2 * ((ones([1,1])*arange(powa_repeat)).T + int(ipowa) * powa_repeat), 2 * ((ones([1,1])*arange(powa_repeat)).T + int(ipowa) * powa_repeat) + 1
+    c_addresses_I, c_addresses_Q = concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_I), axis=1), concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_Q), axis=1) # 2D stack of c-addresses
+    I, Q = mean(selectedata[gotocdata(c_addresses_I, c_cwsweep_structure)]), mean(selectedata[gotocdata(c_addresses_Q, c_cwsweep_structure)])
+    Amp,P = IQAP(I,Q)
+    return I, Q, Amp, P
+
+# B8. y: powa, x: fluxbias
+def assembler_powa_fluxbias(args):
+    (y,x) = args
+    c_addresses_head, c_addresses_body = ones([powa_repeat,1])*array([int(irepeat),x,int(ixyfreq),int(ixypowa),int(isparam),int(iifb),int(ifreq)]), ones([powa_repeat,1])*array([]) # repeated constants # A + [] = A
+    c_addresses_tail_I, c_addresses_tail_Q = 2 * ((ones([1,1])*arange(powa_repeat)).T + y * powa_repeat), 2 * ((ones([1,1])*arange(powa_repeat)).T + y * powa_repeat) + 1
+    c_addresses_I, c_addresses_Q = concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_I), axis=1), concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_Q), axis=1) # 2D stack of c-addresses
+    I, Q = mean(selectedata[gotocdata(c_addresses_I, c_cwsweep_structure)]), mean(selectedata[gotocdata(c_addresses_Q, c_cwsweep_structure)])
+    Amp,P = IQAP(I,Q)
+    return I, Q, Amp, P
+
+# B9.  y: xypowa, x: fluxbias
+def assembler_xypowa_fluxbias(args):
+    (y,x) = args
+    c_addresses_head, c_addresses_body = ones([powa_repeat,1])*array([int(irepeat),x,int(ixyfreq),y,int(isparam),int(iifb),int(ifreq)]), ones([powa_repeat,1])*array([]) # repeated constants # A + [] = A (to be removed: redundancy)
+    c_addresses_tail_I, c_addresses_tail_Q = 2 * ((ones([1,1])*arange(powa_repeat)).T + int(ipowa) * powa_repeat), 2 * ((ones([1,1])*arange(powa_repeat)).T + int(ipowa) * powa_repeat) + 1
+    c_addresses_I, c_addresses_Q = concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_I), axis=1), concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_Q), axis=1) # 2D stack of c-addresses
+    I, Q = mean(selectedata[gotocdata(c_addresses_I, c_cwsweep_structure)]), mean(selectedata[gotocdata(c_addresses_Q, c_cwsweep_structure)])
+    Amp,P = IQAP(I,Q)
+    return I, Q, Amp, P
+
+# B10. y: powa, x: xypowa
+def assembler_powa_xypowa(args):
+    (y,x) = args
+    c_addresses_head, c_addresses_body = ones([powa_repeat,1])*array([int(irepeat),int(ifluxbias),int(ixyfreq),x,int(isparam),int(iifb),int(ifreq)]), ones([powa_repeat,1])*array([]) # repeated constants # A + [] = A
     c_addresses_tail_I, c_addresses_tail_Q = 2 * ((ones([1,1])*arange(powa_repeat)).T + y * powa_repeat), 2 * ((ones([1,1])*arange(powa_repeat)).T + y * powa_repeat) + 1
     c_addresses_I, c_addresses_Q = concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_I), axis=1), concatenate((c_addresses_head, c_addresses_body, c_addresses_tail_Q), axis=1) # 2D stack of c-addresses
     I, Q = mean(selectedata[gotocdata(c_addresses_I, c_cwsweep_structure)]), mean(selectedata[gotocdata(c_addresses_Q, c_cwsweep_structure)])
