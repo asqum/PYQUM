@@ -10,6 +10,9 @@ from pyqum.instrument.logger import address, set_status, status_code, debug
 from numpy import log10, ceil
 from time import sleep
 
+# PENDING: Add "available_channels" into the database
+available_channels = [1,2]
+
 def Initiate(current=False, which=2, mode='DATABASE'):
     ad = address(mode)
     rs = ad.lookup(mdlname, which) # Instrument's Address
@@ -88,29 +91,33 @@ def set_voltage(inst, voltage, channel=1):
 def sweep(inst, voltage, channel, update_settings={}):
     voltage = round(float(voltage),12)
     if get_output(inst, channel): 
-        output(inst, 0, int(channel)) # have to turn-off output to move up/down the range!
+        output(inst, 0, [int(channel)]) # have to turn-off output to move up/down the range!
         set_voltage(inst, voltage, int(channel))
-        output(inst, 1, int(channel)) # turn back on if initially on
+        output(inst, 1, [int(channel)]) # turn back on if initially on
     else:
         set_voltage(inst, voltage, int(channel))
     return
 
-def output(inst, state, channel=1):
+def output(inst, state, channel=available_channels):
     '''
+    ***selective output***
     state: 0 (OFF), 1 (ON)
-    channel: 1-4
+    ALL channel: 1-2 / 1-4 so far
     '''
-    inst.send(('LINK %s\n' %channel).encode())
-    inst.send(b'*OPC?\n')
-    inst.recv(1024).decode()
-    inst.send(('SOUT %s\n' %state).encode())
-    inst.send(b'*OPC?\n')
-    ready = inst.recv(1024).decode()
-    inst.send(b'!\n')
+    for CH in channel:
+        inst.send(('LINK %s\n' %CH).encode())
+        inst.send(b'*OPC?\n')
+        inst.recv(1024).decode()
+        inst.send(('SOUT %s\n' %state).encode())
+        inst.send(b'*OPC?\n')
+        ready = inst.recv(1024).decode()
+        inst.send(b'!\n')
     
     return ready
 
 def close(inst, reset=True, which=1):
+    if reset: 
+        for channel in available_channels: sweep(inst, 0, channel) # return ALL to zero
     try:
         inst.close()
         status = "Success"
@@ -133,7 +140,7 @@ if __name__ == "__main__":
 
     s = Initiate(which=2, mode='TEST') # DR-1: 1, DR-2: 2
     channel = int(input("Channel [1: lower, 2: upper stack] >> ")) # 1: lower, 2: upper stack
-    output(s, 1, channel)
+    output(s, 1)
 
     for v in v_array:
         print("\nsweeping %sV:" %v)
@@ -142,7 +149,7 @@ if __name__ == "__main__":
         print("reading: %sV" %get_voltage(s, channel))
         input("press enter to continue: ")
         
-    output(s, 0, channel)    
-    close(s)
+    output(s, 0)    
+    close(s, True)
 
 
