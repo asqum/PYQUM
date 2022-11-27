@@ -80,7 +80,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
         if "DUMMY" not in DC_type[i].upper(): DC[i] = im("pyqum.instrument.machine.%s" %DC_type[i])
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC_instance[i] = DC[i].Initiate(current=current, which=DC_label[i]) # PENDING option: choose between Voltage / Current output
-            DC[i].output(DC_instance[i], 1)
+            DC[i].output(DC_instance[i], 1, channel=dcsweepch)
             # Pre-setting Z-Idle-Channels:
             for key in z_idle.keys(): 
                 if i+1==int(key.split('-')[0]):
@@ -241,7 +241,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
         if "DUMMY" not in DC_type[i].upper(): DC[i] = im("pyqum.instrument.machine.%s" %DC_type[i])
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC_instance[i] = DC[i].Initiate(current=current, which=DC_label[i]) # PENDING option: choose between Voltage / Current output
-            DC[i].output(DC_instance[i], 1)
+            DC[i].output(DC_instance[i], 1, channel=dcsweepch)
             # Pre-setting Z-Idle-Channels:
             for key in z_idle.keys(): 
                 if i+1==int(key.split('-')[0]):

@@ -10,7 +10,7 @@ from pyqum.instrument.logger import address, set_status, status_code, debug
 from numpy import log10, ceil
 from time import sleep
 
-def Initiate(which, mode='DATABASE'):
+def Initiate(current=False, which=2, mode='DATABASE'):
     ad = address(mode)
     rs = ad.lookup(mdlname, which) # Instrument's Address
     inst = socket.socket()
@@ -86,7 +86,7 @@ def set_voltage(inst, voltage, channel=1):
     return ready
 
 def sweep(inst, voltage, channel, update_settings={}):
-    voltage = float(voltage)
+    voltage = round(float(voltage),12)
     if get_output(inst, channel): 
         output(inst, 0, int(channel)) # have to turn-off output to move up/down the range!
         set_voltage(inst, voltage, int(channel))
@@ -124,21 +124,25 @@ def close(inst, reset=True, which=1):
 # =============================================================================================================================================================
 # TEST ZONE:
 if __name__ == "__main__":
-    v_array = [1e-6, 3e-5, 6e-4, 7e-3, 8e-2, 2e-1, 1, 6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
-    # v_array = [6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
+    from pyqum.instrument.toolbox import cdatasearch, waveform
 
-    s = Initiate(2, 'TEST') # DR-1: 1, DR-2: 2
-    channel = 1 # 1: lower, 2: upper stack
-    output(s, 0, channel)
+    v_array = waveform("-0.7 to 0.7 *14").data
+    # v_array = [1e-6, 3e-5, 6e-4, 7e-3, 8e-2, 2e-1, 1, 1.5] #, 6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
+    # v_array = [6, 10, 18, 37, 58, 77, 100, 101, 150, 0]
+    print("Sweeping: %s" %v_array)
+
+    s = Initiate(which=2, mode='TEST') # DR-1: 1, DR-2: 2
+    channel = int(input("Channel [1: lower, 2: upper stack] >> ")) # 1: lower, 2: upper stack
+    output(s, 1, channel)
 
     for v in v_array:
         print("\nsweeping %sV:" %v)
         sweep(s, v, channel)
         print("state: %s" %get_output(s, channel))
         print("reading: %sV" %get_voltage(s, channel))
-        sleep(0.7)
+        input("press enter to continue: ")
         
     output(s, 0, channel)    
-    s.close(s)
+    close(s)
 
 
