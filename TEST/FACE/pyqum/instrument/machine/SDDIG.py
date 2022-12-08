@@ -12,6 +12,7 @@ from si_prefix import si_format, si_parse
 from pyqum.instrument.logger import address, set_status, clocker
 from pyqum.instrument.analyzer import curve
 from pyqum.instrument.machine import SD_FPGA
+# from pyqum.instrument.machine import SD_AINAVE
 
 # SD1 Libraries
 import sys
@@ -26,6 +27,8 @@ def Initiate(which, mode='DATABASE'):
         # CREATE AND OPEN MODULE
         # module = keysightSD1.SD_AIN()
         module = SD_FPGA.SD_AINAVE()
+        # module = SD_AINAVE.SD_AINAVE()
+        # module.assignCard("M3102A")
         moduleID = module.openWithSlot("", int(rs.split('::')[0]), int(rs.split('::')[1])) # PRODUCT, CHASSIS::SLOT
         if moduleID < 0: print(Fore.RED + "Module open error:", moduleID)
         else: print(Fore.GREEN + "%s-%s's connection Initialized >> ID: %s, Name: %s, Chassis: %s, Slot: %s" % (mdlname,which, moduleID, module.getProductName(), module.getChassis(), module.getSlot()))
