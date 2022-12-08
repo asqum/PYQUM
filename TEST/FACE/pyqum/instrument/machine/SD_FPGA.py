@@ -12,7 +12,7 @@ from pyqum.instrument.reader import device_port
 from pathlib import Path
 FPGA_FOLDER = Path(device_port("FPGA"))
 M3102_PATH = FPGA_FOLDER / "M3102A.k7z"
-FPGA_PATH = FPGA_FOLDER / "QSS020_1051.k7z"
+FPGA_PATH = FPGA_FOLDER / "M3102A_AVE.k7z"
 
 class SD_AINAVE(keysightSD1.SD_AIN):
     def __init__(self):
@@ -39,19 +39,19 @@ class SD_AINAVE(keysightSD1.SD_AIN):
 
         # Checking Sandbox:
         # self.FPGAreset(keysightSD1.SD_ResetMode.PULSE)
-        self.regClear = self.FPGAgetSandBoxRegister("Paramater_Clear")
+        self.regClear = self.FPGAgetSandBoxRegister("Mem_Clear")
         if not isinstance(self.regClear,keysightSD1.SD_SandBoxRegister):
             raise TypeError("can't find regClear register") 
-        self.regNumOfPoint = self.FPGAgetSandBoxRegister("Paramater_NumOfPoint")
+        self.regNumOfPoint = self.FPGAgetSandBoxRegister("Mem_NumOfPoint")
         if not isinstance(self.regNumOfPoint,keysightSD1.SD_SandBoxRegister):
             raise TypeError("can't find regNumOfPoint register") 
-        self.regNumOfShot = self.FPGAgetSandBoxRegister("Paramater_NumOfShot")
+        self.regNumOfShot = self.FPGAgetSandBoxRegister("Mem_NumOfShot")
         if not isinstance(self.regNumOfShot,keysightSD1.SD_SandBoxRegister):
             raise TypeError("can't find regNumOfShot register") 
-        self.regStatus0 = self.FPGAgetSandBoxRegister("Paramater_State_0")
+        self.regStatus0 = self.FPGAgetSandBoxRegister("Mem_State_0")
         if not isinstance(self.regStatus0,keysightSD1.SD_SandBoxRegister):
             raise TypeError("can't find regStatus0 register") 
-        self.regStatus1 = self.FPGAgetSandBoxRegister("Paramater_State_1")
+        self.regStatus1 = self.FPGAgetSandBoxRegister("Mem_State_1")
         if not isinstance(self.regStatus1,keysightSD1.SD_SandBoxRegister):
             raise TypeError("can't find regStatus1 register") 
         self.FPGA = True 
@@ -91,9 +91,9 @@ class SD_AINAVE(keysightSD1.SD_AIN):
                 raise RuntimeError("AVE process timeout, check trigger timing or incease timeout time setting. Register info:"+info)
 
     def getDebugInfo(self):
-        TrigCnt0 = self.FPGAgetSandBoxRegister("Paramater_TriggerCnt0")
-        TrigCnt1 = self.FPGAgetSandBoxRegister("Paramater_TriggerCnt1")
-        regNumOfShot = self.FPGAgetSandBoxRegister("Paramater_NumOfShot")
+        TrigCnt0 = self.FPGAgetSandBoxRegister("Mem_TriggerCnt0")
+        TrigCnt1 = self.FPGAgetSandBoxRegister("Mem_TriggerCnt1")
+        regNumOfShot = self.FPGAgetSandBoxRegister("Mem_NumOfShot")
         tn0 = TrigCnt0.readRegisterInt32()
         tn1 = TrigCnt1.readRegisterInt32()
         shots = regNumOfShot.readRegisterInt32()
