@@ -462,7 +462,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     print(Fore.BLUE + "DATA of size %s is ready to be saved" %len(DATA))
                 elif readoutype in ["continuous", "rt-wfm-ave"]: # by default
                     
-                    if FPGA==1: DATA = DATA.reshape([TOTAL_POINTS*2]) # average was done on FPGA (real-time)
+                    if FPGA==1: DATA = ( DATA.reshape([TOTAL_POINTS*2]) ) / recordsum # average was done on FPGA (real-time)
                     else: DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0) # average was done on CPU
 
                     if digital_homodyne != "original": 

@@ -12,7 +12,7 @@ from si_prefix import si_format, si_parse
 from pyqum.instrument.logger import address, set_status, clocker
 from pyqum.instrument.analyzer import curve
 from pyqum.instrument.machine import SD_FPGA
-# from pyqum.instrument.machine import SD_AINAVE
+
 
 # SD1 Libraries
 import sys
@@ -26,9 +26,7 @@ def Initiate(which, mode='DATABASE'):
     try:
         # CREATE AND OPEN MODULE
         # module = keysightSD1.SD_AIN()
-        module = SD_FPGA.SD_AINAVE()
-        # module = SD_AINAVE.SD_AINAVE()
-        # module.assignCard("M3102A")
+        module = SD_FPGA.SD_FPGA()
         moduleID = module.openWithSlot("", int(rs.split('::')[0]), int(rs.split('::')[1])) # PRODUCT, CHASSIS::SLOT
         if moduleID < 0: print(Fore.RED + "Module open error:", moduleID)
         else: print(Fore.GREEN + "%s-%s's connection Initialized >> ID: %s, Name: %s, Chassis: %s, Slot: %s" % (mdlname,which, moduleID, module.getProductName(), module.getChassis(), module.getSlot()))
@@ -61,19 +59,19 @@ def ConfigureBoard(module, update_settings={}):
     PXI, FULL_SCALE, TOTAL_POINTS, NUM_CYCLES, triggerDelay_sec, FPGA = int(settings['PXI']), float(settings['FULL_SCALE']), settings['TOTAL_POINTS'], settings['NUM_CYCLES'], settings['triggerDelay_sec'], int(settings["FPGA"])
 
     # 1. FPGA: SELECT LEVEL
+    module.assignCard("M3102A")
     stage, now = clocker()
-    if FPGA: 
-        module.loadAVEBitFile(FPGA)
-        print(Fore.GREEN + "FPGA ENABLED: LEVEL-%s"%FPGA)
-    else: 
-        module.loadAVEBitFile()
+   
+    module.loadFPGABitFile(FPGA)
+    print(Fore.GREEN + "FPGA ENABLED: LEVEL-%s"%FPGA)
+
 
     dt_s = 1 / sampling_rate(module)
     for DAQ_CH in range(4):
         DAQ_CH += 1
         module.channelInputConfig(DAQ_CH, fullScale=FULL_SCALE, impedance=1, coupling=0)
         # 2. FPGA: SET REGISTER IF TRUE, NORMAL CONFIGURE IF OTHERWISE 
-        module.DAQconfigAVE(DAQ_CH, pointsPerCycle=TOTAL_POINTS, nCycles=NUM_CYCLES, triggerDelay=round(triggerDelay_sec/dt_s), triggerMode=keysightSD1.SD_TriggerModes.EXTTRIG) # previously: module.DAQconfig
+        module.DAQconfigFPGA(DAQ_CH, pt_per_shot=TOTAL_POINTS, shots=NUM_CYCLES, trig_delay=round(triggerDelay_sec/dt_s), trigger_mode=keysightSD1.SD_TriggerModes.EXTTRIG) # previously: module.DAQconfig 
         stage, now = clocker(stage, now, "DAQconfigAVE")
         if PXI < 0: # EXTERNAL FRONT-PANEL TRIGGER:
             print(Fore.CYAN + "Trigger from front panel EXT:")
@@ -99,37 +97,67 @@ def AcquireData(module, recordtime_s, recordsum, update_settings={}):
     samplesPerSec = sampling_rate(module)
     dt_s = 1 / samplesPerSec # in second
     TOTAL_POINTS = round(recordtime_s/dt_s)
-    if FPGA: DATA_V = zeros([2, 1*TOTAL_POINTS])
-    else: DATA_V = zeros([2, recordsum*TOTAL_POINTS])
+
+    if FPGA == module.bitMode_Keysight: DATA_V = zeros([2, recordsum*TOTAL_POINTS])
+    elif FPGA == module.bitMode_AVE : DATA_V = zeros([2, 1*TOTAL_POINTS])
+    elif FPGA == module.bitMode_SingleDDC: DATA_V = zeros([4, recordsum*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_SingleDDC_Int: DATA_V = zeros([4, recordsum*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_SingleDDC_Spt: DATA_V = zeros([4, 1*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_AVE_SingleDDC: DATA_V = zeros([4, 1*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_AVE_SingleDDC_Int: DATA_V = zeros([4, 1*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_DualDDC: DATA_V = zeros([2, recordsum*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_DualDDC_Int: DATA_V = zeros([2, recordsum*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_DualDDC_Spt: DATA_V = zeros([2, 1*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_AVE_DualDDC: DATA_V = zeros([2, 1*round(TOTAL_POINTS/5)])
+    elif FPGA == module.bitMode_AVE_DualDDC_Int: DATA_V = zeros([2, 1*round(TOTAL_POINTS/5)])
+    else:
+        raise ValueError(" fpga mode error")
 
     # SELECT CHANNELS:
     DAQmask = 0
     for i in IQ_PAIR: DAQmask += 2**(i-1) # Mask to select which DAQ-channels (e.g. 0b0011 where LSB is CH1, bit 1 is CH2 and so on).
     start_acq = time()
 
-    # 3. FPGA: CLEAR MEMORY
-    module.aveMemoryClear()
-        
     # START DATA ACQUISITION:
     module.DAQflushMultiple(DAQmask)
+    module.aveMemoryClear()
     module.DAQstartMultiple(DAQmask)
-
+    
     # 4. FPGA: WAIT FOR REAL-TIME COMPUTATION TO CONCLUDE
-    module.checkFinished(timeout_in_s=101) # check the average process completion
+    
 
     for index, DAQ_CH in enumerate(IQ_PAIR):
         # DAQ ACQUISITION
-        if FPGA: readPoints = module.DAQread(DAQ_CH, 1*TOTAL_POINTS, READ_TIMEOUT)
-        else: readPoints = module.DAQread(DAQ_CH, recordsum*TOTAL_POINTS, READ_TIMEOUT)
+        # check the average process completion
+        
+        if FPGA == module.bitMode_Keysight: 
+            module.checkFinished(DAQ_CH, TOTAL_POINTS, recordsum,timeout_in_s=101)
+            readPoints = module.DAQread(DAQ_CH, recordsum*TOTAL_POINTS, READ_TIMEOUT)
+            DATA_V[index] = FULL_SCALE * ( readPoints / 2**(14+1)) # DECODING BINARY
+        elif FPGA & module.bitMode_SingleDDC:
+            if DAQ_CH == 1:
+                module.checkFinished(1, TOTAL_POINTS, recordsum,timeout_in_s=101)
+                module.checkFinished(2, TOTAL_POINTS, recordsum,timeout_in_s=101)
+                DATA_V[1] = FULL_SCALE * (model.DAQreadFPGA(1, READ_TIMEOUT) / 2**(14+1))
+                DATA_V[2] = FULL_SCALE * (model.DAQreadFPGA(2, READ_TIMEOUT) / 2**(14+1))
+            elif DAQ_CH ==2:
+                module.checkFinished(3, TOTAL_POINTS, recordsum,timeout_in_s=101)
+                module.checkFinished(4, TOTAL_POINTS, recordsum,timeout_in_s=101)
+                DATA_V[3] = FULL_SCALE * (model.DAQreadFPGA(3, READ_TIMEOUT) / 2**(14+1))
+                DATA_V[4] = FULL_SCALE * (model.DAQreadFPGA(4, READ_TIMEOUT) / 2**(14+1))
+        else:
+            module.checkFinished(DAQ_CH, TOTAL_POINTS, recordsum,timeout_in_s=101)
+            readPoints = module.DAQreadFPGA(DAQ_CH, READ_TIMEOUT)
+            DATA_V[index] = FULL_SCALE * ( readPoints / 2**(14+1)) # DECODING BINARY 
         print(Fore.YELLOW + "Total points read by CH-{}: {}".format(DAQ_CH, readPoints.size))
         # convert binary data to voltage
 
-        DATA_V[index] = FULL_SCALE * ( readPoints / 2**(14+1)) # DECODING BINARY
+        
         # DATA_V[index] = readPoints # RAW-DIGITS
 
     # STOP DAQ
     module.DAQstopMultiple(DAQmask)
-
+    # Interleaved function is not implement !!!
     if FPGA: DATA_V = DATA_V.T.reshape(1, TOTAL_POINTS, 2) # Interleaved IQ-pairs
     else: DATA_V = DATA_V.T.reshape(recordsum, TOTAL_POINTS, 2) # Interleaved IQ-pairs
     transferTime_sec = float(time() - start_acq)
@@ -187,7 +215,3 @@ if __name__ == "__main__":
 
     print("Exiting...")
     close(digModule, 1, mode="TEST")
-
-
-
-
