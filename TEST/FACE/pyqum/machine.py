@@ -116,6 +116,7 @@ def sgconnect():
     sgtag = '%s:%s' %(sgname,session['user_name']) # tag = <type>-<label>:<user>
     sgtype, sglabel, sguser = sgtag.split('-')[0], sgtag.split('-')[1].split(':')[0], sgtag.split('-')[1].split(':')[1]
     linkedsg = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in sgbench.keys()]
+    print("sgname: %s, linkedsg: %s" %(sgname,linkedsg))
     if sgname not in linkedsg and int(g.user['instrument'])>=3:
         '''get in if not currently initiated'''
         try:
@@ -280,7 +281,8 @@ def dacgetchannels():
     dac_status = get_status(request.args.get('dacname').split('-')[0], request.args.get('dacname').split('-')[1])
     level = DAC[dactype].sourcelevel(DAC_handle[dactag], Channel)[1]
     message = {}
-    message['source-amplitude'], message['source-offset'] = si_format(float(level['AMPLITUDE']), precision=3) + "Vpp", si_format(float(level['OFFSET']), precision=3) + "V"
+    try: message['source-amplitude'], message['source-offset'] = si_format(float(level['AMPLITUDE']), precision=3) + "Vpp", si_format(float(level['OFFSET']), precision=3) + "V"
+    except(TypeError): message['source-amplitude'], message['source-offset'] = "1.5 Vpp", "0 V" # Default values
     if dactype=="TKAWG": message['chstate'] = int(DAC[dactype].output(DAC_handle[dactag], Channel)[1]['STATE']) # TKAWG ONLY
     try: message['score'] = dac_status['SCORE-%s'%Channel]
     except(KeyError): pass
@@ -778,7 +780,7 @@ def bdr():
         shared_new_samples = [s['samplename'] for s in g.cosamples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
         # 3. SERVICE samples: (Training & Hero samples are to be categorized as SERVICE type of sample)
         global service_samples
-        service_samples = [s['samplename'] for s in g.samples if int(s['level'])>1]
+        service_samples = [s['samplename'] for s in (g.samples + g.cosamples) if int(s['level'])>1]
 
         # service_samples = ['Sam', 'Same01', 'IDLE', 'DR-RFcable', '3SXQ-Al-Si-19-1']
         recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + service_samples
