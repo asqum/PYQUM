@@ -8,8 +8,9 @@ from copy import copy
 from math import trunc, ceil
 from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians, nan, isnan, append, complex128
 from pyqum.instrument.logger import get_status
-from pulse_signal.pulse import QAM, give_waveformInfo
+from pulse_signal.pulse import QAM 
 import pulse_signal.common_Mathfunc as cpf
+from pulseScript import give_waveformInfo
 
 # 0106 add 
 # give the total time,points consider in AWG limitations
@@ -171,7 +172,7 @@ class pulser:
                     Ichannel.append(signal_i)
                     Qchannel.append(signal_q)
 
-        return wholeConnectSequence, Ichannel, Qchannel
+        return wholeConnectSequence, sum(Ichannel), sum(Qchannel)
 
     def song(self):
         '''
@@ -212,11 +213,11 @@ class pulser:
         match self.ifChannel:
             case "i":
                 self.envelope = wholeConnectEnvelope.real
-                self.music = array(sum(Ichannel))
+                self.music = array(Ichannel)
 
             case "q":
                 self.envelope = wholeConnectEnvelope.imag
-                self.music = array(sum(Qchannel))
+                self.music = array(Qchannel)
 
             case "z": # for z-gate
                 self.envelope = abs(wholeConnectEnvelope)
