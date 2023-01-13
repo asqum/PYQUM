@@ -104,6 +104,7 @@ def output(inst, state, channel=available_channels):
     state: 0 (OFF), 1 (ON)
     ALL channel: 1-2 / 1-4 so far
     '''
+    if type(channel)!=list: channel = [int(channel)]
     for CH in channel:
         inst.send(('LINK %s\n' %CH).encode())
         inst.send(b'*OPC?\n')
