@@ -67,17 +67,18 @@ def give_mixerInfo(score):
 # give pulse information, width, amplitude, start time and adjFrequency included
 def give_pulseInfo(pulseDescribe,dt):
     basicParas={"width":nan,"height":nan,"startTime":nan,"adjFrequency":nan}
-    descriptions = list(basicParas.keys())
     idx = 0   # help to count 
     for p in pulseDescribe.split(',')[1:]:
         if p != '' :
-            if idx < 2: 
-                basicParas[descriptions[idx]] = float(p) 
-            else:   # idx = 2 is probably <startTime> or <adjFrequency> so we need to classify it
-                if p.lower()[-1] == "m":
-                    basicParas["adjFrequency"] = float(p[:-1])
-                else:
-                    basicParas["startTime"] = int(p)
+            match idx:
+                case 0:
+                    basicParas["startTime"] = float(p[1:])
+                case 1:
+                    basicParas["width"] = float(p[:-1])
+                case 2: 
+                    basicParas["height"] = float(p) 
+                case 3:
+                    basicParas["adjFrequency"] = float(p)
         idx += 1
 
     if isnan(basicParas["adjFrequency"]):
