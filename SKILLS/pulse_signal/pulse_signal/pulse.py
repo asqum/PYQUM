@@ -2,11 +2,11 @@
 # sys.path.insert(0, r'../')
 # Numpy Series
 # Typing
-from numpy import ndarray, complex128, issubdtype
+from numpy import ndarray, complex128, issubdtype, nan, isnan
 # Array
-from numpy import array, linspace, empty, append
+from numpy import array, linspace, empty, append, zeros, hstack, nonzero
 # Math
-from numpy import cos, sin, exp, arctan2, radians, sign, sqrt
+from numpy import cos, sin, exp, arctan2, radians, sign, sqrt, max
 # const
 from numpy import pi
 
@@ -14,8 +14,36 @@ from typing import List, Tuple
 from .common_Mathfunc import gaussianFunc, DRAGFunc
 from .waveform import Waveform
 from .digital_mixer import upConversion_IQ, upConversion_RF
+import common_Mathfunc as cpf
 
+# 0106 added : full time with envelope signal and other append zero
+def pulse_extend(envelope,startPoint,totalPoints)->ndarray:
+    beforePulse = zeros(startPoint)
+    if envelope.shape[0]+startPoint <= totalPoints:
+        afterPulse = zeros(totalPoints-envelope.shape[0]-startPoint)
+    else:
+        raise IndexError("Pulse is out of given total time !")
+    fullSequence = hstack([beforePulse,envelope,afterPulse])
 
+    # check length
+    if fullSequence.shape[0] == totalPoints:
+        return fullSequence
+    else:
+        raise IndexError("Pulse extend length error")
+
+# generate IF Frequency array with specified time 
+def give_ifFrequencyArray(ifFrequency,pulseWidth,startPoint,totalPoints,dt)->ndarray:
+    ifList = []
+    for i in range(int( -(pulseWidth //-dt) )):
+        ifList.append(ifFrequency)
+
+    beforePulse = zeros(startPoint)
+    if len(ifList)+startPoint <= totalPoints:
+        afterPulse = zeros(totalPoints-len(ifList)-startPoint)
+    else:
+        raise IndexError("Pulse is out of given total time !")
+    fullSequence = hstack([beforePulse,array(ifList),afterPulse])
+    return fullSequence
 
 class Pulse():
     """ Store the necessary information for waveform """
@@ -26,6 +54,9 @@ class Pulse():
         self._carrierPhase = None
         self._envelopeFunc = None
         self._parameters = None
+        # 0105 add 
+        self._startPoint = None
+        self._adjFrequency = None   # -> each pulse component own its frequecy
 
     @property
     def carrierFrequency ( self )->float:
@@ -66,6 +97,23 @@ class Pulse():
     @parameters.setter
     def parameters ( self, value:tuple ):
         self._parameters = value
+
+    # 0105 add 
+    @property 
+    def startPoint (self):
+        """ The function to the each pulse component start time ."""
+        return self._startPoint
+    @startPoint.setter
+    def startPoint (self, value):
+        self._startPoint = value
+    
+    @property
+    def adjFrequency ( self )->float:
+        """ The pulse component frequency of the signal, unit depended on dt."""
+        return self._adjFrequency
+    @adjFrequency.setter
+    def adjFrequency ( self, value ):
+        self._adjFrequency = value
 
     def generate_envelope( self, t0:float, dt:float )->Waveform:
         """ For a given dt and t0, calculate the envelop waveform"""
@@ -116,28 +164,90 @@ class QAM():
     In-phase component I(t) is real part of envelope.
     Quadrature component Q(t) is imag part of envelope
     """
-    def __init__ ( self, dt:float = 1 ):
+    def __init__ ( self, dt:float = 1, totalPoints:int=1 ):
         self.carrierFrequency = None
         self.envelope = array([[]])
+        self.adjIFfrequency = array([])
         self.dt = dt
+        self.totalPoints = totalPoints
 
     @property
     def amplitude ( self )->ndarray:
         """ Quadrature component Q(t)."""
         return sqrt(self.envelope[0]**2+self.envelope[1]**2)
 
-    def import_pulseSequence( self, pulses:List[Pulse], dt:float = None ):
-
+    # 0106 eddition
+    # no adjust IF frequency, return whole RF envelope ONLY
+    def give_RFenvelope_IFfrequency( self, pulses:List[Pulse], dt:float = None, totalPoints:int = None ):
+        if totalPoints == None: totalPoints = self.totalPoints
         if dt == None: dt = self.dt
-        envelope_RF = array([])
+        envelope_RF = zeros(totalPoints, dtype=complex128)
+
         for pulse in pulses:
             self.carrierFrequency = pulse.carrierFrequency
             new_envelope = pulse.generate_envelope( 0, dt ).Y
-            envelope_RF = append( envelope_RF, new_envelope, axis=0 )
-        self.envelope = envelope_RF
-        return envelope_RF
+
+            startPoint = pulse.startPoint
+
+            if startPoint != "":
+                extended_envelope = pulse_extend(new_envelope,int(startPoint),totalPoints)
+                envelope_RF += extended_envelope
+
+            else:  # concat in the last nonzero + 1 point
+                try:
+                    startPoint = max(nonzero(envelope_RF))
+                    if startPoint + 1 + new_envelope.shape[0] > totalPoints:
+                        raise IndexError("Un-specified start makes out of sequence!")
+                    else:  # action: tail to head concat
+                        extended_envelope = pulse_extend(new_envelope,startPoint+1,totalPoints)
+                        envelope_RF += extended_envelope
+                        
+                except(ValueError):  # envelope_RF is all zero, start from the first point 
+                    startPoint = 1
+                    extended_envelope = pulse_extend(new_envelope,startPoint,totalPoints)
+                    envelope_RF += extended_envelope
+                    
+        return array([]), envelope_RF  # whole connected envelope sequence
+
+    def give_RFIFDict( self, pulses:List[Pulse], dt:float = None, totalPoints:int = None ):
+        if totalPoints == None: totalPoints = self.totalPoints
+        if dt == None: dt = self.dt
+        RFenvelopeList = []
+        RFsequence = zeros(totalPoints, dtype=complex128)  # -> show the whole envelope sequence
+        for pulse in pulses:
+            thisEnvelope = zeros(totalPoints, dtype=complex128)  # -> record this envelope with start time and IFadjFreq
+            self.carrierFrequency = pulse.carrierFrequency
+            new_envelope = pulse.generate_envelope( 0, dt ).Y
+
+            startPoint = pulse.startPoint
+
+            if startPoint != "":
+                extended_envelope = pulse_extend(new_envelope,int(startPoint),totalPoints)
+                thisEnvelope += extended_envelope
+                RFsequence += extended_envelope
+                
+            else:  # concat in the last nonzero + 1 point
+                try:
+                    startPoint = max(nonzero(RFsequence))
+                    if startPoint + 1 + new_envelope.shape[0] > totalPoints:
+                        raise IndexError("Un-specified start makes out of sequence!")
+                    else:  # action: tail to head concat
+                        extended_envelope = pulse_extend(new_envelope,startPoint+1,totalPoints)
+                        thisEnvelope += extended_envelope
+                        RFsequence += extended_envelope
+                        
+                except(ValueError):  # envelope_RF is all zero, start from the first point 
+                    startPoint = 1
+                    extended_envelope = pulse_extend(new_envelope,startPoint,totalPoints)
+                    thisEnvelope += extended_envelope
+                    RFsequence += extended_envelope
+
+            RFenvelopeList.append([thisEnvelope]) 
         
-    def SSB( self, freqIF:float, leakage_sup:bool, envelope_RF:ndarray = None, dt:float = None, IQMixer:tuple=(1,90,0,0) )->Tuple[ndarray,ndarray,float]:
+        return RFenvelopeList, RFsequence # seperated pulse envelope with its IFadjFreq as key, whole connected sequence
+        
+        
+    def SSB( self, freqIF:float, envelope_RF:ndarray = None, dt:float = None, IQMixer:tuple=(1,90,0,0) )->Tuple[ndarray,ndarray,float]:
         """
         For the pulse is generate by IQMixer
         For a given dt and t0, calculate the I/Q for IQmixer. \n
@@ -151,14 +261,13 @@ class QAM():
         The LO frequency should be RF-IF (RF is carrier frequency)
         """
         if dt == None: dt = self.dt
-        
-        signal_I, signal_Q = upConversion_IQ( envelope_RF, freqIF*dt, IQMixer=IQMixer, suppress_leakage=leakage_sup )
-
+        if envelope_RF == None: envelope_RF = self.envelope
+        signal_I, signal_Q = upConversion_IQ( envelope_RF, freqIF*dt, IQMixer=IQMixer )
         if self.carrierFrequency != None:
             freq_LO = self.carrierFrequency - freqIF
             return signal_I, signal_Q, freq_LO
         else: # Do not care carrier frequency
-            return signal_I, signal_Q, 0
+            return signal_I, signal_Q
 
 
 
@@ -196,7 +305,5 @@ def get_Pulse_DRAG ( duration:float, parameters:tuple, carrierFrequency:float=0,
     newPulse.parameters = parameters
 
     return newPulse
-
-
 
 

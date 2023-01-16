@@ -10,7 +10,7 @@ from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil,
 from pyqum.instrument.logger import get_status
 from pulse_signal.pulse import QAM 
 import pulse_signal.common_Mathfunc as cpf
-from pulseScript import give_waveformInfo
+from pulse_signal.pulseScript import give_waveformInfo
 
 # 0106 add 
 # give the total time,points consider in AWG limitations
