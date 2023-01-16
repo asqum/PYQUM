@@ -286,17 +286,16 @@ class SD_FPGA(keysightSD1.SD_AIN):
         self.bitMode_Dual = 0x08
         self.bitMode_Int = 0x10
         self.bitMode_Spt = 0x20
-        # DDC COMBO:
-        self.bitMode_SingleDDC = self.bitMode_DDC|self.bitMode_Single # 6
-        self.bitMode_SingleDDC_Int =self.bitMode_SingleDDC|self.bitMode_Int # 22
-        self.bitMode_SingleDDC_Spt =self.bitMode_SingleDDC_Int|self.bitMode_Spt # 54
-        self.bitMode_DualDDC = self.bitMode_DDC|self.bitMode_Dual # 10
-        self.bitMode_DualDDC_Int = self.bitMode_DualDDC|self.bitMode_Int # 26
-        self.bitMode_DualDDC_Spt = self.bitMode_DualDDC_Int|self.bitMode_Spt # 58
-        self.bitMode_AVE_SingleDDC = self.bitMode_AVE|self.bitMode_SingleDDC # 7
-        self.bitMode_AVE_SingleDDC_Int = self.bitMode_AVE_SingleDDC|self.bitMode_Int # 23
-        self.bitMode_AVE_DualDDC = self.bitMode_AVE|self.bitMode_DualDDC # 11
-        self.bitMode_AVE_DualDDC_Int = self.bitMode_AVE_DualDDC| self.bitMode_Int # 27
+        self.bitMode_SingleDDC = self.bitMode_DDC|self.bitMode_Single
+        self.bitMode_SingleDDC_Int =self.bitMode_SingleDDC|self.bitMode_Int
+        self.bitMode_SingleDDC_Spt =self.bitMode_SingleDDC_Int|self.bitMode_Spt
+        self.bitMode_DualDDC = self.bitMode_DDC|self.bitMode_Dual 
+        self.bitMode_DualDDC_Int = self.bitMode_DualDDC|self.bitMode_Int
+        self.bitMode_DualDDC_Spt = self.bitMode_DualDDC_Int|self.bitMode_Spt
+        self.bitMode_AVE_SingleDDC = self.bitMode_AVE|self.bitMode_SingleDDC
+        self.bitMode_AVE_SingleDDC_Int = self.bitMode_AVE_SingleDDC|self.bitMode_Int
+        self.bitMode_AVE_DualDDC = self.bitMode_AVE|self.bitMode_DualDDC
+        self.bitMode_AVE_DualDDC_Int = self.bitMode_AVE_DualDDC| self.bitMode_Int
     
     def _getAveReg(self):
         if not (self._FPGA & self.bitMode_AVE or self._FPGA & self.bitMode_Spt):

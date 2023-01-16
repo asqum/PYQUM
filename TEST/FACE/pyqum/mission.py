@@ -1663,27 +1663,16 @@ def mani_QuCTRL_access():
     # Integrate R-Parameters back into C-Order:
     RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
     for k in RJSON.keys(): corder[k] = RJSON[k]
-    
-    # Determine BufferKey based on ReadoutType:
+    # Recombine Buffer back into C-Order:
     if perimeter['READOUTYPE'] == 'one-shot': 
-        if "TIME_RESOLUTION_NS" in perimeter.keys(): bufferkey, buffer_resolution = 'RECORD-SUM', int(perimeter['TIME_RESOLUTION_NS'])
-        else: bufferkey, buffer_resolution = 'RECORD-SUM', 1
+        bufferkey, buffer_resolution = 'RECORD-SUM', 1
     else: 
         if "TIME_RESOLUTION_NS" in perimeter.keys(): bufferkey, buffer_resolution = 'RECORD_TIME_NS', int(perimeter['TIME_RESOLUTION_NS'])
         else: bufferkey, buffer_resolution = 'RECORD_TIME_NS', 1
-
-    # Recombine Buffer back into C-Order: (contingent on FPGA bitMode***)
-    if perimeter['READOUTYPE'] in ['rt-ave-singleddc']:
-        corder['_DDC_CH_'] = "I,Q,"
-        corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(round(int(perimeter[bufferkey])/int(buffer_resolution))/5)-1)
-        ORACLE_STRUCT = ['_DDC_CH_', bufferkey]
-    else:
-        corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
-        ORACLE_STRUCT = [bufferkey]
+    corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
     print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
-    
     # Extend C-Structure with R-Parameters & Buffer keys:
-    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
+    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
 
     # Structure & Addresses:
     c_QuCTRL_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \

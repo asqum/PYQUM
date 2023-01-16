@@ -5,7 +5,7 @@ from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
 from numpy import zeros, ceil, where
-from pyqum.instrument.logger import address, set_status, get_status
+from pyqum.instrument.logger import address, set_status
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.toolbox import normalize_dipeak
 from pyqum.instrument.analyzer import curve
@@ -104,16 +104,10 @@ def waveshape(module, channel, shape):
 def sourcelevel(module, channel, action=['Get','','']):
     '''value in volts (–1.5 V to 1.5 V)
     '''
-    instr_location = "(%s,%s)" %(module.getChassis(), module.getSlot())
-
     if 'Set' in action:
         module.channelAmplitude(channel, action[1])
         module.channelOffset(channel, action[2])
-        saved_parameters = {'AMPLITUDE': action[1], "OFFSET": action[2]}
-        set_status(mdlname, saved_parameters, instr_location) # NOTE: manually save parameters under INSTLOG
-        print(Fore.GREEN + Back.WHITE + "***SETTING %s" %saved_parameters)
-    
-    return ["Defaults", get_status(mdlname, instr_location)]
+    return ["Defaults", {'AMPLITUDE': "1.5", "OFFSET": "0"}]
 def frequency(module, channel, value):
     '''value in Hz. (Refer to the product’s Data Sheet for frequency specifications.)
     '''
@@ -297,7 +291,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
             # NOTE: clearQ seems to solve the RELOAD issues of waveforms that's shorter than 16us, BUT: master and slave will not be well synced and will jitter within 100ns. SAD.
             module.AWGstop(channel)
             module.AWGflush(channel) # Clear queue TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT
-            print(Fore.CYAN + "Clearing CH%s's queue for good alignment of ALL 4 channels within 100ns" %(channel))
+            print(Fore.CYAN + "Clearing CH%s's queue for good alignment of ALL 4 channels" %(channel))
         
         resendWaveform(module, waveform_id, pulsedata)
         # sendWaveform(module, waveform_id, pulsedata)

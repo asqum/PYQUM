@@ -230,23 +230,16 @@ class address:
         print('resource: %s' %self.rs)
         return self.rs
     
-    def update_machine(self,connected,codename,system=None,sequence=0):
+    def update_machine(self,connected,codename):
         ''' 
         Update SQL Database:
         connected: 0 or 1, codename = <instr>-<label/index> 
-        Refer restrictions on system assignments
         '''
         if self.mode=='DATABASE':
             db = get_db()
-            
-            # Booking the machine with Queue:
-            if sequence: db.execute( 'UPDATE machine SET system = ?, sequence = ? WHERE codename = ?', (system, sequence, codename) )
-            # Using the machine with Initialize:
-            else: db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename) )
-
+            db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
             db.commit()
             close_db()
-            print(Fore.YELLOW + "%s UPDATED!" %(codename))
         elif self.mode=='TEST':
             print(Fore.RED + "REMINDER: MAKE SURE TO CLOSE CONNECTION UPON EXIT AND AVOID CONFLICT WITH ONLINE INSTRUMENTS")
         return
@@ -254,16 +247,11 @@ class address:
         '''return total connection(s) based on instrument-list given'''
         db = get_db()
         connection = 0
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         print(Fore.CYAN + "instr_list: %s" %instr_list)
         for mach in flatten(instr_list):
+            print(mach)
             connection += int(db.execute('''SELECT connected FROM machine WHERE codename = ?''', (mach,) ).fetchone()['connected'])
-
-        if not connection:
-            system = get_status("MSSN")[session['user_name']]['queue']
-            for i,mach in enumerate(flatten(instr_list)):
-                self.update_machine(0,mach,system=system,sequence=i+1)
-                print(Fore.GREEN + "%s. %s's Queue: %s" %(i+1,mach,system))
-
         close_db()
         return connection
 
