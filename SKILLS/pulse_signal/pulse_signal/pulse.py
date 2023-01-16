@@ -137,7 +137,7 @@ class QAM():
         self.envelope = envelope_RF
         return envelope_RF
         
-    def SSB( self, freqIF:float, envelope_RF:ndarray = None, dt:float = None, IQMixer:tuple=(1,90,0,0) )->Tuple[ndarray,ndarray,float]:
+    def SSB( self, freqIF:float, leakage_sup:bool, envelope_RF:ndarray = None, dt:float = None, IQMixer:tuple=(1,90,0,0) )->Tuple[ndarray,ndarray,float]:
         """
         For the pulse is generate by IQMixer
         For a given dt and t0, calculate the I/Q for IQmixer. \n
@@ -151,13 +151,14 @@ class QAM():
         The LO frequency should be RF-IF (RF is carrier frequency)
         """
         if dt == None: dt = self.dt
-        if envelope_RF == None: envelope_RF = self.envelope
-        signal_I, signal_Q = upConversion_IQ( envelope_RF, freqIF*dt, IQMixer=IQMixer )
+        
+        signal_I, signal_Q = upConversion_IQ( envelope_RF, freqIF*dt, IQMixer=IQMixer, suppress_leakage=leakage_sup )
+
         if self.carrierFrequency != None:
             freq_LO = self.carrierFrequency - freqIF
             return signal_I, signal_Q, freq_LO
         else: # Do not care carrier frequency
-            return signal_I, signal_Q
+            return signal_I, signal_Q, 0
 
 
 

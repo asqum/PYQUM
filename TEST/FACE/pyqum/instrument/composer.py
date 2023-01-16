@@ -130,6 +130,7 @@ class pulser:
         # save mixer information into self
         mixerInfo = give_mixerInfo(self.score)  # return dictionary
         self.iffreq = mixerInfo["IfFreq"]
+        self.IF_MHz_rotation = self.iffreq
         self.mixer_module = mixerInfo["Module"]
         self.ifChannel = mixerInfo["IfChannel"]
         self.mixerInfo = mixerInfo["Modifies"]
@@ -184,7 +185,7 @@ class pulser:
         '''
 
 
-        pulses = []
+        pulses = {}
         # 1. Baseband Shaping:
         for beat in self.score.replace(" ","").replace("\n","").lower().split(";")[1:]:
             if beat == '': break # for the last semicolon
