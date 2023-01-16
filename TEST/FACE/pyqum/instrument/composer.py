@@ -6,11 +6,100 @@ init(autoreset=True) #to convert termcolor to wins color
 
 from copy import copy
 from math import trunc, ceil
-from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians, nan, isnan, append
+from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians, nan, isnan, append, complex128
 from pyqum.instrument.logger import get_status
-from pulse_signal.pulse import Pulse
-from pulse_signal.pulse import QAM
+from pulse_signal.pulse import QAM 
 import pulse_signal.common_Mathfunc as cpf
+from pulseScript import give_waveformInfo
+
+# 0106 add 
+# give the total time,points consider in AWG limitations
+def give_timeInfo(score,dt,clock_multiples):
+    order = score.replace(" ","").replace("\n","").lower()
+    info = order.split(";")[0].split(",")[0].split('ns=')[1]
+    
+    totalpoints = int(clock_multiples) *int( -(int( -(float(info.split('/')[0]) //-dt))//-clock_multiples))
+    totaltime = totalpoints* dt
+
+    firstOperationIdx = None
+    if len(info.split('/'))==2:     # if sequenceSetting is not the form "500/1" ,ex: "500" only
+        firstOperationIdx = int(info.split('/')[1])
+
+    return {"OperateFirst":firstOperationIdx,"AWG_times":totaltime,"AWG_points":totalpoints}
+    
+# give the mixer informations 
+def give_mixerInfo(score):
+    order = score.replace(" ","").replace("\n","").lower()
+    info = order.split(";")[0].split(",")
+    try: mixerParams = info[1].split('mhz=')[1] # self.mix_params -> "i/-91/"
+    except(IndexError): mixerParams = "z/0/" # No Mixer setting
+    # IF Frequency
+    ifFreq = float(mixerParams.split("/")[1])
+    # mixer modulation
+    try: 
+        mixerModule = mixerParams.split("/")[2]  # self.mixer_module -> ""
+        if mixerModule=='' : mixerModule = "pure" # for the case where mhz=i/37/<empty>
+    except(IndexError): 
+        mixerModule = "pure" # "pure": "1/0/0" in json-configuration for MIXER
+    # If channel
+    ifChannel = mixerParams.split("/")[0]
+    # modify coef.
+    mixerInfo = None
+    match ifChannel:
+        case "i"|"q":
+            try:
+                mixerName = mixerModule.split(ifChannel.lower())[0]
+                lable_IF = mixerModule.split(ifChannel.lower())[1]
+                channel_I = mixerName+'i'+lable_IF
+                channel_Q = mixerName+'q'+lable_IF
+                amp_I, phase_I, offset_I = [float(x) for x in get_status("MIXER")[channel_I].split("/")]
+                amp_Q, phase_Q, offset_Q = [float(x) for x in get_status("MIXER")[channel_Q].split("/")]
+                mixerInfo = (amp_I/amp_Q, phase_I-phase_Q, offset_I, offset_Q)
+            except:
+                mixerInfo = ( 1, 90, 0, 0 )
+        case "z":
+                mixerInfo = None
+        case _:
+                mixerInfo = None
+
+    return {"IfFreq":ifFreq,"Module":mixerModule,"IfChannel":ifChannel,"Modifies":mixerInfo}
+
+# give pulse information, width, amplitude, start time and adjFrequency included
+def give_pulseInfo(pulseDescribe,dt):
+    basicParas={"width":nan,"height":nan,"startTime":nan,"adjFrequency":nan}
+    idx = 0   # help to count 
+    for p in pulseDescribe.split(',')[1:]:
+        if p != '' :
+            match idx:
+                case 0:
+                    basicParas["startTime"] = float(p[1:])
+                case 1:
+                    basicParas["width"] = float(p[:-1])
+                case 2: 
+                    basicParas["height"] = float(p) 
+                case 3:
+                    basicParas["adjFrequency"] = float(p)
+        idx += 1
+
+    if isnan(basicParas["adjFrequency"]):
+        basicParas["adjFrequency"] = 0
+    
+    pulsePts = int(-(basicParas["width"]//-dt)) # -(100.0//-0.8) -int-> 125
+    basicParas["width"] = pulsePts*dt  # make the pulse width is complete waveform after AWG output
+    return basicParas
+
+
+# specify where the pulse component starts at , return the point
+def give_startPoint(starttime,clock_multiples,dt)->str:
+    if isnan(starttime):
+        StartPoint = ""
+    else:
+        originStartPoint = -int(starttime // -dt)
+        StartPoint = str(int(clock_multiples) *int( -(originStartPoint //-clock_multiples) ))
+    return StartPoint
+
+
+
 class pulser:
     '''
     Next generation of Pulse Assembly:\n
@@ -27,59 +116,64 @@ class pulser:
     '''
     def __init__(self, dt=0.8, clock_multiples=8, 
                 score='Gaussup/6,100,1; Flat,100,1; Gaussdn/6,100,1; Pause,300,1; Gaussup/6,100,1; Flat,100,1; Gaussdn/6,100,1;'):
-        # Initialize score string type
-        self.score = score.replace(" ","").replace("\n","").lower() # get rid of multiple spacings & new-lines and also lower the cases
-        
+        self.score = score
         self.dt = dt
-        themeSetting = self.score.split(";")[0].split(",")
-        sequenceSetting = themeSetting[0].split('ns=')[1]
-        
-        # modify user input time
-        originTotaltime = float(sequenceSetting.split('/')[0])
-        originTotalPoint = int( -(originTotaltime //-dt) )
-        # Get first operation
-        self.firstOperationIdx = None
-        if len(sequenceSetting.split('/'))==2:
-            self.firstOperationIdx = int(sequenceSetting.split('/')[1])
+        self.clock_multiples = clock_multiples
 
-        self.totalpoints = int(clock_multiples) *int( -(originTotalPoint //-clock_multiples) )
-        self.totaltime = self.totalpoints* dt
-        self.beatime, self.music = 0, zeros([self.totalpoints])
+        # save time information into self
+        timeInfo = give_timeInfo(self.score,self.dt,self.clock_multiples)  # return dictionary
+        self.firstOperationIdx = timeInfo["OperateFirst"]
+        self.totalpoints = timeInfo["AWG_points"]
+        self.totaltime = timeInfo["AWG_times"]
+        self.beatime, self.music, self.timeline = 0, zeros([self.totalpoints]), linspace( 0, self.totaltime, self.totalpoints, endpoint=False)
 
+        # save mixer information into self
+        mixerInfo = give_mixerInfo(self.score)  # return dictionary
+        self.iffreq = mixerInfo["IfFreq"]
+        self.mixer_module = mixerInfo["Module"]
+        self.ifChannel = mixerInfo["IfChannel"]
+        self.mixerInfo = mixerInfo["Modifies"]
 
-        self.timeline = linspace( 0, self.totaltime, self.totalpoints, endpoint=False)
-        # mixing module:
-        try: self.mix_params = themeSetting[1].split('mhz=')[1]
-        except(IndexError): self.mix_params = "z/0/" # No Mixer setting
-        
-        self.iffreq = float(self.mix_params.split("/")[1]) # pre-loading IF-frequency in MHz
-        try: 
-            self.mixer_module = self.mix_params.split("/")[2]
-            if self.mixer_module=='' : self.mixer_module = "pure" # for the case where mhz=i/37/<empty>
-        except(IndexError): 
-            self.mixer_module = "pure" # "pure": "1/0/0" in json-configuration for MIXER
+    def relativeIF_compose(self, pulses, modulator):
+        '''
+        This function is the core of song(). Due to the different relative IF frequency,\n
+        there is a different way to compose SSB (Single Sideband).\n
+        This function is exactly the determiner.
+        '''
 
-        self.IF_MHz_rotation = self.iffreq # uncalibrated pure case, generalised to support baseband case where IF=0
-        
-        self.ifChannel = self.mix_params.split("/")[0] # Get current IF Channel
+        wholeConnectSequence = zeros(self.totalpoints, dtype=complex128)
+        Ichannel, Qchannel = [], []
+        if len(pulses.keys()) == 1 :   # All the same adjust IF frequency, directly sum all the if frequency
+            pulse_components = pulses[list(pulses.keys())[0]]
+            _, pulse_signal=modulator.give_RFenvelope_IFfrequency(pulse_components)   # 0107 added: Do first on the pulses with specified start time
+            IFfreq = (self.iffreq + float(list(pulses.keys())[0]))/1e3
+            wholeConnectSequence += pulse_signal
+            # 2. Envelope before IF-Mixing:
+            if self.mixerInfo != None:
+                signal_i, signal_q, LO_freq = modulator.SSB( IFfreq,leakage_sup=True, envelope_RF=pulse_signal,IQMixer=self.mixerInfo )
+                Ichannel.append(signal_i)
+                Qchannel.append(signal_q)
+        else:        # with adjust IF frequency , all SSB() -> sum -> leakage suppress
+            envelopes, connected = {}, {}
+            
+            if self.mixerInfo != None:
+                from pulse_signal.digital_mixer import leakage_suppress
+                for IFadj in list(pulses.keys()):   # a relative frequency may contain many pulses
+                    if IFadj not in envelopes.keys():
+                        envelopes[IFadj] = []  # groups in relative freq  
+                    components, pulse_signal = modulator.give_RFIFDict(pulses[IFadj])   # 0107 added: Do first on the pulses with specified start time
+                    envelopes[IFadj].append(components)   # pulses envelopes group in relative freq
+                    connected[IFadj] = pulse_signal        # whole connected envelope groups in relative freq
 
-        self.mixerInfo = None
-        match self.ifChannel:
-            case "i"|"q":
-                try:
-                    mixerName = self.mixer_module.split(self.ifChannel.lower())[0]
-                    lable_IF = self.mixer_module.split(self.ifChannel.lower())[1]
-                    channel_I = mixerName+'i'+lable_IF
-                    channel_Q = mixerName+'q'+lable_IF
-                    amp_I, phase_I, offset_I = [float(x) for x in get_status("MIXER")[channel_I].split("/")]
-                    amp_Q, phase_Q, offset_Q = [float(x) for x in get_status("MIXER")[channel_Q].split("/")]
-                    self.mixerInfo = (amp_I/amp_Q, phase_I-phase_Q, offset_I, offset_Q)
-                except:
-                    self.mixerInfo = ( 1, 90, 0, 0 )
-            case "z":
-                    self.mixerInfo = None
-            case _:
-                    self.mixerInfo = None
+                for IFadj in list(connected.keys()):
+                    IFfreq = (self.iffreq + float(IFadj))/1e3
+                    wholeConnectSequence += connected[IFadj]
+                    i, q, LO_freq = modulator.SSB( IFfreq,leakage_sup=False,envelope_RF=connected[IFadj] ,IQMixer=self.mixerInfo )
+                    signal_i, signal_q = leakage_suppress( i, q, IQMixer=self.mixerInfo )
+                    Ichannel.append(signal_i)
+                    Qchannel.append(signal_q)
+
+        return wholeConnectSequence, sum(Ichannel), sum(Qchannel)
 
     def song(self):
         '''
@@ -92,141 +186,44 @@ class pulser:
 
         pulses = []
         # 1. Baseband Shaping:
-        for beat in self.score.split(";")[1:]:
+        for beat in self.score.replace(" ","").replace("\n","").lower().split(";")[1:]:
             if beat == '': break # for the last semicolon
             
             # basic para include pulse width and hight
-            basicParas=[]
-            for p in beat.split(',')[1:]:
-                if p == '' :
-                    basicParas.append( nan )
-                else:
-                    basicParas.append( float(p) )            
-
-            pulsewidth = float(basicParas[0])
-            pulseheight = float(basicParas[1])
-
-
-            waveformParas = []
-            for p in beat.split(',')[0].split('/')[1:]:
-                if p == '':
-                    waveformParas.append( nan )
-                else:
-                    waveformParas.append( float(p) )
-
-            pulsePts = int(-(pulsewidth//-self.dt))
-            pulsewidth = pulsePts*self.dt
-            self.beatime += pulsewidth
+            pulseInfo = give_pulseInfo(beat,self.dt)
+            pulsewidth = pulseInfo["width"] # width and height must have value. If not, it will be nan.
+            pulseheight = pulseInfo["height"]
+            pulseStartPoint = give_startPoint(pulseInfo["startTime"],self.clock_multiples,self.dt) # return string
+            pulseAdjFrequency = pulseInfo["adjFrequency"]
+            # groups in relative IF frequency
+            if str(pulseAdjFrequency) not in pulses.keys():
+                pulses[str(pulseAdjFrequency)] = []
             
-            pulseType = beat.split('/')[0]
-            match pulseType:
-                case "flat":
-                    pulse_func = cpf.constFunc
-                    func_paras = [pulseheight]
-                    carrierPhase = 0
-                case "gauss":
-                    pulse_func = cpf.gaussianFunc
-                    if isnan(waveformParas[0]): sfactor = 4
-                    else: sfactor = waveformParas[0]
-                    carrierPhase = 0
-                    func_paras = [pulseheight, pulsewidth/sfactor, pulsewidth/2]
+            self.beatime += pulsewidth
 
-                case "gaussup":
-                    pulse_func = cpf.gaussianFunc
-                    if isnan(waveformParas[0]): sfactor = 4
-                    else: sfactor = waveformParas[0]
-                    carrierPhase = 0
-                    func_paras = [pulseheight, pulsewidth*2/sfactor, 0]
-
-                case "gaussdn":
-                    pulse_func = cpf.gaussianFunc
-                    if isnan(waveformParas[0]): sfactor = 4
-                    else: sfactor = waveformParas[0]
-                    carrierPhase = 0
-                    func_paras = [pulseheight, pulsewidth*2/sfactor, pulsewidth]
+            # 0105 add. Generate paras a pulse need like width, amplitude, function, phase,...  
+            new_pulse = give_waveformInfo(beat,pulsewidth,pulseheight)
+            new_pulse.startPoint = pulseStartPoint
+            new_pulse.adjFrequency = pulseAdjFrequency
+                    
+            pulses[str(pulseAdjFrequency)].append(new_pulse)   # group in dict by the relative frequency
 
 
-                case "drag":
-                    pulse_func = cpf.DRAGFunc
-                    if len(waveformParas)==1:
-                        sfactor = 4
-                        dRatio = 0
-                        rotAxis = 0
-                    else:
-                        if isnan(waveformParas[0]): sfactor = 4
-                        else: sfactor = waveformParas[0]
-                        if isnan(waveformParas[1]): dRatio = 0
-                        else: dRatio = waveformParas[1]
-                        if isnan(waveformParas[2]): rotAxis = 0
-                        else: rotAxis = radians(waveformParas[2])
-                    carrierPhase = rotAxis
-                    func_paras = [pulseheight, pulsewidth/sfactor, pulsewidth/2, dRatio ]
-
-                case "lin":
-                    pulse_func = cpf.linearFunc
-                    if isnan(waveformParas[0]): start = 0
-                    else: start = waveformParas[0]
-                    if isnan(waveformParas[1]): end = 0
-                    else: end = waveformParas[1]
-                    carrierPhase = 0
-                    slope = (start-end)/pulsewidth
-                    func_paras = [slope, start]
-
-                case "gerp":
-                    pulse_func = cpf.GERPFunc
-                    if len(waveformParas)==1:
-                        sfactor = 4
-                        edgeWidth = 30
-                        peakMultiplier = 0
-                    else:
-                        if isnan(waveformParas[0]): sfactor = 4
-                        else: sfactor = waveformParas[0]
-                        if isnan(waveformParas[1]): edgeWidth = 30
-                        else: edgeWidth = waveformParas[1]
-                        if isnan(waveformParas[2]): peakMultiplier = 0
-                        else: peakMultiplier = waveformParas[2]
-
-                    func_paras = [pulseheight, pulsewidth, 0, edgeWidth, edgeWidth*2/sfactor]
-                case _:
-                    pulse_func = cpf.constFunc
-
-            new_pulse = Pulse()
-            new_pulse.duration = pulsewidth
-            new_pulse.envelopeFunc = pulse_func
-            new_pulse.carrierPhase = carrierPhase
-            new_pulse.parameters = func_paras
-            pulses.append(new_pulse)
-
-
-        modulator = QAM( self.dt )
-        modulator.import_pulseSequence(pulses)
-
-        # Fill remain pts with idle gate
-        #remainPts = int( -(self.beatime-self.totaltime) // self.dt)
-
-        remainPts = self.totalpoints -modulator.envelope.shape[-1]
-
-        if remainPts >= 0:
-            modulator.envelope = append( modulator.envelope, zeros(remainPts) )
-        else:
-            print( "Too many pulse.")
-            modulator.envelope = zeros(self.totalpoints)
-        pulse_signal = modulator.envelope
-        # 2. Envelope before IF-Mixing:
-        if self.mixerInfo != None:
-            signal_i, signal_q = modulator.SSB( self.iffreq/1e3, IQMixer=self.mixerInfo )
+        modulator = QAM( self.dt, self.totalpoints ) # 0106 added totalpoints
+        wholeConnectEnvelope, Ichannel, Qchannel = self.relativeIF_compose(pulses,modulator)
+        
         match self.ifChannel:
             case "i":
-                self.envelope = pulse_signal.real
-                self.music = signal_i
+                self.envelope = wholeConnectEnvelope.real
+                self.music = array(Ichannel)
 
             case "q":
-                self.envelope = pulse_signal.imag
-                self.music = signal_q
+                self.envelope = wholeConnectEnvelope.imag
+                self.music = array(Qchannel)
 
             case "z": # for z-gate
-                self.envelope = abs(pulse_signal)
-                self.music = abs(pulse_signal)
+                self.envelope = abs(wholeConnectEnvelope)
+                self.music = abs(wholeConnectEnvelope)
             case _:
                 print("Unkown IF channel type.")
                 self.envelope = array([])
