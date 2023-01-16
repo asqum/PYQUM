@@ -150,16 +150,16 @@ class pulser:
                     pulse_func = cpf.DRAGFunc
                     if len(waveformParas)==1:
                         sfactor = 4
-                        dRatio = 1
+                        dRatio = 0
                         rotAxis = 0
                     else:
                         if isnan(waveformParas[0]): sfactor = 4
                         else: sfactor = waveformParas[0]
-                        if isnan(waveformParas[1]): dRatio = 1
+                        if isnan(waveformParas[1]): dRatio = 0
                         else: dRatio = waveformParas[1]
                         if isnan(waveformParas[2]): rotAxis = 0
                         else: rotAxis = radians(waveformParas[2])
-                    carrierPhase = pi *(rotAxis/180.)
+                    carrierPhase = rotAxis
                     func_paras = [pulseheight, pulsewidth/sfactor, pulsewidth/2, dRatio ]
 
                 case "lin":
