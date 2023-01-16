@@ -158,8 +158,8 @@ class pulser:
                         if isnan(waveformParas[1]): dRatio = 1
                         else: dRatio = waveformParas[1]
                         if isnan(waveformParas[2]): rotAxis = 0
-                        else: rotAxis = waveformParas[2]
-                    carrierPhase = radians(rotAxis)
+                        else: rotAxis = radians(waveformParas[2])
+                    carrierPhase = pi *(rotAxis/180.)
                     func_paras = [pulseheight, pulsewidth/sfactor, pulsewidth/2, dRatio ]
 
                 case "lin":
@@ -245,17 +245,17 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-80/; Flat/,100,0; drag/4/0/0,100,0.5;',clock_multiples=1)
+    xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-91/; Flat/,100,0; drag/4/-0.8/0,100,0.5;',clock_multiples=1)
     xyi.song()
-    xyq = pulser(dt=.5,score='ns=500/1,mhz=Q/-80/; Flat/,100,0; drag/4/0/0,100,0.5;',clock_multiples=1)
+    xyq = pulser(dt=.5,score='ns=500/1,mhz=Q/-91/; Flat/,100,0; drag/4/-0.8/0,100,0.5;',clock_multiples=1)
     xyq.song()
 
     cz = pulser(dt=.5,score='ns=500;Flat/,100,0.5;',clock_multiples=1)
     cz.song()
 
-    roi = pulser(dt=.5,score='ns=500/1,mhz=I/-80/; Flat/,100,0; drag/4/0/90,100,0.25;',clock_multiples=1)
+    roi = pulser(dt=.5,score='ns=500/1,mhz=I/-29/; Flat/,40,0; gerp/,400,0.2;',clock_multiples=1)
     roi.song()
-    roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-80/; Flat/,100,0; drag/4/0/90,100,0.25;',clock_multiples=1)
+    roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-29/; Flat/,40,0; gerp/,400,0.2;',clock_multiples=1)
     roq.song()
 
     pulsedata = roi.music
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     plot2 = plt.figure(2)
     plt.plot(xyi.timeline, xyi.music, label="xyi")
     plt.plot(xyq.timeline, xyq.music, label="xyq")
-    # plt.plot(cz.timeline, cz.music, label="z")
+    plt.plot(cz.timeline, cz.music, label="z")
     plt.plot(roi.timeline, roi.music, label="roi")
     plt.plot(roq.timeline, roq.music, label="roq")
     plt.title("AWG real output")
