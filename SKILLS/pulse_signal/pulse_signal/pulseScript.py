@@ -3,8 +3,8 @@ from numpy import nan, isnan
 # Math
 from numpy import pi, radians
 
-import common_Mathfunc as cpf
-from .pulse import Pulse
+import pulse_signal.common_Mathfunc as cpf
+from pulse_signal.pulse import Pulse
 
 
 # try to put this function into waveform.py but with circular import error
@@ -49,14 +49,14 @@ def give_waveformInfo(beat,width,height)->dict:
         case "drage":   # waveform with ErfGaussian
             pulse_func = cpf.DRAGFunc
             if len(paraList)==1:
-                sfactor = 6
-                dRatio = 0.5
+                sfactor = 4
+                dRatio = -0.69
                 rotAxis = 0
 
             else:
-                if isnan(paraList[0]): sfactor = 6
+                if isnan(paraList[0]): sfactor = 4
                 else: sfactor = paraList[0]
-                if isnan(paraList[1]): dRatio = 0.5
+                if isnan(paraList[1]): dRatio = -0.69
                 else: dRatio = paraList[1]
                 if isnan(paraList[2]): rotAxis = 0
                 else: rotAxis = radians(paraList[2])
