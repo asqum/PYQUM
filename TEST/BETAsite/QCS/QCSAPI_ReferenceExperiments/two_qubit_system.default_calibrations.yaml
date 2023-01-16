@@ -1,0 +1,60 @@
+awg1:
+  channel1_frequency: 4000000000.0
+  channel1_phase: 0
+  channel2_frequency: 0
+  channel2_phase: 0
+  channel3_frequency: 0
+  channel3_phase: 0
+  channel4_frequency: 4000000000.0
+  channel4_phase: 0
+control_signal:
+  acquisition_len: 5e-07
+control_signal.drive_channel:
+  frequency: 4000000000.0
+  pulses:
+    default_pulse:
+      amplitude: 0.2
+      chop: 4
+      shape: GaussianPulse
+      sigma: 4e-08
+digitizer:
+  channel1_acquisition_delay: 0
+  channel1_range: 0.9
+  channel2_acquisition_delay: 0
+  channel2_range: 0.9
+  channel3_acquisition_delay: 0
+  channel3_range: 0.9
+  channel4_acquisition_delay: 0
+  channel4_range: 0.9
+downconverter:
+  phase: 0
+qubit1.xy:
+  frequency: 4200000000.0
+  pulses:
+    default_pulse:
+      amplitude: 0.825
+      chop: 4
+      shape: GaussianPulse
+      sigma: 1e-08
+qubit2.xy:
+  frequency: 2000000000.0
+  pulses:
+    default_pulse:
+      amplitude: 1.0
+      chop: 4
+      shape: GaussianPulse
+      sigma: 1e-08
+readout_signal:
+  acquisition_len: 5e-07
+readout_signal.drive_channel:
+  frequency: 4500000000.0
+  pulses:
+    default_pulse:
+      amplitude: 0.2
+      chop: 4
+      shape: GaussianPulse
+      sigma: 4e-08
+system:
+  initialization_time: 0.0001
+  number_of_averages: 100
+version: 0.0.1

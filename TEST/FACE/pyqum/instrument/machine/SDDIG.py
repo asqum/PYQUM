@@ -122,6 +122,7 @@ def AcquireData(module, recordtime_s, recordsum, update_settings={}):
     module.DAQflushMultiple(DAQmask)
     module.aveMemoryClear()
     module.DAQstartMultiple(DAQmask)
+    module.DAQtriggerMultiple(DAQmask)
     
     # 4. FPGA: WAIT FOR REAL-TIME COMPUTATION TO CONCLUDE
     
