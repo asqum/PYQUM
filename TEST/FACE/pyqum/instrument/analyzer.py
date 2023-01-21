@@ -113,29 +113,36 @@ def pulseresp_sampler(srange, selected_caddress, selectedata, c_structure, datad
 	\nC. MON (pulswipe):
 	\nD. RMS (poweroot):
 	'''
-	# tStart = time()
+	
+	# Define active start and stop point:
+	if '@' in srange[1]: active_start, active_stop = int(srange[0]), int(srange[1].split('@')[1])
+	else: active_start, active_stop = int(srange[0]), int(srange[1])
 
 	# 1. Cropping Active Region:
-	if [int(srange[1]) , int(srange[0])] > [c_structure[-1]//datadensity] * 2:
+	if [active_stop , active_start] > [c_structure[-1]//datadensity] * 2:
 		print(Back.WHITE + Fore.RED + "Out of range")
 	else:
-		step = (int(srange[1]) - int(srange[0])) // abs(int(srange[1]) - int(srange[0]))
-		active_len = abs(int(srange[1]) - int(srange[0]) + step)
+		step = (active_stop - active_start) // abs(active_stop - active_start)
+		active_len = abs(active_stop - active_start + step)
 		# 1. ACTIVE Region of the Pulse Response:
 		# FASTEST PARALLEL VECTORIZATION OF BIG DATA BY NUMPY:
 		# Assemble stacks of selected c-address for this sample range:
 		selected_caddress_I = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
 		selected_caddress_Q = array([[int(s) for s in selected_caddress[:-1]] + [0]] * active_len)
 		# sort-out interleaved IQ:
-		selected_caddress_I[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+step,step))
-		selected_caddress_Q[:,-1] = 2 * array(range(int(srange[0]),int(srange[1])+step,step)) + ones(active_len)
-		# Compressing I- & Q-pulse of this sample range into just one point:
-		# selectedata = array(selectedata)
+		selected_caddress_I[:,-1] = 2 * array(range(active_start,active_stop+step,step))
+		selected_caddress_Q[:,-1] = 2 * array(range(active_start,active_stop+step,step)) + ones(active_len)
+		
+		# Melting down I- & Q-pulse of this sample-range into just one point:
 		I_Pulse_active = selectedata[gotocdata(selected_caddress_I, c_structure)]
-		Idata_active = mean(I_Pulse_active)
 		Q_Pulse_active = selectedata[gotocdata(selected_caddress_Q, c_structure)]
-		Qdata_active = mean(Q_Pulse_active)
-		# print("Go to IQ-Pulsection in %ss" %(time()-tStart))
+		if '@' in srange[1]: # for FPGA-INT case
+			Idata_active = (I_Pulse_active[-1]-I_Pulse_active[0]) / (active_stop - active_start)
+			Qdata_active = (Q_Pulse_active[-1]-Q_Pulse_active[0]) / (active_stop - active_start)
+		else: # default
+			Idata_active = mean(I_Pulse_active)
+			Qdata_active = mean(Q_Pulse_active)
+		
 		if mode == 'C':
 			A_Pulse_active = sqrt( I_Pulse_active**2 + Q_Pulse_active**2 )
 			A_Pulse_active = A_Pulse_active/A_Pulse_active[0]

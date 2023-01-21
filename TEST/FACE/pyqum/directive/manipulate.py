@@ -6,10 +6,11 @@ init(autoreset=True) #to convert termcolor to wins color
 from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # instrument-module's name e.g. ENA, PSG, YOKO
 
+from traceback import format_exc
 from time import time, sleep
 from copy import copy, deepcopy
 from json import loads, dumps
-from numpy import prod, array, mean, ceil
+from numpy import prod, array, mean, ceil, moveaxis, linspace, outer, ones, divide
 from numexpr import evaluate
 from flask import session, g
 
@@ -19,13 +20,13 @@ from pyqum.instrument.toolbox import cdatasearch, waveform, find_in_list
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.analyzer import pulse_baseband
 from pyqum.instrument.reader import inst_order, macer
+from pyqum import get_db, close_db
 
 import qpu.application as qapp
 import qpu.backend.circuit.backendcircuit as bec
 from pandas import DataFrame
 import qpu.backend.phychannel as pch
 import qpu.backend.component as qcp
-from pyqum import get_db, close_db
 
 # from asqpu.hardware_information import *
 
@@ -37,6 +38,35 @@ __version__ = "beta3"
 __email__ = "teikhui@phys.sinica.edu.tw"
 __status__ = "development"
 
+
+def get_plain_SCORE(Var_SCORE_Script, RJSON):
+    '''
+    Get parameters from the SCORE-header with variables inside.
+    Var_SCORE_Script with variables that can be accessed from RJSON, to be cleansed.
+    '''
+
+    # Extract Pulse-related Settings ONLY:
+    rjson_struct = [k for k in RJSON.keys() if k in Var_SCORE_Script] # 1st SCORE only
+
+    # Prepare R-waveform object for pulse-instructions
+    R_Max_value = {}
+    for k in rjson_struct: R_Max_value[k] = max(waveform(RJSON[k]).data, key=abs) # PICK THE MAX PARAMETER VALUE!
+
+    # UPDATE EVERY {R}
+    for j in range(len(rjson_struct)):
+        if ">" in rjson_struct[j]: # For Locked variables with customized math expression:
+            math_expression = rjson_struct[j].split(">")[1] # Algebraic initially
+            for R_KEY in rjson_struct[j].split(">")[0].replace(" ","").split(","):
+                math_expression = math_expression.replace( R_KEY, str(R_Max_value[R_KEY]) )
+            Script_Var_Update = evaluate(math_expression) # evaluate numpy-supported expression
+            print(Fore.LIGHTBLUE_EX + "STRUCTURE LOCKED AT IDX-%s: %s -> %s -> %s" %(j, rjson_struct[j], math_expression, Script_Var_Update))
+        else: # for usual variables
+            Script_Var_Update = R_Max_value[rjson_struct[j]]
+                    
+        Var_SCORE_Script = Var_SCORE_Script.replace("{%s}"%rjson_struct[j], str(Script_Var_Update))
+
+    print(Fore.YELLOW + Back.BLUE + "Plain SCORE_Script: %s" %Var_SCORE_Script)
+    return Var_SCORE_Script
 
 def get_Qubit_CV (samplename)->bec.BackendCircuit:
     
@@ -160,8 +190,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     RJSON = loads(perimeter['R-JSON'].replace("'",'"'))
     # 1e. Derived perimeter(s) from above:
     if TASK_LEVEL == "MAC":
-        ifperiod = pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr], dt=1).totaltime
-        print(Fore.BLUE +f"SCORE_TEMPLATE {SCORE_TEMPLATE['CH%s'%RO_addr]}")
+        ifperiod = pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%RO_addr], RJSON), dt=(1e9/CLOCK_HZ)).totaltime
     if TASK_LEVEL == "EXP":
         # for i, qubit_id in enumerate(Sample_Backend.q_reg["qubit"]):
         d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True ) # PENDING: MORE unified function from ASQPU?
@@ -170,8 +199,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     print(Fore.BLUE +f"totaltime(ifperiod) {ifperiod}")
     
     if TASK_LEVEL == "MAC":
-        RO_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%RO_addr]).IF_MHz_rotation # working with RO-MOD (up or down)
-        XY_Compensate_MHz = -pulser(score=SCORE_TEMPLATE['CH%s'%XY_addr]).IF_MHz_rotation # working with XY-MOD (up or down)
+        RO_Compensate_MHz = -pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%RO_addr], RJSON)).IF_MHz_rotation # working with RO-MOD (up or down)
+        XY_Compensate_MHz = -pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%XY_addr], RJSON)).IF_MHz_rotation # working with XY-MOD (up or down)
         DDC_RO_Compensate_MHz = RO_Compensate_MHz
         print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
     if TASK_LEVEL == "EXP":
@@ -276,6 +305,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     FPGA = adca.bitMode_Keysight # original keysight bitfile
     if readoutype in ["rt-wfm-ave"]: FPGA = adca.bitMode_AVE
     elif readoutype in ['rt-ave-singleddc']: FPGA = adca.bitMode_AVE_SingleDDC
+    elif readoutype in ['rt-ave-dualddc']: FPGA = adca.bitMode_AVE_DualDDC
+    elif readoutype in ['rt-ave-dualddc-int']: FPGA = adca.bitMode_AVE_DualDDC_Int
+    elif readoutype in ['rt-dualddc-int']: FPGA = adca.bitMode_DualDDC_Int
 
     '''Prepare ADC:'''
     TOTAL_POINTS = round(recordtime_ns / TIME_RESOLUTION_NS)
@@ -288,7 +320,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     elif readoutype in ["continuous", "rt-wfm-ave"]: # along record time
         buffersize = TOTAL_POINTS * 2 # data-density of 2 due to IQ
     elif readoutype in ['rt-ave-singleddc']: # along record time
-        buffersize = round(TOTAL_POINTS/5) * 4  # 2 groups of IQ, down-sampled 5X
+        buffersize = 2 * round(TOTAL_POINTS/5) * 2  # 2 groups of IQ, down-sampled 5X
+    elif readoutype in ['rt-ave-dualddc', 'rt-ave-dualddc-int']: # along record time
+        buffersize = round(TOTAL_POINTS/5) * 2  # only down-sampled 5X
+    elif readoutype in ['rt-dualddc-int']: # along record sum (shots with accumulated readout-time)
+        buffersize = round(TOTAL_POINTS/5) * recordsum * 2  # only down-sampled 5X
     
     try: print(Fore.YELLOW + "Buffer-size for %s: %s" %(readoutype, buffersize))
     except: print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
@@ -389,7 +425,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         Mac = macer()
                         Mac.execute(MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)])
                         DC[i_slot].sweep(DC_instance[i_slot], str(Mac.VALUES[Mac.KEYS.index("sweep")]), channel=channel)
-                        if TASK_LEVEL == "MAC": DC[i_slot].output(DC_instance[i_slot], int(Mac.VALUES[Mac.KEYS.index("output")]), channel)
+                        if TASK_LEVEL == "MAC": DC[i_slot].output(DC_instance[i_slot], int(float(Mac.VALUES[Mac.KEYS.index("output")])), channel)
                         if TASK_LEVEL == "EXP": DC[i_slot].output(DC_instance[i_slot], 1, channel)
                         Mac.close()
 
@@ -403,7 +439,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     Mac.execute(MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)])
                     SG[i_slot].frequency(SG_instance[i_slot], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
                     SG[i_slot].power(SG_instance[i_slot], action=['Set_%s'%channel, str(Mac.VALUES[Mac.KEYS.index("power")]) + ""]) # UNIT dBm NOT WORKING IN DDSLO
-                    if TASK_LEVEL == "MAC": SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, int(Mac.VALUES[Mac.KEYS.index("output")])])
+                    if TASK_LEVEL == "MAC": SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, int(float(Mac.VALUES[Mac.KEYS.index("output")]))])
                     if TASK_LEVEL == "EXP": SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, 1])
                     Mac.close()
 
@@ -445,8 +481,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr['DAC'][i_slot_order]} CHANNEL {ch}")
 
                     # Clear ADC memory after each fist-slot-channel's Waveform RELOAD:
-                    if FPGA & adca.bitMode_AVE:
-                        if i_slot_order==0: ADC.BeforePlay(adca, update_settings={})
+                    if FPGA:
+                        if i_slot_order in [0]: # still got very rare jump(s) even after this:
+                            ADC.BeforePlay(adca, update_settings={"FPGA": FPGA, "DDC_FREQ": [-(DDC_RO_Compensate_MHz)*1e6, -(DDC_RO_Compensate_MHz)*1e6]})
+
+                    # DAC[i_slot_order].resume_channel(DAC_instance[i_slot_order], int(ch)) #PENDING: align with TEKTRONIX
 
                 DAC[i_slot_order].ready(DAC_instance[i_slot_order])
                 print(Fore.GREEN + 'Waveform from DAC-%s (%s) is Ready!'%(i_slot_order+1, instr['DAC'][i_slot_order]))
@@ -456,36 +495,56 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # Basic ADC Readout (Buffer Every-loop):
                 DATA = ADC.AcquireData(adca, recordtime_ns*1e-9, recordsum, update_settings=dict(FPGA=FPGA) )[0]
                 # POST PROCESSING
-                if readoutype in ['one-shot']:
-                    DATA = DATA.reshape([recordsum,TOTAL_POINTS*2])
-                    if digital_homodyne != "original": 
-                        for r in range(recordsum):
-                            trace_I, trace_Q = DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[0], DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[1]
-                            trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
-                            DATA[r,:] = array([trace_I, trace_Q]).reshape(2*TOTAL_POINTS) # back to interleaved IQ-Data
-                            if not r%1000: print(Fore.YELLOW + "Shooting %s times" %(r+1))
-                    DATA = mean(DATA.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1)
-                    print(Fore.BLUE + "DATA of size %s is ready to be saved" %len(DATA))
-                elif readoutype in ["continuous", "rt-wfm-ave", 'rt-ave-singleddc']: # by default
+                if readoutype in ['one-shot', 'rt-dualddc-int']:
                     
-                    # Managing output data based on FPGA bitMode***:
+                    # Managing output data based on FPGA bitMode for one-shot-type***:
+                    if FPGA & adca.bitMode_DDC:
+                        DATA = DATA.reshape([recordsum,round(TOTAL_POINTS/5),2])
+                        DATA = moveaxis(DATA,1,0).reshape([round(TOTAL_POINTS/5)*recordsum*2]) # change into [round(TOTAL_POINTS/5),recordsum,2] shape and then melt it down to a string of data (1D)
+                        if FPGA & adca.bitMode_Int:
+                            # prepare denominator:
+                            record_succession = outer(linspace(1+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)), ones(recordsum*2)).reshape([round(TOTAL_POINTS/5)*recordsum*2])
+                            DATA = divide(DATA, record_succession)
+                    else:
+                        DATA = DATA.reshape([recordsum,TOTAL_POINTS*2])
+                        if digital_homodyne != "original": 
+                            for r in range(recordsum):
+                                trace_I, trace_Q = DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[0], DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[1]
+                                trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
+                                DATA[r,:] = array([trace_I, trace_Q]).reshape(2*TOTAL_POINTS) 
+                                if not r%1000: print(Fore.YELLOW + "Shooting %s times" %(r+1))
+                        DATA = mean(DATA.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1) # back to interleaved IQ-Data string
+                    
+                elif readoutype in ["continuous", "rt-wfm-ave", 'rt-ave-singleddc', 'rt-ave-dualddc', 'rt-ave-dualddc-int']: # by default
+                    
+                    # Managing output data based on FPGA bitMode for averaged(continuous)-type***:
                     if FPGA == adca.bitMode_Keysight:
                         DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0) # average was done on CPU
                     elif FPGA == adca.bitMode_AVE:
                         DATA = ( DATA.reshape([TOTAL_POINTS*2]) ) / recordsum # average was done on FPGA (real-time)
                     elif FPGA in [adca.bitMode_AVE_SingleDDC]:
-                        DATA = ( DATA.reshape([round(TOTAL_POINTS/5)*4]) ) / recordsum # average + single-DDC was done on FPGA (real-time)
+                        DATA = ( DATA.reshape([round(TOTAL_POINTS/5)*4]) ) # average + single-DDC was done on FPGA (real-time)
+                    elif FPGA in [adca.bitMode_AVE_DualDDC]:
+                        DATA = ( DATA.reshape([round(TOTAL_POINTS/5)*2]) ) # average + dual-DDC was done on FPGA (real-time)
+                    elif FPGA in [adca.bitMode_AVE_DualDDC_Int]:
+                        DATA = ( DATA.reshape([round(TOTAL_POINTS/5)*2]) ) # average + dual-DDC was done on FPGA (real-time)
+                        # prepare denominator:
+                        # record_succession = outer(linspace(1+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)), ones(2)).reshape([round(TOTAL_POINTS/5)*2])
+                        # DATA = divide(DATA, record_succession)
                     
                     # DDC on CPU:
                     if (digital_homodyne != "original") and not (FPGA & adca.bitMode_DDC): 
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
                         trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
-                        DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data
+                        DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string
                 else:
                     print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
+
+                print(Fore.BLUE + "DATA of shape %s is ready to be buffered" %(DATA.shape)) # should be a string of data (1D)
             
             except Exception as e:
                 print(Fore.RED + "PLS CHECK ADC ERROR:\n%s" %e)
+                print(Fore.RED + format_exc())
                 break # proceed to close all & queue out if error
             
             # print("Operation Complete")

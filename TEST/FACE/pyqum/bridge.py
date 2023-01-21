@@ -37,14 +37,16 @@ def show():
     return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 
 # IQ-CALIBRATION:
-@bp.route('/iqcal', methods=['POST', 'GET'])
-def iqcal(): 
+def iqcal_container():
     global IQCAL_instance, saname
     try: print(Fore.GREEN + "Connected IQCAL: %s" %IQCAL_instance.keys())
     except: IQCAL_instance = {}
     saname = 'MXA_1' # PENDING: ADD Options to choose from available SA-list. (via database)
-    current_usr = session['user_name']
-    return render_template("blog/bridg/iqcal.html", current_usr=current_usr)
+    return
+@bp.route('/iqcal', methods=['POST', 'GET'])
+def iqcal(): 
+    iqcal_container()
+    return render_template("blog/bridg/iqcal.html", current_usr=session['user_name'])
 @bp.route('/iqcal/load/mixermodules', methods=['GET'])
 def iqcal_load_mixermodules():
     mixermodule_list = [x for x in get_status("MIXER").keys()]
@@ -94,6 +96,7 @@ def iqcal_manual_calibrate():
     return jsonify(freq_list=freq_list, powa_list=powa_list, full_spectrum_x=full_spectrum_x, full_spectrum_y=full_spectrum_y)
 @bp.route('/iqcal/manual/sa/connect', methods=['GET'])
 def iqcal_manual_saconnect():
+    iqcal_container()
     if saname not in IQCAL_instance.keys() and not address().macantouch([saname]) and int(g.user['instrument'])>=3:
         IQCAL_instance[saname] = session['user_name']
         try:
@@ -116,6 +119,7 @@ def iqcal_manual_sacloset():
     return jsonify(status=status)
 @bp.route('/iqcal/auto/calibrate/run', methods=['GET'])
 def iqcal_auto_calibrate_run():
+    iqcal_container()
     if saname not in IQCAL_instance.keys() and not address().macantouch([saname]) and int(g.user['instrument'])>=3:
         IQCAL_instance[saname] = session['user_name']
 
