@@ -15,6 +15,7 @@ echo Fully Qualified root path: %root_FQPN%
 rem set config file name
 set "config_file_name=..\path.cfg"
 
+
 rem get Fully Qualified path of CONFIGG folder
 for %%I in ("%root_FQPN%%config_file_name%") do set "config_FQPN=%%~fI"
 echo Fully Qualified config file path: %config_FQPN%

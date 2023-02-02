@@ -188,6 +188,16 @@ input[type=submit] {
     width: 95%;
     margin: 2.5px 0;
 }
+input[type=submit].autoscan1Q {
+    background-color: #b2506f;
+    color: white;
+    padding: 8px 16px; /* | - */
+    border: none;
+    border-radius: 3.5px;
+    cursor: pointer;
+    width: 95%;
+    margin: 2.5px 0;
+}
 /* Sample */
 input[type=submit].loaded {
     background-color: rgb(0, 255, 42);
@@ -218,6 +228,9 @@ input[type=submit].notification:hover {
 }
 input[type=submit]:hover {
     background-color: #45a049;
+}
+input[type=submit].autoscan1Q:hover {
+    background-color: #cb3d92;
 }
 input[type=submit].plotted {
     background-color: gold;

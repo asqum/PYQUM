@@ -43,6 +43,13 @@ from sklearn.metrics import r2_score
 import pandas as pd
 # Save file
 from scipy.io import savemat
+
+# Cavity searching
+# from ccavity_search.cavity_search import search
+import pandas as pd
+import numpy as np
+#from keras.models import load_model
+
 # fidelity
 from sklearn.cluster import KMeans
 from sklearn.svm import SVC
@@ -775,7 +782,7 @@ def fit_sin(tt, yy):
 	fitfunc = lambda t: A * sin(w*t + p) + c
 	output = {"amp": A, "omega": w, "phase": p, "offset": c, "freq": f, "period": 1./f, "fitfunc": fitfunc, "maxcov": max(pcov), "rawres": (guess,popt,pcov)}
 	return output
-
+#test
 class Autoflux():
 
 	def __init__( self, quantificationObj, *args,**kwargs ):
@@ -944,3 +951,14 @@ class Readout_fidelity():
 		# save the model to disk
 		pickle.dump(self.model, open(r'C:\Users\ASQUM\Documents\GitHub\PYQUM\TEST\FACE\pyqum\static\img\finalized_svc_model.sav', 'wb'))
 		print("finished pretrain!")
+
+class CavitySearch():
+	def __init__( self, quantificationObj, *args,**kwargs ):
+
+		self.quantificationObj = quantificationObj
+
+
+	def do_analysis ( self ):
+		search(self.quantificationObj)
+
+

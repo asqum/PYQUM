@@ -1,0 +1,197 @@
+<html>
+
+<head>
+  <meta name="viewport" charset="utf-8" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/buttom_autoscan1Q.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/selector_autoscan1Q.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style_autoscan1Q.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/animation_autoscan1Q.css') }}">
+  
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
+  <script language="JavaScript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<header>
+  <h1 class="title">SingleQubit Automated Measurement Report</h1>
+  <div id="status">Status NOW:<span id="progress_report_block">Welcome!</span></div>
+  <form id="permission-text">Permission:<input id="permission-inp" placeholder="Enforce" /></form>
+  <div class="loading" id="spinner" style="visibility:hidden;">Loading&#8230;</div>
+  <button class='refresh-button' id="refresh">🔄</button>
+  <button id="dmbutton" class="button-d" value="0">Dark</button>
+  <button class='content-button' id="showcontent-MS" value="0">Set</button>
+  <button class='content-button' id="showcontent-CS" value="0">Cavity</button>
+  <button class='content-button' id="showcontent-PD" value="0">Power</button>
+  <button class='content-button' id="showcontent-FD" value="0">Flux</button>
+  <button class='content-button' id="showcontent-CW" value="0">2Tone</button>
+  <button class='content-button' id="search-jobid" value="0">JOBID</button>
+  
+</header>
+
+<body>
+  <section class="the-box">
+    <!--Measurement settings-->
+    <div  class="MS-container"  id="MS-content" >
+      <div class="content-title">
+        <label>Measurement Settings
+        <button type="submit" id="Start-CS-but">Initialize</button>
+        </label>
+      </div>
+      
+      <div class="set-pad">
+        <label id="CPw-num-text">Designed CPW Number:<input id="CPw-num-inp" placeholder="3"/></label>
+        
+        <label id="port-text">I/O Port:<input id="port-inp" placeholder="S21," /></label>
+
+        <label id="scanmode-text">Mode:
+          <select id="scan-mode">
+            <option>Qubits</option>
+            <option>Cavities</option>
+          </select>
+        </label>
+    
+      </div>
+      
+
+      <div id="measure-pad">   
+        
+        <button id="get-cav-status">Resume</button>
+        <label id="measure-text">Target:
+          <select id="cavity-select-MS"></select>
+        </label>
+        <label id="dc-channel-text" >DC-Chennel:<input id="dc-channel-inp" placeholder="1"/></label>
+        <button id="Start-measure-but">Measure</button>
+      </div>
+
+      <h3 class="sub-content-title">Measurement Results</h3>
+      <div class="sectitle"><div id="result" style="display:none;"></div></div>
+    </div>
+
+    <!--Cavity Search-->
+    <div  class="CS-container"  id="CS-content" style="display:none">
+      <div class="content-title"><h2>Cavity Search</h2></div>
+      
+      <div class="select-area">
+        <input class="jobid-input" id="jobid-CS" placeholder="JOBID">
+        <input id="designed-CPW" placeholder="CPW">
+        <h3 class='cavity-select-CS'>Cavity @</h3>
+        <select class="CS-selector"  id="cavity-select-CS" aria-label="label for the select"></select>
+        <button type="button" class="button-run" id="CS-search" value="0">Plot</button>
+        <button type="button" class="button-run" id="looks-CS">Cavity</button>
+        <button type="button" class="ShowPara" id="sp-CS" value="0">Paras</button>
+      </div>
+      
+      <div class="Plot-area">
+        <div class="plotframe-rec" id="CavitySearch-result-plot"></div>
+        <em id='resultId-CS'></em>
+      </div>
+
+      <div id="menu">
+        <b><div class="paras" id="Freqrange-CS"></div></b>
+        <b><div class="paras" id="Powrange-CS"></div></b>
+        <b><div class="paras" id="Fluxrange-CS"></div></b>
+        <b><div class="paras" id="IFBW-CS"></div><br></b>
+        <b><div class="paras" id="XYFreqrange-CS"></div></b>
+        <b><div class="paras" id="XYPowrange-CS"></div></b>
+        <b><div class="paras" id="Repeattime-CS"></div></b>
+      </div>
+
+    </div>
+
+    <!--Power dependence-->
+    <div class="PD-container" id="PD-content" style="display:none" >
+      <div class="content-title"><h2 id="PD">Power Dependence</h2></div>
+
+      <div class="select-area">
+        <input class="jobid-input" id="jobid-PD" placeholder="JOBID">
+        <h3 class='cavity-select-text'>Cavity @</h3>
+        <select class="PD-selector"  id="cavity-select-PD" aria-label="label for the select"></select>
+        <button type="button" class="button-run" id="PD-search" value="0">Show</button>
+        <button type="button" class="ShowPara" id="sp-PD" value="0">Paras</button>
+      </div>
+
+      <div class="Plot-area">
+        <div class="plotframe-squ" id="PowerDep-result-plot"></div>
+      </div>
+
+      <div id="menu">
+        <b><div class="paras" id="Freqrange-PD"></div></b>
+        <b><div class="paras" id="Powrange-PD"></div></b>
+        <b><div class="paras" id="Fluxrange-PD"></div></b>
+        <b><div class="paras" id="IFBW-PD"></div><br></b>
+        <b><div class="paras" id="XYFreqrange-PD"></div></b>
+        <b><div class="paras" id="XYPowrange-PD"></div></b>
+        <b><div class="paras" id="Repeattime-PD"></div></b>
+      </div>
+
+    </div>
+
+    <!--Flux dependence-->
+    
+    <div class="FD-container" id="FD-content" style="display:none">
+      <div class="content-title"><h2 id="FD">Flux Dependence</h2></div>
+
+      <div class="select-area">
+        <input class="jobid-input" id="jobid-FD" placeholder="JOBID">
+        <h3 class='cavity-select-text'>Cavity @</h3>
+        <select class="FD-selector"  id="cavity-select-FD" aria-label="label for the select"></select>
+        <button type="button" class="button-run" id="FD-search" value="0">Show</button>
+        <button type="button" class="ShowPara" id="sp-FD" value="0">Paras</button>
+      </div>
+
+      <div class="Plot-area">
+        <div class="plotframe-squ" id="FluxDep-result-plot"></div>
+      </div>
+
+      <div id="menu">
+        <b><div class="paras" id="Freqrange-FD"></div></b>
+        <b><div class="paras" id="Powrange-FD"></div></b>
+        <b><div class="paras" id="Fluxrange-FD"></div></b>
+        <b><div class="paras" id="IFBW-FD"></div><br></b>
+        <b><div class="paras" id="XYFreqrange-FD"></div></b>
+        <b><div class="paras" id="XYPowrange-FD"></div></b>
+        <b><div class="paras" id="Repeattime-FD"></div></b>
+      </div>
+
+    </div>
+
+    <!--CWsweep-->
+    
+    <div class="CW-container" id="CW-content" style="display:none">
+      <div class="content-title"><h2>CWsweep</h2></div>
+      
+    <div class="sweep-operation-log">
+      <select id="sweep-selector" aria-label="label for the select"></select>
+      <button id="sweep">Sweep</button>
+    </div>
+
+      <div class="select-area">
+        <input class="jobid-input" id="jobid-CW" placeholder="JOBID">
+        <button id="load-jobid-CW">LOAD</button>
+        <h3 class='cavity-select-text'>Cavity @</h3>
+        <select class="CW-selector"  id="cavity-select-CW" aria-label="label for the select"></select>
+        <h3 class='xypower-select-text'>XY-Power @</h3>
+        <select class="xy-power-selector" id="power-select-CW" aria-label="label for the select"></select>
+        <button type="button" class="button-run" id="CW-search" value="0">Show</button>
+        <button type="button" class="ShowPara" id="sp-CW" value="0">Paras</button>
+      </div>
+
+      <div class="Plot-area">
+        <div class="plotframe-rec" id="CWsweep-result-plot"></div>
+      </div>
+
+      <div id="menu">
+        <b><div class="paras" id="Freqrange-CW"></div></b>
+        <b><div class="paras" id="Powrange-CW"></div></b>
+        <b><div class="paras" id="Fluxrange-CW"></div></b>
+        <b><div class="paras" id="IFBW-CW"></div><br></b>
+        <b><div class="paras" id="XYFreqrange-CW"></div></b>
+        <b><div class="paras" id="XYPowrange-CW"></div></b>
+        <b><div class="paras" id="Repeattime-CW"></div></b>
+      </div>
+
+    </div>
+  </section>
+  <script language="JavaScript" type='text/javascript' src = "../static/js/autoscan1Q.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,373 @@
+
+/*Darkmode button*/
+#dmbutton {
+    background-color: rgb(25, 45, 24);
+    border: 0.2rem solid rgba(222, 222, 222, 0.369);
+    border-radius: 1rem;
+    box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
+    color: rgb(255, 255, 255);
+    cursor: pointer;
+    font-size: 1rem;
+    width:6%;
+    height:5%;
+    position:fixed;
+    top:1.7%;
+    right:1%;
+    z-index: 10;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#Start-CS-but{
+    position:relative;
+    background-color:rgb(36, 34, 55);
+    color:rgb(255, 255, 255);
+    width:20%;
+    height:40%;
+    border-radius: 1rem;
+    font-size:1.2rem;
+    z-index: 2;
+}
+
+/*Cavity search button part*/
+#CS-search{
+    background-color:rgb(36, 34, 55);
+    color:rgb(255, 255, 255);
+    border: 0.2rem solid rgb(79, 70, 70);
+    border-radius: 1.2rem;
+    box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1.34rem;
+    width: 18.5%;
+    height:22.5%;
+    position: absolute;
+    top:12.5%;
+    right:1%;
+    text-align: center;
+    touch-action: manipulation;
+    vertical-align: middle;
+    z-index: 2;
+}
+
+#looks-CS{
+    background-color: #25112a;
+    color:white;
+    border: 0.2rem solid rgb(79, 70, 70);
+    border-radius: 1.2rem;
+    box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.34rem;
+    width: 18.5%;
+    height:22.5%;
+    position: absolute;
+    top:36.5%;
+    right:1%;
+    text-align: center;
+    vertical-align: middle;
+    z-index: 2;
+}
+
+#sp-CS {
+    background-color: #383201;
+    color:white;
+    border: 0.2rem solid rgb(79, 70, 70);
+    border-radius: 0.9rem;
+    box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.34rem;
+    width:18.5%;
+    height:5%;
+    position: absolute;
+    top:62%;
+    right:1.1%;
+    text-align: center;
+    vertical-align: middle;
+    z-index: 2;
+}
+#CS-search:hover,#looks-CS:hover,#sp-CS:hover,#Start-measure-but:hover {
+    border: 0.1rem solid rgb(255, 0, 0);
+}
+
+/*Power Dependence button part*/
+#PD-search,#FD-search,#CW-search {
+    background-color: rgb(36, 34, 55);
+    color:white;
+    border: 0.2rem solid rgb(79, 70, 70);
+    border-radius: 1.2rem;
+    box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.34rem;
+    width: 18.5%;
+    height:45%;
+    position: absolute;
+    top:17%;
+    right:1.1%;
+    text-align: center;
+    vertical-align: middle;
+    z-index: 2;
+}
+#PD-search:hover,#FD-search:hover,#CW-search:hover {
+    border: 0.3rem solid rgb(255, 0, 0);
+} 
+#sp-PD,#sp-FD,#sp-CW {
+    background-color: #383201;
+    color:white;
+    border: 0.2rem solid rgb(79, 70, 70);
+    border-radius: 1.2rem;
+    box-shadow: rgba(27, 31, 35, .1) 0 0.07rem 0;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.34rem;
+    width: 18.5%;
+    height:5%;
+    position: absolute;
+    top:64%;
+    right:1.1%;
+    text-align: center;
+    vertical-align: middle;
+    z-index: 2;
+}
+#sp-PD:hover,#sp-FD:hover,#sp-CW:hover{
+    border: 0.3rem solid rgb(255, 0, 0);
+}
+#showcontent-MS{
+    background-color: rgb(25, 45, 24);
+    color:white;
+    position:fixed;
+    top:1.7%;
+    right:7.5%;
+    width:3%;
+    height:11%;
+    border-radius: 1rem;
+    z-index: 10;
+    font-size:1rem ;
+    border: 0.2rem solid rgb(79, 70, 70);
+    z-index: 10;
+}
+
+#showcontent-CS{
+    background-color: rgb(25, 45, 24);
+    color:white;
+    position:relative;
+    top:25%;
+    right:-93%;
+    width:5%;
+    height:60%;
+    border-radius: 1rem;
+    z-index: 10;
+    font-size:1rem ;
+    border: 0.2rem solid rgb(79, 70, 70);
+}
+#showcontent-PD{
+    background-color: rgb(25, 45, 24);
+    color:white;
+    position:relative;
+    top:25%;
+    right:-82%;
+    width:5%;
+    height:60%;
+    border-radius: 1rem;
+    z-index: 10;
+    font-size:1rem ;
+    border: 0.2rem solid rgb(79, 70, 70);
+}
+#showcontent-FD{
+    background-color: rgb(25, 45, 24);
+    color:white;
+    position:relative;
+    top:25%;
+    right:-71%;
+    width:5%;
+    height:60%;
+    border-radius: 1rem;
+    z-index: 10;
+    font-size:1rem ;
+    border: 0.2rem solid rgb(79, 70, 70);
+}
+#showcontent-CW{
+    background-color: rgb(25, 45, 24);
+    color:white;
+    position:relative;
+    top:25%;
+    right:-60%;
+    width:5%;
+    height:60%;
+    border-radius: 1rem;
+    z-index: 10;
+    font-size:1rem ;
+    border: 0.2rem solid rgb(79, 70, 70);
+}
+#search-jobid{
+    background-color: rgb(25, 45, 24);
+    color:white;
+    color:rgb(255, 255, 255);
+    position:fixed;
+    top:8%;
+    right:1%;
+    width:6%;
+    height:5%;
+    border-radius: 1rem;
+    z-index: 10;
+    font-size:1rem ;
+    border: 0.2rem solid rgb(79, 70, 70);
+}
+#showcontent-MS:hover,#showcontent-PD:hover,#showcontent-FD:hover,#showcontent-CS:hover,#showcontent-CW:hover,#search-jobid:hover  {
+    color:rgb(255, 0, 30);
+    box-shadow: rgba(255, 255, 255, 0.918) 0 0.25rem 0.25rem inset;
+}
+#showcontent-MS:active,#showcontent-PD:active,#showcontent-FD:active,#showcontent-CW:active,#showcontent-CS:active,#search-jobid:active {
+    border: 0.2rem solid rgb(178, 247, 82);
+}
+
+#refresh{
+    background-color: transparent;
+    position:fixed;
+    bottom:0.1%;
+    left:1%;
+    z-index: 10;
+    font-size:3rem ;
+    border: 0.2rem solid transparent;
+    border-radius: 1rem;
+    height: -3%;
+    width:-3%;
+
+}
+#refresh:hover  {
+    color:rgb(255, 0, 30);
+    border: 0.2rem solid rgb(255, 0, 0);
+    box-shadow: rgba(255, 255, 255, 0.918) 0 0.1rem 0.1rem inset;
+}
+#refresh:active {
+    border: 0.2rem solid rgb(178, 247, 82);
+}
+#load-jobid-CW{
+    background-color: rgb(25, 45, 24);
+    color:white;
+    width: 15%;
+    height:5%;
+    position: absolute;
+    top:6%;
+    right:1%;
+    font-size:0.8rem ;
+    border-radius: 1rem;
+    border: 0.2rem solid rgb(79, 70, 70);
+}
+
+#Start-measure-but{
+    position:relative;
+    left:6%;
+    background-color:rgb(36, 34, 55);
+    color:rgb(255, 255, 255);
+    width:10%;
+    height:40%;
+    border-radius: 1rem;
+    font-size:1.2rem;
+    z-index: 2;
+}
+#get-cav-status{
+    position:relative;
+    right:5%;
+    background-color:rgb(96, 44, 44);
+    color:rgb(255, 255, 255);
+    width:7%;
+    height: 40%;
+    border-radius: 1rem;
+    font-size:1.2rem;
+    z-index: 2;
+}
+
+
+#search-jobid:before,#dmbutton:before,#CS-search:before,#looks-CS:before,#Start-CS-but:before,#load-jobid-CW:before,#Start-measure-but:before,#get-cav-status:before
+,.ShowPara:before,.button-run:before,.content-button:before,#load-jobid-CW:before {
+    content: '';
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    position: absolute;
+    top: -2px;
+    left:-2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity .3s ease-in-out;
+    border-radius: 1rem;
+}
+#search-jobid:active:after,#dmbutton:active:after,#CS-search:active:after,#looks-CS:active:after,#Start-measure-but:after,#get-cav-status:after
+,.ShowPara:active:after,.button-run:active:after,.content-button:active:after,#Start-CS-but:active:after,#load-jobid-CW:active:after {
+    background: transparent;
+}
+#search-jobid:active,#dmbutton:active,#CS-search:active,#looks-CS:active
+,.ShowPara:active,.button-run:active,.content-button:active,#Start-CS-but:active,#load-jobid-CW:active,#Start-measure-but:active,#get-cav-status:active {
+    color: #000;
+    opacity: 0.5;
+}
+#search-jobid:hover:before,#dmbutton:hover:before,#CS-search:hover:before,#looks-CS:hover:before,#Start-measure-but:hover:before,#get-cav-status:hover:before
+,.ShowPara:hover:before,.button-run:hover:before,.content-button:hover:before,#Start-CS-but:hover:before,#load-jobid-CW:hover:before{
+    opacity: 1;
+}
+
+#search-jobid:after,#dmbutton:after,.content-button:after{
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgb(25, 45, 24);
+    left: 0;
+    top: 0;
+    border-radius: 1rem;
+}
+#search-jobid:active,#dmbutton:active,.content-button:active{
+    color:#ffa600;
+}
+.button-run:after,#Start-CS-but:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgb(36, 34, 55);
+    left: 0;
+    top: 0;
+    border-radius: 1rem;
+    color:transparent;
+    
+}
+#looks-CS:after{
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #25112a;
+    left: 0;
+    top: 0;
+    border-radius: 1rem; 
+}
+.ShowPara:after{
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #383201;
+    left: 0;
+    top: 0;
+    border-radius: 1rem; 
+}
+
+@keyframes glowing {
+    0% { background-position: 0 0; }
+    50% { background-position: 400% 0; }
+    100% { background-position: 0 0; }
+}

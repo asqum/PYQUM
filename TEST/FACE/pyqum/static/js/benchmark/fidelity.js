@@ -454,5 +454,5 @@ function FD_pretrain_data(){
 function FD_plot_data(){
 
     // Plot fit parameters
-    $.getJSON( '/benchmark/plot',{ }, function (data) {});
+    $.getJSON( '/benchmark/fidelity/autoscan1q',{ }, function (data) {});
 }

@@ -705,6 +705,7 @@ $('input.notification#F_Response_notification').click( function(){
     return false;
 });
 
+
 // SAVE NOTE:
 $('textarea.char.fresp[name="note"]').change( function () {
     $.getJSON(mssnencrpytonian() + '/mssn'+'/all/save/jobnote', {
