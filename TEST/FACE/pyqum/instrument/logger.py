@@ -230,16 +230,23 @@ class address:
         print('resource: %s' %self.rs)
         return self.rs
     
-    def update_machine(self,connected,codename):
+    def update_machine(self,connected,codename,system=None,sequence=0):
         ''' 
         Update SQL Database:
         connected: 0 or 1, codename = <instr>-<label/index> 
+        Refer restrictions on system assignments
         '''
         if self.mode=='DATABASE':
             db = get_db()
-            db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename,) )
+            
+            # Booking the machine with Queue:
+            if sequence: db.execute( 'UPDATE machine SET system = ?, sequence = ? WHERE codename = ?', (system, sequence, codename) )
+            # Using the machine with Initialize:
+            else: db.execute( 'UPDATE machine SET user_id = ?, connected = ? WHERE codename = ?', (session['user_id'], connected, codename) )
+
             db.commit()
             close_db()
+            print(Fore.YELLOW + "%s UPDATED!" %(codename))
         elif self.mode=='TEST':
             print(Fore.RED + "REMINDER: MAKE SURE TO CLOSE CONNECTION UPON EXIT AND AVOID CONFLICT WITH ONLINE INSTRUMENTS")
         return
@@ -247,11 +254,16 @@ class address:
         '''return total connection(s) based on instrument-list given'''
         db = get_db()
         connection = 0
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         print(Fore.CYAN + "instr_list: %s" %instr_list)
         for mach in flatten(instr_list):
-            print(mach)
             connection += int(db.execute('''SELECT connected FROM machine WHERE codename = ?''', (mach,) ).fetchone()['connected'])
+
+        if not connection:
+            system = get_status("MSSN")[session['user_name']]['queue']
+            for i,mach in enumerate(flatten(instr_list)):
+                self.update_machine(0,mach,system=system,sequence=i+1)
+                print(Fore.GREEN + "%s. %s's Queue: %s" %(i+1,mach,system))
+
         close_db()
         return connection
 
@@ -535,13 +547,20 @@ class measurement:
             if 'READOUTYPE' in self.perimeter.keys():
                 RJSON = loads(self.perimeter['R-JSON'].replace("'",'"'))
                 for k in RJSON.keys(): self.datasize = self.datasize * waveform(str(RJSON[k])).count
-                if self.perimeter['READOUTYPE'] == 'one-shot':
-                    self.datasize = self.datasize * int(self.perimeter['RECORD-SUM'])
-                else:
-                    # EXTRACT "TIME_RESOLUTION_NS" IF AVAILABLE: TOTAL_READ_POINTS = RECORD_TIME_NS / TIME_RESOLUTION_NS
-                    if 'TIME_RESOLUTION_NS' in self.perimeter.keys(): TIME_RESOLUTION_NS = int(self.perimeter['TIME_RESOLUTION_NS'])
-                    else: TIME_RESOLUTION_NS = 1 # backward-compatible with ALZDG's 1GSPS sampling-rate
-                    self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS']) // TIME_RESOLUTION_NS
+                
+                # 1. EXTRACT "TIME_RESOLUTION_NS" IF AVAILABLE: TOTAL_READ_POINTS = RECORD_TIME_NS / TIME_RESOLUTION_NS
+                if 'TIME_RESOLUTION_NS' in self.perimeter.keys(): TIME_RESOLUTION_NS = int(self.perimeter['TIME_RESOLUTION_NS'])
+                else: TIME_RESOLUTION_NS = 1 # backward-compatible with ALZDG's 1GSPS sampling-rate
+
+                # 2. RESCALING CONTINGENT ON VARIOUS READOUTYPE:
+                if self.perimeter['READOUTYPE'] == 'one-shot': channel_branchout, down_sample_factor, readoutime_ns, shots = 1, 1, TIME_RESOLUTION_NS, int(self.perimeter['RECORD-SUM'])
+                elif self.perimeter['READOUTYPE'] == 'rt-dualddc-int': channel_branchout, down_sample_factor, readoutime_ns, shots = 1, 5, int(self.perimeter['RECORD_TIME_NS']), int(self.perimeter['RECORD-SUM'])
+                elif self.perimeter['READOUTYPE'] in ['rt-ave-singleddc']: channel_branchout, down_sample_factor, readoutime_ns, shots = 2, 5, int(self.perimeter['RECORD_TIME_NS']), 1
+                elif self.perimeter['READOUTYPE'] in ['rt-ave-dualddc', 'rt-ave-dualddc-int']: channel_branchout, down_sample_factor, readoutime_ns, shots = 1, 5, int(self.perimeter['RECORD_TIME_NS']), 1
+                else: channel_branchout, down_sample_factor, readoutime_ns, shots = 1, 1, int(self.perimeter['RECORD_TIME_NS']), 1
+
+                # 3. DATA-SIZE CONTRIBUTED BY READOUT:
+                self.datasize = self.datasize * readoutime_ns // TIME_RESOLUTION_NS // down_sample_factor * channel_branchout * shots
 
             print(Fore.YELLOW + "writtensize: %s, datasize: %s" %(self.writtensize/8, self.datasize))  
             self.data_progress = float(self.writtensize / (self.datasize*8) * 100)

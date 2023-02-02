@@ -1,0 +1,55 @@
+---
+# file version
+version: 0.0.1
+# classical control components
+
+# give entities an alias
+# that can be referenced
+# by other entities
+entity M5300AWG awg1:
+    chassis: 1
+    slot: 6 
+
+entity M5201Downconverter downconverter:
+    chassis: 1
+    slot: 3
+    
+entity M5200Digitizer digitizer:
+    chassis: 1
+    slot: 4 
+
+# quantum components
+entity ReadoutResonator readout_signal:
+    entity AnalogChannel drive_channel:
+        entity instrument: awg1
+        channel_number: 4
+    entity AcquisitionChannel acquisition_channel:
+        entity downconverter: downconverter
+        entity digitizer: digitizer
+        channel_number: 4
+
+entity ReadoutResonator control_signal:
+    entity AnalogChannel drive_channel:
+        entity instrument: awg1
+        channel_number: 3
+    entity AcquisitionChannel acquisition_channel:
+        entity downconverter: downconverter
+        entity digitizer: digitizer
+        channel_number: 1
+        # In a real application for readout multiplexing would call for 
+        # these two ReadoutResonator to share a digitizer channel
+        # In this demo, we use a different channel_number here
+        # so that we also acquire the qubit control signals
+
+
+entity Qubit qubit1:
+    entity AnalogChannel xy:
+        entity instrument: awg1
+        channel_number: 1
+    entity readout: readout_signal
+
+entity Qubit qubit2:
+    entity AnalogChannel xy:
+        entity instrument: awg1
+        channel_number: 2
+    entity readout: readout_signal

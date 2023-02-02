@@ -98,13 +98,16 @@ def allbdrcurrentstatus():
 # endregion
 
 # region: SG (user-specific, Generalized)
-@bp.route('/sg', methods=['GET'])
-def sg(): 
+def sg_container():
     global sgbench, SG, sgchannel
     try: print(Fore.GREEN + "Connected SG: %s" %sgbench.keys())
     except: sgbench, SG = {}, {}
     try: print(Fore.GREEN + "SG Channel: %s" %sgchannel.keys())
     except: sgchannel = {}
+    return
+@bp.route('/sg', methods=['GET'])
+def sg(): 
+    sg_container()
     return render_template("blog/machn/sg.html")
 @bp.route('/sg/log', methods=['GET'])
 def sglog():
@@ -112,10 +115,12 @@ def sglog():
     return jsonify(log=log)
 @bp.route('/sg/connect', methods=['GET'])
 def sgconnect():
+    sg_container()
     sgname = request.args.get('sgname') # name = type + label
     sgtag = '%s:%s' %(sgname,session['user_name']) # tag = <type>-<label>:<user>
     sgtype, sglabel, sguser = sgtag.split('-')[0], sgtag.split('-')[1].split(':')[0], sgtag.split('-')[1].split(':')[1]
     linkedsg = ['%s-%s'%(x.split('-')[0],x.split('-')[1].split(':')[0]) for x in sgbench.keys()]
+    print("sgname: %s, linkedsg: %s" %(sgname,linkedsg))
     if sgname not in linkedsg and int(g.user['instrument'])>=3:
         '''get in if not currently initiated'''
         try:
@@ -198,11 +203,14 @@ def sgsetchannel():
 # endregion
 
 # region: DAC (user-specific, Generalized)
-@bp.route('/dac', methods=['GET'])
-def dac(): 
+def dac_container():
     global DAC_handle, DAC
     try: print(Fore.GREEN + "Connected DAC: %s" %DAC_handle.keys())
     except: DAC_handle, DAC = {}, {}
+    return
+@bp.route('/dac', methods=['GET'])
+def dac(): 
+    dac_container
     return render_template("blog/machn/dac.html")
 @bp.route('/dac/log', methods=['GET'])
 def daclog():
@@ -210,6 +218,7 @@ def daclog():
     return jsonify(log=log)
 @bp.route('/dac/connect', methods=['GET'])
 def dacconnect():
+    dac_container()
     dacname = request.args.get('dacname')
     dactag = '%s:%s' %(dacname,session['user_name'])
     print("dactag: %s" %dactag)
@@ -280,7 +289,8 @@ def dacgetchannels():
     dac_status = get_status(request.args.get('dacname').split('-')[0], request.args.get('dacname').split('-')[1])
     level = DAC[dactype].sourcelevel(DAC_handle[dactag], Channel)[1]
     message = {}
-    message['source-amplitude'], message['source-offset'] = si_format(float(level['AMPLITUDE']), precision=3) + "Vpp", si_format(float(level['OFFSET']), precision=3) + "V"
+    try: message['source-amplitude'], message['source-offset'] = si_format(float(level['AMPLITUDE']), precision=3) + "Vpp", si_format(float(level['OFFSET']), precision=3) + "V"
+    except(TypeError): message['source-amplitude'], message['source-offset'] = "1.5 Vpp", "0 V" # Default values
     if dactype=="TKAWG": message['chstate'] = int(DAC[dactype].output(DAC_handle[dactag], Channel)[1]['STATE']) # TKAWG ONLY
     try: message['score'] = dac_status['SCORE-%s'%Channel]
     except(KeyError): pass
@@ -378,14 +388,17 @@ def dacstop():
 # endregion
 
 # region: ADC (user-specific, Generalized)
-@bp.route('/adc', methods=['GET'])
-def adc(): 
+def adc_container():
     global adcboard, ADC, adc_1Ddata
     try: print(Fore.GREEN + "Connected ADC: %s" %adcboard.keys())
     except: adcboard, ADC = {}, {}
     # Initialize 1D Data-Holder:
     try: print(Fore.CYAN + "Connected M-USER(s) holding ADC's 1D-DATA: %s" %adc_1Ddata.keys())
     except: adc_1Ddata = {}
+    return
+@bp.route('/adc', methods=['GET'])
+def adc(): 
+    adc_container()
     return render_template("blog/machn/adc.html")
 @bp.route('/adc/log', methods=['GET'])
 def adclog():
@@ -393,6 +406,7 @@ def adclog():
     return jsonify(log=log)
 @bp.route('/adc/connect', methods=['GET'])
 def adcconnect():
+    adc_container()
     adcname = request.args.get('adcname')
     adctag = '%s:%s' %(adcname,session['user_name'])
     print("adctag: %s" %adctag)
@@ -534,11 +548,14 @@ def adcget():
 # endregion
 
 # region: NA (user-specific, Generalized)
-@bp.route('/na', methods=['GET'])
-def na(): 
+def na_container():
     global NA, nabench, freqrange
     try: print(Fore.GREEN + "Connected NA: %s" %nabench.keys())
     except: NA, nabench, freqrange = {}, {}, {}
+    return
+@bp.route('/na', methods=['GET'])
+def na(): 
+    na_container()
     return render_template("blog/machn/na.html")
 @bp.route('/na/log', methods=['GET'])
 def nalog():
@@ -546,6 +563,7 @@ def nalog():
     return jsonify(log=log)
 @bp.route('/na/connect', methods=['GET'])
 def naconnect():
+    na_container()
     naname = request.args.get('naname')
     natag = '%s:%s' %(naname,session['user_name'])
     natype, nalabel, nauser = natag.split('-')[0], natag.split('-')[1].split(':')[0], natag.split('-')[1].split(':')[1]
@@ -675,11 +693,14 @@ def naget():
 # endregion
 
 # region: SA (user-specific, Generalized, Databased)
-@bp.route('/sa', methods=['GET'])
-def sa(): 
+def sa_container():
     global sabench, SA
     try: print(Fore.GREEN + "Connected SA: %s" %sabench.keys())
     except: sabench, SA = {}, {}
+    return
+@bp.route('/sa', methods=['GET'])
+def sa(): 
+    sa_container()
     return render_template("blog/machn/sa.html")
 @bp.route('/sa/log', methods=['GET'])
 def salog():
@@ -687,6 +708,7 @@ def salog():
     return jsonify(log=log)
 @bp.route('/sa/connect', methods=['GET'])
 def saconnect():
+    sa_container()
     saname = request.args.get('saname') # name: <type>-<label>
     satag = '%s:%s' %(saname,session['user_name']) # tag: <type>-<label>:<user>
     satype, salabel, sauser = satag.split('-')[0], satag.split('-')[1].split(':')[0], satag.split('-')[1].split(':')[1]
@@ -766,6 +788,8 @@ def saget():
 # endregion
 
 # region: BDR
+global category
+category = ['ROLE','CH','DC','SG','NA','DAC','ADC','SA','SC']
 @bp.route('/bdr')
 def bdr():
     if int(g.user['instrument'])>=1:
@@ -778,7 +802,7 @@ def bdr():
         shared_new_samples = [s['samplename'] for s in g.cosamples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
         # 3. SERVICE samples: (Training & Hero samples are to be categorized as SERVICE type of sample)
         global service_samples
-        service_samples = [s['samplename'] for s in g.samples if int(s['level'])>1]
+        service_samples = [s['samplename'] for s in (g.samples + g.cosamples) if int(s['level'])>1]
 
         # service_samples = ['Sam', 'Same01', 'IDLE', 'DR-RFcable', '3SXQ-Al-Si-19-1']
         recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + service_samples
@@ -790,8 +814,6 @@ def bdr():
         close_db()
         try: queue = get_status("MSSN")[session['user_name']]['queue']
         except: queue = 'CHAR0' # default
-        global category
-        category = ['ROLE','CH','DC','SG','NA','DAC','ADC','SA','SC']
         
         DR_platform = int(get_status("WEB")['port']) - 5300
         return render_template("blog/machn/bdr.html", DR_platform=DR_platform, loaded=loaded, recent_samples=recent_samples, machine_list=machine_list, systemlist=systemlist, queue=queue, \

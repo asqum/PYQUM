@@ -5,7 +5,7 @@ from os.path import basename as bs
 mdlname = bs(__file__).split('.')[0] # module's name e.g. PSG
 
 from numpy import zeros, ceil, where
-from pyqum.instrument.logger import address, set_status
+from pyqum.instrument.logger import address, set_status, get_status
 from pyqum.instrument.composer import pulser
 from pyqum.instrument.toolbox import normalize_dipeak
 from pyqum.instrument.analyzer import curve
@@ -67,9 +67,12 @@ def ready(module, channels=[1,2,3,4]):
     '''Start ALL Channels by defaults'''
     mask = 0
     for ch in channels: mask += 2**(ch-1) 
-    status = module.AWGstartMultiple(mask) 
+    status = module.AWGresumeMultiple(mask)
+    status = module.AWGstartMultiple(mask)
     print(Fore.GREEN + "PLAYING MASK: %s" %mask)      
     return status
+def resume_channel(module, channel):        
+    return module.AWGresume(channel)
 def play(module):
     '''A Dummy function To be compatible with TKAWG'''
     # print(Fore.YELLOW + "Waveform loading status: %s" %bool(keysightSD1.SD_Wave.getStatus))
@@ -104,10 +107,16 @@ def waveshape(module, channel, shape):
 def sourcelevel(module, channel, action=['Get','','']):
     '''value in volts (–1.5 V to 1.5 V)
     '''
+    instr_location = "(%s,%s)" %(module.getChassis(), module.getSlot())
+
     if 'Set' in action:
         module.channelAmplitude(channel, action[1])
         module.channelOffset(channel, action[2])
-    return ["Defaults", {'AMPLITUDE': "1.5", "OFFSET": "0"}]
+        saved_parameters = {'AMPLITUDE': action[1], "OFFSET": action[2]}
+        set_status(mdlname, saved_parameters, instr_location) # NOTE: manually save parameters under INSTLOG
+        print(Fore.GREEN + Back.WHITE + "***SETTING %s" %saved_parameters)
+    
+    return ["Defaults", get_status(mdlname, instr_location)]
 def frequency(module, channel, value):
     '''value in Hz. (Refer to the product’s Data Sheet for frequency specifications.)
     '''
@@ -259,6 +268,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
     '''
     markeroption: 0 (disabled), 7 (PIN-Switch on MixerBox) (a.k.a. marker[1-4] for TKAWG)
     clearQ: MUST be used when ALL channels are FULLY assigned.
+    ATTN: envelope is only used in PIN-Switch case (to be deprecated soon)
     '''
     # 1. Loading the settings:
     # NOTE: default settings for SDAWG: clearQ=0 to avoid inconsistent delay between Master & Slave for each run in "manipulate"
@@ -275,7 +285,7 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
             # Output MARKER through CH-4:
             mkr_array = zeros(len(pulsedata))
             if PINSW: # For DRIVING PIN-SWITCH: Following envelope.
-                if len(envelope): mkr_array = abs(normalize_dipeak(envelope)) # always RISING
+                if len(envelope): mkr_array = abs(normalize_dipeak(abs(envelope))) # always RISING # envelope is a complex numpy-array
             else: # For TRIGGER PURPOSES: Making sure marker-width is finite & less than pulse-length.
                 try: # pulse case (should contain at least 4 points to produce a marker)
                     shrinkage = 3
@@ -287,11 +297,13 @@ def compose_DAC(module, channel, pulsedata, envelope=[], markeroption=0, update_
                 print(Fore.YELLOW + "Output Trigger marker = 1/3 envelop: (%s - %s)" %(first_rising_edge, last_falling_edge))
             pulsedata = mkr_array
 
+        # module.AWGpause(channel) # to mitigate FPGA-AVE
+
         if clearQ: 
             # NOTE: clearQ seems to solve the RELOAD issues of waveforms that's shorter than 16us, BUT: master and slave will not be well synced and will jitter within 100ns. SAD.
             module.AWGstop(channel)
             module.AWGflush(channel) # Clear queue TO RESOLVE SYNC-ISSUE in FULL-4-CHANNELS OUTPUT
-            print(Fore.CYAN + "Clearing CH%s's queue for good alignment of ALL 4 channels" %(channel))
+            print(Fore.CYAN + "Clearing CH%s's queue for good alignment of ALL 4 channels within 100ns" %(channel))
         
         resendWaveform(module, waveform_id, pulsedata)
         # sendWaveform(module, waveform_id, pulsedata)
