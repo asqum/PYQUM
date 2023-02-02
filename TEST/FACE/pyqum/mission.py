@@ -1676,10 +1676,12 @@ def mani_QuCTRL_access():
     
     # Determine BufferKey based on ReadoutType:
     if perimeter['READOUTYPE'] in ['one-shot', 'rt-dualddc-int']: 
+
         bufferkey, buffer_resolution = 'RECORD-SUM', 1
     else: 
         if "TIME_RESOLUTION_NS" in perimeter.keys(): bufferkey, buffer_resolution = 'RECORD_TIME_NS', int(perimeter['TIME_RESOLUTION_NS'])
         else: bufferkey, buffer_resolution = 'RECORD_TIME_NS', 1
+
 
     # Recombine Buffer back into C-Order: (contingent on FPGA bitMode***)
     # one-shot related fpga:
@@ -1711,10 +1713,10 @@ def mani_QuCTRL_access():
     else:
         corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
         ORACLE_STRUCT = [bufferkey]
+
     print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
-    
     # Extend C-Structure with R-Parameters & Buffer keys:
-    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
+    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
 
     # Structure & Addresses:
     c_QuCTRL_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \

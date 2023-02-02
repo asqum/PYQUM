@@ -4,9 +4,42 @@ from numpy import ndarray
 # Numpy array
 from numpy import array, append, zeros, ones, where, linspace
 # Numpy common math function
-from numpy import exp
+from numpy import exp,sqrt
 # Numpy constant
 from numpy import pi, logical_and
+# Scipy
+from scipy.special import erf
+
+
+# Gaussian Family
+def GaussianFamily (x, *p)->ndarray:
+    """
+    x: array like, shape (n,)\n
+    p: parameters\n
+        p[0]: amp\n
+        p[1]: sigma\n
+        p[2]: peak position\n
+        p[3]: shift term 
+    """
+    return p[0] *exp( -( (x-p[2]) /p[1] )**2 /2) + p[3]
+
+def derivativeGaussianFamily (x, *p)->ndarray:
+    """
+    x: array like, shape (n,)\n
+    p: parameters\n
+        p[0]: amp\n
+        p[1]: sigma\n
+        p[2]: peak position\n
+    """ 
+    if p[1] != 0. :
+        return -p[0] / p[1]**2 *(x-p[2]) *exp( -( (x-p[2]) /p[1] )**2 /2)
+    else :
+        return zeros(len(x))
+
+
+def ErfShifter(gatetime,sigma)->float:
+    
+    return -exp(-(gatetime**2)/(8*sigma**2))
 
 
 
@@ -19,6 +52,7 @@ def gaussianFunc (x, *p)->ndarray:
         p[2]: peak position\n
     """
     return p[0] *exp( -( (x-p[2]) /p[1] )**2 /2)
+
 def derivativeGaussianFunc (x, *p)->ndarray:
     """
     return derivative Gaussian
@@ -33,6 +67,44 @@ def derivativeGaussianFunc (x, *p)->ndarray:
         return -p[0] / p[1]**2 *(x-p[2]) *exp( -( (x-p[2]) /p[1] )**2 /2)
     else :
         return zeros(len(x))
+
+
+# 1223 append Hermite waveform
+# ref: PHYSICAL REVIEW B 68, 224518 (2003)
+
+def HermiteFunc(x, *p)->ndarray:
+    """
+    x: array like, shape (n,)\n
+    p: parameters\n
+        p[0]: A (1.67 recommended)\n
+        p[1]: alpha (4 recommended)\n
+        p[2]: beta (4 recommended)\n
+        p[3]: peak position (half gate time recommended)
+    """
+    tg = x[-1]-x[0]
+    # given in the reference
+    sigma = tg/(2*p[1])
+
+    return ((1-p[2]*((x-p[3])/(p[1]*sigma))**2)*p[0]*exp(-(x-p[3])**2/(2*sigma**2)))/sigma
+
+def derivativeHermiteFunc (x, *p)->ndarray:
+    """
+    return derivative Hermite
+    x: array like, shape (n,) \n
+    p: parameters \n
+        p[0]: A (1.67 recommended)\n
+        p[1]: alpha (4 recommended)\n
+        p[2]: beta (4 recommended)\n 
+        p[3]: peak position (half gate time recommended)
+    """
+    tg = x[-1]-x[0]
+    # given in the reference
+    sigma = tg/(2*p[1])
+    if tg != 0. :
+        return -(p[0]*(x-p[3])*(2*p[2]/p[1]**2+(1-p[2]*((x-p[3])/(p[1]*sigma))**2))*exp(-((x-p[3])**2)/(2*sigma**2)))/sigma**3
+    else :
+        return zeros(len(x))
+
 
 def constFunc (x, *p)->ndarray:
     """
@@ -97,15 +169,32 @@ def linearFunc (t, *p)->ndarray:
 
 def DRAGFunc ( t, *p )->ndarray:
     """
-    return gaussian +1j*derivative Gaussian\n
+    return gaussian -1j*derivative Gaussian\n
     x: array like, shape (n,), the element is complex number \n
     p[0]: amp \n
     p[1]: sigma \n
     p[2]: peak position \n
-    p[3]: derivative Gaussian amplitude ratio \n
+    p[3]: shift term\n
+    p[4]: derivative Gaussian amplitude ratio \n
     """
-    gaussParas = (p[0],p[1],p[2])
-    return gaussianFunc( t, *gaussParas ) -1j*p[3]*derivativeGaussianFunc( t, *gaussParas )
+    gaussParas = (p[0],p[1],p[2],p[3])
+    return GaussianFamily( t, *gaussParas ) -1j*p[4]*derivativeGaussianFamily( t, *gaussParas )
+
+
+# 1223 append DRAG with Hermite wavefor2
+def DRAGFunc_Hermite(t, *p )->ndarray:
+    """
+    return Hermite +1j*derivative Hermite\n
+    x: array like, shape (n,), the element is complex number \n
+    p[0]: A (1.67 recommended)\n
+    p[1]: alpha (4 recommended)\n
+    p[2]: beta (4 recommended)\n 
+    p[3]: peak position\n
+    p[4]: derivative Hermite amplitude ratio \n
+    """
+    HermiteParas = (p[0],p[1],p[2],p[3])
+    return HermiteFunc( t, *HermiteParas ) -1j*p[4]*derivativeHermiteFunc( t, *HermiteParas )
+
 
 if __name__ == '__main__':
     from numpy import linspace

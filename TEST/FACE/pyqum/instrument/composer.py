@@ -10,7 +10,9 @@ from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil,
 from pyqum.instrument.logger import get_status
 from pulse_signal.pulse import QAM 
 import pulse_signal.common_Mathfunc as cpf
-from pulseScript import give_waveformInfo
+
+from pulse_signal.pulseScript import give_waveformInfo
+
 
 # 0106 add 
 # give the total time,points consider in AWG limitations
@@ -130,6 +132,9 @@ class pulser:
         # save mixer information into self
         mixerInfo = give_mixerInfo(self.score)  # return dictionary
         self.iffreq = mixerInfo["IfFreq"]
+
+        self.IF_MHz_rotation = self.iffreq
+
         self.mixer_module = mixerInfo["Module"]
         self.ifChannel = mixerInfo["IfChannel"]
         self.mixerInfo = mixerInfo["Modifies"]
@@ -184,7 +189,7 @@ class pulser:
         '''
 
 
-        pulses = []
+        pulses = {}
         # 1. Baseband Shaping:
         for beat in self.score.replace(" ","").replace("\n","").lower().split(";")[1:]:
             if beat == '': break # for the last semicolon
@@ -198,7 +203,7 @@ class pulser:
             # groups in relative IF frequency
             if str(pulseAdjFrequency) not in pulses.keys():
                 pulses[str(pulseAdjFrequency)] = []
-           
+
             self.beatime += pulsewidth
 
             # 0105 add. Generate paras a pulse need like width, amplitude, function, phase,...  
@@ -241,17 +246,17 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-80/; Flat/,100,0; drag/4/0/0,100,0.5;',clock_multiples=1)
+    xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-91/; Flat/,100,0; drag/4/-0.8/0,100,0.5;',clock_multiples=1)
     xyi.song()
-    xyq = pulser(dt=.5,score='ns=500/1,mhz=Q/-80/; Flat/,100,0; drag/4/0/0,100,0.5;',clock_multiples=1)
+    xyq = pulser(dt=.5,score='ns=500/1,mhz=Q/-91/; Flat/,100,0; drag/4/-0.8/0,100,0.5;',clock_multiples=1)
     xyq.song()
 
     cz = pulser(dt=.5,score='ns=500;Flat/,100,0.5;',clock_multiples=1)
     cz.song()
 
-    roi = pulser(dt=.5,score='ns=500/1,mhz=I/-80/; Flat/,100,0; drag/4/0/90,100,0.25;',clock_multiples=1)
+    roi = pulser(dt=.5,score='ns=500/1,mhz=I/-29/; Flat/,40,0; gerp/,400,0.2;',clock_multiples=1)
     roi.song()
-    roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-80/; Flat/,100,0; drag/4/0/90,100,0.25;',clock_multiples=1)
+    roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-29/; Flat/,40,0; gerp/,400,0.2;',clock_multiples=1)
     roq.song()
 
     pulsedata = roi.music
@@ -272,7 +277,7 @@ if __name__ == "__main__":
     plot2 = plt.figure(2)
     plt.plot(xyi.timeline, xyi.music, label="xyi")
     plt.plot(xyq.timeline, xyq.music, label="xyq")
-    # plt.plot(cz.timeline, cz.music, label="z")
+    plt.plot(cz.timeline, cz.music, label="z")
     plt.plot(roi.timeline, roi.music, label="roi")
     plt.plot(roq.timeline, roq.music, label="roq")
     plt.title("AWG real output")
