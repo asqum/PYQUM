@@ -10,7 +10,9 @@ from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil,
 from pyqum.instrument.logger import get_status
 from pulse_signal.pulse import QAM 
 import pulse_signal.common_Mathfunc as cpf
+
 from pulse_signal.pulseScript import give_waveformInfo
+
 
 # 0106 add 
 # give the total time,points consider in AWG limitations
@@ -130,7 +132,9 @@ class pulser:
         # save mixer information into self
         mixerInfo = give_mixerInfo(self.score)  # return dictionary
         self.iffreq = mixerInfo["IfFreq"]
+
         self.IF_MHz_rotation = self.iffreq
+
         self.mixer_module = mixerInfo["Module"]
         self.ifChannel = mixerInfo["IfChannel"]
         self.mixerInfo = mixerInfo["Modifies"]
@@ -199,7 +203,7 @@ class pulser:
             # groups in relative IF frequency
             if str(pulseAdjFrequency) not in pulses.keys():
                 pulses[str(pulseAdjFrequency)] = []
-            
+
             self.beatime += pulsewidth
 
             # 0105 add. Generate paras a pulse need like width, amplitude, function, phase,...  
@@ -208,7 +212,6 @@ class pulser:
             new_pulse.adjFrequency = pulseAdjFrequency
                     
             pulses[str(pulseAdjFrequency)].append(new_pulse)   # group in dict by the relative frequency
-
 
         modulator = QAM( self.dt, self.totalpoints ) # 0106 added totalpoints
         wholeConnectEnvelope, Ichannel, Qchannel = self.relativeIF_compose(pulses,modulator)

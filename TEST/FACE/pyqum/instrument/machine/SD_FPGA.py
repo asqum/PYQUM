@@ -153,10 +153,10 @@ class SD_FPGA(keysightSD1.SD_AIN):
         """
         if self._FPGA & self.bitMode_AVE:
             print("config AVE")
-            self._DAQconfigAVE(CH, pt_per_shot, shots, trig_delay, trigger_mode)
+            self._DAQconfigAVE(CH, pt_per_shot, shots, int(trig_delay/5), trigger_mode)
         elif self._FPGA & self.bitMode_DDC:
             print("config DDC")
-            self._DAQconfigDDC(CH, pt_per_shot, shots, trig_delay, trigger_mode)
+            self._DAQconfigDDC(CH, pt_per_shot, shots, int(trig_delay/5), trigger_mode)
         else:
             error = self.DAQconfig(CH, pt_per_shot, shots, trig_delay, trigger_mode)
             if error != 0:
@@ -212,7 +212,7 @@ class SD_FPGA(keysightSD1.SD_AIN):
             elif Channel == 4:
                 status = self.regCh4State.readRegisterInt32()
             else:
-                raise ValueError(" incorrect channel settikng")
+                raise ValueError(" incorrect channel setting")
             tcheck = time.time()-tstart
         if tcheck >= timeout_in_s:
             raise RuntimeError("AVE status runtime error in channel:"+str(Channel))

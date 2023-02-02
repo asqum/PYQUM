@@ -1,4 +1,5 @@
-# region: Loading Modules
+# region
+# Loading Modules
 from pathlib import Path
 from colorama import init, Back, Fore
 init(autoreset=True) #to convert termcolor to wins color
@@ -66,7 +67,8 @@ class JSEncoder(json.JSONEncoder):
             return str(obj, encoding='utf-8');
         return json.JSONEncoder.default(self, obj)
 
-# region: PENDING: Some Tools for Fast Parallel Calculations:
+# region
+# PENDING: Some Tools for Fast Parallel Calculations:
 def scanner(a, b):
     for i in a:
         for j in b:
@@ -83,7 +85,8 @@ def worker(y_count,x_count,char_name="sqepulse"):
     return {'rI': rI, 'rQ': rQ, 'rA': rA, 'rP': rP}
 # endregion
     
-# region: Main
+# region
+# Main
 @bp.route('/')
 def show(status="Mission started"):
     # Filter out Stranger:
@@ -98,7 +101,8 @@ def show(status="Mission started"):
     return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 # endregion
 
-# region: ALL
+# region
+# ALL
 @bp.route('/all', methods=['GET'])
 def all(): 
     systemlist = [x['system'] for x in get_db().execute('SELECT system FROM queue').fetchall()]
@@ -244,7 +248,8 @@ def all_save_jobnote():
     return jsonify(message=message)
 # endregion
 
-# region: CHAR:
+# region
+# CHAR:
 @bp.route('/char', methods=['GET'])
 def char(): 
     print(Fore.BLUE + 'User %s is allowed to run measurement: %s'%(g.user['username'],session['run_clearance']))
@@ -253,7 +258,8 @@ def char():
     return render_template("blog/msson/char.html", samplename=samplename, people=session['people'])
 # endregion
 
-# region: CHAR -> 1. F-Response ============================================================================================================================================
+# region
+# CHAR -> 1. F-Response ============================================================================================================================================
 # FRESP Security layer:
 frespcryption = 'hfhajfjkafh'
 
@@ -546,7 +552,8 @@ def char_fresp_2ddata():
     return jsonify(message=message, x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 # endregion
 
-# region: CHAR -> 2. CW-Sweeping =============================================================================================================================================
+# region
+# CHAR -> 2. CW-Sweeping =============================================================================================================================================
 @bp.route('/char/cwsweep', methods=['GET'])
 def char_cwsweep(): 
     return render_template("blog/msson/char/cwsweep.html")
@@ -1044,7 +1051,8 @@ def char_cwsweep_2ddata():
     return jsonify(message=message, x=x, y=y, ZZA=ZZA, ZZP=ZZP, xtitle=xtitle, ytitle=ytitle)
 # endregion
 
-# region: CHAR -> 3. SQE-Pulsing =============================================================================================================================================
+# region
+# CHAR -> 3. SQE-Pulsing =============================================================================================================================================
 '''ACCESS ONLY'''
 @bp.route('/char/sqepulse', methods=['GET'])
 def char_sqepulse(): 
@@ -1397,7 +1405,8 @@ def char_sqepulse_2ddata():
     return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 # endregion
 
-# region: MANI:
+# region
+# MANI:
 @bp.route('/mani', methods=['GET'])
 def mani(): 
     print(Fore.BLUE + 'User %s is allowed to run measurement: %s'%(g.user['username'],session['run_clearance']))
@@ -1405,7 +1414,8 @@ def mani():
     return render_template("blog/msson/mani.html", samplename=samplename, people=session['people'])
 # endregion
 
-# region: MANI -> Qubit ConTRoL =============================================================================================================================================
+# region
+# MANI -> Qubit ConTRoL =============================================================================================================================================
 '''Complete Qubit Manipulation:
     1. Single_Qubit
     2. Qubits
@@ -1663,13 +1673,47 @@ def mani_QuCTRL_access():
     # Integrate R-Parameters back into C-Order:
     RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
     for k in RJSON.keys(): corder[k] = RJSON[k]
-    # Recombine Buffer back into C-Order:
-    if perimeter['READOUTYPE'] == 'one-shot': 
+    
+    # Determine BufferKey based on ReadoutType:
+    if perimeter['READOUTYPE'] in ['one-shot', 'rt-dualddc-int']: 
+
         bufferkey, buffer_resolution = 'RECORD-SUM', 1
     else: 
         if "TIME_RESOLUTION_NS" in perimeter.keys(): bufferkey, buffer_resolution = 'RECORD_TIME_NS', int(perimeter['TIME_RESOLUTION_NS'])
         else: bufferkey, buffer_resolution = 'RECORD_TIME_NS', 1
-    corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
+
+
+    # Recombine Buffer back into C-Order: (contingent on FPGA bitMode***)
+    # one-shot related fpga:
+    if perimeter['READOUTYPE'] in ['rt-dualddc-int']:
+        down_sample_factor = 5
+        buffer_length = round( round( int(perimeter['RECORD_TIME_NS']) / int(perimeter['TIME_RESOLUTION_NS']) ) / down_sample_factor )
+        step_size = int(perimeter['TIME_RESOLUTION_NS']) * down_sample_factor
+        print(Fore.CYAN + "FPGA-DDC-DownSampling DAQ to only: %s points" %buffer_length)
+        corder['RECORD_TIME_NS'] = "%s to %s * %s" %(step_size, int(perimeter['RECORD_TIME_NS']), buffer_length-1)
+        corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
+        ORACLE_STRUCT = ['RECORD_TIME_NS', bufferkey]
+    # averaged related fpga:
+    elif perimeter['READOUTYPE'] in ['rt-ave-singleddc']:
+        corder['_DDC_CH_'] = "I,Q,"
+        down_sample_factor = 5
+        buffer_length = round(round(int(perimeter[bufferkey])/int(buffer_resolution))/down_sample_factor)
+        step_size = int(buffer_resolution) * down_sample_factor
+        print(Fore.CYAN + "FPGA-DDC-DownSampling DAQ to only: %s points" %buffer_length)
+        corder[bufferkey] = "%s to %s * %s" %(step_size, int(perimeter[bufferkey]), buffer_length-1)
+        ORACLE_STRUCT = ['_DDC_CH_', bufferkey]
+    elif perimeter['READOUTYPE'] in ['rt-ave-dualddc', 'rt-ave-dualddc-int']:
+        down_sample_factor = 5
+        buffer_length = round(round(int(perimeter[bufferkey])/int(buffer_resolution))/down_sample_factor)
+        step_size = int(buffer_resolution) * down_sample_factor
+        print(Fore.CYAN + "FPGA-DDC-DownSampling DAQ to only: %s points" %buffer_length)
+        corder[bufferkey] = "%s to %s * %s" %(step_size, int(perimeter[bufferkey]), buffer_length-1)
+        ORACLE_STRUCT = [bufferkey]
+    # non-fpga:
+    else:
+        corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
+        ORACLE_STRUCT = [bufferkey]
+
     print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
     # Extend C-Structure with R-Parameters & Buffer keys:
     SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
@@ -1768,6 +1812,16 @@ def mani_QuCTRL_resetdata():
     return jsonify(message=message)
 
 # DATA PRESENTATION:
+def srange_conversion(buffer_corder, sample_time_range):
+    srange = []
+    time_range = array(waveform(buffer_corder).data)
+    for sample_time in sample_time_range: 
+        gradient_mode = False
+        if '@' in sample_time: sample_time, gradient_mode = sample_time.split('@')[1], True
+        closest_point = abs(time_range-int(sample_time)).argmin()
+        if gradient_mode: srange.append( '@%s' %(closest_point) )
+        else: srange.append( str(closest_point) )
+    return srange
 # Chart is supposedly shared by all measurements (under construction for multi-purpose)
 @bp.route('/mani/QuCTRL/1ddata', methods=['GET'])
 def mani_QuCTRL_1ddata():
@@ -1809,8 +1863,13 @@ def mani_QuCTRL_1ddata():
                 # PENDING: VECTORIZATION OR MULTI-PROCESS
                 selected_caddress[SQ_CParameters[session['user_name']].index(k)] = i # register x-th position
                 if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
-                    srange = request.args.get('srange').split(",") # sample range
-                    smode = request.args.get('smode') # sampling mode
+
+                    # Get indexes based on sampling time-range: 
+                    buffer_corder = M_QuCTRL[session['user_name']].corder['RECORD_TIME_NS']
+                    sample_time_range = request.args.get('srange').split(",")
+                    srange = srange_conversion(buffer_corder, sample_time_range)
+                    if not i: print(Fore.GREEN + "sample coordinates (srange): %s" %srange)
+                    smode = request.args.get('smode') # sampling option
                     Idata[i], Qdata[i], Adata[i], Pdata[i] = \
                         pulseresp_sampler(srange, selected_caddress, selectedata, c_QuCTRL_structure[session['user_name']], M_QuCTRL[session['user_name']].datadensity, mode=smode)
                 else:
@@ -1895,7 +1954,12 @@ def mani_QuCTRL_2ddata():
             for i in xsweep:
                 selected_caddress[SQ_CParameters[session['user_name']].index(selected_x)] = i # register x-th position
                 if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
-                    srange = request.args.get('srange').split(",") # sample range
+                    
+                    # Get indexes based on sampling time-range: 
+                    buffer_corder = M_QuCTRL[session['user_name']].corder['RECORD_TIME_NS']
+                    sample_time_range = request.args.get('srange').split(",")
+                    srange = srange_conversion(buffer_corder, sample_time_range)
+                    if not i: print(Fore.GREEN + "sample coordinates (srange): %s" %srange)
                     smode = request.args.get('smode') # sampling mode
                     Idata[j,i], Qdata[j,i], Adata[j,i], Pdata[j,i] = \
                         pulseresp_sampler(srange, selected_caddress, selectedata, c_QuCTRL_structure[session['user_name']], M_QuCTRL[session['user_name']].datadensity, mode=smode)
@@ -1942,7 +2006,8 @@ def mani_QuCTRL_2ddata():
 # endregion
 
 
-# region: benchmark
+# region
+# benchmark
 def get_measurementObject( measurementType ):
     print(Fore.GREEN + "TASK to BENCHMARK: %s" %(measurementType))
 

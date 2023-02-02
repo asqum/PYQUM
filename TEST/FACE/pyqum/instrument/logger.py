@@ -535,13 +535,20 @@ class measurement:
             if 'READOUTYPE' in self.perimeter.keys():
                 RJSON = loads(self.perimeter['R-JSON'].replace("'",'"'))
                 for k in RJSON.keys(): self.datasize = self.datasize * waveform(str(RJSON[k])).count
-                if self.perimeter['READOUTYPE'] == 'one-shot':
-                    self.datasize = self.datasize * int(self.perimeter['RECORD-SUM'])
-                else:
-                    # EXTRACT "TIME_RESOLUTION_NS" IF AVAILABLE: TOTAL_READ_POINTS = RECORD_TIME_NS / TIME_RESOLUTION_NS
-                    if 'TIME_RESOLUTION_NS' in self.perimeter.keys(): TIME_RESOLUTION_NS = int(self.perimeter['TIME_RESOLUTION_NS'])
-                    else: TIME_RESOLUTION_NS = 1 # backward-compatible with ALZDG's 1GSPS sampling-rate
-                    self.datasize = self.datasize * int(self.perimeter['RECORD_TIME_NS']) // TIME_RESOLUTION_NS
+                
+                # 1. EXTRACT "TIME_RESOLUTION_NS" IF AVAILABLE: TOTAL_READ_POINTS = RECORD_TIME_NS / TIME_RESOLUTION_NS
+                if 'TIME_RESOLUTION_NS' in self.perimeter.keys(): TIME_RESOLUTION_NS = int(self.perimeter['TIME_RESOLUTION_NS'])
+                else: TIME_RESOLUTION_NS = 1 # backward-compatible with ALZDG's 1GSPS sampling-rate
+
+                # 2. RESCALING CONTINGENT ON VARIOUS READOUTYPE:
+                if self.perimeter['READOUTYPE'] == 'one-shot': channel_branchout, down_sample_factor, readoutime_ns, shots = 1, 1, TIME_RESOLUTION_NS, int(self.perimeter['RECORD-SUM'])
+                elif self.perimeter['READOUTYPE'] == 'rt-dualddc-int': channel_branchout, down_sample_factor, readoutime_ns, shots = 1, 5, int(self.perimeter['RECORD_TIME_NS']), int(self.perimeter['RECORD-SUM'])
+                elif self.perimeter['READOUTYPE'] in ['rt-ave-singleddc']: channel_branchout, down_sample_factor, readoutime_ns, shots = 2, 5, int(self.perimeter['RECORD_TIME_NS']), 1
+                elif self.perimeter['READOUTYPE'] in ['rt-ave-dualddc', 'rt-ave-dualddc-int']: channel_branchout, down_sample_factor, readoutime_ns, shots = 1, 5, int(self.perimeter['RECORD_TIME_NS']), 1
+                else: channel_branchout, down_sample_factor, readoutime_ns, shots = 1, 1, int(self.perimeter['RECORD_TIME_NS']), 1
+
+                # 3. DATA-SIZE CONTRIBUTED BY READOUT:
+                self.datasize = self.datasize * readoutime_ns // TIME_RESOLUTION_NS // down_sample_factor * channel_branchout * shots
 
             print(Fore.YELLOW + "writtensize: %s, datasize: %s" %(self.writtensize/8, self.datasize))  
             self.data_progress = float(self.writtensize / (self.datasize*8) * 100)
