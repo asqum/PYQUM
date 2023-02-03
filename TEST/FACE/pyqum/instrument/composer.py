@@ -7,7 +7,6 @@ init(autoreset=True) #to convert termcolor to wins color
 from copy import copy
 from math import trunc, ceil
 from numpy import linspace, power, exp, array, zeros, sin, cos, pi, where, ceil, clip, empty, radians, nan, isnan, append, complex128
-from pyqum.instrument.logger import get_status
 from pulse_signal.pulse import QAM 
 import pulse_signal.common_Mathfunc as cpf
 
@@ -54,6 +53,7 @@ def give_mixerInfo(score):
                 lable_IF = mixerModule.split(ifChannel.lower())[1]
                 channel_I = mixerName+'i'+lable_IF
                 channel_Q = mixerName+'q'+lable_IF
+                from pyqum.instrument.logger import get_status
                 amp_I, phase_I, offset_I = [float(x) for x in get_status("MIXER")[channel_I].split("/")]
                 amp_Q, phase_Q, offset_Q = [float(x) for x in get_status("MIXER")[channel_Q].split("/")]
                 mixerInfo = (amp_I/amp_Q, phase_I-phase_Q, offset_I, offset_Q)
@@ -246,17 +246,17 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    xyi = pulser(dt=.5,score='ns=500/1,mhz=I/-91/; Flat/,100,0; drag/4/-0.8/0,100,0.5;',clock_multiples=1)
+    xyi = pulser(dt=.5,score='ns=600/1,mhz=I/-80/; GERP/,(100,100),1,0; ',clock_multiples=1)
     xyi.song()
-    xyq = pulser(dt=.5,score='ns=500/1,mhz=Q/-91/; Flat/,100,0; drag/4/-0.8/0,100,0.5;',clock_multiples=1)
+    xyq = pulser(dt=.5,score='ns=600/1,mhz=Q/-80/; GERP/,(100,100),1,0;',clock_multiples=1)
     xyq.song()
 
-    cz = pulser(dt=.5,score='ns=500;Flat/,100,0.5;',clock_multiples=1)
+    cz = pulser(dt=.5,score='ns=600;Flat/,100,0.5;',clock_multiples=1)
     cz.song()
 
-    roi = pulser(dt=.5,score='ns=500/1,mhz=I/-29/; Flat/,40,0; gerp/,400,0.2;',clock_multiples=1)
+    roi = pulser(dt=.5,score='ns=600/1,mhz=I/-40/; GAUSSUP/,(370,30),1,0; FLAT/,(400,100),1,0; GAUSSDN/,(500,30),1,0;  ',clock_multiples=1)
     roi.song()
-    roq = pulser(dt=.5,score='ns=500/1,mhz=Q/-29/; Flat/,40,0; gerp/,400,0.2;',clock_multiples=1)
+    roq = pulser(dt=.5,score='ns=600/1,mhz=Q/-40/; GAUSSUP/,(370,30),1,0; FLAT/,(400,100),1,0; GAUSSDN/,(500,30),1,0; ',clock_multiples=1)
     roq.song()
 
     pulsedata = roi.music

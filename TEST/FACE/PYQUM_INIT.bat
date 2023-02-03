@@ -86,13 +86,23 @@ if exist %config_FQPN% (
 
 	:: atsapi (normal installation, files are in MEGA)
 	ECHO Installing atsapi
-	:: DR1 pip install ..\..\..\..\MEGAsync\MANUALS\DAC_ADC\AlazarTech\SDK\Library
-	pip install ..\..\..\..\MEGA\MANUALS\DAC_ADC\AlazarTech\SDK\Library
+	set /p atsapi_path="atsapi package path: "
 
+	:: DR1 pip install ..\..\..\..\MEGAsync\MANUALS\DAC_ADC\AlazarTech\SDK\Library
+	if NOT "%atsapi_path%" == ""  (
+		pip install %atsapi_path%
+	) else (
+		echo Skip atsapi installation
+	)
 	:: keysightSD1 (normal installation, files are in MEGA)
 	ECHO Installing keysightSD1
+	set /p keysightSD1_path="keysightSD1 package path: "
 	:: DR1 pip install ..\..\..\..\MEGAsync\MANUALS\DAC_ADC\KeySight\keysightSD1_3
-	pip install ..\..\..\..\MEGA\MANUALS\DAC_ADC\KeySight\keysightSD1_3
+	if NOT "%askeysightSD1_pathdf%" == "" ( 
+		pip install %keysightSD1_path%
+	) else (
+		echo Skip keysightSD1 installation
+	)
 
 	:: PYQUM (editable installation, files are in PYQUM)
 	ECHO Installing PYQUM 101
