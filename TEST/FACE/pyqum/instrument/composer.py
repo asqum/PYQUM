@@ -13,90 +13,16 @@ import pulse_signal.common_Mathfunc as cpf
 from pulse_signal.pulseScript import give_waveformInfo
 
 
-# 0106 add 
-# give the total time,points consider in AWG limitations
-def give_timeInfo(score,dt,clock_multiples):
-    order = score.replace(" ","").replace("\n","").lower()
-    info = order.split(";")[0].split(",")[0].split('ns=')[1]
-    
-    totalpoints = int(clock_multiples) *int( -(int( -(float(info.split('/')[0]) //-dt))//-clock_multiples))
-    totaltime = totalpoints* dt
 
-    firstOperationIdx = None
-    if len(info.split('/'))==2:     # if sequenceSetting is not the form "500/1" ,ex: "500" only
-        firstOperationIdx = int(info.split('/')[1])
 
-    return {"OperateFirst":firstOperationIdx,"AWG_times":totaltime,"AWG_points":totalpoints}
-    
-# give the mixer informations 
-def give_mixerInfo(score):
-    order = score.replace(" ","").replace("\n","").lower()
-    info = order.split(";")[0].split(",")
-    try: mixerParams = info[1].split('mhz=')[1] # self.mix_params -> "i/-91/"
-    except(IndexError): mixerParams = "z/0/" # No Mixer setting
-    # IF Frequency
-    ifFreq = float(mixerParams.split("/")[1])
-    # mixer modulation
-    try: 
-        mixerModule = mixerParams.split("/")[2]  # self.mixer_module -> ""
-        if mixerModule=='' : mixerModule = "pure" # for the case where mhz=i/37/<empty>
-    except(IndexError): 
-        mixerModule = "pure" # "pure": "1/0/0" in json-configuration for MIXER
-    # If channel
-    ifChannel = mixerParams.split("/")[0]
-    # modify coef.
-    mixerInfo = None
-    match ifChannel:
-        case "i"|"q":
-            try:
-                mixerName = mixerModule.split(ifChannel.lower())[0]
-                lable_IF = mixerModule.split(ifChannel.lower())[1]
-                channel_I = mixerName+'i'+lable_IF
-                channel_Q = mixerName+'q'+lable_IF
-                from pyqum.instrument.logger import get_status
-                amp_I, phase_I, offset_I = [float(x) for x in get_status("MIXER")[channel_I].split("/")]
-                amp_Q, phase_Q, offset_Q = [float(x) for x in get_status("MIXER")[channel_Q].split("/")]
-                mixerInfo = (amp_I/amp_Q, phase_I-phase_Q, offset_I, offset_Q)
-            except:
-                mixerInfo = ( 1, 90, 0, 0 )
-        case "z":
-                mixerInfo = None
-        case _:
-                mixerInfo = None
-
-    return {"IfFreq":ifFreq,"Module":mixerModule,"IfChannel":ifChannel,"Modifies":mixerInfo}
-
-# give pulse information, width, amplitude, start time and adjFrequency included
-def give_pulseInfo(pulseDescribe,dt):
-    basicParas={"width":nan,"height":nan,"startTime":nan,"adjFrequency":nan}
-    idx = 0   # help to count 
-    for p in pulseDescribe.split(',')[1:]:
-        if p != '' :
-            match idx:
-                case 0:
-                    basicParas["startTime"] = float(p[1:])
-                case 1:
-                    basicParas["width"] = float(p[:-1])
-                case 2: 
-                    basicParas["height"] = float(p) 
-                case 3:
-                    basicParas["adjFrequency"] = float(p)
-        idx += 1
-
-    if isnan(basicParas["adjFrequency"]):
-        basicParas["adjFrequency"] = 0
-    
-    pulsePts = int(-(basicParas["width"]//-dt)) # -(100.0//-0.8) -int-> 125
-    basicParas["width"] = pulsePts*dt  # make the pulse width is complete waveform after AWG output
-    return basicParas
 
 
 # specify where the pulse component starts at , return the point
-def give_startPoint(starttime,clock_multiples,dt)->str:
-    if isnan(starttime):
+def give_startPoint(startTime,clock_multiples,dt)->str:
+    if startTime is None:
         StartPoint = ""
     else:
-        originStartPoint = -int(starttime // -dt)
+        originStartPoint = -int(startTime // -dt)
         StartPoint = str(int(clock_multiples) *int( -(originStartPoint //-clock_multiples) ))
     return StartPoint
 
@@ -121,25 +47,149 @@ class pulser:
         self.score = score
         self.dt = dt
         self.clock_multiples = clock_multiples
+        self.parse_SCORE(score)
 
-        # save time information into self
-        timeInfo = give_timeInfo(self.score,self.dt,self.clock_multiples)  # return dictionary
-        self.firstOperationIdx = timeInfo["OperateFirst"]
-        self.totalpoints = timeInfo["AWG_points"]
-        self.totaltime = timeInfo["AWG_times"]
         self.beatime, self.music, self.timeline = 0, zeros([self.totalpoints]), linspace( 0, self.totaltime, self.totalpoints, endpoint=False)
 
+
+
+    def parse_SCORE( self, score ):
+        formatScore = score.replace(" ","").replace("\n","").lower().split(";")
+        header = formatScore[0]
+        self.header = header
+        if len(formatScore) > 1 :
+            self.beats = formatScore[1:-1]
+
+        headerInfo = {
+           "ns": self.give_timeInfo,
+           "mhz": self.give_SSBInfo
+        }
+        for h in headerInfo.items():
+            setting = h[0]
+            label = f"{h[0]}="
+            try:
+                infoString = header.split(label)[1].split(",")[0]
+            except:
+                infoString = None
+                print(f"{setting} is not defined.")
+
+            settingFunc = h[1]
+            settingFunc(infoString)
+
+        # # save time information into self
+        # timeInfo = self.give_timeInfo()  # return dictionary
+
+
+
         # save mixer information into self
-        mixerInfo = give_mixerInfo(self.score)  # return dictionary
-        self.iffreq = mixerInfo["IfFreq"]
+        # mixerInfo = self.give_mixerInfo()  # return dictionary
 
+    # 0106 add 
+    def give_timeInfo( self, headerTime ):
+        """
+        give the total time,points consider in AWG limitations
+        """
+        info = headerTime
+        dt = self.dt
+        clock_multiples = self.clock_multiples
+        totalpoints = int(clock_multiples) *int( -(int( -(float(info.split('/')[0]) //-dt))//-clock_multiples))
+        totaltime = totalpoints* dt
+
+        firstOperationIdx = None
+        if len(info.split('/'))==2:     # if sequenceSetting is not the form "500/1" ,ex: "500" only
+            firstOperationIdx = int(info.split('/')[1])
+        
+        timeInfo = {
+            "OperateFirst":firstOperationIdx,
+            "AWG_time":totaltime,
+            "AWG_points":totalpoints
+        }
+
+        self.firstOperationIdx = timeInfo["OperateFirst"]
+        self.totalpoints = timeInfo["AWG_points"]
+        self.totaltime = timeInfo["AWG_time"]
+        return timeInfo
+        
+    def give_SSBInfo( self, headerSSB  ):
+        """
+        parse the mixer informations 
+        """
+        print(headerSSB)
+        # IF Frequency
+        if headerSSB == None:
+            ifChannel = "z"
+            ifFreq = 0
+
+        else:
+            ifChannel = headerSSB.split("/")[0]
+            ifFreq = float(headerSSB.split("/")[1])
+        # mixer modulation
+        try: 
+            mixerModule = headerSSB.split("/")[2]  # self.mixer_module -> ""
+            if mixerModule=='' : mixerModule = "pure" # for the case where mhz=i/37/<empty>
+        except: 
+            mixerModule = "pure" # "pure": "1/0/0" in json-configuration for MIXER
+        # If channel
+
+        # modify coef.
+        mixerInfo = None
+        match ifChannel:
+            case "i"|"q":
+                try:
+                    mixerName = mixerModule.split(ifChannel.lower())[0]
+                    lable_IF = mixerModule.split(ifChannel.lower())[1]
+                    channel_I = mixerName+'i'+lable_IF
+                    channel_Q = mixerName+'q'+lable_IF
+                    from pyqum.instrument.logger import get_status
+                    amp_I, phase_I, offset_I = [float(x) for x in get_status("MIXER")[channel_I].split("/")]
+                    amp_Q, phase_Q, offset_Q = [float(x) for x in get_status("MIXER")[channel_Q].split("/")]
+                    mixerInfo = (amp_I/amp_Q, phase_I-phase_Q, offset_I, offset_Q)
+                except:
+                    mixerInfo = ( 1, 90, 0, 0 )
+            case "z":
+                    mixerInfo = None
+            case _:
+                    mixerInfo = None
+
+        ssbInfo = {
+            "IfFreq":ifFreq,
+            "Module":mixerModule,
+            "IfChannel":ifChannel,
+            "Modifies":mixerInfo
+        }
+
+        self.iffreq = ssbInfo["IfFreq"]
         self.IF_MHz_rotation = self.iffreq
+        self.mixer_module = ssbInfo["Module"]
+        self.ifChannel = ssbInfo["IfChannel"]
+        self.mixerInfo = ssbInfo["Modifies"]
 
-        self.mixer_module = mixerInfo["Module"]
-        self.ifChannel = mixerInfo["IfChannel"]
-        self.mixerInfo = mixerInfo["Modifies"]
+        return ssbInfo
 
-    def relativeIF_compose(self, pulses, modulator):
+    # give pulse information, width, amplitude, start time and adjFrequency included
+    def give_pulseInfo( self, description:str ):
+        basicParas={"width":None,"height":None,"startTime":None,"adjFrequency":None}
+        idx = 0   # help to count
+        dt = self.dt
+        paras = description.split(',')
+        if len(description.split('(')) == 2:
+            timeParas = description.split("(")[1].split(")")[0].split(',')
+            basicParas["startTime"] = float(timeParas[0])
+            basicParas["width"] = float(timeParas[1])
+            basicParas["height"] = float(paras[3]) 
+            basicParas["adjFrequency"] = float(paras[4])
+        else:    
+            basicParas["width"] = float(paras[1])
+            basicParas["height"] = float(paras[2])
+
+        if basicParas["adjFrequency"] is None:
+            basicParas["adjFrequency"] = 0
+        pulsePts = int(-(basicParas["width"]//-dt)) # -(100.0//-0.8) -int-> 125
+        basicParas["width"] = pulsePts*dt  # make the pulse width is complete waveform after AWG output
+        return basicParas
+
+
+    def relativeIF_compose(self, pulses, modulator:QAM):
         '''
         This function is the core of song(). Due to the different relative IF frequency,\n
         there is a different way to compose SSB (Single Sideband).\n
@@ -191,11 +241,10 @@ class pulser:
 
         pulses = {}
         # 1. Baseband Shaping:
-        for beat in self.score.replace(" ","").replace("\n","").lower().split(";")[1:]:
-            if beat == '': break # for the last semicolon
+        for beat in self.beats:
             
             # basic para include pulse width and hight
-            pulseInfo = give_pulseInfo(beat,self.dt)
+            pulseInfo = self.give_pulseInfo( beat )
             pulsewidth = pulseInfo["width"] # width and height must have value. If not, it will be nan.
             pulseheight = pulseInfo["height"]
             pulseStartPoint = give_startPoint(pulseInfo["startTime"],self.clock_multiples,self.dt) # return string
@@ -246,17 +295,23 @@ class pulser:
 # print("%sns music:\n%s" %(abc.totaltime, abc.music))
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    xyi = pulser(dt=.5,score='ns=600/1,mhz=I/-80/; GERP/,(100,100),1,0; ',clock_multiples=1)
+
+    # score='GERP/,(100,100),1,0'
+    # score='GERP/,1,0'
+
+    # print(float("A"))
+    
+    xyi = pulser(dt=.5,score='ns=600/1,mhz=I/-80/; GERP/,100,0.1; GAUSS/,100,0.1; FLAT/,100,0.1;',clock_multiples=1)
     xyi.song()
-    xyq = pulser(dt=.5,score='ns=600/1,mhz=Q/-80/; GERP/,(100,100),1,0;',clock_multiples=1)
+    xyq = pulser(dt=.5,score='ns=600/1,mhz=Q/-80/; GERP/,100,0.1; GAUSS/,100,0.1; FLAT/,100,0.1;',clock_multiples=1)
     xyq.song()
 
     cz = pulser(dt=.5,score='ns=600;Flat/,100,0.5;',clock_multiples=1)
     cz.song()
 
-    roi = pulser(dt=.5,score='ns=600/1,mhz=I/-40/; GAUSSUP/,(370,30),1,0; FLAT/,(400,100),1,0; GAUSSDN/,(500,30),1,0;  ',clock_multiples=1)
+    roi = pulser(dt=.5,score='ns=600/1,mhz=I/-40/; GERP/,(100,100),0.1,0; GAUSS/,(150,100),0.1,0; FLAT/,(200,100),0.1,0;',clock_multiples=1)
     roi.song()
-    roq = pulser(dt=.5,score='ns=600/1,mhz=Q/-40/; GAUSSUP/,(370,30),1,0; FLAT/,(400,100),1,0; GAUSSDN/,(500,30),1,0; ',clock_multiples=1)
+    roq = pulser(dt=.5,score='ns=600/1,mhz=Q/-40/; GERP/,(100,100),0.1,0; GAUSS/,(150,100),0.1,0; FLAT/,(200,100),0.1,0;',clock_multiples=1)
     roq.song()
 
     pulsedata = roi.music
@@ -283,4 +338,4 @@ if __name__ == "__main__":
     plt.title("AWG real output")
     plt.legend()
     plt.show()
-
+    

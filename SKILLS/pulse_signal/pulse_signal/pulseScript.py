@@ -36,14 +36,14 @@ def give_waveformInfo(beat,width,height)->dict:
             if isnan(paraList[0]): sfactor = 4
             else: sfactor = paraList[0]
             carrierPhase = 0
-            func_paras = [height, width*2/sfactor, 0,0]
+            func_paras = [height, width*2/sfactor, width,0]
 
         case "gaussdn":
             pulse_func = cpf.GaussianFamily
             if isnan(paraList[0]): sfactor = 4
             else: sfactor = paraList[0]
             carrierPhase = 0
-            func_paras = [height, width*2/sfactor, width, 0]
+            func_paras = [height, width*2/sfactor, 0, 0]
 
 
         case "drage":   # waveform with ErfGaussian
