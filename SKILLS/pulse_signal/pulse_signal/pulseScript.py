@@ -50,13 +50,13 @@ def give_waveformInfo(beat,width,height)->dict:
             pulse_func = cpf.DRAGFunc
             if len(paraList)==1:
                 sfactor = 4
-                dRatio = -0.69
+                dRatio = 0
                 rotAxis = 0
 
             else:
                 if isnan(paraList[0]): sfactor = 4
                 else: sfactor = paraList[0]
-                if isnan(paraList[1]): dRatio = -0.69
+                if isnan(paraList[1]): dRatio = 0
                 else: dRatio = paraList[1]
                 if isnan(paraList[2]): rotAxis = 0
                 else: rotAxis = radians(paraList[2])
@@ -93,12 +93,12 @@ def give_waveformInfo(beat,width,height)->dict:
             pulse_func = cpf.DRAGFunc
             if len(paraList)==1:
                 sfactor = 4
-                dRatio = 1
+                dRatio = 0
                 rotAxis = 0
             else:
                 if isnan(paraList[0]): sfactor = 4
                 else: sfactor = paraList[0]
-                if isnan(paraList[1]): dRatio = 1
+                if isnan(paraList[1]): dRatio = 0
                 else: dRatio = paraList[1]
                 if isnan(paraList[2]): rotAxis = 0
                 else: rotAxis = radians(paraList[2])
