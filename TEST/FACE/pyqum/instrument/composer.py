@@ -208,9 +208,11 @@ class pulser:
                 signal_i, signal_q, LO_freq = modulator.SSB( IFfreq,leakage_sup=True, envelope_RF=pulse_signal,IQMixer=self.mixerInfo )
                 Ichannel.append(signal_i)
                 Qchannel.append(signal_q)
+            totalI = sum(Ichannel)
+            totalQ = sum(Qchannel)
         else:        # with adjust IF frequency , all SSB() -> sum -> leakage suppress
             envelopes, connected = {}, {}
-            
+            print("More than one IF freq")
             if self.mixerInfo != None:
                 from pulse_signal.digital_mixer import leakage_suppress
                 for IFadj in list(pulses.keys()):   # a relative frequency may contain many pulses
@@ -219,16 +221,14 @@ class pulser:
                     components, pulse_signal = modulator.give_RFIFDict(pulses[IFadj])   # 0107 added: Do first on the pulses with specified start time
                     envelopes[IFadj].append(components)   # pulses envelopes group in relative freq
                     connected[IFadj] = pulse_signal        # whole connected envelope groups in relative freq
-
                 for IFadj in list(connected.keys()):
                     IFfreq = (self.iffreq + float(IFadj))/1e3
                     wholeConnectSequence += connected[IFadj]
                     i, q, LO_freq = modulator.SSB( IFfreq,leakage_sup=False,envelope_RF=connected[IFadj] ,IQMixer=self.mixerInfo )
-                    signal_i, signal_q = leakage_suppress( i, q, IQMixer=self.mixerInfo )
-                    Ichannel.append(signal_i)
-                    Qchannel.append(signal_q)
-
-        return wholeConnectSequence, sum(Ichannel), sum(Qchannel)
+                    Ichannel.append(i)
+                    Qchannel.append(q)
+                totalI, totalQ = leakage_suppress( sum(Ichannel), sum(Qchannel), IQMixer=self.mixerInfo )
+        return wholeConnectSequence, totalI, totalQ
 
     def song(self):
         '''
@@ -309,17 +309,17 @@ if __name__ == "__main__":
     cz = pulser(dt=.5,score='ns=600;Flat/,100,0.5;',clock_multiples=1)
     cz.song()
 
-    roi = pulser(dt=.5,score='ns=600/1,mhz=I/-40/; GERP/,(100,100),0.1,0; GAUSS/,(150,100),0.1,0; FLAT/,(200,100),0.1,0;',clock_multiples=1)
+    roi = pulser(dt=.5,score='ns=600/1,mhz=I/-40/roosi0; FLAT/,(100,100),0.1,0; FLAT/,(100,200),0.1,-25;',clock_multiples=1)
     roi.song()
-    roq = pulser(dt=.5,score='ns=600/1,mhz=Q/-40/; GERP/,(100,100),0.1,0; GAUSS/,(150,100),0.1,0; FLAT/,(200,100),0.1,0;',clock_multiples=1)
+    roq = pulser(dt=.5,score='ns=600/1,mhz=Q/-40/roosq0; FLAT/,(100,100),0.1,0; FLAT/,(100,200),0.1,-25;',clock_multiples=1)
     roq.song()
 
     pulsedata = roi.music
     shrinkage = 3
-    first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][0], where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][-1]
-    print(first_rising_edge, last_falling_edge)
-    last_falling_edge = first_rising_edge + int(ceil((last_falling_edge - first_rising_edge)/shrinkage))
-    print(first_rising_edge, last_falling_edge)
+    # first_rising_edge, last_falling_edge = where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][0], where(ceil(abs(pulsedata-pulsedata[-1]))==1)[0][-1]
+    # print(first_rising_edge, last_falling_edge)
+    # last_falling_edge = first_rising_edge + int(ceil((last_falling_edge - first_rising_edge)/shrinkage))
+    # print(first_rising_edge, last_falling_edge)
     
     plot1 = plt.figure(1)
     plt.plot(xyi.timeline, xyi.envelope, label="xyx")
