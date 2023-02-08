@@ -17,9 +17,6 @@ $(document).ready(function(){
 });
 
 // Global variables:
-window.f_size = 24;
-window.L_width = 3.8;
-window.gap_size = 24;
 window.mani_TASK = "";
 window.selecteday = '';
 window.VdBm_selector = 'select.mani.data.QuCTRL#QuCTRL-1d-VdBm';
@@ -182,9 +179,6 @@ function accessdata_QuCTRL() {
                 if ( data.pdata[cparam].length > 1) {
                     $('select.mani.QuCTRL#' + cparam).append($('<option>', { text: 'X-ALL', value: 'x' })).append($('<option>', { text: 'X-COUNT', value: 'xc' }))
                         .append($('<option>', { text: 'SAMPLE', value: 's' })).append($('<option>', { text: 'Y-ALL', value: 'y' }));
-                    if ( i==SQ_CParameters.length-1 && SQ_CParameters[i]=='RECORD_TIME_NS' ) {
-                        $('select.mani.QuCTRL#' + cparam).val('s');
-                    };
                 };
                 // 2.2 Loading Constant Values:
                 var max_selection = 1001; // to speed up loading process, entries per request is limited.
@@ -218,10 +212,8 @@ function accessdata_QuCTRL() {
         console.log("Progress: " + data_progress);
 
         // 6. Loading Perimeters for NEW RUN:
-        // 6.0 Predefined Perimeters:
+        // 6.0 Predefined Perimeters (PENDING: TO BE MACED SOON):
         $.each(QuCTRL_Perimeters, function(i,perimeter) { $('.mani.config.QuCTRL#' + perimeter).val(data.perimeter[perimeter]); });
-        if ($('.mani.config.QuCTRL#READOUTYPE').val().includes("ddc")) { $('.mani.config.QuCTRL#DIGIHOME').hide(); 
-        } else { $('.mani.config.QuCTRL#DIGIHOME').show(); };
         // 6.1 SCORE-JSON Perimeter:
         $.each(CH_Matrix.DAC, function(i,channel_set) {
             $.each(channel_set, function(j,channel) {
@@ -321,33 +313,29 @@ function plot1D_QuCTRL(x,y1,y2,y3,y5,VdBm_selector,xtitle,mode='lines') {
         legend: {x: 1.08},
         height: $(window).height()*0.8,
         width: $(window).width()*0.7,
-        // margin: {t:20,r:0,b:0,l:10},
         xaxis: {
-            automargin: true,
             zeroline: false,
-            title: { text: xtitle, standoff: gap_size },
-            titlefont: {size: f_size},
-            tickfont: {size: f_size},
-            tickwidth: L_width,
-            linewidth: L_width 
+            title: xtitle,
+            titlefont: {size: 18},
+            tickfont: {size: 18},
+            tickwidth: 3,
+            linewidth: 3 
         },
         yaxis: {
-            automargin: true,
             zeroline: false,
-            title: { text: '<b>Signal(' + yunit + ')</b>', standoff: gap_size },
-            titlefont: {size: f_size},
-            tickfont: {size: f_size},
-            tickwidth: L_width,
-            linewidth: L_width,
+            title: '<b>Signal(' + yunit + ')</b>',
+            titlefont: {size: 18},
+            tickfont: {size: 18},
+            tickwidth: 3,
+            linewidth: 3,
         },
         yaxis2: {
-            automargin: true,
             zeroline: false,
-            title: { text: '<b>$UFN-Phase(\\frac{rad}{\\Delta x})$</b>', standoff: gap_size },
-            titlefont: {color: 'rgb(148, 103, 189)', size: f_size}, 
-            tickfont: {color: 'rgb(148, 103, 189)', size: f_size},
-            tickwidth: L_width,
-            linewidth: L_width, 
+            title: '<b>$UFN-Phase(\\frac{rad}{\\Delta x})$</b>', 
+            titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
+            tickfont: {color: 'rgb(148, 103, 189)', size: 18},
+            tickwidth: 3,
+            linewidth: 3, 
             overlaying: 'y', 
             side: 'right'
         },
@@ -371,7 +359,7 @@ function plot1D_QuCTRL(x,y1,y2,y3,y5,VdBm_selector,xtitle,mode='lines') {
     Plotly.newPlot('mani-QuCTRL-chart', Trace, layout, {showSendToCloud: true});
     $( "i.QuCTRL1d" ).remove(); //clear previous
 };
-function compare1D_QuCTRL(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_selector,y1q=[],y2q=[]) {
+function compare1D_QuCTRL(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_selector) {
     // V or dBm
     y1 = VdBm_Conversion(y1, VdBm_selector)['y']; 
     y2 = VdBm_Conversion(y2, VdBm_selector); 
@@ -392,17 +380,13 @@ function compare1D_QuCTRL(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_selec
         name: 'Subtracted',
         line: {color: 'grey', width: 2.5},
         yaxis: 'y2' };
-    let traceS_IQ = {x: [], y: [], mode: 'lines', type: 'scatter', 
-        name: 'IQ-Separation',
-        line: {color: 'green', width: 2.5},
-        yaxis: 'y2' };
     
     let layout = {
         legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
-        xaxis: { automargin: true, zeroline: false, title: {text:xtitle,standoff:gap_size}, titlefont: {size: f_size}, tickfont: {size: f_size}, tickwidth: L_width, linewidth: L_width },
-        yaxis: { automargin: true, zeroline: false, title: {text:'<b>Signal(' + yunit + ')</b>',standoff:gap_size}, titlefont: {size: f_size}, tickfont: {size: f_size}, tickwidth: L_width, linewidth: L_width },
-        yaxis2: { automargin: true, zeroline: false, title: {text:'<b>Difference(V)</b>',standoff:gap_size}, titlefont: {color: 'Grey', size: f_size}, 
-            tickfont: {color: 'grey', size: f_size}, tickwidth: L_width, linewidth: L_width, overlaying: 'y', side: 'right' },
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis: { zeroline: false, title: '<b>Signal(' + yunit + ')</b>', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis2: { zeroline: false, title: '<b>Difference(V)</b>', titlefont: {color: 'Grey', size: 18}, 
+            tickfont: {color: 'grey', size: 18}, tickwidth: 3, linewidth: 3, overlaying: 'y', side: 'right' },
         title: ''
         };
     
@@ -419,41 +403,18 @@ function compare1D_QuCTRL(x1,y1,x2,y2,normalize=false,direction='dip',VdBm_selec
     // Original
     $.each(x1, function(i, val) {traceA.x.push(val);});
     $.each(y1, function(i, val) {traceA.y.push(val);});
-    if (y1q.length>0) {
-        $.each(x1, function(i, val) {traceA.x.push(val);});
-        $.each(y1q, function(i, val) {traceA.y.push(val);});
-        traceA.name += "-IQ";
-        traceA.mode = "markers";
-        traceA.mode.marker = {symbol: 'circle', size: 3.7, color: 'blue'}
-    };
     // Compared
     $.each(x2, function(i, val) {traceB.x.push(val);});
     $.each(y2, function(i, val) {traceB.y.push(val);});
-    if (y2q.length>0) {
-        $.each(x2, function(i, val) {traceB.x.push(val);});
-        $.each(y2q, function(i, val) {traceB.y.push(val);});
-        traceB.name += "-IQ";
-        traceB.mode = "markers";
-        traceB.mode.marker = {symbol: 'circle', size: 3.7, color: 'red'}
-    };
     // Subtracted:
-    if (y1q.length==0) {
-        $.each(x2, function(i, val) { traceS.x.push(val); });
-        $.each(y2, function(i, val) { traceS.y.push(y1[i]-y2[i]); });
-    }
-    // Subverted IQ:
-    if (y1q.length>0) {
-        $.each(x2, function(i, val) { traceS_IQ.x.push(val); });
-        $.each(y2, function(i, val) { traceS_IQ.y.push( Math.sqrt( (y1[i]-y2[i])**2 + (y1q[i]-y2q[i])**2 ) ); });
-        let message = ("Maximum IQ-separation: " + Math.max.apply(null,traceS_IQ.y) + " at " + traceS_IQ.x[ traceS_IQ.y.indexOf( Math.max.apply(null,traceS_IQ.y) ) ]);
-        $('div#mani-QuCTRL-announcement').empty().append($('<h4 style="color: green;"></h4>').text(message));
-    };
+    $.each(x2, function(i, val) { traceS.x.push(val); });
+    $.each(y2, function(i, val) { traceS.y.push(y1[i]-y2[i]); });
     
-    var Trace = [traceA, traceB, traceS, traceS_IQ]
+    var Trace = [traceA, traceB, traceS]
     Plotly.newPlot('mani-QuCTRL-chart', Trace, layout, {showSendToCloud: true});
     $( "i.QuCTRL1d" ).remove(); //clear previous
 };
-function plot2D_QuCTRL(x,y,ZZ,x_title,ytitle,plotype,mission,colorscal,VdBm_selector) {
+function plot2D_QuCTRL(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,VdBm_selector) {
     // V or dBm
     YConv = VdBm_Conversion(y, VdBm_selector); 
     y = YConv['y'];
@@ -466,9 +427,9 @@ function plot2D_QuCTRL(x,y,ZZ,x_title,ytitle,plotype,mission,colorscal,VdBm_sele
     
     let layout = {
         legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
-        xaxis: { automargin: true, zeroline: false, title: {text:String(x_title),standoff:gap_size}, titlefont: {size: f_size}, tickfont: {size: f_size}, tickwidth: L_width, linewidth: L_width, mirror: true },
-        yaxis: { automargin: true, zeroline: false, title: {text:ytitle + '{' + yunit + '}',standoff:gap_size}, titlefont: {size: f_size}, tickfont: {size: f_size}, tickwidth: L_width, linewidth: L_width, mirror: true },
-        title: '', annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom', text: "", font: {size: f_size}, showarrow: false, textangle: 0 }] };
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        yaxis: { zeroline: false, title: ytitle + '{' + yunit + '}', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        title: '', annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom', text: "", font: {size: 18}, showarrow: false, textangle: 0 }] };
 
     // Data GROOMING:
     // 1. Normalization along x-axis (dip)
@@ -533,7 +494,7 @@ function plot2D_QuCTRL(x,y,ZZ,x_title,ytitle,plotype,mission,colorscal,VdBm_sele
     var Trace = [trace];
     Plotly.newPlot('mani-' + mission + '-chart', Trace, layout, {showSendToCloud: true});
 };
-function Compare2D_QuCTRL(x,y,ZZ,ZZ2,xtitle,ytitle,plotype,mission,colorscal,VdBm_selector,ZZq=[],ZZ2q=[]) {
+function Compare2D_QuCTRL(x,y,ZZ,ZZ2,xtitle,ytitle,plotype,mission,colorscal,VdBm_selector) {
     // V or dBm
     YConv = VdBm_Conversion(y, VdBm_selector); 
     y = YConv['y'];
@@ -546,9 +507,9 @@ function Compare2D_QuCTRL(x,y,ZZ,ZZ2,xtitle,ytitle,plotype,mission,colorscal,VdB
     
     let layout = {
         legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
-        xaxis: { automargin: true, zeroline: false, title: {text:String(xtitle),standoff:gap_size}, titlefont: {size: f_size}, tickfont: {size: f_size}, tickwidth: L_width, linewidth: L_width, mirror: true },
-        yaxis: { automargin: true, zeroline: false, title: {text:ytitle + '{' + yunit + '}',standoff:gap_size}, titlefont: {size: f_size}, tickfont: {size: f_size}, tickwidth: L_width, linewidth: L_width, mirror: true },
-        title: '', annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom', text: "", font: {size: f_size}, showarrow: false, textangle: 0 }] };
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        yaxis: { zeroline: false, title: ytitle + '{' + yunit + '}', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+        title: '', annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom', text: "", font: {size: 18}, showarrow: false, textangle: 0 }] };
 
     // Data GROOMING:
     // 1. Normalization along x-axis (dip)
@@ -594,13 +555,8 @@ function Compare2D_QuCTRL(x,y,ZZ,ZZ2,xtitle,ytitle,plotype,mission,colorscal,VdB
     };
         
     // Compare 1st & 2nd ZZ:
-    if (ZZq.length==0) {
-        var ZZC = [];
-        $.each(ZZ, function(i, Z) { var Zrow = []; $.each(Z, function(j, z) { var zc = z - ZZ2[i][j]; Zrow.push(zc); }); ZZC.push(Zrow); });
-    } else { // IQ-Separation: Math.sqrt( (y1[i]-y2[i])**2 + (y1q[i]-y2q[i])**2 )
-        var ZZC = [];
-        $.each(ZZ, function(i, Z) { var Zrow = []; $.each(Z, function(j, z) { var zc = Math.sqrt( (z - ZZ2[i][j])**2 + (ZZq[i][j] - ZZ2q[i][j])**2 ); Zrow.push(zc); }); ZZC.push(Zrow); });
-    };
+    var ZZC = [];
+    $.each(ZZ, function(i, Z) { var Zrow = []; $.each(Z, function(j, z) { var zc = z - ZZ2[i][j]; Zrow.push(zc); }); ZZC.push(Zrow); });
 
     // Pushing Data into TRACE:
     $.each(x, function(i, val) {trace.x.push(val);}); $.each(y, function(i, val) {trace.y.push(val);});
@@ -638,24 +594,22 @@ function compareIQ_QuCTRL(x1,y1,x2,y2,mission="QuCTRL") {
         height: $(window).height()*0.6,
         width: $(window).width()*0.6,
         xaxis: {
-            automargin: true, 
             range: [-maxscal, maxscal],
             zeroline: true,
-            title: {text: "I", standoff: gap_size},
-            titlefont: {size: f_size},
-            tickfont: {size: f_size},
+            title: "I",
+            titlefont: {size: 18},
+            tickfont: {size: 18},
             tickwidth: 3,
             zerolinewidth: 3.5,
             gridcolor: 'rgb(159, 197, 232)',
             zerolinecolor: 'grey',
         },
         yaxis: {
-            automargin: true, 
             range: [-maxscal, maxscal],
             zeroline: true,
-            title: {text:"Q", standoff: gap_size},
-            titlefont: {size: f_size},
-            tickfont: {size: f_size},
+            title: "Q",
+            titlefont: {size: 18},
+            tickfont: {size: 18},
             tickwidth: 3,
             zerolinewidth: 3.5,
             gridcolor: 'rgb(159, 197, 232)',
@@ -670,7 +624,7 @@ function compareIQ_QuCTRL(x1,y1,x2,y2,mission="QuCTRL") {
             y: 1.05,
             yanchor: 'bottom',
             text: '',
-            font: {size: f_size},
+            font: {size: 18},
             showarrow: false,
             textangle: 0
           }]
@@ -699,8 +653,8 @@ function plot_pulses(X,Y,xtitle='sample-point#',mode='lines') {
     
     let layout = {
         legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
-        xaxis: { automargin: true, zeroline: false, title: {text:xtitle, standoff:gap_size}, titlefont: {size: f_size}, tickfont: {size: f_size}, tickwidth: L_width, linewidth: L_width },
-        yaxis: { automargin: true, zeroline: false, title: {text:'<b>Normalized DAC-Output</b>', standoff:gap_size}, titlefont: {size: f_size}, tickfont: {size: f_size}, tickwidth: L_width, linewidth: L_width, },
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
+        yaxis: { zeroline: false, title: '<b>Normalized DAC-Output</b>', titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, },
         title: '',
         };
 
@@ -722,7 +676,6 @@ $('.modal-toggle.manage.QuCTRL').on('click', function(e) {
 $('.modal-toggle.data-reset.QuCTRL').on('click', function(e) {
     e.preventDefault();
     $('.modal.data-reset.QuCTRL').toggleClass('is-visible');
-    $('.modal.manage.QuCTRL').toggleClass('is-visible');
 });
 
 // SURFING through CH & MAC selection:
@@ -813,11 +766,6 @@ $('.mani.config.QuCTRL').on('change', function() {
     $('input.QuCTRL.setchannels.check').hide();
     $('input.mani#QuCTRL-run').hide();
     $('div.QuCTRL.settingstatus').empty().append($('<h4 style="color: red;"></h4>').text("!!! VALUES CHANGED !!!"));
-});
-// 0.1. Hide "Digital Homodyne" selector if FPGA-DDC-ish selected in "Readout TYPE":
-$('.mani.config.QuCTRL#READOUTYPE').on('change', function() {
-    if ($(this).val().includes("ddc")) { $('.mani.config.QuCTRL#DIGIHOME').hide(); 
-    } else { $('.mani.config.QuCTRL#DIGIHOME').show(); };
 });
 // 1. Check ADC TIMSUM:
 $('input.QuCTRL.adc-timsum.check').bind('click', function() {
@@ -1136,7 +1084,6 @@ $('input.mani#QuCTRL-run').on('touchend click', function(event) {
 // Click to resume measurement (PENDING: Error(s) to be fixed)
 $(function () {
     $('button.mani#QuCTRL-resume').on('touchend click', function(event) {
-        $('.modal.manage.QuCTRL').toggleClass('is-visible');
         eventHandler(event, $(this)); // Prevent phantom clicks from touch-click.
         setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 160);
         setTimeout(() => { $('button.tablinks#ALL-tab').trigger('click'); }, 120);
@@ -1266,7 +1213,6 @@ $(function () {
                                                                 .append($('<option>', { text: 'In-plane', value: 'I' }))
                                                                 .append($('<option>', { text: 'Quadrature', value: 'Q' }))
                                                                 .append($('<option>', { text: 'Phase', value: 'P' }))
-                                                                .append($('<option>', { text: 'IQ-Separation', value: 'IQ_Separation' }))
                                                                 .append($('<option>', { text: 'IQ-Plot', value: 'IQ' }));
             
             compare1D_QuCTRL(x,y[$('select.mani.data.QuCTRL#QuCTRL-compare-iqap').val()],xC,yC[$('select.mani.data.QuCTRL#QuCTRL-compare-iqap').val()],normalize,direction,VdBm_selector);
@@ -1283,8 +1229,6 @@ $('.mani.data.QuCTRL.compare').on('change', function() {
     direction = $('select.mani.data.QuCTRL#QuCTRL-compare-nml').val().split('normal')[1];
     if ($('select.mani.data.QuCTRL#QuCTRL-compare-iqap').val()=="IQ") {
         compareIQ_QuCTRL(y["I"],y["Q"],yC["I"],yC["Q"]);
-    } else if ($('select.mani.data.QuCTRL#QuCTRL-compare-iqap').val()=="IQ_Separation") {
-        compare1D_QuCTRL(x,y["I"],xC,yC["I"],normalize,direction,VdBm_selector,y["Q"],yC["Q"]);
     } else {
         compare1D_QuCTRL(x,y[$('select.mani.data.QuCTRL#QuCTRL-compare-iqap').val()],xC,yC[$('select.mani.data.QuCTRL#QuCTRL-compare-iqap').val()],normalize,direction,VdBm_selector);
     };
@@ -1331,8 +1275,7 @@ $(function () {
             window.ytitle = data.ytitle;
             // Amplitude (default) or Phase
             $('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').empty().append($('<option>', { text: 'Amp', value: 'Amp' })).append($('<option>', { text: 'Pha', value: 'Pha' }))
-                                                                .append($('<option>', { text: 'I', value: 'I' })).append($('<option>', { text: 'Q', value: 'Q' }))
-                                                                .append($('<option>', { text: 'IQ-Sep', value: 'IQ_Sep' }));
+                                                                .append($('<option>', { text: 'I', value: 'I' })).append($('<option>', { text: 'Q', value: 'Q' }));
             // Data grooming
             $('select.mani.data.QuCTRL#QuCTRL-2d-type').empty().append($('<option>', { text: 'direct', value: 'direct' }))
                 .append($('<option>', { text: 'normalYdip', value: 'normalYdip' })).append($('<option>', { text: 'normalYpeak', value: 'normalYpeak' }))
@@ -1385,22 +1328,21 @@ $('div.2D select.mani.data.QuCTRL').on('change', function() {
                 VdBm_selector2);
         };
     } else {
-        if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "Amp") {var ZZ = ZZA; var ZZ2 = ZZA2; var ZZq = []; var ZZ2q = []; }
-        else if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "Pha") {var ZZ = ZZUP; var ZZ2 = ZZUP2; var ZZq = []; var ZZ2q = []; }
-        else if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "I") {var ZZ = ZZI; var ZZ2 = ZZI2; var ZZq = []; var ZZ2q = []; }
-        else if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "Q") {var ZZ = ZZQ; var ZZ2 = ZZQ2; var ZZq = []; var ZZ2q = []; }
-        else if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "IQ_Sep") {var ZZ = ZZI; var ZZ2 = ZZI2; var ZZq = ZZQ; var ZZ2q = ZZQ2; };
+        if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "Amp") {var ZZ = ZZA; var ZZ2 = ZZA2; }
+        else if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "Pha") {var ZZ = ZZUP; var ZZ2 = ZZUP2; }
+        else if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "I") {var ZZ = ZZI; var ZZ2 = ZZI2; }
+        else if ($('select.mani.data.QuCTRL#QuCTRL-2d-iqamphase').val() == "Q") {var ZZ = ZZQ; var ZZ2 = ZZQ2; };
 
         if ($('select.mani.data.QuCTRL#QuCTRL-2d-direction').val() == "rotate") {
             Compare2D_QuCTRL(Y, X, transpose(ZZ), transpose(ZZ2), ytitle, xtitle, 
                 $('select.mani.data.QuCTRL#QuCTRL-2d-type').val(),'QuCTRL',
                 $('select.mani.data.QuCTRL#QuCTRL-2d-colorscale').val(),
-                VdBm_selector2, ZZq, ZZ2q);
+                VdBm_selector2);
         } else {
             Compare2D_QuCTRL(X, Y, ZZ, ZZ2, xtitle, ytitle, 
                 $('select.mani.data.QuCTRL#QuCTRL-2d-type').val(),'QuCTRL',
                 $('select.mani.data.QuCTRL#QuCTRL-2d-colorscale').val(),
-                VdBm_selector2, ZZq, ZZ2q);
+                VdBm_selector2);
         };
     }
     
@@ -1526,7 +1468,7 @@ $('input.QuCTRL.notification').click( function(){
 
     if (Day != null) {
         // Digesting Day & Moment on the back:
-        $.when( listimes_QuCTRL() ).then(function () { accessdata_QuCTRL(); }).fail(function () { accessdata_QuCTRL(); });
+        $.when( listimes_QuCTRL() ).done(function () { accessdata_QuCTRL(); });
     };
     
     // Setting Day & Moment on the front:

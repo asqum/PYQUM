@@ -690,12 +690,8 @@ $('input.notification#F_Response_notification').click( function(){
     // Setting global Day & Moment index:
     wday = DAYLIST.length - 1 - DAYLIST.indexOf(Day);
     wmoment = Moment;
-
-    if (Day != null) {
-        // Digesting Day & Moment on the back:
-        $.when( listimes_fresp() ).then(function () { accessdata_fresp(); }).fail(function () { accessdata_fresp(); });
-    };
-    
+    // Digesting Day & Moment on the back:
+    $.when( listimes_fresp() ).done(function () { accessdata_fresp(); });
     // Setting Day & Moment on the front:
     $('select.char.fresp[name="wday"]').val(wday);
     setTimeout(() => {

@@ -223,16 +223,3 @@ $(document).on('click', 'button.plusButton-interow', function() {
     console.log("Going FORWARD");
 });
 
-// Customized up-down selection of multiple parameters on the Missions:
-$(document).on('click', 'button.up_select', function() {
-    var select_element = $( 'select.char.cwsweep.parameter#c-' + $('select.char.cwsweep.parameter#cwsweep-parameters').val() );
-    var selIndex = select_element.prop('selectedIndex');
-    if (selIndex != 0) { select_element.val(select_element.children('option').eq(selIndex - 1).val()); };
-    select_element.trigger("change");
-});
-$(document).on('click', 'button.down_select', function() {
-    var select_element = $( 'select.char.cwsweep.parameter#c-' + $('select.char.cwsweep.parameter#cwsweep-parameters').val() );
-    var selIndex = select_element.prop('selectedIndex');
-    if (selIndex != select_element.children('option').length - 1) { select_element.val(select_element.children('option').eq(selIndex + 1).val()); };
-    select_element.trigger("change");
-});

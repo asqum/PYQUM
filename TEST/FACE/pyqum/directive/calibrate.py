@@ -52,7 +52,7 @@ def Update_DAC(daca, ifreq, IQparams, IF_period, IF_scale, mixer_module, channel
         pulseq = pulser(dt=dt, clock_multiples=1, score=SCORE_DEFINED['CH%s'%channel])
         pulseq.song()
 
-        DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, marker, dict(PINSW=False)) # ODD for PIN-SWITCH, EVEN for TRIGGER; RO-TRIGGER: 1: ALZDG, 2: MXA; XY-TRIGGER: 1: MXA, 2: SCOPE
+        DAC.compose_DAC(daca, int(channel), pulseq.music, pulseq.envelope, marker, dict(PINSW=True)) # ODD for PIN-SWITCH, EVEN for TRIGGER; RO-TRIGGER: 1: ALZDG, 2: MXA; XY-TRIGGER: 1: MXA, 2: SCOPE
     DAC.ready(daca)
     sleep(0.73) # wait for trigger to complete MXA measurement
 
@@ -100,7 +100,7 @@ class IQ_Cal:
         global SG, DAC, SA
         self.mode = mixer_module[:2].upper()
         # Wiring configurations:
-        if 'SDAWG' in iqcal_config['DA']: iqcal_config.update(dict(XY={'marker':0, 'trigger':1}, RO={'marker':0, 'trigger':2})) # dict(XY={'marker':7, 'trigger':1}, RO={'marker':7, 'trigger':2})
+        if 'SDAWG' in iqcal_config['DA']: iqcal_config.update(dict(XY={'marker':7, 'trigger':1}, RO={'marker':7, 'trigger':2}))
         else: iqcal_config.update(dict(XY={'marker':1, 'trigger':1}, RO={'marker':2, 'trigger':2}))
         self.iqcal_config = iqcal_config
         # Carrier LO:
@@ -142,7 +142,7 @@ class IQ_Cal:
         for ch in range(2):
             channel = int(ch + channels_group)
             # PENDING: AVOID HAVING "MARKER=7" TWICE: IT WILL HAVE RESEND ERROR POPPING UP!
-            DAC.compose_DAC(self.daca, channel, pulseq.music, pulseq.envelope, self.iqcal_config[self.mode]['marker'], dict(PINSW=False)) # we don't need marker yet initially
+            DAC.compose_DAC(self.daca, channel, pulseq.music, pulseq.envelope, self.iqcal_config[self.mode]['marker'], dict(PINSW=True)) # we don't need marker yet initially
         # Turn on all 4 channels:
         DAC.alloff(self.daca, action=['Set',0])
         DAC.ready(self.daca)
