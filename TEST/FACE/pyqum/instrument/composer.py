@@ -57,9 +57,10 @@ class pulser:
         formatScore = score.replace(" ","").replace("\n","").lower().split(";")
         header = formatScore[0]
         self.header = header
+        self.beats = []
         if len(formatScore) > 1 :
             self.beats = formatScore[1:-1]
-
+        
         headerInfo = {
            "ns": self.give_timeInfo,
            "mhz": self.give_SSBInfo
@@ -210,6 +211,10 @@ class pulser:
                 Qchannel.append(signal_q)
             totalI = sum(Ichannel)
             totalQ = sum(Qchannel)
+        elif len(pulses.keys()) == 0 :
+            totalI = wholeConnectSequence
+            totalQ = wholeConnectSequence
+
         else:        # with adjust IF frequency , all SSB() -> sum -> leakage suppress
             envelopes, connected = {}, {}
             print("More than one IF freq")
