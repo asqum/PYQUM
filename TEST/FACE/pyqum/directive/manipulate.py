@@ -173,7 +173,6 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     # 1a. Instruments' specs:
     TIME_RESOLUTION_NS = int(perimeter['TIME_RESOLUTION_NS'])
     CLOCK_HZ = float(perimeter['CLOCK_HZ'])
-    FPGA = 0
     # 1b. DSP perimeter(s)
     digital_homodyne = perimeter['DIGIHOME']
     ifreqcorrection_kHz = float(perimeter['IF_ALIGN_KHZ'])
@@ -185,7 +184,6 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     recordsum = int(perimeter['RECORD-SUM'])
     recordtime_ns = int(perimeter['RECORD_TIME_NS']) # min:1280ns, step:128ns
     readoutype = perimeter['READOUTYPE']
-    if readoutype in ["rt-wfm-ave"]: FPGA = 1
     # 1d. SCORE-, MACE- & R-JSON perimeters:
     SCORE_TEMPLATE = perimeter['SCORE-JSON'] # already a DICT
     MACE_TEMPLATE = perimeter['MACE-JSON'] # already a DICT
@@ -317,12 +315,10 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     update_items = dict( triggerDelay_sec=trigger_delay_ns*1e-9, TOTAL_POINTS=TOTAL_POINTS, NUM_CYCLES=recordsum, PXI=-13, FPGA=FPGA ) # HARDWIRED to receive trigger from the front-panel EXT.
     ADC.ConfigureBoard(adca, update_items)
     
-
     # Buffer-size for lowest-bound data-collecting instrument:
     if readoutype in ['one-shot']: # along record sum (for fidelity measurement)
         buffersize = recordsum * 2 # data-density of 2 due to IQ
-        print("Buffer-size: %s" %buffersize)
-    elif readoutype in ["continuous", "rt-wfm-ave"]: # along record time (default, FPGA-enhanced)
+    elif readoutype in ["continuous", "rt-wfm-ave"]: # along record time
         buffersize = TOTAL_POINTS * 2 # data-density of 2 due to IQ
 
     elif readoutype in ['rt-ave-singleddc']: # along record time
@@ -499,10 +495,6 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 print(Fore.GREEN + 'Waveform from DAC-%s (%s) is Ready!'%(i_slot_order+1, instr['DAC'][i_slot_order]))
                 # input("STAGE-3 TEST ON RB, PRESS ENTER TO PROCEED: ")
                 
-            # Basic Readout (Buffer Every-loop):
-            # ADC 
-            DATA = ADC.AcquireData(adca, recordtime_ns*1e-9, recordsum, update_settings=dict(FPGA=FPGA) )[0]
-            # POST PROCESSING
             try:
 
                 # Basic ADC Readout (Buffer Every-loop):
@@ -545,10 +537,16 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         # record_succession = outer(linspace(1+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)), ones(2)).reshape([round(TOTAL_POINTS/5)*2])
                         # DATA = divide(DATA, record_succession)
                     
-                    if FPGA==1: DATA = ( DATA.reshape([TOTAL_POINTS*2]) ) / recordsum # average was done on FPGA (real-time)
-                    else: DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0) # average was done on CPU
-
-                    if digital_homodyne != "original": 
+                    # Managing output data based on FPGA bitMode***:
+                    if FPGA == adca.bitMode_Keysight:
+                        DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0) # average was done on CPU
+                    elif FPGA == adca.bitMode_AVE:
+                        DATA = ( DATA.reshape([TOTAL_POINTS*2]) ) / recordsum # average was done on FPGA (real-time)
+                    elif FPGA in [adca.bitMode_AVE_SingleDDC]:
+                        DATA = ( DATA.reshape([round(TOTAL_POINTS/5)*4]) ) / recordsum # average + single-DDC was done on FPGA (real-time)
+                    
+                    # DDC on CPU:
+                    if (digital_homodyne != "original") and not (FPGA & adca.bitMode_DDC): 
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
                         trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
                         DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string

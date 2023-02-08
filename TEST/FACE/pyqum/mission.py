@@ -1715,8 +1715,9 @@ def mani_QuCTRL_access():
         ORACLE_STRUCT = [bufferkey]
 
     print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
+    
     # Extend C-Structure with R-Parameters & Buffer keys:
-    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
+    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
 
     # Structure & Addresses:
     c_QuCTRL_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \
