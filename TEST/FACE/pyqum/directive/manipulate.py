@@ -478,10 +478,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     if (i_slot_order==0) and ("SDAWG" in DAC_type[i_slot_order]): marker = 7 # ONLY 1st DAC outputs marker via CH-4 to trigger ADC for RO
                     else: marker = 2 # for compatibility with TKAWG (outputs 2 markers for each channel)
 
-                    print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr['DAC'][i_slot_order]} CHANNEL {ch} {i_slot_order} {channel_set}")
 
                     DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), CH_Pulse_SEQ, [], marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
-                    print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr['DAC'][i_slot_order]} CHANNEL {ch}")
+                    print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr['DAC'][i_slot_order]} CHANNEL {ch} {i_slot_order} {channel_set}")
 
                     # Clear ADC memory after each fist-slot-channel's Waveform RELOAD:
                     if FPGA:
@@ -536,14 +535,6 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         # prepare denominator:
                         # record_succession = outer(linspace(1+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)), ones(2)).reshape([round(TOTAL_POINTS/5)*2])
                         # DATA = divide(DATA, record_succession)
-                    
-                    # Managing output data based on FPGA bitMode***:
-                    if FPGA == adca.bitMode_Keysight:
-                        DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0) # average was done on CPU
-                    elif FPGA == adca.bitMode_AVE:
-                        DATA = ( DATA.reshape([TOTAL_POINTS*2]) ) / recordsum # average was done on FPGA (real-time)
-                    elif FPGA in [adca.bitMode_AVE_SingleDDC]:
-                        DATA = ( DATA.reshape([round(TOTAL_POINTS/5)*4]) ) / recordsum # average + single-DDC was done on FPGA (real-time)
                     
                     # DDC on CPU:
                     if (digital_homodyne != "original") and not (FPGA & adca.bitMode_DDC): 
