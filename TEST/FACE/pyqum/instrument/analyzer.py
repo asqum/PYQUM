@@ -215,7 +215,7 @@ def pulse_baseband(method, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorre
 	
 	try: 
 		processing_data.process_DownConversion(rotation_compensate_MHz/1e3 + ifreqcorrection_kHz/1e6) # in GHz (ns timescale)
-		if method == "dual_digital_homodyne": processing_data.process_LowPass(4,0.05)
+		# if method == "dual_digital_homodyne": processing_data.process_LowPass(4,0.05) Jacky:Should be remove
 	except: print(Fore.RED + "INVALID DH METHOD")
 
 	trace_I = processing_data.signal[0]
