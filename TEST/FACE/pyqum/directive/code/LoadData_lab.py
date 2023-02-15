@@ -238,7 +238,7 @@ def jobid_search_pyqum(id):
     name = user[user['id']==name_id]['username'].iloc[0]
     sample_name = sample[sample['id']==sample_id]['samplename'].iloc[0]
     mission = queue[queue['system']==queue_name]['mission'].iloc[0]
-    pyqum_path = r"C:\Users\ASQUM\HODOR\CONFIG\USRLOG\%s\%s\%s\%s\%s.pyqum(%d)"%(name,sample_name,mission,dateday,task,wmoment)
+    pyqum_path = r"C:\Users\ASQUM\HODOR\CONFIG\USRLOG\%s\%s\%s\%s\%s.pyqum(%s)"%(name,sample_name,mission,dateday,task,wmoment)
     print("Path : ",pyqum_path)
     return pyqum_path,task
 

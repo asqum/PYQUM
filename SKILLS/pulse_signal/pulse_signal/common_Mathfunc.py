@@ -38,8 +38,11 @@ def derivativeGaussianFamily (x, *p)->ndarray:
 
 
 def ErfShifter(gatetime,sigma)->float:
-    
-    return -exp(-(gatetime**2)/(8*sigma**2))
+
+    if sigma != 0. :
+        return -exp(-(gatetime**2)/(8*sigma**2))
+    else :
+        return 0  
 
 
 

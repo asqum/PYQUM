@@ -1105,18 +1105,18 @@ class CavitySearch:
         
     def give_region(self,peak_list):
         for tip_freq in peak_list: 
-            freq = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Frequency']
-            amp = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Amplitude']
-            pha = self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['UPhase']
+            freq = array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Frequency'])
+            amp = array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['Amplitude'])
+            pha = array(self.info['Comparison_fig'][self.info['Comparison_fig']['Frequency'].between(tip_freq-0.015,tip_freq+0.015)]['UPhase'])
             
             amp_tip_idx,FWHM_amp_idx = peak_info(amp,self.info['p2p_freq'])  # unit: GHz
             pha_tip_idx,FWHM_pha_idx = peak_info(pha,self.info['p2p_freq'])
             avg_tip_idx = 0.5*(array(freq)[amp_tip_idx]+array(freq)[pha_tip_idx])
             max_FWHM = max([FWHM_amp_idx,FWHM_pha_idx])*self.info['p2p_freq']
-            amp_start = amp[amp_tip_idx] - 3.5*max_FWHM
-            amp_end = amp[amp_tip_idx] + 3.5*max_FWHM
-            pha_start = pha[pha_tip_idx] - 3.5*max_FWHM
-            pha_end = pha[pha_tip_idx] + 3.5*max_FWHM
+            amp_start = freq[amp_tip_idx] - 5*max_FWHM
+            amp_end = freq[amp_tip_idx] + 5*max_FWHM
+            pha_start = freq[pha_tip_idx] - 5*max_FWHM
+            pha_end = freq[pha_tip_idx] + 5*max_FWHM
 
             self.region['%d MHz'%(avg_tip_idx*1000)] = [min([amp_start,pha_start]),max([amp_end,pha_end])]
         self.final_answer = self.region
@@ -1439,13 +1439,14 @@ class QubitFreq_Compa:
         
 
       
-def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot"):
+def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot",ifb="100"):
     # Check user's current queue status:
     if session['run_clearance']:
         print(comment)
         wday = int(-1)
         sparam = sparam   #S-Parameter
-        ifb = "100"     #IF-Bandwidth (Hz)
+        ifb = ifb     #IF-Bandwidth (Hz)
+
         freq = freq #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
@@ -1470,12 +1471,12 @@ def char_cwsweep_new(sparam,freq,powa,flux,f_bare,f_dress,dcsweepch = "1",commen
         print(comment)
         wday = int(-1)
         sparam = sparam   #S-Parameter
-        ifb = "30"     #IF-Bandwidth (Hz)
+        ifb = "60"     #IF-Bandwidth (Hz)
         freq = freq  #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
         xyfreq = "{} to {} * 300".format(f_qubit-1.5,f_qubit+1.5)#"OPT,"
-        xypowa = "-10 -20 -30 r 10"#"OPT,"
+        xypowa = "-10 -20 r 10"#"OPT,"
         PERIMETER = {"dcsweepch":dcsweepch, "z-idle":'{}', 'sg-locked': '{}', "sweep-config":'{"sweeprate":0.0001,"pulsewidth":1001e-3,"current":0}'} # DC=YOKO
         CORDER = {'Flux-Bias':fluxbias, 'XY-Frequency':xyfreq, 'XY-Power':xypowa, 'S-Parameter':sparam, 'IF-Bandwidth':ifb, 'Frequency':freq, 'Power':powa}
         comment = comment.replace("\"","")+str(CORDER) #comment
@@ -1504,7 +1505,7 @@ class Quest_command:
         else: pass
     
     def cavitysearch(self,add_comment=""):
-        jobid = char_fresp_new(sparam=self.sparam,freq = "3 to 9 *10000",powa = "0",flux = "OPT,",dcsweepch = "1",comment = "By bot - step1 cavitysearch "+add_comment)
+        jobid = char_fresp_new(sparam=self.sparam,freq = "4 to 8 *10000",powa = "0",flux = "OPT,",dcsweepch = "1",comment = "By bot - step1 cavitysearch "+add_comment)
         print('JOBID: ',jobid)
         return jobid
     def powerdepend(self,select_freq,add_comment=""):
@@ -1512,7 +1513,7 @@ class Quest_command:
         print('check PD freq_range: ',freq_command)
         if (select_freq[0]>12) | (select_freq[1]>12) | (select_freq[0]<2) | (select_freq[1]<2):
             raise ValueError("Frequency is out of range with "+freq_command)
-        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-70 to -10 * 13",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment)
+        jobid = char_fresp_new(sparam=self.sparam,freq=freq_command,powa = "-60 to 10 * 14",flux = "OPT,",dcsweepch = "1",comment = "By bot - step2 power dependent"+add_comment,ifb="20")
         return jobid
     def fluxdepend(self,select_freq,select_powa,dc_ch,add_comment=""):
         freq_command = "{} to {} *200".format(select_freq[0],select_freq[1])
@@ -1686,7 +1687,9 @@ class AutoScan1Q:
         samplename = get_status("MSSN")[session['user_name']]['sample']
         # samplename = "2QAS-19-3"
         specifications = sample[sample['samplename']==samplename]['specifications'].iloc[0]
-        if specifications != "":
+        
+        if specifications is not None:
+            print("### specifications: ",specifications)
             spec_dict = ast.literal_eval(specifications)
             step_list = spec_dict["step"].split("-")
             if where == "PD":
@@ -1717,10 +1720,10 @@ class AutoScan1Q:
                 record_dict["step"] = "1-1_50%"
                 self.write_specification(record_dict)
             else:
-                jobid = record_dict["JOBIDs"]["CavitySearch"]
+                jobid = int(record_dict["JOBIDs"]["CavitySearch"])
             plot_ornot = 0
         else:
-            jobid = jobid_check   
+            jobid = int(jobid_check)   
             speci,_ = self.read_specification()
 
             if speci != {}:

@@ -735,6 +735,7 @@ def settings(datadensity=1):
                         print(Fore.GREEN + "NEW JOB REGISTERED")
                     print(Fore.BLUE + "NEW DAY DETECTED")
                 elif dayindex == -3: # TEMP FILE
+                    # print(Fore.RED + "@@@@@TEMP FILE@@@@@")
                     pass
                 elif dayindex >= 0: # RESUME from previous stopped File => (1 file, 1 job)
                     day = M.daylist[dayindex]
@@ -749,6 +750,7 @@ def settings(datadensity=1):
                 print(Fore.YELLOW + "Queueing IN")
                 while True:
                     jobsinqueue(queue)
+                    
                     # 2.1. Get out in the middle of waiting:
                     if JOBID not in g.queue_jobid_list:
                         M.status = "M-JOB CANCELLED OR NOT QUEUED IN PROPERLY"
@@ -848,7 +850,9 @@ def jobsinqueue(queue):
         db = get_db()
         g.queue_jobid_list = db.execute("SELECT job_id FROM %s ORDER BY id"%queue).fetchall()
         close_db()
+        # print(Fore.RED +str(g.queue_jobid_list))
         g.queue_jobid_list = [dict(x)['job_id'] for x in g.queue_jobid_list] # use to scheduling tasks in queue
+        
         status = "JOBID-LIST in QUEUE has been extracted"
     else: status = "Measurement clearance was not found"
     return status
@@ -866,6 +870,7 @@ def qin(queue,jobid):
         except:
             status = "Error Queueing in with JOBID #%s" %jobid
     else: status = "Measurement clearance was not found"
+    # print(Fore.RED +status)
     return status
 def qout(queue,jobid,username):
     '''Queue out without a Job'''
@@ -920,11 +925,16 @@ def jobin(task,corder,perimeter,instr,comment,tag):
         try:
             db = get_db()
             samplename = get_status("MSSN")[session['user_name']]['sample']
+            # print(Fore.RED +"samplename"+str(samplename))
             queue = get_status("MSSN")[session['user_name']]['queue']
+            # print(Fore.RED +"queue"+str(queue))
+            # print(Fore.RED +str(type(queue)))
             sample_id = db.execute('SELECT s.id FROM sample s WHERE s.samplename = ?', (samplename,)).fetchone()[0]
-            cursor = db.execute('INSERT INTO job (user_id, sample_id, task, parameter, perimeter, instrument, comment, tag, queue) VALUES (?,?,?,?,?,?,?,?,?)', 
-                                        (g.user['id'],sample_id,task,str(corder),str(perimeter),str(instr),comment,tag,queue))
-            JOBID = cursor.lastrowid
+            # print(Fore.RED +"id"+str(sample_id))
+            
+            cursor = db.execute('INSERT INTO job (user_id, sample_id, task, parameter, perimeter, instrument, comment, tag, queue) VALUES (?,?,?,?,?,?,?,?,?)', (g.user['id'],sample_id,task,str(corder),str(perimeter),str(instr),comment,tag,queue))
+            JOBID = cursor.lastrowid   # error
+            # print(JOBID)
             db.commit() # to avoid database-lock in the event of pending write-changes
             perimeter['jobid'] = JOBID
             # sleep(0.317)

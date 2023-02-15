@@ -212,8 +212,8 @@ class pulser:
             totalI = sum(Ichannel)
             totalQ = sum(Qchannel)
         elif len(pulses.keys()) == 0 :
-            totalI = wholeConnectSequence
-            totalQ = wholeConnectSequence
+            totalI = zeros(self.totalpoints)
+            totalQ = zeros(self.totalpoints)
 
         else:        # with adjust IF frequency , all SSB() -> sum -> leakage suppress
             envelopes, connected = {}, {}

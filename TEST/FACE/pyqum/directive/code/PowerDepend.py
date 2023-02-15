@@ -55,9 +55,9 @@ def outlier_detect(data,label):
     class0_label ,class1_label = 0,2
     label = class1_label* label
     iteration = 3
-    threshold = 1.5
+    threshold = 1.75
     IQR_end = 0.006
-    upquantile,lowquantile=.4,.6
+    upquantile,lowquantile=.45,.55
     for i in range(iteration):
         Q1_0 = quantile(data[:,1][label==class0_label],upquantile)
         Q3_0 = quantile(data[:,1][label==class0_label],lowquantile)
