@@ -19,6 +19,7 @@ import pulse_signal.common_Mathfunc as cpf
 # 0106 added : full time with envelope signal and other append zero
 def pulse_extend(envelope,startPoint,totalPoints)->ndarray:
     beforePulse = zeros(startPoint)
+    print(envelope.shape[0],startPoint,totalPoints)
     if envelope.shape[0]+startPoint <= totalPoints:
         afterPulse = zeros(totalPoints-envelope.shape[0]-startPoint)
     else:
@@ -203,7 +204,7 @@ class QAM():
                         envelope_RF += extended_envelope
                         
                 except(ValueError):  # envelope_RF is all zero, start from the first point 
-                    startPoint = 1
+                    startPoint = 0
                     extended_envelope = pulse_extend(new_envelope,startPoint,totalPoints)
                     envelope_RF += extended_envelope
                     
