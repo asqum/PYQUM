@@ -1446,7 +1446,6 @@ def char_fresp_new(sparam,freq,powa,flux,dcsweepch = "1",comment = "By bot",ifb=
         wday = int(-1)
         sparam = sparam   #S-Parameter
         ifb = ifb     #IF-Bandwidth (Hz)
-
         freq = freq #Frequency (GHz)
         powa = powa    #Power (dBm)
         fluxbias = flux   #Flux-Bias (V/A)
@@ -1754,13 +1753,16 @@ class AutoScan1Q:
 
         
     
-    def powerdepend(self,cavity_freq,jobid_check):
+    def powerdepend(self,cavity_freq,jobid_check,mode):
         cav_MHz = cavity_freq.split("-")[0]
         cav_label = cavity_freq.split("-")[-1]
         if jobid_check == "":
             record_dict,_ = self.read_specification(where="PD")
             if cav_MHz not in record_dict["JOBIDs"]["PowerDepend"].keys():
-                jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cav_MHz],add_comment="with Cavity "+str(cav_MHz))
+                if mode != "Qubits":
+                    jobid = Quest_command(self.sparam).powerdepend(select_freq=self.cavity_list[cav_MHz],add_comment="with Cavity "+str(cav_MHz))
+                else:
+                    jobid = Quest_command(self.sparam).powerdepend(select_freq=[int(cav_MHz)-1.5,int(cav_MHz)+1.5],add_comment="with Cavity "+str(cav_MHz))
                 record_dict["JOBIDs"]["PowerDepend"][cav_MHz] = jobid   # save first after measuring
                 record_dict["step"] = f"2-{cav_label}_50%"
                 self.write_specification(record_dict)

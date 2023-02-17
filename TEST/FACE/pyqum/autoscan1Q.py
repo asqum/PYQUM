@@ -110,7 +110,7 @@ def measure_procedure():
         # power dep. part (bare chech OK!)
         if permission == "Enforce" or (part == "1" and first_run == 0) or (part == "4" and process=="100%" and first_run == 0) or (part == "2" and process=="50%" and first_run == 0) or first_run != 0:   #history == "" or specifications["results"]["PD"] == {}
             print("PowerDependent start @ C-%d :\n"%int(cavitys[i].split("-")[-1]))
-            routine.powerdepend(cavitys[i],"")
+            routine.powerdepend(cavitys[i],"",scan_mode)
             specifications,_ = routine.read_specification(where = "write_only")   # read the speci contains jobid and step record to keep writing 
             specifications["results"]["PowerDepend"][cavitys[i].split("-")[0]] = {} 
             specifications["results"]["PowerDepend"][cavitys[i].split("-")[0]]["dress_power(dBm)"]= routine.low_power
