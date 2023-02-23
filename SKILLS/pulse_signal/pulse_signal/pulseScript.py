@@ -62,8 +62,9 @@ def give_waveformInfo(beat,width,height)->dict:
                 else: rotAxis = radians(paraList[2])
             carrierPhase = pi *(rotAxis/180.)
             shift = cpf.ErfShifter(width,width/sfactor)
+            amp = cpf.ErfAmplifier(height,width,width/sfactor)
             
-            func_paras = [height, width/sfactor, width/2, shift*height, dRatio ]
+            func_paras = [amp, width/sfactor, width/2, shift, dRatio ]
         
         case "dragh":   # waveform with hermite
             pulse_func = cpf.DRAGFunc_Hermite
