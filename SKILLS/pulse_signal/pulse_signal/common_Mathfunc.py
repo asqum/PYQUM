@@ -37,10 +37,10 @@ def derivativeGaussianFamily (x, *p)->ndarray:
         return zeros(len(x))
 
 
-def ErfShifter(gatetime,sigma)->float:
+def ErfShifter(amp,gatetime,sigma)->float:
     area = sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))-gatetime*exp(-(gatetime**2)/(8*sigma**2))
     if sigma != 0. :
-        return -(exp(-(gatetime**2)/(8*sigma**2)))*sigma/area
+        return -(exp(-(gatetime**2)/(8*sigma**2)))*sigma*amp/area
     else :
         return 0  
 
