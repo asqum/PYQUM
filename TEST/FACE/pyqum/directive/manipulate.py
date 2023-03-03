@@ -302,7 +302,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     adca = ADC.Initiate(which=ADC_label)
 
     # Mapping Readout-type to FPGA bitMode***:
-    FPGA = adca.bitMode_Keysight # original keysight bitfile
+    if "SD" in ADC_type: FPGA = adca.bitMode_Keysight # original keysight bitfile
+    else: FPGA = 0
     if readoutype in ["rt-wfm-ave"]: FPGA = adca.bitMode_AVE
     elif readoutype in ['rt-ave-singleddc']: FPGA = adca.bitMode_AVE_SingleDDC
     elif readoutype in ['rt-ave-dualddc']: FPGA = adca.bitMode_AVE_DualDDC
@@ -522,7 +523,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 elif readoutype in ["continuous", "rt-wfm-ave", 'rt-ave-singleddc', 'rt-ave-dualddc', 'rt-ave-dualddc-int']: # by default
                     
                     # Managing output data based on FPGA bitMode for averaged(continuous)-type***:
-                    if FPGA == adca.bitMode_Keysight:
+                    if "SD" not in ADC_type or FPGA == adca.bitMode_Keysight:
                         DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0) # average was done on CPU
                     elif FPGA == adca.bitMode_AVE:
                         DATA = ( DATA.reshape([TOTAL_POINTS*2]) ) / recordsum # average was done on FPGA (real-time)
@@ -537,7 +538,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         # DATA = divide(DATA, record_succession)
                     
                     # DDC on CPU:
-                    if (digital_homodyne != "original") and not (FPGA & adca.bitMode_DDC): 
+                    if "SD" not in ADC_type: DDC_ON_FPGA = False
+                    else: DDC_ON_FPGA = FPGA & adca.bitMode_DDC
+                    if (digital_homodyne != "original") and not (DDC_ON_FPGA): 
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
                         trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
                         DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string

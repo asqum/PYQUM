@@ -83,6 +83,11 @@ def sampling_rate(board="ALZDG"):
     '''
     return float(1000000000.0)
 
+# DUMMY:
+def BeforePlay(board, update_settings={}):
+    print(Fore.BLUE + "ALZ doesn't adopt FPGA")
+    return None
+
 # NOTE: Here adopting NPT: Multiple Records without Pre-Trigger Samples:
 # Configures a board for acquisition
 def ConfigureBoard(board, update_settings={}):
