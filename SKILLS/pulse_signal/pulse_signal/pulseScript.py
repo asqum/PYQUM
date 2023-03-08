@@ -61,7 +61,7 @@ def give_waveformInfo(beat,width,height)->dict:
                 if isnan(paraList[2]): rotAxis = 0
                 else: rotAxis = radians(paraList[2])
             carrierPhase = pi *(rotAxis/180.)
-            shift = cpf.ErfShifter(width,width/sfactor)
+            shift = cpf.ErfShifter(height,width,width/sfactor)
             amp = cpf.ErfAmplifier(height,width,width/sfactor)
             
             func_paras = [amp, width/sfactor, width/2, shift, dRatio ]
