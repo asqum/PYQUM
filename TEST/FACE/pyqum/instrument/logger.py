@@ -731,7 +731,7 @@ def settings(datadensity=1):
                         print(Fore.GREEN + "Jobid found in perimeter")
                     # NEW JOB => (0 file, 0 job)
                     else: 
-                        JOBID = jobin(task, corder, perimeter, instr, comment, tag)
+                        JOBID = jobin(task, corder, perimeter, instr[session['user_name']], comment, tag)
                         print(Fore.GREEN + "NEW JOB REGISTERED")
                     print(Fore.BLUE + "NEW DAY DETECTED")
                 elif dayindex == -3: # TEMP FILE
@@ -756,7 +756,7 @@ def settings(datadensity=1):
                         M.status = "M-JOB CANCELLED OR NOT QUEUED IN PROPERLY"
                         return M
                     # 2.2. It's your turn AND all relevant instruments are free:
-                    elif g.queue_jobid_list.index(JOBID)==0 and not address().macantouch(list(instr.values())):
+                    elif g.queue_jobid_list.index(JOBID)==0 and not address().macantouch(list(instr[session['user_name']].values())):
                         '''All of the following should be fulfilled before taking turn to run:
                             1. ONLY FIRST-IN-LINE get to break the waiting loop
                             2. ALL instruments required are disconnected
@@ -771,7 +771,7 @@ def settings(datadensity=1):
                         print(Fore.YELLOW + "JOBID #%s is waiting every %s seconds" %(JOBID,waiting_interval))
 
                 # 3. Start RUNNING / WORKING / MEASUREMENT:
-                M.selectday(dayindex, corder, perimeter, instr, datadensity, comment, tag, JOBID)
+                M.selectday(dayindex, corder, perimeter, instr[session['user_name']], datadensity, comment, tag, JOBID)
                 perimeter.pop('jobid', None)
                 # print(Back.GREEN + "Day selected: %s"%self.day)
                 M.selectmoment(taskentry)
