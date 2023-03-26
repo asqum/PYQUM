@@ -2,12 +2,12 @@ from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import *
 from qm.simulate.credentials import create_credentials
 from qm import SimulationConfig
-from configuration import config
+from configuration import config, qop_ip
 from qm.simulate import LoopbackInterface
 import matplotlib.pyplot as plt
 from qualang_tools import units
 
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 qm = qmm.open_qm(config)
 
 u = units.unit()

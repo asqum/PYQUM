@@ -44,8 +44,8 @@ with program() as relaxation:
             wait(t, "q1_xy")
 
             # qubit 2
-            # play("x180_ft", "q2_xy")
-            # wait(t, "q2_xy")
+            play("x180_ft", "q2_xy")
+            wait(t, "q2_xy")
 
             align() # equivalent to align("q2_xy", "rr1", "rr2")
 
@@ -72,7 +72,7 @@ with program() as relaxation:
 
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 # job = qmm.simulate(config, relaxation, SimulationConfig(11000))

@@ -17,7 +17,7 @@ from qm.simulate import LoopbackInterface
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
-t = 17000//4 //100
+t = 14000//4 #//100
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
 dfs = np.arange(- 20e6, + 20e6, 0.5e6)
@@ -46,23 +46,23 @@ with program() as multi_qubit_spec:
 
             assign(f_q1, df + fres_q1)
             update_frequency("q1_xy", f_q1)
-            # assign(f_q2, df + fres_q2)
-            # update_frequency("q2_xy", f_q2)  
+            assign(f_q2, df + fres_q2)
+            update_frequency("q2_xy", f_q2)  
 
-            wait(4000)
+            wait(1000)
 
             # qubit 1
-            play("cw"*amp(0.77), "q1_xy", duration=t)
-            align("q1_xy", "rr1")
-            measure("readout"*amp(1.0), "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
+            play("cw"*amp(0.07), "q1_xy", duration=t)
+            # align("q1_xy", "rr1")
+            measure("readout"*amp(0.9), "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
             dual_demod.full("sin", "out1", "cos", "out2", Q[0]))
             save(I[0], I_st[0])
             save(Q[0], Q_st[0])
             
             # qubit 2
-            # play("cw"*amp(0.037), "q2_xy", duration=t)
+            play("cw"*amp(0.3), "q2_xy", duration=t)
             # align("q2_xy", "rr2")
-            measure("readout"*amp(0.8), "rr2", None, dual_demod.full("cos", "out1", "sin", "out2", I[1]),
+            measure("readout"*amp(0.9), "rr2", None, dual_demod.full("cos", "out1", "sin", "out2", I[1]),
             dual_demod.full("minus_sin", "out1", "cos", "out2", Q[1]))
             save(I[1], I_st[1])
             save(Q[1], Q_st[1])
@@ -82,7 +82,7 @@ with program() as multi_qubit_spec:
 
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 # job = qmm.simulate(config, multi_qubit_spec, SimulationConfig(11000, 

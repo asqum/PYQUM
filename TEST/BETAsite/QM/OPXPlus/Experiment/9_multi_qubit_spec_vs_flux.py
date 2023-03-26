@@ -18,6 +18,7 @@ from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
 from pathlib import Path
+save_dir = (Path().absolute()/"data"/"9_multi_qubit_spec_vs_flux_02.npz")
 
 t = 17000//4
 fres_q1 = qubit_IF_q1
@@ -112,9 +113,6 @@ else:
 
     fig, ax = plt.subplots(2, 2)
     interrupt_on_close(fig, job)
-
-    save_dir = (Path().absolute()/"data"/"9_multi_qubit_spec_vs_flux_02.npz")
-    print("saving data at: %s" %save_dir)
 
     while job.result_handles.is_processing():
         results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")

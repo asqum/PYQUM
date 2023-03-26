@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from qualang_tools.units import unit
 from qualang_tools.loops import from_array
 
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 qm = qmm.open_qm(config)
 
 # rr2

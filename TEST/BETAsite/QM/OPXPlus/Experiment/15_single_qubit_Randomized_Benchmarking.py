@@ -25,7 +25,7 @@ seed = 345323
 cooldown_time = 10000
 qb = "q2_xy"
 rr = "rr2"
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 
 def generate_sequence():
@@ -152,10 +152,14 @@ with program() as rb:
                 play_sequence(sequence_list, depth)
                 
                 align()
-                measure("readout", "rr2", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I))
+                # Qubit-1
+                # measure("readout", "rr1", None, dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q))
+                # measure("readout", "rr2", None)
+                # Qubit-2
                 measure("readout", "rr1", None)
+                measure("readout", "rr2", None, dual_demod.full("rotated_minus_sin", "out1", "rotated_cos", "out2", Q))
      
-                save(I, I_st)
+                save(Q, I_st)
                 assign(sequence_list[depth], saved_gate)
         
 

@@ -2,7 +2,7 @@ from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import *
 from qm.simulate.credentials import create_credentials
 from qm import SimulationConfig
-from configuration import config
+from configuration import config, qop_ip
 from qm.simulate import LoopbackInterface
 import matplotlib
 matplotlib.use('TKAgg')
@@ -18,7 +18,7 @@ with program() as hello_qua:
 
 # open communication with opx
 # qmm = QuantumMachinesManager(host="niv-0ce2f504.dev.quantum-machines.co", port=443, credentials=create_credentials())
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 job = qmm.simulate(config, hello_qua, SimulationConfig(400))

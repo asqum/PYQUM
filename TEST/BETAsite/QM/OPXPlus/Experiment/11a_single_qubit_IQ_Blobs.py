@@ -16,7 +16,7 @@ from qualang_tools.results import fetching_tool
 from qualang_tools.analysis import two_state_discriminator
 
 pts = 20000
-s = 1.0
+s = 0.1
 
 # QUA program
 with program() as iq_blobs:
@@ -48,7 +48,8 @@ with program() as iq_blobs:
         # excited iq blobs for both qubits
         wait(10000)
         align()
-        play("flattop", "q2_xy")
+        play("flattop"*amp(1), "q1_xy")
+        play("flattop"*amp(1), "q2_xy")
         align()
         measure("readout"*amp(s), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_minus_sin", "out2", I_e[0]),
                 dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q_e[0]))
@@ -67,7 +68,7 @@ with program() as iq_blobs:
             Q_e_st[i].save_all(f"Q_e_q{i}")
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # open quantum machine
 qm = qmm.open_qm(config)

@@ -17,7 +17,7 @@ from qm.simulate import LoopbackInterface
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
-t_delay = np.arange(4, 100, 1)
+t_delay = np.arange(4, 300, 1)
 n_avg = 100000
 dphi = 10e6 * (t_delay[1]-t_delay[0])*(4e-9)
 
@@ -45,7 +45,7 @@ with program() as ramsey:
             # qubit 2
             play("x90_ft", "q2_xy")
             wait(t, "q2_xy")
-            frame_rotation_2pi(phi)
+            # frame_rotation_2pi(phi)
             play("x90_ft", "q2_xy")
 
             align() # equivalent to align("q2_xy", "rr1", "rr2")
@@ -69,7 +69,7 @@ with program() as ramsey:
 
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 # job = qmm.simulate(config, ramsey, SimulationConfig(11000))

@@ -98,7 +98,7 @@ with program() as multi_res_spec_vs_flux:
 
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 # job = qmm.simulate(config, multi_res_spec_vs_flux, SimulationConfig(11000, 

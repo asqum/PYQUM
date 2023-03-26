@@ -17,8 +17,8 @@ from qm.simulate import LoopbackInterface
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
-amps = np.arange(0.0, 1.9, 0.01)
-n_avg = 100000
+amps = np.arange(0.0, 1.7, 0.01)
+n_avg = 1000000
 err_amp = 1
 
 # QUA program
@@ -44,8 +44,10 @@ with program() as rabi:
             # qubit 1
             for i in range(err_amp):
                 play("flattop"*amp(a), "q1_xy")
-                # play("flattop"*amp(a), "q2_xy")
+                play("flattop"*amp(a), "q2_xy")
             align()
+
+            # Start using Rotated-Readout:
             measure("readout"*amp(1.0), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_minus_sin", "out2", I[0]),
             dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q[0]))
             save(I[0], I_st[0])
@@ -70,7 +72,7 @@ with program() as rabi:
 
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="qum.phys.sinica.edu.tw", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 # job = qmm.simulate(config, rabi, SimulationConfig(11000))

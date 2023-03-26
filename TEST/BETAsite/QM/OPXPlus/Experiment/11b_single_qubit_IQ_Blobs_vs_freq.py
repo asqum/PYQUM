@@ -66,7 +66,7 @@ with program() as iq_blobs:
         D_st.buffer(len(freqs)).average().save('D')
         
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # open quantum machine
 qm = qmm.open_qm(config)

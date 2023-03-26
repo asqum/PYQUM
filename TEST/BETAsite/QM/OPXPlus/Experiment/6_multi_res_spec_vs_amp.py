@@ -82,7 +82,7 @@ with program() as multi_res_spec_vs_amp:
 
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 # job = qmm.simulate(config, multi_res_spec_vs_amp, SimulationConfig(11000, 
@@ -120,14 +120,14 @@ while job.result_handles.is_processing():
 
 
     ax[0].cla()
-    ax[0].set_title("rr1-%s (LO: %s)"%(n, LO))
+    ax[0].set_title("rr1-%s (fcent: %s)"%(n, LO + fres_q1/u.MHz))
     ax[0].set_xlabel("amp")
     ax[0].set_ylabel("freq")
-    ax[0].pcolor(amps, + fres_q1/u.MHz + dfs/u.MHz, A1)
+    ax[0].pcolor(amps,  + dfs/u.MHz, A1)
     ax[1].cla()
-    ax[1].set_title("rr2-%s (LO: %s)"%(n, LO))
+    ax[1].set_title("rr2-%s (fcent: %s)"%(n, LO - fres_q2/u.MHz))
     ax[1].set_xlabel("amp")
     ax[1].set_ylabel("freq")
-    ax[1].pcolor(amps, - fres_q2/u.MHz - dfs/u.MHz, A2)
+    ax[1].pcolor(amps,  - dfs/u.MHz, A2)
 
     plt.pause(1.0) # every second

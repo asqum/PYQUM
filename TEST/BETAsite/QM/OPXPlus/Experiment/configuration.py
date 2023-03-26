@@ -27,14 +27,14 @@ def IQ_imbalance(g, phi):
 #############
 u = unit()
 
-qop_ip = "127.0.0.1"
+qop_ip = "qum.phys.sinica.edu.tw"
 
 # Qubits
 qubit_LO = 3.95 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
 # qubit_IF_q1 = (41) * u.MHz
 # qubit_IF_q2 = (+362.3) * u.MHz
-qubit_IF_q1 = (3950-3911) * u.MHz
-qubit_IF_q2 = (3950-3716.1) * u.MHz
+qubit_IF_q1 = (3950-3911) * u.MHz # 3911, 3544, 3783
+qubit_IF_q2 = (3950-3624.9) * u.MHz # 3624.9, 3705.7, 3667
 mixer_qubit_g_q1 = 0.007
 mixer_qubit_g_q2 = 0.009
 mixer_qubit_phi_q1 = 0.085
@@ -47,19 +47,35 @@ const_amp = 270 * u.mV
 
 # generate flattop waveforms
 
-# qubit 1
-flattop_len_1 = 140 #60
-flattop_rise_len_1 = 10
-flattop_amp_1 = 0.22 *2*0.5
+# qubit-1 (uses X to tune up the rest of the Q-gates)
+flattop_len_1 = 60 #40, 60, 300
+flattop_rise_len_1 = 8
+flattop_amp_1 = 0.24 *0.131*4 #*0.57 #RB1
+# flattop_amp_1 = 0.22 *0.32*0.857 #RB2
+
 tot_ft_len_1 = flattop_len_1 + 2 * flattop_rise_len_1
+x = np.array(flattop_gaussian_waveform(flattop_amp_1, flattop_len_1, flattop_rise_len_1))
+y = np.array([0] * tot_ft_len_1)
+x180_flattop_I_1 = x
+x180_flattop_Q_1 = y 
+x90_flattop_I_1 = x * 0.5 
+x90_flattop_Q_1 = y * 0.5
+y180_flattop_I_1 = -y
+y180_flattop_Q_1 = x
+y90_flattop_I_1 = -y * 0.5
+y90_flattop_Q_1 = x * 0.5
+mx90_flattop_I_1 = - x * 0.5 
+mx90_flattop_Q_1 = - y * 0.5
+my90_flattop_I_1 = - y * 0.5
+my90_flattop_Q_1 = x * 0.5
 
-# qubit 2
-flattop_len = 60 #60
-flattop_rise_len = 10
-flattop_amp = 0.27439104
-# flattop_amp = 0.22 *0.8 *0.95 *1.03*1.017
+# qubit-2
+flattop_len = 60 #40, 60, 300
+flattop_rise_len = 8
+flattop_amp = 0.24 *1.2 #RB1
+# flattop_amp = 0.22 *1.14 #RB2
+ 
 tot_ft_len = flattop_len + 2 * flattop_rise_len
-
 x = np.array(flattop_gaussian_waveform(flattop_amp, flattop_len, flattop_rise_len))
 y = np.array([0] * tot_ft_len)
 x180_flattop_I = x
@@ -136,8 +152,14 @@ minus_y90_Q_wf_q2 = minus_y90_wf_q2
 
 # Resonators
 resonator_LO = 6.35 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
-resonator_IF_q1 = +49.166 * u.MHz
-resonator_IF_q2 = int((-132.084 + 0.1000 - 0.046) * u.MHz)
+
+# RB1:
+resonator_IF_q1 = int((6399.12 - 6350) * u.MHz)
+resonator_IF_q2 = int((6350 - 6482.046) * u.MHz) 
+# RB2:
+# resonator_IF_q1 = int((6398.933 - 6350) * u.MHz)
+# resonator_IF_q2 = int((6350 - 6482.139) * u.MHz)
+
 resonator_IF_qc = -220 * u.MHz
 mixer_resonator_g_q1 = -0.014
 mixer_resonator_g_q2 = 0.029
@@ -146,9 +168,9 @@ mixer_resonator_phi_q1 = -0.017
 mixer_resonator_phi_q2 = -0.018
 mixer_resonator_phi_qc = -0.0010
 
-readout_len = 3500 # 20000 for 4-7
-readout_amp_q1 = 0.08 * 0.3
-readout_amp_q2 = 0.07 * 0.295
+readout_len = 4000 # 20000 for 4-7
+readout_amp_q1 = 0.07
+readout_amp_q2 = 0.07 *0.3 *0.87
 readout_amp_qc = 0.0525
 
 time_of_flight = 260 # should be a multiple of 4
@@ -176,9 +198,9 @@ config = {
                 6: {"offset": -0.110},  # Q qubit2
                 # 7: {"offset": 0.168},  # Z qubit1 => offset at q1 max frequency
                 # 8: {"offset": -0.48},  # Z qubit2 => offset at q2 max frequency
-                7: {"offset": 0.180},  # Z qubit1 => offset at q1 max frequency
-                8: {"offset": -0.489},  # Z qubit2 => offset at q2 max frequency
-                9: {"offset": 0.06},  # Z coupler => offset at q1<=>q2 coupling off
+                7: {"offset": 0.137},  # Z qubit1 => offset at 3 chosen idle-points => 0.137, -0.35, -0.15
+                8: {"offset": -0.499},  # Z qubit2 => offset near q2 max frequency
+                9: {"offset": 0.097},  # Z coupler => offset at q1<=>q2 coupling off
             },
             "digital_outputs": {
                 1: {},
@@ -264,12 +286,12 @@ config = {
                 "y90": "y90_pulse_q1",
                 "y180": "y180_pulse_q1",
                 "-y90": "-y90_pulse_q1",
-                "x180_ft": "x_180_ft_pulse_q2",
-                "x90_ft": "x_90_ft_pulse_q2",
-                "y180_ft": "y_180_ft_pulse_q2",
-                "y90_ft": "y_90_ft_pulse_q2",
-                "-x90_ft": "mx_90_ft_pulse_q2",
-                "-y90_ft": "my_90_ft_pulse_q2",
+                "x180_ft": "x_180_ft_pulse_q1",
+                "x90_ft": "x_90_ft_pulse_q1",
+                "y180_ft": "y_180_ft_pulse_q1",
+                "y90_ft": "y_90_ft_pulse_q1",
+                "-x90_ft": "mx_90_ft_pulse_q1",
+                "-y90_ft": "my_90_ft_pulse_q1",
             },
         },
         "q2_xy": {
@@ -376,6 +398,54 @@ config = {
             "waveforms": {
                 "I": "my90_ft_I_wf_q2",
                 "Q": "my90_ft_Q_wf_q2",
+            },
+        },
+        "x_180_ft_pulse_q1": {
+            "operation": "control",
+            "length": tot_ft_len_1,
+            "waveforms": {
+                "I": "x180_ft_I_wf_q1",
+                "Q": "x180_ft_Q_wf_q1",
+            },
+        },
+        "x_90_ft_pulse_q1": {
+            "operation": "control",
+            "length": tot_ft_len_1,
+            "waveforms": {
+                "I": "x90_ft_I_wf_q1",
+                "Q": "x90_ft_Q_wf_q1",
+            },
+        },
+        "y_180_ft_pulse_q1": {
+            "operation": "control",
+            "length": tot_ft_len_1,
+            "waveforms": {
+                "I": "y180_ft_I_wf_q1",
+                "Q": "y180_ft_Q_wf_q1",
+            },
+        },
+        "y_90_ft_pulse_q1": {
+            "operation": "control",
+            "length": tot_ft_len_1,
+            "waveforms": {
+                "I": "y90_ft_I_wf_q1",
+                "Q": "y90_ft_Q_wf_q1",
+            },
+        },
+        "mx_90_ft_pulse_q1": {
+            "operation": "control",
+            "length": tot_ft_len_1,
+            "waveforms": {
+                "I": "mx90_ft_I_wf_q1",
+                "Q": "mx90_ft_Q_wf_q1",
+            },
+        },
+        "my_90_ft_pulse_q1": {
+            "operation": "control",
+            "length": tot_ft_len_1,
+            "waveforms": {
+                "I": "my90_ft_I_wf_q1",
+                "Q": "my90_ft_Q_wf_q1",
             },
         },
         "flattop_pulse_q1": {
@@ -549,6 +619,19 @@ config = {
      },
     "waveforms": {
     
+        "x180_ft_I_wf_q1": {"type": "arbitrary", "samples": x180_flattop_I_1.tolist()},
+        "x180_ft_Q_wf_q1": {"type": "arbitrary", "samples": x180_flattop_Q_1.tolist()},
+        "x90_ft_I_wf_q1": {"type": "arbitrary", "samples": x90_flattop_I_1.tolist()},
+        "x90_ft_Q_wf_q1": {"type": "arbitrary", "samples": x90_flattop_Q_1.tolist()},
+        "y180_ft_I_wf_q1": {"type": "arbitrary", "samples": y180_flattop_I_1.tolist()},
+        "y180_ft_Q_wf_q1": {"type": "arbitrary", "samples": y180_flattop_Q_1.tolist()},
+        "y90_ft_I_wf_q1": {"type": "arbitrary", "samples": y90_flattop_I_1.tolist()},
+        "y90_ft_Q_wf_q1": {"type": "arbitrary", "samples": y90_flattop_Q_1.tolist()},
+        "mx90_ft_I_wf_q1": {"type": "arbitrary", "samples": mx90_flattop_I_1.tolist()},
+        "mx90_ft_Q_wf_q1": {"type": "arbitrary", "samples": mx90_flattop_Q_1.tolist()},
+        "my90_ft_I_wf_q1": {"type": "arbitrary", "samples": my90_flattop_I_1.tolist()},
+        "my90_ft_Q_wf_q1": {"type": "arbitrary", "samples": my90_flattop_Q_1.tolist()},
+
         "x180_ft_I_wf_q2": {"type": "arbitrary", "samples": x180_flattop_I.tolist()},
         "x180_ft_Q_wf_q2": {"type": "arbitrary", "samples": x180_flattop_Q.tolist()},
         "x90_ft_I_wf_q2": {"type": "arbitrary", "samples": x90_flattop_I.tolist()},

@@ -20,7 +20,7 @@ from qualang_tools.results import progress_counter
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
 dfs = np.arange(- 14e6, + 14e6, 0.2e6)
-amps = np.arange(0.0, 1.1, 0.01)
+amps = np.arange(0.0, 1.95, 0.02)
 n_avg = 100000
 
 # QUA program
@@ -45,8 +45,8 @@ with program() as rabi_chevron:
 
             assign(f_q1, df + fres_q1)
             update_frequency("q1_xy", f_q1)
-            # assign(f_q2, df + fres_q2)
-            # update_frequency("q2_xy", f_q2)  
+            assign(f_q2, df + fres_q2)
+            update_frequency("q2_xy", f_q2)  
 
             with for_(*from_array(a, amps)):
                     
@@ -54,7 +54,7 @@ with program() as rabi_chevron:
 
                 # qubit 1
                 play("flattop"*amp(a), "q1_xy")
-                # play("flattop"*amp(a), "q2_xy")
+                play("flattop"*amp(a), "q2_xy")
                 align()
                 measure("readout"*amp(1.0), "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
                 dual_demod.full("sin", "out1", "cos", "out2", Q[0]))
@@ -80,7 +80,7 @@ with program() as rabi_chevron:
 
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 # job = qmm.simulate(config, rabi_chevron, SimulationConfig(11000))
@@ -117,10 +117,10 @@ while job.result_handles.is_processing():
     ax[1,0].set_title('Q1-Q, n={}'.format(n))
     ax[0,1].cla()
     ax[0,1].pcolor(amps, -dfs, I2)
-    ax[0,1].set_title('Q2-In={}, fcent={}'.format(n, LO+IF2))
+    ax[0,1].set_title('Q2-I, n={}, fcent={}'.format(n, LO+IF2))
     ax[1,1].cla()
     ax[1,1].pcolor(amps, -dfs, Q2)
-    ax[1,1].set_title('Q2-Qn={}'.format(n))
+    ax[1,1].set_title('Q2-Q, n={}'.format(n))
     plt.pause(1.0)
 
 # plt.plot(I1, Q1, '.')

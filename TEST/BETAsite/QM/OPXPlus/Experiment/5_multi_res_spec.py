@@ -68,7 +68,7 @@ with program() as multi_res_spec:
 
 
 # open communication with opx
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 # simulate the test_config QUA program
 # job = qmm.simulate(config, multi_res_spec, SimulationConfig(11000, 
@@ -96,8 +96,11 @@ fig, ax = plt.subplots(1, 2)
 
 ax[0].plot(LO + fres_q1/u.MHz + dfs/u.MHz, np.abs(s1))
 ax[0].set_title("rr1")
+ax[0].set_ylabel("Amp (V)")
+ax[0].set_xlabel("Freq (MHz)")
 ax[1].plot(LO - fres_q2/u.MHz - dfs/u.MHz, np.abs(s2))
 ax[1].set_title("rr2")
+ax[1].set_xlabel("Freq (MHz)")
 
 # plt.plot(I1, Q1, '.')
 # plt.plot(I2, Q2, '.')

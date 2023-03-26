@@ -2,7 +2,7 @@ from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import *
 from qm.simulate.credentials import create_credentials
 from qm import SimulationConfig
-from configuration import config, IQ_imbalance
+from configuration import config, IQ_imbalance, qop_ip
 from qm.simulate import LoopbackInterface
 # import matplotlib
 # matplotlib.use('TKAgg')
@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # import asyncio
 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-qmm = QuantumMachinesManager(host="192.168.1.82", port=80)
+qmm = QuantumMachinesManager(host=qop_ip, port=80)
 qm = qmm.open_qm(config)
 
 # qm.set_dc_offset_by_qe("rr1", "I", 0.05)
