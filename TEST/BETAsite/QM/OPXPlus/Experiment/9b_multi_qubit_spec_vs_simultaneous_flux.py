@@ -17,9 +17,6 @@ from qm.simulate import LoopbackInterface
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
-from pathlib import Path
-save_dir = (Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"data"/"9_multi_qubit_spec_vs_flux_02.npz")
-
 num_pts = 100
 t = 17000//4 #//100
 fres_q1 = qubit_IF_q1
@@ -150,7 +147,6 @@ else:
         results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
         n, I1, Q1, I2, Q2 = results.fetch_all()
 
-        np.savez(save_dir, n=n, I1=I1, Q1=Q1, I2=I2, Q2=Q2)
         progress_counter(n, n_avg)
         s1 = I1 + 1j*Q1
         s2 = I2 + 1j*Q2
@@ -209,3 +205,5 @@ else:
     # plt.axis('equal')
 
     plt.show()
+
+np.savez(save_dir/"9_multi_qubit_spec_vs_flux.npz", n=n, I1=I1, Q1=Q1, I2=I2, Q2=Q2)

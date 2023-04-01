@@ -2,7 +2,7 @@ from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import *
 from qm.simulate.credentials import create_credentials
 from qm import SimulationConfig
-from configuration import config, qop_ip
+from configuration import config, qop_ip, save_dir
 from qm.simulate import LoopbackInterface
 import matplotlib
 matplotlib.use('TKAgg')
@@ -95,6 +95,6 @@ while job.result_handles.is_processing():
     ax[2].pcolor(amps,4*ts, I2)
     ax[2].set_title('q2 - I , n={}'.format(n))
     plt.pause(1.0)
-    np.savez('iswap', I1=I1, Q1=Q1, I2=I2, ts=ts, amps=amps)
 
 plt.show()
+np.savez(save_dir/'iswap', I1=I1, Q1=Q1, I2=I2, ts=ts, amps=amps)

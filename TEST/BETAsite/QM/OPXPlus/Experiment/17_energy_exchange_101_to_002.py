@@ -2,7 +2,7 @@ from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import *
 from qm.simulate.credentials import create_credentials
 from qm import SimulationConfig
-from configuration import config, qop_ip
+from configuration import config, qop_ip, save_dir
 from qm.simulate import LoopbackInterface
 import matplotlib
 matplotlib.use('TKAgg')
@@ -37,7 +37,7 @@ with program() as cz:
         with for_(*from_array(t, ts)):
             with for_(*from_array(a, amps)):
                 set_dc_offset("q1_z", "single", dc0_q1)
-                wait(10000, "q1_z")
+                wait(100, "q1_z") # 10000
                 align()
                 play("x180_ft", "q1_xy")
                 play("x180_ft", "q2_xy")
@@ -73,36 +73,39 @@ with program() as cz:
 
 # open communication with opx
 qmm = QuantumMachinesManager(host=qop_ip, port=80)
+simulate = True
 
 # simulate the qua program
-# job = qmm.simulate(config, cz, SimulationConfig(15000))
-# job.get_simulated_samples().con1.plot()
-# plt.show()
-qm = qmm.open_qm(config)
-job = qm.execute(cz)
-fig, ax = plt.subplots(2,2)
-interrupt_on_close(fig, job)
+if simulate:
+    job = qmm.simulate(config, cz, SimulationConfig(15000))
+    job.get_simulated_samples().con1.plot()
 
-while job.result_handles.is_processing():
-    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
-    n, I1, Q1, I2, Q2 = results.fetch_all()
-    progress_counter(n, n_avgs)
+else:
+    qm = qmm.open_qm(config)
+    job = qm.execute(cz)
+    fig, ax = plt.subplots(2,2)
+    interrupt_on_close(fig, job)
 
-    u = unit()
-    ax[0,0].cla()
-    ax[0,0].pcolor(amps,4*ts, I1)
-    ax[0,0].set_title('q1 - I , n={}'.format(n))
-    ax[1,0].cla()
-    ax[1,0].pcolor(amps,4*ts, Q1)
-    ax[1,0].set_title('q1 - Q , n={}'.format(n))
-    ax[0,1].cla()
-    ax[0,1].pcolor(amps,4*ts, I2)
-    ax[0,1].set_title('q2 - I , n={}'.format(n))
-    ax[1,1].cla()
-    ax[1,1].pcolor(amps,4*ts, Q2)
-    ax[1,1].set_title('q2 - Q , n={}'.format(n))
-    
-    plt.pause(1.0)
-    # np.savez('cz', I1=I1, Q1=Q1, I2=I2, ts=ts, amps=amps)
+    while job.result_handles.is_processing():
+        results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
+        n, I1, Q1, I2, Q2 = results.fetch_all()
+        progress_counter(n, n_avgs)
+
+        u = unit()
+        ax[0,0].cla()
+        ax[0,0].pcolor(amps,4*ts, I1)
+        ax[0,0].set_title('q1 - I , n={}'.format(n))
+        ax[1,0].cla()
+        ax[1,0].pcolor(amps,4*ts, Q1)
+        ax[1,0].set_title('q1 - Q , n={}'.format(n))
+        ax[0,1].cla()
+        ax[0,1].pcolor(amps,4*ts, I2)
+        ax[0,1].set_title('q2 - I , n={}'.format(n))
+        ax[1,1].cla()
+        ax[1,1].pcolor(amps,4*ts, Q2)
+        ax[1,1].set_title('q2 - Q , n={}'.format(n))
+        
+        plt.pause(1.0)
 
 plt.show()
+# np.savez(save_dir/'cz', I1=I1, Q1=Q1, I2=I2, Q2=Q2, ts=ts, amps=amps)

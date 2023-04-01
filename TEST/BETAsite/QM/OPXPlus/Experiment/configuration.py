@@ -3,6 +3,13 @@ from qualang_tools.config.waveform_tools import drag_gaussian_pulse_waveforms
 from qualang_tools.units import unit
 from qualang_tools.config.waveform_tools import flattop_gaussian_waveform
 
+#########
+# PATHS #
+#########
+
+from pathlib import Path
+save_dir = (Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"data")
+
 #######################
 # AUXILIARY FUNCTIONS #
 #######################

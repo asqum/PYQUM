@@ -241,4 +241,4 @@ print(
 plt.title("r_c: %s%%, r_g: %s%%" %(r_c*100, r_g*100))
 plt.show()
 
-np.savez("rb_values", value)
+np.savez(save_dir/"rb_values", value)

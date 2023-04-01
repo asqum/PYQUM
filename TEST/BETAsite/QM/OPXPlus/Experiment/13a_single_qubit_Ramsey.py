@@ -19,15 +19,17 @@ from qualang_tools.results import progress_counter
 
 t_delay = np.arange(4, 300, 1)
 n_avg = 100000
-dphi = 10e6 * (t_delay[1]-t_delay[0])*(4e-9)
+dphi = 5e6 * (t_delay[1]-t_delay[0])*(4e-9) # period: 200ns
+Phi = np.arange(0, 5, 0.05) # 5 rotations
+# Phi = np.arange(0, 6, 0.02)
 
 # QUA program
 with program() as ramsey:
     
     I = [declare(fixed) for i in range(2)]
-    # Q = [declare(fixed) for i in range(2)] 
+    Q = [declare(fixed) for i in range(2)] 
     I_st = [declare_stream() for i in range(2)]
-    # Q_st = [declare_stream() for i in range(2)]
+    Q_st = [declare_stream() for i in range(2)]
     n = declare(int)
     n_st = declare_stream()
     t = declare(int)
@@ -37,36 +39,45 @@ with program() as ramsey:
         
         save(n, n_st)
 
-        assign(phi, 0)
-        with for_(*from_array(t, t_delay)):
+        # assign(phi, 0)
+        # with for_(*from_array(t, t_delay)):
+        with for_(*from_array(phi, Phi)):
                 
             wait(10000)
 
             # qubit 2
             play("x90_ft", "q2_xy")
-            wait(t, "q2_xy")
-            # frame_rotation_2pi(phi)
+            # wait(t, "q2_xy")
+
+            align()
+            frame_rotation_2pi(phi, "q2_xy")
             play("x90_ft", "q2_xy")
 
             align() # equivalent to align("q2_xy", "rr1", "rr2")
 
-            measure("readout"*amp(1), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_minus_sin", "out2", I[0]))
+            measure("readout"*amp(1.0), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_minus_sin", "out2", I[0]),
+            dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q[0]))
             save(I[0], I_st[0])
-            measure("readout"*amp(1), "rr2", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I[1]))
+            save(Q[0], Q_st[0])
+            measure("readout"*amp(1.0), "rr2", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I[1]),
+            dual_demod.full("rotated_minus_sin", "out1", "rotated_cos", "out2", Q[1]))
             save(I[1], I_st[1])
+            save(Q[1], Q_st[1])
 
-            assign(phi, phi + dphi)
+            # assign(phi, phi + dphi)
 
     with stream_processing():
 
         n_st.save("n")
+        # var = t_delay
+        var = Phi
 
         # resonator 1
-        I_st[0].buffer(len(t_delay)).average().save("I1")
-        
+        I_st[0].buffer(len(var)).average().save("I1")
+        Q_st[0].buffer(len(var)).average().save("Q1")
         # resonator 2
-        I_st[1].buffer(len(t_delay)).average().save("I2")
-
+        I_st[1].buffer(len(var)).average().save("I2")
+        Q_st[1].buffer(len(var)).average().save("Q2")
 
 # open communication with opx
 qmm = QuantumMachinesManager(host=qop_ip, port=80)
@@ -89,13 +100,14 @@ fig = plt.figure()
 interrupt_on_close(fig, job)
 
 while job.result_handles.is_processing():
-    results = fetching_tool(job, ["n", "I1", "I2"], mode="live")
-    n, I1, I2 = results.fetch_all()
+    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
+    n, I1, Q1, I2, Q2 = results.fetch_all()
     progress_counter(n, n_avg)
 
     u = unit()
     plt.cla()
-    plt.plot(4*t_delay, I2)
+    # plt.plot(4*t_delay, Q2)
+    plt.plot(Phi, Q2)
     plt.title('n={}'.format(n))
     plt.pause(1.0)
 
