@@ -17,19 +17,17 @@ import os, fnmatch
 from Macros import cz_gate
 from cosine import Cosine
 
+filename = 'cz_ops_'
 modelist = ['sim', 'prev', 'load', 'new']
 mode = modelist[int(input("1. simulate, 2. previous job, 3. load data, 4. new run (1-4)?"))-1]
 print("mode: %s" %mode)
-flist = fnmatch.filter(os.listdir(save_dir), 'cz_ops*')
-print("Saved data:\n")
-for i, f in enumerate(flist): print("%s. %s" %(i+1,f))
 
 dc0_q2 = config["controllers"]["con1"]["analog_outputs"][8]["offset"]
 dc0_q1 = config["controllers"]["con1"]["analog_outputs"][7]["offset"]
 Phi = np.arange(0, 5, 0.05) # 5 rotations
-n_avgs = 1300000
+n_avg = 1300000
 
-with program() as cz:
+with program() as cz_ops:
 
     # update_frequency("q2_xy", 0)
 
@@ -47,7 +45,7 @@ with program() as cz:
     a = declare(fixed)
     phi = declare(fixed)
 
-    with for_(n, 0, n < n_avgs, n+1):
+    with for_(n, 0, n < n_avg, n+1):
         save(n, n_st)
         with for_(*from_array(phi, Phi)):
             # set_dc_offset("q1_z", "single", dc0_q1)
@@ -118,12 +116,14 @@ with program() as cz:
 row,col = 2,2
 fig, ax = plt.subplots(row,col)
 def data_present(live=True, data=[]):
+    fig.suptitle('Tuning CZ on: %s'%filename, fontsize=20, fontweight='bold', color='blue')
+
     if len(data)==0:
         results = fetching_tool(job, ["n", "I1g", "Q1g", "I2g", "Q2g", "I1e", "Q1e", "I2e", "Q2e"], mode="live")
         n, I1g, Q1g, I2g, Q2g, I1e, Q1e, I2e, Q2e = results.fetch_all()
     else: n, I1g, Q1g, I2g, Q2g, I1e, Q1e, I2e, Q2e = \
             data.f.n, data.f.I1g, data.f.Q1g, data.f.I2g, data.f.Q2g, data.f.I1e, data.f.Q1e, data.f.I2e, data.f.Q2e
-    progress_counter(n, n_avgs)
+    progress_counter(n, n_avg)
 
     u = unit()
     ax[0,0].cla()
@@ -156,7 +156,6 @@ def data_present(live=True, data=[]):
     else: 
         plt.show()
         if not len(data):
-            filename = 'cz_ops_1204_143'
             np.savez(save_dir/filename, n=n, Phi=Phi, I1g=I1g, Q1g=Q1g, I2g=I2g, Q2g=Q2g, I1e=I1e, Q1e=Q1e, I2e=I2e, Q2e=Q2e)
             print("Data saved as %s.npz" %filename)
         plt.close()
@@ -167,13 +166,13 @@ def data_present(live=True, data=[]):
 qmm = QuantumMachinesManager(host=qop_ip, port=80)
 
 if mode=="sim": # simulate the qua program
-    job = qmm.simulate(config, cz, SimulationConfig(15000))
+    job = qmm.simulate(config, cz_ops, SimulationConfig(15000))
     job.get_simulated_samples().con1.plot()
 
 if mode=="prev": # check any running previous job
     qm_list =  qmm.list_open_quantum_machines()
     qm = qmm.get_qm(qm_list[0])
-    print("QM-ID: %s, Queue: %s" %(qm.id,qm.queue.count))
+    print("QM-ID: %s, Queue: %s, Version: %s" %(qm.id,qm.queue.count,qmm.version()))
     job = qm.get_running_job()
     try: 
         print("JOB-ID: %s" %job.id())
@@ -186,6 +185,11 @@ if mode=="prev": # check any running previous job
         qm.close()
     
 if mode=="load": # load data
+    flist = fnmatch.filter(os.listdir(save_dir), 'cz_ops*')
+    keyword = input("Enter Keyword if any: ")
+    flist = list(filter(lambda x: keyword in x, flist))
+    print("Saved data with keyword '%s':\n" %keyword)
+    for i, f in enumerate(flist): print("%s. %s" %(i+1,f))
     f_location = int(input("enter 1-%s: " %len(flist)))
     filename = flist[f_location-1]
     data = np.load(save_dir/(filename))
@@ -193,7 +197,7 @@ if mode=="load": # load data
     
 if mode=="new": # new run
     qm = qmm.open_qm(config)
-    job = qm.execute(cz)
+    job = qm.execute(cz_ops)
     data_present(True)
     interrupt = int(input("Stop execution on closing figure (1/0)?"))
     if interrupt: 

@@ -17,6 +17,9 @@ from qm.simulate import LoopbackInterface
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
+filename = 'SQ_Rabi_Chevron_40nsX'
+data_dict = dict()
+
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
 dfs = np.arange(- 14e6, + 14e6, 0.2e6)
@@ -76,6 +79,9 @@ with program() as rabi_chevron:
         # resonator 2
         I_st[1].buffer(len(dfs), len(amps)).average().save("I2")
         Q_st[1].buffer(len(dfs), len(amps)).average().save("Q2")
+
+        # Oracle SCOPE:
+        SCOPE = ["n", "I1", "Q1", "I2", "Q2"]
         
 
 
@@ -87,11 +93,15 @@ qmm = QuantumMachinesManager(host=qop_ip, port=80)
 # job.get_simulated_samples().con1.plot()
 # plt.show()
 
-# # execute QUA:
-qm = qmm.open_qm(config)
-job = qm.execute(rabi_chevron)
-res_handle = job.result_handles
-# res_handle.wait_for_all_values()
+prev = False
+if prev: # running previous job
+    qm_list =  qmm.list_open_quantum_machines()
+    qm = qmm.get_qm(qm_list[0])
+    print("QM-ID: %s, Queue: %s, Version: %s" %(qm.id,qm.queue.count,qmm.version()))
+    job = qm.get_running_job()
+else: # execute new job (QUA):
+    qm = qmm.open_qm(config)
+    job = qm.execute(rabi_chevron)
 
 # plt.show()
 LO = qubit_LO/u.MHz
@@ -102,29 +112,31 @@ fig, ax = plt.subplots(2,2)
 interrupt_on_close(fig, job)
 
 while job.result_handles.is_processing():
-    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
-    n, I1, Q1, I2, Q2 = results.fetch_all()
-    progress_counter(n, n_avg)
+    results = fetching_tool(job, SCOPE, mode="live")
+    for i, dataz in enumerate(results.fetch_all()): data_dict[SCOPE[i]] = dataz
+    progress_counter(data_dict["n"], n_avg)
     # s1 = I1 + 1j*Q1
     # s2 = I2 + 1j*Q2
 
     u = unit()
     ax[0,0].cla()
-    ax[0,0].pcolor(amps, -dfs, I1)
-    ax[0,0].set_title('Q1-I, n={}, fcent={}'.format(n, LO+IF1))
+    ax[0,0].pcolor(amps, -dfs, data_dict['I1'])
+    ax[0,0].set_title('Q1-I, n={}, fcent={}'.format(data_dict["n"], LO+IF1))
     ax[1,0].cla()
-    ax[1,0].pcolor(amps, -dfs, Q1)
-    ax[1,0].set_title('Q1-Q, n={}'.format(n))
+    ax[1,0].pcolor(amps, -dfs, data_dict['Q1'])
+    ax[1,0].set_title('Q1-Q, n={}'.format(data_dict["n"]))
     ax[0,1].cla()
-    ax[0,1].pcolor(amps, -dfs, I2)
-    ax[0,1].set_title('Q2-I, n={}, fcent={}'.format(n, LO+IF2))
+    ax[0,1].pcolor(amps, -dfs, data_dict['I2'])
+    ax[0,1].set_title('Q2-I, n={}, fcent={}'.format(data_dict["n"], LO+IF2))
     ax[1,1].cla()
-    ax[1,1].pcolor(amps, -dfs, Q2)
-    ax[1,1].set_title('Q2-Q, n={}'.format(n))
-    plt.pause(1.0)
+    ax[1,1].pcolor(amps, -dfs, data_dict['Q2'])
+    ax[1,1].set_title('Q2-Q, n={}'.format(data_dict["n"]))
+    plt.pause(2.0)
+    # np.savez(save_dir/filename, **data_dict)
 
 # plt.plot(I1, Q1, '.')
 # plt.plot(I2, Q2, '.')
 # plt.axis('equal')
 
 plt.show()
+

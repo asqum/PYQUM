@@ -19,7 +19,7 @@ dc0_q2 = config["controllers"]["con1"]["analog_outputs"][8]["offset"]
 dc0_q1 = config["controllers"]["con1"]["analog_outputs"][7]["offset"]
 ts = np.arange(4, 200, 1)
 amps = np.arange(-0.098, -0.118, -0.0005)
-n_avgs = 1300000
+n_avg = 1300000
 
 with program() as cz:
 
@@ -32,7 +32,7 @@ with program() as cz:
     t = declare(int)
     a = declare(fixed)
 
-    with for_(n, 0, n < n_avgs, n+1):
+    with for_(n, 0, n < n_avg, n+1):
         save(n, n_st)
         with for_(*from_array(t, ts)):
             with for_(*from_array(a, amps)):
@@ -89,7 +89,7 @@ else:
     while job.result_handles.is_processing():
         results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
         n, I1, Q1, I2, Q2 = results.fetch_all()
-        progress_counter(n, n_avgs)
+        progress_counter(n, n_avg)
 
         u = unit()
         ax[0,0].cla()

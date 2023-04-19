@@ -18,7 +18,7 @@ job = QmJob(qmm, job.id())
 
 ts = np.arange(4, 200, 1)
 amps = np.arange(-0.098, -0.118, -0.0005)
-n_avgs = 1300000
+n_avg = 1300000
 
 results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
 n, I1, Q1, I2, Q2 = results.fetch_all()

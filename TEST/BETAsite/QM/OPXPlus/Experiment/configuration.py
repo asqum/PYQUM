@@ -55,9 +55,9 @@ const_amp = 270 * u.mV
 # generate flattop waveforms
 
 # qubit-1 (uses X to tune up the rest of the Q-gates)
-flattop_len_1 = 60 #40, 60, 300
+flattop_len_1 = 40 #40, 60, 300
 flattop_rise_len_1 = 8
-flattop_amp_1 = 0.24 *0.131*4 #*0.57 #RB1
+flattop_amp_1 = 0.24 *0.131*4 *1.5 #RB1
 # flattop_amp_1 = 0.22 *0.32*0.857 #RB2
 
 tot_ft_len_1 = flattop_len_1 + 2 * flattop_rise_len_1
@@ -77,9 +77,9 @@ my90_flattop_I_1 = - y * 0.5
 my90_flattop_Q_1 = x * 0.5
 
 # qubit-2
-flattop_len = 60 #40, 60, 300
+flattop_len = 40 #40, 60, 300
 flattop_rise_len = 8
-flattop_amp = 0.24 *1.2 #RB1
+flattop_amp = 0.24 *1.2 *1.5 #RB1
 # flattop_amp = 0.22 *1.14 #RB2
  
 tot_ft_len = flattop_len + 2 * flattop_rise_len
@@ -205,9 +205,9 @@ config = {
                 6: {"offset": -0.110},  # Q qubit2
                 # 7: {"offset": 0.168},  # Z qubit1 => offset at q1 max frequency
                 # 8: {"offset": -0.48},  # Z qubit2 => offset at q2 max frequency
-                7: {"offset": 0.137},  # Z qubit1 => offset at 3 chosen idle-points => 0.137, -0.35, -0.15
-                8: {"offset": -0.499},  # Z qubit2 => offset near q2 max frequency
-                9: {"offset": 0.097},  # Z coupler => offset at q1<=>q2 coupling off
+                7: {"offset": 0},  # Z qubit1 => offset at 3 chosen idle-points => 0.137, -0.35, -0.15
+                8: {"offset": -0.2},  # Z qubit2 => offset near q2 max frequency  => -0.499
+                9: {"offset": 0.2},  # Z coupler => offset at q1<=>q2 coupling off=> 0.097
             },
             "digital_outputs": {
                 1: {},

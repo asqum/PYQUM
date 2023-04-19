@@ -29,7 +29,7 @@ ddc1 = dcs1[1] - dcs1[0]
 # dfs2 = np.linspace(- 450e6, + 100e6, num_pts) # qubit 2
 dfs2 = np.linspace(- 120e6, 160e6, num_pts) # qubit 2
 ddf2 = dfs2[1] - dfs2[0]
-dcs2 = np.linspace(-0.48, -0.46, num_pts) # flux 2 
+dcs2 = np.linspace(-0.49, 0.49, num_pts) # flux 2 
 ddc2 = dcs2[1] - dcs2[0]
 n_avg = 4000000
 
@@ -66,14 +66,14 @@ with program() as multi_qubit_spec_vs_flux:
             update_frequency("q1_xy", f_q1)
             update_frequency("q2_xy", f_q2)  
 
-            assign(dc1, dcs1[0])
-            # assign(dc2, dcs2[0])
+            # assign(dc1, dcs1[0])
+            assign(dc2, dcs2[0])
 
             with for_(j, 0, j<num_pts, j+1):
 
                 # Flux sweeping 
-                set_dc_offset("q1_z", "single", dc1)
-                # set_dc_offset("q2_z", "single", dc2)
+                # set_dc_offset("q1_z", "single", dc1)
+                set_dc_offset("q1_z", "single", dc2)
                 
                 # Saturate qubit
                 play("cw"*amp(0.07), "q1_xy", duration=t)
@@ -91,8 +91,8 @@ with program() as multi_qubit_spec_vs_flux:
                 save(I[1], I_st[1])
                 save(Q[1], Q_st[1])
 
-                assign(dc1, dc1 + ddc1)
-                # assign(dc2, dc2 + ddc2)
+                # assign(dc1, dc1 + ddc1)
+                assign(dc2, dc2 + ddc2)
                 
                 # DC waiting time will affect the edges of the curve:
                 wait(1000)
@@ -206,4 +206,4 @@ else:
 
     plt.show()
 
-np.savez(save_dir/"9_multi_qubit_spec_vs_flux.npz", n=n, I1=I1, Q1=Q1, I2=I2, Q2=Q2)
+# np.savez(save_dir/"9_multi_qubit_spec_vs_flux.npz", n=n, I1=I1, Q1=Q1, I2=I2, Q2=Q2)
