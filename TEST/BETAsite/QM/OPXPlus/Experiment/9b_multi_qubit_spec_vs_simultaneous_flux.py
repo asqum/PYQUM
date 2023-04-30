@@ -22,7 +22,7 @@ t = 17000//4 #//100
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
 # dfs1 = np.linspace(- 450e6, + 200e6, num_pts) # qubit 1
-dfs1 = np.linspace( -100e6, 380e6, num_pts) # qubit 1
+dfs1 = np.linspace( -100e6, 490e6, num_pts) # qubit 1
 ddf1 = dfs1[1] - dfs1[0]
 dcs1 = np.linspace(-0.49, 0.49, num_pts) # flux 1
 ddc1 = dcs1[1] - dcs1[0]
@@ -33,7 +33,7 @@ dcs2 = np.linspace(-0.49, 0.49, num_pts) # flux 2
 ddc2 = dcs2[1] - dcs2[0]
 n_avg = 4000000
 
-# Equalization for comparison:
+# Equalization for comparison: fixed on f_q1
 fres_q2 = fres_q1
 dfs2 = dfs1
 ddf2 = ddf1
@@ -72,8 +72,9 @@ with program() as multi_qubit_spec_vs_flux:
             with for_(j, 0, j<num_pts, j+1):
 
                 # Flux sweeping 
-                # set_dc_offset("q1_z", "single", dc1)
                 set_dc_offset("q1_z", "single", dc2)
+                set_dc_offset("q2_z", "single", 0.173)
+                set_dc_offset("qc_z", "single", -0.117)
                 
                 # Saturate qubit
                 play("cw"*amp(0.07), "q1_xy", duration=t)

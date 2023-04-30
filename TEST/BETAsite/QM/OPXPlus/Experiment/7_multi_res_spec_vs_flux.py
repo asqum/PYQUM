@@ -17,13 +17,13 @@ from qualang_tools.plot import interrupt_on_close
 from qm.simulate import LoopbackInterface
 
 flux_pts = 50
-dcs1 = np.linspace(-0.4, 0.49, flux_pts)
-dcs2 = np.linspace(-0.48, 0.46, flux_pts)
+dcs1 = np.linspace(-0.49, 0.49, flux_pts)
+dcs2 = np.linspace(-0.49, 0.49, flux_pts)
 ddc1 = dcs1[1] - dcs1[0]
 ddc2 = dcs2[1] - dcs2[0]
 fres_q1 = resonator_IF_q1
 fres_q2 = resonator_IF_q2
-dfs = np.arange(-0.9e6, + 0.2e6, 0.011e6)
+dfs = np.arange(-1.4e6, + 1.0e6, 0.006e6)
 n_avg = 2000000
 
 # QUA program
@@ -60,7 +60,7 @@ with program() as multi_res_spec_vs_flux:
 
                 # Flux sweeping 
                 set_dc_offset("q1_z", "single", dc1)
-                set_dc_offset("q2_z", "single", dc2)
+                # set_dc_offset("q2_z", "single", dc2)
             
                 # wait for the resonators to relax 
                 wait(1000, "rr1")

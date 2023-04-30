@@ -161,8 +161,8 @@ minus_y90_Q_wf_q2 = minus_y90_wf_q2
 resonator_LO = 6.35 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
 
 # RB1:
-resonator_IF_q1 = int((6399.12 - 6350) * u.MHz)
-resonator_IF_q2 = int((6350 - 6482.046) * u.MHz) 
+resonator_IF_q1 = int((6398.95 - 6350) * u.MHz)
+resonator_IF_q2 = int((6350 - 6481.953) * u.MHz) 
 # RB2:
 # resonator_IF_q1 = int((6398.933 - 6350) * u.MHz)
 # resonator_IF_q2 = int((6350 - 6482.139) * u.MHz)
@@ -176,8 +176,8 @@ mixer_resonator_phi_q2 = -0.018
 mixer_resonator_phi_qc = -0.0010
 
 readout_len = 4000 # 20000 for 4-7
-readout_amp_q1 = 0.07
-readout_amp_q2 = 0.07 *0.3 *0.87
+readout_amp_q1 = 0.07 *0.892
+readout_amp_q2 = 0.07 *0.822
 readout_amp_qc = 0.0525
 
 time_of_flight = 260 # should be a multiple of 4
@@ -206,8 +206,8 @@ config = {
                 # 7: {"offset": 0.168},  # Z qubit1 => offset at q1 max frequency
                 # 8: {"offset": -0.48},  # Z qubit2 => offset at q2 max frequency
                 7: {"offset": 0},  # Z qubit1 => offset at 3 chosen idle-points => 0.137, -0.35, -0.15
-                8: {"offset": -0.2},  # Z qubit2 => offset near q2 max frequency  => -0.499
-                9: {"offset": 0.2},  # Z coupler => offset at q1<=>q2 coupling off=> 0.097
+                8: {"offset": 0.49},  # Z qubit2 => offset near q2 max frequency  => -0.499
+                9: {"offset": -0.12},  # Z coupler => offset at q1<=>q2 coupling off=> 0.097 (will heat-up mK when > 0.1V)
             },
             "digital_outputs": {
                 1: {},
