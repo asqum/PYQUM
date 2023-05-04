@@ -4,12 +4,14 @@ from numpy import ndarray
 # Numpy array
 from numpy import array, append, zeros, ones, where, linspace
 # Numpy common math function
-from numpy import exp,sqrt
+from numpy import exp,sqrt,tanh,cosh
 # Numpy constant
 from numpy import pi, logical_and
 # Scipy
 from scipy.special import erf
 
+def sech(x):
+    return 1/cosh(x)
 
 # Gaussian Family
 def GaussianFamily (x, *p)->ndarray:
@@ -114,6 +116,39 @@ def derivativeHermiteFunc (x, *p)->ndarray:
     else :
         return zeros(len(x))
 
+# 0504 add Tangential
+def TangentialFunc(x, *p)->ndarray:
+    """
+    return tangential function
+    x: array like, shape (n,) \n
+    p: parameters \n
+        p[0]: amp\n
+        p[1]: sigma\n
+        p[2]: peak position\n
+    """
+    tg = x[-1]-x[0]
+    if tg != 0:
+        return tanh((x-p[2])/p[1])-tanh((x-p[2]-tg)/p[1])
+    else:
+        return zeros(len(x))
+
+def derivativeTangentialFunc(x, *p)->ndarray:
+    """
+    return derivative tangential function
+    x: array like, shape (n,) \n
+    p: parameters \n
+        p[0]: amp\n
+        p[1]: sigma\n
+        p[2]: peak position\n
+    """
+    tg = x[-1]-x[0]
+    if tg != 0:
+        return (sech((x-p[2])/p[1]))**2-(sech((x-p[2]-tg)/p[1]))**2
+    else:
+        return zeros(len(x))
+
+
+
 
 def constFunc (x, *p)->ndarray:
     """
@@ -204,6 +239,19 @@ def DRAGFunc_Hermite(t, *p )->ndarray:
     HermiteParas = (p[0],p[1],p[2],p[3])
     return HermiteFunc( t, *HermiteParas ) -1j*p[4]*derivativeHermiteFunc( t, *HermiteParas )
 
+# 0504 add DRAG for tangential
+def DRAGFunc_Tangential(t, *p )->ndarray:
+    """
+    return Tangential +1j*derivative Tangential\n
+    x: array like, shape (n,), the element is complex number \n
+    p[0]: amp \n
+    p[1]: sigma \n
+    p[2]: peak position \n
+    p[3]: derivative Hermite amplitude ratio \n
+    """
+    TangParas = (p[0],p[1],p[2],p[3])
+    return TangentialFunc( t, *TangParas ) -1j*p[4]*derivativeTangentialFunc( t, *TangParas )
+
 
 if __name__ == '__main__':
     from numpy import linspace
@@ -215,3 +263,4 @@ if __name__ == '__main__':
     plt.plot(x,gaussianFunc(x,*p))
     plt.plot(x,derivativeGaussianFunc(x,*p))
     plt.show()
+

@@ -146,12 +146,30 @@ class SQCompiler(GateCompiler):
         
         
         pulse_length = self.params["rxy"]["pulse_length"]
+        pulse_strength = self.params["rxy"]["pulse_strength"]
         dt = self.params["rxy"]["dt"]
         anharmonicity = self.params["anharmonicity"]
-        a_weight = self.params["a_weight"]
+        if self.params["waveform"][0] != "":
+            waveform = self.params["waveform"][0]
+            a_weight = self.params["waveform"][1]
+        else:
+            waveform = "DRAG"
+            a_weight = 0.
+
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., a_weight/anharmonicity) ) *gate.arg_value/np.pi
+        if waveform.lower()=="dragh":
+            coeff = ps.DRAGFunc_Hermite(tlist, *(1,4,4,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
+        elif waveform.lower()=="drage":
+            shifter = ps.ErfShifter(pulse_strength,pulse_length,pulse_length/4)
+            coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2.,shifter,a_weight/anharmonicity) ) *gate.arg_value/np.pi
+        elif waveform.lower()=="dragt":
+            coeff = ps.DRAGFunc_Tangential(tlist, *(1,pulse_length/4.,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
+        elif waveform.lower()=="gauss":
+            coeff = ps.GaussianFamily(tlist,*(1,pulse_length/4.,pulse_length/2.,0))*gate.arg_value/np.pi
+        else:
+            coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2.,0,a_weight/anharmonicity) ) *gate.arg_value/np.pi
+
 
         if gate.name == "RX":
             return self.generate_pulse(gate, tlist, coeff, phase=0.0)

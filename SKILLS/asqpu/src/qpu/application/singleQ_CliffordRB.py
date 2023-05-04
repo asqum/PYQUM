@@ -170,8 +170,15 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
+    mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
     mycompiler.params["anharmonicity"] = q_info.tempPars["anharmonicity"]
     mycompiler.params["a_weight"] = q_info.tempPars["a_weight"]
+
+    if "waveform&alpha" in list(q_info.tempPars.keys()):
+        mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha"]
+    else:
+        mycompiler.params["waveform"] = ["",0]
+
 
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt
