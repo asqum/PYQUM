@@ -27,7 +27,7 @@ def show():
         # Security implementation:
         if not g.user: abort(404)
         return render_template("blog/guide/guide.html")
-    return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
+    return("<h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 
 # ALL
 @bp.route('/calc', methods=['POST', 'GET'])
