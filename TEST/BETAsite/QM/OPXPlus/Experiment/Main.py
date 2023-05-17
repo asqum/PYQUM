@@ -16,7 +16,8 @@ import os, fnmatch
 from Macros import cz_gate
 from cosine import Cosine
 
-from E12_single_qubit_T1 import *
+# from E12_single_qubit_T1 import *
+from qua_code import *
 
 filename = 'T1_'
 modelist = ['sim', 'prev', 'load', 'new']
