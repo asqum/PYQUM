@@ -1,4 +1,5 @@
 # config_testing.py tests all the operations in the configuration file 
+from pyqum.instrument.toolbox import waveform
 
 from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import *
