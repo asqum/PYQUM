@@ -103,7 +103,8 @@ with program() as multi_qubit_spec_vs_flux:
         I_st[1].buffer(num_pts, num_pts).average().save("I2")
         Q_st[1].buffer(num_pts, num_pts).average().save("Q2")
         
-
+        # Oracle SCOPE:
+        SCOPE = ["n", "I1", "Q1", "I2", "Q2"]
 
 
 

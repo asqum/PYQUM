@@ -19,13 +19,14 @@ from cosine import Cosine
 # from E12_single_qubit_T1 import *
 from qua_code import *
 
-filename = 'T1_'
+filename = 'Test_'
 modelist = ['sim', 'prev', 'load', 'new']
 mode = modelist[int(input("1. simulate, 2. previous job, 3. load data, 4. new run (1-4)?"))-1]
 print("mode: %s" %mode)
 data_dict = dict()
 
-# Prepare Figures:
+# Prepare Figures
+###########################################
 row,col = 2,2
 fig, ax = plt.subplots(row,col)
 def data_present(live=True, data=[]):
@@ -34,6 +35,7 @@ def data_present(live=True, data=[]):
     if len(data)==0:
         results = fetching_tool(job, SCOPE, mode="live")
         for i, dataz in enumerate(results.fetch_all()): data_dict[SCOPE[i]] = dataz
+        
         
     else: n, I1g, Q1g, I2g, Q2g, I1e, Q1e, I2e, Q2e = \
             data.f.n, data.f.I1g, data.f.Q1g, data.f.I2g, data.f.Q2g, data.f.I1e, data.f.Q1e, data.f.I2e, data.f.Q2e
@@ -75,6 +77,7 @@ def data_present(live=True, data=[]):
         plt.close()
 
     return
+##################################################
 
 # open communication with opx
 qmm = QuantumMachinesManager(host=qop_ip, port=80)
