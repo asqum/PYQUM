@@ -20,8 +20,8 @@ debugger = debug(mdlname)
 
 # INITIALIZATION
 def Initiate(reset=True, which=1, mode='DATABASE', screenoff=0): # PENDING INCLUSION INTO THE DATABASE
-    ad = address(mode)
-    rs = ad.lookup(mdlname) # Instrument's Address
+    # TODO: Recover all variable "ad" in this file  # ad = address(mode)
+    rs = 'TCPIP0::192.168.1.37::INSTR' #ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -38,7 +38,8 @@ def Initiate(reset=True, which=1, mode='DATABASE', screenoff=0): # PENDING INCLU
         # sleep(3)
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat)))
-        ad.update_machine(1, "%s_%s"%(mdlname,which))
+
+        # ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
         print(Fore.RED + "%s's connection NOT FOUND" % mdlname)
@@ -246,8 +247,8 @@ def close(bench, reset=True, which=1, mode='DATABASE'):
     try:
         bench.close() #None means Success?
         status = "%s Closed Successfully"%(mdlname)
-        ad = address(mode)
-        ad.update_machine(0, "%s_%s"%(mdlname,which))
+        # ad = address(mode)
+        # ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error Closing up %s"%(mdlname)
     set_status(mdlname, dict(state='disconnected'))
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed" %(mdlname))
@@ -269,6 +270,7 @@ def ifbw(nabench, action=['Get', '']):
     vbw(nabench, action=action)
 
 # Test Zone
+"""
 def test(detail=True):
     from pyqum.instrument.analyzer import curve
     from pyqum.instrument.toolbox import waveform
@@ -355,5 +357,5 @@ def test(detail=True):
     else: state = False
     close(s, reset=state, mode="TEST")
     return
-
+"""
 # test()

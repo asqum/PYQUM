@@ -20,8 +20,8 @@ import keysightSD1
 
 # INITIALIZATION
 def Initiate(which, mode='DATABASE', current=False):
-    ad = address(mode)
-    rs = ad.lookup(mdlname, label=int(which)) # Instrument's Address
+    # TODO: Recover all variable "ad" in this file  #ad = address(mode)
+    rs = '1::5' #ad.lookup(mdlname, label=int(which)) # Instrument's Address
     try:
         # CREATE AND OPEN MODULE
         module = keysightSD1.SD_AOU()
@@ -33,7 +33,7 @@ def Initiate(which, mode='DATABASE', current=False):
         for i in range(4): module.channelWaveShape(i+1, keysightSD1.SD_Waveshapes.AOU_HIZ) # always HiZ ALL 4-channels
 
         set_status(mdlname, dict(state='connected'), which)
-        ad.update_machine(1, "%s_%s"%(mdlname,which))
+    #    ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'), which)
         print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
@@ -358,7 +358,7 @@ def close(module, which, reset=True, mode='DATABASE'):
         module.close() #None means Success?
         status = "Success"
         ad = address(mode)
-        ad.update_machine(0, "%s_%s"%(mdlname,which))
+    #    ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
     set_status(mdlname, dict(state='disconnected: %s' %status), which)
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed: %s" %(mdlname,status))

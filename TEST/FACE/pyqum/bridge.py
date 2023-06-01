@@ -20,7 +20,8 @@ from numpy import cos, sin, pi, polyfit, poly1d, array, roots, isreal, sqrt, mea
 
 # Load instruments
 from pyqum.instrument.machine import TKAWG, PSGA, MXA
-from pyqum.directive.calibrate import IQ_Cal
+#from pyqum.directive.calibrate import IQ_Cal
+from pyqum.directive.new_mixer_cal import IQ_Calibrate
 
 encryp = 'ghhgjadz'
 bp = Blueprint(myname, __name__, url_prefix='/bridge')
@@ -132,7 +133,7 @@ def iqcal_auto_calibrate_run():
         Mixer_module = request.args.get('Mixer_module')
         Wiring_config = loads(request.args.get('Wiring_config'))
         Channels_group = int(request.args.get('Channels_group')) # 1:1,2; 2:2,3; 3:3,4; ...
-        C = IQ_Cal(Conv_frequency_GHz, LO_power_dBm, IF_rotation_MHz, IF_period_ns, IF_scale, Mixer_module, Wiring_config, Channels_group)
+        C = IQ_Calibrate(Conv_frequency_GHz, LO_power_dBm, IF_rotation_MHz, IF_period_ns, IF_scale, Mixer_module, Wiring_config, Channels_group)
         C.run()
         C.close()
 

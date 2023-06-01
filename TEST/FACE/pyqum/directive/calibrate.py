@@ -429,3 +429,26 @@ def test():
     C.close()
 
 # test()
+"""
+iqcal_config = {"SG":"DDSLO_1","DA":"SDAWG_1","SA":"MXA_1"}
+SA_type, SA_label = iqcal_config['SA'].split("_")
+SA = im("pyqum.instrument.machine.%s" %SA_type)
+mxa = SA.Initiate(which=SA_label, screenoff=False)
+IF_freq = -25
+Conv_freq = 5.2
+LO_freq = Conv_freq - IF_freq/1000
+fspan_MHz = abs(IF_freq)*7 # SPAN MUST INCLUDE ALL PEAKS
+BW_Hz = fspan_MHz*1e6 / 100
+points = 1000
+SA_Setup(mxa, LO_freq, fspan_MHz=fspan_MHz, BW_Hz=BW_Hz, points=points)
+SA.averag(mxa,action=['Set', '1000'])
+print(SA.averag(mxa,action=['Get', '']))
+power = SA.mark_power(mxa, LO_freq)[0]
+print("After Ave Power at %sGHz is %sdBm" %(LO_freq, power))
+
+# frequency_range = waveform("%s to %s *%s" %(LO_freq-fspan_MHz/2000, LO_freq+fspan_MHz/2000, points-1)).data
+# Trigger Number XY:1 RO:2 (for DR-1 case)
+# TODO: For CW calibration DO NOT need trigger 
+# SA.trigger_source(mxa, action=['Set','EXTernal%s'%(iqcal_config[mode]['trigger'])])
+sleep(3)
+"""
