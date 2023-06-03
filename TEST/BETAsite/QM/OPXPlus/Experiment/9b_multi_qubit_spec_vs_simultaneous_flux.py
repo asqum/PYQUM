@@ -18,26 +18,27 @@ from qm.simulate import LoopbackInterface
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
-num_pts = 100
+from numpy import array
+
+# NOTE:
+# *from_array only works with numpy.arange
+# for_each_ must work with same type of data, but can be parallel assignment of variables
+
+# constant / from config:
+n_avg = 4000000
 t = 17000//4 #//100
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
-# dfs1 = np.linspace(- 450e6, + 200e6, num_pts) # qubit 1
-dfs1 = np.linspace( -100e6, 490e6, num_pts) # qubit 1
-ddf1 = dfs1[1] - dfs1[0]
-dcs1 = np.linspace(-0.49, 0.49, num_pts) # flux 1
-ddc1 = dcs1[1] - dcs1[0]
-# dfs2 = np.linspace(- 450e6, + 100e6, num_pts) # qubit 2
-dfs2 = np.linspace(- 120e6, 160e6, num_pts) # qubit 2
-ddf2 = dfs2[1] - dfs2[0]
-dcs2 = np.linspace(-0.49, 0.49, num_pts) # flux 2 
-ddc2 = dcs2[1] - dcs2[0]
-n_avg = 4000000
+
+# variables
+dfq1 = np.linspace( -100e6, 490e6, 100, dtype=int) # qubit 1
+dcq1 = np.linspace(-0.49, 0.49, 120) # flux 1
+dfq2 = np.linspace(- 120e6, 160e6, 100, dtype=int) # qubit 2
+dcq2 = np.linspace(-0.49, 0.49, 120) # flux 2 
 
 # Equalization for comparison: fixed on f_q1
 fres_q2 = fres_q1
-dfs2 = dfs1
-ddf2 = ddf1
+dfq2 = dfq1
 
 # QUA program
 with program() as multi_qubit_spec_vs_flux:
@@ -48,32 +49,24 @@ with program() as multi_qubit_spec_vs_flux:
     Q_st = [declare_stream() for i in range(2)]
     n = declare(int)
     n_st = declare_stream()
-    f_q1 = declare(int)
-    f_q2 = declare(int)
-    dc1 = declare(fixed)
-    dc2 = declare(fixed)
-    i = declare(int)
-    j = declare(int)
+    df_q1 = declare(int)
+    df_q2 = declare(int)
+    dc_q1 = declare(fixed)
+    dc_q2 = declare(fixed)
 
     with for_(n, 0, n < n_avg, n+1):
         
         save(n, n_st)
-        
-        assign(f_q1, dfs1[0] + fres_q1)
-        assign(f_q2, dfs2[0] + fres_q2)
+       
+        with for_each_((df_q1,df_q2), (dfq1,dfq2)):
 
-        with for_(i, 0, i<num_pts, i+1):
-
-            update_frequency("q1_xy", f_q1)
-            update_frequency("q2_xy", f_q2)  
-
-            # assign(dc1, dcs1[0])
-            assign(dc2, dcs2[0])
-
-            with for_(j, 0, j<num_pts, j+1):
+            update_frequency("q1_xy", df_q1 + fres_q1)
+            update_frequency("q2_xy", df_q2 + fres_q2) 
+            
+            with for_(*from_array(dc_q2, dcq2)):
 
                 # Flux sweeping 
-                set_dc_offset("q1_z", "single", dc2)
+                set_dc_offset("q1_z", "single", dc_q2)
                 set_dc_offset("q2_z", "single", 0.173)
                 set_dc_offset("qc_z", "single", -0.117)
                 
@@ -92,28 +85,24 @@ with program() as multi_qubit_spec_vs_flux:
                 save(Q[0], Q_st[0])
                 save(I[1], I_st[1])
                 save(Q[1], Q_st[1])
-
-                # assign(dc1, dc1 + ddc1)
-                assign(dc2, dc2 + ddc2)
                 
                 # DC waiting time will affect the edges of the curve:
                 wait(1000)
-
-            assign(f_q1, f_q1 + ddf1)
-            assign(f_q2, f_q2 + ddf2)
 
     with stream_processing():
 
         n_st.save("n")
 
         # resonator 1
-        I_st[0].buffer(num_pts, num_pts).average().save("I1")
-        Q_st[0].buffer(num_pts, num_pts).average().save("Q1")
+        I_st[0].buffer(len(dfq1), len(dcq1)).average().save("I1")
+        Q_st[0].buffer(len(dfq1), len(dcq1)).average().save("Q1")
         
         # resonator 2
-        I_st[1].buffer(num_pts, num_pts).average().save("I2")
-        Q_st[1].buffer(num_pts, num_pts).average().save("Q2")
+        I_st[1].buffer(len(dfq2), len(dcq2)).average().save("I2")
+        Q_st[1].buffer(len(dfq2), len(dcq2)).average().save("Q2")
         
+        # Oracle SCOPE:
+        SCOPE = ["n", "I1", "Q1", "I2", "Q2"]
 
 
 # open communication with opx
@@ -144,14 +133,16 @@ else:
     fig, ax = plt.subplots(2, 3)
     interrupt_on_close(fig, job)
 
-
+    data_dict = dict()
     while job.result_handles.is_processing():
-        results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
-        n, I1, Q1, I2, Q2 = results.fetch_all()
+        # results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
+        # n, I1, Q1, I2, Q2 = results.fetch_all()
+        results = fetching_tool(job, SCOPE, mode="live")
+        for i, dataz in enumerate(results.fetch_all()): data_dict[SCOPE[i]] = dataz
 
-        progress_counter(n, n_avg)
-        s1 = I1 + 1j*Q1
-        s2 = I2 + 1j*Q2
+        progress_counter(data_dict["n"], n_avg)
+        s1 = data_dict["I1"] + 1j*data_dict["Q1"]
+        s2 = data_dict["I2"] + 1j*data_dict["Q2"]
 
         # Normalize:
         A1 = np.abs(s1)
@@ -176,29 +167,29 @@ else:
         ax[0,0].set_title("q1 amp (LO: %s, n: %s)" %(LO,n))
         ax[0,0].set_xlabel("flux-1")
         ax[0,0].set_ylabel("freq")
-        ax[0,0].pcolor(dcs1, LO + IF_q1 - dfs1/u.MHz, A1)
+        ax[0,0].pcolor(dcq1, LO + IF_q1 - dfq1/u.MHz, A1)
 
         ax[1,0].set_title("q1 pha (LO+IF0: %s, n: %s)" %(LO+IF_q1,n))
         ax[1,0].set_xlabel("flux-1")
         ax[1,0].set_ylabel("ifreq")
-        ax[1,0].pcolor(dcs1, - dfs1/u.MHz, P1)
+        ax[1,0].pcolor(dcq1, - dfq1/u.MHz, P1)
     
         ax[0,1].set_title("q2 amp (LO: %s, n: %s)" %(LO,n))
         ax[0,1].set_xlabel("flux-1")
-        ax[0,1].pcolor(dcs1, LO + IF_q2 - dfs2/u.MHz, A2)
+        ax[0,1].pcolor(dcq1, LO + IF_q2 - dfq2/u.MHz, A2)
 
         ax[1,1].set_title("q2 pha (LO+IF0: %s, n: %s)" %(LO+IF_q2,n))
         ax[1,1].set_xlabel("flux-1")
-        ax[1,1].pcolor(dcs1, - dfs2/u.MHz, P2)
+        ax[1,1].pcolor(dcq1, - dfq2/u.MHz, P2)
 
         # Add both to compare:
         ax[0,2].set_title("q1 + q2 (Amp)")
         ax[0,2].set_xlabel("flux-1")
-        ax[0,2].pcolor(dcs1, LO + IF_q1 - dfs1/u.MHz, A1+A2)
+        ax[0,2].pcolor(dcq1, LO + IF_q1 - dfq1/u.MHz, A1+A2)
 
         ax[1,2].set_title("q1 + q2 (Pha)")
         ax[1,2].set_xlabel("flux-1")
-        ax[1,2].pcolor(dcs1, - dfs1/u.MHz, P1+P2)
+        ax[1,2].pcolor(dcq1, - dfq1/u.MHz, P1+P2)
 
         plt.pause(1.0)
 

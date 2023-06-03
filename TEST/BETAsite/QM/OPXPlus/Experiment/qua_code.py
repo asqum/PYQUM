@@ -29,7 +29,7 @@ dfs2 = dfs1
 ddf2 = ddf1
 
 # QUA program
-with program() as multi_qubit_spec_vs_flux:
+with program() as qua_program:
     
     I = [declare(fixed) for i in range(2)]
     Q = [declare(fixed) for i in range(2)] 

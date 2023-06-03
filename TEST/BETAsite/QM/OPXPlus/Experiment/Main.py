@@ -37,8 +37,8 @@ def data_present(live=True, data=[]):
         for i, dataz in enumerate(results.fetch_all()): data_dict[SCOPE[i]] = dataz
         
         
-    else: n, I1g, Q1g, I2g, Q2g, I1e, Q1e, I2e, Q2e = \
-            data.f.n, data.f.I1g, data.f.Q1g, data.f.I2g, data.f.Q2g, data.f.I1e, data.f.Q1e, data.f.I2e, data.f.Q2e
+    # else: n, I1g, Q1g, I2g, Q2g, I1e, Q1e, I2e, Q2e = \
+    #         data.f.n, data.f.I1g, data.f.Q1g, data.f.I2g, data.f.Q2g, data.f.I1e, data.f.Q1e, data.f.I2e, data.f.Q2e
     progress_counter(data_dict["n"], n_avg)
 
     u = unit()
@@ -84,7 +84,7 @@ qmm = QuantumMachinesManager(host=qop_ip, port=80)
 print("QUA version: %s" %qmm.version())
 
 if mode=="sim": # simulate the qua program
-    job = qmm.simulate(config, cz_ops, SimulationConfig(15000))
+    job = qmm.simulate(config, qua_program, SimulationConfig(15000))
     job.get_simulated_samples().con1.plot()
 
 if mode=="prev": # check any running previous job
@@ -115,7 +115,7 @@ if mode=="load": # load data
     
 if mode=="new": # new run
     qm = qmm.open_qm(config)
-    job = qm.execute(cz_ops)
+    job = qm.execute(qua_program)
     data_present(True)
     interrupt = int(input("Stop execution on closing figure (1/0)?"))
     if interrupt: 
