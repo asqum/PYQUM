@@ -18,8 +18,8 @@ debugger = debug(mdlname)
 
 # INITIALIZATION
 def Initiate(which, mode='DATABASE'):
-    # TODO: Recover all variable "ad" in this file #ad = address(mode)
-    rs = 'TCPIP0::192.168.1.108::INSTR' #ad.lookup(mdlname, which) # Instrument's Address
+    ad = address(mode)
+    rs = ad.lookup(mdlname, which) # Instrument's Address
     rm = visa.ResourceManager()
     try:
         bench = rm.open_resource(rs) #establishing connection using GPIB# with the machine
@@ -28,7 +28,7 @@ def Initiate(which, mode='DATABASE'):
         bench.timeout = 150000 #set timeout in ms
         set_status(mdlname, dict(state='connected'), which)
         print(Fore.GREEN + "%s-%s's connection Initialized: %s" % (mdlname,which, str(stat)))
-        #ad.update_machine(1, "%s_%s"%(mdlname,which))
+        ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'), which)
         print(Fore.RED + "%s-%s's connection NOT FOUND" %(mdlname,which))
@@ -235,7 +235,7 @@ def close(bench, which, reset=True, mode='DATABASE'):
         bench.close() #None means Success?
         status = "Success"
         ad = address(mode)
-        #ad.update_machine(0, "%s_%s"%(mdlname,which))
+        ad.update_machine(0, "%s_%s"%(mdlname,which))
     except: status = "Error"
     set_status(mdlname, dict(state='disconnected with %s' %status), which)
     print(Back.WHITE + Fore.BLACK + "%s's connection Closed with %s" %(mdlname,status))
