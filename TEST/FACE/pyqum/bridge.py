@@ -68,11 +68,13 @@ def iqcal_load_calibrate():
 def iqcal_manual_calibrate():
     mixermodule_key = request.args.get('mixermodule_key')
     mixermodule_val = request.args.get('mixermodule_val')
+    """
     LO_GHz = float(request.args.get('LO_frequency_GHz'))
     IF_GHz = float(request.args.get('IF_frequency_MHz'))/1000
     npoints = int(request.args.get('Sweep_points'))
     RBW_kHz = int(request.args.get('RBW_kHz'))
     AveCount = int(request.args.get('AveCount'))
+    """
     set_status("MIXER", {'%s'%mixermodule_key : '%s'%mixermodule_val})
     
     try:
@@ -80,6 +82,7 @@ def iqcal_manual_calibrate():
         # a. Zero-span Sweep:
         freq_list = [LO_GHz-2*IF_GHz, LO_GHz-IF_GHz, LO_GHz, LO_GHz+IF_GHz, LO_GHz+2*IF_GHz]
         powa_list = []
+        """
         for freq in freq_list:
             powa_list.append(SA.fpower(iqcal_sabench[session['user_name']], frequency_GHz=freq, resBW_kHz=RBW_kHz, ave_points=4, ave_counts=AveCount)[0])
         # b. Full Spectrum:
@@ -91,9 +94,10 @@ def iqcal_manual_calibrate():
         SA.autoscal(iqcal_sabench[session['user_name']])
         full_spectrum_x = waveform('%s to %s * %s' %(fstart, fstop, npoints-1)).data
         full_spectrum_y = SA.sdata(iqcal_sabench[session['user_name']], mode="")
+        """
     except: 
         freq_list, powa_list, full_spectrum_x, full_spectrum_y = [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]
-
+    
     return jsonify(freq_list=freq_list, powa_list=powa_list, full_spectrum_x=full_spectrum_x, full_spectrum_y=full_spectrum_y)
 @bp.route('/iqcal/manual/sa/connect', methods=['GET'])
 def iqcal_manual_saconnect():
@@ -128,12 +132,22 @@ def iqcal_auto_calibrate_run():
         Conv_frequency_GHz = float(request.args.get('Conv_frequency_GHz'))
         IF_rotation_MHz = int(request.args.get('IF_rotation_MHz')) # +/-: directional
         LO_power_dBm = float(request.args.get('LO_power_dBm'))
-        IF_period_ns = int(request.args.get('IF_period_ns'))
+        # IF_period_ns = int(request.args.get('IF_period_ns'))
+        LO_leakage_threshold_dBm = int(request.args.get('LO_leakage_threshold_dBm')) 
+        MR_leakage_threshold_dBm = int(request.args.get('MR_leakage_threshold_dBm')) 
+        range_of_phai_IQ = float(request.args.get('range_of_phai_IQ'))
+        range_of_a_IQ = float(request.args.get('range_of_a_IQ'))
+        range_of_offset_I = float(request.args.get('range_of_offset_I'))
+        range_of_offset_Q = float(request.args.get('range_of_offset_Q'))
+        step_rate = float(request.args.get('step_rate'))
+        IF_period_ns = 500000
         IF_scale = float(request.args.get('IF_scale'))
         Mixer_module = request.args.get('Mixer_module')
         Wiring_config = loads(request.args.get('Wiring_config'))
         Channels_group = int(request.args.get('Channels_group')) # 1:1,2; 2:2,3; 3:3,4; ...
-        C = IQ_Calibrate(Conv_frequency_GHz, LO_power_dBm, IF_rotation_MHz, IF_period_ns, IF_scale, Mixer_module, Wiring_config, Channels_group)
+        
+        C = IQ_Calibrate(Conv_frequency_GHz, LO_power_dBm, IF_rotation_MHz, IF_period_ns, IF_scale, Mixer_module, Wiring_config, Channels_group,\
+            range_of_phai_IQ, range_of_a_IQ, range_of_offset_I, range_of_offset_Q, step_rate, LO_leakage_threshold_dBm, MR_leakage_threshold_dBm)
         C.run()
         C.close()
 

@@ -19,7 +19,7 @@ import pulse_signal.common_Mathfunc as cpf
 # 0106 added : full time with envelope signal and other append zero
 def pulse_extend(envelope,startPoint,totalPoints)->ndarray:
     beforePulse = zeros(startPoint)
-    print(envelope.shape[0],startPoint,totalPoints)
+    # print(envelope.shape[0],startPoint,totalPoints)
     if envelope.shape[0]+startPoint <= totalPoints:
         afterPulse = zeros(totalPoints-envelope.shape[0]-startPoint)
     else:

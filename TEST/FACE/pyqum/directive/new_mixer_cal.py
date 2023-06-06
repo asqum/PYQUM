@@ -14,20 +14,38 @@ from pyqum.instrument.logger import status_code, get_status, set_status, clocker
 # from pyqum.instrument.analyzer import curve
 from pyqum.instrument.composer import pulser
 from scipy.optimize import curve_fit
-from numpy import sin, cos, pi, array, float64, sum, dot, log10, linspace, min
+from numpy import sin, cos, pi, array, float64, sum, dot, log10, linspace, min, argmin
 from time import time, sleep
 import matplotlib.pyplot as plt
 
 def target_function(x, a, b, c):
     return a*x**2 + b*x + c
+
+# def find_minimum(x,y):
+#     popt, pcov = curve_fit(
+#         f=target_function,         # model function
+#         xdata=x,    # x data
+#         ydata=y,     # y data
+#         p0=(1,1,1),    # initial value of the parameters
+#     )
+#     minimum = -popt[1]/2/popt[0]
+#     return minimum
+
 def find_minimum(x,y):
-    popt, pcov = curve_fit(
-        f=target_function,         # model function
-        xdata=x,    # x data
-        ydata=y,     # y data
-        p0=(1,1,1),    # initial value of the parameters
-    )
-    minimum = -popt[1]/2/popt[0]
+    min_idx = argmin(y)
+    if min_idx == 0 or min_idx == len(y)-1:
+        minimum = x[argmin(y)]
+    else:
+        minL_idx = min_idx-1
+        minR_idx = min_idx+1
+        dyL = y[minL_idx]-y[min_idx]
+        dyR = y[minR_idx]-y[min_idx]
+        nor_dyL = dyL/(dyL+dyR)
+        nor_dyR = dyR/(dyL+dyR)
+        dx = (x[minR_idx]-x[minL_idx])/2
+        print(f"dx {dx}")
+        print(f"Shift {(dx*dyR -dx*dyL)}")
+        minimum = x[argmin(y)]+(dx*nor_dyL -dx*nor_dyR)
     return minimum
 
 # Instrument acting on feedback:
@@ -86,8 +104,8 @@ def SA_Setup(mxa, center_freq_GHz, fspan_MHz=1e-3, BW_Hz=1000, points=7):
 
 class IQ_Calibrate:
 
-    def __init__(self, Conv_freq, LO_powa, IF_freq, IF_period, IF_scale, mixer_module, iqcal_config=dict(SG='DDSLO_1',DA='SDAWG_1',SA='MXA_1'), channels_group=1,\
-        range_phai=20, range_a=0.2, range_I=0.1, range_Q=0.1, step_rate=0.8, LOstop=-40, MRstop=-40):
+    def __init__(self, Conv_freq, LO_powa, IF_freq, IF_period, IF_scale, mixer_module, iqcal_config=dict(SG='PSGA_1',DA='TKAWG_1',SA='MXA_1'), channels_group=1,\
+        range_phai=20, range_a=0.1, range_I=0.2, range_Q=0.2, step_rate=0.6, LOstop=-50, MRstop=-50):
         '''
         The calibration is based on the mixer mechanism.
         Initialize relevant instruments:
@@ -186,15 +204,15 @@ class IQ_Calibrate:
         phai_IQ = self.IQparams[4] - self.IQparams[3]
         a_IQ = self.IQparams[2]
         print(f'Conv power: {SA.mark_power(self.mxa, self.Conv_freq)[0]} dBm')
+        print(f'LO leakage: {SA.mark_power(self.mxa, self.leakage_freq[0])[0]} dBm') 
         print(f'MR leakage: {SA.mark_power(self.mxa, self.leakage_freq[1])[0]} dBm')
-        print(f'LO leakage: {SA.mark_power(self.mxa, self.leakage_freq[0])[0]} dBm')        
         low_phai_bound, high_phai_bound = phai_IQ-self.range_phai, phai_IQ+self.range_phai
         low_a_bound, high_a_bound = a_IQ-self.range_a, a_IQ+self.range_a
         low_offsetI_bound, high_offsetI_bound = Ioffset-self.range_I, Ioffset+self.range_I
         low_offsetQ_bound, high_offsetQ_bound = Qoffset-self.range_Q, Qoffset+self.range_Q
         
         while(1):
-            print('######################################### MR calibration #########################################')
+            print('######################################### Phase calibration #########################################')
             # Choose 5 separate points between the low bound and high bound
             Phai = linspace(low_phai_bound, high_phai_bound, 5)
             print(f'low_phai_bound:{low_phai_bound}, high_phai_bound:{high_phai_bound}')
@@ -208,6 +226,8 @@ class IQ_Calibrate:
             self.IQparams = array([Ioffset, Qoffset, a_IQ, 0, phai_IQ])
             pulsettings = Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group, self.iqcal_config[self.mode]['marker'])
             signal = SA.mark_power(self.mxa, self.leakage_freq[1])[0]
+            target = SA.mark_power(self.mxa, self.Conv_freq)[0]
+            print(f'{Phai}, {mirror}')
             print(f'find min phai_IQ: {phai_IQ}, {signal} dBm')
             # Choose phai_IQ as center and decrease point choose with range 
             low_phai_bound, high_phai_bound = phai_IQ-(high_phai_bound-low_phai_bound)/2*self.step_rate**count, phai_IQ+(high_phai_bound-low_phai_bound)/2*self.step_rate**count
@@ -215,13 +235,18 @@ class IQ_Calibrate:
             set_status("RELAY", dict(autoIQCAL_dur_s=time()-self.t_start, autoIQCAL_frequencies=self.frequency_range, autoIQCAL_spectrum=self.current_spectrum))
 
             # Criterion of when the loop will stop
-            if SA.mark_power(self.mxa, self.leakage_freq[1])[0] < SA.mark_power(self.mxa, self.Conv_freq)[0]+self.MRstop or count >= 10 or SA.mark_power(self.mxa, self.leakage_freq[1])[0] < -80:
-                print(f'RF: {SA.mark_power(self.mxa, self.Conv_freq)[0]} dBm, MR leakage: {signal} dBm')
+            if signal < target+self.MRstop or count >= 5 or signal < -80:
+                print(f'RF: {target} dBm, MR leakage: {signal} dBm')
                 break
-            
+            count += 1
+
+        count = 0
+        while(1):    
+            print('######################################### Amplitude calibration #########################################')
             # Choose 5 separate points between the low bound and high bound
             A_IQ = linspace(low_a_bound, high_a_bound, 5)
             print(f'low_a_bound:{low_a_bound}, high_a_bound:{high_a_bound}')
+            
             mirror = []
             for a_IQ in A_IQ:
                 self.IQparams = array([Ioffset, Qoffset, a_IQ, 0, phai_IQ])
@@ -233,21 +258,22 @@ class IQ_Calibrate:
             self.IQparams = array([Ioffset, Qoffset, a_IQ, 0, phai_IQ])
             pulsettings = Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group, self.iqcal_config[self.mode]['marker'])
             signal = SA.mark_power(self.mxa, self.leakage_freq[1])[0]
+            target = SA.mark_power(self.mxa, self.Conv_freq)[0]
             print(f'find min a_IQ: {a_IQ}, {signal}dBm')
             # Decrease bound with the range 
             low_a_bound, high_a_bound = a_IQ-(high_a_bound-low_a_bound)/2*self.step_rate**count, a_IQ+(high_a_bound-low_a_bound)/2*self.step_rate**count
             print(f'AAAAAAAAAAAAAAAAAAAAAAAAAAAAA count: {count} AAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
             self.current_spectrum = SA.sdata(self.mxa, mode="")
             set_status("RELAY", dict(autoIQCAL_dur_s=time()-self.t_start, autoIQCAL_frequencies=self.frequency_range, autoIQCAL_spectrum=self.current_spectrum))
-
+            
             # Criterion of when the loop will stop
-            if SA.mark_power(self.mxa, self.leakage_freq[1])[0] < SA.mark_power(self.mxa, self.Conv_freq)[0]+self.MRstop or count >= 10 or count >= 10 or SA.mark_power(self.mxa, self.leakage_freq[1])[0] < -80:
+            if signal < target+self.MRstop or count >= 5 or signal < -80:
                 print(f'RF: {SA.mark_power(self.mxa, self.Conv_freq)[0]} dBm, MR leakage: {signal} dBm')
                 break
+            
             count += 1
-        
         count = 0 
-
+        offset_Q = Qoffset
         while(1):
             print('######################################### LO calibration #########################################')
             # Choose 5 separate points between the low bound and high bound
@@ -255,16 +281,19 @@ class IQ_Calibrate:
             print(f'low offsetI bound: {low_offsetI_bound}, high offsetI bound: {high_offsetI_bound}')
             leakage = []
             for offset_I in Offset_I:
-                self.IQparams = array([offset_I, 0, a_IQ, 0, phai_IQ])
+                self.IQparams = array([offset_I, offset_Q, a_IQ, 0, phai_IQ])
+                print("I", self.IQparams)
                 pulsettings = Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group, self.iqcal_config[self.mode]['marker'])
                 signal = SA.mark_power(self.mxa, self.leakage_freq[0])[0]
                 leakage.append(signal)
             offset_I = find_minimum(Offset_I,leakage)
             # plt.plot(Offset_I,leakage)
             # plt.savefig(r'C:\Users\ASQUM\Desktop\mixer_cal\offsetI_{}.png'.format(count))
-            self.IQparams = array([offset_I, Qoffset, a_IQ, 0, phai_IQ])
+            self.IQparams = array([offset_I, offset_Q, a_IQ, 0, phai_IQ])
             pulsettings = Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group, self.iqcal_config[self.mode]['marker'])
             signal = SA.mark_power(self.mxa, self.leakage_freq[0])[0]
+            target = SA.mark_power(self.mxa, self.Conv_freq)[0]
+            print(f'{Offset_I}, {leakage}')
             print(f'find min offsetI: {offset_I}, {signal}dBm')
             # Decrease the range 
             low_offsetI_bound, high_offsetI_bound = offset_I-(high_offsetI_bound-low_offsetI_bound)/2*self.step_rate**count, offset_I+(high_offsetI_bound-low_offsetI_bound)/2*self.step_rate**count
@@ -273,8 +302,8 @@ class IQ_Calibrate:
             set_status("RELAY", dict(autoIQCAL_dur_s=time()-self.t_start, autoIQCAL_frequencies=self.frequency_range, autoIQCAL_spectrum=self.current_spectrum))
 
             # Criterion of when the loop will stop
-            if SA.mark_power(self.mxa, self.leakage_freq[0])[0] < SA.mark_power(self.mxa, self.Conv_freq)[0]+self.LOstop or count >= 10 or count >= 10 or SA.mark_power(self.mxa, self.leakage_freq[0])[0] < -80:
-                print(f'RF: {SA.mark_power(self.mxa, self.Conv_freq)[0]} dBm, MR leakage: {signal} dBm')
+            if signal < target+self.LOstop or count >= 5 or signal < -80:
+                print(f'RF: {target} dBm, MR leakage: {signal} dBm')
                 break
             
             # Choose 5 separate points between the low bound and high bound
@@ -283,6 +312,7 @@ class IQ_Calibrate:
             leakage = []
             for offset_Q in Offset_Q:
                 self.IQparams = array([offset_I, offset_Q, a_IQ, 0, phai_IQ])
+                print("Q", self.IQparams)
                 pulsettings = Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group, self.iqcal_config[self.mode]['marker'])
                 signal = SA.mark_power(self.mxa, self.leakage_freq[0])[0]
                 leakage.append(signal)
@@ -290,6 +320,8 @@ class IQ_Calibrate:
             self.IQparams = array([offset_I, offset_Q, a_IQ, 0, phai_IQ])
             pulsettings = Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group, self.iqcal_config[self.mode]['marker'])
             signal = SA.mark_power(self.mxa, self.leakage_freq[0])[0]
+            target = SA.mark_power(self.mxa, self.Conv_freq)[0]
+            print(f'{Offset_Q}, {leakage}')
             print(f'find min offsetQ: {offset_Q}, {signal}dBm')
             # Decrease the range 
             low_offsetQ_bound, high_offsetQ_bound = offset_Q-(high_offsetQ_bound-low_offsetQ_bound)/2*self.step_rate**count, offset_Q+(high_offsetQ_bound-low_offsetQ_bound)/2*self.step_rate**count
@@ -298,10 +330,18 @@ class IQ_Calibrate:
             set_status("RELAY", dict(autoIQCAL_dur_s=time()-self.t_start, autoIQCAL_frequencies=self.frequency_range, autoIQCAL_spectrum=self.current_spectrum))
 
             # Criterion of when the loop will stop
-            if SA.mark_power(self.mxa, self.leakage_freq[0])[0] < SA.mark_power(self.mxa, self.Conv_freq)[0]+self.LOstop or count >= 10 or count >= 10 or SA.mark_power(self.mxa, self.leakage_freq[0])[0] < -80:
-                print(f'RF: {SA.mark_power(self.mxa, self.Conv_freq)[0]} dBm, MR leakage: {signal} dBm')
+            if signal < target+self.LOstop or count >= 5 or signal < -80:
+                print(f'RF: {target} dBm, LO leakage: {signal} dBm')
                 break
             count += 1
+        # Final check
+        pulsettings = Update_DAC(self.daca, self.IF_freq, self.IQparams, self.IF_period, self.IF_scale, self.mixer_module, self.channels_group, self.iqcal_config[self.mode]['marker'])
+        
+        leakage_LO = SA.mark_power(self.mxa, self.leakage_freq[0])[0]
+        leakage_MR = SA.mark_power(self.mxa, self.leakage_freq[1])[0]
+        target = SA.mark_power(self.mxa, self.Conv_freq)[0]
+        print(f"Calibration Paras {self.IQparams}")
+        print(f'RF: {target} dBm, MR leakage: {leakage_MR} dBm, LO leakage: {leakage_LO} dBm')
 
     def run(self):
         set_status("RELAY", dict(autoIQCAL=1))
@@ -329,7 +369,7 @@ class IQ_Calibrate:
         if SA.mark_power(self.mxa, self.leakage_freq[0])[0] > SA.mark_power(self.mxa, self.Conv_freq)[0]-40 or SA.mark_power(self.mxa, self.leakage_freq[1])[0] > SA.mark_power(self.mxa, self.Conv_freq)[0]-40:
             self.calibration()
         self.current_spectrum = SA.sdata(self.mxa, mode="")
-        set_status("RELAY", dict(autoIQCAL_dur_s=time()-self.t_start, autoIQCAL_frequencies=self.frequency_range, autoIQCAL_spectrum=self.current_spectrum))
+        set_status("RELAY", dict(autoIQCAL=0, autoIQCAL_dur_s=time()-self.t_start, autoIQCAL_frequencies=self.frequency_range, autoIQCAL_spectrum=self.current_spectrum))
         sleep(3.17)
         
         print('RF after calibration : %s' %(SA.mark_power(self.mxa, self.Conv_freq)[0]))
@@ -348,7 +388,7 @@ class IQ_Calibrate:
 def test():
     # ===============================================================
     # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module, wiring-configuration, channels-group (1st channel of dual)
-    C = IQ_Calibrate(4.8, 13, -80, 300000, 0.1, 'ro48', dict(SG='PSGA_1',DA='SDAWG_2',SA='MXA_1'), 1) # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    C = IQ_Calibrate(6.367, 13, -25, 300000, 0.1, 'ro6367', dict(SG='DDSLO_2',DA='SDAWG_3',SA='MXA_1'), 1) # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
     C.run()
     # ===============================================================
     C.close()

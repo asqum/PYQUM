@@ -115,7 +115,7 @@ class pulser:
         """
         parse the mixer informations 
         """
-        print(headerSSB)
+        # print(headerSSB)
         # IF Frequency
         if headerSSB == None:
             ifChannel = "z"
