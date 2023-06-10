@@ -6,6 +6,7 @@ import numpy as np
 from qutip import sigmax, sigmay, sigmaz, basis, qeye, Qobj
 from qutip_qip.circuit import QubitCircuit, Gate
 from typing import List
+from pulse_signal.common_Mathfunc import ErfAmplifier
 
 from qpu.backend.circuit.compiler import SQCompiler
 from qpu.backend.circuit.backendcircuit import BackendCircuit
@@ -170,7 +171,7 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
-    mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
+    
     mycompiler.params["anharmonicity"] = float(q_info.tempPars["anharmonicity"])*2*np.pi
     #mycompiler.params["a_weight"] = q_info.tempPars["a_weight"]
 
@@ -178,7 +179,12 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
         mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha"]
     else:
         mycompiler.params["waveform"] = ["",0]
-
+    
+    # if the waveform is erf gauss the amplitude need to be modified
+    if mycompiler.params["waveform"][0].lower()!='drage':
+        mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
+    else:
+        mycompiler.params["rxy"]["pulse_strength"] = ErfAmplifier(q_info.tempPars["XYL"],q_info.tempPars["XYW"],q_info.tempPars["XYW"]/4)
 
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt
