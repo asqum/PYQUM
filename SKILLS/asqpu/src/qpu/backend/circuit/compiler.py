@@ -159,7 +159,7 @@ class SQCompiler(GateCompiler):
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
         if waveform.lower()=="dragh":
-            coeff = ps.DRAGFunc_Hermite(tlist, *(1,4,4,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
+            coeff = ps.DRAGFunc_Hermite(tlist, *(1,2,4,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
         elif waveform.lower()=="drage":
             Amp_erf = ps.ErfAmplifier(pulse_strength,pulse_length,pulse_length/4)
             shifter = ps.ErfShifter(Amp_erf,pulse_length,pulse_length/4)/Amp_erf
