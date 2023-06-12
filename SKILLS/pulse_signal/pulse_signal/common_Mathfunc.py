@@ -251,8 +251,8 @@ def DRAGFunc_Tangential(t, *p )->ndarray:
     p[2]: peak position \n
     p[3]: derivative Hermite amplitude ratio \n
     """
-    TangParas = (p[0],p[1],p[2],p[3])
-    return TangentialFunc( t, *TangParas ) -1j*p[4]*derivativeTangentialFunc( t, *TangParas )
+    TangParas = (p[0],p[1],p[2])
+    return TangentialFunc( t, *TangParas ) -1j*p[3]*derivativeTangentialFunc( t, *TangParas )
 
 
 if __name__ == '__main__':
