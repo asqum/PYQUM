@@ -114,7 +114,7 @@ def derivativeHermiteFunc (x, *p)->ndarray:
         tg = x[-1]-x[0]
         # given in the reference
         sigma = tg/(2*p[1])
-        return -(p[0]*(x-p[3])*(2*p[2]/p[1]**2+(1-p[2]*((x-p[3])/(p[1]*sigma))**2))*exp(-((x-p[3])**2)/(2*sigma**2)))/sigma**3
+        return (p[0]*((x-p[3])/(sigma**2))*(-2*p[2]/p[1]**2+(1-p[2]*((x-p[3])/(p[1]*sigma))**2))*exp(-((x-p[3])**2)/(2*sigma**2)))
     else :
         return zeros(len(x))
 
@@ -130,7 +130,7 @@ def TangentialFunc(x, *p)->ndarray:
     """
     if len(x) != 0:
         tg = x[-1]-x[0]
-        return p[0]*(tanh((x-p[2])/p[1])-tanh((x-p[2]-tg)/p[1]))
+        return p[0]*(tanh(x/p[1])-tanh((x-tg)/p[1]))
     else:
         return zeros(len(x))
 
