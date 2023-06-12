@@ -34,7 +34,7 @@ def derivativeGaussianFamily (x, *p)->ndarray:
         p[2]: peak position\n
     """ 
     if p[1] != 0. :
-        return -p[0] / p[1]**2 *(x-p[2]) *exp( -( (x-p[2]) /p[1] )**2 /2)
+        return -p[0]*(x-p[2])*exp( -( (x-p[2]) /p[1] )**2 /2)/p[1]**2
     else :
         return zeros(len(x))
 
