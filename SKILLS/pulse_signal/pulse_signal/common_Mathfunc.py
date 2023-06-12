@@ -145,7 +145,7 @@ def derivativeTangentialFunc(x, *p)->ndarray:
     """
     if len(x) != 0:
         tg = x[-1]-x[0]
-        return p[0]*((sech((x-p[2])/p[1]))**2-(sech((x-p[2]-tg)/p[1]))**2)
+        return p[0]*(sech(x/p[1])**2-(sech((x-tg)/p[1]))**2)/p[1]
     else:
         return zeros(len(x))
 
