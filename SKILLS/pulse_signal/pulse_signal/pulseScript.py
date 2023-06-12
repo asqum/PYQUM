@@ -38,11 +38,11 @@ def give_waveformInfo(beat,width,height)->dict:
                 beta = 4
 
             else:
-                if isnan(paraList[1]): alpha = 2
-                else: alpha = paraList[1]
-                if isnan(paraList[2]): beta = 4
-                else: beta = paraList[2]
-
+                if isnan(paraList[0]): alpha = 2
+                else: alpha = paraList[0]
+                if isnan(paraList[1]): beta = 4
+                else: beta = paraList[1]
+            carrierPhase = 0
             func_paras = [height, alpha, beta, width/2]
         
         case "tangential" | "tan":
