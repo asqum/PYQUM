@@ -184,7 +184,8 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     if mycompiler.params["waveform"][0].lower()!='drage':
         mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
     else:
-        mycompiler.params["rxy"]["pulse_strength"] = ErfAmplifier(q_info.tempPars["XYL"],q_info.tempPars["XYW"],q_info.tempPars["XYW"]/4)
+        q_info.tempPars["XYL"] = ErfAmplifier(q_info.tempPars["XYL"],q_info.tempPars["XYW"],q_info.tempPars["XYW"]/4)
+        mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
 
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt

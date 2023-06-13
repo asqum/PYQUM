@@ -23,7 +23,7 @@ def GaussianFamily (x, *p)->ndarray:
         p[2]: peak position\n
         p[3]: shift term 
     """
-    return p[0] *exp( -( (x-p[2]) /p[1] )**2 /2) + p[3]
+    return p[0]*(exp( -( (x-p[2]) /p[1] )**2 /2) + p[3])
 
 def derivativeGaussianFamily (x, *p)->ndarray:
     """
@@ -39,16 +39,20 @@ def derivativeGaussianFamily (x, *p)->ndarray:
         return zeros(len(x))
 
 
-def ErfShifter(amp_erf,gatetime,sigma)->float:
+def ErfShifter(gatetime,sigma)->float:
     if sigma != 0. :
-        return amp_erf*exp(-(gatetime**2)/(8*sigma**2))
+        return exp(-(gatetime**2)/(8*sigma**2))
     else :
         return 0  
 
 def ErfAmplifier(Amp,gatetime,sigma)->float:
-    amp = sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))-gatetime*exp(-(gatetime**2)/(8*sigma**2))
-    if sigma != 0. :
-        return Amp*sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))/amp
+    
+    if sigma != 0.:
+        amp = sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))-gatetime*exp(-(gatetime**2)/(8*sigma**2))
+        if amp !=0. :
+            return Amp*sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))/amp
+        else:
+            return 0
     else :
         return 0 
 
