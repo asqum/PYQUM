@@ -30,7 +30,17 @@ def give_waveformInfo(beat,width,height)->dict:
             else: sfactor = paraList[0]
             carrierPhase = 0
             func_paras = [height, width/sfactor, width/2, 0]
-        
+
+        case "erfgauss" | "erf" | "erfg":
+            pulse_func = cpf.GaussianFamily
+            if isnan(paraList[0]): sfactor = 4
+            else: sfactor = paraList[0]
+            carrierPhase = 0
+            amp_erf = cpf.ErfAmplifier(height,width,width/sfactor)
+            shift = cpf.ErfShifter(width,width/sfactor)
+
+            func_paras = [amp_erf, width/sfactor, width/2, shift]
+
         case "hermite":
             pulse_func = cpf.HermiteFunc
             if len(paraList)==1:

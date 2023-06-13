@@ -41,16 +41,16 @@ def derivativeGaussianFamily (x, *p)->ndarray:
 
 def ErfShifter(gatetime,sigma)->float:
     if sigma != 0. :
-        return exp(-(gatetime**2)/(8*sigma**2))
+        return -exp(-(gatetime**2)/(8*sigma**2))
     else :
         return 0  
 
 def ErfAmplifier(Amp,gatetime,sigma)->float:
     
     if sigma != 0.:
-        amp = sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))-gatetime*exp(-(gatetime**2)/(8*sigma**2))
-        if amp !=0. :
-            return Amp*sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))/amp
+        u = sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))-gatetime*exp(-(gatetime**2)/(8*sigma**2))
+        if u !=0. :
+            return Amp*sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))/u
         else:
             return 0
     else :
