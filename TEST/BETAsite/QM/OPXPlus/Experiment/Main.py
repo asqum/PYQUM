@@ -1,6 +1,6 @@
 from qm.QuantumMachinesManager import QuantumMachinesManager, QmJob
 from qm import SimulationConfig
-from configuration import config, qop_ip, save_dir
+from configuration import *
 
 from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool, progress_counter
@@ -94,10 +94,80 @@ if mode=="prev": # check any running previous job
     job = qm.get_running_job()
     try: 
         print("JOB-ID: %s" %job.id())
+
+
+        LO = qubit_LO/u.MHz
+        IF_q1 = -fres_q1/u.MHz
+        IF_q2 = -fres_q2/u.MHz
+
+        
+        data_dict = dict()
+
         while int(input("Continue collecting data (1/0)?")):
             job = QmJob(qmm, job.id())
-            data_present(False)
-            fig, ax = plt.subplots(row,col)
+            # data_present(False)
+            # fig, ax = plt.subplots(row,col)
+
+
+            results = fetching_tool(job, SCOPE, mode="live")
+            for i, dataz in enumerate(results.fetch_all()): data_dict[SCOPE[i]] = dataz
+
+            progress_counter(data_dict["n"], n_avg)
+            s1 = data_dict["I1"] + 1j*data_dict["Q1"]
+            s2 = data_dict["I2"] + 1j*data_dict["Q2"]
+
+            # Normalize:
+            A1 = np.abs(s1)
+            P1 = np.unwrap(np.angle(s1))
+            A2 = np.abs(s2)
+            P2 = np.unwrap(np.angle(s2))
+            row_sums = A1.sum(axis=0)
+            A1 = A1 / row_sums[np.newaxis, :]
+            row_sums = A2.sum(axis=0)
+            A2 = A2 / row_sums[np.newaxis, :]
+            u = unit()
+
+            fig, ax = plt.subplots(2, 3)
+
+            ax[0,0].cla()
+            ax[1,0].cla()
+            ax[0,1].cla()
+            ax[1,1].cla()
+            ax[0,2].cla()
+            ax[1,2].cla()
+        
+            ax[0,0].set_title("q1 amp (LO: %s, n: %s)" %(LO,n))
+            ax[0,0].set_xlabel("flux-1")
+            ax[0,0].set_ylabel("freq")
+            ax[0,0].pcolor(dcq1, LO + IF_q1 - dfq1/u.MHz, A1)
+
+            ax[1,0].set_title("q1 pha (LO+IF0: %s, n: %s)" %(LO+IF_q1,n))
+            ax[1,0].set_xlabel("flux-1")
+            ax[1,0].set_ylabel("ifreq")
+            ax[1,0].pcolor(dcq1, - dfq1/u.MHz, P1)
+        
+            ax[0,1].set_title("q2 amp (LO: %s, n: %s)" %(LO,n))
+            ax[0,1].set_xlabel("flux-1")
+            ax[0,1].pcolor(dcq1, LO + IF_q2 - dfq2/u.MHz, A2)
+
+            ax[1,1].set_title("q2 pha (LO+IF0: %s, n: %s)" %(LO+IF_q2,n))
+            ax[1,1].set_xlabel("flux-1")
+            ax[1,1].pcolor(dcq1, - dfq2/u.MHz, P2)
+
+            # Add both to compare:
+            ax[0,2].set_title("q1 + q2 (Amp)")
+            ax[0,2].set_xlabel("flux-1")
+            ax[0,2].pcolor(dcq1, LO + IF_q1 - dfq1/u.MHz, A1+A2)
+
+            ax[1,2].set_title("q1 + q2 (Pha)")
+            ax[1,2].set_xlabel("flux-1")
+            ax[1,2].pcolor(dcq1, - dfq1/u.MHz, P1+P2)
+
+            plt.show()
+    
+    
+    
+    
     except Exception as e: 
         print(e)
         qm.close()
@@ -116,14 +186,14 @@ if mode=="load": # load data
 if mode=="new": # new run
     qm = qmm.open_qm(config)
     job = qm.execute(qua_program)
-    data_present(True)
-    interrupt = int(input("Stop execution on closing figure (1/0)?"))
-    if interrupt: 
-        interrupt_on_close(fig, job)
-    else:
-        print("kill the thread to exit..")
-    while job.result_handles.is_processing(): 
-        data_present(True)
-    if interrupt: qm.close()
+    # data_present(True)
+    # interrupt = int(input("Stop execution on closing figure (1/0)?"))
+    # if interrupt: 
+    #     interrupt_on_close(fig, job)
+    # else:
+    #     print("kill the thread to exit..")
+    # while job.result_handles.is_processing(): 
+    #     data_present(True)
+    # if interrupt: qm.close()
         
             
