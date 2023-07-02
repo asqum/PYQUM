@@ -126,6 +126,8 @@ def load_logged_in_user():
         close_db()
         g.QPC1_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC1'").fetchone()[0]
         close_db()
+        g.OPX0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='OPX0'").fetchone()[0]
+        close_db()
         # print(Fore.GREEN + "CHAR0_sample: %s" %g.CHAR0_sample)
 
 
@@ -379,7 +381,8 @@ def usersamples_update():
         else:
             message = 'CLEARANCE NOT MATCHED: Only Admin / Owner allowed to update samples'
     except:
-        message = "Check sample parameters"
+        if sname=='0': message = "Co-author is not allowed to update the sample details"
+        else: message = "Check sample parameters"
     close_db()
 
     print(message)

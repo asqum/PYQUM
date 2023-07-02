@@ -1,13 +1,14 @@
+#=> 9b_multi_qubit_spec_vs_simultaneous_flux.py <=#
+
 ####################
 # QUA START        #
 ####################
 
+code = '''
 from qm.qua import *
 from configuration import *
 from qualang_tools.loops import from_array
 from pyqum.instrument.toolbox import waveform
-
-code = '''
 
 # constant / from config:
 n_avg = 4000000

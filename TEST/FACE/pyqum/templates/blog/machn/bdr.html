@@ -228,6 +228,16 @@
                         {% endif %}
                         {% endfor %}
                     </select></div>
+                    <div class="col-15" id='left'><select class='bdr samples-allocation OPX0' id='system-OPX0' type="text">
+                        <option value='null'> -reset- </option>
+                        {% for s in recent_samples %}
+                        {% if s==OPX0_sample %}
+                            <option value={{s}} selected>{{s}}</option>
+                        {% else %}
+                            <option value={{s}}>{{s}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select></div>
                 </div>
             {% endif %}
             

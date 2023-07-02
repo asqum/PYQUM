@@ -1,4 +1,4 @@
-'''ALL QuBit Manipulations: Single_Qubit, Qubits, RB, QPU'''
+'''ALL QuBit Manipulations (brute-force, unintegrated): Single_Qubit, Qubits, RB, QPU'''
 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color

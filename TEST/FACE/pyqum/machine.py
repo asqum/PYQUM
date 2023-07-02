@@ -789,7 +789,7 @@ def saget():
 
 # region: BDR
 global category
-category = ['ROLE','CH','DC','SG','NA','DAC','ADC','SA','SC']
+category = ['CONFG','ROLE','CH','DC','SG','NA','DAC','ADC','SA','SC']
 @bp.route('/bdr')
 def bdr():
     if int(g.user['instrument'])>=1:
@@ -817,7 +817,7 @@ def bdr():
         
         DR_platform = int(get_status("WEB")['port']) - 5300
         return render_template("blog/machn/bdr.html", DR_platform=DR_platform, loaded=loaded, recent_samples=recent_samples, machine_list=machine_list, systemlist=systemlist, queue=queue, \
-            category=category, CHAR0_sample=g.CHAR0_sample, CHAR1_sample=g.CHAR1_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample)
+            category=category, CHAR0_sample=g.CHAR0_sample, CHAR1_sample=g.CHAR1_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample, OPX0_sample=g.OPX0_sample)
     else: abort(404)
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():
