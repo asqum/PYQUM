@@ -2024,11 +2024,17 @@ def get_measurementObject( measurementType ):
     def QuCTRL ():
         mObj = M_QuCTRL[session['user_name']]
         return mObj
+    
+    try:
+        task_name = mani_TASK[session['user_name']]
+    except:
+        print(f"{session['user_name']} mani_TASK[session['user_name']] have problem")
+        task_name = "Single_Qubit"
     measurementObject = {
         'fresp': frequency_response,
         'cwsweep': CW_sweep,
         # for "manipulate" category, the task-name will be aligned between PY and JS: 
-        mani_TASK[session['user_name']]: QuCTRL # TODO: Notify alignment with Benchmark (ATTN: Jacky)
+        task_name: QuCTRL # TODO: Notify alignment with Benchmark (ATTN: Jacky)
         
     }
     return measurementObject[measurementType]()
