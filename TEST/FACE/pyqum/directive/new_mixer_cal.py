@@ -212,6 +212,8 @@ class IQ_Calibrate:
         low_offsetQ_bound, high_offsetQ_bound = Qoffset-self.range_Q, Qoffset+self.range_Q
         
         while(1):
+            # Press 'stop' then it will stop at here
+            if get_status("RELAY")['autoIQCAL'] == 0: break
             print('######################################### Phase calibration #########################################')
             # Choose 5 separate points between the low bound and high bound
             Phai = linspace(low_phai_bound, high_phai_bound, 5)
@@ -233,7 +235,6 @@ class IQ_Calibrate:
             low_phai_bound, high_phai_bound = phai_IQ-(high_phai_bound-low_phai_bound)/2*self.step_rate**count, phai_IQ+(high_phai_bound-low_phai_bound)/2*self.step_rate**count
             self.current_spectrum = SA.sdata(self.mxa, mode="")
             set_status("RELAY", dict(autoIQCAL_dur_s=time()-self.t_start, autoIQCAL_frequencies=self.frequency_range, autoIQCAL_spectrum=self.current_spectrum))
-
             # Criterion of when the loop will stop
             if signal < target+self.MRstop or count >= 5 or signal < -80:
                 print(f'RF: {target} dBm, MR leakage: {signal} dBm')
@@ -242,6 +243,8 @@ class IQ_Calibrate:
 
         count = 0
         while(1):    
+            # Press 'stop' then it will stop at here
+            if get_status("RELAY")['autoIQCAL'] == 0: break
             print('######################################### Amplitude calibration #########################################')
             # Choose 5 separate points between the low bound and high bound
             A_IQ = linspace(low_a_bound, high_a_bound, 5)
@@ -275,6 +278,8 @@ class IQ_Calibrate:
         count = 0 
         offset_Q = Qoffset
         while(1):
+            # Press 'stop' then it will stop at here
+            if get_status("RELAY")['autoIQCAL'] == 0: break
             print('######################################### LO calibration #########################################')
             # Choose 5 separate points between the low bound and high bound
             Offset_I = linspace(low_offsetI_bound, high_offsetI_bound, 5)
@@ -366,7 +371,7 @@ class IQ_Calibrate:
         sleep(3.17)
 
         self.t_start = time()
-        if SA.mark_power(self.mxa, self.leakage_freq[0])[0] > SA.mark_power(self.mxa, self.Conv_freq)[0]-40 or SA.mark_power(self.mxa, self.leakage_freq[1])[0] > SA.mark_power(self.mxa, self.Conv_freq)[0]-40:
+        if SA.mark_power(self.mxa, self.leakage_freq[0])[0] > SA.mark_power(self.mxa, self.Conv_freq)[0]-50 or SA.mark_power(self.mxa, self.leakage_freq[1])[0] > SA.mark_power(self.mxa, self.Conv_freq)[0]-50:
             self.calibration()
         self.current_spectrum = SA.sdata(self.mxa, mode="")
         set_status("RELAY", dict(autoIQCAL=0, autoIQCAL_dur_s=time()-self.t_start, autoIQCAL_frequencies=self.frequency_range, autoIQCAL_spectrum=self.current_spectrum))
@@ -388,7 +393,7 @@ class IQ_Calibrate:
 def test():
     # ===============================================================
     # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module, wiring-configuration, channels-group (1st channel of dual)
-    C = IQ_Calibrate(6.367, 13, -25, 300000, 0.1, 'ro6367', dict(SG='DDSLO_2',DA='SDAWG_3',SA='MXA_1'), 1) # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
+    C = IQ_Calibrate(4.30996, 23, -120, 300000, 0.02, 'xy195v4', dict(SG='PSGA_2',DA='SDAWG_2',SA='MXA_1'), 1) # Conv_freq (GHz), LO_powa (dBm), IF_freq (MHz), IF_period (ns), IF_scale, mixer_module
     C.run()
     # ===============================================================
     C.close()

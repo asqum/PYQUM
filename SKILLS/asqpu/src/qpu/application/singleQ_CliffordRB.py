@@ -1,4 +1,5 @@
-
+from colorama import init, Back, Fore
+init(autoreset=True) #to convert termcolor to wins color
 from argparse import Action
 from typing import List
 #from pulse_generator.pulse import Pulse
@@ -171,21 +172,16 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
-    
     mycompiler.params["anharmonicity"] = float(q_info.tempPars["anharmonicity"])*2*np.pi
-    #mycompiler.params["a_weight"] = q_info.tempPars["a_weight"]
 
-    if "waveform&alpha" in list(q_info.tempPars.keys()):
-        mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha"]
+    if "waveform&alpha&sigma" in list(q_info.tempPars.keys()):
+        mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha&sigma"]
     else:
-        mycompiler.params["waveform"] = ["",0]
+        mycompiler.params["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
     
-    # if the waveform is erf gauss the amplitude need to be modified
-    if mycompiler.params["waveform"][0].lower()!='drage':
-        mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
-    else:
-        q_info.tempPars["XYL"] = ErfAmplifier(q_info.tempPars["XYL"],q_info.tempPars["XYW"],q_info.tempPars["XYW"]/4)
-        mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
+    print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f, S-Factor = %d and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["waveform"][2],mycompiler.params["anharmonicity"]))
+
+    mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
 
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt
