@@ -1,6 +1,6 @@
 # PiQUM
 
-**PiQuM** is a **P**latform **i**ndependent & **P**urpose **i**ntegrated **Q**uantum **U**niversal **M**achine
+**PiQuM** is a **P**latform **i**ndependent & **P**urpose **i**ntegrated **Q**uantum **U**nitary **M**anager
 
 >Created by: ````David Lee, Teik-Hui````
 
