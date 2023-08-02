@@ -12,8 +12,10 @@ $(document).ready(function(){
 });
 
 // Global variables:
-window.selecteday = ''
-window.frespcryption = 'hfhajfjkafh'
+window.text_size = 26;
+window.axis_width = 3.8;
+window.selecteday = '';
+window.frespcryption = 'hfhajfjkafh';
 window.server_URL = 'http://192.168.1.15:'; //'http://qum.phys.sinica.edu.tw:'
 
 // Local variables:
@@ -173,13 +175,13 @@ function plot2D_fresp(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal) {
         height: $(window).height()*0.8,
         width: $(window).width()*0.7,
         xaxis: {
-            zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+            zeroline: false, title: xtitle, titlefont: {size: text_size}, tickfont: {size: text_size}, tickwidth: axis_width, linewidth: axis_width, mirror: true },
         yaxis: {
             zeroline: false, title: ytitle,
-            titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+            titlefont: {size: text_size}, tickfont: {size: text_size}, tickwidth: axis_width, linewidth: axis_width, mirror: true },
         title: '',
         annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom',
-            text: "", font: {size: 18}, showarrow: false, textangle: 0 }] };
+            text: "", font: {size: text_size}, showarrow: false, textangle: 0 }] };
 
     // Data GROOMING:
     // 1. Normalization along x-axis (dip)
@@ -467,26 +469,26 @@ $(function () {
                 xaxis: {
                     zeroline: false,
                     title: xtitle1,
-                    titlefont: {size: 18},
-                    tickfont: {size: 18},
-                    tickwidth: 3,
-                    linewidth: 3 
+                    titlefont: {size: text_size},
+                    tickfont: {size: text_size},
+                    tickwidth: axis_width,
+                    linewidth: axis_width 
                 },
                 yaxis: {
                     zeroline: false,
                     // title: '<b>Amp(dB)</b>',
-                    titlefont: {size: 18},
-                    tickfont: {size: 18},
-                    tickwidth: 3,
-                    linewidth: 3
+                    titlefont: {size: text_size},
+                    tickfont: {size: text_size},
+                    tickwidth: axis_width,
+                    linewidth: axis_width
                 },
                 yaxis2: {
                     zeroline: false,
                     title: '<b>U-Pha(rad)</b>', 
-                    titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
-                    tickfont: {color: 'rgb(148, 103, 189)', size: 18},
-                    tickwidth: 3,
-                    linewidth: 3, 
+                    titlefont: {color: 'rgb(148, 103, 189)', size: text_size}, 
+                    tickfont: {color: 'rgb(148, 103, 189)', size: text_size},
+                    tickwidth: axis_width,
+                    linewidth: axis_width, 
                     overlaying: 'y', 
                     side: 'right'
                 },
@@ -499,7 +501,7 @@ $(function () {
                     y: 1.05,
                     yanchor: 'bottom',
                     text: '<b>Amp(dB)</b>',
-                    font: {size: 18},
+                    font: {size: text_size},
                     showarrow: false,
                     textangle: 0
                   }]

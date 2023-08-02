@@ -160,6 +160,9 @@ textarea.PeaCH:focus {
 textarea.Specifications:focus {
     height: 317px;
 }
+textarea.CONFG:focus {
+    height: 713px;
+}
 
 label.parameter {
     word-wrap: break-word;

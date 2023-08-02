@@ -11,6 +11,7 @@ $(document).ready(function(){
 
 // Global variables:
 window.selecteday = '';
+// window.text_size = 37; // sharing Globals with fresp.js
 
 // Local variables:
 var cwsweep_Perimeters = ['dcsweepch', 'z-idle', 'sg-locked',  'sweep-config', 'R-JSON']
@@ -232,7 +233,7 @@ function accessdata_cwsweep() {
     return false;
 };
 function plot1D_cwsweep(x1,y1,y2,y3,y4,xtitle,phasetype) {
-    console.log(xtitle);
+    console.log("text size: " + text_size);
     
     let traceL = {x: [], y: [], mode: 'lines', type: 'scatter', 
         name: 'Amplitude (' + wday + ', ' + wmoment + ')',
@@ -259,26 +260,26 @@ function plot1D_cwsweep(x1,y1,y2,y3,y4,xtitle,phasetype) {
         xaxis: {
             zeroline: false,
             title: xtitle,
-            titlefont: {size: 18},
-            tickfont: {size: 18},
-            tickwidth: 3,
-            linewidth: 3 
+            titlefont: {size: text_size},
+            tickfont: {size: text_size},
+            tickwidth: axis_width,
+            linewidth: axis_width 
         },
         yaxis: {
             zeroline: false,
             // title: '<b>Amp(dB)</b>',
-            titlefont: {size: 18},
-            tickfont: {size: 18},
-            tickwidth: 3,
-            linewidth: 3
+            titlefont: {size: text_size},
+            tickfont: {size: text_size},
+            tickwidth: axis_width,
+            linewidth: axis_width
         },
         yaxis2: {
             zeroline: false,
             title: phasetype, 
-            titlefont: {color: 'rgb(148, 103, 189)', size: 18}, 
-            tickfont: {color: 'rgb(148, 103, 189)', size: 18},
-            tickwidth: 3,
-            linewidth: 3, 
+            titlefont: {color: 'rgb(148, 103, 189)', size: text_size}, 
+            tickfont: {color: 'rgb(148, 103, 189)', size: text_size},
+            tickwidth: axis_width,
+            linewidth: axis_width, 
             overlaying: 'y', 
             side: 'right'
         },
@@ -291,7 +292,7 @@ function plot1D_cwsweep(x1,y1,y2,y3,y4,xtitle,phasetype) {
             y: 1.05,
             yanchor: 'bottom',
             text: '<b>Amp(dB)</b>',
-            font: {size: 18},
+            font: {size: text_size},
             showarrow: false,
             textangle: 0
           }]
@@ -325,13 +326,13 @@ function plot2D_cwsweep(x,y,ZZ,xtitle,ytitle,plotype,mission,colorscal,zsmooth) 
         height: $(window).height()*0.8,
         width: $(window).width()*0.7,
         xaxis: {
-            zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+            zeroline: false, title: xtitle, titlefont: {size: text_size}, tickfont: {size: text_size}, tickwidth: axis_width, linewidth: axis_width, mirror: true },
         yaxis: {
             zeroline: false, title: ytitle,
-            titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3, mirror: true },
+            titlefont: {size: text_size}, tickfont: {size: text_size}, tickwidth: axis_width, linewidth: axis_width, mirror: true },
         title: '',
         annotations: [{ xref: 'paper', yref: 'paper',  x: 0.03, xanchor: 'right', y: 1.05, yanchor: 'bottom',
-            text: "", font: {size: 18}, showarrow: false, textangle: 0 }] };
+            text: "", font: {size: text_size}, showarrow: false, textangle: 0 }] };
 
     // Data GROOMING:
     // 1. Normalization along x-axis (dip)

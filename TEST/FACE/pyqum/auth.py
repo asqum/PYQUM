@@ -126,7 +126,7 @@ def load_logged_in_user():
         close_db()
         g.QPC1_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPC1'").fetchone()[0]
         close_db()
-        g.OPX0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='OPX0'").fetchone()[0]
+        g.QPX0_sample = get_db().execute("SELECT q.samplename FROM queue q WHERE q.system='QPX0'").fetchone()[0]
         close_db()
         # print(Fore.GREEN + "CHAR0_sample: %s" %g.CHAR0_sample)
 

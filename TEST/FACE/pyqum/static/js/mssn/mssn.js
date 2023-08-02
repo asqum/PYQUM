@@ -122,10 +122,10 @@ function compare1D(x1,y1,x2,y2,xtitle,ytitle,normalize=false,direction='dip',mis
     
     let layout = {
         legend: {x: 1.08}, height: $(window).height()*0.8, width: $(window).width()*0.7,
-        xaxis: { zeroline: false, title: xtitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
-        yaxis: { zeroline: false, title: ytitle, titlefont: {size: 18}, tickfont: {size: 18}, tickwidth: 3, linewidth: 3 },
-        yaxis2: { zeroline: false, title: '<b>Difference</b>', titlefont: {color: 'Grey', size: 18}, 
-            tickfont: {color: 'grey', size: 18}, tickwidth: 3, linewidth: 3, overlaying: 'y', side: 'right' },
+        xaxis: { zeroline: false, title: xtitle, titlefont: {size: text_size}, tickfont: {size: text_size}, tickwidth: axis_width, linewidth: axis_width },
+        yaxis: { zeroline: false, title: ytitle, titlefont: {size: text_size}, tickfont: {size: text_size}, tickwidth: axis_width, linewidth: axis_width },
+        yaxis2: { zeroline: false, title: '<b>Difference</b>', titlefont: {color: 'Grey', size: text_size}, 
+            tickfont: {color: 'grey', size: text_size}, tickwidth: axis_width, linewidth: axis_width, overlaying: 'y', side: 'right' },
         title: ''
         };
     

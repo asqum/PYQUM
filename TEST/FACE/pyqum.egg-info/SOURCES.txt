@@ -1776,6 +1776,7 @@ pyqum/templates/blog/guide/guide.html
 pyqum/templates/blog/home/activity.html
 pyqum/templates/blog/home/create.html
 pyqum/templates/blog/home/index.html
+pyqum/templates/blog/home/resource.html
 pyqum/templates/blog/home/update.html
 pyqum/templates/blog/machn/adc.html
 pyqum/templates/blog/machn/all.html
