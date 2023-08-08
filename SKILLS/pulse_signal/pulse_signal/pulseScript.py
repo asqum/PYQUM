@@ -98,10 +98,9 @@ def give_waveformInfo(beat,width,height)->dict:
                 else: dRatio = paraList[1]
                 if isnan(paraList[2]): rotAxis = 0
                 else: rotAxis = radians(paraList[2])
-            carrierPhase = pi *(rotAxis/180.)
+            carrierPhase = rotAxis
             #amp_erf = cpf.ErfAmplifier(height,width,width/sfactor)
             shift = cpf.ErfShifter(width,width/sfactor)
-            
             func_paras = [height, width/sfactor, width/2, shift, dRatio ]
         
         case "dragh":   # waveform with hermite
@@ -121,7 +120,7 @@ def give_waveformInfo(beat,width,height)->dict:
                 if isnan(paraList[4]): rotAxis = 0
                 else: rotAxis = radians(paraList[4])
 
-            carrierPhase = pi *(rotAxis/180.)
+            carrierPhase = rotAxis
             func_paras = [height, alpha, beta, width/2, dRatio ]
 
         case "drag":
@@ -137,7 +136,7 @@ def give_waveformInfo(beat,width,height)->dict:
                 else: dRatio = paraList[1]
                 if isnan(paraList[2]): rotAxis = 0
                 else: rotAxis = radians(paraList[2])
-            carrierPhase = pi *(rotAxis/180.)
+            carrierPhase = rotAxis
             func_paras = [height, width/sfactor, width/2, 0, dRatio ]
 
         case "lin":

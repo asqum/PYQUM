@@ -187,7 +187,6 @@ class QAM():
         for pulse in pulses:
             self.carrierFrequency = pulse.carrierFrequency
             new_envelope = pulse.generate_envelope( 0, dt ).Y
-
             startPoint = pulse.startPoint
 
             if startPoint != "":
