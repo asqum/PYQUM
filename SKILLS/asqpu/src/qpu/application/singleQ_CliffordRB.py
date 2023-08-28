@@ -1,4 +1,5 @@
-
+from colorama import init, Back, Fore
+init(autoreset=True) #to convert termcolor to wins color
 from argparse import Action
 from typing import List
 #from pulse_generator.pulse import Pulse
@@ -6,6 +7,7 @@ import numpy as np
 from qutip import sigmax, sigmay, sigmaz, basis, qeye, Qobj
 from qutip_qip.circuit import QubitCircuit, Gate
 from typing import List
+from pulse_signal.common_Mathfunc import ErfAmplifier
 
 from qpu.backend.circuit.compiler import SQCompiler
 from qpu.backend.circuit.backendcircuit import BackendCircuit
@@ -170,8 +172,16 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
-    mycompiler.params["anharmonicity"] = q_info.tempPars["anharmonicity"]
-    mycompiler.params["a_weight"] = q_info.tempPars["a_weight"]
+    mycompiler.params["anharmonicity"] = float(q_info.tempPars["anharmonicity"])*2*np.pi
+
+    if "waveform&alpha&sigma" in list(q_info.tempPars.keys()):
+        mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha&sigma"]
+    else:
+        mycompiler.params["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
+    
+    print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f, S-Factor = %d and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["waveform"][2],mycompiler.params["anharmonicity"]))
+
+    mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
 
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt

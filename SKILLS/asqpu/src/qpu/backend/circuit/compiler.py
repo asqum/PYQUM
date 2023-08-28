@@ -146,6 +146,7 @@ class SQCompiler(GateCompiler):
         
         
         pulse_length = self.params["rxy"]["pulse_length"]
+        pulse_strength = self.params["rxy"]["pulse_strength"]
         dt = self.params["rxy"]["dt"]
         anharmonicity = self.params["anharmonicity"]
         a_weight = self.params["a_weight"]

@@ -4,12 +4,14 @@ from numpy import ndarray
 # Numpy array
 from numpy import array, append, zeros, ones, where, linspace
 # Numpy common math function
-from numpy import exp,sqrt
+from numpy import exp,sqrt,tanh,cosh
 # Numpy constant
 from numpy import pi, logical_and
 # Scipy
 from scipy.special import erf
 
+def sech(x):
+    return 1/cosh(x)
 
 # Gaussian Family
 def GaussianFamily (x, *p)->ndarray:
@@ -21,7 +23,7 @@ def GaussianFamily (x, *p)->ndarray:
         p[2]: peak position\n
         p[3]: shift term 
     """
-    return p[0] *exp( -( (x-p[2]) /p[1] )**2 /2) + p[3]
+    return p[0]*(exp( -( (x-p[2]) /p[1] )**2 /2) + p[3])
 
 def derivativeGaussianFamily (x, *p)->ndarray:
     """
@@ -32,22 +34,25 @@ def derivativeGaussianFamily (x, *p)->ndarray:
         p[2]: peak position\n
     """ 
     if p[1] != 0. :
-        return -p[0] / p[1]**2 *(x-p[2]) *exp( -( (x-p[2]) /p[1] )**2 /2)
+        return -p[0]*(x-p[2])*exp( -( (x-p[2]) /p[1] )**2 /2)/p[1]**2
     else :
         return zeros(len(x))
 
 
-def ErfShifter(amp,gatetime,sigma)->float:
-    area = sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))-gatetime*exp(-(gatetime**2)/(8*sigma**2))
+def ErfShifter(gatetime,sigma)->float:
     if sigma != 0. :
-        return -(exp(-(gatetime**2)/(8*sigma**2)))*sigma*amp/area
+        return -exp(-(gatetime**2)/(8*sigma**2))
     else :
         return 0  
 
 def ErfAmplifier(Amp,gatetime,sigma)->float:
-    area = sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))-gatetime*exp(-(gatetime**2)/(8*sigma**2))
-    if sigma != 0. :
-        return Amp*sigma/area
+    
+    if sigma != 0.:
+        u = sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))-gatetime*exp(-(gatetime**2)/(8*sigma**2))
+        if u !=0. :
+            return Amp*sqrt(2*pi*sigma**2)*erf(gatetime/(sqrt(8)*sigma))/u
+        else:
+            return 0
     else :
         return 0 
 
@@ -90,11 +95,14 @@ def HermiteFunc(x, *p)->ndarray:
         p[2]: beta (4 recommended)\n
         p[3]: peak position (half gate time recommended)
     """
-    tg = x[-1]-x[0]
-    # given in the reference
-    sigma = tg/(2*p[1])
+    if len(x) != 0:
+        tg = x[-1]-x[0]
+        # given in the reference
+        sigma = tg/(2*p[1])
 
-    return ((1-p[2]*((x-p[3])/(p[1]*sigma))**2)*p[0]*exp(-(x-p[3])**2/(2*sigma**2)))/sigma
+        return (1-p[2]*((x-p[3])/(p[1]*sigma))**2)*p[0]*exp(-(x-p[3])**2/(2*sigma**2))
+    else:
+        return zeros(len(x))
 
 def derivativeHermiteFunc (x, *p)->ndarray:
     """
@@ -106,13 +114,46 @@ def derivativeHermiteFunc (x, *p)->ndarray:
         p[2]: beta (4 recommended)\n 
         p[3]: peak position (half gate time recommended)
     """
-    tg = x[-1]-x[0]
-    # given in the reference
-    sigma = tg/(2*p[1])
-    if tg != 0. :
-        return -(p[0]*(x-p[3])*(2*p[2]/p[1]**2+(1-p[2]*((x-p[3])/(p[1]*sigma))**2))*exp(-((x-p[3])**2)/(2*sigma**2)))/sigma**3
+    if len(x) != 0 :
+        tg = x[-1]-x[0]
+        # given in the reference
+        sigma = tg/(2*p[1])
+        return (p[0]*((x-p[3])/(sigma**2))*(-2*p[2]/p[1]**2+(1-p[2]*((x-p[3])/(p[1]*sigma))**2))*exp(-((x-p[3])**2)/(2*sigma**2)))
     else :
         return zeros(len(x))
+
+# 0504 add Tangential
+def TangentialFunc(x, *p)->ndarray:
+    """
+    return tangential function
+    x: array like, shape (n,) \n
+    p: parameters \n
+        p[0]: amp\n
+        p[1]: sigma\n
+        p[2]: peak position\n
+    """
+    if len(x) != 0:
+        tg = x[-1]-x[0]
+        return p[0]*(tanh(x/p[1])-tanh((x-tg)/p[1]))
+    else:
+        return zeros(len(x))
+
+def derivativeTangentialFunc(x, *p)->ndarray:
+    """
+    return derivative tangential function
+    x: array like, shape (n,) \n
+    p: parameters \n
+        p[0]: amp\n
+        p[1]: sigma\n
+        p[2]: peak position\n
+    """
+    if len(x) != 0:
+        tg = x[-1]-x[0]
+        return p[0]*(sech(x/p[1])**2-(sech((x-tg)/p[1]))**2)/p[1]
+    else:
+        return zeros(len(x))
+
+
 
 
 def constFunc (x, *p)->ndarray:
@@ -204,6 +245,19 @@ def DRAGFunc_Hermite(t, *p )->ndarray:
     HermiteParas = (p[0],p[1],p[2],p[3])
     return HermiteFunc( t, *HermiteParas ) -1j*p[4]*derivativeHermiteFunc( t, *HermiteParas )
 
+# 0504 add DRAG for tangential
+def DRAGFunc_Tangential(t, *p )->ndarray:
+    """
+    return Tangential +1j*derivative Tangential\n
+    x: array like, shape (n,), the element is complex number \n
+    p[0]: amp \n
+    p[1]: sigma \n
+    p[2]: peak position \n
+    p[3]: derivative Hermite amplitude ratio \n
+    """
+    TangParas = (p[0],p[1],p[2])
+    return TangentialFunc( t, *TangParas ) -1j*p[3]*derivativeTangentialFunc( t, *TangParas )
+
 
 if __name__ == '__main__':
     from numpy import linspace
@@ -215,3 +269,4 @@ if __name__ == '__main__':
     plt.plot(x,gaussianFunc(x,*p))
     plt.plot(x,derivativeGaussianFunc(x,*p))
     plt.show()
+

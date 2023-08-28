@@ -6,6 +6,7 @@ pyqum/__init__.py
 pyqum/apache.py
 pyqum/auth.py
 pyqum/authschema.sql
+pyqum/autoscan1Q.py
 pyqum/benchmark.py
 pyqum/blog.py
 pyqum/bridge.py
@@ -19,10 +20,14 @@ pyqum.egg-info/dependency_links.txt
 pyqum.egg-info/not-zip-safe
 pyqum.egg-info/requires.txt
 pyqum.egg-info/top_level.txt
+pyqum/static/.DS_Store
+pyqum/static/css/.DS_Store
 pyqum/static/css/ScrollTabla.css
+pyqum/static/css/animation_autoscan1Q.css
 pyqum/static/css/anime.css
 pyqum/static/css/benchmark.css
 pyqum/static/css/brdg.css
+pyqum/static/css/buttom_autoscan1Q.css
 pyqum/static/css/button.css
 pyqum/static/css/dsply.css
 pyqum/static/css/form.css
@@ -31,10 +36,13 @@ pyqum/static/css/mach.css
 pyqum/static/css/modal.css
 pyqum/static/css/mssn.css
 pyqum/static/css/progress.css
+pyqum/static/css/selector_autoscan1Q.css
 pyqum/static/css/style.css
+pyqum/static/css/style_autoscan1Q.css
 pyqum/static/css/table.css
 pyqum/static/css/user.css
 pyqum/static/css/util.css
+pyqum/static/fa/.DS_Store
 pyqum/static/fa/LICENSE.txt
 pyqum/static/fa/css/all.css
 pyqum/static/fa/css/all.min.css
@@ -1670,6 +1678,7 @@ pyqum/static/js/.DS_Store
 pyqum/static/js/Chart.min.js
 pyqum/static/js/Clock.js
 pyqum/static/js/angular.min.js
+pyqum/static/js/autoscan1Q.js
 pyqum/static/js/base.js
 pyqum/static/js/gauge.min.js
 pyqum/static/js/jquery-3.5.1.min.js
@@ -1685,6 +1694,7 @@ pyqum/static/js/auth/samples.js
 pyqum/static/js/auth/user.js
 pyqum/static/js/benchmark/autoflux.js
 pyqum/static/js/benchmark/benchmark.js
+pyqum/static/js/benchmark/cavitySearch.js
 pyqum/static/js/benchmark/common_fitting.js
 pyqum/static/js/benchmark/decoherence.js
 pyqum/static/js/benchmark/fidelity.js
@@ -1729,6 +1739,7 @@ pyqum/static/ui/jquery-ui.structure.css
 pyqum/static/ui/jquery-ui.structure.min.css
 pyqum/static/ui/jquery-ui.theme.css
 pyqum/static/ui/jquery-ui.theme.min.css
+pyqum/templates/.DS_Store
 pyqum/templates/base.html
 pyqum/templates/auth/login.html
 pyqum/templates/auth/measurement.html
@@ -1736,8 +1747,12 @@ pyqum/templates/auth/profile.html
 pyqum/templates/auth/register.html
 pyqum/templates/auth/samples.html
 pyqum/templates/auth/user.html
+pyqum/templates/blog/.DS_Store
+pyqum/templates/blog/autoscan1Q/.DS_Store
+pyqum/templates/blog/autoscan1Q/autoscan1Q.html
 pyqum/templates/blog/benchmark/autoflux.html
 pyqum/templates/blog/benchmark/benchmark.html
+pyqum/templates/blog/benchmark/cavitySearch.html
 pyqum/templates/blog/benchmark/common_fitting.html
 pyqum/templates/blog/benchmark/decoherence.html
 pyqum/templates/blog/benchmark/fidelity.html
@@ -1761,6 +1776,7 @@ pyqum/templates/blog/guide/guide.html
 pyqum/templates/blog/home/activity.html
 pyqum/templates/blog/home/create.html
 pyqum/templates/blog/home/index.html
+pyqum/templates/blog/home/resource.html
 pyqum/templates/blog/home/update.html
 pyqum/templates/blog/machn/adc.html
 pyqum/templates/blog/machn/all.html
@@ -1771,6 +1787,7 @@ pyqum/templates/blog/machn/machine.html
 pyqum/templates/blog/machn/na.html
 pyqum/templates/blog/machn/sa.html
 pyqum/templates/blog/machn/sg.html
+pyqum/templates/blog/msson/.DS_Store
 pyqum/templates/blog/msson/all.html
 pyqum/templates/blog/msson/char.html
 pyqum/templates/blog/msson/mani.html

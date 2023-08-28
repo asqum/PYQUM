@@ -184,9 +184,15 @@
             </div>
             {% if g.user['management'] %}
                 <div class="row">
-                    <div class="col-20" id='left'><h3 class="bdr samples-allocation">Loaded {{loaded}} NEW sample(s)</h3></div>
+                    <div class="col-30" id='left'><h4 class="bdr samples-allocation" style="color: blue;">Loaded {{loaded}} NEW sample(s): Note that sample should only bind to just one queue-system</h4></div>
                 </div>
                 <div id="samples-allocation-status"></div>
+
+                <!-- characterize -->
+                <div class="row">
+                    <div class="col-15" id='left'><h3>CHAR0</h3></div>
+                    <div class="col-15" id='left'><h3>CHAR1</h3></div>
+                </div>
                 <div class="row">
                     <div class="col-15" id='left'><select class='bdr samples-allocation CHAR0' id='system-CHAR0' type="text">
                         <option value='null'> -reset- </option>
@@ -208,6 +214,14 @@
                         {% endif %}
                         {% endfor %}
                     </select></div>
+                </div>
+
+                <!-- manipulate -->
+                <div class="row">
+                    <div class="col-15" id='left'><h3>QPC0</h3></div>
+                    <div class="col-15" id='left'><h3>QPC1</h3></div>
+                </div>
+                <div class="row">
                     <div class="col-15" id='left'><select class='bdr samples-allocation QPC0' id='system-QPC0' type="text">
                         <option value='null'> -reset- </option>
                         {% for s in recent_samples %}
@@ -222,6 +236,24 @@
                         <option value='null'> -reset- </option>
                         {% for s in recent_samples %}
                         {% if s==QPC1_sample %}
+                            <option value={{s}} selected>{{s}}</option>
+                        {% else %}
+                            <option value={{s}}>{{s}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select></div>
+                </div>
+
+                <!-- orchestrate -->
+                <div class="row">
+                    <div class="col-15" id='left'><h3>QPX0</h3></div>
+                    
+                </div>
+                <div class="row">
+                    <div class="col-15" id='left'><select class='bdr samples-allocation QPX0' id='system-QPX0' type="text">
+                        <option value='null'> -reset- </option>
+                        {% for s in recent_samples %}
+                        {% if s==QPX0_sample %}
                             <option value={{s}} selected>{{s}}</option>
                         {% else %}
                             <option value={{s}}>{{s}}</option>
@@ -273,21 +305,23 @@
             </div>
             {% if g.user['management'] %}
                 <div class="row">
-                    <div class="col-20" id='left'><h3 class="bdr wiring-designation">3 measurement systems:</h3></div>
+                    <div class="col-20" id='left'><h3 class="bdr wiring-designation">measurement systems:</h3></div>
                 </div>
                 <div id="checking-queue-wiring"></div>
                 <div id="wiring-designation-status"></div>
                 <div id="wiring-update-status"></div>
+                
                 {% for cat in category %}
                     <div class="row" id='wiring-designation-{{cat}}'>
                             <div class="col-10" id='left'><label class='bdr wiring-designation'>{{cat}}</label></div>
-                            {% if cat.upper() in ["ROLE","CH"] %}
+                            {% if cat.upper() in ["CONFG","ROLE","CH"] %}
                                 <div class="col-60" id='left'><textarea class='bdr wiring-designation {{cat}}' type="text" style="color:blue;"></textarea></div>
                             {% else %}
                                 <div class="col-60" id='left'><input class='bdr wiring-designation {{cat}}' type="text"/></div>
                             {% endif %}
                     </div>
                 {% endfor %}
+                
                 <div class="row">
                     <div class="col-10" id='left'></div>
                     <div class="col-10" id='left'><input class="bdr wiring-designation set" type="submit" value="SET"/></div>

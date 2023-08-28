@@ -28,37 +28,51 @@
             <!-- Inspecting Sidebands -->
             <div class="row">
                 <div class="col-10" id='left'><label>SA status</label></div>
-                <div class="col-10" id='left'><label>LO-freq (GHz)</label></div>
+                <!-- <div class="col-10" id='left'><label>LO-freq (GHz)</label></div> -->
                 <div class="col-10" id='left'><label>IF-freq (MHz)</label></div>
-                <div class="col-10" id='left'><label>Sweep-points</label></div>
-                <div class="col-10" id='left'><label>RBW (kHz)</label></div>
-                <div class="col-10" id='left'><label>Average#</label></div>
+                <div class="col-10" id='left'><label>Difference of LO-leakage between Conv (dBm)</label></div>
+                <div class="col-10" id='left'><label>Difference of MR-leakage between Conv (dBm)</label></div>
+                <div class="col-10" id='left'><label>Initial range of phai_IQ (degree)</label></div>
+                <div class="col-10" id='left'><label>Initial range of a_IQ </label></div>
+                <div class="col-10" id='left'><label>step rate</label></div>
+                <!--div class="col-10" id='left'><label>Sweep-points</label></div-->
+                <!-- <div class="col-10" id='left'><label>RBW (kHz)</label></div> -->
+                <!-- <div class="col-10" id='left'><label>Average#</label></div> -->
             </div>
             <div class="row">
                 <div class="col-10" id='left'><label class="switch"><input class='iqcal manual SA connect' type="checkbox">
                     <div class="slider smooth"><span class="on">ONLINE</span><span class="off">CONNECT</span></div>
                 </label></div>
-                <div class="col-10" id='left'><input class='iqcal manual SA sweep LO-frequency-GHz' type="text" value="7"/></div>
-                <div class="col-10" id='left'><input class='iqcal manual SA sweep IF-frequency-MHz' type="text" value="3"/></div>
-                <div class="col-10" id='left'><input class='iqcal manual SA sweep Sweep-points' type="number" value='1001' min=0 step=1/></div>
-                <div class="col-10" id='left'><input class='iqcal manual SA sweep RBW_kHz' type="number" value='10' min=1 step=1 max=1000/></div>
-                <div class="col-10" id='left'><input class='iqcal manual SA sweep AveCount' type="number" value='4' min=1 step=1 max=1000000/></div>
+                <!--div class="col-10" id='left'><input class='iqcal manual SA sweep LO-frequency-GHz' type="text" value="7"/></div-->
+                <div class="col-10" id='left'><input class='iqcal auto AI IF-rotation-MHz' type="text" value="-25"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI LO-leakage-threshold-dBm' type="text" value="-50"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI MR-leakage-threshold-dBm' type="text" value="-50"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI range-of-phai_IQ' type="text" value="20"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI range-of-a_IQ' type="text" value="0.1"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI step-rate' type="text" value="0.6"/></div>
+                <!-- <div class="col-10" id='left'><input class='iqcal manual SA sweep Sweep-points' type="number" value='1001' min=0 step=1/></div> -->
+                <!--div class="col-10" id='left'><input class='iqcal manual SA sweep RBW_kHz' type="number" value='10' min=1 step=1 max=1000/></div-->
+                <!--div class="col-10" id='left'><input class='iqcal manual SA sweep AveCount' type="number" value='4' min=1 step=1 max=1000000/></div-->
             </div>
             <div class="row">
                 <div class="col-10" id='left'><label> </label></div>
                 <div class="col-10" id='left'><label>Conv-freq (GHz)</label></div>
-                <div class="col-10" id='left'><label>IF-rotation (MHz)</label></div>
+                <!-- <div class="col-10" id='left'><label>IF-rotation (MHz)</label></div> -->
                 <div class="col-10" id='left'><label>LO-Power (dBm)</label></div>
-                <div class="col-10" id='left'><label>IF-Period (ns)</label></div>
+                <!-- <div class="col-10" id='left'><label>IF-Period (ns)</label></div> -->
                 <div class="col-10" id='left'><label>IF-Scale (0-1)</label></div>
+                <div class="col-10" id='left'><label>Initial range of offset_I (V)</label></div>
+                <div class="col-10" id='left'><label>Initial range of offset_Q (V)</label></div>
             </div>
             <div class="row">
                 <div class="col-10" id='left'><div class="buttons"><a class="btn green iqcal auto AI run">RUN</a></div></div>
                 <div class="col-10" id='left'><input class='iqcal auto AI Conv-frequency-GHz' type="text" value="5"/></div>
-                <div class="col-10" id='left'><input class='iqcal auto AI IF-rotation-MHz' type="text" value="-37"/></div>
+                <!-- <div class="col-10" id='left'><input class='iqcal auto AI IF-rotation-MHz' type="text" value="-37"/></div> -->
                 <div class="col-10" id='left'><input class='iqcal auto AI LO-power-dBm' type="text" value="6"/></div>
-                <div class="col-10" id='left'><input class='iqcal auto AI IF-period-ns' type="text" value="60000"/></div>
+                <!-- <div class="col-10" id='left'><input class='iqcal auto AI IF-period-ns' type="text" value="60000"/></div> -->
                 <div class="col-10" id='left'><input class='iqcal auto AI IF-scale' type="text" value="0.05"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI range-of-offset_I' type="text" value="0.2"/></div>
+                <div class="col-10" id='left'><input class='iqcal auto AI range-of-offset_Q' type="text" value="0.2"/></div>
             </div>
             <div class="row">
                 <div class="col-10" id='left'><i class='fa fa-solid fa-sync fa-spin fa-2x fa-fw iqcal auto AI stop' style='font-size:17px;color:red;'></i></div>

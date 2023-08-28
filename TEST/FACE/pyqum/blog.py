@@ -169,3 +169,10 @@ def delete(id):
 
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
+
+@bp.route('/resource', methods=('GET', 'POST'))
+@login_required
+def resource():
+
+    return render_template('blog/home/resource.html')
+

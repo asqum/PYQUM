@@ -41,8 +41,9 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     DC_Matrix = CH_Wiring['DC']
     ROLE_Wiring = inst_order(queue, 'ROLE')
     DC_Role = ROLE_Wiring['DC']
-    instr['DC']= inst_order(queue, 'DC') # multiple modules allowed
-    instr['NA']= inst_order(queue, 'NA')[0]
+    instr[session['user_name']] = {}
+    instr[session['user_name']]['DC']= inst_order(queue, 'DC') # multiple modules allowed
+    instr[session['user_name']]['NA']= inst_order(queue, 'NA')[0]
 
     # pushing pre-measurement parameters to settings:
     yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task
@@ -65,7 +66,7 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
 
     # Pre-loop settings:
     # NA:
-    [NA_type, NA_label] = instr['NA'].split('_')
+    [NA_type, NA_label] = instr[session['user_name']]['NA'].split('_')
     NA = im("pyqum.instrument.machine.%s" %NA_type)
     nabench = NA.Initiate(True, which=NA_label)
     NA.dataform(nabench, action=['Set', 'REAL'])
@@ -73,10 +74,10 @@ def F_Response(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, r
     fstart, fstop = freq.data[0]*1e9, freq.data[-1]*1e9
     NA.linfreq(nabench, action=['Set', fstart, fstop]) # Linear Freq-sweep-range
     # DC:
-    DC_qty = len(instr['DC'])
+    DC_qty = len(instr[session['user_name']]['DC'])
     DC_type, DC_label, DC, DC_instance = [None]*DC_qty, [None]*DC_qty, [None]*DC_qty, [None]*DC_qty
     for i, channel_set in enumerate(DC_Matrix):
-        [DC_type[i], DC_label[i]] = instr['DC'][i].split('_')
+        [DC_type[i], DC_label[i]] = instr[session['user_name']]['DC'][i].split('_')
         if "DUMMY" not in DC_type[i].upper(): DC[i] = im("pyqum.instrument.machine.%s" %DC_type[i])
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC_instance[i] = DC[i].Initiate(current=current, which=DC_label[i]) # PENDING option: choose between Voltage / Current output
@@ -185,9 +186,10 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     DC_Matrix = CH_Wiring['DC']
     ROLE_Wiring = inst_order(queue, 'ROLE')
     DC_Role = ROLE_Wiring['DC']
-    instr['DC']= inst_order(queue, 'DC') # multiple modules allowed
-    instr['SG']= inst_order(queue, 'SG')[0]
-    instr['NA']= inst_order(queue, 'NA')[0]
+    instr[session['user_name']] = {}
+    instr[session['user_name']]['DC']= inst_order(queue, 'DC') # multiple modules allowed
+    instr[session['user_name']]['SG']= inst_order(queue, 'SG')[0]
+    instr[session['user_name']]['NA']= inst_order(queue, 'NA')[0]
 
     # pushing pre-measurement parameters to settings:
     yield owner, sample, tag, instr, corder, comment, dayindex, taskentry, perimeter, queue, renamed_task
@@ -219,7 +221,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
     
     # Pre-loop settings:
     # NA:
-    [NA_type, NA_label] = instr['NA'].split('_')
+    [NA_type, NA_label] = instr[session['user_name']]['NA'].split('_')
     NA = im("pyqum.instrument.machine.%s" %NA_type)
     nabench = NA.Initiate(True, which=NA_label)
     NA.dataform(nabench, action=['Set', 'REAL'])
@@ -234,10 +236,10 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
         buffersize_1 = powa_repeat * 2 # (buffer) data density of 2 due to IQ
 
     # DC:
-    DC_qty = len(instr['DC'])
+    DC_qty = len(instr[session['user_name']]['DC'])
     DC_type, DC_label, DC, DC_instance = [None]*DC_qty, [None]*DC_qty, [None]*DC_qty, [None]*DC_qty
     for i, channel_set in enumerate(DC_Matrix):
-        [DC_type[i], DC_label[i]] = instr['DC'][i].split('_')
+        [DC_type[i], DC_label[i]] = instr[session['user_name']]['DC'][i].split('_')
         if "DUMMY" not in DC_type[i].upper(): DC[i] = im("pyqum.instrument.machine.%s" %DC_type[i])
         if "opt" not in fluxbias.data: # check if it is in optional-state
             DC_instance[i] = DC[i].Initiate(current=current, which=DC_label[i]) # PENDING option: choose between Voltage / Current output
@@ -249,7 +251,7 @@ def CW_Sweep(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, res
                     else: fluxbias_lock[key] = waveform(z_idle[key].lower().replace("lock",str(fluxbias.count-1))) # locked to fluxbias
 
     # SG:
-    [SG_type, SG_label] = instr['SG'].split('_')
+    [SG_type, SG_label] = instr[session['user_name']]['SG'].split('_')
     SG = im("pyqum.instrument.machine.%s" %SG_type)
     if "opt" not in xyfreq.data: # check if it is in optional-state / serious-state
         sgbench = SG.Initiate(which=SG_label)

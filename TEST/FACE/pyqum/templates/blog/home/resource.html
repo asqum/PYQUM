@@ -1,0 +1,41 @@
+{% extends 'base.html' %} 
+{% block title %}WELCOME TO PYQUM v0.1{% endblock %}
+
+{% block head %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/auth/activities.js') }}"></script>
+
+    
+{% endblock %}
+
+{% block content %} 
+
+<body class="home">
+
+{% if g.user %}
+<div class="container-activity">
+
+    <div class='row'>
+        <div class='col-15' id='left'>
+            <h2>Resources</h2>
+        </div>
+        <div class='col-10' id='left'>
+            <a class="action" href="{{ url_for('blog.index') }}"><h5>Home</h5></a>
+        </div>
+    </div>
+
+    <div class='row'>
+        <div class="activities"></div>
+    </div>
+        
+    
+
+</div>
+{% endif %}
+
+<a href="https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/quantum-technology-sees-record-investments-progress-on-talent-gap">McKinsey 2023</a>
+
+
+
+</body>
+
+{% endblock %}

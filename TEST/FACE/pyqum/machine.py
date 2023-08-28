@@ -788,8 +788,16 @@ def saget():
 # endregion
 
 # region: BDR
-global category
-category = ['ROLE','CH','DC','SG','NA','DAC','ADC','SA','SC']
+def q_category():
+    '''Category based on queue-system type:'''
+    category = ['CONFG','ROLE','CH','DC','SG','NA','DAC','ADC','SA','SC']
+    try: queue = get_status("MSSN")[session['user_name']]['queue']
+    except: queue = 'CHAR0' # default
+    if 'x' in queue.lower(): q_cat = category[0:1] # advanced QPC => QPX
+    else: q_cat = category[1::] # non-integrated QPC
+    print(Fore.YELLOW + "q_cat list: %s" %q_cat)
+    return q_cat
+
 @bp.route('/bdr')
 def bdr():
     if int(g.user['instrument'])>=1:
@@ -800,24 +808,27 @@ def bdr():
         owned_new_samples = [s['samplename'] for s in g.samples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
         # 2. SHARED co-samples:
         shared_new_samples = [s['samplename'] for s in g.cosamples if s['registered'].strftime("%Y-%m-%d")==g.latest_date]
-        # 3. SERVICE samples: (Training & Hero samples are to be categorized as SERVICE type of sample)
+        # 3.1. SERVICE samples: (Training & Hero samples are to be categorized as SERVICE type of sample)
         global service_samples
         service_samples = [s['samplename'] for s in (g.samples + g.cosamples) if int(s['level'])>1]
-
         # service_samples = ['Sam', 'Same01', 'IDLE', 'DR-RFcable', '3SXQ-Al-Si-19-1']
+        
+        # 3.2. RECENT samples:
         recent_samples = list(set(owned_new_samples).union(set(shared_new_samples))) + service_samples
         loaded = len(recent_samples) - len(service_samples)
 
-        # 3. Wiring settings:
+        # 4.1. Wiring settings:
         machine_list = [x['codename'] for x in g.machlist]
         systemlist = [x['system'] for x in get_db().execute('SELECT system FROM queue').fetchall()]
         close_db()
+        
+        # 4.2. Checking queue:
         try: queue = get_status("MSSN")[session['user_name']]['queue']
         except: queue = 'CHAR0' # default
-        
+
         DR_platform = int(get_status("WEB")['port']) - 5300
         return render_template("blog/machn/bdr.html", DR_platform=DR_platform, loaded=loaded, recent_samples=recent_samples, machine_list=machine_list, systemlist=systemlist, queue=queue, \
-            category=category, CHAR0_sample=g.CHAR0_sample, CHAR1_sample=g.CHAR1_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample)
+            category=q_category(), CHAR0_sample=g.CHAR0_sample, CHAR1_sample=g.CHAR1_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample, QPX0_sample=g.QPX0_sample)
     else: abort(404)
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():
@@ -918,14 +929,13 @@ def bdr_wiring_instruments():
     qsystem = request.args.get('qsystem')
     inst_list = inst_order(qsystem)
     instr_organized, instr_tabulated = {}, {}
-    for cat in category: instr_organized[cat] = inst_order(qsystem,cat,False)
+    for cat in q_category(): instr_organized[cat] = inst_order(qsystem,cat,False)
     print(Fore.CYAN + "Organized instruments: %s"%instr_organized)
     
     modules_mismatch, channels_mismatch = 0, 0
-    if 'DUMMY_1' in instr_organized['ROLE']: pass
-    else:
+    try:
         # Check CH & ROLE structure alignment:
-        for cat in category: instr_tabulated[cat] = inst_order(qsystem,cat)
+        for cat in q_category(): instr_tabulated[cat] = inst_order(qsystem,cat)
         for key, value in instr_tabulated['ROLE'].items():
             modules_mismatch += len(value) - len(instr_tabulated['CH'][key])
             # print(Fore.YELLOW + "%s's ROLE: %s, %s's CH: %s" %(key, len(value), key, len(loads(instr_tabulated['CH'])[key])))
@@ -933,8 +943,9 @@ def bdr_wiring_instruments():
             for idx, channel_composition in enumerate(value):
                 channels_mismatch += len(channel_composition) - len(instr_tabulated['CH'][key][idx])
                 # print(Fore.YELLOW + "%s's ROLE's module-%s: %s, %s's CH's module-%s: %s" %(key, idx, len(channel_composition), key, idx, len(loads(instr_tabulated['CH'])[key][idx])))
+    except Exception as e: print(Fore.RED + Back.WHITE + "Error: %s" %e)
         
-    return jsonify(category=category, inst_list=inst_list, instr_organized=instr_organized, modules_mismatch=modules_mismatch, channels_mismatch=channels_mismatch)
+    return jsonify(category=q_category(), inst_list=inst_list, instr_organized=instr_organized, modules_mismatch=modules_mismatch, channels_mismatch=channels_mismatch)
 @bp.route('/bdr/wiring/set/instruments', methods=['GET'])
 def bdr_wiring_set_instruments():
     qsystem = request.args.get('qsystem')

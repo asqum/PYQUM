@@ -115,7 +115,7 @@ class pulser:
         """
         parse the mixer informations 
         """
-        print(headerSSB)
+        # print(headerSSB)
         # IF Frequency
         if headerSSB == None:
             ifChannel = "z"
@@ -279,7 +279,7 @@ class pulser:
                 self.envelope = wholeConnectEnvelope.imag
                 self.music = array(Qchannel)
 
-            case "z": # for z-gate
+            case "abs": # for z-gate
                 self.envelope = abs(wholeConnectEnvelope)
                 self.music = abs(wholeConnectEnvelope)
             case _:

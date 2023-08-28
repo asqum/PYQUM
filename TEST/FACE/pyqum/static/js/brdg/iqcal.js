@@ -123,10 +123,10 @@ $(document).on("change", "input.iqcal.mixer-module-KEY", function () {
     return false;
 });
 // Manual Calibration:
-$(document).on("change", "input.iqcal.manual.SA.sweep", function () {
-    manual_calibrate();
-    return false;
-});
+// $(document).on("change", "input.iqcal.manual.SA.sweep", function () {
+//     manual_calibrate();
+//     return false;
+// });
 
 // SA CONNECTION:
 $(function () {
@@ -166,7 +166,14 @@ $(function () {
             Conv_frequency_GHz: $('input.iqcal.auto.AI.Conv-frequency-GHz').val(),
             IF_rotation_MHz: $('input.iqcal.auto.AI.IF-rotation-MHz').val(),
             LO_power_dBm: $('input.iqcal.auto.AI.LO-power-dBm').val(),
-            IF_period_ns: $('input.iqcal.auto.AI.IF-period-ns').val(),
+            LO_leakage_threshold_dBm: $('input.iqcal.auto.AI.LO-leakage-threshold-dBm').val(),
+            MR_leakage_threshold_dBm: $('input.iqcal.auto.AI.MR-leakage-threshold-dBm').val(),
+            range_of_phai_IQ: $('input.iqcal.auto.AI.range-of-phai_IQ').val(),
+            range_of_a_IQ: $('input.iqcal.auto.AI.range-of-a_IQ').val(),
+            range_of_offset_I: $('input.iqcal.auto.AI.range-of-offset_I').val(),
+            range_of_offset_Q: $('input.iqcal.auto.AI.range-of-offset_Q').val(),
+            step_rate: $('input.iqcal.auto.AI.step-rate').val(),
+            // IF_period_ns: $('input.iqcal.auto.AI.IF-period-ns').val(),
             IF_scale: $('input.iqcal.auto.AI.IF-scale').val(),
             Mixer_module: $('input.iqcal.auto.AI.Mixer-module').val(),
             Wiring_config: $('input.iqcal.auto.AI.Wiring-config').val(),

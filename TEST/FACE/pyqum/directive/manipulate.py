@@ -1,4 +1,4 @@
-'''ALL QuBit Manipulations: Single_Qubit, Qubits, RB, QPU'''
+'''ALL QuBit Manipulations (brute-force, unintegrated): Single_Qubit, Qubits, RB, QPU'''
 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
@@ -154,14 +154,15 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
 
     # Queue-specific instrument-package in list:
-    instr['DAC']= inst_order(queue, 'DAC')
-    instr['SG']= inst_order(queue, 'SG')
-    instr['DC']= inst_order(queue, 'DC')
-    instr['ADC']= inst_order(queue, 'ADC')[0] # only 1 instrument allowed (No multiplexing yet)
+    instr[session['user_name']] = {}
+    instr[session['user_name']]['DAC']= inst_order(queue, 'DAC')
+    instr[session['user_name']]['SG']= inst_order(queue, 'SG')
+    instr[session['user_name']]['DC']= inst_order(queue, 'DC')
+    instr[session['user_name']]['ADC']= inst_order(queue, 'ADC')[0] # only 1 instrument allowed (No multiplexing yet)
 
     # Packing instrument-specific perimeter from database:
-    perimeter.update(dict(TIME_RESOLUTION_NS=loads(g.machspecs[instr['ADC']])['TIME_RESOLUTION_NS']))
-    perimeter.update(dict(CLOCK_HZ=loads(g.machspecs[instr['DAC'][0]])['CLOCK_HZ']))
+    perimeter.update(dict(TIME_RESOLUTION_NS=loads(g.machspecs[instr[session['user_name']]['ADC']])['TIME_RESOLUTION_NS']))
+    perimeter.update(dict(CLOCK_HZ=loads(g.machspecs[instr[session['user_name']]['DAC'][0]])['CLOCK_HZ']))
     # Packing wiring-specific perimeter from database:
     perimeter.update(dict(CH_Matrix=dumps(CH_Matrix)))
     perimeter.update(dict(ROLE_Matrix=dumps(ROLE_Matrix)))
@@ -231,10 +232,10 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     
     # Pre-loop settings:
     # DC for PA:
-    DC_qty = len(instr['DC'])
+    DC_qty = len(instr[session['user_name']]['DC'])
     DC_type, DC_label, DC, DC_instance = [None]*DC_qty, [None]*DC_qty, [None]*DC_qty, [None]*DC_qty
     for i_slot, channel_set in enumerate(DC_CH_Matrix):
-        [DC_type[i_slot], DC_label[i_slot]] = instr['DC'][i_slot].split('_')
+        [DC_type[i_slot], DC_label[i_slot]] = instr[session['user_name']]['DC'][i_slot].split('_')
         if "DUMMY" in DC_type[i_slot]: 
             pass
         else:
@@ -245,10 +246,10 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # DC[i_slot].output(DC_instance[i_slot], 1, channel)
 
     # SG for [XY, RO]:
-    SG_qty = len(instr['SG'])
+    SG_qty = len(instr[session['user_name']]['SG'])
     SG_type, SG_label, SG, SG_instance = [None]*SG_qty, [None]*SG_qty, [None]*SG_qty, [None]*SG_qty
     for i_slot, channel_set in enumerate(SG_CH_Matrix):
-        [SG_type[i_slot], SG_label[i_slot]] = instr['SG'][i_slot].split('_')
+        [SG_type[i_slot], SG_label[i_slot]] = instr[session['user_name']]['SG'][i_slot].split('_')
         SG[i_slot] = im("pyqum.instrument.machine.%s" %SG_type[i_slot])
         SG_instance[i_slot] = SG[i_slot].Initiate(which=SG_label[i_slot])
         for channel in channel_set:
@@ -256,11 +257,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             # SG[i_slot].rfoutput(SG_instance[i_slot], action=['Set_%s'%channel, 1])
 
     # DAC for [RO, XY]:
-    DAC_qty = len(instr['DAC'])
+    DAC_qty = len(instr[session['user_name']]['DAC'])
     DAC_type, DAC_label, DAC, DAC_instance = [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty, [None]*DAC_qty
 
     for i_slot, channel_set in enumerate(DAC_CH_Matrix):
-        [DAC_type[i_slot], DAC_label[i_slot]] = instr['DAC'][i_slot].split('_')
+        [DAC_type[i_slot], DAC_label[i_slot]] = instr[session['user_name']]['DAC'][i_slot].split('_')
         DAC[i_slot] = im("pyqum.instrument.machine.%s" %DAC_type[i_slot])
         DAC_instance[i_slot] = DAC[i_slot].Initiate(which=DAC_label[i_slot])
         DAC[i_slot].clock(DAC_instance[i_slot], action=['Set', 'EFIXed', CLOCK_HZ])
@@ -274,7 +275,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         else: 
             markeroption = 0
             update_settings = dict(Master=False, trigbyPXI=2)
-        print(Fore.CYAN + "%s's setting: %s" %(instr['DAC'][i_slot], update_settings))
+        print(Fore.CYAN + "%s's setting: %s" %(instr[session['user_name']]['DAC'][i_slot], update_settings))
 
         '''Prepare DAC:'''
         dt = round(1/float(DAC[i_slot].clock(DAC_instance[i_slot])[1]['SRATe'])/1e-9, 2)
@@ -297,12 +298,13 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         DAC[i_slot].play(DAC_instance[i_slot])
     
     # ADC:
-    [ADC_type, ADC_label] = instr['ADC'].split('_')
+    [ADC_type, ADC_label] = instr[session['user_name']]['ADC'].split('_')
     ADC = im("pyqum.instrument.machine.%s" %ADC_type)
     adca = ADC.Initiate(which=ADC_label)
 
     # Mapping Readout-type to FPGA bitMode***:
-    FPGA = adca.bitMode_Keysight # original keysight bitfile
+    if "SD" in ADC_type: FPGA = adca.bitMode_Keysight # original keysight bitfile
+    else: FPGA = 0
     if readoutype in ["rt-wfm-ave"]: FPGA = adca.bitMode_AVE
     elif readoutype in ['rt-ave-singleddc']: FPGA = adca.bitMode_AVE_SingleDDC
     elif readoutype in ['rt-ave-dualddc']: FPGA = adca.bitMode_AVE_DualDDC
@@ -410,12 +412,12 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # 1. Extract MACE-Command for DC:
                 for i_slot, channel_set in enumerate(DC_CH_Matrix):
                     for channel in channel_set:
-                        MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)] = "sweep:%s" %(d_setting['DC'][instr['DC'][i_slot]][channel-1]['sweep']) # manually assign power for now
+                        MACE_DEFINED['DC-%s-%s'%(i_slot+1,channel)] = "sweep:%s" %(d_setting['DC'][instr[session['user_name']]['DC'][i_slot]][channel-1]['sweep']) # manually assign power for now
 
                 # 2. Extract MACE-Command for SG:
                 for i_slot, channel_set in enumerate(SG_CH_Matrix):
                     for channel in channel_set:
-                        MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr['SG'][i_slot]][channel-1]['freq'], d_setting['SG'][instr['SG'][i_slot]][channel-1]['power']) # manually assign power for now
+                        MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)] = "frequency:%s, power:%s" %(d_setting['SG'][instr[session['user_name']]['SG'][i_slot]][channel-1]['freq'], d_setting['SG'][instr[session['user_name']]['SG'][i_slot]][channel-1]['power']) # manually assign power for now
 
 
             # Basic MAC Control (Every-loop)
@@ -463,7 +465,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         CH_Pulse_SEQ = pulseq.music
 
                     if TASK_LEVEL == "EXP":
-                        try: CH_Pulse_SEQ = d_setting['DAC'][instr['DAC'][i_slot_order]][ch-1]
+                        try: CH_Pulse_SEQ = d_setting['DAC'][instr[session['user_name']]['DAC'][i_slot_order]][ch-1]
                         except(KeyError): 
                             # NOTE: TO BE ADDED IN D-SETTINGS LATER ON
                             CH_Pulse_SEQ = DAC_idle_music # Idle music for channel not used in Q. Circuit but present in QPC-Wiring (for Qubits segregation)
@@ -480,7 +482,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
 
                     DAC[i_slot_order].compose_DAC(DAC_instance[i_slot_order], int(ch), CH_Pulse_SEQ, [], marker, update_settings=update_settings) # PENDING: Option to turn ON PINSW for SDAWG (default is OFF)
-                    print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr['DAC'][i_slot_order]} CHANNEL {ch} {i_slot_order} {channel_set}")
+                    print(Fore.BLUE +f"CHECKING DAC LIST: {instr[session['user_name']]['DAC']}")
+                    print(Fore.BLUE +f"INJECTED {len(CH_Pulse_SEQ)} POINTS OF WAVEFORM INTO {instr[session['user_name']]['DAC'][i_slot_order]} CHANNEL {ch} {i_slot_order} {channel_set}")
 
                     # Clear ADC memory after each fist-slot-channel's Waveform RELOAD:
                     if FPGA:
@@ -491,7 +494,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
 
                 DAC[i_slot_order].ready(DAC_instance[i_slot_order])
-                print(Fore.GREEN + 'Waveform from DAC-%s (%s) is Ready!'%(i_slot_order+1, instr['DAC'][i_slot_order]))
+                print(Fore.GREEN + 'Waveform from DAC-%s (%s) is Ready!'%(i_slot_order+1, instr[session['user_name']]['DAC'][i_slot_order]))
                 # input("STAGE-3 TEST ON RB, PRESS ENTER TO PROCEED: ")
                 
             try:
@@ -502,14 +505,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 if readoutype in ['one-shot', 'rt-dualddc-int']:
                     
                     # Managing output data based on FPGA bitMode for one-shot-type***:
-                    if FPGA & adca.bitMode_DDC:
-                        DATA = DATA.reshape([recordsum,round(TOTAL_POINTS/5),2])
-                        DATA = moveaxis(DATA,1,0).reshape([round(TOTAL_POINTS/5)*recordsum*2]) # change into [round(TOTAL_POINTS/5),recordsum,2] shape and then melt it down to a string of data (1D)
-                        if FPGA & adca.bitMode_Int:
-                            # prepare denominator:
-                            record_succession = outer(linspace(1+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)), ones(recordsum*2)).reshape([round(TOTAL_POINTS/5)*recordsum*2])
-                            DATA = divide(DATA, record_succession)
-                    else:
+                    if "SD" not in ADC_type or FPGA == adca.bitMode_Keysight:
                         DATA = DATA.reshape([recordsum,TOTAL_POINTS*2])
                         if digital_homodyne != "original": 
                             for r in range(recordsum):
@@ -518,11 +514,18 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                                 DATA[r,:] = array([trace_I, trace_Q]).reshape(2*TOTAL_POINTS) 
                                 if not r%1000: print(Fore.YELLOW + "Shooting %s times" %(r+1))
                         DATA = mean(DATA.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1) # back to interleaved IQ-Data string
+                    elif FPGA & adca.bitMode_DDC:
+                        DATA = DATA.reshape([recordsum,round(TOTAL_POINTS/5),2])
+                        DATA = moveaxis(DATA,1,0).reshape([round(TOTAL_POINTS/5)*recordsum*2]) # change into [round(TOTAL_POINTS/5),recordsum,2] shape and then melt it down to a string of data (1D)
+                        if FPGA & adca.bitMode_Int:
+                            # prepare denominator:
+                            record_succession = outer(linspace(1+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)+round(trigger_delay_ns/10), round(TOTAL_POINTS/5)), ones(recordsum*2)).reshape([round(TOTAL_POINTS/5)*recordsum*2])
+                            DATA = divide(DATA, record_succession)
                     
                 elif readoutype in ["continuous", "rt-wfm-ave", 'rt-ave-singleddc', 'rt-ave-dualddc', 'rt-ave-dualddc-int']: # by default
                     
                     # Managing output data based on FPGA bitMode for averaged(continuous)-type***:
-                    if FPGA == adca.bitMode_Keysight:
+                    if "SD" not in ADC_type or FPGA == adca.bitMode_Keysight:
                         DATA = mean(DATA.reshape([recordsum,TOTAL_POINTS*2]), axis=0) # average was done on CPU
                     elif FPGA == adca.bitMode_AVE:
                         DATA = ( DATA.reshape([TOTAL_POINTS*2]) ) / recordsum # average was done on FPGA (real-time)
@@ -537,7 +540,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         # DATA = divide(DATA, record_succession)
                     
                     # DDC on CPU:
-                    if (digital_homodyne != "original") and not (FPGA & adca.bitMode_DDC): 
+                    if "SD" not in ADC_type: DDC_ON_FPGA = False
+                    else: DDC_ON_FPGA = FPGA & adca.bitMode_DDC
+                    if (digital_homodyne != "original") and not (DDC_ON_FPGA): 
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
                         trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
                         DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string

@@ -11,6 +11,7 @@ src/physics_model/qubit_model.py
 src/physics_model/resonator.py
 src/qpu/__init__.py
 src/qpu/application/__init__.py
+src/qpu/application/dynamical_decoupling.py
 src/qpu/application/singleQ_CliffordRB.py
 src/qpu/backend/__init__.py
 src/qpu/backend/circuit/__init__.py

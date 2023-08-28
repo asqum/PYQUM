@@ -20,6 +20,8 @@ debugger = debug(mdlname)
 
 # INITIALIZATION
 def Initiate(reset=True, which=1, mode='DATABASE', screenoff=0): # PENDING INCLUSION INTO THE DATABASE
+    # TODO: Recover all variable "ad" in this file  # ad = address(mode)
+    #rs = 'TCPIP0::192.168.1.37::INSTR' #
     ad = address(mode)
     rs = ad.lookup(mdlname) # Instrument's Address
     rm = visa.ResourceManager()
@@ -38,6 +40,7 @@ def Initiate(reset=True, which=1, mode='DATABASE', screenoff=0): # PENDING INCLU
         # sleep(3)
         set_status(mdlname, dict(state='connected'))
         print(Fore.GREEN + "%s's connection Initialized: %s" % (mdlname, str(stat)))
+
         ad.update_machine(1, "%s_%s"%(mdlname,which))
     except: 
         set_status(mdlname, dict(state='DISCONNECTED'))
@@ -269,6 +272,7 @@ def ifbw(nabench, action=['Get', '']):
     vbw(nabench, action=action)
 
 # Test Zone
+"""
 def test(detail=True):
     from pyqum.instrument.analyzer import curve
     from pyqum.instrument.toolbox import waveform
@@ -355,5 +359,5 @@ def test(detail=True):
     else: state = False
     close(s, reset=state, mode="TEST")
     return
-
+"""
 # test()
