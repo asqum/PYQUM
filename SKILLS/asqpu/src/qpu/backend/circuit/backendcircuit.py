@@ -86,13 +86,15 @@ class BackendCircuit():
         """
         Get channel by q_component id and port.
         """
+        # List the physical channels corresponding to qubit id.   
+        # For example: for q1, q_id_channels = ['ROI1', 'XY1', 'Z1']
         myfilter = self.qc_relation["q_id"]==q_id
-
         q_id_channels = self.qc_relation["channel_id"].loc[myfilter].to_list()
+
         related_channel_id = None
         for channel_id in q_id_channels:
             channel = self._get_channel_id(channel_id)
-            
+            # Three types in channel.port: "xy", "z", "ro_in" 
             if channel.port == port:
                 related_channel_id = channel_id
         return self._get_channel_id(related_channel_id)
@@ -123,9 +125,6 @@ class BackendCircuit():
         """
         channel_output = {}
         register_qN = len(self.q_reg["qubit"])
-
-
-
         for qi, port, envelope_rf in waveform_channel:
             if qi >= register_qN:
                 print(f"Only {register_qN} qubit are registered")
@@ -148,11 +147,15 @@ class BackendCircuit():
 
                     case _:
                         freq_carrier = 0
-
+                # print(channel_output.keys())
+                # print(phyCh.name)
                 if phyCh.name not in channel_output.keys():
                     channel_output[phyCh.name] = [(envelope_rf,freq_carrier)]
+                    # print('aaaaaa'*5)
+                    # print(channel_output[phyCh.name])                    
                 else:
                     channel_output[phyCh.name].append( (envelope_rf,freq_carrier) )
+
         
         for ch_name, q_name in zip(self.qc_relation["channel_id"],self.qc_relation["q_id"]):
             
@@ -163,8 +166,9 @@ class BackendCircuit():
                 print("shift Z")
                 if ch_name in channel_output.keys():
                     channel_output[ch_name][0] = (channel_output[ch_name][0][0] +qubit.tempPars["IDLEZ"],0)
-                else: # If the Z line is not used but reguster in cq_relation
+                else: # If the Z line is not used but register in cq_relation
                     channel_output[ch_name] = [(zeros(self.total_point())+qubit.tempPars["IDLEZ"],0)]
+    
         return channel_output
 
 
@@ -188,7 +192,7 @@ class BackendCircuit():
  
 
         channel_output = self.translate_channel_output(waveform_channel)
-
+        devices_output = {}
         for phyCh in self.channels:
             print("Get setting from channel",phyCh.name)
 

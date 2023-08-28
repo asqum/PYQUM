@@ -11,6 +11,7 @@ import sys
 sys.path.append("..")
 from BECircuit_fromTestFile import get_test_bec
 
+
 mybec = get_test_bec()
 mybec.dt = 0.5
 print(mybec.to_qpc())
@@ -21,7 +22,7 @@ rg_y0 = Gate("RY", 0, arg_value= np.pi)
 rg_z0 = Gate("RZ", 0, arg_value= 500)
 idle_gate = Gate("IDLE", 0, arg_value= 1000)
 gate_seq = [
-    rg_x0, idle_gate, rg_y0, rg_ro0
+    rg_x0, idle_gate, rg_y0
 ]
 circuit = QubitCircuit(2)
 
@@ -46,6 +47,7 @@ mycompiler.params["rxy"]["dt"] = mybec.dt
 mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
 mycompiler.params["anharmonicity"] = q_info.tempPars["anharmonicity"]
 mycompiler.params["a_weight"] = 0 #q_info.tempPars["a_weight"]
+mycompiler.params["img_ratio"] = 0.5
 
 mycompiler.params["ro"] = {}
 mycompiler.params["ro"]["dt"] = mybec.dt

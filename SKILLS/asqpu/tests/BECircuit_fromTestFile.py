@@ -4,9 +4,8 @@ import numpy as np
 import qpu.backend.circuit.backendcircuit as bec
 import qpu.backend.component as qcp
 from pandas import DataFrame
-
-
-
+import os
+ROOT_DIR = os.path.dirname(os.path.abspath(r".\PYQUM\SKILLS\asqpu\tests\BECircuit_test_1Q.py"))
 
 def read_location( location_path ):
     fo = open(location_path, "r")
@@ -46,8 +45,8 @@ def read_QReg( infostr ):
     return read_dict
 
 def get_test_bec()->bec.BackendCircuit:
-    location_path = "./tests/location.txt"
-    spec_path = "./tests/spec.txt"
+    location_path = os.path.join(ROOT_DIR, "location.txt")
+    spec_path = os.path.join(ROOT_DIR, "spec.txt")
     mybec = bec.BackendCircuit()
     mybec._channels, mybec.qc_relation, mybec.q_reg = read_location(location_path)
     mybec._qComps = read_qComp(spec_path)

@@ -26,7 +26,7 @@ class SQCompiler(GateCompiler):
             "RX": self.rxy_compiler,
             "RY": self.rxy_compiler,
             "RZ": self.rz_compiler,
-            "RO": self.measurement_compiler,
+            "M": self.measurement_compiler,
             "IDLE": self.idle_compiler,
         }
 
@@ -149,9 +149,10 @@ class SQCompiler(GateCompiler):
         dt = self.params["rxy"]["dt"]
         anharmonicity = self.params["anharmonicity"]
         a_weight = self.params["a_weight"]
+        img_ratio = self.params["img_ratio"]
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., a_weight/anharmonicity) ) *gate.arg_value/np.pi
+        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., a_weight/anharmonicity, img_ratio) ) *gate.arg_value/np.pi
 
         if gate.name == "RX":
             return self.generate_pulse(gate, tlist, coeff, phase=0.0)
@@ -222,7 +223,7 @@ class SQCompiler(GateCompiler):
 
     def to_waveform( self, circuit:QubitCircuit ):
 
-        compiled_data = self.compile(circuit, schedule_mode=False)
+        compiled_data = self.compile(circuit.gates, schedule_mode=False)
 
         tlist_map = compiled_data[0]
         coeffs_map = compiled_data[1]
