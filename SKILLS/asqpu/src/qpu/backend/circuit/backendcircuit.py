@@ -94,6 +94,7 @@ class BackendCircuit():
         related_channel_id = None
         for channel_id in q_id_channels:
             channel = self._get_channel_id(channel_id)
+
             # Three types in channel.port: "xy", "z", "ro_in" 
             if channel.port == port:
                 related_channel_id = channel_id
@@ -148,7 +149,6 @@ class BackendCircuit():
                     case _:
                         freq_carrier = 0
                 # print(channel_output.keys())
-                # print(phyCh.name)
                 if phyCh.name not in channel_output.keys():
                     channel_output[phyCh.name] = [(envelope_rf,freq_carrier)]
                     # print('aaaaaa'*5)
@@ -161,7 +161,6 @@ class BackendCircuit():
             
             phyCh = self.get_channel(ch_name)
             qubit = self.get_qComp(q_name)
-            print(ch_name, phyCh.port, q_name, qubit.tempPars.keys() )
             if phyCh.port == "z" and "IDLEZ" in qubit.tempPars.keys(): # shift Z 
                 print("shift Z")
                 if ch_name in channel_output.keys():
