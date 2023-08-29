@@ -152,6 +152,7 @@ function accessdata_QuCTRL() {
         console.log("R-JSON-length: " + R_COUNT);
         window.SQ_CParameters = data.SQ_CParameters;
 
+
         // 1. Creating parameter-range selectors:
         $('table.mani-QuCTRL-extra').remove();
         $.each(SQ_CParameters, function(i,cparam){
@@ -176,6 +177,7 @@ function accessdata_QuCTRL() {
 
         // 2023.08.28 For multiplex readout OneShot==============================
         if(data.perimeter['READOUTYPE']=='one-shot'){
+            window.perimeter = data.perimeter;
             var colperow = 8;
             var IF_ALIGN_KHZ_row = parseInt(IF_ALIGN_KHZ_idx/colperow);
             if (IF_ALIGN_KHZ_idx%colperow==0) {
@@ -217,9 +219,9 @@ function accessdata_QuCTRL() {
         });
 
         // 2023.08.28 For multiplex readout OneShot==============================
-        if(data.perimeter['READOUTYPE']=='one-shot'){
+        if(perimeter['READOUTYPE']=='one-shot'){
             let ReadoutAlign_list = [];
-            if(data.perimeter["IF_ALIGN_KHZ"]=="0"){
+            if(perimeter["IF_ALIGN_KHZ"]=="0"){
                 ReadoutAlign_list = ["0"];
             }else{
                 ReadoutAlign_list = data.perimeter["IF_ALIGN_KHZ"].split(" ");
@@ -1227,6 +1229,14 @@ $(function () {
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
+        
+        // ONLY for multiplex OneShot=======================================
+        if(perimeter['READOUTYPE']=='one-shot'){
+            cselect["IF_ALIGN_KHZ"] = $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").val();
+        };
+        // =================================================================
+
+
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();
@@ -1269,6 +1279,13 @@ $(function () {
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
+
+        // ONLY for multiplex OneShot=======================================
+        if(perimeter['READOUTYPE']=='one-shot'){
+            cselect["IF_ALIGN_KHZ"] = $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").val();
+        };
+        // =================================================================
+
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();
@@ -1342,6 +1359,13 @@ $(function () {
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
+
+        // ONLY for multiplex OneShot=======================================
+        if(perimeter['READOUTYPE']=='one-shot'){
+            cselect["IF_ALIGN_KHZ"] = $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").val();
+        };
+        // =================================================================
+
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();
@@ -1450,6 +1474,13 @@ $(function () {
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
+
+        // ONLY for multiplex OneShot=======================================
+        if(perimeter['READOUTYPE']=='one-shot'){
+            cselect["IF_ALIGN_KHZ"] = $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").val();
+        };
+        // =================================================================
+        
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();
