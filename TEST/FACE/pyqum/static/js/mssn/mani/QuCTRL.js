@@ -174,16 +174,18 @@ function accessdata_QuCTRL() {
             IF_ALIGN_KHZ_idx += 1;
         });
 
-        // 2023.08.28 For multiplex readout ==============================
-        var colperow = 8;
-        var IF_ALIGN_KHZ_row = parseInt(IF_ALIGN_KHZ_idx/colperow);
-        if (IF_ALIGN_KHZ_idx%colperow==0) {
-            $('div.row.QuCTRL-c-parameters').append('<table class="content-table mani-QuCTRL-extra E' + IF_ALIGN_KHZ_row + '"></table>');
-            $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row).append($('<thead></thead>').append($('<tr></tr>')));
-            $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row).append($('<tbody class="mani-QuCTRL parameter"></tbody>').append($('<tr></tr>')));
+        // 2023.08.28 For multiplex readout OneShot==============================
+        if(data.perimeter['READOUTYPE']=='one-shot'){
+            var colperow = 8;
+            var IF_ALIGN_KHZ_row = parseInt(IF_ALIGN_KHZ_idx/colperow);
+            if (IF_ALIGN_KHZ_idx%colperow==0) {
+                $('div.row.QuCTRL-c-parameters').append('<table class="content-table mani-QuCTRL-extra E' + IF_ALIGN_KHZ_row + '"></table>');
+                $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row).append($('<thead></thead>').append($('<tr></tr>')));
+                $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row).append($('<tbody class="mani-QuCTRL parameter"></tbody>').append($('<tr></tr>')));
+            };
+            $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row + ' thead tr').append('<th class="mani QuCTRL ' + "IF_ALIGN_KHZ" + '">' + "READOUT_ALIGN_KHz" + '</th>');
+            $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row + ' tbody tr').append('<th><select class="mani QuCTRL" id="' + "IF_ALIGN_KHZ" + '" type="text"></select></th>');
         };
-        $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row + ' thead tr').append('<th class="mani QuCTRL ' + "IF_ALIGN_KHZ" + '">' + "READOUT_ALIGN_KHz" + '</th>');
-        $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row + ' tbody tr').append('<th><select class="mani QuCTRL" id="' + "IF_ALIGN_KHZ" + '" type="text"></select></th>');
         // ====================================================   
 
         // 2. Loading data into parameter-range selectors:
@@ -214,16 +216,18 @@ function accessdata_QuCTRL() {
             };
         });
 
-        // 2023.08.28 For multiplex readout ==============================
-        let ReadoutAlign_list = [];
-        if(data.perimeter["IF_ALIGN_KHZ"]=="0"){
-            ReadoutAlign_list = ["0"];
-        }else{
-            ReadoutAlign_list = data.perimeter["IF_ALIGN_KHZ"].split(" ");
+        // 2023.08.28 For multiplex readout OneShot==============================
+        if(data.perimeter['READOUTYPE']=='one-shot'){
+            let ReadoutAlign_list = [];
+            if(data.perimeter["IF_ALIGN_KHZ"]=="0"){
+                ReadoutAlign_list = ["0"];
+            }else{
+                ReadoutAlign_list = data.perimeter["IF_ALIGN_KHZ"].split(" ");
+            };
+            $.each(ReadoutAlign_list, function(i,v){ 
+                $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").append($('<option>', { text: v, value: i })); 
+            });
         };
-        $.each(ReadoutAlign_list, function(i,v){ 
-            $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").append($('<option>', { text: v, value: i })); 
-        });
         // ===============================================================
 
         // 3. load edittable comment & references for NEW RUN:
