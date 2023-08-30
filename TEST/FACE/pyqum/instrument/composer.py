@@ -279,11 +279,12 @@ class pulser:
                 self.envelope = wholeConnectEnvelope.imag
                 self.music = array(Qchannel)
 
-            case "abs": # for z-gate
+            case "z": # for z-gate
                 self.envelope = abs(wholeConnectEnvelope)
                 self.music = abs(wholeConnectEnvelope)
             case _:
                 print("Unkown IF channel type.")
+                print("IF chennel: ",self.ifChannel)
                 self.envelope = array([])
                 self.music = array([])               
         #print("operation number",len(self.operationList))

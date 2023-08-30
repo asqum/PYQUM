@@ -332,7 +332,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         buffersize = round(TOTAL_POINTS/5) * recordsum * 2  # only down-sampled 5X
     
     DDCfreqs = ifreqcorrection_MHz.split(" ") # single readout -> ["0"] ; multiplex -> ["0","10","20",...]
-    buffersize *= len(DDCfreqs)
+    # buffersize *= len(DDCfreqs)
 
     try: print(Fore.YELLOW + "Buffer-size for %s: %s" %(readoutype, buffersize))
     except: print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
@@ -513,14 +513,15 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     if "SD" not in ADC_type or FPGA == adca.bitMode_Keysight:
                         if digital_homodyne != "original": 
                             DATA_for_DDCfreq = zeros([readout_numbers,recordsum*2])
-                            for a in range(readout_numbers):
+                            for a in range(readout_numbers):    
                                 for r in range(recordsum):
                                     trace_I, trace_Q = DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[0], DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[1]
                                     trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, float(DDCfreqs[a]), dt=TIME_RESOLUTION_NS)
                                     DATA[r,:] = array([trace_I, trace_Q]).reshape(2*TOTAL_POINTS) 
+                                    if not r%1000:print("Now Rotate ROIF= ",DDCfreqs[a])
                                     if not r%1000: print(Fore.YELLOW + "Single readout Shooting %s times" %(r+1))
                                 DATA_for_DDCfreq[a] = mean(DATA.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1) # back to interleaved IQ-Data string, shape -> (recordsum*2,)
-                            DATA = DATA_for_DDCfreq # shape -> (a,recordsum*2)
+                            DATA = DATA_for_DDCfreq.reshape(-1) # shape -> (,a*recordsum*2)
                             
                     elif FPGA & adca.bitMode_DDC:
                         DATA = DATA.reshape([recordsum,round(TOTAL_POINTS/5),2])
