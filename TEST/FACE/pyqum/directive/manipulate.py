@@ -177,7 +177,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     CLOCK_HZ = float(perimeter['CLOCK_HZ'])
     # 1b. DSP perimeter(s)
     digital_homodyne = perimeter['DIGIHOME']
-    ifreqcorrection_kHz = perimeter['IF_ALIGN_KHZ'] #single Q readout -> "0" ; multiplex -> "0 20 30 ..."
+    ifreqcorrection_MHz = perimeter['IF_ALIGN_KHZ'] #single Q readout -> "0" ; multiplex -> "0 20 30 ..."
     # 1c. Basic perimeter(s): # previously: config = corder['C-Config']
     # biasmode = bool(int(perimeter['BIASMODE']))
     # xypowa = perimeter['XY-LO-Power']
@@ -331,7 +331,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     elif readoutype in ['rt-dualddc-int']: # along record sum (shots with accumulated readout-time)
         buffersize = round(TOTAL_POINTS/5) * recordsum * 2  # only down-sampled 5X
     
-    DDCfreqs = ifreqcorrection_kHz.split(" ") # single readout -> ["0"] ; multiplex -> ["0","10","20",...]
+    DDCfreqs = ifreqcorrection_MHz.split(" ") # single readout -> ["0"] ; multiplex -> ["0","10","20",...]
     buffersize *= len(DDCfreqs)
 
     try: print(Fore.YELLOW + "Buffer-size for %s: %s" %(readoutype, buffersize))
@@ -552,7 +552,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     else: DDC_ON_FPGA = FPGA & adca.bitMode_DDC
                     if (digital_homodyne != "original") and not (DDC_ON_FPGA): 
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
-                        trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
+                        trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, float(DDCfreqs[0]), dt=TIME_RESOLUTION_NS)
                         DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string
                 else:
                     print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
