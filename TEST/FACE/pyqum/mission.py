@@ -1676,7 +1676,7 @@ def mani_QuCTRL_access():
 
     # for multiplex OneShot
     if perimeter['READOUTYPE'] == "one-shot":
-        corder["IF_ALIGN_KHZ"]=perimeter["IF_ALIGN_KHZ"]
+        corder["IF_ALIGN_MHZ"]=perimeter["IF_ALIGN_KHZ"]
 
     # Determine BufferKey based on ReadoutType:
     if perimeter['READOUTYPE'] in ['one-shot', 'rt-dualddc-int']: 
@@ -1724,7 +1724,7 @@ def mani_QuCTRL_access():
     if perimeter['READOUTYPE'] != "one-shot":
         SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
     else:
-        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ["IF_ALIGN_KHZ"] + ORACLE_STRUCT
+        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ["IF_ALIGN_MHZ"] + ORACLE_STRUCT
 
     # Structure & Addresses:
     c_QuCTRL_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \
