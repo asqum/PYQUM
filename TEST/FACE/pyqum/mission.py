@@ -1673,7 +1673,11 @@ def mani_QuCTRL_access():
     # Integrate R-Parameters back into C-Order:
     RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
     for k in RJSON.keys(): corder[k] = RJSON[k]
-    
+
+    # for multiplex OneShot
+    if perimeter['READOUTYPE'] == "one-shot":
+        corder["IF_ALIGN_KHZ"]=perimeter["IF_ALIGN_KHZ"]
+
     # Determine BufferKey based on ReadoutType:
     if perimeter['READOUTYPE'] in ['one-shot', 'rt-dualddc-int']: 
 
@@ -1717,7 +1721,10 @@ def mani_QuCTRL_access():
     print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
     
     # Extend C-Structure with R-Parameters & Buffer keys:
-    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
+    if perimeter['READOUTYPE'] != "one-shot":
+        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
+    else:
+        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ["IF_ALIGN_KHZ"] + ORACLE_STRUCT
 
     # Structure & Addresses:
     c_QuCTRL_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \
@@ -1835,7 +1842,7 @@ def mani_QuCTRL_1ddata():
     cselect = json.loads(request.args.get('cselect'))
 
     for k in cselect.keys():
-        if "x" in cselect[k]:
+        if "x" in cselect[k] and k != "IF_ALIGN_KHZ":
             xtitle = "<b>" + k + "</b>"
             selected_caddress = [s for s in cselect.values()]
         
@@ -1881,7 +1888,9 @@ def mani_QuCTRL_1ddata():
                     Idata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], c_QuCTRL_structure[session['user_name']])]
                     Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], c_QuCTRL_structure[session['user_name']])]
                     Adata[i] = sqrt(Idata[i]**2 + Qdata[i]**2)
-                    Pdata[i] = arctan2(Qdata[i], Idata[i]) # -pi < phase < pi    
+                    Pdata[i] = arctan2(Qdata[i], Idata[i]) # -pi < phase < pi   
+        elif "x" in cselect[k] and k == "IF_ALIGN_KHZ": 
+            print("IF_ALIGN_KHZ can't be a x-axis! Check the selector.")
 
     print("Structure: %s" %c_QuCTRL_structure[session['user_name']])
 

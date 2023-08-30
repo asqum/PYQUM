@@ -158,7 +158,6 @@ function accessdata_QuCTRL() {
         $.each(SQ_CParameters, function(i,cparam){
             var colperow = 8; // row density
             var row = parseInt(i/colperow);
-            var IF_ALIGN_KHZ_idx = 0;
             if (i%colperow==0 || i==0) {
                 $('div.row.QuCTRL-c-parameters').append('<table class="content-table mani-QuCTRL-extra E' + row + '"></table>');
                 $('table.mani-QuCTRL-extra.E' + row).append($('<thead></thead>').append($('<tr></tr>')));
@@ -172,23 +171,7 @@ function accessdata_QuCTRL() {
                 $('table.mani-QuCTRL-extra.E' + row + ' thead tr').append('<th class="mani QuCTRL ' + String(cparam) + '">' + cparam + '</th>');
                 $('table.mani-QuCTRL-extra.E' + row + ' tbody tr').append('<th><select class="mani QuCTRL" id="' + cparam + '" type="text"></select></th>');
             }; 
-            IF_ALIGN_KHZ_idx += 1;
-        });
-
-        // 2023.08.28 For multiplex readout OneShot==============================
-        if(data.perimeter['READOUTYPE']=='one-shot'){
-            window.perimeter = data.perimeter;
-            var colperow = 8;
-            var IF_ALIGN_KHZ_row = parseInt(IF_ALIGN_KHZ_idx/colperow);
-            if (IF_ALIGN_KHZ_idx%colperow==0) {
-                $('div.row.QuCTRL-c-parameters').append('<table class="content-table mani-QuCTRL-extra E' + IF_ALIGN_KHZ_row + '"></table>');
-                $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row).append($('<thead></thead>').append($('<tr></tr>')));
-                $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row).append($('<tbody class="mani-QuCTRL parameter"></tbody>').append($('<tr></tr>')));
-            };
-            $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row + ' thead tr').append('<th class="mani QuCTRL ' + "IF_ALIGN_KHZ" + '">' + "READOUT_ALIGN_KHz" + '</th>');
-            $('table.mani-QuCTRL-extra.E' + IF_ALIGN_KHZ_row + ' tbody tr').append('<th><select class="mani QuCTRL" id="' + "IF_ALIGN_KHZ" + '" type="text"></select></th>');
-        };
-        // ====================================================   
+        }); 
 
         // 2. Loading data into parameter-range selectors:
         $.each(SQ_CParameters, function(i,cparam){
@@ -217,20 +200,6 @@ function accessdata_QuCTRL() {
 
             };
         });
-
-        // 2023.08.28 For multiplex readout OneShot==============================
-        if(perimeter['READOUTYPE']=='one-shot'){
-            let ReadoutAlign_list = [];
-            if(perimeter["IF_ALIGN_KHZ"]=="0"){
-                ReadoutAlign_list = ["0"];
-            }else{
-                ReadoutAlign_list = data.perimeter["IF_ALIGN_KHZ"].split(" ");
-            };
-            $.each(ReadoutAlign_list, function(i,v){ 
-                $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").append($('<option>', { text: v, value: i })); 
-            });
-        };
-        // ===============================================================
 
         // 3. load edittable comment & references for NEW RUN:
         QuCTRLcomment = data.comment;
@@ -1224,18 +1193,13 @@ $(function () {
         $('button.mani.access.QuCTRL#'+mani_TASK).prepend("<i class='QuCTRL1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.QuCTRL#repeat').val();
         var cselect = {};
+
+
         $.each(SQ_CParameters, function(i,cparam){ 
             // to avoid ">" from messing with HTML syntax
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
-        
-        // ONLY for multiplex OneShot=======================================
-        if(perimeter['READOUTYPE']=='one-shot'){
-            cselect["IF_ALIGN_KHZ"] = $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").val();
-        };
-        // =================================================================
-
 
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
@@ -1274,17 +1238,13 @@ $(function () {
         $('button.mani.access.QuCTRL#'+mani_TASK).prepend("<i class='QuCTRL1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.QuCTRL#repeat').val();
         var cselect = {};
+
+
         $.each(SQ_CParameters, function(i,cparam){ 
             // to avoid ">" from messing with HTML syntax
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
-
-        // ONLY for multiplex OneShot=======================================
-        if(perimeter['READOUTYPE']=='one-shot'){
-            cselect["IF_ALIGN_KHZ"] = $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").val();
-        };
-        // =================================================================
 
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
@@ -1354,17 +1314,13 @@ $(function () {
         $('button.mani.access.QuCTRL#'+mani_TASK).prepend("<i class='QuCTRL2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.QuCTRL#repeat').val();
         var cselect = {};
+
+
         $.each(SQ_CParameters, function(i,cparam){ 
             // to avoid ">" from messing with HTML syntax
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
-
-        // ONLY for multiplex OneShot=======================================
-        if(perimeter['READOUTYPE']=='one-shot'){
-            cselect["IF_ALIGN_KHZ"] = $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").val();
-        };
-        // =================================================================
 
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
@@ -1469,18 +1425,16 @@ $(function () {
         $('button.mani.access.QuCTRL#'+mani_TASK).prepend("<i class='QuCTRL2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.QuCTRL#repeat').val();
         var cselect = {};
+
+
         $.each(SQ_CParameters, function(i,cparam){ 
             // to avoid ">" from messing with HTML syntax
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
 
-        // ONLY for multiplex OneShot=======================================
-        if(perimeter['READOUTYPE']=='one-shot'){
-            cselect["IF_ALIGN_KHZ"] = $('select.mani.QuCTRL#' + "IF_ALIGN_KHZ").val();
-        };
-        // =================================================================
-        
+
+
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();

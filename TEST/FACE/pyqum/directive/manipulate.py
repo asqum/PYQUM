@@ -331,10 +331,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     elif readoutype in ['rt-dualddc-int']: # along record sum (shots with accumulated readout-time)
         buffersize = round(TOTAL_POINTS/5) * recordsum * 2  # only down-sampled 5X
     
-    if type(ifreqcorrection_kHz) is not list:
-        buffersize *= 1
-    else:
-        buffersize *= len(ifreqcorrection_kHz)
+    DDCfreqs = ifreqcorrection_kHz.split(" ") # single readout -> ["0"] ; multiplex -> ["0","10","20",...]
+    buffersize *= len(DDCfreqs)
 
     try: print(Fore.YELLOW + "Buffer-size for %s: %s" %(readoutype, buffersize))
     except: print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
@@ -510,7 +508,6 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # POST PROCESSING
                 if readoutype in ['one-shot', 'rt-dualddc-int']:
                     DATA = DATA.reshape([recordsum,TOTAL_POINTS*2])
-                    DDCfreqs = ifreqcorrection_kHz.split(" ") # single readout -> ["0"] ; multiplex -> ["0","10","20",...]
                     readout_numbers = len(DDCfreqs)
                     # Managing output data based on FPGA bitMode for one-shot-type***:
                     if "SD" not in ADC_type or FPGA == adca.bitMode_Keysight:
