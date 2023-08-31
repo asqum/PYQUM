@@ -1675,7 +1675,7 @@ def mani_QuCTRL_access():
     for k in RJSON.keys(): corder[k] = RJSON[k]
 
     # for multiplex OneShot
-    if perimeter['READOUTYPE'] == "one-shot":
+    if perimeter['READOUTYPE'] in ["one-shot", "continuous"]:
         corder["IF_ALIGN_MHZ"]=perimeter["IF_ALIGN_KHZ"]
 
     # Determine BufferKey based on ReadoutType:
@@ -1721,10 +1721,10 @@ def mani_QuCTRL_access():
     print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
     
     # Extend C-Structure with R-Parameters & Buffer keys:
-    if perimeter['READOUTYPE'] != "one-shot":
-        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
+    if perimeter['READOUTYPE'] in ["one-shot", "continuous"]:
+        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ["IF_ALIGN_MHZ"] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
     else:
-        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ["IF_ALIGN_MHZ"] + ORACLE_STRUCT
+        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT
 
     # Structure & Addresses:
     c_QuCTRL_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \
