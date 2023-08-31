@@ -1722,7 +1722,7 @@ def mani_QuCTRL_access():
     
     # Extend C-Structure with R-Parameters & Buffer keys:
     if perimeter['READOUTYPE'] in ["one-shot", "continuous"]:
-        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ["IF_ALIGN_MHZ"] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
+        SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ["IF_ALIGN_MHZ"] + ORACLE_STRUCT  # Fixed-Structure + R-Structure + Buffer
     else:
         SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT
 
