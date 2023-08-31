@@ -4,7 +4,7 @@
 	"port":"ro_in",
 	"devices":{
 		"DAC":[("SDAWG_3",1),("SDAWG_3",2)],
-		"SG":[("DDSLO_1",1)]
+		"SG":[("DDSLO_2",1)]
 		},
 
     "paras":{
@@ -13,7 +13,8 @@
         "amp_balance": 1,
         "phase_balance": 90, 
 
-        "freq_IF":0.02,
+        "freq_IF":-0.13,
+	"ro_IF":0,
         "power_LO":6,
 
 		"delay": 100
@@ -24,7 +25,7 @@
 	"port":"ro_in",
 	"devices":{
 		"DAC":[("SDAWG_3",1),("SDAWG_3",2)],
-		"SG":[("DDSLO_1",1)]
+		"SG":[("DDSLO_2",1)]
 		},
 
     "paras":{
@@ -33,7 +34,8 @@
         "amp_balance": 1,
         "phase_balance": 90, 
 
-        "freq_IF":-0.02,
+        "freq_IF":-0.13,
+	"ro_IF":-0.28,
         "power_LO":6,
 
 		"delay": 100
@@ -44,8 +46,8 @@
 	"type":"up",
 	"port":"xy",
 	"devices":{
-		"DAC":[("SDAWG_2",1),("SDAWG_2",2)],
-		"SG":[("DDSLO_2",1)],
+		"DAC":[("SDAWG_1",1),("SDAWG_1",2)],
+		"SG":[("DDSLO_1",1)],
 		},
 
     "paras":{
@@ -53,8 +55,8 @@
         "offset_Q": 0,
         "amp_balance": 1,
         "phase_balance": 90, 
-        "freq_IF":0.12,
-        "power_LO":23,
+        "freq_IF":-0.08,
+        "power_LO":0,
 
 		"delay": 380
         }
@@ -64,7 +66,7 @@
 	"type":"up",
 	"port":"xy",
 	"devices":{
-		"DAC":[("SDAWG_1",1),("SDAWG_1",2)],
+		"DAC":[("SDAWG_2",1),("SDAWG_2",2)],
 		"SG":[("PSGA_2",1)],
 		},
 
@@ -73,8 +75,8 @@
         "offset_Q": 0,
         "amp_balance": 1,
         "phase_balance": 90, 
-        "freq_IF":0.12,
-        "power_LO":6,
+        "freq_IF":-0.8,
+        "power_LO":0,
 
 		"delay": 380
         }

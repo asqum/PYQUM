@@ -167,7 +167,7 @@ class BackendCircuit():
                     channel_output[ch_name][0] = (channel_output[ch_name][0][0] +qubit.tempPars["IDLEZ"],0)
                 else: # If the Z line is not used but register in cq_relation
                     channel_output[ch_name] = [(zeros(self.total_point())+qubit.tempPars["IDLEZ"],0)]
-    
+
         return channel_output
 
 
@@ -189,13 +189,12 @@ class BackendCircuit():
             "ADC":{},
         }
  
-
         channel_output = self.translate_channel_output(waveform_channel)
         devices_output = {}
+        ro_I, ro_Q = {},{}
+
         for phyCh in self.channels:
             print("Get setting from channel",phyCh.name)
-
-                
             if phyCh.name in channel_output.keys():
                 print("Qubit control channel")
                 phyCh = self.get_channel(phyCh.name)
@@ -216,17 +215,25 @@ class BackendCircuit():
                     print("waveform too many points.")
                 print(envelope_rf.shape)
                 if isinstance(phyCh, UpConversionChannel):
-                    freq_carrier = single_signal[1]
-                    devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier  )
-
+                    if phyCh.name[:2] == 'RO':
+                        freq_carrier = single_signal[1]
+                        ro_I[phyCh.name], ro_Q[phyCh.name] = phyCh.ro_dac_output(envelope_rf)
+                        signal_I = sum(ro_I.values())
+                        signal_Q = sum(ro_Q.values())
+                        devices_output = phyCh.ro_devices_setting(signal_I,signal_Q,freq_carrier)
+                    else:
+                        freq_carrier = single_signal[1]
+                        devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier  )
+                        print(phyCh.devices_setting( envelope_rf, freq_carrier  ))
+                    
+                # DACChannel for DC output
                 if isinstance(phyCh, DACChannel):
                     devices_output =  phyCh.devices_setting( envelope_rf )
             else:
                 if isinstance(phyCh, PumpingLine):
                     print("Pumping channel")
                     devices_output =  phyCh.devices_setting()
-
-
+      
             for category in devices_setting_all.keys():
                 if category in devices_output.keys():
                     for info, setting in devices_output[category].items():
@@ -238,9 +245,8 @@ class BackendCircuit():
                         
                         if type(setting) != type(None):
                             devices_setting_all[category][instr_name][channel_idx] = setting
-                            
 
-
+        
         return devices_setting_all
 
     def to_qpc( self ):
@@ -297,12 +303,6 @@ class BackendCircuit():
     @qc_relation.setter
     def qc_relation( self, value:DataFrame):
         self._qc_relation = value
-
-
-
-
-
-
 
 
 

@@ -133,8 +133,51 @@ class UpConversionChannel( WaveformChannel ):
         dac_out[dac_info[1]] = signal_Q
 
         return dac_out
+    def ro_dac_output( self, signalRF:ndarray )->[ndarray, ndarray]:
+        """
+        Time dependet DAC output, translate from rf signal
+        """
+        # if dt == None:
+        #     dt = self.dt
+        # if freqIF == None: freqIF = self.freqIF
+        # else: self.freqIF = freqIF
 
-    
+        # if IQMixer == None: IQMixer = self.comps["IQMixer"]["calibration"]
+        # else : IQMixer = self.IQMixer
+
+        IQMixer = (self.paras["amp_balance"],self.paras["phase_balance"],self.paras["offset_I"],self.paras["offset_Q"])
+        freq_IF = self.paras["freq_IF"]
+        ro_IF = self.paras["ro_IF"]
+        freq_IF = freq_IF + ro_IF
+        if type(signalRF) != type(None):
+            signal_I, signal_Q = upConversion_IQ( signalRF, freq_IF, IQMixer, suppress_leakage=True )
+        else:
+            signal_I = None
+            signal_Q = None
+
+        return signal_I, signal_Q
+
+    def ro_devices_setting( self, signal_I, signal_Q, freq_carrier:float )->dict:
+
+        sg_name = self.devices["SG"][0]
+        sg_out = {
+            sg_name:{
+                "freq": upconversion_LO( freq_carrier, self.paras["freq_IF"] ),
+                "power": self.paras["power_LO"]
+            }
+        }
+        dac_info = self.devices["DAC"] 
+        dac_out = {}
+        dac_out[dac_info[0]] = signal_I
+        dac_out[dac_info[1]] = signal_Q
+
+        device_setting = {
+            "DAC": dac_out,
+            "SG": sg_out
+        }
+        return device_setting
+
+
     def devices_setting( self, signalRF:ndarray, freq_carrier:float )->dict:
 
         sg_name = self.devices["SG"][0]

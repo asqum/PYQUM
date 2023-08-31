@@ -83,8 +83,9 @@ class TQCompile(GateCompiler):
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
         coeff = ps.constFunc(tlist, dz )
+        targets_label = ''.join(str(target) for target in gate.targets)
         pulse_info = [
-        ("sz" + str(gate.targets[0]), coeff)
+        ("sz" + targets_label, coeff)
         ]
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
@@ -96,8 +97,9 @@ class TQCompile(GateCompiler):
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
         coeff = ps.constFunc(tlist, dz )
+        targets_label = ''.join(str(target) for target in gate.targets)
         pulse_info = [
-        ("sz" + str(gate.targets[0]), coeff)
+        ("sz" + targets_label, coeff)
         ]
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
@@ -115,7 +117,6 @@ class TQCompile(GateCompiler):
         sampling_point = gate.arg_value
         tlist = np.linspace(0,sampling_point,sampling_point, endpoint=False)
         coeff = ps.GERPFunc(tlist, *(1,sampling_point,0,15,30/4.) )
-
         pulse_info = [
             ("sz" + str(gate.targets[0]), coeff)
         ]
@@ -133,16 +134,15 @@ class TQCompile(GateCompiler):
             to implement a gate containing the control pulses.
         """
         
-        pulse_length = self.params[str(gate.targets)]["ro"]["pulse_length"]
-        dt = self.params[str(gate.targets)]["ro"]["dt"]
-
+        pulse_length = self.params["ro"]["pulse_length"]
+        dt = self.params["ro"]["dt"]
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0,pulse_length,sampling_point, endpoint=False)
         # The edge with we give 15 sampling points. 
-        coeff = ps.GERPFunc(tlist, *(1,pulse_length,0,15,30/4.) )  
-
+        coeff = ps.GERPFunc(tlist, *(1,pulse_length,0,15,30/4.) ) 
+        targets_label = ''.join(str(target) for target in gate.targets)
         pulse_info = [
-            ("ro" + str(gate.targets[0]), coeff)
+            ("ro" + targets_label, coeff)
         ]
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
@@ -173,8 +173,7 @@ class TQCompile(GateCompiler):
         tlist_map = compiled_data[0]
         coeffs_map = compiled_data[1]
         waveform_channel = []
-
-
+        # N is the number of the qubits
         for qi in range(circuit.N):
             envelope_rf = control_xy(coeffs_map, qi)
             if type(envelope_rf) != type(None):
@@ -187,8 +186,7 @@ class TQCompile(GateCompiler):
             envelope_rf = measurement_ro(coeffs_map, qi)
             if type(envelope_rf) != type(None):
                 waveform_channel.append( (qi,"ro_in",envelope_rf) )
-        # print('a'*50)
-        # print(waveform_channel)
+                
         return waveform_channel
     
 def control_xy( coeffs_map, target_index ):
@@ -196,7 +194,6 @@ def control_xy( coeffs_map, target_index ):
     sx_exist = False
     sy_exist = False
     for label in coeffs_map.keys():
-        # print(label)
         label_index = int(label[2:])
         label_action = label[:2]
         if label_index == target_index:
@@ -216,9 +213,9 @@ def control_xy( coeffs_map, target_index ):
 def measurement_ro( coeffs_map, target_index ):
     ro_exist = False
     for label in coeffs_map.keys():
-        label_index = int(label[2:])
+        label_index = label[2:]
         label_action = label[:2]
-        if label_index == target_index:
+        if str(target_index) in label_index:
             match label_action:
                     case "ro":
                         ro_exist = True

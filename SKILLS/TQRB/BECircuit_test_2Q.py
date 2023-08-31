@@ -26,8 +26,7 @@ mybec.dt = 0.5
 # print(test_measurement.measurement_comp_basis(test_state))
 
 
-rg_ro0 = Gate("RO", 0 )
-rg_ro1 = Gate("RO", 1)
+rg_ro = Gate("RO", [0,1] )
 rg_x0 = Gate("RX", 0, arg_value= np.pi)
 rg_y1 = Gate("RY", 1, arg_value= np.pi)
 # rg_z0 = Gate("RZ", 0, arg_value= 500)
@@ -36,9 +35,10 @@ idle_gate = Gate("IDLE", 0, arg_value= 20)
 idle_gate_1 = Gate("IDLE", 1, arg_value= 20)
 cz = Gate("CZ", 0, 1)
 iswap = Gate("ISWAP", [0,1])
-gate_seq = [
-    rg_x0, idle_gate_1, rg_y1,  idle_gate, cz, idle_gate, rg_y1, iswap, rg_y1, rg_ro0, rg_ro1
-]
+# gate_seq = [
+#     rg_x0, idle_gate_1, rg_y1,  idle_gate, cz, idle_gate, rg_y1, iswap, rg_y1, rg_ro
+# ]
+gate_seq = [rg_x0, rg_ro]
 circuit = QubitCircuit(2)
 
 two_qubit = basis(4, 0)
@@ -55,7 +55,7 @@ mybec.total_time = q1_info.tempPars["total_time"]
 q2_name = mybec.q_reg["qubit"][1]
 q2_info = mybec.get_qComp(q2_name)
 
-print(q1_info.tempPars)
+# Give parameters to TQCompiler
 mycompiler.params[str(rg_x0.targets)] = {}
 mycompiler.params[str(rg_x0.targets)]["rxy"] = {}
 mycompiler.params[str(rg_x0.targets)]["rxy"]["dt"] = mybec.dt
@@ -66,12 +66,9 @@ mycompiler.params[str(rg_y1.targets)]["rxy"] = {}
 mycompiler.params[str(rg_y1.targets)]["rxy"]["dt"] = mybec.dt
 mycompiler.params[str(rg_y1.targets)]["rxy"]["pulse_length"] = q2_info.tempPars["XYW"]
 mycompiler.params[str(rg_y1.targets)]["anharmonicity"] = q2_info.tempPars["anharmonicity"]
-mycompiler.params[str(rg_ro0.targets)]["ro"] = {}
-mycompiler.params[str(rg_ro0.targets)]["ro"]["pulse_length"] = q1_info.tempPars["ROW"]
-mycompiler.params[str(rg_ro0.targets)]["ro"]["dt"] = mybec.dt
-mycompiler.params[str(rg_ro1.targets)]["ro"] = {}
-mycompiler.params[str(rg_ro1.targets)]['ro']['dt'] = mybec.dt
-mycompiler.params[str(rg_ro1.targets)]['ro']["pulse_length"] = q2_info.tempPars["ROW"]
+mycompiler.params["ro"] = {}
+mycompiler.params["ro"]["pulse_length"] = q1_info.tempPars["ROW"]
+mycompiler.params["ro"]["dt"] = mybec.dt
 mycompiler.params["cz"] = {}
 mycompiler.params["cz"]["dt"] = mybec.dt
 mycompiler.params["cz"]["pulse_length"] = q1_info.tempPars["CZ"]["ZW"]
