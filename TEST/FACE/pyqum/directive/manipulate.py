@@ -524,7 +524,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                                     if not r%1000:print("Now Rotate ROIF= ",DDCfreqs[a])
                                     if not r%1000: print(Fore.YELLOW + "Single readout Shooting %s times" %(r+1))
                                 DATA_for_DDCfreq[a] = mean(DATA_after_aDDC.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1) # back to interleaved IQ-Data string, shape -> (recordsum*2,)
-                            DATA = DATA_for_DDCfreq.reshape(readout_numbers*recordsum*2) # shape -> (,a*recordsum*2)
+                            DATA = DATA_for_DDCfreq.transpose().reshape(-1) # shape -> (,a*recordsum*2)
                             
                     elif FPGA & adca.bitMode_DDC:
                         DATA = DATA.reshape([recordsum,round(TOTAL_POINTS/5),2])
@@ -560,7 +560,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         for a in range(readout_numbers):
                             trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, -float(DDCfreqs[a]), dt=TIME_RESOLUTION_NS)
                             DATA_for_DDCfreq[a] = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string
-                        DATA = DATA_for_DDCfreq.reshape(readout_numbers*TOTAL_POINTS*2)
+                        DATA = DATA_for_DDCfreq.reshape(-1)
                 else:
                     print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
 
