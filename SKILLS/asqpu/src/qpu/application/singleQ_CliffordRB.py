@@ -67,7 +67,6 @@ def clifford_gates( target:int )->List:
 
 
 
-
 def decomposition( gates:List[Gate] )->Qobj:
     """
         

@@ -6,7 +6,7 @@ from pandas import DataFrame
 import abc
 from typing import List, Tuple, Union, Dict
 
-from numpy import array, ndarray, zeros, append
+from numpy import array, ndarray, zeros, append, full
 
 class BackendCircuit():
     """
@@ -126,6 +126,7 @@ class BackendCircuit():
         """
         channel_output = {}
         register_qN = len(self.q_reg["qubit"])
+
         for qi, port, envelope_rf in waveform_channel:
             if qi >= register_qN:
                 print(f"Only {register_qN} qubit are registered")
@@ -141,18 +142,14 @@ class BackendCircuit():
                     case "ro_in":
                         freq_carrier = qubit.tempPars["freq_ro"]
                         envelope_rf *= qubit.tempPars["ROL"]
-
                     case "z":
                         freq_carrier = 0
-                        # envelope_rf += qubit.tempPars["IDLEZ"]
-
                     case _:
                         freq_carrier = 0
-                # print(channel_output.keys())
+
                 if phyCh.name not in channel_output.keys():
                     channel_output[phyCh.name] = [(envelope_rf,freq_carrier)]
-                    # print('aaaaaa'*5)
-                    # print(channel_output[phyCh.name])                    
+              
                 else:
                     channel_output[phyCh.name].append( (envelope_rf,freq_carrier) )
 
@@ -207,13 +204,18 @@ class BackendCircuit():
                 envelope_rf = single_signal[0]
                 point_rf = envelope_rf.shape[-1]
                 point_buffer = self.total_point() -point_rf -point_delay
-                
-                if point_buffer>0:
+
+                if isinstance(phyCh, DACChannel): # The IDLEZ should start from beginning.
+                    if point_buffer>0:
+                        envelope_rf = append(full(point_buffer,envelope_rf[0]),envelope_rf)
+                        envelope_rf = append(envelope_rf,full(point_delay,envelope_rf[0]))
+
+                elif point_buffer>0:
                     envelope_rf = append( zeros(point_buffer), envelope_rf )
                     envelope_rf = append( envelope_rf, zeros(point_delay) )
                 else:
                     print("waveform too many points.")
-                print(envelope_rf.shape)
+
                 if isinstance(phyCh, UpConversionChannel):
                     if phyCh.name[:2] == 'RO':
                         freq_carrier = single_signal[1]
@@ -224,7 +226,6 @@ class BackendCircuit():
                     else:
                         freq_carrier = single_signal[1]
                         devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier  )
-                        print(phyCh.devices_setting( envelope_rf, freq_carrier  ))
                     
                 # DACChannel for DC output
                 if isinstance(phyCh, DACChannel):

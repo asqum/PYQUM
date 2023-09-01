@@ -31,14 +31,14 @@ rg_x0 = Gate("RX", 0, arg_value= np.pi)
 rg_y1 = Gate("RY", 1, arg_value= np.pi)
 # rg_z0 = Gate("RZ", 0, arg_value= 500)
 # idle_gate's arg_value is the time of idle gate.
-idle_gate = Gate("IDLE", 0, arg_value= 20)
-idle_gate_1 = Gate("IDLE", 1, arg_value= 20)
+idle_gate = Gate("IDLE", 0)
+idle_gate_1 = Gate("IDLE", 1)
 cz = Gate("CZ", 0, 1)
 iswap = Gate("ISWAP", [0,1])
-# gate_seq = [
-#     rg_x0, idle_gate_1, rg_y1,  idle_gate, cz, idle_gate, rg_y1, iswap, rg_y1, rg_ro
-# ]
-gate_seq = [rg_x0, rg_ro]
+gate_seq = [
+    rg_y1, cz, rg_y1,idle_gate,rg_ro
+]
+# gate_seq = [rg_x0, rg_ro]
 circuit = QubitCircuit(2)
 
 two_qubit = basis(4, 0)
@@ -54,6 +54,7 @@ q1_info = mybec.get_qComp(q1_name)
 mybec.total_time = q1_info.tempPars["total_time"]
 q2_name = mybec.q_reg["qubit"][1]
 q2_info = mybec.get_qComp(q2_name)
+qubit_info = [q1_info,q2_info]
 
 # Give parameters to TQCompiler
 mycompiler.params[str(rg_x0.targets)] = {}
@@ -69,18 +70,28 @@ mycompiler.params[str(rg_y1.targets)]["anharmonicity"] = q2_info.tempPars["anhar
 mycompiler.params["ro"] = {}
 mycompiler.params["ro"]["pulse_length"] = q1_info.tempPars["ROW"]
 mycompiler.params["ro"]["dt"] = mybec.dt
-mycompiler.params["cz"] = {}
-mycompiler.params["cz"]["dt"] = mybec.dt
-mycompiler.params["cz"]["pulse_length"] = q1_info.tempPars["CZ"]["ZW"]
-mycompiler.params["cz"]["dz"] = q1_info.tempPars["CZ"]["dZ"]
-mycompiler.params["iswap"] = {}
-mycompiler.params["iswap"]["dt"] = mybec.dt
-mycompiler.params["iswap"]["pulse_length"] = q1_info.tempPars["ISWAP"]["ZW"]
-mycompiler.params["iswap"]["dz"] = q1_info.tempPars["ISWAP"]["dZ"]
+iswap_targets = ''.join(str(target) for target in iswap.targets)
+for i, target in enumerate(iswap_targets):
+    mycompiler.params[target] = {}
+    mycompiler.params[target]["iswap"] = {}
+    mycompiler.params[target]["iswap"]["dt"] = mybec.dt
+    mycompiler.params[target]["iswap"]["pulse_length"] = qubit_info[i].tempPars["ISWAP"]["ZW"]
+    mycompiler.params[target]["iswap"]["dz"] = qubit_info[i].tempPars["ISWAP"]["dZ"]
+    mycompiler.params[target]["iswap"]["c_Z"] = qubit_info[i].tempPars["ISWAP"]["c_Z"]
+    mycompiler.params[target]["iswap"]["c_ZW"] = qubit_info[i].tempPars["ISWAP"]["c_ZW"]
+
+for i in range(2):
+    mycompiler.params[i] = {}
+    mycompiler.params[i]["cz"] = {}
+    mycompiler.params[i]["cz"]["dt"] = mybec.dt
+    mycompiler.params[i]["cz"]["pulse_length"] = qubit_info[i].tempPars["CZ"]["ZW"]
+    mycompiler.params[i]["cz"]["dz"] = qubit_info[i].tempPars["CZ"]["dZ"]
+    mycompiler.params[i]["cz"]["c_Z"] = qubit_info[i].tempPars["CZ"]["c_Z"]    
+    mycompiler.params[i]["cz"]["c_ZW"] = qubit_info[i].tempPars["CZ"]["c_ZW"]
 mycompiler.params["a_weight"] = 0 #q_info.tempPars["a_weight"]
 mycompiler.params["img_ratio"] = 0.5
 
-with open('mycompiler_params.txt', 'w') as file:
+with open(r'.\SKILLS\TQRB\TQRBmycompiler_params.txt', 'w') as file:
     file.write(str(mycompiler.params)) # use `json.loads` to do the reverse
 
 # raw circuit

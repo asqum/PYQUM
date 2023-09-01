@@ -58,10 +58,11 @@ class TQCompile(GateCompiler):
             return self.generate_pulse(gate, tlist, coeff, phase=np.pi / 2)
     
     def idle_compiler( self, gate, args ):
-        # The time length of idle gate is same as X gate 
-
+        '''
+        The time length of idle gate is same as X gate 
+        '''
         dt = self.params[str(gate.targets)]["rxy"]["dt"]
-        idle_time = gate.arg_value
+        idle_time = self.params[str(gate.targets)]["rxy"]["pulse_length"]
         idle_point = int( -(idle_time//-dt) )
         if idle_point>0:
             tlist = np.linspace(0,idle_time,idle_point, endpoint=False)
@@ -76,31 +77,62 @@ class TQCompile(GateCompiler):
             return []
     
     def iswap_compiler( self, gate, args):
-
-        pulse_length = self.params["iswap"]["pulse_length"]
-        dt = self.params["iswap"]["dt"]
-        dz = self.params["iswap"]["dz"]
-        sampling_point = int( -(pulse_length//-dt) )
-        tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-        coeff = ps.constFunc(tlist, dz )
+        '''
+        Here we give a restriction that the compensate z pulse lengths of two qubits should be the same. 
+        '''
         targets_label = ''.join(str(target) for target in gate.targets)
-        pulse_info = [
-        ("sz" + targets_label, coeff)
-        ]
+        pulse_info = []
+        for label in targets_label:    
+            pulse_length = self.params[label]["iswap"]["pulse_length"]
+            dt = self.params[label]["iswap"]["dt"]
+            dz = self.params[label]["iswap"]["dz"]  
+            sampling_point = int( -(pulse_length//-dt) )    
+            tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
+            coeff = ps.constFunc( tlist, dz ) 
+
+            # c_Z for compensate rotation                       
+            c_pulse_length = self.params[label]["iswap"]["c_ZW"]
+            c_dz = self.params[label]["iswap"]["c_Z"]
+            c_sampling_point = int( -(c_pulse_length//-dt) )            
+            if c_pulse_length != 0:
+                c_tlist = np.linspace(
+                    pulse_length, pulse_length + c_pulse_length, c_sampling_point, endpoint=False
+                    )            
+                c_coeff = ps.constFunc(c_tlist, c_dz )           
+                tlist = np.append(tlist,c_tlist)
+                coeff = np.append(coeff,c_coeff) 
+            pulse_info.append(("sz" + label, coeff))
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
     def cz_compiler(self, gate, args):
-
-        pulse_length = self.params["cz"]["pulse_length"]
-        dt = self.params["cz"]["dt"]
-        dz = self.params["cz"]["dz"]
-        sampling_point = int( -(pulse_length//-dt) )
-        tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-        coeff = ps.constFunc(tlist, dz )
+        '''
+        Here we give a restriction that the compensate z pulse lengths of two qubits should be the same. 
+        '''
         targets_label = ''.join(str(target) for target in gate.targets)
-        pulse_info = [
-        ("sz" + targets_label, coeff)
-        ]
+        pulse_info = []        
+        for i in range(2):
+            pulse_length = self.params[i]["cz"]["pulse_length"]
+            dt = self.params[i]["cz"]["dt"]
+            dz = self.params[i]["cz"]["dz"]
+            sampling_point = int( -(pulse_length//-dt) )
+            tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
+            coeff = ps.constFunc(tlist, dz )
+
+            # c_Z for compensate rotation
+            c_pulse_length = self.params[i]["cz"]["c_ZW"]
+            c_dz = self.params[i]["cz"]["c_Z"]
+            c_sampling_point = int( -(c_pulse_length//-dt) )            
+            if c_pulse_length != 0:
+                c_tlist = np.linspace(
+                    pulse_length, pulse_length + c_pulse_length, c_sampling_point, endpoint=False
+                    )            
+                c_coeff = ps.constFunc(c_tlist, c_dz )           
+                tlist = np.append(tlist,c_tlist)
+                coeff = np.append(coeff,c_coeff) 
+            pulse_info.append(
+                ("sz" + str(i), coeff)
+            )
+
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
     def rz_compiler(self, gate, args):
@@ -122,7 +154,6 @@ class TQCompile(GateCompiler):
         ]
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
-
     def measurement_compiler(self, gate, args):
         """Compiles single-qubit gates to pulses.
         
@@ -141,9 +172,9 @@ class TQCompile(GateCompiler):
         # The edge with we give 15 sampling points. 
         coeff = ps.GERPFunc(tlist, *(1,pulse_length,0,15,30/4.) ) 
         targets_label = ''.join(str(target) for target in gate.targets)
-        pulse_info = [
-            ("ro" + targets_label, coeff)
-        ]
+        pulse_info = []
+        for label in targets_label:
+            pulse_info.append(("ro" + label, coeff))
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
     def generate_pulse(self, gate, tlist, coeff, phase=0.0):
@@ -167,7 +198,7 @@ class TQCompile(GateCompiler):
         ]
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
-    def to_waveform( self, circuit:QubitCircuit, schedule_mode ):
+    def to_waveform( self, circuit:QubitCircuit, schedule_mode=None ):
         # It translates the gate.compile to waveform_channel:(qi,type,envelope_rf).
         compiled_data = self.compile(circuit.gates, schedule_mode)
         tlist_map = compiled_data[0]
@@ -186,7 +217,7 @@ class TQCompile(GateCompiler):
             envelope_rf = measurement_ro(coeffs_map, qi)
             if type(envelope_rf) != type(None):
                 waveform_channel.append( (qi,"ro_in",envelope_rf) )
-                
+    
         return waveform_channel
     
 def control_xy( coeffs_map, target_index ):
@@ -215,7 +246,7 @@ def measurement_ro( coeffs_map, target_index ):
     for label in coeffs_map.keys():
         label_index = label[2:]
         label_action = label[:2]
-        if str(target_index) in label_index:
+        if str(target_index) == label_index:
             match label_action:
                     case "ro":
                         ro_exist = True
@@ -241,3 +272,26 @@ def control_z( coeffs_map, target_index ):
         rf_envelop = z_coeff 
         return rf_envelop
     return None
+
+if __name__ == '__main__':
+    compiler = TQCompile(2, params={})
+    iswap = Gate("ISWAP", [0,1])
+    cz = Gate("CZ", 0, 1)
+    
+    for i in range(2):
+        compiler.params[i] = {}
+        compiler.params[i]["cz"] = {}
+        compiler.params[i]["cz"]["dt"] = 0.5
+        compiler.params[i]["cz"]["pulse_length"] = 20
+        compiler.params[i]["cz"]["dz"] = -0.5
+        compiler.params[i]["cz"]["c_ZW"] = 10
+        compiler.params[i]["cz"]["c_Z"] = 0.3
+    gateseq = [cz]
+    print(compiler.compile((gateseq)))
+
+
+    # gateseq = [iswap]
+    # compiler.params['0'] = {}
+    # compiler.params['0']["iswap"] = {}
+    # compiler.compile((gateseq))
+
