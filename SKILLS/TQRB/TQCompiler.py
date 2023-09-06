@@ -43,9 +43,9 @@ class TQCompile(GateCompiler):
             to implement a gate containing the control pulses.
         """
 
-        pulse_length = self.params[str(gate.targets)]["rxy"]["pulse_length"]
-        dt = self.params[str(gate.targets)]["rxy"]["dt"]
-        anharmonicity = self.params[str(gate.targets)]["anharmonicity"]
+        pulse_length = self.params[str(gate.targets[0])]["rxy"]["pulse_length"]
+        dt = self.params[str(gate.targets[0])]["rxy"]["dt"]
+        anharmonicity = self.params[str(gate.targets[0])]["anharmonicity"]
         a_weight = self.params["a_weight"]
         img_ratio = self.params["img_ratio"]
         sampling_point = int( -(pulse_length//-dt) )
@@ -61,8 +61,8 @@ class TQCompile(GateCompiler):
         '''
         The time length of idle gate is same as X gate 
         '''
-        dt = self.params[str(gate.targets)]["rxy"]["dt"]
-        idle_time = self.params[str(gate.targets)]["rxy"]["pulse_length"]
+        dt = self.params[str(gate.targets[0])]["rxy"]["dt"]
+        idle_time = self.params[str(gate.targets[0])]["rxy"]["pulse_length"]
         idle_point = int( -(idle_time//-dt) )
         if idle_point>0:
             tlist = np.linspace(0,idle_time,idle_point, endpoint=False)
@@ -110,17 +110,17 @@ class TQCompile(GateCompiler):
         '''
         targets_label = ''.join(str(target) for target in gate.targets)
         pulse_info = []        
-        for i in range(2):
-            pulse_length = self.params[i]["cz"]["pulse_length"]
-            dt = self.params[i]["cz"]["dt"]
-            dz = self.params[i]["cz"]["dz"]
+        for qi in range(2):
+            pulse_length = self.params[str(qi)]["cz"]["pulse_length"]
+            dt = self.params[str(qi)]["cz"]["dt"]
+            dz = self.params[str(qi)]["cz"]["dz"]
             sampling_point = int( -(pulse_length//-dt) )
             tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
             coeff = ps.constFunc(tlist, dz )
 
             # c_Z for compensate rotation
-            c_pulse_length = self.params[i]["cz"]["c_ZW"]
-            c_dz = self.params[i]["cz"]["c_Z"]
+            c_pulse_length = self.params[str(qi)]["cz"]["c_ZW"]
+            c_dz = self.params[str(qi)]["cz"]["c_Z"]
             c_sampling_point = int( -(c_pulse_length//-dt) )            
             if c_pulse_length != 0:
                 c_tlist = np.linspace(
@@ -130,7 +130,7 @@ class TQCompile(GateCompiler):
                 tlist = np.append(tlist,c_tlist)
                 coeff = np.append(coeff,c_coeff) 
             pulse_info.append(
-                ("sz" + str(i), coeff)
+                ("sz" + str(qi), coeff)
             )
 
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
@@ -277,6 +277,8 @@ if __name__ == '__main__':
     compiler = TQCompile(2, params={})
     iswap = Gate("ISWAP", [0,1])
     cz = Gate("CZ", 0, 1)
+    rg_x0 = Gate("RX", 0, arg_value= np.pi)
+    print(str(rg_x0.targets[0]))
     
     for i in range(2):
         compiler.params[i] = {}
@@ -287,11 +289,4 @@ if __name__ == '__main__':
         compiler.params[i]["cz"]["c_ZW"] = 10
         compiler.params[i]["cz"]["c_Z"] = 0.3
     gateseq = [cz]
-    print(compiler.compile((gateseq)))
-
-
-    # gateseq = [iswap]
-    # compiler.params['0'] = {}
-    # compiler.params['0']["iswap"] = {}
-    # compiler.compile((gateseq))
 

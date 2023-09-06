@@ -5,7 +5,8 @@ from typing import List
 #from pulse_generator.pulse import Pulse
 import numpy as np
 from qutip import sigmax, sigmay, sigmaz, basis, qeye, Qobj
-from qutip_qip.circuit import QubitCircuit, Gate
+from qutip_qip.circuit import QubitCircuit
+from qutip_qip.operations import Gate #Measurement in 0.3.X qutip_qip
 from typing import List
 from pulse_signal.common_Mathfunc import ErfAmplifier
 
@@ -64,7 +65,6 @@ def clifford_gates( target:int )->List:
         g_nc1,g_nc2,g_nc4,g_nc3
     ]
     return gates_set
-
 
 
 def decomposition( gates:List[Gate] )->Qobj:
