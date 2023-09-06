@@ -18,8 +18,8 @@ mybec = get_test_bec()
 mybec.dt = 0.5
 
 rg_ro = Gate("RO", [0,1] )
-for num_gates in range(20):
-    circuit = get_TQcircuit_random_clifford(target=1, control=0, num_gates=num_gates)
+for num in range(20):
+    circuit = get_TQcircuit_random_clifford(target=1, control=0, num_gates=num)
 circuit.add_gate(rg_ro)
 
 mycompiler = TQCompile(2, params={})
@@ -62,10 +62,6 @@ with open(r'.\SKILLS\TQRB\TQRBmycompiler_params.txt', 'w') as file:
 # for gate in circuit.gates:
 #     print(f"{gate.name} for {gate.targets}")
 
-"""
-The compilation right now is using default value, such that each gate will operate one by one.
-It should be corrected if we want to do RB.
-"""
 compiled_data = mycompiler.compile(circuit,schedule_mode='ASAP')
 tlist = compiled_data[0]
 coeffs = compiled_data[1]
