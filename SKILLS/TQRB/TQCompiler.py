@@ -220,6 +220,37 @@ class TQCompile(GateCompiler):
     
         return waveform_channel
     
+    def _process_idling_tlist(
+        self, pulse_mode, start_time, last_pulse_time, step_size
+    ):
+        '''
+        This function in Gatecompiler does not meet our need, here we give some finetune to our need.
+        '''
+        idling_tlist = []
+        if pulse_mode == "continuous":
+            # We add sufficient number of zeros at the beginning
+            # and the end of the idling to prevent wrong cubic spline.
+            # if start_time - last_pulse_time > 3 * step_size:
+            #     idling_tlist1 = np.linspace(
+            #         last_pulse_time + step_size / 5,
+            #         last_pulse_time + step_size,
+            #         10,
+            #     )
+            #     idling_tlist2 = np.linspace(
+            #         start_time - step_size, start_time, 10
+            #     )
+            #     idling_tlist.extend([idling_tlist1, idling_tlist2])
+            # else:
+            idling_tlist.append(
+                    np.arange(
+                    last_pulse_time + step_size, start_time, step_size
+                )
+            )
+        elif pulse_mode == "discrete":
+            # idling until the start time
+            idling_tlist.append([start_time])
+        return np.concatenate(idling_tlist)
+    
 def control_xy( coeffs_map, target_index ):
     # It first checks corresponding targets and xy ports, then returns RF with coeff. sx + i*sy. 
     sx_exist = False
