@@ -5,15 +5,19 @@ import qpu.backend.circuit.backendcircuit as bec
 import qpu.backend.component as qcp
 from pandas import DataFrame
 import os
-ROOT_DIR = os.path.dirname(os.path.abspath(r".\SKILLS\asqpu\tests\BECircuit_test_1Q.py"))
+ROOT_DIR = os.path.dirname(os.path.abspath(r".\SKILLS\TQRB\BECircuit_test_2Q.py"))
 
 def read_location( location_path ):
+    # location.txt contains three parts: 
+    # real physical channel (_channels),
+    # channels' id and corresponding qubits (qc_relation),
+    # ubits type and id (q_reg)
+    
     fo = open(location_path, "r")
     locstr = fo.read()
     fo.close() 
     locstr = locstr.split("===")
     return read_phych(locstr[0]), read_ChQcomp(locstr[1]), read_QReg(locstr[2])
-
 
 def read_qComp( spec_path ):
     fo = open(spec_path, "r")
