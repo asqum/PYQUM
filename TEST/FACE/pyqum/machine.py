@@ -233,6 +233,7 @@ def dacconnect():
             status = "connected"
             acting("CONNECTING DAC: %s" %(request.args.get('dacname')))
         except:
+            raise
             message = "Please check if %s's connection configuration is OK or is it being used!" %(dacname)
             status = 'error'
     else:
