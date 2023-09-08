@@ -10,7 +10,7 @@ from qutip_qip.operations import Gate #Measurement in 0.3.X qutip_qip
 from typing import List
 from pulse_signal.common_Mathfunc import ErfAmplifier
 from qutip.tensor import tensor
-from qpu.backend.circuit.compiler import SQCompiler
+from TQCompiler import TQCompile
 from qpu.backend.circuit.backendcircuit import BackendCircuit
 from collections import Counter
 
@@ -260,6 +260,54 @@ def get_TQcircuit_random_clifford(target, control, num_gates)->QubitCircuit:
 
     return circuit_RB
 
+def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, control=0, withRO:bool=False):
+
+    d_setting = []
+    circuit_RB = get_TQcircuit_random_clifford(target, control, num_gates)
+    if withRO:
+        rg_ro = Gate("RO", [control,target] )
+        circuit_RB.add_gate(rg_ro)
+    mycompiler = TQCompile(2, params={})
+    q1_name = backendcircuit.q_reg["qubit"][0]
+    q1_info = backendcircuit.get_qComp(q1_name)
+    backendcircuit.total_time = q1_info.tempPars["total_time"]
+    q2_name = backendcircuit.q_reg["qubit"][1]
+    q2_info = backendcircuit.get_qComp(q2_name)
+    print(f"{q1_name}, {q2_name} get RB sequence." )
+    print(f"dt={backendcircuit.dt}")
+    qubit_info = [q1_info,q2_info]
+
+    # Give parameters to TQCompiler
+    for qi in range(2):
+        mycompiler.params[str(qi)] = {}
+        mycompiler.params[str(qi)]["rxy"] = {}
+        mycompiler.params[str(qi)]["rxy"]["dt"] = backendcircuit.dt
+        mycompiler.params[str(qi)]["rxy"]["pulse_length"] = qubit_info[qi].tempPars["XYW"]
+        mycompiler.params[str(qi)]["anharmonicity"] = float(qubit_info[qi].tempPars["anharmonicity"])*2*np.pi
+        mycompiler.params[str(qi)]["cz"] = {}
+        mycompiler.params[str(qi)]["cz"]["dt"] = backendcircuit.dt
+        mycompiler.params[str(qi)]["cz"]["pulse_length"] = qubit_info[qi].tempPars["CZ"]["ZW"]
+        mycompiler.params[str(qi)]["cz"]["dz"] = qubit_info[qi].tempPars["CZ"]["dZ"]
+        mycompiler.params[str(qi)]["cz"]["c_Z"] = qubit_info[qi].tempPars["CZ"]["c_Z"]    
+        mycompiler.params[str(qi)]["cz"]["c_ZW"] = qubit_info[qi].tempPars["CZ"]["c_ZW"]
+        if "waveform&alpha&sigma" in list(qubit_info[qi].tempPars.keys()):
+            mycompiler.params["waveform"] = qubit_info[qi].tempPars["waveform&alpha&sigma"]
+        else:
+            mycompiler.params["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
+    # The readout pulse length for 2 qubits should be the same.    
+    mycompiler.params["ro"] = {}
+    mycompiler.params["ro"]["pulse_length"] = q1_info.tempPars["ROW"]
+    mycompiler.params["ro"]["dt"] = backendcircuit.dt
+    mycompiler.params["a_weight"] = 0    
+    mycompiler.params["img_ratio"] = 0.5
+    print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f, S-Factor = %d and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["waveform"][2],mycompiler.params["anharmonicity"]))
+
+    waveform_channel = mycompiler.to_waveform(circuit_RB)
+    d_setting = backendcircuit.devices_setting(waveform_channel)
+    d_setting["total_time"] = backendcircuit.total_time
+    return d_setting
+
+
 def test_c2_clifford_compact(target,control,group:str):
 
     # The following part is to test the compactness of the C2 clifford group
@@ -305,8 +353,8 @@ def test_c2_clifford_compact(target,control,group:str):
     print(i)
     print(test2)
 
-if __name__ == '__main__':
-    test_c2_clifford_compact(1,0,'cnot')
+# if __name__ == '__main__':
+#     test_c2_clifford_compact(1,0,'cnot')
    
                     
 
