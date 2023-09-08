@@ -6,7 +6,7 @@ from qutip_qip.circuit import QubitCircuit
 import numpy as np
 from qutip_qip.operations.gates import expand_operator
 import pulse_signal.common_Mathfunc as ps 
-from TQClifford import m_random_Clifford_circuit, get_TQcircuit_random_clifford
+from qpu.application.TQClifford import m_random_Clifford_circuit, get_TQcircuit_random_clifford
 from TQCompiler import TQCompile
 import sys
 sys.path.append("..")
@@ -17,9 +17,9 @@ mybec = get_test_bec()
 # sampling rate: 0.5 ns/#
 mybec.dt = 0.5
 
-rg_ro = Gate("RO", [0,1] )
-for num in range(20):
-    circuit = get_TQcircuit_random_clifford(target=1, control=0, num_gates=num)
+rg_ro = Gate("RO", [1,0] )
+
+circuit = get_TQcircuit_random_clifford(target=1, control=0, num_gates=1)
 circuit.add_gate(rg_ro)
 
 mycompiler = TQCompile(2, params={})
