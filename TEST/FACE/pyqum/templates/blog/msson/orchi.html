@@ -1,0 +1,45 @@
+<!doctype html> <!--extended from parent: mission.html, which in turn inherited base.html-->
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/orchi.js') }}"></script>
+</head>
+
+<body class="mssn">
+
+    <div>
+
+        <div class="tab2">
+            <input class='orchi loaded' id='sample-name' type='submit' value={{ samplename }}></input>
+            <input class='orchi people' id='sample-owner' type='submit' value={{ people }}></input>
+            <a href="/benchmark">
+                <input class='orchi benchmark' type="submit" value="Benchmark" id="orchi-to-benchmark"/>
+            </a>
+
+            <!-- MAC LEVEL: PIONEER, NAMEs NOT IN DATABASE -->
+            <button class='orchi access QPX' id="Single_Qubit">Single_Qubit</button>
+            <button class='orchi access QPX' id="Qubits">Qubits</button>
+
+            <!-- EXP LEVEL: NAMEs MUST MATCH the MACE DATABASE FOR ASQPU API-->
+            <button class='orchi access QPX' id="DD" style="font-weight:713;">DD</button>
+            <button class='orchi access QPX' id="RB" style="font-weight:713;">RB</button>
+            <button class='orchi access QPX' id="QPU" style="font-weight:713;">QPU</button>
+            
+        </div>
+
+        <script>
+            $(function(){
+                // doesn't work inside orchi.js
+                $("div.orchicontent.QPX").load("{{ url_for('mission.orchi_QPX') }}");
+            });
+        </script>
+        
+        <!-- page content based on button clicked -->
+        <div class="orchicontent QPX"></div>
+        
+    </div>
+
+</body>
+
+</html>
