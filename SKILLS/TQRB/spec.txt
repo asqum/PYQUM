@@ -13,6 +13,7 @@
 	"anharmonicity":-0.222,
 	"a_weight":1,
 	"total_time":20000,
+	"waveform&alpha&sigma":["DRAGe",-0.5,4],
 	},
 
 	{"id":"q2",	
@@ -29,6 +30,7 @@
 	"anharmonicity":-0.222,
 	"a_weight":1,
 	"total_time":20000,
+	"waveform&alpha&sigma":["DRAGe",-0.5,4],
 	},
 	
 	{"id":"qc",

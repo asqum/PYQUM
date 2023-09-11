@@ -46,11 +46,34 @@ class TQCompile(GateCompiler):
         pulse_length = self.params[str(gate.targets[0])]["rxy"]["pulse_length"]
         dt = self.params[str(gate.targets[0])]["rxy"]["dt"]
         anharmonicity = self.params[str(gate.targets[0])]["anharmonicity"]
-        a_weight = self.params["a_weight"]
-        img_ratio = self.params["img_ratio"]
+
+        if self.params[str(gate.targets[0])]["waveform"][0] != "NaN":
+            waveform = self.params[str(gate.targets[0])]["waveform"][0]
+            a_weight = self.params[str(gate.targets[0])]["waveform"][1]
+            sFactor = self.params[str(gate.targets[0])]["waveform"][2]
+        else:
+            waveform = "DRAG"
+            a_weight = 0
+            sFactor = 4.
+
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., a_weight/anharmonicity, img_ratio) ) *gate.arg_value/np.pi
+        
+        if waveform.lower()=="dragh":
+            coeff = ps.DRAGFunc_Hermite(tlist, *(1,2,4,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
+        
+        elif waveform.lower()=="drage":
+            shifter = ps.ErfShifter(pulse_length,pulse_length/sFactor)
+            coeff = ps.DRAGFunc(tlist, *(1,pulse_length/sFactor,pulse_length/2.,shifter,a_weight/anharmonicity) ) *gate.arg_value/np.pi 
+
+        elif waveform.lower()=="dragt":
+            coeff = ps.DRAGFunc_Tangential(tlist, *(1,pulse_length/sFactor,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
+        
+        elif waveform.lower()=="gauss":    
+            coeff = ps.GaussianFamily(tlist,*(1,pulse_length/sFactor,pulse_length/2.,0))*gate.arg_value/np.pi
+        
+        else:  
+            coeff = ps.DRAGFunc(tlist, *(1,pulse_length/sFactor,pulse_length/2.,0,a_weight/anharmonicity) ) *gate.arg_value/np.pi
 
         if gate.name == "RX":
             return self.generate_pulse(gate, tlist, coeff, phase=0.0)
