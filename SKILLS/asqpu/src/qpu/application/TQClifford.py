@@ -10,7 +10,7 @@ from qutip_qip.operations import Gate #Measurement in 0.3.X qutip_qip
 from typing import List
 from pulse_signal.common_Mathfunc import ErfAmplifier
 from qutip.tensor import tensor
-from TQCompiler import TQCompile
+from qpu.backend.circuit.TQRB.TQCompiler import TQCompile
 from qpu.backend.circuit.backendcircuit import BackendCircuit
 from collections import Counter
 
@@ -300,7 +300,7 @@ def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, 
     mycompiler.params["ro"]["dt"] = backendcircuit.dt
     mycompiler.params["a_weight"] = 0    
     mycompiler.params["img_ratio"] = 0.5
-    print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f, S-Factor = %d and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["waveform"][2],mycompiler.params["anharmonicity"]))
+    # print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f, S-Factor = %d and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["waveform"][2],mycompiler.params["anharmonicity"]))
 
     waveform_channel = mycompiler.to_waveform(circuit_RB)
     d_setting = backendcircuit.devices_setting(waveform_channel)
