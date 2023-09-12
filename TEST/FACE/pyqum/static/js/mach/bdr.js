@@ -359,7 +359,10 @@ $(function() {
 function wiring_designation_check() {
     $('table.BDR-WIRING thead.wiring.designation-update tr').empty();
     $('table.BDR-WIRING tbody.wiring.designation-update tr').empty();
+
     var header = ['Order', 'Category', 'Designation'];
+    const container = $("#wiring-designation-categories-container");
+
     $.each(header, function (i,val) { $('table.BDR-WIRING thead.wiring.designation-update tr').append('<th>' + val + '</th>'); });
     $.getJSON('/mach/bdr/wiring/instruments', {
         qsystem: $('select.bdr.wiring.queue-system').val(),
@@ -368,11 +371,39 @@ function wiring_designation_check() {
         $.each(data.inst_list, function (i,val) {
             $('table.BDR-WIRING tbody.wiring.designation-update').append('<tr><td>' + (i+1) + '</td><td>' + val.category + '</td><td>' + val.designation + '</td></tr>');
         });
+
+        // Rendering edittable wiring-designation setup:
+        container.empty();
+        data.category.forEach(cat => {
+            const rowDiv = $("<div>").addClass("row").attr("id", `wiring-designation-${cat}`);
+            const col1Div = $("<div>").addClass("col-10").attr("id", "left");
+            const label = $("<label>").addClass("bdr wiring-designation").text(cat);
+            col1Div.append(label);
+            const col2Div = $("<div>").addClass("col-60").attr("id", "left");
+    
+            if (["CONFG", "ROLE", "CH"].includes(cat.toUpperCase())) {
+                const textarea = $("<textarea>").addClass(`bdr wiring-designation ${cat}`)
+                                               .attr("type", "text")
+                                               .css("color", "blue");
+                col2Div.append(textarea);
+            } else {
+                const input = $("<input>").addClass(`bdr wiring-designation ${cat}`)
+                                           .attr("type", "text");
+                col2Div.append(input);
+            }
+    
+            rowDiv.append(col1Div);
+            rowDiv.append(col2Div);
+            container.append(rowDiv);
+        });
+
+        // undefined=blank: leave the input blank if it contain DUMMY_1! // support both input and texarea
         $.each(data.category, function (i,cat) {
             console.log("Category [" + cat + "] has enlisted: " + data.instr_organized[cat]);
             if (data.instr_organized[cat].includes("DUMMY_1")==false) { var enlisted_instr = data.instr_organized[cat]; };
-            $('.bdr.wiring-designation.'+cat).val(enlisted_instr); // undefined=blank: leave the input blank if it contain DUMMY_1! // support both input and texarea
+            $('.bdr.wiring-designation.'+cat).val(enlisted_instr); 
         });
+        
         $('div#wiring-designation-status').empty().append($('<h4 style="color: red;"></h4>').text("modules-mismatch: " + data.modules_mismatch + "\n, channels-mismatch: " + data.channels_mismatch));
     });
     return false;

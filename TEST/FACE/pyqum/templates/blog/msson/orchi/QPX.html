@@ -1,0 +1,417 @@
+<!doctype html> <!--extended from parent: mission.html, which in turn inherited base.html-->
+
+<head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/mssn/orchi/QPX.js') }}"></script>
+</head>
+
+<body class='orchi'>
+
+<div class="container">
+
+        <div class="row"> <!-- New Role for File-status -->
+            <div class="col-15" id='left'><select class='orchi QPX wday zoomSelect' type="text" style="color: navy;"></select></div>
+            <div class="col-7" id='left'><select class='orchi QPX wmoment zoomSelect-1' type="number" style="color: orangered;"></select></div>
+            <div class="col-20" id='left'>
+                <ul class="data-status QPX">
+                    <li>
+                        <span class="bar data-progress QPX"></span>
+                        <h4 class="data-eta QPX"></h4>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="col-28" id='right'>
+                <!-- Notification: should align with the orchi.access button in orchi.html -->
+                <input class='QPX notification' id='Single_Qubit_notification' type='submit' value=""></input>
+                <input class='QPX notification' id='Qubits_notification' type='submit' value=""></input>
+                <!-- ASQPU API: -->
+                <input class='QPX notification' id='DD_notification' type='submit' value=""></input>
+                <input class='QPX notification' id='RB_notification' type='submit' value=""></input>
+                <input class='QPX notification' id='QPU_notification' type='submit' value=""></input>
+            </div>
+            <div class="col-2" id='right'><button class="plusButton-1" style="color: orangered;">+</button></div>
+            <div class="col-2" id='right'><button class="minusButton-1" style="color: orangered;">-</button></div>
+            <div class="col-2" id='right'><button class="plusButton" style="color: navy;">+</button></div>
+            <div class="col-2" id='right'><button class="minusButton" style="color: navy;">-</button></div>
+        </div>
+
+        <div class="row">
+           
+            <div class="col" id='left' style="width:49%">
+                <!-- Read-only Comment -->
+                <div class="col-row-split"><textarea class='orchi QPX comment' type="text" rows="15" cols="73" readonly>--comment--</textarea></div>
+                <!-- Editable Note -->
+                <div class="col-row-split"><textarea class='orchi QPX note' id='QPX-interaction' type="text" rows="15" cols="73">--note--</textarea></div>
+            </div>
+            
+            <div class="col" id='left' style="width:49%">
+                <!-- Read-only Peripheral (perimeter, SCORE etc.) Statement -->
+                <div><textarea class='orchi QPX PSTATEMENT' type="text" rows="15" cols="73" readonly>--P-STATEMENT(s)--</textarea></div>
+            </div>
+            
+        </div>
+
+        <!-- Perimeters (already merged into flexible-parameters below) -->
+        <!-- <div class="row perimeter">
+            <div id="orchi-QPX-perimeter"></div>
+        </div> -->
+
+        <!-- Combined Fixed & Flexible Parameters -->
+        <div class="row QPX-c-parameters"></div>
+
+        <!-- Check, Plot 1D-Data -->
+        <div class="row 1D">
+            <div class="col-10" id='left'><input class='orchi data QPX' id="QPX-1d-data" type="submit" value="1D-Data"/></div>
+            <div class="col-5" id='left'><select class='orchi data QPX' id="QPX-1d-VdBm" type="text">
+                <option value='V'>V</option>
+                <option value='dBm'>dBm</option>
+            </select></div>
+            <div class="col-15" id='left'><input class='orchi data QPX' id="QPX-sample-range" type="text" value="100,200,500,700"/></div>
+            <div class="col-7" id='left'><select class='orchi data QPX' id="QPX-sample-mode" type="text">
+                <option value='A' selected>A. DRS</option>
+                <option value='B'>B. RSD</option>
+                <option value='C'>C. MON</option>
+                <option value='D'>D. RMS</option>
+            </select></div>
+            <div class="col-8" id='left'><select class='orchi data QPX' id="QPX-1d-mode" type="text">
+                <option value='lines'>Line</option>
+                <option value='markers'>Marker</option>
+            </select></div>
+            <div class="col-12" id='left'><input class='orchi data QPX multiplot' id="plot-name" type="text" value=""/></div>
+            <div class="col-10" id='left'><h4>:curve-name</h4></div>
+        </div>
+        <!-- Compare 1D-Data -->
+        <div class="row 1D">
+            <div class="col-10" id='left'><input class='orchi data QPX' id="QPX-insert-1D" style="background-color:navy;" type="submit" value="1D-1D"/></div>
+            <div class="col-10" id='left'><select class='orchi data QPX compare' id="QPX-compare-nml" type="text"></select></div>
+            <div class="col-10" id='left'><select class='orchi data QPX compare' id="QPX-compare-iqap" type="text"></select></div>
+            <div class="col-10" id='left'><input class='orchi data QPX compare' id="QPX-shot-range" type="text" value="1,4300"/></div>
+            <div class="col-10" id='left'><h4>:shot-range</h4></div>
+        </div>
+
+        <!-- 2D-Data Assembly and Grooming -->
+        <div class="row 2D">
+            <div class="col-10" id='left'><input class='orchi data QPX' id="QPX-2d-data" type="submit" value="2D-Data"/></div>
+            <div class="col-5" id='left'><select class='orchi data QPX' id="QPX-2d-VdBm" type="text">
+                <option value='V'>V</option>
+                <option value='dBm'>dBm</option>
+            </select></div>
+            <div class="col-10" id='left'><select class='orchi data QPX' id="QPX-2d-iqamphase" type="text"></select></div>
+            <div class="col-10" id='left'><select class='orchi data QPX' id="QPX-2d-type" type="text"></select></div>
+            <div class="col-10" id='left'><select class='orchi data QPX' id="QPX-2d-colorscale" type="text"></select></div>
+            <div class="col-10" id='left'><select class='orchi data QPX' id="QPX-2d-direction" type="text"></select></div>
+            <!-- SAVE PERIMETER SETTINGS (PULSE SCHEMES) -->
+            <div class="col-20" id='left'><select class='orchi scheme QPX' id="SCHEME_LIST" type="text">
+                <option value='TRANSFER' selected>TRANSFER</option>
+                <option value='FRESP'>FREQ. RESPONSE</option>
+                <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
+                <option value='RABI'>RABI DRIVING</option>
+                <option value='T1'>T1 DELAY</option>
+                <option value='T2'>T2 DELAY</option>
+                <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
+                <option value='GENERAL'>GENERALIZED</option>
+            </select></div>
+            <div class="col-10" id='left'><input class="QPX perimeter-settings save" type="submit" value="SAVE"/></div>
+            
+        </div>
+
+        <!-- 2D Histories -->
+        <div class="row">
+            <div class="col-10" id='left'><input class='orchi data QPX' id="QPX-2d-2d" style="background-color:navy;" type="submit" value="2D-2D"/></div>
+            <div class="col-84" id='left'><select class='orchi data QPX' id="QPX-data-assemblies" type="text"></select></div>
+        </div>
+        <!-- Download 1D & 2D data for external analysis -->
+        <div class="row">
+            <div class="col-10" id='left'><button class="orchi push_button w-95 blue" id="QPX-savecsv">CSV-1D</button></div>
+            <div class="col-10" id='left'><button class="orchi push_button w-95 blue" id="QPX-savemat">MAT-2D</button></div>
+        </div>
+
+        <div id="orchi-QPX-announcement"></div>
+
+        <div id="orchi-QPX-chart"></div>
+        
+        <!-- Brings up dialogue box for parameter settings -->
+        <div class="modal new QPX">
+            <div class="modal-overlay modal-toggle new QPX"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading">Setting up Single-Qubit Measurement:</h2>
+                    <div class="QPX settingstatus"></div>
+                </div>
+
+                <div class="modal-header">
+                    <div class="MAC"><h4 style="color: rgb(5, 70, 16);">0. Inserting Pulse:</h4></div>
+                    <div class="row MAC">
+                        <div class="col-10" id='left'><input class="QPX set-period" type="submit" value="INITIALIZE"/></div>
+
+                        <div class="col-10" id='left'><label class='parameter'>Width(ns)</label></div>
+                        <div class="col-10" id='left'><select class='QPX setchannels finite-variable pulse-width' type="text">
+                            <option value='finite'>finite</option><option value='variable'>variable</option></select></div>
+
+                        <div class="col-10" id='left'><label class='parameter'>Height(au)</label></div>
+                        <div class="col-10" id='left'><select class='QPX setchannels finite-variable pulse-height' type="text">
+                            <option value='finite'>finite</option><option value='variable'>variable</option></select></div>
+
+                        <div class="col-10" id='left'><label class='parameter'>Shape</label></div>
+                    </div>
+                    <div class="row MAC">
+                        <div class="col-10" id='left'><input style="color:blue;" class="QPX setchannels finite pulse-period" type="number" value='20000' min=0 max=1000000/></div>
+
+                        <div class="col-20" id='left'><input style="color:blue;" class="QPX setchannels finite pulse-width" type="number" value='100'/></div>
+                        <div class="col-20" id='left'><input style="color:blue;" class='QPX setchannels variable pulse-width' type="text" value="R1 = 0 to 10000 * 5000"/></div>
+
+                        <div class="col-20" id='left'><input style="color:blue;" class="QPX setchannels finite pulse-height" type="number" value=0.42 min=0 max=1 step=0.05/></div>
+                        <div class="col-20" id='left'><input style="color:blue;" class='QPX setchannels variable pulse-height' type="text" value="R2 = 0 to 1 * 1000"/></div>
+
+                        <div class="col-10" id='left'><select class='QPX setchannels pulse-shape' type="text">
+                            <option value='FLAT' selected>FLAT</option>
+                            <option value='GAUSS UP'>GAUSS UP</option>
+                            <option value='GAUSS DN'>GAUSS DN</option>
+                        </select></div>
+
+                        <!-- <div class="col-10" id='left'><select class='QPX setchannels score-channel' type="text">
+                            <option value='1' selected>Score-1</option>
+                            <option value='2'>Score-2</option>
+                            <option value='3'>Score-3</option>
+                            <option value='4'>Score-4</option>
+                        </select></div> -->
+
+                        <div class="col-10" id='left'><input class="QPX setchannels insert" type="submit" value="INSERT"/></div>
+                        <div class="col-10" id='left'><input class="QPX setchannels back" type="submit" value="BACK"/></div>
+                    </div>
+                    <!-- LOAD PERIMETER SETTINGS (PULSE SCHEMES, xQASM) -->
+                    <div class="row perimeter">
+                        <div class="col-10" id='left'><input class="loaded QPX perimeter-settings load" type="submit" value="LOAD"/></div>
+                        <div class="col-20" id='left'><select class='orchi config QPX' id="SCHEME_LIST" type="text">
+                            <option value='TRANSFER' selected>TRANSFER</option>
+                            <option value='FRESP'>FREQ. RESPONSE</option>
+                            <option value='CWSWEEP'>CONT. WAVE SWEEPING</option>
+                            <option value='RABI'>RABI DRIVING</option>
+                            <option value='T1'>T1 DELAY</option>
+                            <option value='T2'>T2 DELAY</option>
+                            <option value='WIGNER'>WIGNER TOMOGRAPHY</option>
+                            <option value='GENERAL'>GENERALIZED</option>
+                        </select></div>
+                    </div>
+                </div>
+
+                <div class="modal-header">
+
+                    <!-- 1. DSP Settings -->
+                    <h4 style="color: rgb(12, 18, 100);">1.1 Perimeters: DSP Settings (to be Maced soon)</h4>
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><label>Digital Homodyne</label></div>
+                        <div class="col-16" id='left'><label>IF Align (kHz)</label></div>
+                    </div>
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><select class='orchi config QPX' id="DIGIHOME" type="text">
+                            <option value='original' selected>Original</option>
+                            <option value='dual_digital_homodyne'>Dual roll-back</option>
+                            <option value='i_digital_homodyne'>I integration</option>
+                            <option value='q_digital_homodyne'>Q integration</option>
+                        </select></div>
+                        <div class="col-16" id='left'><input class='orchi config QPX' id="IF_ALIGN_KHZ" type="number" value="0" step=1 /></div>
+                    </div>
+
+                    <!-- 2. Readout Settings -->
+                    <h4 style="color: rgb(12, 18, 100);">1.2 Perimeters: Readout Settings (to be Maced soon)</h4>
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><label>Readout TYPE</label></div>
+                        <div class="col-16" id='left'><label>Trigger-Delay(ns)</label></div>
+                        <div class="col-16" id='left'><label>Record-Sum</label></div>
+                        <div class="col-16" id='left'><label>Record-Time(ns)</label></div>
+                    </div>
+                    <div class="row perimeter">
+                        <div class="col-16" id='left'><select class='orchi config QPX' id="READOUTYPE" type="text">
+                            <option value='one-shot'>ONE-SHOT</option>
+                            <option value='continuous' selected>CONTINUOUS</option>
+                            <option value='rt-wfm-ave'>RT WAVEFORM AVERAGE</option>
+
+                            <option value='rt-ave-singleddc'>RT AVERAGE SingleDDC</option>
+                            <option value='rt-ave-dualddc'>*RT AVERAGE DualDDC</option>
+                            <option value='rt-ave-dualddc-int'>*RT AVERAGE DualDDC INT@</option>
+                            <option value='rt-dualddc-int'>RT DualDDC INTEGRATE</option>
+
+                        </select></div>
+                        <div class="col-16" id='left'><input class='orchi config QPX' id="TRIGGER_DELAY_NS" type="number" value="0" step=8 min=0 /></div>
+                        <div class="col-16" id='left'><input class='orchi config QPX' id="RECORD-SUM" type="number" value="1024" step=128 min=1024 max=102400/></div>
+                        <div class="col-16" id='left'><input class='orchi config QPX' id="RECORD_TIME_NS" type="number" value="1280" step=128 min=1280 max=128000/></div>
+                        <div class="col-16" id='left'><input class="QPX adc-timsum check" type="submit" value="CHECK-TIMSUM"/></div>
+                    </div>
+
+                    <!-- 3.1 SCORE (Pulse) Settings -->
+                    <h4 class="MAC DAC" style="color: rgb(12, 18, 100);">1.3.1 Perimeters: SCORE (Pulse) Settings</h4>
+                    <div class="row">
+                        <!-- DAC Channel Matrix (listified) -->
+                        <div class="row perimeter MAC DAC">
+                            <div class="col-16" id='left'><select class="dac-channel-matrix zoomSelect"></select></div>
+                            <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                            <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                        </div>
+                        <div class="dac-channel-matrix MAC DAC"></div>
+                    </div>
+
+                    <!-- 3.2a MACE (SG) Settings -->
+                    <h4 class="MAC SG" style="color: rgb(12, 18, 100);">1.3.2a Perimeters: MACE (SG) Settings</h4>
+                    <div class="row">
+                        <!-- SG Channel Matrix (listified) -->
+                        <div class="row perimeter MAC SG">
+                            <div class="col-16" id='left'><select class="sg-channel-matrix zoomSelect"></select></div>
+                            <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                            <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                        </div>
+                        <div class="sg-channel-matrix MAC SG"></div>
+                    </div>
+
+                    <!-- 3.2b MACE (DC) Settings -->
+                    <h4 class="MAC DC" style="color: rgb(12, 18, 100);">1.3.2b Perimeters: MACE (DC) Settings</h4>
+                    <div class="row">
+                        <!-- DC Channel Matrix (listified) -->
+                        <div class="row perimeter MAC DC">
+                            <div class="col-16" id='left'><select class="dc-channel-matrix zoomSelect"></select></div>
+                            <div class="col-2" id='left'><button class="plusButton">+</button></div>
+                            <div class="col-2" id='left'><button class="minusButton">-</button></div>
+                        </div>
+                        <div class="dc-channel-matrix MAC DC"></div>
+                    </div>
+
+                    <!-- 3.3 MACE (EXP) Settings -->
+                    <h4 class="EXP" style="color: rgb(12, 18, 100);">1.3.3 Perimeters: MACE (EXP) Settings</h4>
+                    <div class="row">
+                        <!-- EXP Channel Matrix (listified) -->
+                        <div class="exp-channel-matrix EXP"></div>
+                    </div>
+                        
+                    <!-- R-JSON Settings -->
+                    <h4 style="color: rgb(12, 18, 100);">1.X R-JSON (Flexible-Parameter) Settings</h4>
+                    <div class="row">
+                        <!-- Where Flexible-Parameters 'LEGO' happens: R-JSON -->
+                        <div class="row perimeter"><div class="col-97" id='left'><label>R-JSON</label></div></div>
+                        <div class="row perimeter">
+                            <div class="col-97" id='left'>
+                                <!-- Change the dimension in style.css -->
+                                <textarea class='orchi config QPX' id='R-JSON' type="text" rows="7" cols="13" style="color:blue;">{}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pulse Check -->
+                    <div class="row perimeter">
+                        <div class="col-15" id='left'><input class="orchi modal-toggle QPX pulse-check" id="QPX-pulse-check"  type="submit" value="PULSE-CHECK: MAX-{R}"/></div>
+                        <div class="col-15" id='left'><input class="orchi modal-toggle QPX toggle-pulses" id="QPX-toggle-pulses"  type="submit" value="TOGGLE-PULSES"/></div>
+                    </div>
+                    <div class="QPX" id="QPX-check-pulse-progress"></div>
+                    <div class="row perimeter">
+                        <div class="orchi modal-toggle" id="orchi-QPX-pulse-check"></div>
+                    </div>
+                    
+
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <h4 style="color: rgb(12, 18, 100);">2. Parameters:</h4>
+
+                        <!-- <div class="row">
+                            <div class="col-16" id='left'><label>Flux-Bias (V/A)</label></div>
+                            <div class="col-16" id='left'><label>XY-Frequency (GHz)</label></div>
+                            <div class="col-16" id='left'><label>RO-Frequency (GHz)</label></div>
+                        </div> -->
+                        <!-- <div class="row">
+                            <div class="col-16" id='left'><input class='orchi QPX' id="Flux-Bias" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='orchi QPX' id="XY-LO-Frequency" type="text" value="OPT,"/></div>
+                            <div class="col-16" id='left'><input class='orchi QPX' id="RO-LO-Frequency" type="text" value="6 to 7 * 3000"/></div>
+                        </div> -->
+
+                        <!-- Comment -->
+                        <div class="row">
+                            <div class="col-75" id='left'>
+                                <textarea class='orchi QPX' id="QPX-ecomment" type="text" rows="3" cols="73">--comment--</textarea>
+                            </div>
+                        </div>                      
+
+                        <!-- RUN -->
+                        <div class="row">
+                            <div class="col-15" id='left'><input class="QPX setchannels check" type="submit" value="CHECK-RJSON"/></div> 
+                            <div class="col-15" id='left'><input class="orchi modal-toggle new QPX" id="QPX-run"  type="submit" value="RUN"/></div>
+                            <div class="col-15" id='left'><input class="orchi modal-toggle new QPX" id="QPX-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                        <div class="row"><div class="col-49" id='left'><div class='QPX check-rjson-status'></div></div></div>
+                        <div class="row">
+                            <div class="col-12" id='left'><label class='parameter'>Queue system: </label></div>
+                            <div class="col-49" id='left'><div class='QPX queue-system'></div></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" id='left'><label class='parameter'>Instruments: </label></div>
+                            <div class="col-49" id='left'><div class='QPX all-instruments'></div></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brings up dialogue box for file-managing -->
+        <div class="modal manage QPX">
+            <div class="modal-overlay modal-toggle manage QPX"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading">Management office:</h2>
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <div class="row"> <!-- New Row for Parameter-input -->
+                            {% if session['run_clearance'] %}
+                                <div class="col-10" id='left'><button class="orchi push_button w-95 blue" id="QPX-resume">RESUME</button></div>
+                            {% endif %}
+                            <!-- <div class="col-10" id='left'><button class="orchi push_button w-95 blue" id="QPX-savenote">SAVE NOTE</button></div> -->
+                            <div class="col-10" id='left'><button class="orchi push_button w-95 red" id="QPX-datareset">CLIP</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brings up dialogue box for data-reset -->
+        <div class="modal data-reset QPX">
+            <div class="modal-overlay modal-toggle data-reset QPX"></div>
+            <div class="modal-wrapper modal-transition">
+                <div class="modal-header">
+                    <h2 class="modal-heading" style="color:red">DATA RESET: PLEASE CONSIDER IT CAREFULLY. THIS ACTION CANNOT BE UNDONE.</h2>
+                </div>
+                    
+                <div class="modal-body">
+                    <div class="modal-content">
+
+                        <div class="row">
+                            <div class="col-20" id='left'><label>Truncate After:</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-20" id='left'><input class='orchi QPX' id="QPX-truncateafter" type="text"/></div> 
+                            <div class="col-10" id='left'><label>point(s)</label></div>  
+                        </div>
+
+                        <div class="row">
+                            <div class="col-10" id='left'><input class="orchi modal-toggle data-reset QPX" id="QPX-reset" type="submit" value="RESET"/></div>
+                            <div class="col-10" id='left'><input class="orchi modal-toggle data-reset QPX" id="QPX-cancel" type="submit" value="CANCEL"/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="orchi QPX confirm">
+            <h1>Confirm your action</h1>
+            <p>Are you really <em>really</em> <strong>really</strong> sure that you want to make changes to the FILE?</p>
+            <button class="orchi QPX reset-no" autofocus>NO</button>
+            <button class="orchi QPX reset-yes">YES</button>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
+

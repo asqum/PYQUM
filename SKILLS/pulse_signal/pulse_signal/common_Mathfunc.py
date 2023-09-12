@@ -1,6 +1,6 @@
 # Numpy
 # Typing
-from numpy import ndarray
+from numpy import ndarray, array
 # Numpy array
 from numpy import array, append, zeros, ones, where, linspace
 # Numpy common math function
@@ -9,6 +9,7 @@ from numpy import exp,sqrt,tanh,cosh
 from numpy import pi, logical_and
 # Scipy
 from scipy.special import erf
+
 
 def sech(x):
     return 1/cosh(x)
@@ -153,7 +154,33 @@ def derivativeTangentialFunc(x, *p)->ndarray:
     else:
         return zeros(len(x))
 
+def errf(x, *p)->ndarray:
+    """
+    return error function array
+    x: array like, shape (n,)\n
+    p[0]: amp \n
+    p[1]: center of edge \n
+    p[2]: edge sigma \n
+    """
+    return p[0] * (erf((x - p[1]) / (sqrt(2) * p[2])) + 1)/2
 
+def EERP(x, *p)->ndarray:
+    """
+    return Gaussian Edge Rectangular Pulse array
+    x: array like, shape (n,) \n
+    p[0]: amp \n
+    p[1]: center of edge \n
+    p[2]: edge sigma \n
+    p[3]: pulse length \n
+    p[4]: start time\n
+    """
+    total_t = p[3]
+    start_t = p[4]
+    Td = total_t - p[1]
+    f1 = errf(x, p[0], p[1] + start_t, p[2])
+    f2 = -errf(x, p[0], Td + start_t, p[2])
+
+    return f1 + f2
 
 
 def constFunc (x, *p)->ndarray:
@@ -264,9 +291,12 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     
 
-    x = linspace(0,40,1000)
-    p = (1,15,20)
-    plt.plot(x,gaussianFunc(x,*p))
-    plt.plot(x,derivativeGaussianFunc(x,*p))
+    x = linspace(0,50,1000)
+    p = (1,5,2,30,15)
+    plt.plot(x, EERP(x,*p))
+    # print(errf(x,*p))
+    # plt.plot(x,errf(x,*p))
+    # plt.plot(x,gaussianFunc(x,*p))
+    # plt.plot(x,derivativeGaussianFunc(x,*p))
     plt.show()
 
