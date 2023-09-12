@@ -89,9 +89,14 @@ if mode=="sim": # simulate the qua program
 
 if mode=="prev": # check any running previous job
     qm_list =  qmm.list_open_quantum_machines()
-    qm = qmm.get_qm(qm_list[0])
-    print("QM-ID: %s, Queue: %s" %(qm.id,qm.queue.count))
-    job = qm.get_running_job()
+
+    if len(qm_list)==0: 
+        print("OPX+ is not active at the moment")
+    else: 
+        qm = qmm.get_qm(qm_list[0])
+        print("QM-ID: %s, Queue: %s" %(qm.id,qm.queue.count))
+        job = qm.get_running_job()
+    
     try: 
         print("JOB-ID: %s" %job.id())
 
@@ -164,13 +169,13 @@ if mode=="prev": # check any running previous job
             ax[1,2].pcolor(dcq1, - dfq1/u.MHz, P1+P2)
 
             plt.show()
-    
-    
-    
+
+        if int(input("conclude the job (1/0)?")): job.halt()
     
     except Exception as e: 
         print(e)
-        qm.close()
+        try: qm.close()
+        except Exception as e: print(e)
     
 if mode=="load": # load data
     flist = fnmatch.filter(os.listdir(save_dir), 'cz_ops*')

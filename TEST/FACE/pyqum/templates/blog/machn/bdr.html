@@ -311,7 +311,8 @@
                 <div id="wiring-designation-status"></div>
                 <div id="wiring-update-status"></div>
                 
-                {% for cat in category %}
+                <!-- finally replaced by JQuery: -->
+                <!-- {% for cat in category %}
                     <div class="row" id='wiring-designation-{{cat}}'>
                             <div class="col-10" id='left'><label class='bdr wiring-designation'>{{cat}}</label></div>
                             {% if cat.upper() in ["CONFG","ROLE","CH"] %}
@@ -320,7 +321,9 @@
                                 <div class="col-60" id='left'><input class='bdr wiring-designation {{cat}}' type="text"/></div>
                             {% endif %}
                     </div>
-                {% endfor %}
+                {% endfor %} -->
+
+                <div id="wiring-designation-categories-container"></div>
                 
                 <div class="row">
                     <div class="col-10" id='left'></div>
