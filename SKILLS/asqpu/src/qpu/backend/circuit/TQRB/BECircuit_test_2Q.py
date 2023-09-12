@@ -37,7 +37,7 @@ cz = Gate("CZ", targets=0, controls=1)
 # print(cz.targets, cz.controls)
 iswap = Gate("ISWAP", [0,1])
 gate_seq = [
-    rg_y1, rg_y1, cz, rg_ro
+    rg_y1, cz,rg_x0, iswap, rg_ro
 ]
 # gate_seq = [rg_x0, rg_ro]
 circuit = QubitCircuit(2)
@@ -71,17 +71,20 @@ for qi in range(2):
     mycompiler.params[str(qi)]["cz"]["dz"] = qubit_info[qi].tempPars["CZ"]["dZ"]
     mycompiler.params[str(qi)]["cz"]["c_Z"] = qubit_info[qi].tempPars["CZ"]["c_Z"]    
     mycompiler.params[str(qi)]["cz"]["c_ZW"] = qubit_info[qi].tempPars["CZ"]["c_ZW"]
+    mycompiler.params[str(qi)]["cz"]["waveform"] = qubit_info[qi].tempPars["CZ"]["waveform&edge&sigma"]
+    mycompiler.params[str(qi)]["cz"]["c_waveform"] = qubit_info[qi].tempPars["CZ"]["c_waveform&edge&sigma"]    
     mycompiler.params[str(qi)]["iswap"] = {}
     mycompiler.params[str(qi)]["iswap"]["dt"] = mybec.dt
     mycompiler.params[str(qi)]["iswap"]["pulse_length"] = qubit_info[qi].tempPars["ISWAP"]["ZW"]
     mycompiler.params[str(qi)]["iswap"]["dz"] = qubit_info[qi].tempPars["ISWAP"]["dZ"]
     mycompiler.params[str(qi)]["iswap"]["c_Z"] = qubit_info[qi].tempPars["ISWAP"]["c_Z"]
-    mycompiler.params[str(qi)]["iswap"]["c_ZW"] = qubit_info[qi].tempPars["ISWAP"]["c_ZW"]    
+    mycompiler.params[str(qi)]["iswap"]["c_ZW"] = qubit_info[qi].tempPars["ISWAP"]["c_ZW"]   
+    mycompiler.params[str(qi)]["iswap"]["waveform"] = qubit_info[qi].tempPars["ISWAP"]["waveform&edge&sigma"]
+    mycompiler.params[str(qi)]["iswap"]["c_waveform"] = qubit_info[qi].tempPars["ISWAP"]["c_waveform&edge&sigma"]
+    mycompiler.params[str(qi)]["waveform"] = qubit_info[qi].tempPars["waveform&alpha&sigma"]
 mycompiler.params["ro"] = {}
 mycompiler.params["ro"]["pulse_length"] = q1_info.tempPars["ROW"]
 mycompiler.params["ro"]["dt"] = mybec.dt
-mycompiler.params["a_weight"] = 0    
-mycompiler.params["img_ratio"] = 0.5
 
 with open(r'.\SKILLS\TQRB\TQRBmycompiler_params.txt', 'w') as file:
     file.write(str(mycompiler.params)) # use `json.loads` to do the reverse
