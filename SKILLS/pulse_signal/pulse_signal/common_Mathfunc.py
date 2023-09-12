@@ -291,7 +291,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     
 
-    x = linspace(0,50,1000)
+    x = linspace(0,60,1000)
     p = (1,5,2,30,15)
     plt.plot(x, EERP(x,*p))
     # print(errf(x,*p))
