@@ -1,4 +1,4 @@
-'''ALL QuBit Manipulations (brute-force, unintegrated): Single_Qubit, Qubits, RB, QPU'''
+'''ALL QuBit Manipulations (brute-force, unintegrated): Single_Qubit, Qubits, RB, TQRB, QPU'''
 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
@@ -107,7 +107,7 @@ def get_Qubit_CV (samplename)->bec.BackendCircuit:
 @settings(2) # data-density
 def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, renamed_task=''):
     '''
-    renamed_task: Single_Qubit, Qubits, RB, QPU
+    renamed_task: Single_Qubit, Qubits, RB, TQRB, QPU
     Time-domain Pulse measurement:\n
     SCORES (SCripted ORchestration of Entanglement & Superposition) is a scripted pulse instruction language for running Quantum Algorithm.\n
     perimeter.keys() = ['XY-LO-Power', 'RO-LO-Power', 'SCORE-NS', 'SCORE-JSON', 'R-JSON', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE']\n
@@ -398,6 +398,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     case "RB": 
                         '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
                         d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+                    # In our naming conventions, control is 0 and target is 1 
+                    case "TQRB":
+                        d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), withRO=True )
                     case _: 
                         print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
 

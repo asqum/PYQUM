@@ -45,6 +45,7 @@ mybec.total_time = q_info.tempPars["total_time"]
 mycompiler.params["rxy"] = {}
 mycompiler.params["rxy"]["dt"] = mybec.dt
 mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
+mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
 mycompiler.params["anharmonicity"] = q_info.tempPars["anharmonicity"]
 mycompiler.params["a_weight"] = 0 #q_info.tempPars["a_weight"]
 mycompiler.params["img_ratio"] = 0.5

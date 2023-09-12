@@ -6,7 +6,7 @@ from pandas import DataFrame
 import abc
 from typing import List, Tuple, Union, Dict
 
-from numpy import array, ndarray, zeros, append
+from numpy import array, ndarray, zeros, append, full
 
 class BackendCircuit():
     """
@@ -94,6 +94,7 @@ class BackendCircuit():
         related_channel_id = None
         for channel_id in q_id_channels:
             channel = self._get_channel_id(channel_id)
+
             # Three types in channel.port: "xy", "z", "ro_in" 
             if channel.port == port:
                 related_channel_id = channel_id
@@ -125,6 +126,7 @@ class BackendCircuit():
         """
         channel_output = {}
         register_qN = len(self.q_reg["qubit"])
+
         for qi, port, envelope_rf in waveform_channel:
             if qi >= register_qN:
                 print(f"Only {register_qN} qubit are registered")
@@ -140,19 +142,14 @@ class BackendCircuit():
                     case "ro_in":
                         freq_carrier = qubit.tempPars["freq_ro"]
                         envelope_rf *= qubit.tempPars["ROL"]
-
                     case "z":
                         freq_carrier = 0
-                        # envelope_rf += qubit.tempPars["IDLEZ"]
-
                     case _:
                         freq_carrier = 0
-                # print(channel_output.keys())
-                # print(phyCh.name)
+
                 if phyCh.name not in channel_output.keys():
                     channel_output[phyCh.name] = [(envelope_rf,freq_carrier)]
-                    # print('aaaaaa'*5)
-                    # print(channel_output[phyCh.name])                    
+              
                 else:
                     channel_output[phyCh.name].append( (envelope_rf,freq_carrier) )
 
@@ -161,14 +158,13 @@ class BackendCircuit():
             
             phyCh = self.get_channel(ch_name)
             qubit = self.get_qComp(q_name)
-            print(ch_name, phyCh.port, q_name, qubit.tempPars.keys() )
             if phyCh.port == "z" and "IDLEZ" in qubit.tempPars.keys(): # shift Z 
                 print("shift Z")
                 if ch_name in channel_output.keys():
                     channel_output[ch_name][0] = (channel_output[ch_name][0][0] +qubit.tempPars["IDLEZ"],0)
                 else: # If the Z line is not used but register in cq_relation
                     channel_output[ch_name] = [(zeros(self.total_point())+qubit.tempPars["IDLEZ"],0)]
-    
+
         return channel_output
 
 
@@ -190,13 +186,12 @@ class BackendCircuit():
             "ADC":{},
         }
  
-
         channel_output = self.translate_channel_output(waveform_channel)
         devices_output = {}
+        ro_I, ro_Q = {},{}
+
         for phyCh in self.channels:
             print("Get setting from channel",phyCh.name)
-
-                
             if phyCh.name in channel_output.keys():
                 print("Qubit control channel")
                 phyCh = self.get_channel(phyCh.name)
@@ -209,25 +204,37 @@ class BackendCircuit():
                 envelope_rf = single_signal[0]
                 point_rf = envelope_rf.shape[-1]
                 point_buffer = self.total_point() -point_rf -point_delay
-                
-                if point_buffer>0:
+
+                if isinstance(phyCh, DACChannel): # The IDLEZ should start from beginning.
+                    if point_buffer>0:
+                        envelope_rf = append(full(point_buffer,envelope_rf[0]),envelope_rf)
+                        envelope_rf = append(envelope_rf,full(point_delay,envelope_rf[0]))
+
+                elif point_buffer>0:
                     envelope_rf = append( zeros(point_buffer), envelope_rf )
                     envelope_rf = append( envelope_rf, zeros(point_delay) )
                 else:
                     print("waveform too many points.")
-                print(envelope_rf.shape)
-                if isinstance(phyCh, UpConversionChannel):
-                    freq_carrier = single_signal[1]
-                    devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier  )
 
+                if isinstance(phyCh, UpConversionChannel):
+                    if phyCh.name[:2] == 'RO':
+                        freq_carrier = single_signal[1]
+                        ro_I[phyCh.name], ro_Q[phyCh.name] = phyCh.ro_dac_output(envelope_rf)
+                        signal_I = sum(ro_I.values())
+                        signal_Q = sum(ro_Q.values())
+                        devices_output = phyCh.ro_devices_setting(signal_I,signal_Q,freq_carrier)
+                    else:
+                        freq_carrier = single_signal[1]
+                        devices_output =  phyCh.devices_setting( envelope_rf, freq_carrier  )
+                    
+                # DACChannel for DC output
                 if isinstance(phyCh, DACChannel):
                     devices_output =  phyCh.devices_setting( envelope_rf )
             else:
                 if isinstance(phyCh, PumpingLine):
                     print("Pumping channel")
                     devices_output =  phyCh.devices_setting()
-
-
+      
             for category in devices_setting_all.keys():
                 if category in devices_output.keys():
                     for info, setting in devices_output[category].items():
@@ -239,9 +246,8 @@ class BackendCircuit():
                         
                         if type(setting) != type(None):
                             devices_setting_all[category][instr_name][channel_idx] = setting
-                            
 
-
+        
         return devices_setting_all
 
     def to_qpc( self ):
@@ -298,12 +304,6 @@ class BackendCircuit():
     @qc_relation.setter
     def qc_relation( self, value:DataFrame):
         self._qc_relation = value
-
-
-
-
-
-
 
 
 
