@@ -8,8 +8,14 @@
 	"ROL":0.02,
 	"ROW":8000,
 	"IDLEZ":0.15,
-	"CZ":{"dZ":0.5,"ZW":28,"c_Z":0.1,"c_ZW":10},
-	"ISWAP":{"dZ":-0.7,"ZW":40,"c_Z":0,"c_ZW":10},
+	"CZ":{
+		"dZ":0.5,"ZW":28,"c_Z":0.1,"c_ZW":10,"waveform&edge&sigma":["EERP",10,4],
+		"c_waveform&edge&sigma":["EERP",3,4]
+	},
+	"ISWAP":{
+		"dZ":-0.7,"ZW":40,"c_Z":0.2,"c_ZW":10,"waveform&edge&sigma":["GERP",10,4],
+		"c_waveform&edge&sigma":["CONST",10,4]
+	},
 	"anharmonicity":-0.222,
 	"a_weight":1,
 	"total_time":20000,
@@ -22,8 +28,14 @@
 	"XYL":0.2,
 	"XYW":20,
 	"freq_ro":6.2,
-	"CZ":{"dZ":0,"ZW":28,"c_Z":-0.01,"c_ZW":10},
-	"ISWAP":{"dZ":0,"ZW":40,"c_Z":0,"c_ZW":10},
+	"CZ":{
+		"dZ":0,"ZW":28,"c_Z":-0.1,"c_ZW":10,"waveform&edge&sigma":["EERP",10,4],
+		"c_waveform&edge&sigma":["EERP",3,4]
+		},
+	"ISWAP":{
+		"dZ":0,"ZW":40,"c_Z":-0.1,"c_ZW":10,"waveform&edge&sigma":["GERP",10,4],
+		"c_waveform&edge&sigma":["CONST",10,4]
+		},
 	"ROL":0.05,
 	"ROW":8000,
 	"IDLEZ":0.1,

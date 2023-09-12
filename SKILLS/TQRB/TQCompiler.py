@@ -34,6 +34,7 @@ class TQCompile(GateCompiler):
 
     def rxy_compiler(self, gate, args):
         """Compiles single-qubit gates to pulses.
+        The waveform types:["DRAG","DRAGe","DRAGt","DRAGh","GAUSS"]
         
         Args:
             gate (qutip_qip.circuit.Gate): A qutip Gate object.
@@ -59,22 +60,25 @@ class TQCompile(GateCompiler):
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
         
-        if waveform.lower()=="dragh":
-            coeff = ps.DRAGFunc_Hermite(tlist, *(1,2,4,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
-        
-        elif waveform.lower()=="drage":
-            shifter = ps.ErfShifter(pulse_length,pulse_length/sFactor)
-            coeff = ps.DRAGFunc(tlist, *(1,pulse_length/sFactor,pulse_length/2.,shifter,a_weight/anharmonicity) ) *gate.arg_value/np.pi 
-
-        elif waveform.lower()=="dragt":
-            coeff = ps.DRAGFunc_Tangential(tlist, *(1,pulse_length/sFactor,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
-        
-        elif waveform.lower()=="gauss":    
-            coeff = ps.GaussianFamily(tlist,*(1,pulse_length/sFactor,pulse_length/2.,0))*gate.arg_value/np.pi
-        
-        else:  
-            coeff = ps.DRAGFunc(tlist, *(1,pulse_length/sFactor,pulse_length/2.,0,a_weight/anharmonicity) ) *gate.arg_value/np.pi
-
+        match waveform.lower():
+            case "dragh": coeff = ps.DRAGFunc_Hermite(
+                    tlist, *(1,2,4,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
+            case "drage":
+                shifter = ps.ErfShifter(pulse_length,pulse_length/sFactor)
+                coeff = ps.DRAGFunc(
+                    tlist, *(1,pulse_length/sFactor,pulse_length/2.,shifter,a_weight/anharmonicity) 
+                    ) *gate.arg_value/np.pi 
+            case "dragt": coeff = ps.DRAGFunc_Tangential(
+                    tlist, *(1,pulse_length/sFactor,pulse_length/2.,a_weight/anharmonicity) 
+                    ) *gate.arg_value/np.pi
+            case "gauss": coeff = ps.GaussianFamily(
+                    tlist,*(1,pulse_length/sFactor,pulse_length/2.,0))*gate.arg_value/np.pi
+            case "drag": coeff = ps.DRAGFunc(
+                    tlist, *(1,pulse_length/sFactor,pulse_length/2.,0,a_weight/anharmonicity) 
+                    ) *gate.arg_value/np.pi
+            case _:
+                raise NameError('No such fucntion')
+            
         if gate.name == "RX":
             return self.generate_pulse(gate, tlist, coeff, phase=0.0)
         elif gate.name == "RY":
@@ -101,27 +105,54 @@ class TQCompile(GateCompiler):
     
     def iswap_compiler( self, gate, args):
         '''
-        Here we give a restriction that the compensate z pulse lengths of two qubits should be the same. 
+        Here we give a restriction that the compensate z pulse lengths of two qubits should be the same.
+        The waveform types:["CONST","GERP","ERRF"] 
         '''
         targets_label = ''.join(str(target) for target in gate.targets)
         pulse_info = []
-        for label in targets_label:    
+        for label in targets_label:   
+            if self.params[label]["iswap"]["waveform"][0] != "NaN":
+                waveform = self.params[label]["iswap"]["waveform"][0]
+                edge = self.params[label]["iswap"]["waveform"][1]
+                sFactor = self.params[label]["iswap"]["waveform"][2]
+            else:
+                waveform = "Const"
+
             pulse_length = self.params[label]["iswap"]["pulse_length"]
             dt = self.params[label]["iswap"]["dt"]
             dz = self.params[label]["iswap"]["dz"]  
             sampling_point = int( -(pulse_length//-dt) )    
             tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-            coeff = ps.constFunc( tlist, dz ) 
 
-            # c_Z for compensate rotation                       
+            match waveform.lower(): 
+                case "const": coeff = ps.constFunc(tlist, dz )     
+                case "gerp": coeff = ps.GERPFunc(tlist, *(dz,pulse_length,0,edge,2*edge/sFactor))
+                case "eerp": coeff = ps.EERP(tlist, *(dz,edge/2,edge/sFactor,pulse_length,0))
+                case _: raise NameError('No such function') 
+
+            # c_Z for compensate rotation    
+            if self.params[label]["iswap"]["c_waveform"][0] != "NaN":
+                c_waveform = self.params[label]["iswap"]["c_waveform"][0]
+                c_edge = self.params[label]["iswap"]["c_waveform"][1]
+                c_sFactor = self.params[label]["iswap"]["c_waveform"][2]
+
+            else: c_waveform = "Const"              
+                               
             c_pulse_length = self.params[label]["iswap"]["c_ZW"]
             c_dz = self.params[label]["iswap"]["c_Z"]
-            c_sampling_point = int( -(c_pulse_length//-dt) )            
+            c_sampling_point = int( -(c_pulse_length//-dt) )
+
             if c_pulse_length != 0:
                 c_tlist = np.linspace(
                     pulse_length, pulse_length + c_pulse_length, c_sampling_point, endpoint=False
-                    )            
-                c_coeff = ps.constFunc(c_tlist, c_dz )           
+                    )  
+                match c_waveform.lower(): 
+                    case "const": c_coeff = ps.constFunc(c_tlist, c_dz )     
+                    case "gerp": c_coeff = ps.GERPFunc(
+                        c_tlist, *(c_dz,c_pulse_length,c_tlist[0],c_edge,2*c_edge/c_sFactor) ) 
+                    case "eerp": c_coeff = ps.EERP(
+                        c_tlist, *(c_dz,c_edge/2,c_edge/c_sFactor,c_pulse_length,c_tlist[0]))
+                    case _: raise NameError('No such function')  
                 tlist = np.append(tlist,c_tlist)
                 coeff = np.append(coeff,c_coeff) 
             pulse_info.append(("sz" + label, coeff))
@@ -130,6 +161,7 @@ class TQCompile(GateCompiler):
     def cz_compiler(self, gate, args):
         '''
         Here we give a restriction that the compensate z pulse lengths of two qubits should be the same. 
+        The waveform types:["CONST","GERP"]
         '''
         targets_label = ''.join(str(target) for target in gate.targets)
         pulse_info = []        
@@ -139,17 +171,40 @@ class TQCompile(GateCompiler):
             dz = self.params[str(qi)]["cz"]["dz"]
             sampling_point = int( -(pulse_length//-dt) )
             tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-            coeff = ps.constFunc(tlist, dz )
+
+            if self.params[str(qi)]["cz"]["waveform"][0] != "NaN":
+                waveform = self.params[str(qi)]["cz"]["waveform"][0]
+                edge = self.params[str(qi)]["cz"]["waveform"][1]
+                sFactor = self.params[str(qi)]["cz"]["waveform"][2]
+            else:
+                waveform = "Const"
+
+            match waveform.lower(): 
+                case "const": coeff = ps.constFunc(tlist, dz )     
+                case "gerp": coeff = ps.GERPFunc(tlist, *(dz,pulse_length,0,edge,2*edge/sFactor))
+                case "eerp": coeff = ps.EERP(tlist, *(dz,edge/2,edge/sFactor,pulse_length,0)) 
+                case _: raise NameError('No such function') 
 
             # c_Z for compensate rotation
             c_pulse_length = self.params[str(qi)]["cz"]["c_ZW"]
             c_dz = self.params[str(qi)]["cz"]["c_Z"]
-            c_sampling_point = int( -(c_pulse_length//-dt) )            
+            c_sampling_point = int( -(c_pulse_length//-dt) )
+
+            if self.params[str(qi)]["cz"]["c_waveform"][0] != "NaN":
+                c_waveform = self.params[str(qi)]["cz"]["c_waveform"][0]
+                c_edge = self.params[str(qi)]["cz"]["c_waveform"][1]
+                c_sFactor = self.params[str(qi)]["cz"]["c_waveform"][2]
+
             if c_pulse_length != 0:
                 c_tlist = np.linspace(
                     pulse_length, pulse_length + c_pulse_length, c_sampling_point, endpoint=False
-                    )            
-                c_coeff = ps.constFunc(c_tlist, c_dz )           
+                    )
+                match c_waveform.lower(): 
+                    case "const": c_coeff = ps.constFunc(c_tlist, c_dz )     
+                    case "gerp": c_coeff = ps.GERPFunc(
+                        c_tlist, *(c_dz,c_pulse_length,c_tlist[0],c_edge,2*c_edge/c_sFactor) )
+                    case "eerp": c_coeff = ps.EERP(
+                        c_tlist, *(c_dz,c_edge/2,c_edge/c_sFactor,c_pulse_length,c_tlist[0]))           
                 tlist = np.append(tlist,c_tlist)
                 coeff = np.append(coeff,c_coeff) 
             pulse_info.append(
@@ -328,19 +383,39 @@ def control_z( coeffs_map, target_index ):
     return None
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
     compiler = TQCompile(2, params={})
     iswap = Gate("ISWAP", [0,1])
     cz = Gate("CZ", 0, 1)
     rg_x0 = Gate("RX", 0, arg_value= np.pi)
-    print(str(rg_x0.targets[0]))
     
     for i in range(2):
-        compiler.params[i] = {}
-        compiler.params[i]["cz"] = {}
-        compiler.params[i]["cz"]["dt"] = 0.5
-        compiler.params[i]["cz"]["pulse_length"] = 20
-        compiler.params[i]["cz"]["dz"] = -0.5
-        compiler.params[i]["cz"]["c_ZW"] = 10
-        compiler.params[i]["cz"]["c_Z"] = 0.3
-    gateseq = [cz]
+        compiler.params[str(i)] = {}
+        compiler.params[str(i)]["cz"] = {}
+        compiler.params[str(i)]["cz"]["dt"] = 0.5
+        compiler.params[str(i)]["cz"]["pulse_length"] = 20
+        compiler.params[str(i)]["cz"]["dz"] = -0.5
+        compiler.params[str(i)]["cz"]["c_ZW"] = 10
+        compiler.params[str(i)]["cz"]["c_Z"] = 0.3
+        compiler.params[str(i)]["cz"]["waveform"] = ["EERP",5,4]
+        compiler.params[str(i)]["cz"]["c_waveform"] = ["EERP",2,4]
+        compiler.params[str(i)]["iswap"] = {}
+        compiler.params[str(i)]["iswap"]["dt"] = 0.5
+        compiler.params[str(i)]["iswap"]["pulse_length"] = 40
+        compiler.params[str(i)]["iswap"]["dz"] = 0.5
+        compiler.params[str(i)]["iswap"]["c_Z"] = -0.2
+        compiler.params[str(i)]["iswap"]["c_ZW"] = 40 
+        compiler.params[str(i)]["iswap"]["waveform"] = ["EERP",10,4]
+        compiler.params[str(i)]["iswap"]["c_waveform"] = ["EERP",10,4]
+        compiler.params[str(i)]["waveform"] = ["GAUSS",-0.5,4]
+    gateseq = [cz,iswap]
 
+    circuit = QubitCircuit(2)
+
+    for gate in gateseq:
+        circuit.add_gate(gate)
+        compiled_data = compiler.compile(circuit,schedule_mode='ASAP')
+    print(compiled_data[1])
+    plt.plot(compiled_data[1]['sz0'])
+    plt.show()
