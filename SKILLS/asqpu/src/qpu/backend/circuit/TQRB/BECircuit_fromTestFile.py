@@ -5,7 +5,7 @@ import qpu.backend.circuit.backendcircuit as bec
 import qpu.backend.component as qcp
 from pandas import DataFrame
 import os
-ROOT_DIR = os.path.dirname(os.path.abspath(r".\SKILLS\TQRB\BECircuit_test_2Q.py"))
+ROOT_DIR = os.path.dirname(os.path.abspath(r".\SKILLS\asqpu\src\qpu\backend\circuit\TQRB\BECircuit_test_2Q.py"))
 
 def read_location( location_path ):
     # location.txt contains three parts: 
