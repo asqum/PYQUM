@@ -320,7 +320,7 @@ class TQCompile(GateCompiler):
             #     idling_tlist.extend([idling_tlist1, idling_tlist2])
             # else:
             idling_tlist.append(
-                    np.arange(
+                np.arange(
                     last_pulse_time + step_size, start_time, step_size
                 )
             )
