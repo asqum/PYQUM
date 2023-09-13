@@ -1420,7 +1420,6 @@ def mani():
     1. Single_Qubit
     2. Qubits
     3.1. RB (Randomized Benchmarking)
-    3.2. QPU (Running Quantum Circuit on QPU)
 '''
 @bp.route('/mani/QuCTRL', methods=['GET'])
 def mani_QuCTRL(): 
@@ -2011,6 +2010,599 @@ def mani_QuCTRL_2ddata():
         print(Fore.YELLOW + "%s is plotting 2D-data from the HISTORY: %s" %(session['user_name'], chosen_matfile))
 
     return json.dumps(QuCTRL_2Ddata[session['user_name']], cls=JSEncoder)
+    # return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
+
+# endregion
+
+# region
+# ORCHI -> QPU ORCHestratIon =============================================================================================================================================
+'''Advanced QPU Orchestration:
+    1. QM
+    2. QBlox
+    3. Intermodulation
+    4. QICK
+    5. M5K
+'''
+@bp.route('/orchi/QPX', methods=['GET'])
+def orchi_QPX(): 
+    return render_template("blog/msson/orchi/QPX.html")
+# Initialize and list days specific to task
+@bp.route('/orchi/QPX/init', methods=['GET'])
+def orchi_QPX_init():
+    global orchi_TASK, Run_QPX, M_QPX, SQ_CParameters, QPX_1Ddata, QPX_2Ddata, c_QPX_structure, c_QPX_progress, QPX_jobid, TASK_LEVEL
+
+    # Managing / Initialize user-specific Orchestration-Task for QPX:
+    try: print(Fore.GREEN + "Connected TASK-USER(s) for QPX: %s" %orchi_TASK.keys())
+    except: orchi_TASK = {}
+    orchi_TASK[session['user_name']] = request.args.get('orchi_TASK')
+
+    # Managing / Initialize token-specific Measurement M:
+    try: print(Fore.GREEN + "Connected M-TOKEN(s) for %s: %s" %(orchi_TASK[session['user_name']], Run_QPX.keys()))
+    except: Run_QPX = {}
+    
+    # Managing / Initialize user-specific Measurement Access MA:
+    try: print(Fore.BLUE + "Connected MA-USER(s) for %s: %s" %(orchi_TASK[session['user_name']], M_QPX.keys()))
+    except: M_QPX = {}
+    # 'user_name' accessing 'people' data:
+    M_QPX[session['user_name']] = eval("QPX(session['people'], renamed_task='%s')"%(orchi_TASK[session['user_name']]))
+    print(Fore.BLUE + Back.WHITE + "User %s is managing %s's data" %(session['user_name'],session['people']))
+
+    # Managing / Initialize user-specific Control Parameters CP:
+    try: print(Fore.CYAN + "Connected CP-USER(s) for %s: %s" %(orchi_TASK[session['user_name']], SQ_CParameters.keys()))
+    except: SQ_CParameters = {}
+
+    # Managing / Initialize user-specific 1D Data-Holder 1DH:
+    try: print(Fore.CYAN + "Connected 1DH-USER(s) for %s: %s" %(orchi_TASK[session['user_name']], QPX_1Ddata.keys()))
+    except: QPX_1Ddata = {}
+    # Managing / Initialize user-specific 2D Data-Holder 2DH:
+    try: print(Fore.CYAN + "Connected 2DH-USER(s) for %s: %s" %(orchi_TASK[session['user_name']], QPX_2Ddata.keys()))
+    except: QPX_2Ddata = {}
+
+    # Managing / Initialize user-specific SQ Structure SQS:
+    try: print(Fore.CYAN + "Connected USER(s) for %s's Structure: %s" %(orchi_TASK[session['user_name']], c_QPX_structure.keys()))
+    except: c_QPX_structure = {}
+
+    # Managing / Initialize user-specific SQ Progress SQP:
+    try: print(Fore.CYAN + "Connected USER(s) for %s's Progress: %s" %(orchi_TASK[session['user_name']], c_QPX_progress.keys()))
+    except: c_QPX_progress = {}
+
+    # Managing / Initialize user-specific SQ Jobid:
+    try: print(Fore.GREEN + "Connected USER(s) for %s's Jobid: %s" %(orchi_TASK[session['user_name']], QPX_jobid.keys()))
+    except: QPX_jobid = {}
+
+    # Managing / Initialize user-specific TASK LEVEL for QPX:
+    try: print(Fore.GREEN + "Connected TASK-LEVEL-USER(s) for QPX: %s" %TASK_LEVEL.keys())
+    except: TASK_LEVEL = {}
+
+    # Loading SCORE & MACE user-inputs based on (1) TASK-type or (2) WIRING-settings for EACH category:
+    QPC_TYPE = ["DAC", "SG", "DC"] #PENDING: ADC (after FPGA implementation)
+    Experiment_Parameters, Experiment_Default_Values, CH_Matrix, Role, Which, Mac_Parameters, Mac_Default_Values = [], [], {}, {}, {}, {}, {}
+
+    Exp = macer()
+    Experiments = Exp.experiment_list
+    Exp.close()
+
+    if orchi_TASK[session['user_name']] in Experiments:
+        TASK_LEVEL[session['user_name']] = "EXP"
+        # loading Experiment aligned with TASK but not Devices (Mac):
+        Exp = macer(commander=orchi_TASK[session['user_name']])
+        Exp.get_skills()
+        Experiment_Parameters = Exp.PARAMETERS
+        Experiment_Default_Values = Exp.DEFAULT_VALUES
+        Exp.close()
+
+    else: 
+        TASK_LEVEL[session['user_name']] = "MAC"
+        # loading Devices (Mac) for non-customized experiments like Single_Qubit, Qubits
+        for category in QPC_TYPE:
+            try:
+                CH_Matrix[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')[category]
+                Role[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ROLE')[category]
+                Which[category] = inst_order(get_status("MSSN")[session['user_name']]['queue'], category)
+                # For Categories applicable with MACE:
+                if category != "DAC":
+                    Mac = macer(commander=category)
+                    Mac.get_skills()
+                    Mac_Parameters[category] = Mac.PARAMETERS
+                    Mac_Default_Values[category] = Mac.DEFAULT_VALUES
+                    Mac.close()
+            except(KeyError):
+                CH_Matrix[category], Role[category], Which[category] = [[]], [[]], []
+                print(Fore.RED + Back.WHITE + "%s NOT PRESENT IN CHANNEL-ROLE, PLS CHECK ON THE WIRING")
+    
+    return jsonify(daylist=M_QPX[session['user_name']].daylist, run_permission=session['run_clearance'], CH_Matrix=CH_Matrix, Role=Role, Which=Which,
+                    Experiment_Parameters=Experiment_Parameters, Experiment_Default_Values=Experiment_Default_Values, Mac_Parameters=Mac_Parameters, Mac_Default_Values=Mac_Default_Values)
+# list task entries based on day picked
+@bp.route('/orchi/QPX/time', methods=['GET'])
+def orchi_QPX_time():
+    wday = int(request.args.get('wday'))
+    M_QPX[session['user_name']].selectday(wday)
+    return jsonify(taskentries=M_QPX[session['user_name']].taskentries)
+# Check DIGITIZER TIME & SUM:
+@bp.route('/orchi/QPX/check/timsum', methods=['GET'])
+def orchi_QPX_check_timsum():
+    record_time_ns = int(request.args.get('record_time_ns'))
+    record_sum = int(request.args.get('record_sum'))
+    ADC_type = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'ADC')[0].split('_')[0]
+    ADC = im("pyqum.instrument.machine.%s" %ADC_type)
+    record_time_ns, record_sum = ADC.check_timsum(record_time_ns,record_sum)
+    return jsonify(record_time_ns=record_time_ns, record_sum=record_sum)
+# Check PULSES:
+@bp.route('/orchi/QPX/check/pulses', methods=['GET'])
+def orchi_QPX_check_pulses():
+    perimeter = json.loads(request.args.get('PERIMETER'))
+    Pulse_Preview = dict()
+
+    # Extract Pulse-related Settings ONLY:
+    SCORE_TEMPLATE = perimeter['SCORE-JSON']
+    MACE_TEMPLATE = perimeter['MACE-JSON']
+    RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
+    rjson_struct = [k for k in RJSON.keys()]
+
+    # Prepare R-waveform object for pulse-instructions
+    R_waveform = {}
+    for k in RJSON.keys(): R_waveform[k] = waveform(RJSON[k])
+
+    # Loading Channel-Matrix & Channel-Role based on WIRING-settings
+    DACH_Matrix = inst_order(get_status("MSSN")[session['user_name']]['queue'], 'CH')['DAC']
+
+    # UPDATE EVERY {R}
+    SCORE_DEFINED = deepcopy(SCORE_TEMPLATE)
+    MACE_DEFINED = deepcopy(MACE_TEMPLATE)
+    for j in range(len(rjson_struct)):
+        if ">" in rjson_struct[j]: # For Locked variables with customized math expression:
+            math_expression = rjson_struct[j].split(">")[1] # Algebraic initially
+            for R_KEY in rjson_struct[j].split(">")[0].replace(" ","").split(","):
+                math_expression = math_expression.replace( R_KEY, str( max(R_waveform[R_KEY].data, key=abs) ) ) # PICK THE MAX PARAMETER VALUE!
+            Script_Var_Update = evaluate(math_expression) # evaluate numpy-supported expression
+            print(Fore.LIGHTBLUE_EX + "STRUCTURE LOCKED AT IDX-%s: %s -> %s -> %s" %(j, rjson_struct[j], math_expression, Script_Var_Update))
+        else: # for usual variables
+            Script_Var_Update = max(R_waveform[rjson_struct[j]].data)
+                    
+        if TASK_LEVEL[session['user_name']] == "MAC":
+            for i_slot_order, channel_set in enumerate(DACH_Matrix):
+                for ch in channel_set:
+                    dach_address = "%s-%s" %(i_slot_order+1,ch)
+                    SCORE_DEFINED['CH%s'%dach_address] = SCORE_DEFINED['CH%s'%dach_address].replace("{%s}"%rjson_struct[j], str(Script_Var_Update))
+                    
+        if TASK_LEVEL[session['user_name']] == "EXP": 
+            MACE_DEFINED["EXP-" + orchi_TASK[session['user_name']]] = MACE_DEFINED["EXP-" + orchi_TASK[session['user_name']]].replace("{%s}"%rjson_struct[j], str(Script_Var_Update))
+        
+    # Compose WAVEFORM from INSTANTIATED SCORE / MACE COMMANDS:
+    if TASK_LEVEL[session['user_name']] == "MAC":
+        for i_slot_order, channel_set in enumerate(DACH_Matrix):
+            for ch in channel_set:
+                dach_address = "%s-%s" %(i_slot_order+1,ch)
+                pulseq = pulser(dt=1, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address]) # take dt as a unit-sample (1ns)
+                if not i_slot_order: T_samples = pulseq.totaltime
+                pulseq.song()
+                Pulse_Preview['CH%s'%dach_address] = list(pulseq.music)
+
+    if TASK_LEVEL[session['user_name']] == "EXP": 
+        Exp = macer(commander=orchi_TASK[session['user_name']])
+        Exp.execute(MACE_DEFINED["EXP-" + orchi_TASK[session['user_name']]])
+        Sample_Backend = get_Qubit_CV(get_status("MSSN")[session['user_name']]['sample'])
+
+        # MATCHING EXP-TASK:
+        match orchi_TASK[session['user_name']]:
+            case "DD": 
+                '''MACE-Skills: Qubit_ID/0, Echo_times, Free_Evolution_ns'''
+                d_setting = qapp.get_SQDD_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Echo_times")])), float(Exp.VALUES[Exp.KEYS.index("Free_Evolution_ns")]), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+            case "RB": 
+                '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
+                d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+            case _: 
+                print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
+
+        Exp.close()
+        dac_wf = d_setting["DAC"]
+        T_samples = d_setting['total_time']
+        # Compare signal and envelope
+        for instr_name, settings in dac_wf.items():
+            for i, s in enumerate(settings):
+                if type(s) != type(None):
+                    Pulse_Preview[f"{instr_name}-{i+1}"] = list(s)
+                    print(Fore.WHITE + "s: %s" %s)
+        
+    return jsonify(T_samples=T_samples, Pulse_Preview=Pulse_Preview)
+# run NEW measurement:
+@bp.route('/orchi/QPX/new', methods=['GET'])
+def orchi_QPX_new():
+    # Check user's current queue status:
+    if session['run_clearance']:
+        wday = int(request.args.get('wday'))
+        if wday < 0: print("Running New %s..." %(orchi_TASK[session['user_name']]))
+
+        PERIMETER = json.loads(request.args.get('PERIMETER'))
+        CORDER = json.loads(request.args.get('CORDER'))
+        comment = request.args.get('comment').replace("\"","")
+        
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
+        Run_QPX[TOKEN] = QPX(session['people'], perimeter=PERIMETER, corder=CORDER, comment=comment, tag='', dayindex=wday, renamed_task=orchi_TASK[session['user_name']])
+        return jsonify(status=Run_QPX[TOKEN].status)
+    else: return show("PLEASE CHECK YOUR RUN-CLEARANCE WITH ABC")
+
+# DATA DOWNLOAD
+# export to mat
+@bp.route('/orchi/QPX/export/2dmat', methods=['GET'])
+def char_QPX_export_2dmat():
+    interaction = request.args.get('interaction') # merely for security reason to block out unsolicited visits by return None from this request
+    print("interaction: %s" %interaction)
+    status = None
+    if interaction is not None:
+        set_mat(QPX_2Ddata[session['user_name']], '2D%s[%s].mat'%(orchi_TASK[session['user_name']], session['user_name']))
+        status = "mat written"
+        print(Fore.GREEN + "User %s has setup MAT-FILE" %session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
+# export to csv
+@bp.route('/orchi/QPX/export/1dcsv', methods=['GET'])
+def orchi_QPX_export_1dcsv():
+    interaction = request.args.get('interaction') # merely for security reason to block out unsolicited visits by return None from this request
+    print("interaction: %s" %interaction)
+    status = None
+    if interaction is not None:
+        set_csv(QPX_1Ddata[session['user_name']], '1D%s[%s].csv'%(orchi_TASK[session['user_name']], session['user_name']))
+        status = "csv written"
+        print(Fore.GREEN + "User %s has setup CSV-FILE" %session['user_name'])
+    return jsonify(status=status, user_name=session['user_name'], qumport=int(get_status("WEB")['port']), server_URL=device_port("URL"))
+
+# DATA ACCESS
+# list set-parameters based on selected task-entry
+@bp.route('/orchi/QPX/access', methods=['GET'])
+def orchi_QPX_access():
+    # Measurement details:
+    wmoment = int(request.args.get('wmoment'))
+    samplename=get_status("MSSN")[session['user_name']]['sample']
+    try: JOBID = jobsearch(dict(samplename=samplename, task=orchi_TASK[session['user_name']], dateday=M_QPX[session['user_name']].day, wmoment=wmoment))
+    except: JOBID = 0 # Old version of data before job-queue implementation
+    QPX_jobid[session['user_name']] = JOBID
+    M_QPX[session['user_name']].selectmoment(wmoment)
+    M_QPX[session['user_name']].accesstructure()
+    corder = M_QPX[session['user_name']].corder
+    perimeter = M_QPX[session['user_name']].perimeter
+    comment = M_QPX[session['user_name']].comment
+    data_progress = M_QPX[session['user_name']].data_progress
+    data_repeat = data_progress // 100 + int(bool(data_progress % 100))
+
+    # Measurement time:
+    filetime = getmtime(M_QPX[session['user_name']].pqfile) # in seconds
+    startmeasure = mktime(strptime(M_QPX[session['user_name']].day + " " + M_QPX[session['user_name']].startime(), "%Y-%m-%d(%a) %H:%M")) # made into seconds
+
+    if data_progress==0: measureacheta=0
+    else: measureacheta = str(timedelta(seconds=(filetime-startmeasure)/data_progress*(trunc(data_progress/100+1)*100-data_progress)))
+      
+    # Integrate R-Parameters back into C-Order:
+    RJSON = json.loads(perimeter['R-JSON'].replace("'",'"'))
+    for k in RJSON.keys(): corder[k] = RJSON[k]
+    
+    # Determine BufferKey based on ReadoutType:
+    if perimeter['READOUTYPE'] in ['one-shot', 'rt-dualddc-int']: 
+
+        bufferkey, buffer_resolution = 'RECORD-SUM', 1
+    else: 
+        if "TIME_RESOLUTION_NS" in perimeter.keys(): bufferkey, buffer_resolution = 'RECORD_TIME_NS', int(perimeter['TIME_RESOLUTION_NS'])
+        else: bufferkey, buffer_resolution = 'RECORD_TIME_NS', 1
+
+
+    # Recombine Buffer back into C-Order: (contingent on FPGA bitMode***)
+    # one-shot related fpga:
+    if perimeter['READOUTYPE'] in ['rt-dualddc-int']:
+        down_sample_factor = 5
+        buffer_length = round( round( int(perimeter['RECORD_TIME_NS']) / int(perimeter['TIME_RESOLUTION_NS']) ) / down_sample_factor )
+        step_size = int(perimeter['TIME_RESOLUTION_NS']) * down_sample_factor
+        print(Fore.CYAN + "FPGA-DDC-DownSampling DAQ to only: %s points" %buffer_length)
+        corder['RECORD_TIME_NS'] = "%s to %s * %s" %(step_size, int(perimeter['RECORD_TIME_NS']), buffer_length-1)
+        corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
+        ORACLE_STRUCT = ['RECORD_TIME_NS', bufferkey]
+    # averaged related fpga:
+    elif perimeter['READOUTYPE'] in ['rt-ave-singleddc']:
+        corder['_DDC_CH_'] = "I,Q,"
+        down_sample_factor = 5
+        buffer_length = round(round(int(perimeter[bufferkey])/int(buffer_resolution))/down_sample_factor)
+        step_size = int(buffer_resolution) * down_sample_factor
+        print(Fore.CYAN + "FPGA-DDC-DownSampling DAQ to only: %s points" %buffer_length)
+        corder[bufferkey] = "%s to %s * %s" %(step_size, int(perimeter[bufferkey]), buffer_length-1)
+        ORACLE_STRUCT = ['_DDC_CH_', bufferkey]
+    elif perimeter['READOUTYPE'] in ['rt-ave-dualddc', 'rt-ave-dualddc-int']:
+        down_sample_factor = 5
+        buffer_length = round(round(int(perimeter[bufferkey])/int(buffer_resolution))/down_sample_factor)
+        step_size = int(buffer_resolution) * down_sample_factor
+        print(Fore.CYAN + "FPGA-DDC-DownSampling DAQ to only: %s points" %buffer_length)
+        corder[bufferkey] = "%s to %s * %s" %(step_size, int(perimeter[bufferkey]), buffer_length-1)
+        ORACLE_STRUCT = [bufferkey]
+    # non-fpga:
+    else:
+        corder[bufferkey] = "%s to %s * %s" %(int(buffer_resolution), int(perimeter[bufferkey]), round(int(perimeter[bufferkey])/int(buffer_resolution))-1)
+        ORACLE_STRUCT = [bufferkey]
+
+    print(Fore.BLUE + Back.YELLOW + "Bottom-most / Buffer-layer C-Order: %s" %corder[bufferkey])
+    
+    # Extend C-Structure with R-Parameters & Buffer keys:
+    SQ_CParameters[session['user_name']] = corder['C-Structure'] + [k for k in RJSON.keys()] + ORACLE_STRUCT # Fixed-Structure + R-Structure + Buffer
+
+    # Structure & Addresses:
+    c_QPX_structure[session['user_name']] = [waveform(corder[param]).count for param in SQ_CParameters[session['user_name']]][:-1] \
+                                        + [waveform(corder[SQ_CParameters[session['user_name']][-1]]).count*M_QPX[session['user_name']].datadensity]
+    c_QPX_progress[session['user_name']] = cdatasearch(M_QPX[session['user_name']].resumepoint-1, c_QPX_structure[session['user_name']])
+    
+    pdata = dict()
+    for params in SQ_CParameters[session['user_name']]:
+        pdata[params] = waveform(corder[params]).data[0:c_QPX_progress[session['user_name']][SQ_CParameters[session['user_name']].index(params)]+1]
+    # print("RECORD_TIME_NS's parameter-data: %s" %pdata['RECORD_TIME_NS'])
+
+    print(Fore.LIGHTRED_EX + "CHECK JOBID: %s" %JOBID)
+    note = jobsearch(JOBID, mode="note")
+
+    histories = get_histories(samplename, str(JOBID))
+    return jsonify(JOBID=JOBID, note=note,
+        data_progress=data_progress, measureacheta=measureacheta, corder=corder, perimeter=perimeter, comment=comment, 
+        pdata=pdata, SQ_CParameters=SQ_CParameters[session['user_name']], histories=histories)
+# save perimeter settings for different measurements (Fresp, Cwsweep, Rabi, T1, T2, Wigner, Fidelity, QST etc)
+@bp.route('/orchi/QPX/perisettings/save', methods=['GET'])
+def orchi_QPX_perisettings_save():
+    scheme_name = request.args.get('scheme_name')
+    presetting = { '%s'%scheme_name : M_QPX[session['user_name']].perimeter }
+    try:
+        if scheme_name=="TRANSFER" or int(g.user['measurement'])>2: set_status('SCHEME', presetting)
+        else: scheme_name = "Nothing"
+    except(ValueError): scheme_name = "NULL" # for Those with No measurement clearance
+    return jsonify(scheme_name=scheme_name)
+# load perimeter settings for different measurements (Fresp, Cwsweep, Rabi, T1, T2, Wigner, Fidelity, QST etc)
+@bp.route('/orchi/QPX/perisettings/load', methods=['GET'])
+def orchi_QPX_perisettings_load():
+    scheme_name = request.args.get('scheme_name')
+    try: perimeter, status = get_status('SCHEME')[scheme_name], 'Loaded from '
+    except: perimeter, status = {}, 'Not Found.'
+    return jsonify(perimeter=perimeter, status=status)
+
+# DATA MANAGEMENT
+# Resume the unfinished measurement
+@bp.route('/orchi/QPX/resume', methods=['GET'])
+def orchi_QPX_resume():
+    if session['run_clearance']:
+        # retrieve from ui-selection:
+        wday = int(request.args.get('wday'))
+        wmoment = int(request.args.get('wmoment'))
+        # retrieve from file:
+        M_QPX[session['user_name']].accesstructure()
+        perimeter = M_QPX[session['user_name']].perimeter
+        corder = M_QPX[session['user_name']].corder
+        resumepoint = M_QPX[session['user_name']].resumepoint
+
+        TOKEN = 'TOKEN(%s)%s' %(session['user_name'],random())
+        Run_QPX[TOKEN] = QPX(session['people'], perimeter=perimeter, corder=corder, dayindex=wday, taskentry=wmoment, resumepoint=resumepoint, renamed_task=orchi_TASK[session['user_name']])
+        return jsonify(resumepoint=str(resumepoint), datasize=str(M_QPX[session['user_name']].datasize), status=Run_QPX[TOKEN].status)
+    else: return show()
+@bp.route('/orchi/QPX/trackdata', methods=['GET'])
+def orchi_QPX_trackdata():
+    fixed = request.args.get('fixed')
+    fixedvalue = request.args.get('fixedvalue')
+    # list data position in file:
+    try:
+        data_location = None
+        try:
+            fixed_caddress = array(c_QPX_structure[session['user_name']],dtype=int64)-1
+            fixed_caddress[SQ_CParameters[session['user_name']].index(fixed)] = int(fixedvalue)
+            fixed_caddress[SQ_CParameters[session['user_name']].index(fixed)+1:] = 0
+            data_location = int(gotocdata(fixed_caddress, c_QPX_structure[session['user_name']]))
+        except(IndexError): 
+            data_location = None
+            print(Fore.RED + "Structure not properly setup")
+        except(KeyError): 
+            data_location = None
+            print(Fore.YELLOW + "Not yet accessed any data")
+        
+    # except: raise
+    except(ValueError):
+        print(Back.RED + Fore.WHITE + "All parameters before branch must be FIXED!")
+        pass
+
+    print("Data location: %s" %data_location)
+    return jsonify(data_location=data_location)
+@bp.route('/orchi/QPX/resetdata', methods=['GET'])
+def orchi_QPX_resetdata():
+    jobid = int(request.args.get('ACCESSED_JOBID'))
+    truncateafter = int(request.args.get('truncateafter'))
+    jobrunner = get_db().execute('SELECT username FROM user u INNER JOIN job j ON j.user_id = u.id WHERE j.id = ?',(jobid,)).fetchone()['username']
+    close_db()
+    if ( (int(g.user['measurement'])>0) and (session['user_name']==jobrunner) ) or (session['user_name']==session['people']) or (int(g.user['management'])>=7):
+        message = M_QPX[session['user_name']].resetdata(truncateafter)
+        acting("RESETTING DATA in JOB#%s from %s-point"%(jobid,truncateafter))
+    else: 
+        message = 'USER IS NOT THE AUTHORIZED JOB-RUNNER, DATA-OWNER or DATA-MANAGER'
+
+    return jsonify(message=message)
+
+# DATA PRESENTATION:
+def srange_conversion(buffer_corder, sample_time_range):
+    srange = []
+    time_range = array(waveform(buffer_corder).data)
+    for sample_time in sample_time_range: 
+        gradient_mode = False
+        if '@' in sample_time: sample_time, gradient_mode = sample_time.split('@')[1], True
+        closest_point = abs(time_range-int(sample_time)).argmin()
+        if gradient_mode: srange.append( '@%s' %(closest_point) )
+        else: srange.append( str(closest_point) )
+    return srange
+# Chart is supposedly shared by all measurements (under construction for multi-purpose)
+@bp.route('/orchi/QPX/1ddata', methods=['GET'])
+def orchi_QPX_1ddata():
+    print(Fore.GREEN + "User %s is plotting SINGLEQB 1D-Data" %session['user_name'])
+    M_QPX[session['user_name']].loadata()
+    selectedata = M_QPX[session['user_name']].selectedata
+    print("Data length: %s" %len(selectedata))
+    
+    # load parameter indexes from json call:
+    cselect = json.loads(request.args.get('cselect'))
+
+    for k in cselect.keys():
+        if "x" in cselect[k]:
+            xtitle = "<b>" + k + "</b>"
+            selected_caddress = [s for s in cselect.values()]
+        
+            # Sweep-command:
+            selected_sweep = M_QPX[session['user_name']].corder[k]
+
+            # Adjusting c-parameters range for data analysis based on progress:
+            parent_address = selected_caddress[:SQ_CParameters[session['user_name']].index(k)] # address's part before x
+            if [int(s) for s in parent_address] < c_QPX_progress[session['user_name']][0:len(parent_address)]:
+                print(Fore.YELLOW + "selection is well within progress")
+                sweepables = c_QPX_structure[session['user_name']][SQ_CParameters[session['user_name']].index(k)]
+            else: sweepables = c_QPX_progress[session['user_name']][SQ_CParameters[session['user_name']].index(k)]+1
+
+            # Special treatment on the last 'buffer' parameter to factor out the data-density first: 
+            if SQ_CParameters[session['user_name']].index(k) == len(SQ_CParameters[session['user_name']])-1 :
+                isweep = range(sweepables//M_QPX[session['user_name']].datadensity)
+            else:
+                isweep = range(sweepables) # flexible access until progress resume-point
+            print(Back.WHITE + Fore.BLACK + "Sweeping %s points" %len(isweep))
+
+            Idata = zeros(len(isweep))
+            Qdata = zeros(len(isweep))
+            Adata = zeros(len(isweep))
+            Pdata = zeros(len(isweep))
+            for i in isweep:
+                # PENDING: VECTORIZATION OR MULTI-PROCESS
+                selected_caddress[SQ_CParameters[session['user_name']].index(k)] = i # register x-th position
+                if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
+
+                    # Get indexes based on sampling time-range: 
+                    buffer_corder = M_QPX[session['user_name']].corder['RECORD_TIME_NS']
+                    sample_time_range = request.args.get('srange').split(",")
+                    srange = srange_conversion(buffer_corder, sample_time_range)
+                    if not i: print(Fore.GREEN + "sample coordinates (srange): %s" %srange)
+                    smode = request.args.get('smode') # sampling option
+                    Idata[i], Qdata[i], Adata[i], Pdata[i] = \
+                        pulseresp_sampler(srange, selected_caddress, selectedata, c_QPX_structure[session['user_name']], M_QPX[session['user_name']].datadensity, mode=smode)
+                else:
+                    # Ground level Pulse shape response:
+                    selected_caddress = [int(s) for s in selected_caddress]
+                    Basic = selected_caddress[-1]
+                    # Extracting I & Q:
+                    Idata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], c_QPX_structure[session['user_name']])]
+                    Qdata[i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], c_QPX_structure[session['user_name']])]
+                    Adata[i] = sqrt(Idata[i]**2 + Qdata[i]**2)
+                    Pdata[i] = arctan2(Qdata[i], Idata[i]) # -pi < phase < pi    
+
+    print("Structure: %s" %c_QPX_structure[session['user_name']])
+
+    # x-data:
+    selected_progress = waveform(selected_sweep).data[0:len(isweep)]
+    print(Fore.RED + "DEBUG: selected_sweep: %s, isweep: %s" %(selected_sweep,isweep))
+
+    # facilitate index location (or count) for range clipping:
+    cselection = (",").join([s for s in cselect.values()])
+    if "c" in cselection:
+        selected_progress = list(range(len(selected_progress)))
+
+    x, yI, yQ, yA, yUFNP = selected_progress, list(Idata), list(Qdata), list(Adata), list(Pdata)
+    QPX_1Ddata[session['user_name']] = {xtitle: x, 'I': yI, 'Q': yQ, 'A(V)': yA, 'UFNP(rad/x)': yUFNP, "exported by": session['user_name']}
+    
+    return jsonify(x=x, yI=yI, yQ=yQ, yA=yA, yUFNP=yUFNP, xtitle=xtitle)
+
+@bp.route('/orchi/QPX/2ddata', methods=['GET'])
+def orchi_QPX_2ddata():
+    samplename = get_status("MSSN")[session['user_name']]['sample']
+    JOBID = QPX_jobid[session['user_name']]
+    # load parameter indexes from json call:
+    cselect = json.loads(request.args.get('cselect'))
+    call_histories = int(request.args.get('call_histories'))
+    chosen_matfile = request.args.get('chosen_matfile')
+
+    # Plot 2D from scratch if the data not assembled previously:
+    if not call_histories:
+        print(Fore.GREEN + "User %s is plotting SINGLEQB 2D-Data using vectorization" %session['user_name'])
+        M_QPX[session['user_name']].loadata()
+        selectedata = M_QPX[session['user_name']].selectedata
+        print("Data length: %s" %len(selectedata))
+
+        try:
+            x_loc = [k for k in cselect.values()].index('x')
+            selected_x = [c for c in cselect.keys()][x_loc]
+            y_loc = [k for k in cselect.values()].index('y')
+            selected_y = [c for c in cselect.keys()][y_loc]
+            xtitle = "<b>" + selected_x + "</b>"
+            ytitle = "<b>" + selected_y + "</b>"
+            selected_caddress = [s for s in cselect.values()]
+        except: 
+            print("x and y parameters not selected or not valid")
+            
+        # Adjusting c-parameters range for data analysis based on progress:
+        parent_address = selected_caddress[:SQ_CParameters[session['user_name']].index(selected_x)] # address's part before x (higher-level data)
+        if [int(s) for s in parent_address] < c_QPX_progress[session['user_name']][0:len(parent_address)]: # must be matched with the parameter-select-range on the front-page
+            print(Fore.YELLOW + "selection is well within progress")
+            sweepables = [c_QPX_structure[session['user_name']][SQ_CParameters[session['user_name']].index(selected_x)], c_QPX_structure[session['user_name']][SQ_CParameters[session['user_name']].index(selected_y)]]
+        else: 
+            sweepables = [c_QPX_progress[session['user_name']][SQ_CParameters[session['user_name']].index(selected_x)]+1, c_QPX_progress[session['user_name']][SQ_CParameters[session['user_name']].index(selected_y)]+1]
+
+                
+        # flexible access until progress resume-point
+        xsweep = range(sweepables[0])
+        if SQ_CParameters[session['user_name']].index(selected_y) == len(SQ_CParameters[session['user_name']])-1 :
+            # Special treatment on the last 'buffer' parameter to factor out the data-density first:
+            ysweep = range(sweepables[1]//M_QPX[session['user_name']].datadensity)
+        else:
+            ysweep = range(sweepables[1]) 
+        print(Back.WHITE + Fore.BLACK + "Sweeping %s x-points" %len(xsweep))
+        print(Back.WHITE + Fore.BLACK + "Sweeping %s y-points" %len(ysweep))
+
+        Idata = zeros([len(ysweep), len(xsweep)])
+        Qdata = zeros([len(ysweep), len(xsweep)])
+        Adata = zeros([len(ysweep), len(xsweep)])
+        Pdata = zeros([len(ysweep), len(xsweep)])
+        for j in ysweep:
+            if not (j+1)%600: print(Fore.CYAN + "Assembling 2D-DATA, x: %s/%s, y: %s/%s" %(i+1,len(xsweep),j+1,len(ysweep)))
+            selected_caddress[SQ_CParameters[session['user_name']].index(selected_y)] = j # register y-th position
+            for i in xsweep:
+                selected_caddress[SQ_CParameters[session['user_name']].index(selected_x)] = i # register x-th position
+                if [c for c in cselect.values()][-1] == "s": # sampling mode currently limited to time-range (last 'basic' parameter) only
+                    
+                    # Get indexes based on sampling time-range: 
+                    buffer_corder = M_QPX[session['user_name']].corder['RECORD_TIME_NS']
+                    sample_time_range = request.args.get('srange').split(",")
+                    srange = srange_conversion(buffer_corder, sample_time_range)
+                    if not i: print(Fore.GREEN + "sample coordinates (srange): %s" %srange)
+                    smode = request.args.get('smode') # sampling mode
+                    Idata[j,i], Qdata[j,i], Adata[j,i], Pdata[j,i] = \
+                        pulseresp_sampler(srange, selected_caddress, selectedata, c_QPX_structure[session['user_name']], M_QPX[session['user_name']].datadensity, mode=smode)
+
+                else:
+                    # Ground level Pulse shape response:
+                    selected_caddress = [int(s) for s in selected_caddress]
+                    Basic = selected_caddress[-1]
+                    # Extracting I & Q:
+                    Idata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic], c_QPX_structure[session['user_name']])]
+                    Qdata[j,i] = selectedata[gotocdata(selected_caddress[:-1]+[2*Basic+1], c_QPX_structure[session['user_name']])]  
+
+        print("Mapping complete. Structure: %s" %c_QPX_structure[session['user_name']])
+        
+        # x-data:
+        selected_xsweep = M_QPX[session['user_name']].corder[selected_x]
+        x = waveform(selected_xsweep).data[0:len(xsweep)]
+
+        # y-data:
+        selected_ysweep = M_QPX[session['user_name']].corder[selected_y]
+        y = waveform(selected_ysweep).data[0:len(ysweep)]
+        
+        # IQ-data:
+        Adata = sqrt(Idata**2 + Qdata**2)
+        UPdata = unwrap(arctan2(Qdata, Idata)) # -pi < phase < pi -> Unwrapped
+
+        # Packing data into dictionary:
+        ZZI, ZZQ, ZZA, ZZUP = Idata.tolist(), Qdata.tolist(), Adata.tolist(), UPdata.tolist()
+        QPX_2Ddata[session['user_name']] = dict(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
+
+        # Automatically backup 2D-data into HISTORY:
+        caddress = ','.join([str(s) for s in selected_caddress])
+        set_mat_history(QPX_2Ddata[session['user_name']], samplename, str(JOBID), "X(%s)_Y(%s)_caddress(%s)"%(selected_x,selected_y,caddress))
+
+        # executor.submit(fn, args).add_done_callback(handler)
+
+    else:
+        QPX_2Ddata[session['user_name']] = get_mat_history(samplename, str(JOBID), chosen_matfile)
+        print(Fore.YELLOW + "%s is plotting 2D-data from the HISTORY: %s" %(session['user_name'], chosen_matfile))
+
+    return json.dumps(QPX_2Ddata[session['user_name']], cls=JSEncoder)
     # return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 
 # endregion

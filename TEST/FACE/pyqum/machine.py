@@ -233,6 +233,7 @@ def dacconnect():
             status = "connected"
             acting("CONNECTING DAC: %s" %(request.args.get('dacname')))
         except:
+            raise
             message = "Please check if %s's connection configuration is OK or is it being used!" %(dacname)
             status = 'error'
     else:
@@ -788,11 +789,9 @@ def saget():
 # endregion
 
 # region: BDR
-def q_category():
+def q_category(queue="CHAR0"):
     '''Category based on queue-system type:'''
     category = ['CONFG','ROLE','CH','DC','SG','NA','DAC','ADC','SA','SC']
-    try: queue = get_status("MSSN")[session['user_name']]['queue']
-    except: queue = 'CHAR0' # default
     if 'x' in queue.lower(): q_cat = category[0:1] # advanced QPC => QPX
     else: q_cat = category[1::] # non-integrated QPC
     print(Fore.YELLOW + "q_cat list: %s" %q_cat)
@@ -828,7 +827,7 @@ def bdr():
 
         DR_platform = int(get_status("WEB")['port']) - 5300
         return render_template("blog/machn/bdr.html", DR_platform=DR_platform, loaded=loaded, recent_samples=recent_samples, machine_list=machine_list, systemlist=systemlist, queue=queue, \
-            category=q_category(), CHAR0_sample=g.CHAR0_sample, CHAR1_sample=g.CHAR1_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample, QPX0_sample=g.QPX0_sample)
+            category=q_category(queue), CHAR0_sample=g.CHAR0_sample, CHAR1_sample=g.CHAR1_sample, QPC0_sample=g.QPC0_sample, QPC1_sample=g.QPC1_sample, QPX0_sample=g.QPX0_sample)
     else: abort(404)
 @bp.route('/bdr/init', methods=['GET'])
 def bdrinit():
@@ -929,13 +928,13 @@ def bdr_wiring_instruments():
     qsystem = request.args.get('qsystem')
     inst_list = inst_order(qsystem)
     instr_organized, instr_tabulated = {}, {}
-    for cat in q_category(): instr_organized[cat] = inst_order(qsystem,cat,False)
+    for cat in q_category(qsystem): instr_organized[cat] = inst_order(qsystem,cat,False)
     print(Fore.CYAN + "Organized instruments: %s"%instr_organized)
     
     modules_mismatch, channels_mismatch = 0, 0
     try:
         # Check CH & ROLE structure alignment:
-        for cat in q_category(): instr_tabulated[cat] = inst_order(qsystem,cat)
+        for cat in q_category(qsystem): instr_tabulated[cat] = inst_order(qsystem,cat)
         for key, value in instr_tabulated['ROLE'].items():
             modules_mismatch += len(value) - len(instr_tabulated['CH'][key])
             # print(Fore.YELLOW + "%s's ROLE: %s, %s's CH: %s" %(key, len(value), key, len(loads(instr_tabulated['CH'])[key])))
@@ -945,7 +944,7 @@ def bdr_wiring_instruments():
                 # print(Fore.YELLOW + "%s's ROLE's module-%s: %s, %s's CH's module-%s: %s" %(key, idx, len(channel_composition), key, idx, len(loads(instr_tabulated['CH'])[key][idx])))
     except Exception as e: print(Fore.RED + Back.WHITE + "Error: %s" %e)
         
-    return jsonify(category=q_category(), inst_list=inst_list, instr_organized=instr_organized, modules_mismatch=modules_mismatch, channels_mismatch=channels_mismatch)
+    return jsonify(category=q_category(qsystem), inst_list=inst_list, instr_organized=instr_organized, modules_mismatch=modules_mismatch, channels_mismatch=channels_mismatch)
 @bp.route('/bdr/wiring/set/instruments', methods=['GET'])
 def bdr_wiring_set_instruments():
     qsystem = request.args.get('qsystem')
