@@ -17,7 +17,7 @@ from qm.simulate import LoopbackInterface
 
 fres_q1 = resonator_IF_q1
 fres_q2 = resonator_IF_q2
-dfs = np.arange(- 1.2e6, + 1.2e6, 0.02e6)
+dfs = np.arange(- 2e6, + 2e6, 0.02e6)
 n_avg = 8000
 
 # QUA program

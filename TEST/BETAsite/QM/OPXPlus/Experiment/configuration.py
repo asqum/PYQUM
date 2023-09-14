@@ -34,14 +34,15 @@ def IQ_imbalance(g, phi):
 #############
 u = unit()
 
-qop_ip = "qum.phys.sinica.edu.tw"
+# qop_ip = "qum.phys.sinica.edu.tw"
+qop_ip = "192.168.1.82"
 
 # Qubits
 qubit_LO = 3.95 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
 # qubit_IF_q1 = (41) * u.MHz
 # qubit_IF_q2 = (+362.3) * u.MHz
-qubit_IF_q1 = (3950-3911) * u.MHz # 3911, 3544, 3783
-qubit_IF_q2 = (3950-3624.9) * u.MHz # 3624.9, 3705.7, 3667
+qubit_IF_q1 = (3950-3760) * u.MHz # 3911, 3544, 3783
+qubit_IF_q2 = (3950-3885) * u.MHz # 3624.9, 3705.7, 3667
 mixer_qubit_g_q1 = 0.007
 mixer_qubit_g_q2 = 0.009
 mixer_qubit_phi_q1 = 0.085
@@ -57,7 +58,7 @@ const_amp = 270 * u.mV
 # qubit-1 (uses X to tune up the rest of the Q-gates)
 flattop_len_1 = 40 #40, 60, 300
 flattop_rise_len_1 = 8
-flattop_amp_1 = 0.24 *0.131*4 *1.5 #RB1
+flattop_amp_1 = 0.5 #0.24 *0.131*4 *1.5 #RB1
 # flattop_amp_1 = 0.22 *0.32*0.857 #RB2
 
 tot_ft_len_1 = flattop_len_1 + 2 * flattop_rise_len_1
@@ -79,7 +80,7 @@ my90_flattop_Q_1 = x * 0.5
 # qubit-2
 flattop_len = 40 #40, 60, 300
 flattop_rise_len = 8
-flattop_amp = 0.24 *1.2 *1.5 #RB1
+flattop_amp = 0.5 #0.24 *1.2 *1.5 #RB1
 # flattop_amp = 0.22 *1.14 #RB2
  
 tot_ft_len = flattop_len + 2 * flattop_rise_len
@@ -158,11 +159,11 @@ minus_y90_Q_wf_q2 = minus_y90_wf_q2
 # No DRAG when alpha=0, it's just a gaussian.
 
 # Resonators
-resonator_LO = 6.35 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
+resonator_LO = 5.9 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
 
 # RB1:
-resonator_IF_q1 = int((6398.95 - 6350) * u.MHz)
-resonator_IF_q2 = int((6350 - 6481.953) * u.MHz) 
+resonator_IF_q1 = int((5743.45 - 5900) * u.MHz)
+resonator_IF_q2 = int((5900 - 6036.68) * u.MHz) 
 # RB2:
 # resonator_IF_q1 = int((6398.933 - 6350) * u.MHz)
 # resonator_IF_q2 = int((6350 - 6482.139) * u.MHz)
@@ -176,8 +177,8 @@ mixer_resonator_phi_q2 = -0.018
 mixer_resonator_phi_qc = -0.0010
 
 readout_len = 4000 # 20000 for 4-7
-readout_amp_q1 = 0.07 *0.892
-readout_amp_q2 = 0.07 *0.822
+readout_amp_q1 = 0.1*0.5*0.573 #0.07 *0.892
+readout_amp_q2 = 0.1*0.5*0.811 #0.07 *0.822
 readout_amp_qc = 0.0525
 
 time_of_flight = 260 # should be a multiple of 4
@@ -206,8 +207,8 @@ config = {
                 # 7: {"offset": 0.168},  # Z qubit1 => offset at q1 max frequency
                 # 8: {"offset": -0.48},  # Z qubit2 => offset at q2 max frequency
                 7: {"offset": 0},  # Z qubit1 => offset at 3 chosen idle-points => 0.137, -0.35, -0.15
-                8: {"offset": 0.49},  # Z qubit2 => offset near q2 max frequency  => -0.499
-                9: {"offset": -0.12},  # Z coupler => offset at q1<=>q2 coupling off=> 0.097 (will heat-up mK when > 0.1V)
+                8: {"offset": 0},  # Z qubit2 => offset near q2 max frequency  => -0.499
+                9: {"offset": 0},  # Z coupler => offset at q1<=>q2 coupling off=> 0.097 (will heat-up mK when > 0.1V)
             },
             "digital_outputs": {
                 1: {},

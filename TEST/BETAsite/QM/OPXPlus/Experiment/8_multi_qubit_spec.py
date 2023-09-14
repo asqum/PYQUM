@@ -20,7 +20,7 @@ from qualang_tools.results import progress_counter
 t = 14000//4 #//100
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
-dfs = np.arange(- 20e6, + 20e6, 0.5e6)
+dfs = np.arange(- 100e6, + 100e6, 0.25e6)
 n_avg = 10000000
 
 # QUA program
@@ -52,7 +52,7 @@ with program() as multi_qubit_spec:
             wait(1000)
 
             # qubit 1
-            play("cw"*amp(0.07), "q1_xy", duration=t)
+            play("cw"*amp(0.01), "q1_xy", duration=t)
             # align("q1_xy", "rr1")
             measure("readout"*amp(0.9), "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
             dual_demod.full("sin", "out1", "cos", "out2", Q[0]))

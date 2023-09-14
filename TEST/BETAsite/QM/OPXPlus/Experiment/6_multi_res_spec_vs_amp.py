@@ -16,10 +16,10 @@ from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qm.simulate import LoopbackInterface
 
-amps = np.arange(0.05, 1.99, 0.010)
+amps = np.arange(0.005, 1.99, 0.005)
 fres_q1 = resonator_IF_q1
 fres_q2 = resonator_IF_q2
-dfs = np.arange(-1.0e6, + 1.0e6, 0.01e6)
+dfs = np.arange(-2.0e6, + 2.0e6, 0.05e6)
 n_avg = 2000000
 
 # QUA program

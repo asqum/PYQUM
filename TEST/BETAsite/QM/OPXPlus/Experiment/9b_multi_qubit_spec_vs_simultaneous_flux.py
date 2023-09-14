@@ -31,10 +31,10 @@ fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
 
 # variables
-dfq1 = np.linspace( -100e6, 490e6, 100, dtype=int) # qubit 1
-dcq1 = np.linspace(-0.49, 0.49, 120) # flux 1
+dfq1 = np.linspace( -200e6, 290e6, 100, dtype=int) # qubit 1
+dcq1 = np.linspace(-0.05, 0.05, 120) # flux 1
 dfq2 = np.linspace(- 120e6, 160e6, 100, dtype=int) # qubit 2
-dcq2 = np.linspace(-0.49, 0.49, 120) # flux 2 
+dcq2 = np.linspace(-0.05, 0.05, 120) # flux 2 
 
 # Equalization for comparison: fixed on f_q1
 fres_q2 = fres_q1
@@ -63,16 +63,16 @@ with program() as multi_qubit_spec_vs_flux:
             update_frequency("q1_xy", df_q1 + fres_q1)
             update_frequency("q2_xy", df_q2 + fres_q2) 
             
-            with for_(*from_array(dc_q2, dcq2)):
+            with for_(*from_array(dc_q1, dcq1)):
 
                 # Flux sweeping 
-                set_dc_offset("q1_z", "single", dc_q2)
-                set_dc_offset("q2_z", "single", 0.173)
-                set_dc_offset("qc_z", "single", -0.117)
+                set_dc_offset("q1_z", "single", dc_q1)
+                set_dc_offset("q2_z", "single", 0)
+                set_dc_offset("qc_z", "single", 0)
                 
                 # Saturate qubit
-                play("cw"*amp(0.07), "q1_xy", duration=t)
-                play("cw"*amp(0.3), "q2_xy", duration=t)
+                play("cw"*amp(0.01), "q1_xy", duration=t)
+                play("cw"*amp(0.5), "q2_xy", duration=t)
 
                 # align()
                 
@@ -143,6 +143,7 @@ else:
         progress_counter(data_dict["n"], n_avg)
         s1 = data_dict["I1"] + 1j*data_dict["Q1"]
         s2 = data_dict["I2"] + 1j*data_dict["Q2"]
+        n = data_dict["n"]
 
         # Normalize:
         A1 = np.abs(s1)
