@@ -17,10 +17,21 @@ from qualang_tools.plot import interrupt_on_close
 from qm.simulate import LoopbackInterface
 
 amps = np.arange(0.005, 1.99, 0.005)
+max_amp = 1.5
+min_amp = 0.1
+n_max = max_amp**2
+n_min = min_amp**2
+
+logn_max = np.log10(n_max)*10
+logn_min = np.log10(n_min)*10
+logn_list = np.linspace(logn_min, logn_max, 20)
+print(logn_max,logn_min)
+amps = 10**(logn_list/10/2)
+print(amps[0],amps[-1])
 fres_q1 = resonator_IF_q1
 fres_q2 = resonator_IF_q2
-dfs = np.arange(-2.0e6, + 2.0e6, 0.05e6)
-n_avg = 2000000
+dfs = np.arange(-2.0e6, + 2.0e6, 0.02e6)
+n_avg = 100
 
 # QUA program
 with program() as multi_res_spec_vs_amp:
@@ -42,9 +53,9 @@ with program() as multi_res_spec_vs_amp:
 
         with for_(*from_array(df, dfs)):
 
-            assign(f_q1, df + fres_q1)
+            assign(f_q1, df +fres_q1)
             update_frequency("rr1", f_q1)
-            assign(f_q2, df + fres_q2)
+            assign(f_q2, df +fres_q2)
             update_frequency("rr2", f_q2)
 
             with for_(*from_array(a, amps)):
@@ -53,8 +64,8 @@ with program() as multi_res_spec_vs_amp:
                 wait(1000, "rr1")
 
                 # resonator 1
-                measure("readout"*amp(a), "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
-                dual_demod.full("sin", "out1", "cos", "out2", Q[0]))
+                measure("readout"*amp(a), "rr1", None, dual_demod.full("cos", "out1", "sin", "out2", I[0]),
+                dual_demod.full("minus_sin", "out1", "cos", "out2", Q[0]))
                 save(I[0], I_st[0])
                 save(Q[0], Q_st[0])
 
@@ -120,14 +131,14 @@ while job.result_handles.is_processing():
 
 
     ax[0].cla()
-    ax[0].set_title("rr1-%s (fcent: %s)"%(n, LO + fres_q1/u.MHz))
+    ax[0].set_title("rr1-%s (fcent: %s)"%(n, LO -fres_q1/u.MHz))
     ax[0].set_xlabel("amp")
     ax[0].set_ylabel("freq")
-    ax[0].pcolor(amps,  + dfs/u.MHz, A1)
+    ax[0].pcolor(logn_list,  -dfs/u.MHz, A1)
     ax[1].cla()
-    ax[1].set_title("rr2-%s (fcent: %s)"%(n, LO - fres_q2/u.MHz))
+    ax[1].set_title("rr2-%s (fcent: %s)"%(n, LO -fres_q2/u.MHz))
     ax[1].set_xlabel("amp")
     ax[1].set_ylabel("freq")
-    ax[1].pcolor(amps,  - dfs/u.MHz, A2)
+    ax[1].pcolor(logn_list,  -dfs/u.MHz, A2)
 
     plt.pause(1.0) # every second

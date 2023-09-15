@@ -15,7 +15,7 @@ from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool
 from qualang_tools.analysis import two_state_discriminator
 
-pts = 20000
+pts = 200
 s = 0.1
 
 # QUA program
@@ -36,8 +36,8 @@ with program() as iq_blobs:
         # ground iq blobs for both qubits
         wait(10000)
         align()
-        measure("readout"*amp(s), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_minus_sin", "out2", I_g[0]),
-                dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q_g[0]))
+        measure("readout"*amp(s), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I_g[0]),
+                dual_demod.full("rotated_minus_sin", "out1", "rotated_cos", "out2", Q_g[0]))
         measure("readout"*amp(s), "rr2", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I_g[1]),
                 dual_demod.full("rotated_minus_sin", "out1", "rotated_cos", "out2", Q_g[1]))
         save(I_g[0], I_g_st[0])
@@ -51,8 +51,8 @@ with program() as iq_blobs:
         play("flattop"*amp(1), "q1_xy")
         play("flattop"*amp(1), "q2_xy")
         align()
-        measure("readout"*amp(s), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_minus_sin", "out2", I_e[0]),
-                dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q_e[0]))
+        measure("readout"*amp(s), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I_e[0]),
+                dual_demod.full("rotated_minus_sin", "out1", "rotated_cos", "out2", Q_e[0]))
         measure("readout"*amp(s), "rr2", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I_e[1]),
                 dual_demod.full("rotated_minus_sin", "out1", "rotated_cos", "out2", Q_e[1]))
         save(I_e[0], I_e_st[0])
