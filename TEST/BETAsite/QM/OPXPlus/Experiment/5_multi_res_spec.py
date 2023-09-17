@@ -17,8 +17,8 @@ from qm.simulate import LoopbackInterface
 
 fres_q1 = resonator_IF_q1
 fres_q2 = resonator_IF_q2
-dfs = np.arange(- 1.2e6, + 1.2e6, 0.02e6)
-n_avg = 8000
+dfs = np.arange(- 2e6, + 2e6, 0.02e6)
+n_avg = 100
 
 # QUA program
 with program() as multi_res_spec:
@@ -42,8 +42,8 @@ with program() as multi_res_spec:
             # resonator 1
             assign(f_q1, df + fres_q1)
             update_frequency("rr1", f_q1)
-            measure("readout", "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
-            dual_demod.full("sin", "out1", "cos", "out2", Q[0]))
+            measure("readout", "rr1", None, dual_demod.full("cos", "out1", "sin", "out2", I[0]),
+            dual_demod.full("minus_sin", "out1", "cos", "out2", Q[0]))
             save(I[0], I_st[0])
             save(Q[0], Q_st[0])
             
@@ -94,11 +94,11 @@ LO = resonator_LO/u.MHz
 # plt.figure()
 fig, ax = plt.subplots(1, 2)
 
-ax[0].plot(LO + fres_q1/u.MHz + dfs/u.MHz, np.abs(s1))
+ax[0].plot( -dfs/u.MHz, np.abs(s1))
 ax[0].set_title("rr1")
 ax[0].set_ylabel("Amp (V)")
 ax[0].set_xlabel("Freq (MHz)")
-ax[1].plot(LO - fres_q2/u.MHz - dfs/u.MHz, np.abs(s2))
+ax[1].plot( -dfs/u.MHz, np.abs(s2))
 ax[1].set_title("rr2")
 ax[1].set_xlabel("Freq (MHz)")
 

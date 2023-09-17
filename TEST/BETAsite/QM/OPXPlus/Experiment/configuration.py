@@ -34,14 +34,15 @@ def IQ_imbalance(g, phi):
 #############
 u = unit()
 
-qop_ip = "qum.phys.sinica.edu.tw"
+# qop_ip = "qum.phys.sinica.edu.tw"
+qop_ip = "192.168.1.82"
 
 # Qubits
-qubit_LO = 3.95 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
+qubit_LO = 4.200 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
 # qubit_IF_q1 = (41) * u.MHz
 # qubit_IF_q2 = (+362.3) * u.MHz
-qubit_IF_q1 = (3950-3911) * u.MHz # 3911, 3544, 3783
-qubit_IF_q2 = (3950-3624.9) * u.MHz # 3624.9, 3705.7, 3667
+qubit_IF_q1 = -(4015-4200) * u.MHz # 3911, 3544, 3783
+qubit_IF_q2 = -(4160-4200) * u.MHz # 3624.9, 3705.7, 3667
 mixer_qubit_g_q1 = 0.007
 mixer_qubit_g_q2 = 0.009
 mixer_qubit_phi_q1 = 0.085
@@ -57,10 +58,18 @@ const_amp = 270 * u.mV
 # qubit-1 (uses X to tune up the rest of the Q-gates)
 flattop_len_1 = 40 #40, 60, 300
 flattop_rise_len_1 = 8
-flattop_amp_1 = 0.24 *0.131*4 *1.5 #RB1
-# flattop_amp_1 = 0.22 *0.32*0.857 #RB2
-
+flattop_amp_1 = 0.5 #0.24 *0.131*4 *1.5 #RB1
 tot_ft_len_1 = flattop_len_1 + 2 * flattop_rise_len_1
+# tot_ft_len_1 = 40
+
+# amp_drag_1 = 0.5
+# len_drag_1 = 40
+# sigma_drag_1 = tot_ft_len_1/4
+
+# flattop_amp_1 = 0.22 *0.32*0.857 #RB2
+idle_z_1 = 0.02
+
+# x,y = np.array(drag_gaussian_pulse_waveforms(amp_drag_1, tot_ft_len_1, sigma_drag_1, 0, anharmonicity_q1))
 x = np.array(flattop_gaussian_waveform(flattop_amp_1, flattop_len_1, flattop_rise_len_1))
 y = np.array([0] * tot_ft_len_1)
 x180_flattop_I_1 = x
@@ -79,12 +88,21 @@ my90_flattop_Q_1 = x * 0.5
 # qubit-2
 flattop_len = 40 #40, 60, 300
 flattop_rise_len = 8
-flattop_amp = 0.24 *1.2 *1.5 #RB1
-# flattop_amp = 0.22 *1.14 #RB2
- 
+flattop_amp = 0.5 #0.24 *1.2 *1.5 #RB1
+
 tot_ft_len = flattop_len + 2 * flattop_rise_len
+# tot_ft_len = 40
+# flattop_amp = 0.22 *1.14 #RB2
+# amp_drag_2 = 0.5
+# len_drag_2 = 40
+# sigma_drag_2 = tot_ft_len/4
+
+idle_z_2 = 0.006
+# x,y = np.array(drag_gaussian_pulse_waveforms(amp_drag_2, tot_ft_len, sigma_drag_2, 0, anharmonicity_q2))
 x = np.array(flattop_gaussian_waveform(flattop_amp, flattop_len, flattop_rise_len))
 y = np.array([0] * tot_ft_len)
+
+
 x180_flattop_I = x
 x180_flattop_Q = y 
 x90_flattop_I = x * 0.5 
@@ -98,16 +116,16 @@ mx90_flattop_Q = - y * 0.5
 my90_flattop_I = - y * 0.5
 my90_flattop_Q = x * 0.5
 
-pi_len = 800
-pi_sigma = 230
-pi_amp_q1 = 0.22
-pi_amp_q2 = 0.22
+pi_len = 40
+pi_sigma = pi_len/4
+pi_amp_q1 = 0.4*0.3
+pi_amp_q2 = 0.4*0.3
 drag_coef_q1 = 0
 drag_coef_q2 = 0
-anharmonicity_q1 = -200 * u.MHz
-anharmonicity_q2 = -180 * u.MHz
 AC_stark_detuning_q1 = 0 * u.MHz
 AC_stark_detuning_q2 = 0 * u.MHz
+anharmonicity_q1 = -200 * u.MHz
+anharmonicity_q2 = -200 * u.MHz
 
 x180_wf_q1, x180_der_wf_q1 = np.array(drag_gaussian_pulse_waveforms(pi_amp_q1, pi_len, pi_sigma, drag_coef_q1, anharmonicity_q1, AC_stark_detuning_q1))
 x180_I_wf_q1 = x180_wf_q1
@@ -158,11 +176,11 @@ minus_y90_Q_wf_q2 = minus_y90_wf_q2
 # No DRAG when alpha=0, it's just a gaussian.
 
 # Resonators
-resonator_LO = 6.35 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
+resonator_LO = 5.9 * u.GHz  # Used only for mixer correction and frequency rescaling for plots or computation
 
 # RB1:
-resonator_IF_q1 = int((6398.95 - 6350) * u.MHz)
-resonator_IF_q2 = int((6350 - 6481.953) * u.MHz) 
+resonator_IF_q1 = int(-(5743.80 - 5900) * u.MHz)
+resonator_IF_q2 = int(-(6036.85 - 5900) * u.MHz) 
 # RB2:
 # resonator_IF_q1 = int((6398.933 - 6350) * u.MHz)
 # resonator_IF_q2 = int((6350 - 6482.139) * u.MHz)
@@ -171,13 +189,13 @@ resonator_IF_qc = -220 * u.MHz
 mixer_resonator_g_q1 = -0.014
 mixer_resonator_g_q2 = 0.029
 mixer_resonator_g_qc = 0.020
-mixer_resonator_phi_q1 = -0.017
-mixer_resonator_phi_q2 = -0.018
+mixer_resonator_phi_q1 = 0 # -0.017 # -3.1416 #
+mixer_resonator_phi_q2 = 0 # -0.018 # -3.1416 #
 mixer_resonator_phi_qc = -0.0010
 
 readout_len = 4000 # 20000 for 4-7
-readout_amp_q1 = 0.07 *0.892
-readout_amp_q2 = 0.07 *0.822
+readout_amp_q1 = 0.010 #0.07 *0.892
+readout_amp_q2 = 0.015 #0.07 *0.822
 readout_amp_qc = 0.0525
 
 time_of_flight = 260 # should be a multiple of 4
@@ -197,17 +215,17 @@ config = {
     "controllers": {
         "con1": {
             "analog_outputs": {
-                2: {"offset": -0.0147},  # Q readout line
                 1: {"offset": +0.0029},  # I readout line
+                2: {"offset": -0.0147},  # Q readout line
                 3: {"offset": -0.0247},  # I qubit1
                 4: {"offset": -0.0885},  # Q qubit1
                 5: {"offset": -0.0446},  # I qubit2
                 6: {"offset": -0.110},  # Q qubit2
                 # 7: {"offset": 0.168},  # Z qubit1 => offset at q1 max frequency
                 # 8: {"offset": -0.48},  # Z qubit2 => offset at q2 max frequency
-                7: {"offset": 0},  # Z qubit1 => offset at 3 chosen idle-points => 0.137, -0.35, -0.15
-                8: {"offset": 0.49},  # Z qubit2 => offset near q2 max frequency  => -0.499
-                9: {"offset": -0.12},  # Z coupler => offset at q1<=>q2 coupling off=> 0.097 (will heat-up mK when > 0.1V)
+                7: {"offset": idle_z_1},  # Z qubit1 => offset at 3 chosen idle-points => 0.137, -0.35, -0.15
+                8: {"offset": idle_z_2},  # Z qubit2 => offset near q2 max frequency  => -0.499
+                9: {"offset": 0},  # Z coupler => offset at q1<=>q2 coupling off=> 0.097 (will heat-up mK when > 0.1V)
             },
             "digital_outputs": {
                 1: {},
@@ -221,8 +239,8 @@ config = {
     "elements": {
         "rr1": {
             "mixInputs": {
-                "I": ("con1", 2),
-                "Q": ("con1", 1),
+                "I": ("con1", 1),
+                "Q": ("con1", 2),
                 "lo_frequency": resonator_LO,
                 "mixer": "mixer_resonator",
             },
