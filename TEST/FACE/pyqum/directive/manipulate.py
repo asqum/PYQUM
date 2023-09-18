@@ -10,9 +10,10 @@ from traceback import format_exc
 from time import time, sleep
 from copy import copy, deepcopy
 from json import loads, dumps
-from numpy import prod, array, mean, ceil, moveaxis, linspace, outer, ones, divide
+from numpy import prod, array, mean, ceil, moveaxis, linspace, outer, ones, divide, zeros, expand_dims
 from numexpr import evaluate
 from flask import session, g
+from ast import literal_eval
 
 from importlib import import_module as im
 from pyqum.instrument.logger import settings, get_status, set_status, jobsinqueue, qout, job_update_perimeter
@@ -176,7 +177,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     CLOCK_HZ = float(perimeter['CLOCK_HZ'])
     # 1b. DSP perimeter(s)
     digital_homodyne = perimeter['DIGIHOME']
-    ifreqcorrection_kHz = float(perimeter['IF_ALIGN_KHZ'])
+    ifreqcorrection_MHz = perimeter['IF_ALIGN_KHZ'] #single Q readout -> "0" ; multiplex -> "0 20 30 ..."
     # 1c. Basic perimeter(s): # previously: config = corder['C-Config']
     # biasmode = bool(int(perimeter['BIASMODE']))
     # xypowa = perimeter['XY-LO-Power']
@@ -330,6 +331,12 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     elif readoutype in ['rt-dualddc-int']: # along record sum (shots with accumulated readout-time)
         buffersize = round(TOTAL_POINTS/5) * recordsum * 2  # only down-sampled 5X
     
+    # multiplex ==============================
+    DDCfreqs = ifreqcorrection_MHz.split(" ") # single readout -> ["0"] ; multiplex -> ["0","10","20",...]
+    readout_numbers = len(DDCfreqs)
+    buffersize *= readout_numbers
+    # ========================================
+
     try: print(Fore.YELLOW + "Buffer-size for %s: %s" %(readoutype, buffersize))
     except: print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
 
@@ -503,17 +510,22 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 DATA = ADC.AcquireData(adca, recordtime_ns*1e-9, recordsum, update_settings=dict(FPGA=FPGA) )[0]
                 # POST PROCESSING
                 if readoutype in ['one-shot', 'rt-dualddc-int']:
-                    
+                    DATA = DATA.reshape([recordsum,TOTAL_POINTS*2])
                     # Managing output data based on FPGA bitMode for one-shot-type***:
                     if "SD" not in ADC_type or FPGA == adca.bitMode_Keysight:
-                        DATA = DATA.reshape([recordsum,TOTAL_POINTS*2])
                         if digital_homodyne != "original": 
-                            for r in range(recordsum):
-                                trace_I, trace_Q = DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[0], DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[1]
-                                trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
-                                DATA[r,:] = array([trace_I, trace_Q]).reshape(2*TOTAL_POINTS) 
-                                if not r%1000: print(Fore.YELLOW + "Shooting %s times" %(r+1))
-                        DATA = mean(DATA.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1) # back to interleaved IQ-Data string
+                            DATA_for_DDCfreq = zeros([readout_numbers,recordsum*2])
+                            for a in range(readout_numbers):  
+                                DATA_after_aDDC = zeros(DATA.shape)   # copy a DATA with all elements zero in DATA's shape to fill in
+                                for r in range(recordsum):
+                                    trace_I, trace_Q = DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[0], DATA[r,:].reshape((TOTAL_POINTS, 2)).transpose()[1]
+                                    trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, -float(DDCfreqs[a]), dt=TIME_RESOLUTION_NS)
+                                    DATA_after_aDDC[r,:] = array([trace_I, trace_Q]).reshape(2*TOTAL_POINTS) 
+                                    if not r%1000:print("Now Rotate ROIF= ",DDCfreqs[a])
+                                    if not r%1000: print(Fore.YELLOW + "Single readout Shooting %s times" %(r+1))
+                                DATA_for_DDCfreq[a] = mean(DATA_after_aDDC.reshape([recordsum*2,TOTAL_POINTS])[:,skipoints:], axis=1) # back to interleaved IQ-Data string, shape -> (recordsum*2,)
+                            DATA = DATA_for_DDCfreq.reshape(-1) # shape -> (,a*recordsum*2)
+                            
                     elif FPGA & adca.bitMode_DDC:
                         DATA = DATA.reshape([recordsum,round(TOTAL_POINTS/5),2])
                         DATA = moveaxis(DATA,1,0).reshape([round(TOTAL_POINTS/5)*recordsum*2]) # change into [round(TOTAL_POINTS/5),recordsum,2] shape and then melt it down to a string of data (1D)
@@ -544,8 +556,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     else: DDC_ON_FPGA = FPGA & adca.bitMode_DDC
                     if (digital_homodyne != "original") and not (DDC_ON_FPGA): 
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
-                        trace_I, trace_Q = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, ifreqcorrection_kHz, dt=TIME_RESOLUTION_NS)
-                        DATA = array([trace_I, trace_Q]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string
+                        DATA_for_DDCfreq = zeros([readout_numbers,TOTAL_POINTS*2])
+                        for a in range(readout_numbers):
+                            IafterDDC, QafterDDC = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, -float(DDCfreqs[a]), dt=TIME_RESOLUTION_NS)
+                            DATA_for_DDCfreq[a] = array([IafterDDC, QafterDDC]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string
+                        DATA = DATA_for_DDCfreq.reshape(-1)
                 else:
                     print(Back.WHITE + Fore.RED + "INVALID READOUTYPE!")
 

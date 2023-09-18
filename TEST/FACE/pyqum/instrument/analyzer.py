@@ -211,7 +211,7 @@ def pulseresp_sampler(srange, selected_caddress, selectedata, c_structure, datad
 	# print("Pulse sampled in %ss" %(time()-tStart))
 	return dIdata, dQdata, Adata, Pdata
 
-def pulse_baseband(method, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorrection_kHz, t0=0, dt=1):
+def pulse_baseband(method, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorrection_MHz, t0=0, dt=1):
 	'''
 	dt: digitizer-resolution in ns
 	'''
@@ -221,7 +221,7 @@ def pulse_baseband(method, trace_I, trace_Q, rotation_compensate_MHz, ifreqcorre
 	elif method == "q_digital_homodyne": processing_data = sa_dh.SingleChannel(t0, dt, array([trace_Q]))
 	
 	try: 
-		processing_data.process_DownConversion(rotation_compensate_MHz/1e3 + ifreqcorrection_kHz/1e6) # in GHz (ns timescale)
+		processing_data.process_DownConversion(rotation_compensate_MHz/1e3 + ifreqcorrection_MHz/1e3) # in GHz (ns timescale)
 		# if method == "dual_digital_homodyne": processing_data.process_LowPass(4,0.05) Jacky:Should be remove
 	except: print(Fore.RED + "INVALID DH METHOD")
 
