@@ -17,14 +17,17 @@ from qm.simulate import LoopbackInterface
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
-t = 17000//4
+t = 1400//4
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
 # dfs = np.arange(- 40e6, + 30e6, 0.30e6) # qubit 1
 # dcs = np.arange(-0.03, 0.21, 0.002) # flux 1
-dfs = np.arange(- 20e6, + 100e6, 0.30e6) # qubit 2
-dcs = np.arange(-0.5, -0.40, 0.002) # flux 2 
-n_avg = 100000
+dfs = np.arange( -300e6, 300e6, 1e6) # qubit 2
+dcs = np.arange(-0.05, 0.05, 0.005) # flux 2 
+sweep_z_1 = idle_z_1 + dcs
+sweep_z_2 = idle_z_2 + dcs
+
+n_avg = 1000
 
 # QUA program
 with program() as multi_qubit_spec_vs_flux:
@@ -48,22 +51,23 @@ with program() as multi_qubit_spec_vs_flux:
 
             assign(f_q1, df + fres_q1)
             update_frequency("q1_xy", f_q1)
-            # assign(f_q2, df + fres_q2)
-            # update_frequency("q2_xy", f_q2)  
+            assign(f_q2, df + fres_q2)
+            update_frequency("q2_xy", f_q2)  
 
-            with for_(*from_array(dc, dcs)):
+            with for_(*from_array(dc, sweep_z_1)):
 
                 # Flux sweeping 
                 set_dc_offset("q1_z", "single", dc)
-                
+                # set_dc_offset("q2_z", "single", dc)
+
                 # Saturate qubit
-                play("cw"*amp(0.30), "q1_xy", duration=t)
-                # play("cw"*amp(0.05), "q2_xy", duration=t)
+                play("cw"*amp(0.01), "q1_xy", duration=t)
+                play("cw"*amp(0.01), "q2_xy", duration=t)
                 
                 # readout
-                measure("readout"*amp(0.4), "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
-                dual_demod.full("sin", "out1", "cos", "out2", Q[0]))
-                measure("readout"*amp(0.4), "rr2", None, dual_demod.full("cos", "out1", "sin", "out2", I[1]),
+                measure("readout"*amp(1), "rr1", None, dual_demod.full("cos", "out1", "sin", "out2", I[0]),
+                dual_demod.full("minus_sin", "out1", "cos", "out2", Q[0]))
+                measure("readout"*amp(1), "rr2", None, dual_demod.full("cos", "out1", "sin", "out2", I[1]),
                 dual_demod.full("minus_sin", "out1", "cos", "out2", Q[1]))
                 save(I[0], I_st[0])
                 save(Q[0], Q_st[0])
@@ -105,8 +109,8 @@ else:
 
     # plt.show()
     LO = qubit_LO/u.MHz
-    IF_q1 = -qubit_IF_q1/u.MHz
-    IF_q2 = -qubit_IF_q2/u.MHz
+    IF_q1 = -(qubit_IF_q1+dfs)/u.MHz
+    IF_q2 = -(qubit_IF_q2+dfs)/u.MHz
 
     fig, ax = plt.subplots(2, 2)
     interrupt_on_close(fig, job)
@@ -129,22 +133,22 @@ else:
         ax[0,0].set_title("q1 amp (LO: %s, n: %s)" %(LO,n))
         ax[0,0].set_xlabel("flux-2")
         ax[0,0].set_ylabel("q1_ifreq")
-        ax[0,0].pcolor(dcs, LO + IF_q1 - dfs/u.MHz, np.abs(s1))
+        ax[0,0].pcolor(dcs, IF_q1, np.abs(s1))
 
         ax[1,0].set_title("q1 pha (LO: %s, n: %s)" %(LO,n))
         ax[1,0].set_xlabel("flux-2")
         ax[1,0].set_ylabel("q1_ifreq")
-        ax[1,0].pcolor(dcs, LO + IF_q1 - dfs/u.MHz, np.unwrap(np.angle(s1)))
+        ax[1,0].pcolor(dcs, IF_q1, np.unwrap(np.angle(s1)))
     
         ax[0,1].set_title("q2 amp (LO: %s, n: %s)" %(LO,n))
         ax[0,1].set_xlabel("flux-2")
         ax[0,1].set_ylabel("q2_ifreq")
-        ax[0,1].pcolor(dcs, LO + IF_q2 - dfs/u.MHz, np.abs(s2))
+        ax[0,1].pcolor(dcs, IF_q2, np.abs(s2))
 
         ax[1,1].set_title("q2 pha (LO: %s, n: %s)" %(LO,n))
         ax[1,1].set_xlabel("flux-2")
         ax[1,1].set_ylabel("q2_ifreq")
-        ax[1,1].pcolor(dcs, LO + IF_q2 - dfs/u.MHz, np.unwrap(np.angle(s2)))
+        ax[1,1].pcolor(dcs, IF_q2, np.unwrap(np.angle(s2)))
 
         plt.pause(1.0)
 

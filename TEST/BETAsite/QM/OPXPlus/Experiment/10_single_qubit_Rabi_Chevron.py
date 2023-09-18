@@ -22,9 +22,15 @@ data_dict = dict()
 
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
-dfs = np.arange(- 14e6, + 14e6, 0.2e6)
-amps = np.arange(0.0, 1.95, 0.02)
-n_avg = 100000
+dfs = np.arange( -50e6, +50e6, 0.5e6)
+max_amp = 1.99
+min_amp = 0
+# n_max = max_amp**2
+# n_min = min_amp**2
+# n_list = np.linspace(n_min, n_max, 100)
+amps = np.arange(min_amp, max_amp, 0.01)
+
+n_avg = 100
 
 # QUA program
 with program() as rabi_chevron:
@@ -46,9 +52,9 @@ with program() as rabi_chevron:
 
         with for_(*from_array(df, dfs)):
 
-            assign(f_q1, df + fres_q1)
+            assign(f_q1, df +fres_q1)
             update_frequency("q1_xy", f_q1)
-            assign(f_q2, df + fres_q2)
+            assign(f_q2, df +fres_q2)
             update_frequency("q2_xy", f_q2)  
 
             with for_(*from_array(a, amps)):
@@ -56,11 +62,11 @@ with program() as rabi_chevron:
                 wait(4000)
 
                 # qubit 1
-                play("flattop"*amp(a), "q1_xy")
-                play("flattop"*amp(a), "q2_xy")
+                play("x180"*amp(a), "q1_xy")
+                play("x180"*amp(a), "q2_xy")
                 align()
-                measure("readout"*amp(1.0), "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
-                dual_demod.full("sin", "out1", "cos", "out2", Q[0]))
+                measure("readout"*amp(1.0), "rr1", None, dual_demod.full("cos", "out1", "sin", "out2", I[0]),
+                dual_demod.full("minus_sin", "out1", "cos", "out2", Q[0]))
                 save(I[0], I_st[0])
                 save(Q[0], Q_st[0])
                 measure("readout"*amp(1.0), "rr2", None, dual_demod.full("cos", "out1", "sin", "out2", I[1]),
@@ -105,8 +111,10 @@ else: # execute new job (QUA):
 
 # plt.show()
 LO = qubit_LO/u.MHz
-IF1 = -fres_q1/u.MHz
-IF2 = -fres_q2/u.MHz
+IF_q1 = -(qubit_IF_q1+dfs)/u.MHz
+IF_q2 = -(qubit_IF_q2+dfs)/u.MHz
+mid_q1 = (IF_q1[0]+IF_q1[-1])/2
+mid_q2 = (IF_q2[0]+IF_q2[-1])/2
 
 fig, ax = plt.subplots(2,2)
 interrupt_on_close(fig, job)
@@ -120,17 +128,25 @@ while job.result_handles.is_processing():
 
     u = unit()
     ax[0,0].cla()
-    ax[0,0].pcolor(amps, -dfs, data_dict['I1'])
-    ax[0,0].set_title('Q1-I, n={}, fcent={}'.format(data_dict["n"], LO+IF1))
+    ax[0,0].pcolor(amps, IF_q1, data_dict['I1'])
+    ax[0,0].set_title('Q1-I, n={}, fcent={}'.format(data_dict["n"], LO-qubit_IF_q1))
+    ax[0,0].axhline(mid_q1, ls='--', color='r')
+
     ax[1,0].cla()
-    ax[1,0].pcolor(amps, -dfs, data_dict['Q1'])
+    ax[1,0].pcolor(amps, IF_q1, data_dict['Q1'])
     ax[1,0].set_title('Q1-Q, n={}'.format(data_dict["n"]))
+    ax[1,0].axhline(mid_q1, ls='--', color='r')
+
     ax[0,1].cla()
-    ax[0,1].pcolor(amps, -dfs, data_dict['I2'])
-    ax[0,1].set_title('Q2-I, n={}, fcent={}'.format(data_dict["n"], LO+IF2))
+    ax[0,1].pcolor(amps, IF_q2, data_dict['I2'])
+    ax[0,1].set_title('Q2-I, n={}, fcent={}'.format(data_dict["n"], LO-qubit_IF_q2))
+    ax[0,1].axhline(mid_q2, ls='--', color='r')
+    
     ax[1,1].cla()
-    ax[1,1].pcolor(amps, -dfs, data_dict['Q2'])
+    ax[1,1].pcolor(amps, IF_q2, data_dict['Q2'])
     ax[1,1].set_title('Q2-Q, n={}'.format(data_dict["n"]))
+    ax[1,1].axhline(mid_q2, ls='--', color='r')
+
     plt.pause(2.0)
     # np.savez(save_dir/filename, **data_dict)
 

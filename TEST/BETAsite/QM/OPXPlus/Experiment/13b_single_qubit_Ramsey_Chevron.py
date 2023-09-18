@@ -19,9 +19,9 @@ from qualang_tools.results import progress_counter
 
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
-t_delay = np.arange(4, 300, 1)
+t_idx_delay = np.arange(0, 1000, 10)
 n_avg = 100000
-fvec = np.arange(-10e6, 10e6, 0.1e6)
+fvec = np.arange(-1e6, 1e6, 0.05e6)
 
 # QUA program
 with program() as ramsey:
@@ -44,7 +44,7 @@ with program() as ramsey:
             update_frequency("q1_xy", f + fres_q1)
             update_frequency("q2_xy", f + fres_q2)
 
-            with for_(*from_array(t, t_delay)):
+            with for_(*from_array(t, t_idx_delay)):
                     
                 wait(10000)
 
@@ -85,11 +85,11 @@ with program() as ramsey:
         n_st.save("n")
 
         # resonator 1
-        I_st[0].buffer(len(fvec), len(t_delay)).average().save("I1")
-        Q_st[0].buffer(len(fvec), len(t_delay)).average().save("Q1")
+        I_st[0].buffer(len(fvec), len(t_idx_delay)).average().save("I1")
+        Q_st[0].buffer(len(fvec), len(t_idx_delay)).average().save("Q1")
         # resonator 2
-        I_st[1].buffer(len(fvec), len(t_delay)).average().save("I2")
-        Q_st[1].buffer(len(fvec), len(t_delay)).average().save("Q2")
+        I_st[1].buffer(len(fvec), len(t_idx_delay)).average().save("I2")
+        Q_st[1].buffer(len(fvec), len(t_idx_delay)).average().save("Q2")
 
 
 # open communication with opx
@@ -113,7 +113,7 @@ IF2 = -fres_q2/u.MHz
 
 fig, ax = plt.subplots(2,2)
 interrupt_on_close(fig, job)
-
+t_delay = 4*t_idx_delay
 while job.result_handles.is_processing():
     results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
     n, I1, Q1, I2, Q2 = results.fetch_all()
@@ -121,16 +121,16 @@ while job.result_handles.is_processing():
 
     u = unit()
     ax[0,0].cla()
-    ax[0,0].pcolor(4*t_delay, fvec, I1)
+    ax[0,0].pcolor(t_delay, fvec, I1)
     ax[0,0].set_title('Q1-I, n={}, fcent={}'.format(n, LO+IF1))
     ax[1,0].cla()
-    ax[1,0].pcolor(4*t_delay, fvec, Q1)
+    ax[1,0].pcolor(t_delay, fvec, Q1)
     ax[1,0].set_title('Q1-Q, n={}'.format(n))
     ax[0,1].cla()
-    ax[0,1].pcolor(4*t_delay, fvec, I2)
+    ax[0,1].pcolor(t_delay, fvec, I2)
     ax[0,1].set_title('Q2-I, n={}, fcent={}'.format(n, LO+IF2))
     ax[1,1].cla()
-    ax[1,1].pcolor(4*t_delay, fvec, Q2)
+    ax[1,1].pcolor(t_delay, fvec, Q2)
     ax[1,1].set_title('Q2-Q, n={}'.format(n))
     plt.pause(1.0)
 

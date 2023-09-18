@@ -16,15 +16,19 @@ from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qm.simulate import LoopbackInterface
 
-flux_pts = 50
-dcs1 = np.linspace(-0.49, 0.49, flux_pts)
-dcs2 = np.linspace(-0.49, 0.49, flux_pts)
+flux_pts = 25
+volt_range = 0.1
+Q1_offset = 0.021
+Q2_offset = 0.010
+del_volt = np.linspace(-volt_range/2, +volt_range/2, flux_pts)
+dcs1 = Q1_offset+del_volt
+dcs2 = Q2_offset+del_volt
 ddc1 = dcs1[1] - dcs1[0]
 ddc2 = dcs2[1] - dcs2[0]
 fres_q1 = resonator_IF_q1
 fres_q2 = resonator_IF_q2
-dfs = np.arange(-1.4e6, + 1.0e6, 0.006e6)
-n_avg = 2000000
+dfs = np.arange(-1e6, + 1e6, 0.02e6)
+n_avg = 100
 
 # QUA program
 with program() as multi_res_spec_vs_flux:
@@ -48,9 +52,9 @@ with program() as multi_res_spec_vs_flux:
 
         with for_(*from_array(df, dfs)):
 
-            assign(f_q1, df + fres_q1)
+            assign(f_q1, df +fres_q1)
             update_frequency("rr1", f_q1)
-            assign(f_q2, -df + fres_q2)
+            assign(f_q2, df +fres_q2)
             update_frequency("rr2", f_q2)
 
             assign(dc1, dcs1[0])
@@ -60,14 +64,14 @@ with program() as multi_res_spec_vs_flux:
 
                 # Flux sweeping 
                 set_dc_offset("q1_z", "single", dc1)
-                # set_dc_offset("q2_z", "single", dc2)
+                set_dc_offset("q2_z", "single", dc2)
             
                 # wait for the resonators to relax 
                 wait(1000, "rr1")
 
                 # resonator 1
-                measure("readout", "rr1", None, dual_demod.full("cos", "out1", "minus_sin", "out2", I[0]),
-                dual_demod.full("sin", "out1", "cos", "out2", Q[0]))
+                measure("readout", "rr1", None, dual_demod.full("cos", "out1", "sin", "out2", I[0]),
+                dual_demod.full("minus_sin", "out1", "cos", "out2", Q[0]))
                 save(I[0], I_st[0])
                 save(Q[0], Q_st[0])
 
@@ -139,12 +143,12 @@ while job.result_handles.is_processing():
     ax[0].set_title("rr1-%s (LO: %s)"%(n,LO))
     ax[0].set_xlabel("flux-1+2")
     ax[0].set_ylabel("freq")
-    ax[0].pcolor(dcs1, + fres_q1/u.MHz + dfs/u.MHz, A1)
+    ax[0].pcolor(del_volt, -dfs/u.MHz, A1)
     ax[1].cla()
     ax[1].set_title("rr2-%s (LO: %s)"%(n,LO))
     ax[1].set_xlabel("flux-1+2")
     ax[1].set_ylabel("freq")
-    ax[1].pcolor(dcs2, - fres_q2/u.MHz + dfs/u.MHz, A2)
+    ax[1].pcolor(del_volt, -dfs/u.MHz, A2)
 
     plt.pause(1.0) # every second
 

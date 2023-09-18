@@ -18,7 +18,7 @@ from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
 amps = np.arange(0.0, 1.7, 0.01)
-n_avg = 1000000
+n_avg = 100
 err_amp = 1
 
 # QUA program

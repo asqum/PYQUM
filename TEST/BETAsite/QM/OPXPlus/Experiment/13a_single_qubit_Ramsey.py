@@ -18,7 +18,7 @@ from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
 
 t_delay = np.arange(4, 300, 1)
-n_avg = 100000
+n_avg = 1000
 dphi = 5e6 * (t_delay[1]-t_delay[0])*(4e-9) # period: 200ns
 Phi = np.arange(0, 5, 0.05) # 5 rotations
 # Phi = np.arange(0, 6, 0.02)
@@ -40,23 +40,23 @@ with program() as ramsey:
         save(n, n_st)
 
         # assign(phi, 0)
-        # with for_(*from_array(t, t_delay)):
-        with for_(*from_array(phi, Phi)):
+        with for_(*from_array(t, t_delay)):
+        # with for_(*from_array(phi, Phi)):
                 
-            wait(10000)
+            wait(100000)
 
             # qubit 2
             play("x90_ft", "q2_xy")
-            # wait(t, "q2_xy")
+            wait(t, "q2_xy")
 
             align()
-            frame_rotation_2pi(phi, "q2_xy")
+            # frame_rotation_2pi(phi, "q2_xy")
             play("x90_ft", "q2_xy")
 
             align() # equivalent to align("q2_xy", "rr1", "rr2")
 
-            measure("readout"*amp(1.0), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_minus_sin", "out2", I[0]),
-            dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q[0]))
+            measure("readout"*amp(1.0), "rr1", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I[0]),
+            dual_demod.full("rotated_minus_sin", "out1", "rotated_cos", "out2", Q[0]))
             save(I[0], I_st[0])
             save(Q[0], Q_st[0])
             measure("readout"*amp(1.0), "rr2", None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I[1]),
@@ -107,7 +107,10 @@ while job.result_handles.is_processing():
     u = unit()
     plt.cla()
     # plt.plot(4*t_delay, Q2)
-    plt.plot(Phi, Q2)
+    # plt.plot(Phi, Q2)
+    plt.plot(t_delay*4, I2)
+    plt.plot(t_delay*4, Q2)
+
     plt.title('n={}'.format(n))
     plt.pause(1.0)
 
