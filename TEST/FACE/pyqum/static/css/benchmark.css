@@ -225,12 +225,12 @@ label {
 .measurePara {
     background-color: #ffffff;
     flex-basis: 20%;
-    margin: 2px;
+    margin: 0px;
     display: flex;
     justify-content: flex-start;
     align-items: center;
     color: rgb(0, 0, 0);
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .allFitPara {
