@@ -152,6 +152,7 @@ function accessdata_QuCTRL() {
         console.log("R-JSON-length: " + R_COUNT);
         window.SQ_CParameters = data.SQ_CParameters;
 
+
         // 1. Creating parameter-range selectors:
         $('table.mani-QuCTRL-extra').remove();
         $.each(SQ_CParameters, function(i,cparam){
@@ -170,7 +171,7 @@ function accessdata_QuCTRL() {
                 $('table.mani-QuCTRL-extra.E' + row + ' thead tr').append('<th class="mani QuCTRL ' + String(cparam) + '">' + cparam + '</th>');
                 $('table.mani-QuCTRL-extra.E' + row + ' tbody tr').append('<th><select class="mani QuCTRL" id="' + cparam + '" type="text"></select></th>');
             }; 
-        });
+        }); 
 
         // 2. Loading data into parameter-range selectors:
         $.each(SQ_CParameters, function(i,cparam){
@@ -1192,11 +1193,14 @@ $(function () {
         $('button.mani.access.QuCTRL#'+mani_TASK).prepend("<i class='QuCTRL1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.QuCTRL#repeat').val();
         var cselect = {};
+
+
         $.each(SQ_CParameters, function(i,cparam){ 
             // to avoid ">" from messing with HTML syntax
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
+
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();
@@ -1234,11 +1238,14 @@ $(function () {
         $('button.mani.access.QuCTRL#'+mani_TASK).prepend("<i class='QuCTRL1d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.QuCTRL#repeat').val();
         var cselect = {};
+
+
         $.each(SQ_CParameters, function(i,cparam){ 
             // to avoid ">" from messing with HTML syntax
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
+
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();
@@ -1307,11 +1314,14 @@ $(function () {
         $('button.mani.access.QuCTRL#'+mani_TASK).prepend("<i class='QuCTRL2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.QuCTRL#repeat').val();
         var cselect = {};
+
+
         $.each(SQ_CParameters, function(i,cparam){ 
             // to avoid ">" from messing with HTML syntax
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
+
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();
@@ -1415,11 +1425,16 @@ $(function () {
         $('button.mani.access.QuCTRL#'+mani_TASK).prepend("<i class='QuCTRL2d fa fa-palette fa-spin fa-3x fa-fw' style='font-size:15px;color:purple;'></i> ");
         // var irepeat = $('select.mani.QuCTRL#repeat').val();
         var cselect = {};
+
+
         $.each(SQ_CParameters, function(i,cparam){ 
             // to avoid ">" from messing with HTML syntax
             if (cparam.includes(">")) { cselect[cparam] = '0'; // mimicking index of c-selection
             } else { cselect[cparam] = $('select.mani.QuCTRL#' + cparam).val(); };
         });
+
+
+
         console.log("Picked Flux: " + cselect['Flux-Bias']);
         var srange = $('input.mani.data.QuCTRL#QuCTRL-sample-range').val();
         var smode = $('select.mani.data.QuCTRL#QuCTRL-sample-mode').val();

@@ -86,7 +86,10 @@ class ExtendMeasurement ():
 			else: bufferkey = 'RECORD_TIME_NS'
 
 			# Extend C-Structure with R-Parameters & Buffer keys:
-			self.measurementObj.corder['C-Structure'] = self.measurementObj.corder['C-Structure'] + [k for k in RJSON.keys() if ">" not in k] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
+			if self.measurementObj.perimeter['READOUTYPE'] in ['one-shot','continuous']:
+				self.measurementObj.corder['C-Structure'] = self.measurementObj.corder['C-Structure'] + [k for k in RJSON.keys() if ">" not in k] + ["IF_ALIGN_MHZ"] + [bufferkey]
+			else:
+				self.measurementObj.corder['C-Structure'] = self.measurementObj.corder['C-Structure'] + [k for k in RJSON.keys() if ">" not in k] + [bufferkey] # Fixed-Structure + R-Structure + Buffer
 
 		C_Shape = []
 		for k in measurementObj.corder["C-Structure"] :
