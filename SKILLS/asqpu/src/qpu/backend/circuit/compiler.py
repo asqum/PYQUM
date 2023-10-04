@@ -154,8 +154,8 @@ class SQCompiler(GateCompiler):
             a_weight = self.params["waveform"][1]
             sFactor = self.params["waveform"][2]
         else:
-            waveform = "DRAG"
-            a_weight = 0
+            waveform = "DRAGe"
+            a_weight = -0.5
             sFactor = 4.
 
 
