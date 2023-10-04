@@ -284,6 +284,7 @@ class pulser:
                 self.music = abs(wholeConnectEnvelope)
             case _:
                 print("Unkown IF channel type.")
+                print("IF chennel: ",self.ifChannel)
                 self.envelope = array([])
                 self.music = array([])               
         #print("operation number",len(self.operationList))
