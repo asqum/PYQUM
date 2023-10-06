@@ -57,8 +57,8 @@ class TQCompile(GateCompiler):
             a_weight = self.params[str(gate.targets[0])]["waveform"][1]
             sFactor = self.params[str(gate.targets[0])]["waveform"][2]
         else:
-            waveform = "DRAG"
-            a_weight = 0
+            waveform = "DRAGe"
+            a_weight = -0.5
             sFactor = 4.
 
         sampling_point = int( -(pulse_length//-dt) )

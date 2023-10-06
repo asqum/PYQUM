@@ -173,6 +173,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
     # ***USER_DEFINED*** Controlling-PARAMETER(s) ======================================================================================
     # 1a. Instruments' specs:
+    print("Renamed task is : ",str(renamed_task))
     TIME_RESOLUTION_NS = int(perimeter['TIME_RESOLUTION_NS'])
     CLOCK_HZ = float(perimeter['CLOCK_HZ'])
     # 1b. DSP perimeter(s)
@@ -195,7 +196,10 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         ifperiod = pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%RO_addr], RJSON), dt=(1e9/CLOCK_HZ)).totaltime
     if TASK_LEVEL == "EXP":
         # for i, qubit_id in enumerate(Sample_Backend.q_reg["qubit"]):
-        d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True ) # PENDING: MORE unified function from ASQPU?
+        if str(renamed_task) == "TQRB": # Ratis edit @ 2023/10/05
+            d_setting = qapp.get_TQRB_device_setting( Sample_Backend, 0, 1, 0, withRO=True )
+        else:
+            d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True ) # PENDING: MORE unified function from ASQPU?
         ifperiod = d_setting['total_time']
     ##JACKY 
     print(Fore.BLUE +f"totaltime(ifperiod) {ifperiod}")
@@ -396,6 +400,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # Expert EXP Control (Every-loop)
                 Exp = macer(commander=renamed_task)
                 Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
+                
 
                 # MATCHING EXP-TASK FOR ASQPU API:
                 match renamed_task:
@@ -450,6 +455,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz
                     elif 'RO' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = RO_Compensate_MHz
                     else: Compensate_MHz = 0
+                    
                     Mac = macer()
                     Mac.execute(MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)])
                     SG[i_slot].frequency(SG_instance[i_slot], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
@@ -561,6 +567,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
                         DATA_for_DDCfreq = zeros([readout_numbers,TOTAL_POINTS*2])
                         for a in range(readout_numbers):
+                            print("Now Rotate ROIF= ",DDCfreqs[a])
+                            print("The RO mixer IF= ",str(DDC_RO_Compensate_MHz))
                             IafterDDC, QafterDDC = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, -float(DDCfreqs[a]), dt=TIME_RESOLUTION_NS)
                             DATA_for_DDCfreq[a] = array([IafterDDC, QafterDDC]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string
                         DATA = DATA_for_DDCfreq.reshape(-1)

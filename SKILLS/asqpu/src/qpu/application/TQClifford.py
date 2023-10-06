@@ -290,12 +290,28 @@ def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, 
         mycompiler.params[str(qi)]["cz"]["dz"] = qubit_info[qi].tempPars["CZ"]["dZ"]
         mycompiler.params[str(qi)]["cz"]["c_Z"] = qubit_info[qi].tempPars["CZ"]["c_Z"]    
         mycompiler.params[str(qi)]["cz"]["c_ZW"] = qubit_info[qi].tempPars["CZ"]["c_ZW"]
+
         mycompiler.params[str(qi)]["cz"]["type"] = qubit_info[qi].tempPars["CZ"]["type"] 
         mycompiler.params[str(qi)]["cz"]["xyr"] = qubit_info[qi].tempPars["CZ"]["XYR"] 
-        if "waveform&alpha&sigma" in list(qubit_info[qi].tempPars.keys()):
-            mycompiler.params["waveform"] = qubit_info[qi].tempPars["waveform&alpha&sigma"]
+        # if "waveform&alpha&sigma" in list(qubit_info[qi].tempPars.keys()):
+        #     mycompiler.params["waveform"] = qubit_info[qi].tempPars["waveform&alpha&sigma"]
+        # else:
+        #     mycompiler.params["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
+        '''Ratis debug: '''
+        if "waveform&edge&sigma" in list(qubit_info[qi].tempPars["CZ"].keys()):
+            mycompiler.params[str(qi)]["cz"]["waveform"] = qubit_info[qi].tempPars["CZ"]["waveform&edge&sigma"]
         else:
-            mycompiler.params["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
+            mycompiler.params[str(qi)]["cz"]["waveform"] = ["NaN"]
+        if "waveform&edge&sigma" in list(qubit_info[qi].tempPars["CZ"].keys()):   
+            mycompiler.params[str(qi)]["cz"]["c_waveform"] = qubit_info[qi].tempPars["CZ"]["c_waveform&edge&sigma"]
+        else:
+            mycompiler.params[str(qi)]["cz"]["c_waveform"] = [""]
+        if "waveform&alpha&sigma" in list(qubit_info[qi].tempPars.keys()):
+            mycompiler.params[str(qi)]["waveform"] = qubit_info[qi].tempPars["waveform&alpha&sigma"]
+        else:
+            mycompiler.params[str(qi)]["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
+
+
     # The readout pulse length for 2 qubits should be the same.    
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["pulse_length"] = q1_info.tempPars["ROW"]
