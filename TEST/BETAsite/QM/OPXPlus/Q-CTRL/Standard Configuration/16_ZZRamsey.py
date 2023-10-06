@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 2, 1 
+control, target = 1, 2
 
 # Idle time sweep in clock cycles (Needs to be a list of integers)
 if X: idle_times = np.arange(4, 1000, 1)
@@ -64,7 +64,11 @@ with program() as ramsey:
 
             # Qubit b
             play("x90", "q%s_xy"%target)  # 1st x90 gate
-            wait(t, "q%s_xy"%target)  # Wait a varying idle time
+
+            wait(t/2, "q%s_xy"%target)  # Wait a varying idle time
+            play("y180", "q%s_xy"%target)  # DD sequence
+            wait(t/2, "q%s_xy"%target)  # Wait a varying idle time
+
             frame_rotation_2pi(phi, "q%s_xy"%target)  # Virtual Z-rotation
             play("x90", "q%s_xy"%target)  # 2nd x90 gate
 
@@ -174,6 +178,6 @@ else:
         plt.ylabel("I quadrature [V]")
         plt.tight_layout()
         plt.show()
-        print(fitting_results['f']*u.MHz)
+        print(fitting_results['f'])
     except (Exception,) as e:
         print(e)
