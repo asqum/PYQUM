@@ -7,15 +7,17 @@ pip install qualang-tools
 pip install --upgrade qualang-tools
 ````
 
+## Documentations
 https://qm-docs.qualang.io/guides/queue
 
 Octave documentation - https://docs.quantum-machines.co/0.1/qm-qua-sdk/docs/Guides/octave/
 
 Octave GitHub - https://github.com/qua-platform/qua-libs/tree/main/Tutorials/intro-to-octave
 
-QOP202: http://192.168.1.xxx:11010 
+#### How to access QOP202 (older firmware): 
+http://192.168.1.xxx:11010 
 
-Re-clustering at a lower level:
+## Re-clustering at a lower level:
 1. Connect PC-LAN to port 2-10 directly
 2. Check QM-Router to find OPX's internal IP:
 http://192.168.88.1:81 (http://192.168.88.1:81/webfig/#IP:ARP)
@@ -26,3 +28,9 @@ http://192.168.88.xxx:1883/docs/
 http://192.168.88.xxx (http://192.168.88.xxx/ui/cluster)
 5. If it works, you should see Admin page using the QM-Router external IP.
 6. YaY
+
+## Fixing QM-router:
+1. Reset configuration on the front panel
+2. Directly connect PC with QM-router on LAN port 2-10
+3. Run "update_router_settings.py"
+4. Restart QM-router (optional)
