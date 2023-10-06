@@ -28,6 +28,7 @@ mybec.dt = 0.5
 
 rg_ro = Gate("RO", [0,1] )
 rg_x0 = Gate("RX", 0, arg_value= np.pi)
+rg_y0 = Gate("RY", 0, arg_value= np.pi)
 rg_y1 = Gate("RY", 1, arg_value= np.pi)
 # rg_z0 = Gate("RZ", 0, arg_value= 500)
 idle_gate = Gate("IDLE", 0)
@@ -37,7 +38,7 @@ cz = Gate("CZ", targets=0, controls=1)
 # print(cz.targets, cz.controls)
 iswap = Gate("ISWAP", [0,1])
 gate_seq = [
-    rg_y1, cz,rg_x0, iswap, rg_ro
+    rg_x0, rg_x0, cz, rg_x0, rg_x0, rg_ro
 ]
 # gate_seq = [rg_x0, rg_ro]
 circuit = QubitCircuit(2)
@@ -67,26 +68,30 @@ for qi in range(2):
     mycompiler.params[str(qi)]["anharmonicity"] = q1_info.tempPars["anharmonicity"]
     mycompiler.params[str(qi)]["cz"] = {}
     mycompiler.params[str(qi)]["cz"]["dt"] = mybec.dt
+    mycompiler.params[str(qi)]["cz"]["type"] = qubit_info[qi].tempPars["CZ"]["type"] 
     mycompiler.params[str(qi)]["cz"]["pulse_length"] = qubit_info[qi].tempPars["CZ"]["ZW"]
     mycompiler.params[str(qi)]["cz"]["dz"] = qubit_info[qi].tempPars["CZ"]["dZ"]
     mycompiler.params[str(qi)]["cz"]["c_Z"] = qubit_info[qi].tempPars["CZ"]["c_Z"]    
     mycompiler.params[str(qi)]["cz"]["c_ZW"] = qubit_info[qi].tempPars["CZ"]["c_ZW"]
     mycompiler.params[str(qi)]["cz"]["waveform"] = qubit_info[qi].tempPars["CZ"]["waveform&edge&sigma"]
     mycompiler.params[str(qi)]["cz"]["c_waveform"] = qubit_info[qi].tempPars["CZ"]["c_waveform&edge&sigma"]    
+    mycompiler.params[str(qi)]["cz"]["xyr"] = qubit_info[qi].tempPars["CZ"]["XYR"]
     mycompiler.params[str(qi)]["iswap"] = {}
     mycompiler.params[str(qi)]["iswap"]["dt"] = mybec.dt
+    mycompiler.params[str(qi)]["iswap"]["type"] = qubit_info[qi].tempPars["ISWAP"]["type"]  
     mycompiler.params[str(qi)]["iswap"]["pulse_length"] = qubit_info[qi].tempPars["ISWAP"]["ZW"]
     mycompiler.params[str(qi)]["iswap"]["dz"] = qubit_info[qi].tempPars["ISWAP"]["dZ"]
     mycompiler.params[str(qi)]["iswap"]["c_Z"] = qubit_info[qi].tempPars["ISWAP"]["c_Z"]
     mycompiler.params[str(qi)]["iswap"]["c_ZW"] = qubit_info[qi].tempPars["ISWAP"]["c_ZW"]   
     mycompiler.params[str(qi)]["iswap"]["waveform"] = qubit_info[qi].tempPars["ISWAP"]["waveform&edge&sigma"]
     mycompiler.params[str(qi)]["iswap"]["c_waveform"] = qubit_info[qi].tempPars["ISWAP"]["c_waveform&edge&sigma"]
+    mycompiler.params[str(qi)]["iswap"]["xyr"] = qubit_info[qi].tempPars["ISWAP"]["XYR"]
     mycompiler.params[str(qi)]["waveform"] = qubit_info[qi].tempPars["waveform&alpha&sigma"]
 mycompiler.params["ro"] = {}
 mycompiler.params["ro"]["pulse_length"] = q1_info.tempPars["ROW"]
 mycompiler.params["ro"]["dt"] = mybec.dt
 
-with open(r'.\SKILLS\TQRB\TQRBmycompiler_params.txt', 'w') as file:
+with open(r'.\SKILLS\asqpu\src\qpu\backend\circuit\TQRB\TQRBmycompiler_params.txt', 'w') as file:
     file.write(str(mycompiler.params)) # use `json.loads` to do the reverse
 
 # raw circuit
@@ -98,7 +103,7 @@ for gate in circuit.gates:
 compiled_data = mycompiler.compile(circuit,schedule_mode='ASAP')
 tlist = compiled_data[0]
 coeffs = compiled_data[1]
-
+print(mycompiler.cz_count)
 ch_wf = mybec.translate_channel_output(mycompiler.to_waveform(circuit,schedule_mode='ASAP'))
 d_setting = mybec.devices_setting(mycompiler.to_waveform(circuit,schedule_mode='ASAP'))
 dac_wf = d_setting["DAC"]

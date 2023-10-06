@@ -19,7 +19,7 @@ mybec.dt = 0.5
 
 rg_ro = Gate("RO", [1,0] )
 
-circuit = get_TQcircuit_random_clifford(target=1, control=0, num_gates=1)
+circuit = get_TQcircuit_random_clifford(target=1, control=0, num_gates=5)
 circuit.add_gate(rg_ro)
 
 mycompiler = TQCompile(2, params={})
@@ -38,19 +38,23 @@ for qi in range(2):
     mycompiler.params[str(qi)]["rxy"]["pulse_length"] = q1_info.tempPars["XYW"]
     mycompiler.params[str(qi)]["anharmonicity"] = q1_info.tempPars["anharmonicity"]
     mycompiler.params[str(qi)]["cz"] = {}
+    mycompiler.params[str(qi)]["cz"]["type"] = qubit_info[qi].tempPars["CZ"]["type"]    
     mycompiler.params[str(qi)]["cz"]["dt"] = mybec.dt
     mycompiler.params[str(qi)]["cz"]["pulse_length"] = qubit_info[qi].tempPars["CZ"]["ZW"]
     mycompiler.params[str(qi)]["cz"]["dz"] = qubit_info[qi].tempPars["CZ"]["dZ"]
     mycompiler.params[str(qi)]["cz"]["c_Z"] = qubit_info[qi].tempPars["CZ"]["c_Z"]    
     mycompiler.params[str(qi)]["cz"]["c_ZW"] = qubit_info[qi].tempPars["CZ"]["c_ZW"]
+    mycompiler.params[str(qi)]["cz"]["xyr"] = qubit_info[qi].tempPars["CZ"]["XYR"]   
     mycompiler.params[str(qi)]["cz"]["waveform"] = qubit_info[qi].tempPars["CZ"]["waveform&edge&sigma"]
     mycompiler.params[str(qi)]["cz"]["c_waveform"] = qubit_info[qi].tempPars["CZ"]["c_waveform&edge&sigma"]    
     mycompiler.params[str(qi)]["iswap"] = {}
+    mycompiler.params[str(qi)]["iswap"]["type"] = qubit_info[qi].tempPars["ISWAP"]["type"]  
     mycompiler.params[str(qi)]["iswap"]["dt"] = mybec.dt
     mycompiler.params[str(qi)]["iswap"]["pulse_length"] = qubit_info[qi].tempPars["ISWAP"]["ZW"]
     mycompiler.params[str(qi)]["iswap"]["dz"] = qubit_info[qi].tempPars["ISWAP"]["dZ"]
     mycompiler.params[str(qi)]["iswap"]["c_Z"] = qubit_info[qi].tempPars["ISWAP"]["c_Z"]
     mycompiler.params[str(qi)]["iswap"]["c_ZW"] = qubit_info[qi].tempPars["ISWAP"]["c_ZW"]
+    mycompiler.params[str(qi)]["iswap"]["xyr"] = qubit_info[qi].tempPars["ISWAP"]["XYR"]  
     mycompiler.params[str(qi)]["iswap"]["waveform"] = qubit_info[qi].tempPars["ISWAP"]["waveform&edge&sigma"]
     mycompiler.params[str(qi)]["iswap"]["c_waveform"] = qubit_info[qi].tempPars["ISWAP"]["c_waveform&edge&sigma"]
     mycompiler.params[str(qi)]["waveform"] = qubit_info[qi].tempPars["waveform&alpha&sigma"]    
@@ -60,7 +64,7 @@ mycompiler.params["ro"]["dt"] = mybec.dt
 mycompiler.params["a_weight"] = 0    
 mycompiler.params["img_ratio"] = 0.5
 
-with open(r'.\SKILLS\TQRB\TQRBmycompiler_params.txt', 'w') as file:
+with open(r'.\SKILLS\asqpu\src\qpu\backend\circuit\TQRB\TQRBmycompiler_params.txt', 'w') as file:
     file.write(str(mycompiler.params)) # use `json.loads` to do the reverse
 
 # # raw circuit

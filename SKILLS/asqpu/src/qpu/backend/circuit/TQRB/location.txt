@@ -14,7 +14,7 @@
         "phase_balance": 90, 
 
         "freq_IF":-0.13,
-	"ro_IF":0,
+	    "ro_IF":0,
         "power_LO":6,
 
 		"delay": 100
@@ -35,7 +35,7 @@
         "phase_balance": 90, 
 
         "freq_IF":-0.13,
-	"ro_IF":-0.28,
+	    "ro_IF":-0.28,
         "power_LO":6,
 
 		"delay": 100
@@ -55,7 +55,7 @@
         "offset_Q": 0,
         "amp_balance": 1,
         "phase_balance": 90, 
-        "freq_IF":-0.08,
+        "freq_IF":-0.1,
         "power_LO":0,
 
 		"delay": 380

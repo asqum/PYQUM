@@ -290,6 +290,8 @@ def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, 
         mycompiler.params[str(qi)]["cz"]["dz"] = qubit_info[qi].tempPars["CZ"]["dZ"]
         mycompiler.params[str(qi)]["cz"]["c_Z"] = qubit_info[qi].tempPars["CZ"]["c_Z"]    
         mycompiler.params[str(qi)]["cz"]["c_ZW"] = qubit_info[qi].tempPars["CZ"]["c_ZW"]
+        mycompiler.params[str(qi)]["cz"]["type"] = qubit_info[qi].tempPars["CZ"]["type"] 
+        mycompiler.params[str(qi)]["cz"]["xyr"] = qubit_info[qi].tempPars["CZ"]["XYR"] 
         if "waveform&alpha&sigma" in list(qubit_info[qi].tempPars.keys()):
             mycompiler.params["waveform"] = qubit_info[qi].tempPars["waveform&alpha&sigma"]
         else:

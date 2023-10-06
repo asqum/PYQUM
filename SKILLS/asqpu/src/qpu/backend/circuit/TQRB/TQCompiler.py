@@ -31,6 +31,8 @@ class TQCompile(GateCompiler):
             "IDLE": self.idle_compiler,
             "RO": self.measurement_compiler,
         }
+        self.cz_count = 0
+        self.iswap_count = 0
 
     def rxy_compiler(self, gate, args):
         """Compiles single-qubit gates to pulses.
@@ -47,6 +49,8 @@ class TQCompile(GateCompiler):
         pulse_length = self.params[str(gate.targets[0])]["rxy"]["pulse_length"]
         dt = self.params[str(gate.targets[0])]["rxy"]["dt"]
         anharmonicity = self.params[str(gate.targets[0])]["anharmonicity"]
+        phase = np.radians(self.cz_count * float(self.params[str(gate.targets[0])]["cz"]["xyr"])
+        + self.iswap_count * float(self.params[str(gate.targets[0])]["iswap"]["xyr"])) 
 
         if self.params[str(gate.targets[0])]["waveform"][0] != "NaN":
             waveform = self.params[str(gate.targets[0])]["waveform"][0]
@@ -80,9 +84,9 @@ class TQCompile(GateCompiler):
                 raise NameError('No such fucntion')
             
         if gate.name == "RX":
-            return self.generate_pulse(gate, tlist, coeff, phase=0.0)
+            return self.generate_pulse(gate, tlist, coeff, phase=phase)
         elif gate.name == "RY":
-            return self.generate_pulse(gate, tlist, coeff, phase=np.pi / 2)
+            return self.generate_pulse(gate, tlist, coeff, phase=phase + np.pi / 2)
     
     def idle_compiler( self, gate, args ):
         '''
@@ -121,6 +125,8 @@ class TQCompile(GateCompiler):
             pulse_length = self.params[label]["iswap"]["pulse_length"]
             dt = self.params[label]["iswap"]["dt"]
             dz = self.params[label]["iswap"]["dz"]  
+            # determined how to compensate phase
+            type = self.params[label]["iswap"]["type"]
             sampling_point = int( -(pulse_length//-dt) )    
             tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
 
@@ -130,32 +136,35 @@ class TQCompile(GateCompiler):
                 case "eerp": coeff = ps.EERP(tlist, *(dz,edge/2,edge/sFactor,pulse_length,0))
                 case _: raise NameError('No such function') 
 
-            # c_Z for compensate rotation    
-            if self.params[label]["iswap"]["c_waveform"][0] != "NaN":
-                c_waveform = self.params[label]["iswap"]["c_waveform"][0]
-                c_edge = self.params[label]["iswap"]["c_waveform"][1]
-                c_sFactor = self.params[label]["iswap"]["c_waveform"][2]
+            if type.lower() == "az":
+                # c_Z for compensate rotation    
+                if self.params[label]["iswap"]["c_waveform"][0] != "NaN":
+                    c_waveform = self.params[label]["iswap"]["c_waveform"][0]
+                    c_edge = self.params[label]["iswap"]["c_waveform"][1]
+                    c_sFactor = self.params[label]["iswap"]["c_waveform"][2]
 
-            else: c_waveform = "Const"              
-                               
-            c_pulse_length = self.params[label]["iswap"]["c_ZW"]
-            c_dz = self.params[label]["iswap"]["c_Z"]
-            c_sampling_point = int( -(c_pulse_length//-dt) )
+                else: c_waveform = "Const"              
+                                
+                c_pulse_length = self.params[label]["iswap"]["c_ZW"]
+                c_dz = self.params[label]["iswap"]["c_Z"]
+                c_sampling_point = int( -(c_pulse_length//-dt) )
 
-            if c_pulse_length != 0:
-                c_tlist = np.linspace(
-                    pulse_length, pulse_length + c_pulse_length, c_sampling_point, endpoint=False
-                    )  
-                match c_waveform.lower(): 
-                    case "const": c_coeff = ps.constFunc(c_tlist, c_dz )     
-                    case "gerp": c_coeff = ps.GERPFunc(
-                        c_tlist, *(c_dz,c_pulse_length,c_tlist[0],c_edge,2*c_edge/c_sFactor) ) 
-                    case "eerp": c_coeff = ps.EERP(
-                        c_tlist, *(c_dz,c_edge/2,c_edge/c_sFactor,c_pulse_length,c_tlist[0]))
-                    case _: raise NameError('No such function')  
-                tlist = np.append(tlist,c_tlist)
-                coeff = np.append(coeff,c_coeff) 
+                if c_pulse_length != 0:
+                    c_tlist = np.linspace(
+                        pulse_length, pulse_length + c_pulse_length, c_sampling_point, endpoint=False
+                        )  
+                    match c_waveform.lower(): 
+                        case "const": c_coeff = ps.constFunc(c_tlist, c_dz )     
+                        case "gerp": c_coeff = ps.GERPFunc(
+                            c_tlist, *(c_dz,c_pulse_length,c_tlist[0],c_edge,2*c_edge/c_sFactor) ) 
+                        case "eerp": c_coeff = ps.EERP(
+                            c_tlist, *(c_dz,c_edge/2,c_edge/c_sFactor,c_pulse_length,c_tlist[0]))
+                        case _: raise NameError('No such function')  
+                    tlist = np.append(tlist,c_tlist)
+                    coeff = np.append(coeff,c_coeff) 
+
             pulse_info.append(("sz" + label, coeff))
+        if type.lower() == 'vz': self.iswap_count += 1
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
     def cz_compiler(self, gate, args):
@@ -164,11 +173,14 @@ class TQCompile(GateCompiler):
         The waveform types:["CONST","GERP"]
         '''
         targets_label = ''.join(str(target) for target in gate.targets)
-        pulse_info = []        
+        pulse_info = []  
+
         for qi in range(2):
             pulse_length = self.params[str(qi)]["cz"]["pulse_length"]
             dt = self.params[str(qi)]["cz"]["dt"]
             dz = self.params[str(qi)]["cz"]["dz"]
+            # determined how to compensate phase
+            type = self.params[str(qi)]["cz"]["type"]
             sampling_point = int( -(pulse_length//-dt) )
             tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
 
@@ -185,31 +197,34 @@ class TQCompile(GateCompiler):
                 case "eerp": coeff = ps.EERP(tlist, *(dz,edge/2,edge/sFactor,pulse_length,0)) 
                 case _: raise NameError('No such function') 
 
-            # c_Z for compensate rotation
-            c_pulse_length = self.params[str(qi)]["cz"]["c_ZW"]
-            c_dz = self.params[str(qi)]["cz"]["c_Z"]
-            c_sampling_point = int( -(c_pulse_length//-dt) )
+            if type.lower() == "az":
+                # c_Z for compensate rotation
+                c_pulse_length = self.params[str(qi)]["cz"]["c_ZW"]
+                c_dz = self.params[str(qi)]["cz"]["c_Z"]
+                c_sampling_point = int( -(c_pulse_length//-dt) )
 
-            if self.params[str(qi)]["cz"]["c_waveform"][0] != "NaN":
-                c_waveform = self.params[str(qi)]["cz"]["c_waveform"][0]
-                c_edge = self.params[str(qi)]["cz"]["c_waveform"][1]
-                c_sFactor = self.params[str(qi)]["cz"]["c_waveform"][2]
+                if self.params[str(qi)]["cz"]["c_waveform"][0] != "NaN":
+                    c_waveform = self.params[str(qi)]["cz"]["c_waveform"][0]
+                    c_edge = self.params[str(qi)]["cz"]["c_waveform"][1]
+                    c_sFactor = self.params[str(qi)]["cz"]["c_waveform"][2]
 
-            if c_pulse_length != 0:
-                c_tlist = np.linspace(
-                    pulse_length, pulse_length + c_pulse_length, c_sampling_point, endpoint=False
-                    )
-                match c_waveform.lower(): 
-                    case "const": c_coeff = ps.constFunc(c_tlist, c_dz )     
-                    case "gerp": c_coeff = ps.GERPFunc(
-                        c_tlist, *(c_dz,c_pulse_length,c_tlist[0],c_edge,2*c_edge/c_sFactor) )
-                    case "eerp": c_coeff = ps.EERP(
-                        c_tlist, *(c_dz,c_edge/2,c_edge/c_sFactor,c_pulse_length,c_tlist[0]))           
-                tlist = np.append(tlist,c_tlist)
-                coeff = np.append(coeff,c_coeff) 
+                if c_pulse_length != 0:
+                    c_tlist = np.linspace(
+                        pulse_length, pulse_length + c_pulse_length, c_sampling_point, endpoint=False
+                        )
+                    match c_waveform.lower(): 
+                        case "const": c_coeff = ps.constFunc(c_tlist, c_dz )     
+                        case "gerp": c_coeff = ps.GERPFunc(
+                            c_tlist, *(c_dz,c_pulse_length,c_tlist[0],c_edge,2*c_edge/c_sFactor) )
+                        case "eerp": c_coeff = ps.EERP(
+                            c_tlist, *(c_dz,c_edge/2,c_edge/c_sFactor,c_pulse_length,c_tlist[0]))           
+                    tlist = np.append(tlist,c_tlist)
+                    coeff = np.append(coeff,c_coeff) 
+        
             pulse_info.append(
                 ("sz" + str(qi), coeff)
             )
+        if type.lower() == 'vz': self.cz_count += 1
 
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
@@ -255,7 +270,7 @@ class TQCompile(GateCompiler):
             pulse_info.append(("ro" + label, coeff))
         return [Instruction(gate, tlist=tlist, pulse_info=pulse_info)]
     
-    def generate_pulse(self, gate, tlist, coeff, phase=0.0):
+    def generate_pulse(self, gate, tlist, coeff, phase):
         """Generates the pulses.
 
         Args:
