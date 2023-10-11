@@ -298,6 +298,9 @@ def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, 
         # else:
         #     mycompiler.params["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
         '''Ratis debug: '''
+        mycompiler.params[str(qi)]["iswap"] = {}
+        mycompiler.params[str(qi)]["iswap"]["type"] = qubit_info[qi].tempPars["ISWAP"]["type"] 
+        mycompiler.params[str(qi)]["iswap"]["xyr"] = qubit_info[qi].tempPars["ISWAP"]["XYR"]
         if "waveform&edge&sigma" in list(qubit_info[qi].tempPars["CZ"].keys()):
             mycompiler.params[str(qi)]["cz"]["waveform"] = qubit_info[qi].tempPars["CZ"]["waveform&edge&sigma"]
         else:
