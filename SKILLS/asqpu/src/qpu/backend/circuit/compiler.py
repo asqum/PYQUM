@@ -26,7 +26,7 @@ class SQCompiler(GateCompiler):
             "RX": self.rxy_compiler,
             "RY": self.rxy_compiler,
             "RZ": self.rz_compiler,
-            "M": self.measurement_compiler,
+            "RO": self.measurement_compiler,
             "IDLE": self.idle_compiler,
         }
 
