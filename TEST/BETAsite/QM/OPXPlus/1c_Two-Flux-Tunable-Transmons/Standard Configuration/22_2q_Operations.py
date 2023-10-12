@@ -20,7 +20,8 @@ from cosine import Cosine
 filename = 'cz_ops_1'
 cz_type = "square"
 modelist = ['sim', 'prev', 'load', 'new']
-mode = modelist[int(input("1. simulate, 2. previous job, 3. load data, 4. new run (1-4)?"))-1]
+# mode = modelist[int(input("1. simulate, 2. previous job, 3. load data, 4. new run (1-4)?"))-1]
+mode='new'
 print("mode: %s" %mode)
 
 dc0_q2 = config["controllers"]["con2"]["analog_outputs"][6]["offset"]
@@ -196,7 +197,7 @@ if mode=="new": # new run
     qm = qmm.open_qm(config)
     job = qm.execute(cz_ops)
     data_present(True)
-    interrupt = int(input("Stop execution on closing figure (1/0)?"))
+    interrupt = 1#int(input("Stop execution on closing figure (1/0)?"))
     if interrupt: 
         interrupt_on_close(fig, job)
     else:

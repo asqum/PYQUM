@@ -69,8 +69,8 @@ qubit_LO_q4 = 4.200 * u.GHz
 qubit_LO_q5 = 4.200 * u.GHz
 
 # Qubits IF
-qubit_IF_q1 = (-347.022) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
-qubit_IF_q2 = (471.52 ) * u.MHz #(4156-0.119  -4200) * u.MHz
+qubit_IF_q1 = (-346.022 -0.327) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
+qubit_IF_q2 = (471.52 +0.181-0.133) * u.MHz #(4156-0.119  -4200) * u.MHz
 qubit_IF_q3 = (-44.4216-0.032) * u.MHz
 qubit_IF_q4 = (-44.4216-0.032) * u.MHz
 qubit_IF_q5 = (-44.4216-0.032) * u.MHz
@@ -94,8 +94,8 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.1342
-pi_amp_q2 = 0.2542 #0.1497
+pi_amp_q1 = 0.1303
+pi_amp_q2 = 0.2537 #0.1497
 pi_amp_q3 = 0.5
 pi_amp_q4 = 0.5
 pi_amp_q5 = 0.5
@@ -233,7 +233,7 @@ resonator_IF_q5 = int((1) * u.MHz)
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
 readout_len = 1680
-readout_amp_q1 = 0.112
+readout_amp_q1 = 0.1
 readout_amp_q2 = 0.11
 readout_amp_q3 = 0.125
 readout_amp_q4 = 0.125
@@ -295,13 +295,13 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (148.6 / 180) * np.pi
-rotation_angle_q2 = (45.9 / 180) * np.pi
+rotation_angle_q1 = (180.2 / 180) * np.pi
+rotation_angle_q2 = (18.6 / 180) * np.pi
 rotation_angle_q3 = (0 / 180) * np.pi
 rotation_angle_q4 = (0 / 180) * np.pi
 rotation_angle_q5 = (0 / 180) * np.pi
-ge_threshold_q1 = 0.000909
-ge_threshold_q2 = 0.000229
+ge_threshold_q1 = 0.000845
+ge_threshold_q2 = 0.000254
 ge_threshold_q3 = 0
 ge_threshold_q4 = 0
 ge_threshold_q5 = 0

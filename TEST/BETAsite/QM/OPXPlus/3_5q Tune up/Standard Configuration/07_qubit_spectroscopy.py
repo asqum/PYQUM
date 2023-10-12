@@ -40,14 +40,14 @@ warnings.filterwarnings("ignore")
 ###################
 # The QUA program #
 ###################
-q_id = [0,1]
+q_id = [1,2]
 focus = False
 n_avg = 100000  # The number of averages
 
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
 saturation_len = 20 * u.us  # In ns (should be < FFT of df)
 if focus: saturation_amp = 0.0007  # pre-factor to the value defined in the config - restricted to [-2; 2)
-else: saturation_amp = 0.05  # pre-factor to the value defined in the config - restricted to [-2; 2)
+else: saturation_amp = 0.15  # pre-factor to the value defined in the config - restricted to [-2; 2)
 
 # Qubit detuning sweep with respect to qubit_IF
 if focus:
@@ -65,15 +65,12 @@ with program() as multi_qubit_spec:
     I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=len(q_id))
     df = declare(int)  # QUA variable for the readout frequency
 
-    # Adjust the flux line biases if needed
-    # set_dc_offset("q2_z", "single", 0.0)
-
     with for_(n, 0, n < n_avg, n + 1):
         with for_(*from_array(df, dfs)):
             for i in q_id:
                 update_frequency("q%s_xy"%(i+1), df + qubit_IF[i])
             for i in q_id:
-                if i==1: play("saturation" * amp(saturation_amp), "q%s_xy"%(i+1), duration=saturation_len * u.ns)  
+                if i==2: play("saturation" * amp(saturation_amp), "q%s_xy"%(i+1), duration=saturation_len * u.ns)  
                 align("q%s_xy"%(i+1), "rr%s"%(i+1))
             multiplexed_readout(I, I_st, Q, Q_st, resonators=[x+1 for x in q_id], amplitude=0.99)
             wait(thermalization_time * u.ns)
@@ -108,48 +105,5 @@ else:
 
     live_plotting(n_avg, q_id, job, dfs, [], 
                      "Qubit spectroscopy", stage="7", normalize=False, dimension=1)
-    
-    # # Prepare the figure for live plotting
-    # fig = plt.figure()
-    # interrupt_on_close(fig, job)
-    # # Tool to easily fetch results from the OPX (results_handle used in it)
-    # results = fetching_tool(job, ["n", "I2", "Q2", "I3", "Q3"], mode="live")
-    # # Live plotting
-    # while results.is_processing():
-    #     # Fetch results
-    #     n, I1, Q1, I2, Q2 = results.fetch_all()
-    #     # Progress bar
-    #     progress_counter(n, n_avg, start_time=results.start_time)
-    #     # Data analysis
-    #     S1 = u.demod2volts(I1 + 1j * Q1, readout_len)
-    #     S2 = u.demod2volts(I2 + 1j * Q2, readout_len)
-    #     R1 = np.abs(S1)
-    #     phase1 = np.angle(S1)
-    #     R2 = np.abs(S2)
-    #     phase2 = np.angle(S2)
-    #     # Plots
-    #     plt.suptitle("Qubit spectroscopy")
-    #     plt.subplot(221)
-    #     plt.cla()
-    #     plt.plot((dfs + qubit_IF[0]) / u.MHz, R1)
-    #     plt.ylabel(r"$R=\sqrt{I^2 + Q^2}$ [V]")
-    #     plt.title(f"Qubit 1 - LO = {qubit_LO_q1 / u.GHz} GHz)")
-    #     plt.subplot(223)
-    #     plt.cla()
-    #     plt.plot((dfs + qubit_IF[0]) / u.MHz, np.unwrap(phase1))
-    #     plt.ylabel("Phase [rad]")
-    #     plt.xlabel("Qubit intermediate frequency [MHz]")
-    #     plt.subplot(222)
-    #     plt.cla()
-    #     plt.plot((dfs + qubit_IF[1]) / u.MHz, np.abs(R2))
-    #     plt.title(f"Qubit 2 - LO = {qubit_LO_q2 / u.GHz} GHz)")
-    #     plt.subplot(224)
-    #     plt.cla()
-    #     plt.plot((dfs + qubit_IF[1]) / u.MHz, np.unwrap(phase2))
-    #     plt.xlabel("Qubit intermediate frequency [MHz]")
-    #     plt.tight_layout()
-    #     plt.pause(0.1)
 
-
-    # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()

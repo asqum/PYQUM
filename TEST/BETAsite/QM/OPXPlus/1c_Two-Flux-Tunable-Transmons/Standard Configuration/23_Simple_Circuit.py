@@ -55,27 +55,42 @@ with program() as cz_ops:
         # cz_gate(cz_type)
 
         # Circuit 2: Bell-state
-        play("x180", "q2_xy")
+        # play("y180", "q2_xy")
         align()
 
-        play("y90", "q1_xy")
-        play("x180", "q1_xy")
-        align()
-        play("y90", "q2_xy")
-        play("x180", "q2_xy")
-        align()
-        cz_gate(cz_type)
-        frame_rotation_2pi(0.4, "q2_xy")
-        align()
-        play("y90", "q2_xy")
-        play("x180", "q2_xy")
-        align()
-
-        # Circuit 3: Hadamard-test
         # play("y90", "q1_xy")
         # play("x180", "q1_xy")
+
+        # align()
         # play("y90", "q2_xy")
         # play("x180", "q2_xy")
+        # align()
+
+        # play("x180", "q1_xy")
+        # play("x180", "q2_xy")
+        # play("x180", "q1_xy")
+        # play("x180", "q2_xy")
+        # align()
+
+        # cz_gate(cz_type)
+        # frame_rotation_2pi(0.42, "q2_xy")
+
+        # align()
+        # play("y180", "q1_xy")
+        # play("y180", "q2_xy")
+        # play("y180", "q1_xy")
+        # play("y180", "q2_xy")
+        # align()
+
+        # play("y90", "q2_xy")
+        # play("x180", "q2_xy")
+        # align()
+
+        # Circuit 3: Hadamard-test
+        play("y90", "q1_xy")
+        play("x180", "q1_xy")
+        play("y90", "q2_xy")
+        play("x180", "q2_xy")
         # align()
         # play("y90", "q1_xy")
         # play("x180", "q1_xy")
@@ -119,4 +134,17 @@ plt.text(23, 45, r'$\mu=15, b=3$')
 maxfreq = n.max()
 # Set a clean upper y-axis limit.
 plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
+plt.show()
+
+fig, ax = plt.subplots()
+
+print(Counter(bitstrings).keys())
+
+CBits = [x for x in Counter(bitstrings).keys()]
+percentage = [x/n_avg*100 for x in Counter(bitstrings).values()]
+# bar_colors = ['tab:blue', 'tab:green', 'tab:orange', 'tab:red']
+ax.bar(CBits, percentage)#, color=bar_colors)
+ax.set_ylabel('Population (%)')
+ax.set_title('Quantum Circuit\'s Outcome')
+# ax.legend(title='Fruit color')
 plt.show()

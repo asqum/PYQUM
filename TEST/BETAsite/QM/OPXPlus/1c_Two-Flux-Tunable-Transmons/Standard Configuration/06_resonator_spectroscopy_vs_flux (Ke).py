@@ -216,12 +216,12 @@ else:
     ###################
     #  Figure Saving  #
     ################### 
-    if save_data == True:
-        figure = plt.gcf() # get current figure
-        figure.set_size_inches(16, 9)
-        plt.tight_layout()
-        # Save Figure
-        plt.savefig(f"{save_path}.png", dpi = 500)
+    # if save_data == True:
+    #     figure = plt.gcf() # get current figure
+    #     figure.set_size_inches(16, 9)
+    #     plt.tight_layout()
+    #     # Save Figure
+    #     plt.savefig(f"{save_path}.png", dpi = 500)
 
 
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
@@ -271,14 +271,14 @@ else:
     ###################
     #   .npz Saving   #
     ###################
-    if save_data == True:
-        # Change what you want to save
-        np.savez(save_path, flux=flux,
-                 F3=dfs+resonator_IF_q1, R3=R1, P3=phase1, U3=signal.detrend(np.unwrap(phase1)), I3=I1, Q3=Q1,
-                 F4=dfs+resonator_IF_q2, R4=R2, P4=phase2, U4=signal.detrend(np.unwrap(phase2)), I4=I2, Q4=Q2,
-                 F5=dfs+resonator_IF_q3, R5=R3, P5=phase3, U5=signal.detrend(np.unwrap(phase3)), I5=I3, Q5=Q3,
-                 F1=dfs+resonator_IF_q4, R1=R4, P1=phase4, U1=signal.detrend(np.unwrap(phase4)), I1=I4, Q1=Q4,
-                 )
+    # if save_data == True:
+    #     # Change what you want to save
+    #     np.savez(save_path, flux=flux,
+    #              F3=dfs+resonator_IF_q1, R3=R1, P3=phase1, U3=signal.detrend(np.unwrap(phase1)), I3=I1, Q3=Q1,
+    #              F4=dfs+resonator_IF_q2, R4=R2, P4=phase2, U4=signal.detrend(np.unwrap(phase2)), I4=I2, Q4=Q2,
+    #              F5=dfs+resonator_IF_q3, R5=R3, P5=phase3, U5=signal.detrend(np.unwrap(phase3)), I5=I3, Q5=Q3,
+    #              F1=dfs+resonator_IF_q4, R1=R4, P1=phase4, U1=signal.detrend(np.unwrap(phase4)), I1=I4, Q1=Q4,
+    #              )
 
     plt.show()
 

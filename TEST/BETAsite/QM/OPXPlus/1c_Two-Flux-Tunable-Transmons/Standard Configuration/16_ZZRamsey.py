@@ -37,11 +37,12 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 1, 2
+control, target = 2, 1
+DD_cycle = 1
 
 # Idle time sweep in clock cycles (Needs to be a list of integers)
 if X: idle_times = np.arange(4, 1000, 1)
-else: idle_times = np.arange(4, 1200, 4)
+else: idle_times = np.arange(0, 600, 2**DD_cycle)
 
 detuning = 1.00e6  # "Virtual" detuning in Hz
 
@@ -63,9 +64,14 @@ with program() as ramsey:
                 align()
 
             # Qubit b
-            # play("x180", "q%s_xy"%target)
             play("x90", "q%s_xy"%target)  # 1st x90 gate
-            wait(t, "q%s_xy"%target)  # Wait a varying idle time
+
+            # wait(t, "q%s_xy"%target)
+            wait(t/(2**DD_cycle), "q%s_xy"%target)
+            for i in range(2**DD_cycle-1):
+                play("y180", "q%s_xy"%target)  # DD sequence
+                wait(t/(2**DD_cycle), "q%s_xy"%target)
+
             frame_rotation_2pi(phi, "q%s_xy"%target)  # Virtual Z-rotation
             play("x90", "q%s_xy"%target)  # 2nd x90 gate
 
@@ -175,6 +181,6 @@ else:
         plt.ylabel("I quadrature [V]")
         plt.tight_layout()
         plt.show()
-        print(fitting_results['f']*u.MHz)
+        print("Detuned: %s" %(fitting_results['f'][0]*1e9*u.MHz - detuning))
     except (Exception,) as e:
         print(e)
