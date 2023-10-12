@@ -13,11 +13,15 @@
         {% if 'PSGV-1' in g.instlist %}<button class='sg sgname' name='PSGV-1'>PSGV-1</button>{% endif %}
         {% if 'PSGA-1' in g.instlist %}<button class='sg sgname' name='PSGA-1'>PSGA-1</button>{% endif %}
         {% if 'PSGA-2' in g.instlist %}<button class='sg sgname' name='PSGA-2'>PSGA-2</button>{% endif %}
+        
         {% if 'RSSGS-1' in g.instlist %}<button class='sg sgname' name='RSSGS-1'>RSSGS-1</button>{% endif %}
         {% if 'RSSGS-2' in g.instlist %}<button class='sg sgname' name='RSSGS-2'>RSSGS-2</button>{% endif %}
-
         {% if 'RSSGS-3' in g.instlist %}<button class='sg sgname' name='RSSGS-3'>RSSGS-3</button>{% endif %}
         {% if 'RSSGS-4' in g.instlist %}<button class='sg sgname' name='RSSGS-4'>RSSGS-4</button>{% endif %}
+        {% if 'RSSGS-5' in g.instlist %}<button class='sg sgname' name='RSSGS-5'>RSSGS-5</button>{% endif %}
+        {% if 'RSSGS-6' in g.instlist %}<button class='sg sgname' name='RSSGS-6'>RSSGS-6</button>{% endif %}
+        {% if 'RSSGS-7' in g.instlist %}<button class='sg sgname' name='RSSGS-7'>RSSGS-7</button>{% endif %}
+        {% if 'RSSGS-8' in g.instlist %}<button class='sg sgname' name='RSSGS-8'>RSSGS-8</button>{% endif %}
 
         {% if 'DDSLO-1' in g.instlist %}<button class='sg sgname' name='DDSLO-1'>DDSLO-1</button>{% endif %}
         {% if 'DDSLO-2' in g.instlist %}<button class='sg sgname' name='DDSLO-2'>DDSLO-2</button>{% endif %}
@@ -43,6 +47,10 @@
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                     <div class="col-10" id='left'><label class='parameter'>Channel</label></div>
                     <div class="col-12" id='left'><select class='sg settings' name='channel'></select></div> 
+                </div>
+                <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
+                    <div class="col-10" id='left'><label class='parameter'>Clock</label></div>
+                    <div class="col-12" id='left'><select class='sg settings' name='clock'></select></div> 
                 </div>
                 <div class="row"> <!-- NEW ROW of INPUT/SELECT -->
                     <div class="col-10" id='left'><label class='parameter'>Frequency</label></div>

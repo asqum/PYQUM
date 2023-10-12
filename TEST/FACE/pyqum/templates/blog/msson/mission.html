@@ -22,6 +22,7 @@
       $("div#ALL").load("{{ url_for('mission.all') }}");
       $("div#CHAR").load("{{ url_for('mission.char') }}");
       $("div#QPC").load("{{ url_for('mission.mani') }}");
+      $("div#QPX").load("{{ url_for('mission.orchi') }}");
       
     });
 </script> 
@@ -36,6 +37,7 @@
   <button class="tablinks" id="CHAR1-tab" onclick="openTab(event, 'CHAR')">CHAR-1</button>
   <button class="tablinks" id="QPC0-tab" onclick="openTab(event, 'QPC')">QPC-0</button>
   <button class="tablinks" id="QPC1-tab" onclick="openTab(event, 'QPC')">QPC-1</button>
+  <button class="tablinks" id="QPX0-tab" onclick="openTab(event, 'QPX')">QPX-0</button>
 
   <select class="mssn tracking_type">
     <option value="access-jobid" selected>ACCESS</option>
@@ -47,6 +49,7 @@
 <div id="ALL" class="tabcontent"></div>
 <div id="CHAR" class="tabcontent"></div>
 <div id="QPC" class="tabcontent"></div>
+<div id="QPX" class="tabcontent"></div>
 <!-- PENDING: REMOVE/UNIFY THE MSSN-TABS AND SHARING DIRECTIVES ACROSS QUEUE-SYSTEMS -->
 
 

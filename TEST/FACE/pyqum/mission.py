@@ -101,6 +101,18 @@ def show(status="Mission started"):
     return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 # endregion
 
+@bp.route('/receive', methods=['GET', 'POST'])
+def receive():
+    # todo_data = request.args.get('qasm')
+    todo_data = request.json['qasm']
+    qasm_text = "\n".join(todo_data)
+    print("incoming QASM:")
+    print(qasm_text)
+    sleep(60)
+    print(Fore.GREEN + "Quantum Circuit execution completed.")
+
+    return jsonify(message="OK i got it : %s" %len(qasm_text), result={"00001": 524, "11000": 128, "11011": 57})
+
 # region
 # ALL
 @bp.route('/all', methods=['GET'])
@@ -2012,6 +2024,15 @@ def mani_QuCTRL_2ddata():
     return json.dumps(QuCTRL_2Ddata[session['user_name']], cls=JSEncoder)
     # return jsonify(x=x, y=y, ZZI=ZZI, ZZQ=ZZQ, ZZA=ZZA, ZZUP=ZZUP, xtitle=xtitle, ytitle=ytitle)
 
+# endregion
+
+# region
+# ORCHI:
+@bp.route('/orchi', methods=['GET'])
+def orchi(): 
+    print(Fore.BLUE + 'User %s is allowed to run measurement: %s'%(g.user['username'],session['run_clearance']))
+    samplename = get_status("MSSN")[session['user_name']]['sample']
+    return render_template("blog/msson/orchi.html", samplename=samplename, people=session['people'])
 # endregion
 
 # region

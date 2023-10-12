@@ -14,6 +14,7 @@ function put_values(message) {
     $('input.sg.scale.settings[name="powa"]').val(message['power'].split(" ")[0]);
     $('input.sg.unit.settings[name="powa"]').val(message['power'].split(' ')[1]);
     $('input.sg[name="oupt"]').prop( "checked", Boolean(message['rfoutput']) );
+    $('select.sg.settings[name="clock"]').val(message['clock']);
     return false;
 };
 function set_channel() {
@@ -32,7 +33,22 @@ function set_channel() {
     });
     return false;
 };
-
+function set_clock() {
+    var clock = $('select.sg.settings[name="clock"]').val();
+    $.getJSON('/mach/sg/set/clock', {
+        sgname: sgname, sgtype: sgtype, clock: clock,
+    }, function(data){
+        console.log(Date($.now()) + ':\nSetting ' + data.message);
+        $('select.sg.settings[name="clock"]').removeClass('getvalue').addClass('setvalue');
+    })
+    .done(function(data) {
+        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: blue;"></h4>').text(sgname + "'s CLOCK SET TO " + clock));
+    })
+    .fail(function(jqxhr, textStatus, error){
+        $('div.sg#sg-status-announcement').empty().append($('<h4 style="color: red;"></h4>').text(error + "\nPlease Refresh!"));
+    });
+    return false;
+};
 
 //Select model to proceed:
 $(function () {
@@ -44,9 +60,11 @@ $(function () {
         // Indicate current instrument we are operating on:
         $("i.sg.fa-check").remove();
         $(this).prepend("<i class='sg fa fa-check' style='font-size:15px;color:green;'></i> ");
-        // Display inputs accordingly:
+        // Display options accordingly:
         if (sgtype=="DDSLO") { $('select.sg.settings[name="channel"]').empty().append($('<option>', { text: '1', value: '1' })).append($('<option>', { text: '2', value: '2' }));
         } else { $('select.sg.settings[name="channel"]').empty().append($('<option>', { text: 'None', value: '' })) };
+        if (sgtype=="RSSGS") { $('select.sg.settings[name="clock"]').empty().append($('<option>', { text: 'INT', value: 'INT' })).append($('<option>', { text: 'EXT', value: 'EXT' }));
+        } else { $('select.sg.settings[name="clock"]').empty().append($('<option>', { text: 'NONE', value: 'NONE' })) };
         // connecting to each models:
         $.getJSON('/mach/sg/connect', {
             sgname: sgname,
@@ -137,6 +155,8 @@ $('input.sg[name="powa"]').change( function () {
 });
 // Set channel
 $('select.sg.settings[name="channel"]').change( function () { set_channel(); return false; });
+// Set clock
+$('select.sg.settings[name="clock"]').change( function () { set_clock(); return false; });
 
 // close & reset = closet OR re-connect
 $('button.sg.closet').bind('click', function () {
