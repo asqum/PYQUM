@@ -173,12 +173,12 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
     mycompiler.params["anharmonicity"] = float(q_info.tempPars["anharmonicity"])*2*np.pi
 
-    if "waveform&alpha&sigma" in list(q_info.tempPars.keys()):
-        mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha&sigma"]
+    if "waveform&alpha" in list(q_info.tempPars.keys()):
+        mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha"]
     else:
-        mycompiler.params["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
+        mycompiler.params["waveform"] = ["NaN",0]  #[waveform,a_weight,S-Factor]
     
-    print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f, S-Factor = %d and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["waveform"][2],mycompiler.params["anharmonicity"]))
+    print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["anharmonicity"]))
 
     mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
 

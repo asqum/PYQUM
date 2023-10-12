@@ -149,18 +149,22 @@ class SQCompiler(GateCompiler):
         pulse_strength = self.params["rxy"]["pulse_strength"]
         dt = self.params["rxy"]["dt"]
         anharmonicity = self.params["anharmonicity"]
+
         if self.params["waveform"][0] != "NaN":
             waveform = self.params["waveform"][0]
             a_weight = self.params["waveform"][1]
-            sFactor = self.params["waveform"][2]
         else:
             waveform = "DRAGe"
             a_weight = -0.5
-            sFactor = 4.
+
 
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., a_weight/anharmonicity, img_ratio) ) *gate.arg_value/np.pi
+        if waveform == "DRAGe" :
+            shifter = ps.ErfShifter(pulse_length,pulse_length/4)
+        else:
+            shifter = 0
+        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., shifter, a_weight/anharmonicity) ) *gate.arg_value/np.pi
 
         if gate.name == "RX":
             return self.generate_pulse(gate, tlist, coeff, phase=0.0)
