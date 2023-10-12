@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 from qualang_tools.units import unit
 
 # Flags to switch between different modes defined below
-check_up_converters = True
-check_triggers = False
+check_up_converters = False
+check_triggers = True
 check_down_converters = False
 calibration = False
 
@@ -56,7 +56,7 @@ config = {
                 3: {},
                 5: {},
                 7: {},
-                10: {},
+                9: {},
             },
             "analog_inputs": {
                 1: {"offset": +0.0},
@@ -173,7 +173,7 @@ config = {
             },
             "digitalInputs": {
                 "switch": {
-                    "port": (con, 10),
+                    "port": (con, 9),
                     "delay": 136,
                     "buffer": 0,
                 },

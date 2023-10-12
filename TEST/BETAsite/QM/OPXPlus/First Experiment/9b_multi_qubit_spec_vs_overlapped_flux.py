@@ -17,7 +17,7 @@ from qualang_tools.results import fetching_tool
 from qm.simulate import LoopbackInterface
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
-
+from Macros import qua_declaration, multiplexed_readout
 from numpy import array
 
 # NOTE:
@@ -26,19 +26,33 @@ from numpy import array
 
 # constant / from config:
 n_avg = 4000000
-t = 1700//4 #//100
+# t = 1700//4 #//100
 fres_q1 = qubit_IF_q1
 fres_q2 = qubit_IF_q2
+# Adjust the pulse duration and amplitude to drive the qubit into a mixed state
+saturation_len = 20 * u.us  # In ns
+saturation_amp = 0.077  # pre-factor to the value defined in the config - restricted to [-2; 2)
 
 # variables
-dfq1 = np.linspace( -299e6, 299e6, 300, dtype=int) # qubit 1
-dcq1 = np.linspace(-0.35, 0.35, 120) # flux 1
-dfq2 = np.linspace(- 120e6, 160e6, 100, dtype=int) # qubit 2
-dcq2 = np.linspace(-0.35, 0.35, 120) # flux 2 
+# dfq1 = np.linspace(-300e6, 200e6, 500, dtype=int) # qubit 1
+# dcq1 = np.linspace(-0.07, 0.08, 150) # flux 1
+# dfq2 = np.linspace(-300e6, 200e6, 500, dtype=int) # qubit 2
+# dcq2 = np.linspace(-0.07, 0.08, 150) # flux 2 
+
+# Qubit detuning sweep with respect to qubit_IF
+# dfs = np.arange(-300e6, 200e6, 0.5e6)
+dfs = np.linspace(-300e6, 200e6, 500, dtype=int)
+# Flux sweep
+# dcs = np.arange(-0.07, 0.08, 0.0015)
+dcs = dcq2 = np.linspace(-0.07, 0.08, 150)
 
 # Equalization for comparison: fixed on f_q1
 fres_q2 = fres_q1
-dfq2 = dfq1
+dfq1, dfq2 = dfs, dfs
+dcq1, dcq2 = dcs, dcs
+
+flux_offset_1 = max_frequency_point1 # +0.1 -0.035
+flux_offset_2 = max_frequency_point2 -0.035
 
 # QUA program
 with program() as multi_qubit_spec_vs_flux:
@@ -63,22 +77,26 @@ with program() as multi_qubit_spec_vs_flux:
             update_frequency("q1_xy", df_q1 + fres_q1)
             update_frequency("q2_xy", df_q2 + fres_q2) 
             
-            with for_(*from_array(dc_q1, dcq1)):
+            with for_(*from_array(dc_q2, dcq2)):
 
                 # Flux sweeping 
-                set_dc_offset("q1_z", "single", dc_q1)
-                set_dc_offset("q2_z", "single", dc_q2)
-                
-                # Saturate qubit
-                play("cw"*amp(1), "q1_xy", duration=t)
-                play("cw"*amp(1), "q2_xy", duration=t)
+                # set_dc_offset("q1_z", "single", dc_q1 + flux_offset_1)
+                set_dc_offset("q2_z", "single", dc_q2 + flux_offset_2)
+                wait(flux_settle_time * u.ns)  # Wait for the flux to settle
 
-                # align()
+                # Saturate qubit
+                # play("cw"*amp(1), "q1_xy", duration=t)
+                # play("cw"*amp(1), "q2_xy", duration=t)
+                play("saturation" * amp(saturation_amp), "q1_xy", duration=saturation_len * u.ns)
+                play("saturation" * amp(saturation_amp), "q2_xy", duration=saturation_len * u.ns)
+
+                align()
                 
                 # readout
-                measure("readout"*amp(0.5), "rr1", None, dual_demod.full("cos", "out1", "sin", "out2", I[0]),
+                # multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2], amplitude=0.7)
+                measure("readout"*amp(0.77), "rr1", None, dual_demod.full("cos", "out1", "sin", "out2", I[0]),
                 dual_demod.full("minus_sin", "out1", "cos", "out2", Q[0]))
-                measure("readout"*amp(0.5), "rr2", None, dual_demod.full("cos", "out1", "sin", "out2", I[1]),
+                measure("readout"*amp(0.77), "rr2", None, dual_demod.full("cos", "out1", "sin", "out2", I[1]),
                 dual_demod.full("minus_sin", "out1", "cos", "out2", Q[1]))
                 save(I[0], I_st[0])
                 save(Q[0], Q_st[0])
@@ -86,7 +104,7 @@ with program() as multi_qubit_spec_vs_flux:
                 save(Q[1], Q_st[1])
                 
                 # DC waiting time will affect the edges of the curve:
-                wait(1000)
+                # wait(1000)
 
     with stream_processing():
 
@@ -167,29 +185,29 @@ else:
         ax[0,0].set_title("q1 amp (LO: %s, n: %s)" %(LO,n))
         ax[0,0].set_xlabel("flux-1")
         ax[0,0].set_ylabel("freq")
-        ax[0,0].pcolor(dcq1, LO + IF_q1 - dfq1/u.MHz, A1)
+        ax[0,0].pcolor(dcq1, LO + IF_q1 + dfq1/u.MHz, A1)
 
         ax[1,0].set_title("q1 pha (LO+IF0: %s, n: %s)" %(LO+IF_q1,n))
         ax[1,0].set_xlabel("flux-1")
         ax[1,0].set_ylabel("ifreq")
-        ax[1,0].pcolor(dcq1, - dfq1/u.MHz, P1)
+        ax[1,0].pcolor(dcq1,  dfq1/u.MHz, P1)
     
         ax[0,1].set_title("q2 amp (LO: %s, n: %s)" %(LO,n))
         ax[0,1].set_xlabel("flux-1")
-        ax[0,1].pcolor(dcq1, LO + IF_q2 - dfq2/u.MHz, A2)
+        ax[0,1].pcolor(dcq1, LO + IF_q2 + dfq2/u.MHz, A2)
 
         ax[1,1].set_title("q2 pha (LO+IF0: %s, n: %s)" %(LO+IF_q2,n))
         ax[1,1].set_xlabel("flux-1")
-        ax[1,1].pcolor(dcq1, - dfq2/u.MHz, P2)
+        ax[1,1].pcolor(dcq1,  dfq2/u.MHz, P2)
 
         # Add both to compare:
         ax[0,2].set_title("q1 + q2 (Amp)")
         ax[0,2].set_xlabel("flux-1")
-        ax[0,2].pcolor(dcq1, LO + IF_q1 - dfq1/u.MHz, A1+A2)
+        ax[0,2].pcolor(dcq1, LO + IF_q1 + dfq1/u.MHz, A1+A2)
 
         ax[1,2].set_title("q1 + q2 (Pha)")
         ax[1,2].set_xlabel("flux-1")
-        ax[1,2].pcolor(dcq1, - dfq1/u.MHz, P1+P2)
+        ax[1,2].pcolor(dcq1,  dfq1/u.MHz, P1+P2)
 
         plt.pause(1.0)
 

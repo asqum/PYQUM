@@ -63,8 +63,8 @@ qubit_LO_q2 = 4.200 * u.GHz
 # Qubits IF
 # qubit_IF_q1 = (-224.6) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
 # qubit_IF_q2 = (-53.5+6.4) * u.MHz #(4156-0.119  -4200) * u.MHz
-qubit_IF_q1 = (-181.5-0.8) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
-qubit_IF_q2 = (-38+3.6-4.6) * u.MHz #(4156-0.119  -4200) * u.MHz
+qubit_IF_q1 = (-186.24) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
+qubit_IF_q2 = (-43.161) * u.MHz #(4156-0.119  -4200) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -88,13 +88,13 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 40
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.1406#0.177
-pi_amp_q2 = 0.1497 #0.1673
+pi_amp_q1 = 0.1406
+pi_amp_q2 = 0.1497
 
 # DRAG coefficients
 drag_coef_q1 = 0
 drag_coef_q2 = 0
-anharmonicity_q1 = -(124.1-22.2)*2 * u.MHz
+anharmonicity_q1 = -(284-186.22)*2 * u.MHz
 anharmonicity_q2 = -(101.8+42.6)*2 * u.MHz
 AC_stark_detuning_q1 = 0 * u.MHz
 AC_stark_detuning_q2 = 0 * u.MHz
@@ -215,13 +215,13 @@ mixer_resonator_g_q2 = 0.0
 mixer_resonator_phi_q1 = -0.00
 mixer_resonator_phi_q2 = -0.00
 
-# Readout pulse parameters
-readout_len = 3200
-readout_amp_q1 = 0.003*0.3*0.743 *0.85
-readout_amp_q2 = 0.003*0.6*0.714 *0.85
+# Readout pulse parameters (optimal input for IQ-mixer: 125mV)
+readout_len = 2480
+readout_amp_q1 = 0.125 #0.003*0.3*0.743 *0.85
+readout_amp_q2 = 0.125 #0.003*0.6*0.714 *0.85
 
 # TOF and depletion time
-time_of_flight = 260  # must be a multiple of 4
+time_of_flight = 284  # must be a multiple of 4
 depletion_time = 2 * u.us
 
 opt_weights = False
@@ -249,10 +249,10 @@ else:
     opt_weights_minus_real_q2 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (350.0 / 180) * np.pi
-rotation_angle_q2 = (66.1 / 180) * np.pi
-ge_threshold_q1 = 1.140e-03
-ge_threshold_q2 = 1.476e-03
+rotation_angle_q1 = (177.9 / 180) * np.pi
+rotation_angle_q2 = (260 / 180) * np.pi
+ge_threshold_q1 = 2.189e-03
+ge_threshold_q2 = 1.085e-03
 
 #############################################
 #                  Config                   #
@@ -281,8 +281,8 @@ config = {
                 9: {},
             },
             "analog_inputs": {
-                1: {"offset": 0.0, "gain_db": 0},  # I from down-conversion
-                2: {"offset": 0.0, "gain_db": 0},  # Q from down-conversion
+                1: {"offset": 0.006487780227661133, "gain_db": 0},  # I from down-conversion
+                2: {"offset": 0.004683707580566406, "gain_db": 0},  # Q from down-conversion
             },
         },
         "con2": {
