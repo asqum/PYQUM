@@ -34,6 +34,12 @@ def Initiate(which, mode='DATABASE'):
 def model(bench, action=['Get', '']):
     SCPIcore = '*IDN'  #inquiring machine identity: "who r u?"
     return mdlname, bench, SCPIcore, action
+@Attribute
+def clock(bench, action=['Get', '']):
+    '''INTernal| EXTernal'''
+    SCPIcore = 'SOURce:ROSCillator:SOURce'  #inquiring machine identity: "who r u?"
+    return mdlname, bench, SCPIcore, action
+
 
 @Attribute
 def frequency(bench, action=['Get', '']):
@@ -93,6 +99,8 @@ def test(detail=True):
             frequency(s)
             rfoutput(s, action=['Set_1', 'ON'])
             rfoutput(s)
+            print(clock(s, action=['Set_1', 'EXT']))
+            clock(s, action=['Get_', ''])
             
         else: print(Fore.RED + "Basic IO Test")
     if not bool(input("Press ENTER (OTHER KEY) to (skip) reset: ")):

@@ -185,6 +185,14 @@ def sgsetoupt():
     stat = SG[sgtype].rfoutput(sgbench[sgtag], action=['Set_%s'%sgchannel[sgtag], int(oupt)])
     message = 'RF output: %s <%s>' %(stat[1], stat[0])
     return jsonify(message=message)
+@bp.route('/sg/set/clock', methods=['GET'])
+def sgsetclock():
+    sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
+    clock = request.args.get('clock')
+    try: stat = SG[sgtype].clock(sgbench[sgtag], action=['Set_%s'%sgchannel[sgtag], clock])
+    except: stat = ["0", "NONE"]
+    message = 'Clock: %s <%s>' %(stat[1], stat[0])
+    return jsonify(message=message)
 @bp.route('/sg/set/channel', methods=['GET'])
 def sgsetchannel():
     sgtag, sgtype = '%s:%s' %(request.args.get('sgname'),session['user_name']), request.args.get('sgtype')
@@ -196,6 +204,11 @@ def sgsetchannel():
         message['frequency'] = si_format(float(SG[sgtype].frequency(sgbench[sgtag], ['Get_%s'%sgchannel[sgtag], ''])[1][parakeys['frequency']]),precision=12) + "Hz"
         message['power'] = si_format(float(SG[sgtype].power(sgbench[sgtag], ['Get_%s'%sgchannel[sgtag], ''])[1][parakeys['power']]),precision=2) + "dBm"
         message['rfoutput'] = int(SG[sgtype].rfoutput(sgbench[sgtag], ['Get_%s'%sgchannel[sgtag], ''])[1]['STATE']) # rf output
+        if sgtype in ['RSSGS']: 
+            message['clock'] = str(SG[sgtype].clock(sgbench[sgtag], ['Get_%s'%sgchannel[sgtag], ''])[1]['SOURce']) # clock source: INT / EXT / NONE
+        else: 
+            message['clock'] = "NONE"
+            print(Fore.BLUE + "Clock not yet included for this instrument")
     except:
         # raise
         message = dict(status='%s is not connected' %sgtype)
