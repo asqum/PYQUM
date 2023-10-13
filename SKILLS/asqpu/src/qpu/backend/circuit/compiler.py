@@ -202,7 +202,7 @@ class SQCompiler(GateCompiler):
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0,pulse_length,sampling_point, endpoint=False)
 
-        coeff = ps.GERPFunc(tlist, *(1,pulse_length,0,15,30/4.) ) 
+        coeff = ps.GERPFunc(tlist, *(1,pulse_length,0,30,60/4.) ) 
 
         pulse_info = [
             ("ro" + str(gate.targets[0]), coeff)
