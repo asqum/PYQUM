@@ -241,8 +241,10 @@ class SQCompiler(GateCompiler):
         coeffs_map = compiled_data[1]
         waveform_channel = []
 
-
-        for qi in range(circuit.N):
+        ### TODO because for SQ there should be single Qubit signals output. import target qubit index for qi variable
+        target_qubit_idx = 1 
+        for qi in [target_qubit_idx]:#range(circuit.N): '''Ratis debug for Q2 (idx = 1) 10/14 : When target_index is 0 due to the range func,  label_index(1) != target_index(0)'''
+            print("Circuit qubit number and this qi: ",circuit.N,qi)
             envelope_rf = control_xy(coeffs_map, qi)
             if type(envelope_rf) != type(None):
                 waveform_channel.append( (qi,"xy",envelope_rf) )
@@ -274,7 +276,7 @@ def control_xy( coeffs_map, target_index ):
     if sx_exist and sy_exist:
         rf_envelop = sx_coeff +1j*sy_coeff
         return rf_envelop
-    return None
+    return None   
 
 def measurement_ro( coeffs_map, target_index ):
     ro_exist = False
@@ -291,6 +293,7 @@ def measurement_ro( coeffs_map, target_index ):
         rf_envelop = ro_coeff 
         return rf_envelop
     return None
+
 
 def control_z( coeffs_map, target_index ):
     z_exist = False

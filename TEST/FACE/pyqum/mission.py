@@ -1559,6 +1559,8 @@ def mani_QuCTRL_check_pulses():
     # UPDATE EVERY {R}
     SCORE_DEFINED = deepcopy(SCORE_TEMPLATE)
     MACE_DEFINED = deepcopy(MACE_TEMPLATE)
+    print("rjson_struct: ",rjson_struct)
+    print("TASK_LEVEL[session['user_name']]: ",TASK_LEVEL[session['user_name']])
     for j in range(len(rjson_struct)):
         if ">" in rjson_struct[j]: # For Locked variables with customized math expression:
             math_expression = rjson_struct[j].split(">")[1] # Algebraic initially
@@ -1577,7 +1579,7 @@ def mani_QuCTRL_check_pulses():
                     
         if TASK_LEVEL[session['user_name']] == "EXP": 
             MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]] = MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]].replace("{%s}"%rjson_struct[j], str(Script_Var_Update))
-        
+    print("mission.check_pulse, MACE_DEFINED = ", MACE_DEFINED)    
     # Compose WAVEFORM from INSTANTIATED SCORE / MACE COMMANDS:
     if TASK_LEVEL[session['user_name']] == "MAC":
         for i_slot_order, channel_set in enumerate(DACH_Matrix):
