@@ -7,8 +7,8 @@ from qm.QuantumMachinesManager import QuantumMachinesManager
 from configuration import *
 
 # Configure the Octave parameters for each element
-rr1 = ElementsSettings("rr1", gain=0, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
-rr2 = ElementsSettings("rr2", gain=0, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
+rr1 = ElementsSettings("rr1", gain=0-19, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
+rr2 = ElementsSettings("rr2", gain=0-19, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
 q1_xy = ElementsSettings("q1_xy", gain=6)
 q2_xy = ElementsSettings("q2_xy", gain=6)
 # Add the "octave" elements
