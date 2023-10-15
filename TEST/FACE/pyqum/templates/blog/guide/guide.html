@@ -20,6 +20,7 @@
     $('.navbar button.guide').addClass('active');
     $(function(){
       $("div#calc").load("{{ url_for('guide.calc') }}");
+      $("div#qcirc").load("{{ url_for('guide.qcirc') }}");
       
     });
 </script> 
@@ -30,11 +31,14 @@
 
   <!-- Basic Calculation -->
   <button class="tablinks" id="calc-tab" onclick="openTab(event, 'calc')">CALC</button>
+  <!-- Quantum Circuit -->
+  <button class="tablinks" id="qcirc-tab" onclick="openTab(event, 'qcirc')">QCIRC</button>
   
 </div>
 
 <!-- <div id="all" class="tabcontent"></div> -->
 <div id="calc" class="tabcontent"></div>
+<div id="qcirc" class="tabcontent"></div>
 
 {% endif %}
 

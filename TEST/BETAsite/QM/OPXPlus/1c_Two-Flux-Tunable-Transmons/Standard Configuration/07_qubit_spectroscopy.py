@@ -48,7 +48,7 @@ n_avg = 100000  # The number of averages
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
 saturation_len = 20 * u.us  # In ns (should be < FFT of df)
 if focus: saturation_amp = 0.0007  # pre-factor to the value defined in the config - restricted to [-2; 2)
-else: saturation_amp = 0.03  # pre-factor to the value defined in the config - restricted to [-2; 2)
+else: saturation_amp = 1  # pre-factor to the value defined in the config - restricted to [-2; 2)
 
 # Qubit detuning sweep with respect to qubit_IF
 if focus:
@@ -76,10 +76,10 @@ with program() as multi_qubit_spec:
             update_frequency("q2_xy", df + qubit_IF_q2)
             # Play the saturation pulse to put the qubit in a mixed state - Can adjust the amplitude on the fly [-2; 2)
             # qubit 1
-            # play("saturation" * amp(saturation_amp), "q1_xy", duration=saturation_len * u.ns)
+            play("saturation" * amp(saturation_amp), "q1_xy", duration=saturation_len * u.ns)
             align("q1_xy", "rr1")
             # qubit 2
-            play("saturation" * amp(saturation_amp), "q2_xy", duration=saturation_len * u.ns)
+            # play("saturation" * amp(saturation_amp), "q2_xy", duration=saturation_len * u.ns)
             align("q2_xy", "rr2")
 
             # Multiplexed readout, also saves the measurement outcomes
@@ -102,6 +102,7 @@ with program() as multi_qubit_spec:
 #  Open Communication with the QOP  #
 #####################################
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
+print("Running QUA version: %s" %(qmm.version()))
 
 ###########################
 # Run or Simulate Program #

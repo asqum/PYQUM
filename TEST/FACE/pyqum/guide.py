@@ -51,6 +51,11 @@ def calc_qfreq_predict():
     
     return jsonify(fluxrange=fluxrange[0], qzvalue=qzvalue, qfrequency=qfrequency, filling_period=filling_period)
 
+@bp.route('/qcirc', methods=['POST', 'GET'])
+def qcirc(): 
+    current_usr = session['user_name']
+    return render_template("blog/guide/q_circuit.html", current_usr=current_usr)
+
 
 
 

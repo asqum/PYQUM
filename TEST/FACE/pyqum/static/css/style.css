@@ -163,6 +163,10 @@ textarea.Specifications:focus {
 textarea.CONFG:focus {
     height: 713px;
 }
+textarea.guid#guid-qcirc-qasm-script {
+    height: 317px;
+    margin-top: -5px;
+}
 
 label.parameter {
     word-wrap: break-word;

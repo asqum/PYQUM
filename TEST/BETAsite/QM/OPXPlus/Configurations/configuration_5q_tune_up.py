@@ -236,8 +236,8 @@ resonator_IF[4] = int((36.1) * u.MHz)
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
 readout_len = 1680
 readout_amp = np.zeros(5)
-readout_amp[0] = 0.112
-readout_amp[1] = 0.11
+readout_amp[0] = 0.138
+readout_amp[1] = 0.231
 readout_amp[2] = 0.0557
 readout_amp[3] = 0.201
 readout_amp[4] = 0.097
