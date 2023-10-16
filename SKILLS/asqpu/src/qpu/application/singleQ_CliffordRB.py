@@ -185,7 +185,7 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt
     mycompiler.params["ro"]["pulse_length"] = q_info.tempPars["ROW"]
-    waveform_channel = mycompiler.to_waveform(circuit_RB)
+    waveform_channel = mycompiler.to_waveform(circuit_RB,q_idx=target)
     d_setting = backendcircuit.devices_setting(waveform_channel)
     d_setting["total_time"] = backendcircuit.total_time
     return d_setting

@@ -233,8 +233,11 @@ class SQCompiler(GateCompiler):
         else:
             return []
 
-    def to_waveform( self, circuit:QubitCircuit ):
-
+    def to_waveform( self, circuit:QubitCircuit , **kwargs):
+        try:
+            target_q_idx = kwargs["q_idx"]
+        except:
+            target_q_idx = 0
         compiled_data = self.compile(circuit.gates, schedule_mode=False)
 
         tlist_map = compiled_data[0]
@@ -242,8 +245,8 @@ class SQCompiler(GateCompiler):
         waveform_channel = []
 
         ### TODO because for SQ there should be single Qubit signals output. import target qubit index for qi variable
-        target_qubit_idx = 1 
-        for qi in [target_qubit_idx]:#range(circuit.N): '''Ratis debug for Q2 (idx = 1) 10/14 : When target_index is 0 due to the range func,  label_index(1) != target_index(0)'''
+        
+        for qi in [target_q_idx]:#range(circuit.N): '''Ratis debug for Q2 (idx = 1) 10/14 : When target_index is 0 due to the range func,  label_index(1) != target_index(0)'''
             print("Circuit qubit number and this qi: ",circuit.N,qi)
             envelope_rf = control_xy(coeffs_map, qi)
             if type(envelope_rf) != type(None):
