@@ -4,6 +4,9 @@ from set_octave import OctaveUnit, octave_declaration
 from qualang_tools.config.waveform_tools import drag_gaussian_pulse_waveforms, flattop_gaussian_waveform, gaussian
 from qualang_tools.units import unit
 
+import matplotlib
+matplotlib.use('TkAgg')
+
 
 #######################
 # AUXILIARY FUNCTIONS #
@@ -69,7 +72,7 @@ qubit_LO_q4 = 4.200 * u.GHz
 qubit_LO_q5 = 4.200 * u.GHz
 
 # Qubits IF
-qubit_IF_q1 = (-346.022 -0.327) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
+qubit_IF_q1 = (-346.022 -0.146) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
 qubit_IF_q2 = (471.52 +0.181-0.133) * u.MHz #(4156-0.119  -4200) * u.MHz
 qubit_IF_q3 = (-44.4216-0.032) * u.MHz
 qubit_IF_q4 = (-44.4216-0.032) * u.MHz
@@ -94,15 +97,15 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.1303
-pi_amp_q2 = 0.2537 #0.1497
+pi_amp_q1 = 0.1971
+pi_amp_q2 = 0.281
 pi_amp_q3 = 0.5
 pi_amp_q4 = 0.5
 pi_amp_q5 = 0.5
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
-drag_coef_q1 = 0.68
-drag_coef_q2 = 1.3
+drag_coef_q1 = 0
+drag_coef_q2 = 0
 drag_coef_q3 = 0
 drag_coef_q4 = 0
 drag_coef_q5 = 0
@@ -111,8 +114,8 @@ anharmonicity_q2 = -(470.7-369.2)*2 * u.MHz
 anharmonicity_q3 = -(200) * u.MHz
 anharmonicity_q4 = -(200) * u.MHz
 anharmonicity_q5 = -(200) * u.MHz
-AC_stark_detuning_q1 = -0.2 * u.MHz
-AC_stark_detuning_q2 = 2.1 * u.MHz
+AC_stark_detuning_q1 = 0 * u.MHz
+AC_stark_detuning_q2 = 0 * u.MHz
 AC_stark_detuning_q3 = 0 * u.MHz
 AC_stark_detuning_q4 = 0 * u.MHz
 AC_stark_detuning_q5 = 0 * u.MHz
@@ -224,18 +227,18 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 #############################################
 resonator_LO = 5.9 * u.GHz
 # Resonators IF
-resonator_IF_q1 = int((-157.1) * u.MHz)
-resonator_IF_q2 = int((136.71) * u.MHz)
-resonator_IF_q3 = int((-38) * u.MHz)
+resonator_IF_q1 = int((-157.0) * u.MHz)
+resonator_IF_q2 = int((136.8) * u.MHz)
+resonator_IF_q3 = int((-38.5) * u.MHz)
 resonator_IF_q4 = int((1) * u.MHz)
 resonator_IF_q5 = int((1) * u.MHz)
 # Above is for verifying wide-sweep results: -156, -38, 39, 138, 231
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
-readout_len = 1680
-readout_amp_q1 = 0.1
-readout_amp_q2 = 0.11
-readout_amp_q3 = 0.125
+readout_len = 3200
+readout_amp_q1 = 0.0972*1.2
+readout_amp_q2 = 0.1475*1.56
+readout_amp_q3 = 0.1475
 readout_amp_q4 = 0.125
 readout_amp_q5 = 0.125
 
@@ -295,13 +298,13 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (180.2 / 180) * np.pi
-rotation_angle_q2 = (18.6 / 180) * np.pi
+rotation_angle_q1 = (204 / 180) * np.pi
+rotation_angle_q2 = (28.8 / 180) * np.pi
 rotation_angle_q3 = (0 / 180) * np.pi
 rotation_angle_q4 = (0 / 180) * np.pi
 rotation_angle_q5 = (0 / 180) * np.pi
-ge_threshold_q1 = 0.000845
-ge_threshold_q2 = 0.000254
+ge_threshold_q1 = 0.0008252
+ge_threshold_q2 = 0.0002741
 ge_threshold_q3 = 0
 ge_threshold_q4 = 0
 ge_threshold_q5 = 0

@@ -52,13 +52,13 @@ with program() as iq_blobs:
         # Play the qubit pi pulses
         
         # q1:
-        play("y90", "q1_xy")
+        # play("y90", "q1_xy")
         play("x180", "q1_xy")
         # play("y90", "q1_xy")
         # play("x180", "q1_xy")
         
         # q2:
-        play("y90", "q2_xy")
+        # play("y90", "q2_xy")
         play("x180", "q2_xy")
         # play("y90", "q2_xy")
         # play("x180", "q2_xy")

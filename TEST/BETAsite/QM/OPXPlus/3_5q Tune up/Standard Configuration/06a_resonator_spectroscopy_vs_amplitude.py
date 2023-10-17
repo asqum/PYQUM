@@ -32,7 +32,7 @@ warnings.filterwarnings("ignore")
 ###################
 # The QUA program #
 ###################
-q_id = [0,2]
+q_id = [0,1]
 n_avg = 100000  # The number of averages
 # The frequency sweep around the resonators' frequency "resonator_IF_q"
 span = 2.2 * u.MHz

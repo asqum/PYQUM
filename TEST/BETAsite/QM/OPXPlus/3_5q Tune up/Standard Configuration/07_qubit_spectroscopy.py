@@ -40,7 +40,7 @@ warnings.filterwarnings("ignore")
 ###################
 # The QUA program #
 ###################
-q_id = [1,2]
+q_id = [0,1]
 focus = False
 n_avg = 100000  # The number of averages
 
@@ -70,7 +70,7 @@ with program() as multi_qubit_spec:
             for i in q_id:
                 update_frequency("q%s_xy"%(i+1), df + qubit_IF[i])
             for i in q_id:
-                if i==2: play("saturation" * amp(saturation_amp), "q%s_xy"%(i+1), duration=saturation_len * u.ns)  
+                if i<2: play("saturation" * amp(saturation_amp), "q%s_xy"%(i+1), duration=saturation_len * u.ns)  
                 align("q%s_xy"%(i+1), "rr%s"%(i+1))
             multiplexed_readout(I, I_st, Q, Q_st, resonators=[x+1 for x in q_id], amplitude=0.99)
             wait(thermalization_time * u.ns)
@@ -87,6 +87,7 @@ with program() as multi_qubit_spec:
 #  Open Communication with the QOP  #
 #####################################
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
+print("Running QUA version: %s" %(qmm.version()))
 
 ###########################
 # Run or Simulate Program #

@@ -38,13 +38,13 @@ warnings.filterwarnings("ignore")
 n_avg = 100000  # Number of averages
 X = False
 control, target = 2, 1
-DD_cycle = 1
+DD_cycle = 0
 
 # Idle time sweep in clock cycles (Needs to be a list of integers)
 if X: idle_times = np.arange(4, 1000, 1)
-else: idle_times = np.arange(0, 600, 2**DD_cycle)
+else: idle_times = np.arange(0, 600, 2**(DD_cycle + 1))
 
-detuning = 1.00e6  # "Virtual" detuning in Hz
+detuning = 2.00e6  # "Virtual" detuning in Hz
 
 with program() as ramsey:
     I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=2)
