@@ -54,9 +54,9 @@ with program() as rabi:
             with for_(*from_array(a, amps)):
                 # Loop for error amplification (perform many qubit pulses)
                 with for_(count, 0, count < npi, count + 1):
-                    play("x180" * amp(a), "q1_xy")
+                    # play("x180" * amp(a), "q1_xy")
                     # align()
-                    # play("x180" * amp(a), "q2_xy")
+                    play("x180" * amp(a), "q2_xy")
                 # Align the elements to measure after playing the qubit pulses.
                 align()
                 # Start using Rotated integration weights (cf. IQ_blobs.py)
