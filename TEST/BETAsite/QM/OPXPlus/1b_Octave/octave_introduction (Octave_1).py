@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 from qualang_tools.units import unit
 
 # Flags to switch between different modes defined below
-check_up_converters = False
-check_triggers = True
+check_up_converters = True
+check_triggers = False
 check_down_converters = False
 calibration = False
 
@@ -31,7 +31,7 @@ octave_port = 11250 # 11000 + last IP digits
 con = "con1"
 octave = "octave1"
 # The elements used to test the ports of the Octave
-elements = ["qe1", "qe2", "qe3", "qe4", "qe5"]
+elements = ["qe3"] #["qe1", "qe2", "qe3", "qe4", "qe5"]
 IF = 50e6  # The IF frequency
 LO = 6e9  # The LO frequency
 # The configuration used here
@@ -368,7 +368,7 @@ else:
 #######################################
 # Step 3 : checking the up-converters #
 #######################################
-Rest = True
+Rest = False
 if check_up_converters:
     print("-" * 37 + " Checking up-converters")
     job = qm.execute(hello_octave)
