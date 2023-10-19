@@ -1713,6 +1713,7 @@ pyqum/static/js/dsply/static.js
 pyqum/static/js/dsply/stream.js
 pyqum/static/js/guid/calc.js
 pyqum/static/js/guid/guide.js
+pyqum/static/js/guid/qcirc.js
 pyqum/static/js/mach/adc.js
 pyqum/static/js/mach/all.js
 pyqum/static/js/mach/bdr.js
@@ -1726,11 +1727,13 @@ pyqum/static/js/mssn/all.js
 pyqum/static/js/mssn/char.js
 pyqum/static/js/mssn/mani.js
 pyqum/static/js/mssn/mssn.js
+pyqum/static/js/mssn/orchi.js
 pyqum/static/js/mssn/char/cwsweep.js
 pyqum/static/js/mssn/char/fresp.js
 pyqum/static/js/mssn/char/sqepulse.js
 pyqum/static/js/mssn/mani/QuCTRL.js
 pyqum/static/js/mssn/mani/ancillary_00.js
+pyqum/static/js/mssn/orchi/QPX.js
 pyqum/static/ui/jquery-ui.css
 pyqum/static/ui/jquery-ui.js
 pyqum/static/ui/jquery-ui.min.css
@@ -1773,6 +1776,7 @@ pyqum/templates/blog/dsply/game01.html
 pyqum/templates/blog/dsply/test.html
 pyqum/templates/blog/guide/calculate.html
 pyqum/templates/blog/guide/guide.html
+pyqum/templates/blog/guide/q_circuit.html
 pyqum/templates/blog/home/activity.html
 pyqum/templates/blog/home/create.html
 pyqum/templates/blog/home/index.html
@@ -1792,7 +1796,9 @@ pyqum/templates/blog/msson/all.html
 pyqum/templates/blog/msson/char.html
 pyqum/templates/blog/msson/mani.html
 pyqum/templates/blog/msson/mission.html
+pyqum/templates/blog/msson/orchi.html
 pyqum/templates/blog/msson/char/cwsweep.html
 pyqum/templates/blog/msson/char/fresp.html
 pyqum/templates/blog/msson/char/sqepulse.html
 pyqum/templates/blog/msson/mani/QuCTRL.html
+pyqum/templates/blog/msson/orchi/QPX.html

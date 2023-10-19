@@ -32,10 +32,10 @@ warnings.filterwarnings("ignore")
 ##############################
 # Program-specific variables #
 ##############################
-qubit = 2
+qubit = 1
 qb = "q%s_xy"%qubit  # The qubit under study
 res = "rr%s"%qubit  # The resonator to measure the qubit defined above
-n_avg = 30000  # The number of averages
+n_avg = 10000  # The number of averages
 
 # All XY sequences. The sequence names must match corresponding operation in the config
 sequence = [

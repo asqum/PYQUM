@@ -108,6 +108,12 @@ else:
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()
 
+    filename = "IQ_Blobs"
+    save = True
+    if save:
+        np.savez(save_dir/filename, n=n, I_g_q1=I_g_q1, Q_g_q1=Q_g_q1, I_e_q1=I_e_q1, Q_e_q1=Q_e_q1, I_g_q2=I_g_q2, Q_g_q2=Q_g_q2, I_e_q2=I_e_q2, Q_e_q2=Q_e_q2)
+        print("Data saved as %s.npz" %filename)
+
     #########################################
     # The two_state_discriminator gives us the rotation angle which makes it such that all of the information will be in
     # the I axis. This is being done by setting the `rotation_angle` parameter in the configuration.
