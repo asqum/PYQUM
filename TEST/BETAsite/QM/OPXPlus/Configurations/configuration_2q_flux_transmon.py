@@ -25,7 +25,8 @@ qop_port = 9800  # Write the QOP port if version < QOP220
 
 # Path to save data
 # save_dir = Path().absolute() / "QM" / "INSTALLATION" / "data"
-save_dir = (Path().absolute()/"PYQUM"/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"data")
+save_dir = (Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"data")
+# save_dir = (Path().absolute()/"PYQUM"/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"data")
 
 ############################
 # Set octave configuration #
@@ -72,8 +73,8 @@ qubit_LO_q4 = 4.200 * u.GHz
 qubit_LO_q5 = 4.200 * u.GHz
 
 # Qubits IF
-qubit_IF_q1 = (-346.022 -0.146) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
-qubit_IF_q2 = (471.52 +0.181-0.133) * u.MHz #(4156-0.119  -4200) * u.MHz
+qubit_IF_q1 = (-346.022 -0.041) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
+qubit_IF_q2 = (471.52 +0.312) * u.MHz #(4156-0.119  -4200) * u.MHz
 qubit_IF_q3 = (-44.4216-0.032) * u.MHz
 qubit_IF_q4 = (-44.4216-0.032) * u.MHz
 qubit_IF_q5 = (-44.4216-0.032) * u.MHz
@@ -97,15 +98,15 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.1971
-pi_amp_q2 = 0.281
+pi_amp_q1 = 0.05109
+pi_amp_q2 = 0.05995
 pi_amp_q3 = 0.5
 pi_amp_q4 = 0.5
 pi_amp_q5 = 0.5
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
-drag_coef_q1 = 0
-drag_coef_q2 = 0
+drag_coef_q1 = 0.33
+drag_coef_q2 = 0.2
 drag_coef_q3 = 0
 drag_coef_q4 = 0
 drag_coef_q5 = 0
@@ -114,8 +115,8 @@ anharmonicity_q2 = -(470.7-369.2)*2 * u.MHz
 anharmonicity_q3 = -(200) * u.MHz
 anharmonicity_q4 = -(200) * u.MHz
 anharmonicity_q5 = -(200) * u.MHz
-AC_stark_detuning_q1 = 0 * u.MHz
-AC_stark_detuning_q2 = 0 * u.MHz
+AC_stark_detuning_q1 = 0.0 * u.MHz
+AC_stark_detuning_q2 = 0.0 * u.MHz
 AC_stark_detuning_q3 = 0 * u.MHz
 AC_stark_detuning_q4 = 0 * u.MHz
 AC_stark_detuning_q5 = 0 * u.MHz
@@ -235,9 +236,9 @@ resonator_IF_q5 = int((1) * u.MHz)
 # Above is for verifying wide-sweep results: -156, -38, 39, 138, 231
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
-readout_len = 3200
-readout_amp_q1 = 0.0972*1.2
-readout_amp_q2 = 0.1475*1.56
+readout_len = 3600
+readout_amp_q1 = 0.0898128*1.1
+readout_amp_q2 = 0.202488*0.9
 readout_amp_q3 = 0.1475
 readout_amp_q4 = 0.125
 readout_amp_q5 = 0.125
@@ -298,13 +299,13 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (204 / 180) * np.pi
-rotation_angle_q2 = (28.8 / 180) * np.pi
+rotation_angle_q1 = (354.6 / 180) * np.pi
+rotation_angle_q2 = (193.6 / 180) * np.pi
 rotation_angle_q3 = (0 / 180) * np.pi
 rotation_angle_q4 = (0 / 180) * np.pi
 rotation_angle_q5 = (0 / 180) * np.pi
-ge_threshold_q1 = 0.0008252
-ge_threshold_q2 = 0.0002741
+ge_threshold_q1 = 7.941e-04
+ge_threshold_q2 = 3.548e-04
 ge_threshold_q3 = 0
 ge_threshold_q4 = 0
 ge_threshold_q5 = 0
