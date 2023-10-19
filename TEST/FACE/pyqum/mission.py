@@ -1579,7 +1579,7 @@ def mani_QuCTRL_check_timsum():
 def mani_QuCTRL_check_pulses():
     perimeter = json.loads(request.args.get('PERIMETER'))
     Pulse_Preview = dict()
-
+    
     # Extract Pulse-related Settings ONLY:
     SCORE_TEMPLATE = perimeter['SCORE-JSON']
     MACE_TEMPLATE = perimeter['MACE-JSON']
@@ -1619,14 +1619,17 @@ def mani_QuCTRL_check_pulses():
     print("mission.check_pulse, MACE_DEFINED = ", MACE_DEFINED)    
     # Compose WAVEFORM from INSTANTIATED SCORE / MACE COMMANDS:
     if TASK_LEVEL[session['user_name']] == "MAC":
-        for i_slot_order, channel_set in enumerate(DACH_Matrix):
-            for ch in channel_set:
-                dach_address = "%s-%s" %(i_slot_order+1,ch)
-                pulseq = pulser(dt=1, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address]) # take dt as a unit-sample (1ns)
-                if not i_slot_order: T_samples = pulseq.totaltime
-                pulseq.song()
-                Pulse_Preview['CH%s'%dach_address] = list(pulseq.music)
-
+        if len(perimeter["IF_ALIGN_KHZ"].split(" "))>1 and perimeter["READOUTYPE"] not in ["one-shot","continuous"]:
+            raise ValueError(Back.WHITE + Fore.RED + "multiplex readout temporary support OneShot and Continuous only!")
+        else:
+            for i_slot_order, channel_set in enumerate(DACH_Matrix):
+                for ch in channel_set:
+                    dach_address = "%s-%s" %(i_slot_order+1,ch)
+                    pulseq = pulser(dt=1, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address]) # take dt as a unit-sample (1ns)
+                    if not i_slot_order: T_samples = pulseq.totaltime
+                    pulseq.song()
+                    Pulse_Preview['CH%s'%dach_address] = list(pulseq.music)
+            
     if TASK_LEVEL[session['user_name']] == "EXP": 
         Exp = macer(commander=mani_TASK[session['user_name']])
         Exp.execute(MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]])
@@ -1656,6 +1659,7 @@ def mani_QuCTRL_check_pulses():
                     Pulse_Preview[f"{instr_name}-{i+1}"] = list(s)
                     print(Fore.WHITE + "s: %s" %s)
         
+
     return jsonify(T_samples=T_samples, Pulse_Preview=Pulse_Preview)
 # run NEW measurement:
 @bp.route('/mani/QuCTRL/new', methods=['GET'])
