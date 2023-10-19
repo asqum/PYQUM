@@ -153,6 +153,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     try: XY_addr = find_in_list(DAC_ROLE_Matrix, 'XY')
     except: XY_addr = 'OPT' # Optionized if not present
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
+    print(Fore.BLUE + str(find_in_list(str_list=DAC_ROLE_Matrix, element='XY', mode='all')))
 
     # Queue-specific instrument-package in list:
     instr[session['user_name']] = {}
@@ -452,7 +453,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             # 2. MAC's Device: SG
             for i_slot, channel_set in enumerate(SG_CH_Matrix):
                 for channel in channel_set: 
-                    if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz
+                    if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz   # 4 chennels, 2 different IF will go wrong output
                     elif 'RO' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = RO_Compensate_MHz
                     else: Compensate_MHz = 0
                     

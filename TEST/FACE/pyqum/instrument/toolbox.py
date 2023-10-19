@@ -23,11 +23,22 @@ def flatten_address(x, start_from=1):
         if isinstance(x, collections.abc.Iterable) and not isinstance(el, str): result.extend(["%s-%s" %(i+start_from,y) for y in flatten_address(el)]) # extend and update on the way up
         else: result.append(i+start_from) # append at the bottom
     return result
-def find_in_list(str_list, element):
+def find_in_list(str_list, element, **kwargs):
     '''find the address (channel-location) of an element in a non-repeating multi-dimensional list.
     Used in looking for matching role among DAC channels.
     '''
-    return flatten_address(str_list)[flatten(str_list).index([s for s in flatten(str_list) if element in s][0])]
+    if kwargs == {}:
+        return flatten_address(str_list)[flatten(str_list).index([s for s in flatten(str_list) if element in s][0])]
+    else:
+        XY_related_list = [s for s in flatten(str_list) if element in s]
+        XY_related_chennel = [] #The first port for each XY gate
+        for idx in range(0,len(XY_related_list),2):
+            XY_related_chennel.append(flatten_address(str_list)[flatten(str_list).index(XY_related_list[idx])])  
+
+        return XY_related_chennel
+    
+
+
 
 def cdatasearch(Order, Structure):
     ''' Give the address of the data essentially!
