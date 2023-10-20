@@ -464,13 +464,17 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
             for i_slot, channel_set in enumerate(SG_CH_Matrix):
                 for channel in channel_set: 
                     print(Fore.RED + Back.WHITE + f"ROLE={SG_ROLE_Matrix[i_slot][channel-1]}")
-                    if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: 
-                        Compensate_MHz = XY_Compensate_MHz_list[SG_order]
-                        print(Fore.WHITE + Back.RED + f"SG-{i_slot} IF = {Compensate_MHz} MHz")
-                        SG_order += 1
-                    # if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz   # 4 chennels, 2 different IF will go wrong output
-                    elif 'RO' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = RO_Compensate_MHz
-                    else: Compensate_MHz = 0
+                    if TASK_LEVEL == "EXP":
+                        if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz
+                        elif 'RO' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = RO_Compensate_MHz
+                        else: Compensate_MHz = 0
+                    else:
+                        if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: 
+                            Compensate_MHz = XY_Compensate_MHz_list[SG_order]
+                            print(Fore.WHITE + Back.RED + f"SG-{i_slot} IF = {Compensate_MHz} MHz")
+                            SG_order += 1
+                        elif 'RO' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = RO_Compensate_MHz
+                        else: Compensate_MHz = 0
 
                     
                     Mac = macer()
