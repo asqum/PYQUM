@@ -83,7 +83,6 @@ def give_waveformInfo(beat,width,height)->dict:
             carrierPhase = 0
             func_paras = [height, width*2/sfactor, 0, 0]
 
-
         case "drage":   # waveform with ErfGaussian
             pulse_func = cpf.DRAGFunc
             if len(paraList)==1:
@@ -148,6 +147,22 @@ def give_waveformInfo(beat,width,height)->dict:
             carrierPhase = 0
             slope = (start-end)/width
             func_paras = [slope, start]
+
+        case "eerp":    # waveform with Error edge rectangular pulse
+            pulse_func = cpf.EERP
+            if len(paraList) == 1:
+                sfactor = 4
+                edgeWidth = 10
+                peakMultiplier = 0
+            else:
+                if isnan(paraList[0]): sfactor = 4
+                else: sfactor = paraList[0]
+                if isnan(paraList[1]): edgeWidth = 10
+                else: edgeWidth = paraList[1]
+                if isnan(paraList[2]): peakMultiplier = 0
+                else: peakMultiplier = paraList[2]
+            carrierPhase = 0
+            func_paras = [height, edgeWidth/2, edgeWidth/sfactor, width, 0]
 
         case "gerp":
             pulse_func = cpf.GERPFunc

@@ -936,9 +936,10 @@ $('input.mani.QuCTRL.pulse-check#QuCTRL-pulse-check').bind('click', function() {
     $('div.QuCTRL#QuCTRL-check-pulse-progress').empty().append($('<h4 style="color: blue;"></h4>').text("COMPOSING PULSES..."));
     // Assemble PERIMETER:
     var PERIMETER = Perimeter_Assembler();
-    // console.log("PERIMETER to CHECK PULSES: " + PERIMETER)
+    console.log("PERIMETER to CHECK PULSES: " + JSON.stringify(PERIMETER))
     $.getJSON(mssnencrpytonian() + '/mssn/mani/QuCTRL/check/pulses', {
         PERIMETER: JSON.stringify(PERIMETER),
+        
     }, function (data) {
         // Preview Max-Pulses on Chart:
         var Pulse_Preview = data.Pulse_Preview;

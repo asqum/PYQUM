@@ -5,7 +5,8 @@ from typing import List
 #from pulse_generator.pulse import Pulse
 import numpy as np
 from qutip import sigmax, sigmay, sigmaz, basis, qeye, Qobj
-from qutip_qip.circuit import QubitCircuit, Gate
+from qutip_qip.circuit import QubitCircuit
+from qutip_qip.operations import Gate #Measurement in 0.3.X qutip_qip
 from typing import List
 from pulse_signal.common_Mathfunc import ErfAmplifier
 
@@ -64,8 +65,6 @@ def clifford_gates( target:int )->List:
         g_nc1,g_nc2,g_nc4,g_nc3
     ]
     return gates_set
-
-
 
 
 def decomposition( gates:List[Gate] )->Qobj:
@@ -167,26 +166,26 @@ def get_SQRB_device_setting( backendcircuit:BackendCircuit, num_gates, target:in
     q_name = backendcircuit.q_reg["qubit"][target]
     print(f"{q_name} get RB sequence." )
     q_info = backendcircuit.get_qComp(q_name)
-    print(f"dt={backendcircuit.dt}")
+    print(f"Qubit spec={q_info.tempPars}")
     backendcircuit.total_time = q_info.tempPars["total_time"]
     mycompiler.params["rxy"] = {}
     mycompiler.params["rxy"]["dt"] = backendcircuit.dt
     mycompiler.params["rxy"]["pulse_length"] = q_info.tempPars["XYW"]
     mycompiler.params["anharmonicity"] = float(q_info.tempPars["anharmonicity"])*2*np.pi
 
-    if "waveform&alpha&sigma" in list(q_info.tempPars.keys()):
-        mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha&sigma"]
+    if "waveform&alpha" in list(q_info.tempPars.keys()):
+        mycompiler.params["waveform"] = q_info.tempPars["waveform&alpha"]
     else:
-        mycompiler.params["waveform"] = ["NaN",0,4]  #[waveform,a_weight,S-Factor]
+        mycompiler.params["waveform"] = ["NaN",0]  #[waveform,a_weight,S-Factor]
     
-    print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f, S-Factor = %d and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["waveform"][2],mycompiler.params["anharmonicity"]))
+    print(Back.WHITE + Fore.RED + "** Now use %s with a_weight = %.2f and Anharmonicity = %.5f (GHz) **"%(mycompiler.params["waveform"][0],mycompiler.params["waveform"][1],mycompiler.params["anharmonicity"]))
 
     mycompiler.params["rxy"]["pulse_strength"] = q_info.tempPars["XYL"]
 
     mycompiler.params["ro"] = {}
     mycompiler.params["ro"]["dt"] = backendcircuit.dt
     mycompiler.params["ro"]["pulse_length"] = q_info.tempPars["ROW"]
-    waveform_channel = mycompiler.to_waveform(circuit_RB)
+    waveform_channel = mycompiler.to_waveform(circuit_RB,q_idx=target)
     d_setting = backendcircuit.devices_setting(waveform_channel)
     d_setting["total_time"] = backendcircuit.total_time
     return d_setting

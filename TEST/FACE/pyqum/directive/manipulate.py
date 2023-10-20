@@ -1,4 +1,4 @@
-'''ALL QuBit Manipulations (brute-force, unintegrated): Single_Qubit, Qubits, RB, QPU'''
+'''ALL QuBit Manipulations (brute-force, unintegrated): Single_Qubit, Qubits, RB, TQRB, QPU'''
 
 from colorama import init, Fore, Back
 init(autoreset=True) #to convert termcolor to wins color
@@ -108,7 +108,7 @@ def get_Qubit_CV (samplename)->bec.BackendCircuit:
 @settings(2) # data-density
 def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resumepoint=0, instr={}, perimeter={}, renamed_task=''):
     '''
-    renamed_task: Single_Qubit, Qubits, RB, QPU
+    renamed_task: Single_Qubit, Qubits, RB, TQRB, QPU
     Time-domain Pulse measurement:\n
     SCORES (SCripted ORchestration of Entanglement & Superposition) is a scripted pulse instruction language for running Quantum Algorithm.\n
     perimeter.keys() = ['XY-LO-Power', 'RO-LO-Power', 'SCORE-NS', 'SCORE-JSON', 'R-JSON', 'RECORD-SUM', 'RECORD_TIME_NS', 'READOUTYPE']\n
@@ -153,6 +153,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     try: XY_addr = find_in_list(DAC_ROLE_Matrix, 'XY')
     except: XY_addr = 'OPT' # Optionized if not present
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
+    try: XY_addr_list = find_in_list(str_list=DAC_ROLE_Matrix, element='XY', mode='all')
+    except: XY_addr_list = 'OPT' # Optionized if not present
+    print(Fore.BLUE + str(XY_addr_list))  # if 4 DACs for 2Q, [2-1, 2-3] for 2 SG
 
     # Queue-specific instrument-package in list:
     instr[session['user_name']] = {}
@@ -173,6 +176,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
 
     # ***USER_DEFINED*** Controlling-PARAMETER(s) ======================================================================================
     # 1a. Instruments' specs:
+    print("Renamed task is : ",str(renamed_task))
     TIME_RESOLUTION_NS = int(perimeter['TIME_RESOLUTION_NS'])
     CLOCK_HZ = float(perimeter['CLOCK_HZ'])
     # 1b. DSP perimeter(s)
@@ -195,16 +199,26 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
         ifperiod = pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%RO_addr], RJSON), dt=(1e9/CLOCK_HZ)).totaltime
     if TASK_LEVEL == "EXP":
         # for i, qubit_id in enumerate(Sample_Backend.q_reg["qubit"]):
-        d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True ) # PENDING: MORE unified function from ASQPU?
+        if str(renamed_task) == "TQRB": # Ratis edit @ 2023/10/05
+            d_setting = qapp.get_TQRB_device_setting( Sample_Backend, 0, 1, 0, withRO=True )
+        else:
+            d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True ) # PENDING: MORE unified function from ASQPU?
         ifperiod = d_setting['total_time']
     ##JACKY 
     print(Fore.BLUE +f"totaltime(ifperiod) {ifperiod}")
     
     if TASK_LEVEL == "MAC":
         RO_Compensate_MHz = -pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%RO_addr], RJSON)).IF_MHz_rotation # working with RO-MOD (up or down)
-        XY_Compensate_MHz = -pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%XY_addr], RJSON)).IF_MHz_rotation # working with XY-MOD (up or down)
+        # XY_Compensate_MHz = -pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%XY_addr], RJSON)).IF_MHz_rotation # working with XY-MOD (up or down)
         DDC_RO_Compensate_MHz = RO_Compensate_MHz
-        print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
+        
+        XY_Compensate_MHz_list = []
+        for XY_ch in XY_addr_list:
+            XY_Compensate_MHz_list.append(-pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%XY_ch], RJSON)).IF_MHz_rotation)
+        # XY_Compensate_MHz_list = [80, 120] corresponding to SG_1, SG_2
+        print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz_list: %s" %(RO_Compensate_MHz,XY_Compensate_MHz_list))
+
+
     if TASK_LEVEL == "EXP":
         RO_Compensate_MHz = 0
         XY_Compensate_MHz = 0
@@ -396,6 +410,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                 # Expert EXP Control (Every-loop)
                 Exp = macer(commander=renamed_task)
                 Exp.execute(MACE_DEFINED["EXP-" + renamed_task])
+                
 
                 # MATCHING EXP-TASK FOR ASQPU API:
                 match renamed_task:
@@ -405,6 +420,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                     case "RB": 
                         '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
                         d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+                    # In our naming conventions, control is 0 and target is 1 
+                    case "TQRB":
+                        d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), withRO=True )
                     case _: 
                         print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
 
@@ -442,11 +460,19 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         Mac.close()
 
             # 2. MAC's Device: SG
+            SG_order = 0
             for i_slot, channel_set in enumerate(SG_CH_Matrix):
                 for channel in channel_set: 
-                    if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz
+                    print(Fore.RED + Back.WHITE + f"ROLE={SG_ROLE_Matrix[i_slot][channel-1]}")
+                    if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: 
+                        Compensate_MHz = XY_Compensate_MHz_list[SG_order]
+                        print(Fore.WHITE + Back.RED + f"SG-{i_slot} IF = {Compensate_MHz} MHz")
+                        SG_order += 1
+                    # if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz   # 4 chennels, 2 different IF will go wrong output
                     elif 'RO' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = RO_Compensate_MHz
                     else: Compensate_MHz = 0
+
+                    
                     Mac = macer()
                     Mac.execute(MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)])
                     SG[i_slot].frequency(SG_instance[i_slot], action=['Set_%s'%(channel), str(float(Mac.VALUES[Mac.KEYS.index("frequency")]) + Compensate_MHz/1e3) + "GHz"])
@@ -558,6 +584,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         trace_I, trace_Q = DATA.reshape((TOTAL_POINTS, 2)).transpose()[0], DATA.reshape((TOTAL_POINTS, 2)).transpose()[1]
                         DATA_for_DDCfreq = zeros([readout_numbers,TOTAL_POINTS*2])
                         for a in range(readout_numbers):
+                            print("Now Rotate ROIF= ",DDCfreqs[a])
+                            print("The RO mixer IF= ",str(DDC_RO_Compensate_MHz))
                             IafterDDC, QafterDDC = pulse_baseband(digital_homodyne, trace_I, trace_Q, DDC_RO_Compensate_MHz, -float(DDCfreqs[a]), dt=TIME_RESOLUTION_NS)
                             DATA_for_DDCfreq[a] = array([IafterDDC, QafterDDC]).transpose().reshape(TOTAL_POINTS*2) # back to interleaved IQ-Data string
                         DATA = DATA_for_DDCfreq.reshape(-1)

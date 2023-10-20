@@ -149,36 +149,22 @@ class SQCompiler(GateCompiler):
         pulse_strength = self.params["rxy"]["pulse_strength"]
         dt = self.params["rxy"]["dt"]
         anharmonicity = self.params["anharmonicity"]
+
         if self.params["waveform"][0] != "NaN":
             waveform = self.params["waveform"][0]
             a_weight = self.params["waveform"][1]
-            sFactor = self.params["waveform"][2]
         else:
             waveform = "DRAGe"
             a_weight = -0.5
-            sFactor = 4.
 
 
         sampling_point = int( -(pulse_length//-dt) )
         tlist = np.linspace(0, pulse_length, sampling_point, endpoint=False)
-        
-        if waveform.lower()=="dragh":
-            
-            coeff = ps.DRAGFunc_Hermite(tlist, *(1,2,4,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
-        elif waveform.lower()=="drage":
-            shifter = ps.ErfShifter(pulse_length,pulse_length/sFactor)
-            coeff = ps.DRAGFunc(tlist, *(1,pulse_length/sFactor,pulse_length/2.,shifter,a_weight/anharmonicity) ) *gate.arg_value/np.pi 
-
-        elif waveform.lower()=="dragt":
-            
-            coeff = ps.DRAGFunc_Tangential(tlist, *(1,pulse_length/sFactor,pulse_length/2.,a_weight/anharmonicity) ) *gate.arg_value/np.pi
-        elif waveform.lower()=="gauss":
-            
-            coeff = ps.GaussianFamily(tlist,*(1,pulse_length/sFactor,pulse_length/2.,0))*gate.arg_value/np.pi
+        if waveform == "DRAGe" :
+            shifter = ps.ErfShifter(pulse_length,pulse_length/4)
         else:
-            
-            coeff = ps.DRAGFunc(tlist, *(1,pulse_length/sFactor,pulse_length/2.,0,a_weight/anharmonicity) ) *gate.arg_value/np.pi
-
+            shifter = 0
+        coeff = ps.DRAGFunc(tlist, *(1,pulse_length/4.,pulse_length/2., shifter, a_weight/anharmonicity) ) *gate.arg_value/np.pi
 
         if gate.name == "RX":
             return self.generate_pulse(gate, tlist, coeff, phase=0.0)
@@ -247,16 +233,21 @@ class SQCompiler(GateCompiler):
         else:
             return []
 
-    def to_waveform( self, circuit:QubitCircuit ):
-
-        compiled_data = self.compile(circuit, schedule_mode=False)
+    def to_waveform( self, circuit:QubitCircuit , **kwargs):
+        try:
+            target_q_idx = kwargs["q_idx"]
+        except:
+            target_q_idx = 0
+        compiled_data = self.compile(circuit.gates, schedule_mode=False)
 
         tlist_map = compiled_data[0]
         coeffs_map = compiled_data[1]
         waveform_channel = []
 
-
-        for qi in range(circuit.N):
+        ### TODO because for SQ there should be single Qubit signals output. import target qubit index for qi variable
+        
+        for qi in [target_q_idx]:#range(circuit.N): '''Ratis debug for Q2 (idx = 1) 10/14 : When target_index is 0 due to the range func,  label_index(1) != target_index(0)'''
+            print("Circuit qubit number and this qi: ",circuit.N,qi)
             envelope_rf = control_xy(coeffs_map, qi)
             if type(envelope_rf) != type(None):
                 waveform_channel.append( (qi,"xy",envelope_rf) )
@@ -288,7 +279,7 @@ def control_xy( coeffs_map, target_index ):
     if sx_exist and sy_exist:
         rf_envelop = sx_coeff +1j*sy_coeff
         return rf_envelop
-    return None
+    return None   
 
 def measurement_ro( coeffs_map, target_index ):
     ro_exist = False
@@ -305,6 +296,7 @@ def measurement_ro( coeffs_map, target_index ):
         rf_envelop = ro_coeff 
         return rf_envelop
     return None
+
 
 def control_z( coeffs_map, target_index ):
     z_exist = False

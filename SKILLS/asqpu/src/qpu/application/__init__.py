@@ -1,2 +1,3 @@
 from .singleQ_CliffordRB import get_SQRB_device_setting
 from .dynamical_decoupling import get_SQDD_device_setting
+from .TQClifford import get_TQRB_device_setting

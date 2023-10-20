@@ -1570,7 +1570,7 @@ def mani_QuCTRL_check_timsum():
 def mani_QuCTRL_check_pulses():
     perimeter = json.loads(request.args.get('PERIMETER'))
     Pulse_Preview = dict()
-
+    
     # Extract Pulse-related Settings ONLY:
     SCORE_TEMPLATE = perimeter['SCORE-JSON']
     MACE_TEMPLATE = perimeter['MACE-JSON']
@@ -1587,6 +1587,8 @@ def mani_QuCTRL_check_pulses():
     # UPDATE EVERY {R}
     SCORE_DEFINED = deepcopy(SCORE_TEMPLATE)
     MACE_DEFINED = deepcopy(MACE_TEMPLATE)
+    print("rjson_struct: ",rjson_struct)
+    print("TASK_LEVEL[session['user_name']]: ",TASK_LEVEL[session['user_name']])
     for j in range(len(rjson_struct)):
         if ">" in rjson_struct[j]: # For Locked variables with customized math expression:
             math_expression = rjson_struct[j].split(">")[1] # Algebraic initially
@@ -1605,17 +1607,20 @@ def mani_QuCTRL_check_pulses():
                     
         if TASK_LEVEL[session['user_name']] == "EXP": 
             MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]] = MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]].replace("{%s}"%rjson_struct[j], str(Script_Var_Update))
-        
+    print("mission.check_pulse, MACE_DEFINED = ", MACE_DEFINED)    
     # Compose WAVEFORM from INSTANTIATED SCORE / MACE COMMANDS:
     if TASK_LEVEL[session['user_name']] == "MAC":
-        for i_slot_order, channel_set in enumerate(DACH_Matrix):
-            for ch in channel_set:
-                dach_address = "%s-%s" %(i_slot_order+1,ch)
-                pulseq = pulser(dt=1, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address]) # take dt as a unit-sample (1ns)
-                if not i_slot_order: T_samples = pulseq.totaltime
-                pulseq.song()
-                Pulse_Preview['CH%s'%dach_address] = list(pulseq.music)
-
+        if len(perimeter["IF_ALIGN_KHZ"].split(" "))>1 and perimeter["READOUTYPE"] not in ["one-shot","continuous"]:
+            raise ValueError(Back.WHITE + Fore.RED + "multiplex readout temporary support OneShot and Continuous only!")
+        else:
+            for i_slot_order, channel_set in enumerate(DACH_Matrix):
+                for ch in channel_set:
+                    dach_address = "%s-%s" %(i_slot_order+1,ch)
+                    pulseq = pulser(dt=1, clock_multiples=1, score=SCORE_DEFINED['CH%s'%dach_address]) # take dt as a unit-sample (1ns)
+                    if not i_slot_order: T_samples = pulseq.totaltime
+                    pulseq.song()
+                    Pulse_Preview['CH%s'%dach_address] = list(pulseq.music)
+            
     if TASK_LEVEL[session['user_name']] == "EXP": 
         Exp = macer(commander=mani_TASK[session['user_name']])
         Exp.execute(MACE_DEFINED["EXP-" + mani_TASK[session['user_name']]])
@@ -1629,6 +1634,9 @@ def mani_QuCTRL_check_pulses():
             case "RB": 
                 '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
                 d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+            case "TQRB":
+                '''MACE-Skills: Qubit1_ID/0, Qubit2_ID/1, Sequence_length, Repeat_Random'''
+                d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), withRO=True )
             case _: 
                 print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
 
@@ -1642,6 +1650,7 @@ def mani_QuCTRL_check_pulses():
                     Pulse_Preview[f"{instr_name}-{i+1}"] = list(s)
                     print(Fore.WHITE + "s: %s" %s)
         
+
     return jsonify(T_samples=T_samples, Pulse_Preview=Pulse_Preview)
 # run NEW measurement:
 @bp.route('/mani/QuCTRL/new', methods=['GET'])
