@@ -153,7 +153,9 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     try: XY_addr = find_in_list(DAC_ROLE_Matrix, 'XY')
     except: XY_addr = 'OPT' # Optionized if not present
     print(Fore.YELLOW + "RO_addr: %s, XY_addr: %s" %(RO_addr,XY_addr))
-    print(Fore.BLUE + str(find_in_list(str_list=DAC_ROLE_Matrix, element='XY', mode='all')))
+    try: XY_addr_list = find_in_list(str_list=DAC_ROLE_Matrix, element='XY', mode='all')
+    except: XY_addr_list = 'OPT' # Optionized if not present
+    print(Fore.BLUE + str(XY_addr_list))  # if 4 DACs for 2Q, [2-1, 2-3] for 2 SG
 
     # Queue-specific instrument-package in list:
     instr[session['user_name']] = {}
@@ -207,9 +209,16 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     
     if TASK_LEVEL == "MAC":
         RO_Compensate_MHz = -pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%RO_addr], RJSON)).IF_MHz_rotation # working with RO-MOD (up or down)
-        XY_Compensate_MHz = -pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%XY_addr], RJSON)).IF_MHz_rotation # working with XY-MOD (up or down)
+        # XY_Compensate_MHz = -pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%XY_addr], RJSON)).IF_MHz_rotation # working with XY-MOD (up or down)
         DDC_RO_Compensate_MHz = RO_Compensate_MHz
-        print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz: %s" %(RO_Compensate_MHz,XY_Compensate_MHz))
+        
+        XY_Compensate_MHz_list = []
+        for XY_ch in XY_addr_list:
+            XY_Compensate_MHz_list.append(-pulser(score=get_plain_SCORE(SCORE_TEMPLATE['CH%s'%XY_ch], RJSON)).IF_MHz_rotation)
+        # XY_Compensate_MHz_list = [80, 120] corresponding to SG_1, SG_2
+        print(Fore.YELLOW + "RO_Compensate_MHz: %s, XY_Compensate_MHz_list: %s" %(RO_Compensate_MHz,XY_Compensate_MHz_list))
+
+
     if TASK_LEVEL == "EXP":
         RO_Compensate_MHz = 0
         XY_Compensate_MHz = 0
@@ -451,11 +460,18 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         Mac.close()
 
             # 2. MAC's Device: SG
+            SG_order = 0
             for i_slot, channel_set in enumerate(SG_CH_Matrix):
                 for channel in channel_set: 
-                    if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz   # 4 chennels, 2 different IF will go wrong output
+                    print(Fore.RED + Back.WHITE + f"ROLE={SG_ROLE_Matrix[i_slot][channel-1]}")
+                    if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: 
+                        Compensate_MHz = XY_Compensate_MHz_list[SG_order]
+                        print(Fore.WHITE + Back.RED + f"SG-{i_slot} IF = {Compensate_MHz} MHz")
+                        SG_order += 1
+                    # if 'XY' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = XY_Compensate_MHz   # 4 chennels, 2 different IF will go wrong output
                     elif 'RO' in SG_ROLE_Matrix[i_slot][channel-1]: Compensate_MHz = RO_Compensate_MHz
                     else: Compensate_MHz = 0
+
                     
                     Mac = macer()
                     Mac.execute(MACE_DEFINED['SG-%s-%s'%(i_slot+1,channel)])
