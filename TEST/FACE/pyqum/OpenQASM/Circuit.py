@@ -1,4 +1,5 @@
-import oqc
+from colorama import init, Back, Fore
+init(autoreset=True) #to convert termcolor to wins color
 
 from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import *
@@ -10,7 +11,8 @@ from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.units import unit
-# from oqc import *
+from oqc import *
+import grpclib
 
 import numpy as np
 import matplotlib
@@ -110,11 +112,20 @@ def simple_circuit():
             I_st_g[1].save_all(f"I_g_2")
             Q_st_g[1].save_all(f"Q_g_2")
 
-    # open communication with opx
-    # qmm = QuantumMachinesManager('qum.phys.sinica.edu.tw',port=80)
+    # open communication with qm-cluster:
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
 
-    qm = qmm.open_qm(config)
+    # while server in sleep mode, qmm requires 3 wake-up calls:
+    wakeup_call = 0
+    while (wakeup_call>=0) & (wakeup_call<10):
+        try: 
+            qm = qmm.open_qm(config)
+            wakeup_call = -1
+        except(grpclib.exceptions.StreamTerminatedError): 
+            wakeup_call += 1
+            print(Fore.BLUE + "WAKE-UPPPPPPPPP: %s" %wakeup_call)
+            pass
+    
     job = qm.execute(cz_ops)
     job.result_handles.wait_for_all_values()
     results = fetching_tool(job, ["I_g_1", "I_g_2"])
