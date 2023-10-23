@@ -200,7 +200,7 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
     if TASK_LEVEL == "EXP":
         # for i, qubit_id in enumerate(Sample_Backend.q_reg["qubit"]):
         if str(renamed_task) == "TQRB": # Ratis edit @ 2023/10/05
-            d_setting = qapp.get_TQRB_device_setting( Sample_Backend, 0, 1, 0, withRO=True )
+            d_setting = qapp.get_TQRB_device_setting( Sample_Backend, 0, 1, 0, mode='MR', withRO=True )
         else:
             d_setting = qapp.get_SQRB_device_setting( Sample_Backend, 0, 0, True ) # PENDING: MORE unified function from ASQPU?
         ifperiod = d_setting['total_time']
@@ -418,11 +418,11 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         '''MACE-Skills: Qubit_ID/0, Echo_times, Free_Evolution_ns'''
                         d_setting = qapp.get_SQDD_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Echo_times")])), float(Exp.VALUES[Exp.KEYS.index("Free_Evolution_ns")]), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
                     case "RB": 
-                        '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
+                        '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random, Mode'''
                         d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
                     # In our naming conventions, control is 0 and target is 1 
                     case "TQRB":
-                        d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), withRO=True )
+                        d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), mode='MR', withRO=True )
                     case _: 
                         print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
 

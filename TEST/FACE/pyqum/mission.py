@@ -1644,8 +1644,8 @@ def mani_QuCTRL_check_pulses():
                 '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
                 d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
             case "TQRB":
-                '''MACE-Skills: Qubit1_ID/0, Qubit2_ID/1, Sequence_length, Repeat_Random'''
-                d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), withRO=True )
+                '''MACE-Skills: Qubit1_ID/0, Qubit2_ID/1, Sequence_length, Repeat_Random, Mode'''
+                d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), mode='MR', withRO=True )
             case _: 
                 print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
 
@@ -2258,6 +2258,9 @@ def orchi_QPX_check_pulses():
             case "RB": 
                 '''MACE-Skills: Qubit_ID/0, Sequence_length, Repeat_Random'''
                 d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
+            case "TQRB":
+                '''MACE-Skills: Qubit1_ID/0, Qubit2_ID/1, Sequence_length, Repeat_Random, Mode'''
+                d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), mode='MR', withRO=True )
             case _: 
                 print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
 

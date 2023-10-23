@@ -19,7 +19,7 @@ mybec.dt = 0.5
 
 rg_ro = Gate("RO", [1,0] )
 
-circuit = get_TQcircuit_random_clifford(target=1, control=0, num_gates=5)
+circuit = get_TQcircuit_random_clifford(target=1, control=0, num_gates=1, mode='MR')
 circuit.add_gate(rg_ro)
 
 mycompiler = TQCompile(2, params={})

@@ -10,7 +10,7 @@
 	"ROW":8000,
 	"IDLEZ":0.15,
 	"CZ":{
-		"dZ":0.5,"ZW":1,"c_Z":0.1,"c_ZW":10,"waveform&edge&sigma":["EERP",10,4],
+		"dZ":0.5,"ZW":40,"c_Z":0.1,"c_ZW":10,"waveform&edge&sigma":["EERP",10,4],
 		"c_waveform&edge&sigma":["EERP",3,4], "type":"VZ", "XYR":"180"
 	},
 	"ISWAP":{
@@ -30,7 +30,7 @@
 	"XYW":20,
 	"freq_ro":6.2,
 	"CZ":{
-		"dZ":0,"ZW":1,"c_Z":-0.1,"c_ZW":10,"waveform&edge&sigma":["EERP",10,4],
+		"dZ":0,"ZW":40,"c_Z":-0.1,"c_ZW":10,"waveform&edge&sigma":["EERP",10,4],
 		"c_waveform&edge&sigma":["EERP",3,4], "type":"VZ", "XYR":"180"
 		},
 	"ISWAP":{
