@@ -154,6 +154,7 @@ def give_waveformInfo(beat,width,height)->dict:
                 sfactor = 4
                 edgeWidth = 10
                 peakMultiplier = 0
+                filter_sigma = 0
             else:
                 if isnan(paraList[0]): sfactor = 4
                 else: sfactor = paraList[0]
@@ -161,8 +162,10 @@ def give_waveformInfo(beat,width,height)->dict:
                 else: edgeWidth = paraList[1]
                 if isnan(paraList[2]): peakMultiplier = 0
                 else: peakMultiplier = paraList[2]
+                if isnan(paraList[3]): filter_sigma =0
+                else: filter_sigma = paraList[3]
             carrierPhase = 0
-            func_paras = [height, edgeWidth/2, edgeWidth/sfactor, width, 0]
+            func_paras = [height, edgeWidth/2, edgeWidth/sfactor, width, 0, filter_sigma]
 
         case "gerp":
             pulse_func = cpf.GERPFunc

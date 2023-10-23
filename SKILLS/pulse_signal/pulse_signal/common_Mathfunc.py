@@ -169,18 +169,21 @@ def EERP(x, *p)->ndarray:
     return Gaussian Edge Rectangular Pulse array
     x: array like, shape (n,) \n
     p[0]: amp \n
-    p[1]: center of edge \n
+    p[1]: center of edge \ns
     p[2]: edge sigma \n
     p[3]: pulse length \n
     p[4]: start time\n
+    p[5]: gaussian filter sigma (1021 by Ratis for Z pulse)
     """
     total_t = p[3]
     start_t = p[4]
     Td = total_t - p[1]
     f1 = errf(x, p[0], p[1] + start_t, p[2])
     f2 = -errf(x, p[0], Td + start_t, p[2])
+    # ratis for z pulse 1021
+    from scipy.ndimage import gaussian_filter as gFilter
+    return gFilter(f1+f2,p[5]) # p[5] default as 0
 
-    return f1 + f2
 
 
 def constFunc (x, *p)->ndarray:
