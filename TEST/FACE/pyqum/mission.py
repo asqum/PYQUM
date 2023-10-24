@@ -47,8 +47,8 @@ from subprocess import Popen, PIPE, STDOUT
 import os, signal
 
 # Qiskit Simulators
-from qiskit import qasm2, execute
-from qiskit_aer import AerSimulator
+from qiskit import qasm3
+from pyqum.directive.q_circuit_e import running_qc
 
 # endregion
 
@@ -105,50 +105,41 @@ def show(status="Mission started"):
     return("<h3>WHO ARE YOU?</h3><h3>Please Kindly Login!</h3><h3>Courtesy from <a href='http://qum.phys.sinica.edu.tw:%s/auth/login'>HoDoR</a></h3>" %get_status("WEB")["port"])
 # endregion
 
+# region
+
+# Catch openQASM from the composer UX:
 @bp.route('/oqc/receive', methods=['GET', 'POST'])
 def openQASM_receive():
-    composer = int(request.args.get('composer'))
-    
-    if composer:
-        todo_data = request.json['qasm']
-        qasm_script = "\n".join(todo_data)
-    else:
-        # Bypass composer:
-        qasm_script = json.loads(request.args.get('qasm'))
+    qasm_lines = request.json['qasm'] # for future generalization
+    # qasm_script = "\n".join(qasm_lines)
+
+    qiskit_lines = request.json['qiskit']
+    qiskit_script = "\n".join(qiskit_lines)
+    print("Qiskit:\n" + qiskit_script)
+
+    loc = {}
+    exec(qiskit_script, globals(), loc)
+    circuit = loc['circuit']
+
+    qasm_script = qasm3.dumps(circuit)
 
     print("incoming QASM:")
     print(qasm_script)
-    
-    # sleep(60)
+    backend = request.json['backend']
+    shots = request.json['shots']
+    result, circuit_map, message = running_qc(backend, qasm_script, shots)
+    return jsonify(message=message, circuit_map=circuit_map, result=result)
+
+# Run openQASM from QUM:
+@bp.route('/oqc/run', methods=['GET', 'POST'])
+def openQASM_run():
+    qasm_script = json.loads(request.args.get('qasm'))
     backend = request.args.get('backend')
     shots = request.args.get('shots')
-
-    # circuit preview:
-    circuit = qasm2.loads(qasm_script)
-    circuit_map = str(circuit.draw())
-    print(circuit_map)
-
-    if backend=="Ideal":
-        # Construct an ideal simulator
-        aersim = AerSimulator()
-        # Perform an ideal simulation
-        result_ideal = execute(circuit, aersim, shots=shots).result()
-        counts_ideal = result_ideal.get_counts(0)
-        print('Counts(ideal):', counts_ideal)
-        result = counts_ideal
-        message = "Ideal QC execution completed."
-
-    elif backend=="AS_5q_v1":
-        result = {"00001": 524, "11000": 128, "11011": 57}
-        message = "Live QC execution completed."
-
-    else: 
-        result = {"00001": "hahaha", "11000": "hohoho", "11011": "hehehe"}
-        message = "Dummy QC execution completed."
-
-    print(Fore.GREEN + message)
-
+    result, circuit_map, message = running_qc(backend, qasm_script, shots)
     return jsonify(message=message, circuit_map=circuit_map, result=result)
+
+# endregion
 
 # region
 # ALL

@@ -47,9 +47,9 @@ with program() as ro_freq_opt:
 
     with for_(n, 0, n < n_avg, n + 1):
         # a = 1
-        # with for_(*from_array(df, dfs)):
-        df=0
-        with for_(*from_array(a, amplitudes)):
+        with for_(*from_array(df, dfs)):
+        # df=0
+        # with for_(*from_array(a, amplitudes)):
             # Update the frequency of the two resonator elements
             update_frequency("rr1", df + resonator_IF_q1)
             update_frequency("rr2", df + resonator_IF_q2)
@@ -70,8 +70,8 @@ with program() as ro_freq_opt:
         # Save the averaging iteration to get the progress bar
         save(n, n_st)
 
-    # var = dfs
-    var = amplitudes
+    var = dfs
+    # var = amplitudes
     with stream_processing():
         n_st.save("iteration")
         for i in range(2):
@@ -170,8 +170,8 @@ else:
     var2 = (Ig2_var + Qg2_var + Ie2_var + Qe2_var) / 4
     SNR2 = ((np.abs(Z2)) ** 2) / (2 * var2)
     
-    # var = dfs / u.MHz
-    var = amplitudes
+    var = dfs / u.MHz
+    # var = amplitudes
     # Plot results
     plt.suptitle("Readout frequency optimization")
     plt.subplot(121)

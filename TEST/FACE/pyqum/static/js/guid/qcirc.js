@@ -10,18 +10,18 @@ $('input.guid#guid-qcirc-qasm-run').on('touchend click', function(event) {
     var qasm_script = JSON.stringify($('textarea.guid#guid-qcirc-qasm-script').val());
     
     // START RUNNING
-    $.getJSON(mssnencrpytonian() + '/mssn/oqc/receive', {
-        composer: 0, 
+    $.getJSON(mssnencrpytonian() + '/mssn/oqc/run', {
         backend: $('select.guid#guid-qcirc-backend').val(),
         shots: $('input.guid#guid-qcirc-shots').val(),
         qasm: qasm_script,
     }, function (data) {   
         console.log(JSON.stringify(data.circuit_map));    
-        // $('h4#guid-qcirc-map').text(data.circuit_map);
         $('h4#guid-qcirc-result').text(data.message + ": " + JSON.stringify(data.result));
+        $('textarea#guid-qcirc-map').val(data.circuit_map.script);
     });
 
     return false;
 });
+
 
 

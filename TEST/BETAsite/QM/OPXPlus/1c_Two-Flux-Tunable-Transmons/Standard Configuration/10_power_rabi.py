@@ -60,7 +60,7 @@ with program() as rabi:
                 # Align the elements to measure after playing the qubit pulses.
                 align()
                 # Start using Rotated integration weights (cf. IQ_blobs.py)
-                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2], weights="rotated_", amplitude=0.9)
+                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2], weights="rotated_", amplitude=1)
                 # Wait for the qubit to decay to the ground state
                 wait(thermalization_time * u.ns)
         # Save the averaging iteration to get the progress bar

@@ -167,6 +167,10 @@ textarea.guid#guid-qcirc-qasm-script {
     height: 317px;
     margin-top: -5px;
 }
+textarea#guid-qcirc-map {
+    height: 290px;
+    margin-top: -5px;
+}
 
 label.parameter {
     word-wrap: break-word;

@@ -1,7 +1,8 @@
 from pathlib import Path
 
 import sys
-sys.path.append(str(Path().absolute()/"PYQUM"/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"Configurations"))
+sys.path.append(str(Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"Configurations"))
+# sys.path.append(str(Path().absolute()/"PYQUM"/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"Configurations"))
 from configuration_5q_tune_up import *
 
 qubit_num = 5
