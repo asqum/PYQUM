@@ -14,7 +14,9 @@ from qpu.backend.circuit.TQRB.TQCompiler import TQCompile
 from qpu.backend.circuit.backendcircuit import BackendCircuit
 from collections import Counter
 import ast
-
+# gate file path
+num_pairs_path = r'C:\Users\Administrator\Documents\GitHub\PYQUM\SKILLS\asqpu\src\qpu\application\c2_num_pairs.txt'
+inv_pairs_path = r'C:\Users\Administrator\Documents\GitHub\PYQUM\SKILLS\asqpu\src\qpu\application\c2_inv_pairs.txt'
 
 ## Basic
 ## Pi
@@ -295,8 +297,10 @@ def m_random_Clifford_circuit( m, target, control )->QubitCircuit:
     num_seq = []
     circuit = QubitCircuit(2)
     for i in range(m):
+        
         j, clifford_gate = get_random_c2_gate(target, control) # j is the index of this clifford gate
         for gate in clifford_gate:
+            
             sequence.append(gate)
 
         num_seq.append(str(j))
@@ -416,14 +420,14 @@ def c2_inv_gate(target=1, control=0):
             inv_matrix_tuple_list.remove(inv_matrix_tuple_list[j])
             
 
-    with open(r'.\SKILLS\asqpu\src\qpu\application\c2_inv_pairs.txt', 'w') as file:
+    with open(inv_pairs_path, 'w') as file:
         file.write(f'{c2_inv_dict}')
     print(f'finished c2 gate: {count}')
     print(f'error num: {error_num}')
 
 def c2_inv_pairs_to_num_pairs():
     dict = {}
-    with open(r'.\SKILLS\asqpu\src\qpu\application\c2_inv_pairs.txt', 'r') as file:
+    with open(inv_pairs_path, 'r') as file:
         content = file.read()
         data_list = ast.literal_eval(content)
         for i, name_gate in enumerate(list(data_list.values())):
@@ -432,7 +436,7 @@ def c2_inv_pairs_to_num_pairs():
                     dict[str(i)] = str(j)
                     break
             print(f'finish {i}')
-    with open(r'.\SKILLS\asqpu\src\qpu\application\c2_num_pairs.txt', 'w') as file:
+    with open(num_pairs_path, 'w') as file:
         file.write(f'{dict}')
     
 
@@ -453,16 +457,17 @@ def get_TQcircuit_random_clifford(target, control, num_gates, mode = 'ONE')->Qub
         circuit_RB : Qubitcircuit  Combine all the gate and inverse operation.
     '''
     circuit_RB, num_seq = m_random_Clifford_circuit( num_gates, target, control )
-
     if mode == 'ONE':   
         c2_gate_inv = find_inv_gate( circuit_RB.gates )
         circuit_RB.add_gates(c2_gate_inv)
     elif mode == 'MR':  
-        with open(r'.\SKILLS\asqpu\src\qpu\application\c2_num_pairs.txt', 'r') as file:
+        with open(num_pairs_path, 'r') as file:
             content = file.read()
             data_list = ast.literal_eval(content)
+            
         c2_gates = c2_clifford_gates(target, control)
-        for num in reversed(num_seq): # The order of inversed gate should be reversed to clifford gates
+        
+        for num in list(reversed(num_seq)): # The order of inversed gate should be reversed to clifford gates
             inv_num = data_list[str(num)]
             c2_gate_inv = c2_gates[int(inv_num)]
             circuit_RB.add_gates(c2_gate_inv)
@@ -473,6 +478,7 @@ def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, 
 
     d_setting = []
     circuit_RB = get_TQcircuit_random_clifford(target, control, num_gates, mode)
+    
     if withRO:
         rg_ro = Gate("RO", [control,target] )
         circuit_RB.add_gate(rg_ro)
@@ -537,7 +543,7 @@ def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, 
     d_setting["total_time"] = backendcircuit.total_time
     return d_setting
 
-
+'''
 def test_c2_clifford_compact(target,control,group:str):
 
     # The following part is to test the compactness of the C2 clifford group
@@ -582,7 +588,7 @@ def test_c2_clifford_compact(target,control,group:str):
             test2.remove(match_seq)  
     print(i)
     print(test2)
-
+'''
 if __name__ == '__main__':
     print(get_TQcircuit_random_clifford(target=1, control=0, num_gates=5, mode = 'MR'))
     # target = 1

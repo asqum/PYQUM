@@ -422,7 +422,8 @@ def QuCTRL(owner, tag="", corder={}, comment='', dayindex='', taskentry=0, resum
                         d_setting = qapp.get_SQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit_ID")])), withRO=True )
                     # In our naming conventions, control is 0 and target is 1 
                     case "TQRB":
-                        d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), mode='MR', withRO=True )
+                        print(f"mode in mani ={str(Exp.VALUES[Exp.KEYS.index('Mode')])}")
+                        d_setting = qapp.get_TQRB_device_setting( Sample_Backend, int(float(Exp.VALUES[Exp.KEYS.index("Sequence_length")])), target=int(float(Exp.VALUES[Exp.KEYS.index("Qubit2_ID")])), control=int(float(Exp.VALUES[Exp.KEYS.index("Qubit1_ID")])), mode=str(Exp.VALUES[Exp.KEYS.index("Mode")]), withRO=True )
                     case _: 
                         print(Fore.WHITE + Back.RED + "EXP-TASK DOES NOT MATCH MACE-DATABASE")
 

@@ -234,6 +234,7 @@ class BackendCircuit():
                 if isinstance(phyCh, PumpingLine):
                     print("Pumping channel")
                     devices_output =  phyCh.devices_setting()
+                    print(f"channel_output.keys = {channel_output.keys()}")
       
             for category in devices_setting_all.keys():
                 if category in devices_output.keys():
