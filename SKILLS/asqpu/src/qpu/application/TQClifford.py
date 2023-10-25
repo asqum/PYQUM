@@ -294,14 +294,18 @@ def m_random_Clifford_circuit( m, target, control )->QubitCircuit:
     sequence = []
     num_seq = []
     circuit = QubitCircuit(2)
-    for i in range(m):
-        j, clifford_gate = get_random_c2_gate(target, control) # j is the index of this clifford gate
-        for gate in clifford_gate:
-            sequence.append(gate)
-
-        num_seq.append(str(j))
-    for gate in sequence:
-        circuit.add_gate(gate)
+    if m == 0 :
+        for gate in c2_clifford_gates(target,control)[0]:
+            circuit.add_gate(gate) # Add identity gate
+        num_seq.append(str(0))
+    else:
+        for i in range(m):
+            j, clifford_gate = get_random_c2_gate(target, control) # j is the index of this clifford gate
+            for gate in clifford_gate:
+                sequence.append(gate)
+            num_seq.append(str(j))
+        for gate in sequence:
+            circuit.add_gate(gate)
 
     return circuit, num_seq
 
@@ -469,6 +473,35 @@ def get_TQcircuit_random_clifford(target, control, num_gates, mode = 'ONE')->Qub
 
     return circuit_RB
 
+def test_TQcircuit_random_clifford(target, control, num_gates, mode = 'MR'):
+    circuit_RB, num_seq = m_random_Clifford_circuit( num_gates, target, control )
+    if mode == 'ONE':
+        c2_gate_inv = find_inv_gate( circuit_RB.gates )
+        circuit_RB.add_gates(c2_gate_inv)           
+        operation = decomposition(circuit_RB.gates)         
+        for phase in [
+            1,1j,-1,-1j,(1+1j)/np.sqrt(2),(1-1j)/np.sqrt(2),(-1+1j)/np.sqrt(2),(-1-1j)/np.sqrt(2)
+                ]:
+            if phase * operation == tensor(qeye(2), qeye(2)):
+                print('successfully find inverse gate ')
+                break   
+    elif mode == 'MR':
+        with open(r'.\SKILLS\asqpu\src\qpu\application\c2_num_pairs.txt', 'r') as file:
+            content = file.read()
+            data_list = ast.literal_eval(content)        
+        c2_gates = c2_clifford_gates(target, control)
+        for num in reversed(num_seq): # The order of inversed gate should be reversed to clifford gates
+            inv_num = data_list[str(num)]
+            c2_gate_inv = c2_gates[int(inv_num)]
+            circuit_RB.add_gates(c2_gate_inv)
+        operation = decomposition(circuit_RB.gates)   
+        for phase in [
+            1,1j,-1,-1j,(1+1j)/np.sqrt(2),(1-1j)/np.sqrt(2),(-1+1j)/np.sqrt(2),(-1-1j)/np.sqrt(2)
+                ]:
+            if phase * operation == tensor(qeye(2), qeye(2)):
+                print('successfully find inverse gate ')
+                break           
+
 def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, control=0, mode='ONE', withRO:bool=False):
 
     d_setting = []
@@ -537,7 +570,6 @@ def get_TQRB_device_setting(backendcircuit:BackendCircuit, num_gates, target=1, 
     d_setting["total_time"] = backendcircuit.total_time
     return d_setting
 
-
 def test_c2_clifford_compact(target,control,group:str):
 
     # The following part is to test the compactness of the C2 clifford group
@@ -583,11 +615,13 @@ def test_c2_clifford_compact(target,control,group:str):
     print(i)
     print(test2)
 
-if __name__ == '__main__':
-    print(get_TQcircuit_random_clifford(target=1, control=0, num_gates=5, mode = 'MR'))
+# if __name__ == '__main__':
+    # x = test_TQcircuit_random_clifford(target=1, control=0, num_gates=100, mode = 'MR')
     # target = 1
     # control = 0
     # num_gates = 5
     # mode = 'MR'
-    # get_TQcircuit_random_clifford(target, control, num_gates, mode )
+    # x = get_TQcircuit_random_clifford(target=1, control=0, num_gates=1, mode='MR' )
     # x = c2_inv_pairs_to_num_pairs()
+
+
