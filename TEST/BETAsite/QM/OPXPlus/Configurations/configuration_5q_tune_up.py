@@ -14,11 +14,11 @@ u = unit(coerce_to_integer=True)
 # Network parameters #
 ######################
 # Either using Cluster or Port:
-cluster_name = "QPX_1"  # Write your cluster_name if version >= QOP220
-# qop_ip = "192.168.1.77"  # Write the QM router IP address
-# qop_port = None  # Write the QOP port if version < QOP220
-qop_ip = "qum.phys.sinica.edu.tw"  # Write the QM router IP address
-qop_port = 9800  # Write the QOP port if version < QOP220
+cluster_name = "QPX_2"  # Write your cluster_name if version >= QOP220
+qop_ip = "192.168.1.105"  # Write the QM router IP address
+qop_port = None  # Write the QOP port if version < QOP220
+# qop_ip = "qum.phys.sinica.edu.tw"  # Write the QM router IP address
+# qop_port = 9800  # Write the QOP port if version < QOP220
 
 # Path to save data
 # save_dir = Path().absolute() / "QM" / "INSTALLATION" / "data"
@@ -39,19 +39,14 @@ port_mapping = {
     ("con1", 8): ("octave1", "Q4"),
     ("con1", 9): ("octave1", "I5"),
     ("con1", 10): ("octave1", "Q5"),
-    ("con2", 1): ("octave2", "I1"),
-    ("con2", 2): ("octave2", "Q1"),
-    ("con2", 3): ("octave2", "I2"),
-    ("con2", 4): ("octave2", "Q2"),
 }
 
 # The Octave port is 11xxx, where xxx are the last three digits of the Octave internal IP that can be accessed from
 # the OPX admin panel if you QOP version is >= QOP220. Otherwise, it is 50 for Octave1, then 51, 52 and so on.
 octave_1 = OctaveUnit("octave1", qop_ip, port=11250, con="con1", clock="External_1000MHz", port_mapping=port_mapping)
-octave_2 = OctaveUnit("octave2", qop_ip, port=11251, con="con2", clock="External_1000MHz", port_mapping=port_mapping)
 
 # Add the octaves
-octaves = [octave_1, octave_2]
+octaves = [octave_1]
 # Configure the Octaves
 octave_config = octave_declaration(octaves)
 
