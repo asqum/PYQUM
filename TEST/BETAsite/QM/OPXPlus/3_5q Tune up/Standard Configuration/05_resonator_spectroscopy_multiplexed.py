@@ -29,12 +29,24 @@ import warnings
 warnings.filterwarnings("ignore")
 
 ###################
+#   Data Saving   #
+###################
+from datetime import datetime
+import sys
+
+# save_data = True  # Default = False in configuration file
+save_progam_name = sys.argv[0].split('\\')[-1].split('.')[0]  # get the name of current running .py program
+save_time = str(datetime.now().strftime("%Y%m%d-%H%M%S"))
+save_path = f"{save_dir}\{save_time}_{save_progam_name}"
+
+
+###################
 # The QUA program #
 ###################
 qubit_num = 5
-n_avg = 2000  # The number of averages
+n_avg = 10000  # The number of averages
 # The frequency sweep parameters (for both resonators)
-span = 3 * u.MHz  # the span around the resonant frequencies
+span = 10 * u.MHz  # the span around the resonant frequencies
 step = 100 * u.kHz
 dfs = np.arange(-span, span, step)
 
@@ -127,9 +139,17 @@ else:
             if i==0: plt.ylabel("Phase [rad]")
         
         plt.tight_layout()
-        plt.show()
         plt.pause(0.1)
 
+    ###################
+    #  Figure Saving  #
+    ################### 
+    if save_data == True:
+        figure = plt.gcf() # get current figure
+        figure.set_size_inches(16, 8)
+        plt.tight_layout()
+        plt.savefig(f"{save_path}-fitting.png", dpi = 500)
+    
     try:
         from qualang_tools.plot.fitting import Fit
 
@@ -147,5 +167,15 @@ else:
         plt.show()
     except (Exception,):
         pass
+
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()
+
+    ###################
+    #   .npz Saving   #
+    ###################
+    if save_data == True:
+        # Change what you want to save
+        np.savez(save_path, F=resonator_LO+resonator_IF+dfs, I=I, Q=Q, S=S, R=R, P=signal.detrend(np.unwrap(phase)))
+
+    plt.show()

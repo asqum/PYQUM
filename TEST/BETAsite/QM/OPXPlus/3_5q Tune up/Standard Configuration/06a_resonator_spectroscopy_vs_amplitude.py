@@ -30,12 +30,24 @@ import warnings
 warnings.filterwarnings("ignore")
 
 ###################
+#   Data Saving   #
+###################
+from datetime import datetime
+import sys
+
+save_data = True  # Default = False in configuration file
+save_progam_name = sys.argv[0].split('\\')[-1].split('.')[0]  # get the name of current running .py program
+save_time = str(datetime.now().strftime("%Y%m%d-%H%M%S"))
+save_path = f"{save_dir}\{save_time}_{save_progam_name}"
+
+
+###################
 # The QUA program #
 ###################
-q_id = [0,1]
-n_avg = 100000  # The number of averages
+q_id = [0,1,2,3,4]
+n_avg = 1000  # The number of averages
 # The frequency sweep around the resonators' frequency "resonator_IF_q"
-span = 2.2 * u.MHz
+span = 5 * u.MHz
 df = 100 * u.kHz
 dfs = np.arange(-span, +span + 0.1, df)
 # The readout amplitude sweep (as a pre-factor of the readout amplitude) - must be within [-2; 2)
@@ -98,7 +110,7 @@ else:
     qm = qmm.open_qm(config)
     job = qm.execute(multi_res_spec_vs_amp)
     
-    live_plotting(n_avg, q_id, job, amplitudes, dfs, "Power dep. Resonator spectroscopy", stage="6a")
+    live_plotting(n_avg, q_id, job, amplitudes, dfs, "Power dep. Resonator spectroscopy", save_data, save_path, stage="6a")
 
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()

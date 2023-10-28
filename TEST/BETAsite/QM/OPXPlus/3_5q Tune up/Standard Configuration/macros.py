@@ -217,7 +217,7 @@ def filter_calc(exponential):
 
 
 # Plotting
-def live_plotting(n_avg, q_id, job, x_range, y_range, title, stage="", normalize=True, dimension=2):
+def live_plotting(n_avg, q_id, job, x_range, y_range, title, save_data, save_path, stage="", normalize=True, dimension=2):
     # extracting data
     I_list, Q_list = ["I%s"%(i+1) for i in q_id], ["Q%s"%(i+1) for i in q_id]
     results = fetching_tool(job, I_list + Q_list + ["n"], mode="live")
@@ -230,6 +230,17 @@ def live_plotting(n_avg, q_id, job, x_range, y_range, title, stage="", normalize
         all_results = results.fetch_all()
         n = all_results[-1]
         I, Q = all_results[0:len(q_id)], all_results[len(q_id):len(q_id)*2]
+
+        ###################
+        #   .npz Saving   #
+        ###################
+        # NOTE: stage dependency:
+        if stage == "6a":
+            ReadoutAmplitude = np.zeros((len(q_id), len(x_range)))
+            Frequency = np.zeros((len(q_id), len(y_range)))
+            Amplitude = np.zeros((len(q_id), len(y_range), len(x_range)))
+            Phase = np.zeros((len(q_id), len(y_range), len(x_range)))
+        
         # Progress bar
         progress_counter(n, n_avg, start_time=results.start_time)
         # output results for fitting later
@@ -255,6 +266,11 @@ def live_plotting(n_avg, q_id, job, x_range, y_range, title, stage="", normalize
                 map_bottom = signal.detrend(np.unwrap(phase))
                 axh, axv = True, False
                 h_center = resonator_IF[i] / u.MHz
+                # .npz saving
+                ReadoutAmplitude[i] = x_var
+                Frequency[i] = y_range + resonator_IF[i] + resonator_LO
+                Amplitude[i] = R
+                Phase[i] = signal.detrend(np.unwrap(phase))
             elif stage == "6b":
                 x_var = x_range
                 y_var = (y_range + resonator_IF[i]) / u.MHz
@@ -317,8 +333,27 @@ def live_plotting(n_avg, q_id, job, x_range, y_range, title, stage="", normalize
                 plt.axvline(v_center, color="k", linewidth=0.37)
         
         plt.tight_layout()
-        # plt.show()
-        plt.pause(1)
+        plt.pause(0.1)
+
+    if save_data == True:
+        ###################
+        #  Figure Saving  #
+        ################### 
+        figure = plt.gcf() # get current figure
+        figure.set_size_inches(16, 8)
+        plt.tight_layout()
+        plt.savefig(f"{save_path}.png", dpi = 500)
+
+        ###################
+        #   .npz Saving   #
+        ###################
+        # NOTE: stage dependency:
+        if stage == "6a":
+            np.savez(save_path, I=I, Q=Q, ReadoutAmplitude=ReadoutAmplitude, F=Frequency, R=Amplitude, P=Phase)
+    
+    plt.show()
+
+    
 
     return map_top, map_bottom
 
