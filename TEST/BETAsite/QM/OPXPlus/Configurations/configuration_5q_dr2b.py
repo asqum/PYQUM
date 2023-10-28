@@ -189,9 +189,9 @@ minus_y90_I_wf_q5, minus_y90_Q_wf_q5 = (-1) * minus_y90_der_wf_q5, minus_y90_wf_
 ##########################################
 flux_settle_time = 100 * u.ns
 
-max_frequency_point1 = 0.0489
-max_frequency_point2 = 0.0149
-max_frequency_point3 = 0.0537
+max_frequency_point1 = 0
+max_frequency_point2 = 0
+max_frequency_point3 = 0
 max_frequency_point4 = 0
 max_frequency_point5 = 0
 
@@ -225,21 +225,21 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 resonator_LO = 5.96 * u.GHz
 # Resonators IF
 resonator_IF = np.zeros(5)
-resonator_IF[0] = int((-157.1) * u.MHz)
-resonator_IF[1] = int((136.71) * u.MHz)
-resonator_IF[2] = int((-38.8) * u.MHz) #-38
-resonator_IF[3] = int((229.5) * u.MHz)
-resonator_IF[4] = int((36.1) * u.MHz)
+resonator_IF[0] = int((-237) * u.MHz)
+resonator_IF[1] = int((54.5) * u.MHz)
+resonator_IF[2] = int((-124) * u.MHz) 
+resonator_IF[3] = int((142.6) * u.MHz)
+resonator_IF[4] = int((-50.5) * u.MHz)
 # Above is for verifying wide-sweep results: -156, -38, 39, 137, 231
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
-readout_len = 2000
+readout_len = 4000
 readout_amp = np.zeros(5)
-readout_amp[0] = 0.5 #0.138
-readout_amp[1] = 0.231
-readout_amp[2] = 0.0557
-readout_amp[3] = 0.201
-readout_amp[4] = 0.097
+readout_amp[0] = 0.05
+readout_amp[1] = 0.05
+readout_amp[2] = 0.05
+readout_amp[3] = 0.05
+readout_amp[4] = 0.05
 
 # TOF and depletion time
 time_of_flight = 280  # must be a multiple of 4

@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore")
 from datetime import datetime
 import sys
 
-save_data = True  # Default = False in configuration file
+# save_data = True  # Default = False in configuration file
 save_progam_name = sys.argv[0].split('\\')[-1].split('.')[0]  # get the name of current running .py program
 save_time = str(datetime.now().strftime("%Y%m%d-%H%M%S"))
 save_path = f"{save_dir}\{save_time}_{save_progam_name}"
@@ -44,9 +44,9 @@ save_path = f"{save_dir}\{save_time}_{save_progam_name}"
 # The QUA program #
 ###################
 resonator = "rr1"  # The resonator element
-n_avg = 1000  # The number of averages
+n_avg = 10000  # The number of averages
 # The frequency sweep parameters
-frequencies = np.arange(-270e6, 180e6, 0.1e6)
+frequencies = np.arange(-247e6, -227e6, 0.01e6)
 
 
 
