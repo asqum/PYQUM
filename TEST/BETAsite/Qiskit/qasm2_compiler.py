@@ -33,12 +33,12 @@ program = """
 
 circuit = qasm2.loads(program)
 # circuit = qasm3.loads(program)
-print(str(circuit.draw("mpl")))
+print(str(circuit.draw()))
 
 from qiskit_aer import AerSimulator
 
 # Construct an ideal simulator
-aersim = AerSimulator(method="statevector")
+aersim = AerSimulator(method="matrix_product_state") # method: stabilizer, statevector, density_matrix and matrix_product_state
 
 # Perform an ideal simulation
 result_ideal = execute(circuit, aersim, shots=13700).result()

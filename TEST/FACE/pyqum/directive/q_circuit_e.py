@@ -26,7 +26,7 @@ def running_qc(backend, qasm_script, shots):
     circuit_map['draw'] = str(circuit.draw())
     print(circuit_map['draw'])
 
-    if backend=="AS_5q_v1":
+    if backend=="Ideal":
         # Construct an ideal simulator
         aersim = AerSimulator(method="statevector")
         # Perform an ideal simulation
@@ -36,14 +36,13 @@ def running_qc(backend, qasm_script, shots):
         result = counts_ideal
         message = "Ideal QC execution completed."
 
-    elif backend=="Ideal":
-        # result = {"00001": 524, "11000": 128, "11011": 57}
-        result = simple_circuit()
+    elif backend=="AS_5q_dr2a":
+        result = simple_circuit(shots=shots, script=circuit_map['script'])
         message = "Live QC execution completed."
 
     else: 
         result = {"00001": "hahaha", "11000": "hohoho", "11011": "hehehe"}
-        message = "Dummy QC execution completed."
+        message = "QPU under calibration"
 
     print(Fore.GREEN + message)
     return result, circuit_map, message
