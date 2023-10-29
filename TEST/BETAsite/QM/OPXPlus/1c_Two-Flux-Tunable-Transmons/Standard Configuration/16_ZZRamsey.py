@@ -37,8 +37,8 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 1,2
-DD_cycle = 1
+control, target = 2,3
+DD_cycle = 0 # push T2, avoid zz-coupling
 
 # Idle time sweep in clock cycles (Needs to be a list of integers)
 if X: idle_times = np.arange(4, 1000, 1)
@@ -138,7 +138,7 @@ else:
         plt.cla()
         plt.plot(4 * idle_times, I1)
         plt.ylabel("I quadrature [V]")
-        plt.title("Qubit 1")
+        plt.title("Control: q%s (X=%s)" %(control,int(X)))
         plt.subplot(223)
         plt.cla()
         plt.plot(4 * idle_times, Q1)
@@ -147,7 +147,7 @@ else:
         plt.subplot(222)
         plt.cla()
         plt.plot(4 * idle_times, I2)
-        plt.title("Qubit 2")
+        plt.title("Target: q%s" %target)
         plt.subplot(224)
         plt.cla()
         plt.plot(4 * idle_times, Q2)
@@ -160,7 +160,7 @@ else:
     try:
         fit = Fit()
         plt.figure()
-        plt.suptitle(f"Ramsey measurement with detuning={detuning} Hz")
+        plt.suptitle(f"ZZ-Ramsey measurement with detuning={detuning} Hz")
         plt.subplot(221)
         fit.ramsey(4 * idle_times, I1, plot=True)
         plt.xlabel("Idle times [ns]")

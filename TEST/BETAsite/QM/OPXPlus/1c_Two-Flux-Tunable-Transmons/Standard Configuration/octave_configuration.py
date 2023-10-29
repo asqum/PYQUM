@@ -7,12 +7,24 @@ from qm.QuantumMachinesManager import QuantumMachinesManager
 from configuration import *
 
 # Configure the Octave parameters for each element
+# LO 1-1:
 rr1 = ElementsSettings("rr1", gain=10, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
 rr2 = ElementsSettings("rr2", gain=10, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
-q1_xy = ElementsSettings("q1_xy", gain=20)
-q2_xy = ElementsSettings("q2_xy", gain=20)
+rr3 = ElementsSettings("rr3", gain=10, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
+rr4 = ElementsSettings("rr4", gain=10, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
+rr5 = ElementsSettings("rr5", gain=10, rf_in_port=["octave1", 1], down_convert_LO_source="Internal")
+# LO 1-2:
+q1_xy = ElementsSettings("q1_xy", gain=15)
+q3_xy = ElementsSettings("q3_xy", gain=15)
+# LO 1-3:
+q2_xy = ElementsSettings("q2_xy", gain=19)
+q4_xy = ElementsSettings("q4_xy", gain=19)
+# LO 2-1:
+q5_xy = ElementsSettings("q5_xy", gain=15)
+
 # Add the "octave" elements
-elements_settings = [rr1, rr2, q1_xy, q2_xy]
+q1, q2, q3, q4, q5 = [rr1, q1_xy], [rr2, q2_xy], [rr3, q3_xy], [rr4, q4_xy], [rr5, q5_xy]
+elements_settings = q1 + q2 + q3 + q4 + q5
 
 ###################
 # Octave settings #

@@ -26,13 +26,26 @@ QPU = {
             "frequency": qubit_LO_q2 + qubit_IF_q2,
             "T1": qubit2_T1
         },
-    }
+    },
+    "q3": {
+        "readout": {
+            "frequency": resonator_LO + resonator_IF_q3,
+            "length": readout_len
+        },
+        "control": {
+            "frequency": qubit_LO_q3 + qubit_IF_q3,
+            "T1": qubit3_T1
+        },
+    },
 }
 
-print("QPU q1 readout frequency: %s Hz" %(QPU["q1"]["readout"]["frequency"]))
+# print("QPU q1 readout frequency: %s Hz" %(QPU["q1"]["readout"]["frequency"]))
 print("QPU q1 control frequency: %s Hz" %(QPU["q1"]["control"]["frequency"]))
-print("QPU q2 readout frequency: %s Hz" %(QPU["q2"]["readout"]["frequency"]))
+# print("QPU q2 readout frequency: %s Hz" %(QPU["q2"]["readout"]["frequency"]))
 print("QPU q2 control frequency: %s Hz" %(QPU["q2"]["control"]["frequency"]))
 # print("QPU q3 readout frequency: %s Hz" %(QPU["q3"]["readout"]["frequency"]))
-# print("QPU q3 control frequency: %s Hz" %(QPU["q3"]["control"]["frequency"]))
+print("QPU q3 control frequency: %s Hz" %(QPU["q3"]["control"]["frequency"]))
+# print("QPU q4 readout frequency: %s Hz" %(QPU["q4"]["readout"]["frequency"]))
+# print("QPU q4 control frequency: %s Hz" %(QPU["q4"]["control"]["frequency"]))
+
 

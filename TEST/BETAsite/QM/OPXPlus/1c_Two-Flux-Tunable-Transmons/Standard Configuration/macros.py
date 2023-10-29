@@ -17,10 +17,8 @@ def cz_gate(type="square"):
     if type == "square":
         wait(5)  # for flux pulse to relax back completely
 
-        set_dc_offset("q2_z", "single", 0.29888) # 10cc: 0.1452099
+        set_dc_offset("q2_z", "single", -0.12037) # 10cc: 0.1452099
         wait(40 // 4, "q2_z")
-        # set_dc_offset("q2_z", "single", 0.17371) # 10cc: 0.1452099
-        # wait(40 // 4, "q2_z")
 
         align()
         set_dc_offset("q2_z", "single", idle_q2)
