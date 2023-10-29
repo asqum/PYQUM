@@ -72,14 +72,14 @@ qubit_LO_q1 = (3.200) * u.GHz
 qubit_LO_q2 = (4.000) * u.GHz
 qubit_LO_q3 = (3.200) * u.GHz
 qubit_LO_q4 = (4.000) * u.GHz
-qubit_LO_q5 = (3.200) * u.GHz
+qubit_LO_q5 = (4.500) * u.GHz
 
 # Qubits IF
 qubit_IF_q1 = (-112.833 -0.666+0.954-1.940) * u.MHz # -244.1 +0.048
 qubit_IF_q2 = (-180.66 +0.305) * u.MHz # -173.39
 qubit_IF_q3 = (-237 -3.798-0.126) * u.MHz
 qubit_IF_q4 = (0) * u.MHz
-qubit_IF_q5 = (0) * u.MHz
+qubit_IF_q5 = (-414) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -205,7 +205,7 @@ idle_q1 = max_frequency_point1 - 0.203
 idle_q2 = max_frequency_point2 + 0.013
 idle_q3 = max_frequency_point3 - 0.116
 idle_q4 = max_frequency_point4 + 0.052
-idle_q5 = max_frequency_point5 - 0.203
+idle_q5 = max_frequency_point5 - 0.15
 
 # Resonator frequency versus flux fit parameters according to resonator_spec_vs_flux
 # amplitude * np.cos(2 * np.pi * frequency * x + phase) + offset
@@ -352,8 +352,8 @@ config = {
                 5: {"offset": idle_q1},  # qubit1 Z
                 6: {"offset": idle_q2},  # qubit2 Z
                 7: {"offset": idle_q3},  # qubit3 Z
-                8: {"offset": 0.0},  # qubit4 Z
-                9: {"offset": 0.0},  # qubit5 Z
+                8: {"offset": idle_q4},  # qubit4 Z
+                9: {"offset": idle_q5},  # qubit5 Z
                 10: {"offset": 0.0},  # 
             },
             "digital_outputs": {
