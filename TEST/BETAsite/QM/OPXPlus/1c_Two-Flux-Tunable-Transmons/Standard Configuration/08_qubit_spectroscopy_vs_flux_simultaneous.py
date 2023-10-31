@@ -43,9 +43,9 @@ n_avg = 100000  # The number of averages
 saturation_len = 20 * u.us  # In ns
 saturation_amp = 0.057  # pre-factor to the value defined in the config - restricted to [-2; 2)
 # Qubit detuning sweep with respect to qubit_IF
-dfs = np.arange(-200e6, 200e6, 0.4e6)
+dfs = np.arange(-200e6, 200e6, 2e6)
 # Flux sweep
-dcs = np.arange(-0.05, 0.05, 0.001)
+dcs = np.arange(-0.2, 0.2, 0.003)
 # search for idle points:
 flux_offset_1 = idle_q1
 flux_offset_2 = idle_q2
@@ -75,8 +75,9 @@ with program() as multi_qubit_spec_vs_flux:
             assign(index, 0)
             with for_(*from_array(dc, dcs)):
                 # Flux sweeping
-                set_dc_offset("q1_z", "single", dc + flux_offset_1)
+                # set_dc_offset("q1_z", "single", dc + flux_offset_1)
                 # set_dc_offset("q2_z", "single", dc + flux_offset_2)
+                set_dc_offset("q3_z", "single", dc)
                 wait(flux_settle_time * u.ns)  # Wait for the flux to settle
 
                 # Update the resonator frequency to always measure on resonance
@@ -84,7 +85,7 @@ with program() as multi_qubit_spec_vs_flux:
                 # update_frequency("rr2", resonator_freq2[index] + resonator_IF_q2)
 
                 # Saturate qubit
-                play("saturation" * amp(saturation_amp), "q1_xy", duration=saturation_len * u.ns)
+                # play("saturation" * amp(saturation_amp), "q1_xy", duration=saturation_len * u.ns)
                 play("saturation" * amp(saturation_amp), "q2_xy", duration=saturation_len * u.ns)
 
                 # Measure after the qubit pulses (can be commented for measuring while driving if T1 is short)

@@ -55,42 +55,42 @@ with program() as cz_ops:
         # cz_gate(cz_type)
 
         # Circuit 2: Bell-state
-        # play("y180", "q2_xy")
-        align()
-
-        # play("y90", "q1_xy")
-        # play("x180", "q1_xy")
-
-        # align()
-        # play("y90", "q2_xy")
-        # play("x180", "q2_xy")
+        play("x180", "q2_xy")
         # align()
 
-        # play("x180", "q1_xy")
-        # play("x180", "q2_xy")
-        # play("x180", "q1_xy")
-        # play("x180", "q2_xy")
-        # align()
-
-        # cz_gate(cz_type)
-        # frame_rotation_2pi(0.42, "q2_xy")
-
-        # align()
-        # play("y180", "q1_xy")
-        # play("y180", "q2_xy")
-        # play("y180", "q1_xy")
-        # play("y180", "q2_xy")
-        # align()
-
-        # play("y90", "q2_xy")
-        # play("x180", "q2_xy")
-        # align()
-
-        # Circuit 3: Hadamard-test
         play("y90", "q1_xy")
         play("x180", "q1_xy")
+
+        align()
         play("y90", "q2_xy")
         play("x180", "q2_xy")
+        align()
+
+        # play("x180", "q1_xy")
+        # play("x180", "q2_xy")
+        # play("x180", "q1_xy")
+        # play("x180", "q2_xy")
+        # align()
+
+        cz_gate(cz_type)
+        frame_rotation_2pi(0.8, "q2_xy")
+
+        # align()
+        # play("y180", "q1_xy")
+        # play("y180", "q2_xy")
+        # play("y180", "q1_xy")
+        # play("y180", "q2_xy")
+        # align()
+
+        play("y90", "q2_xy")
+        play("x180", "q2_xy")
+        align()
+
+        # Circuit 3: Hadamard-test
+        # play("y90", "q1_xy")
+        # play("x180", "q1_xy")
+        # play("y90", "q2_xy")
+        # play("x180", "q2_xy")
         # align()
         # play("y90", "q1_xy")
         # play("x180", "q1_xy")

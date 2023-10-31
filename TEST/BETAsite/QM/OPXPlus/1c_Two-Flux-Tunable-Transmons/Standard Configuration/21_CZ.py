@@ -56,7 +56,7 @@ ts = np.arange(4, 30, 1)  # The flux pulse durations in clock cycles (4ns) - Mus
 
 # const:
 # amps = (np.arange(0, 0.5, 0.001)-flux_offset) / scale_reference
-amps = (np.arange(0.16, 0.2, 0.00004)-flux_offset) / scale_reference
+amps = (np.arange(-0.135, -0.115, 0.0002)-flux_offset) / scale_reference
 # amps = (np.arange(0.295, 0.305, 0.00001)-flux_offset) / scale_reference
 
 # gaussian-like:

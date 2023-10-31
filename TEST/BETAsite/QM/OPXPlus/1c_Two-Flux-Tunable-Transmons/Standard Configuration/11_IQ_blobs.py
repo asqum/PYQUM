@@ -35,15 +35,15 @@ n_runs = 13700  # Number of runs
 readout_amp = 1
 
 with program() as iq_blobs:
-    I_g, I_g_st, Q_g, Q_g_st, n, _ = qua_declaration(nb_of_qubits=2)
-    I_e, I_e_st, Q_e, Q_e_st, _, _ = qua_declaration(nb_of_qubits=2)
+    I_g, I_g_st, Q_g, Q_g_st, n, _ = qua_declaration(nb_of_qubits=3)
+    I_e, I_e_st, Q_e, Q_e_st, _, _ = qua_declaration(nb_of_qubits=3)
 
     with for_(n, 0, n < n_runs, n + 1):
         # ground iq blobs for both qubits
         wait(thermalization_time * u.ns)
         align()
         # play("x180", "q2_xy")
-        multiplexed_readout(I_g, I_g_st, Q_g, Q_g_st, resonators=[1, 2], weights="rotated_", amplitude=readout_amp)
+        multiplexed_readout(I_g, I_g_st, Q_g, Q_g_st, resonators=[1, 2, 3], weights="rotated_", amplitude=readout_amp)
 
         # excited iq blobs for both qubits
         align()
@@ -52,23 +52,18 @@ with program() as iq_blobs:
         # Play the qubit pi pulses
         
         # q1:
-        # play("y90", "q1_xy")
         play("x180", "q1_xy")
-        # play("y90", "q1_xy")
-        # play("x180", "q1_xy")
-        
         # q2:
-        # play("y90", "q2_xy")
         play("x180", "q2_xy")
-        # play("y90", "q2_xy")
-        # play("x180", "q2_xy")
-
+        # q3:
+        play("x180", "q3_xy")
+        
         align()
-        multiplexed_readout(I_e, I_e_st, Q_e, Q_e_st, resonators=[1, 2], weights="rotated_", amplitude=readout_amp)
+        multiplexed_readout(I_e, I_e_st, Q_e, Q_e_st, resonators=[1, 2, 3], weights="rotated_", amplitude=readout_amp)
 
     with stream_processing():
         # Save all streamed points for plotting the IQ blobs
-        for i in range(2):
+        for i in range(3):
             I_g_st[i].save_all(f"I_g_q{i}")
             Q_g_st[i].save_all(f"Q_g_q{i}")
             I_e_st[i].save_all(f"I_e_q{i}")
@@ -96,22 +91,32 @@ else:
     # Send the QUA program to the OPX, which compiles and executes it
     job = qm.execute(iq_blobs)
     # fetch data
-    results = fetching_tool(job, ["I_g_q0", "Q_g_q0", "I_e_q0", "Q_e_q0", "I_g_q1", "Q_g_q1", "I_e_q1", "Q_e_q1"])
-    I_g_q1, Q_g_q1, I_e_q1, Q_e_q1, I_g_q2, Q_g_q2, I_e_q2, Q_e_q2 = results.fetch_all()
+    results = fetching_tool(job, ["I_g_q0", "Q_g_q0", "I_e_q0", "Q_e_q0", "I_g_q1", "Q_g_q1", "I_e_q1", "Q_e_q1", "I_g_q2", "Q_g_q2", "I_e_q2", "Q_e_q2"])
+    I_g_q1, Q_g_q1, I_e_q1, Q_e_q1, I_g_q2, Q_g_q2, I_e_q2, Q_e_q2, I_g_q3, Q_g_q3, I_e_q3, Q_e_q3 = results.fetch_all()
     # Plot the IQ blobs, rotate them to get the separation along the 'I' quadrature, estimate a threshold between them
     # for state discrimination and derive the fidelity matrix
     two_state_discriminator(I_g_q1, Q_g_q1, I_e_q1, Q_e_q1, True, True)
     plt.suptitle("qubit 1")
     two_state_discriminator(I_g_q2, Q_g_q2, I_e_q2, Q_e_q2, True, True)
     plt.suptitle("qubit 2")
+    two_state_discriminator(I_g_q3, Q_g_q3, I_e_q3, Q_e_q3, True, True)
+    plt.suptitle("qubit 3")
     plt.show()
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()
 
     filename = "IQ_Blobs"
-    save = True
+    save = False
     if save:
-        np.savez(save_dir/filename, n=n, I_g_q1=I_g_q1, Q_g_q1=Q_g_q1, I_e_q1=I_e_q1, Q_e_q1=Q_e_q1, I_g_q2=I_g_q2, Q_g_q2=Q_g_q2, I_e_q2=I_e_q2, Q_e_q2=Q_e_q2)
+
+        output_data = np.empty([2,2,int(n_runs)])
+        print(type(I_g_q1))
+        output_data[0][0] = I_g_q1
+        output_data[0][1] = Q_g_q1
+        output_data[1][0] = I_e_q1
+        output_data[1][1] = Q_e_q1
+        
+        np.savez(save_dir/filename, output_data)
         print("Data saved as %s.npz" %filename)
 
     #########################################

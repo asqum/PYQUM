@@ -40,11 +40,12 @@ n_avg = 100000  # The number of averages
 amps = np.arange(0.1, 1.9, 0.01)
 
 # Number of applied Rabi pulses sweep
-max_nb_of_pulses = 24  # Maximum number of qubit pulses
+# max_nb_of_pulses = 2 # 1D-sweep
+max_nb_of_pulses = 24  # 2D-sweep: Maximum number of qubit pulses
 nb_of_pulses = np.arange(1, max_nb_of_pulses, 1)  # Always play an odd/even number of pulses to end up in the same state
 
 with program() as rabi:
-    I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=2)
+    I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=3)
     a = declare(fixed)  # QUA variable for the qubit drive amplitude pre-factor
     npi = declare(int)  # QUA variable for the number of qubit pulses
     count = declare(int)  # QUA variable for counting the qubit pulses
@@ -55,12 +56,12 @@ with program() as rabi:
                 # Loop for error amplification (perform many qubit pulses)
                 with for_(count, 0, count < npi, count + 1):
                     play("x180" * amp(a), "q1_xy")
-                    # align()
-                    # play("x180" * amp(a), "q2_xy")
+                    play("x180" * amp(a), "q2_xy")
+                    play("x180" * amp(a), "q3_xy")
                 # Align the elements to measure after playing the qubit pulses.
                 align()
                 # Start using Rotated integration weights (cf. IQ_blobs.py)
-                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2], weights="rotated_", amplitude=1)
+                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2, 3], weights="rotated_", amplitude=1)
                 # Wait for the qubit to decay to the ground state
                 wait(thermalization_time * u.ns)
         # Save the averaging iteration to get the progress bar
@@ -74,6 +75,9 @@ with program() as rabi:
         # resonator 2
         I_st[1].buffer(len(amps)).buffer(len(nb_of_pulses)).average().save("I2")
         Q_st[1].buffer(len(amps)).buffer(len(nb_of_pulses)).average().save("Q2")
+        # resonator 3
+        I_st[2].buffer(len(amps)).buffer(len(nb_of_pulses)).average().save("I3")
+        Q_st[2].buffer(len(amps)).buffer(len(nb_of_pulses)).average().save("Q3")
 
 #####################################
 #  Open Communication with the QOP  #
@@ -101,59 +105,86 @@ else:
     fig = plt.figure()
     interrupt_on_close(fig, job)
     # Tool to easily fetch results from the OPX (results_handle used in it)
-    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
+    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2", "I3", "Q3"], mode="live")
     # Live plotting
     while results.is_processing():
         # Fetch results
-        n, I1, Q1, I2, Q2 = results.fetch_all()
+        n, I1, Q1, I2, Q2, I3, Q3 = results.fetch_all()
         # Progress bar
         progress_counter(n, n_avg, start_time=results.start_time)
         # Convert the results into Volts
         I1, Q1 = u.demod2volts(I1, readout_len), u.demod2volts(Q1, readout_len)
         I2, Q2 = u.demod2volts(I2, readout_len), u.demod2volts(Q2, readout_len)
+        I3, Q3 = u.demod2volts(I3, readout_len), u.demod2volts(Q3, readout_len)
         # Plots
         if I1.shape[0] > 1:
             # Power Rabi with error amplification
-            plt.subplot(221)
+            # q1:
+            plt.subplot(231)
             plt.cla()
             plt.pcolor(amps * pi_amp_q1, nb_of_pulses, I1)
+            plt.axvline(pi_amp_q1, color="k", linewidth=0.37)
             plt.title("I1")
             plt.ylabel("# of Rabi pulses")
-            plt.subplot(223)
+            plt.subplot(234)
             plt.cla()
             plt.pcolor(amps * pi_amp_q1, nb_of_pulses, Q1)
             plt.title("Q1")
             plt.xlabel("qubit pulse amplitude [V]")
             plt.ylabel("# of Rabi pulses")
-            plt.subplot(222)
+            # q2:
+            plt.subplot(232)
             plt.cla()
             plt.pcolor(amps * pi_amp_q2, nb_of_pulses, I2)
+            plt.axvline(pi_amp_q2, color="k", linewidth=0.37)
             plt.title("I2")
-            plt.subplot(224)
+            plt.subplot(235)
             plt.cla()
             plt.pcolor(amps * pi_amp_q2, nb_of_pulses, Q2)
             plt.title("Q2")
             plt.xlabel("Qubit pulse amplitude [V]")
+            # q3:
+            plt.subplot(233)
+            plt.cla()
+            plt.pcolor(amps * pi_amp_q3, nb_of_pulses, I3)
+            plt.axvline(pi_amp_q3, color="k", linewidth=0.37)
+            plt.title("I3")
+            plt.subplot(236)
+            plt.cla()
+            plt.pcolor(amps * pi_amp_q3, nb_of_pulses, Q3)
+            plt.title("Q3")
+            plt.xlabel("Qubit pulse amplitude [V]")
         else:
             # 1D power Rabi
             plt.suptitle("Power Rabi")
-            plt.subplot(221)
+            # q1:
+            plt.subplot(231)
             plt.cla()
             plt.plot(amps * pi_amp_q1, I1[0])
             plt.ylabel("I quadrature")
             plt.title("Qubit 1")
-            plt.subplot(223)
+            plt.subplot(234)
             plt.cla()
             plt.plot(amps * pi_amp_q1, Q1[0])
             plt.ylabel("Q quadrature")
             plt.xlabel("Qubit pulse amplitude [V]")
-            plt.subplot(222)
+            # q2:
+            plt.subplot(232)
             plt.cla()
             plt.plot(amps * pi_amp_q2, I2[0])
             plt.title("Qubit 2")
-            plt.subplot(224)
+            plt.subplot(235)
             plt.cla()
             plt.plot(amps * pi_amp_q2, Q2[0])
+            plt.xlabel("Qubit pulse amplitude [V]")
+            # q3:
+            plt.subplot(233)
+            plt.cla()
+            plt.plot(amps * pi_amp_q3, I3[0])
+            plt.title("Qubit 3")
+            plt.subplot(236)
+            plt.cla()
+            plt.plot(amps * pi_amp_q3, Q3[0])
             plt.xlabel("Qubit pulse amplitude [V]")
         plt.tight_layout()
         plt.pause(1.0)

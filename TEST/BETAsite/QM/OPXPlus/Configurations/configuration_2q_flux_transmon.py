@@ -66,24 +66,26 @@ octave_config = octave_declaration(octaves)
 #############################################
 #                  Qubits                   #
 #############################################
-qubit_LO_q1 = (4.200 -0.530) * u.GHz
-qubit_LO_q2 = (4.200 -0.530) * u.GHz
-qubit_LO_q3 = 4.200 * u.GHz
-qubit_LO_q4 = 4.200 * u.GHz
-qubit_LO_q5 = 4.200 * u.GHz
+#             LO: 1=3, 2=4, 5=5             #
+#############################################   
+qubit_LO_q1 = (3.200) * u.GHz
+qubit_LO_q2 = (4.000) * u.GHz
+qubit_LO_q3 = (3.200) * u.GHz
+qubit_LO_q4 = (4.000) * u.GHz
+qubit_LO_q5 = (4.500) * u.GHz
 
 # Qubits IF
-qubit_IF_q1 = (-346.022 -0.041) * u.MHz #(4013-0.0088-0.0037 -4200) * u.MHz
-qubit_IF_q2 = (471.52 +0.312) * u.MHz #(4156-0.119  -4200) * u.MHz
-qubit_IF_q3 = (-44.4216-0.032) * u.MHz
-qubit_IF_q4 = (-44.4216-0.032) * u.MHz
-qubit_IF_q5 = (-44.4216-0.032) * u.MHz
+qubit_IF_q1 = (-112.833 -0.666+0.954-1.940) * u.MHz # -244.1 +0.048
+qubit_IF_q2 = (-180.66 +0.305) * u.MHz # -173.39
+qubit_IF_q3 = (-237 -3.798-0.126) * u.MHz
+qubit_IF_q4 = (0) * u.MHz
+qubit_IF_q5 = (-414) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
 # Relaxation time
-qubit1_T1 = int(12000 * u.ns)
-qubit2_T1 = int(12000 * u.ns)
+qubit1_T1 = int(32688 * u.ns)
+qubit2_T1 = int(17388 * u.ns)
 qubit3_T1 = int(12000 * u.ns)
 qubit4_T1 = int(12000 * u.ns)
 qubit5_T1 = int(12000 * u.ns)
@@ -98,26 +100,26 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.05109
-pi_amp_q2 = 0.05995
-pi_amp_q3 = 0.5
+pi_amp_q1 = 0.02016
+pi_amp_q2 = 0.07575 # 0.0353
+pi_amp_q3 = 0.02342
 pi_amp_q4 = 0.5
 pi_amp_q5 = 0.5
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
-drag_coef_q1 = 0.33
-drag_coef_q2 = 0.2
-drag_coef_q3 = 0
+drag_coef_q1 = 0.4
+drag_coef_q2 = 0.9
+drag_coef_q3 = 0.4
 drag_coef_q4 = 0
 drag_coef_q5 = 0
-anharmonicity_q1 = -(450.2-344.2)*2 * u.MHz
-anharmonicity_q2 = -(470.7-369.2)*2 * u.MHz
-anharmonicity_q3 = -(200) * u.MHz
-anharmonicity_q4 = -(200) * u.MHz
-anharmonicity_q5 = -(200) * u.MHz
-AC_stark_detuning_q1 = 0.0 * u.MHz
-AC_stark_detuning_q2 = 0.0 * u.MHz
-AC_stark_detuning_q3 = 0 * u.MHz
+anharmonicity_q1 = -abs(qubit_IF_q1 - -216.5*u.MHz) * 2
+anharmonicity_q2 = -abs(qubit_IF_q2 - -281.3*u.MHz) * 2
+anharmonicity_q3 = -abs(qubit_IF_q3 - 344.2*u.MHz) * 2
+anharmonicity_q4 = -abs(qubit_IF_q4 - 344.2*u.MHz) * 2
+anharmonicity_q5 = -abs(qubit_IF_q5 - 344.2*u.MHz) * 2
+AC_stark_detuning_q1 = 0.04 * u.MHz
+AC_stark_detuning_q2 = 0.09 * u.MHz
+AC_stark_detuning_q3 = 0.04 * u.MHz
 AC_stark_detuning_q4 = 0 * u.MHz
 AC_stark_detuning_q5 = 0 * u.MHz
 
@@ -193,17 +195,17 @@ minus_y90_I_wf_q5, minus_y90_Q_wf_q5 = (-1) * minus_y90_der_wf_q5, minus_y90_wf_
 ##########################################
 flux_settle_time = 100 * u.ns
 
-max_frequency_point1 = 0.0489
-max_frequency_point2 = 0.0149
-max_frequency_point3 = 0.0537
+max_frequency_point1 = 0
+max_frequency_point2 = 0
+max_frequency_point3 = 0
 max_frequency_point4 = 0
 max_frequency_point5 = 0
 
-idle_q1 = max_frequency_point1 - 0.26
-idle_q2 = max_frequency_point2 + 0.0
-idle_q3 = max_frequency_point3 + 0.2
-idle_q4 = max_frequency_point4 + 0.0
-idle_q5 = max_frequency_point5 + 0.0
+idle_q1 = max_frequency_point1 - 0.203
+idle_q2 = max_frequency_point2 + 0.013
+idle_q3 = max_frequency_point3 - 0.116
+idle_q4 = max_frequency_point4 + 0.052
+idle_q5 = max_frequency_point5 - 0.15
 
 # Resonator frequency versus flux fit parameters according to resonator_spec_vs_flux
 # amplitude * np.cos(2 * np.pi * frequency * x + phase) + offset
@@ -228,20 +230,20 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 #############################################
 resonator_LO = 5.9 * u.GHz
 # Resonators IF
-resonator_IF_q1 = int((-157.0) * u.MHz)
-resonator_IF_q2 = int((136.8) * u.MHz)
-resonator_IF_q3 = int((-38.5) * u.MHz)
-resonator_IF_q4 = int((1) * u.MHz)
-resonator_IF_q5 = int((1) * u.MHz)
+resonator_IF_q1 = int((-163.07) * u.MHz)
+resonator_IF_q2 = int((126.41) * u.MHz)
+resonator_IF_q3 = int((-49.7) * u.MHz)
+resonator_IF_q4 = int((218.3) * u.MHz)
+resonator_IF_q5 = int((28.8) * u.MHz)
 # Above is for verifying wide-sweep results: -156, -38, 39, 138, 231
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
-readout_len = 3600
-readout_amp_q1 = 0.0898128*1.1
-readout_amp_q2 = 0.202488*0.9
-readout_amp_q3 = 0.1475
-readout_amp_q4 = 0.125
-readout_amp_q5 = 0.125
+readout_len = 4000
+readout_amp_q1 = 0.1112832
+readout_amp_q2 = 0.1036*1.23
+readout_amp_q3 = 0.1475*0.9*1.19
+readout_amp_q4 = 0.125 *0.88
+readout_amp_q5 = 0.125 *0.77
 
 # TOF and depletion time
 time_of_flight = 284  # must be a multiple of 4
@@ -299,14 +301,14 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (354.6 / 180) * np.pi
-rotation_angle_q2 = (193.6 / 180) * np.pi
-rotation_angle_q3 = (0 / 180) * np.pi
+rotation_angle_q1 = (100.2 / 180) * np.pi
+rotation_angle_q2 = (224.0 / 180) * np.pi
+rotation_angle_q3 = (142.9 / 180) * np.pi
 rotation_angle_q4 = (0 / 180) * np.pi
 rotation_angle_q5 = (0 / 180) * np.pi
-ge_threshold_q1 = 7.941e-04
-ge_threshold_q2 = 3.548e-04
-ge_threshold_q3 = 0
+ge_threshold_q1 = -1.156e-06
+ge_threshold_q2 = 2.113e-06
+ge_threshold_q3 = 3.061e-04
 ge_threshold_q4 = 0
 ge_threshold_q5 = 0
 
@@ -322,10 +324,10 @@ config = {
                 2: {"offset": 0.0},  # Q readout line
                 3: {"offset": 0.0},  # I qubit1 XY
                 4: {"offset": 0.0},  # Q qubit1 XY
-                5: {"offset": 0.0},  # I qubit2 XY
-                6: {"offset": 0.0},  # Q qubit2 XY
-                7: {"offset": 0.0},  # I qubit3 XY
-                8: {"offset": 0.0},  # Q qubit3 XY
+                5: {"offset": 0.0},  # I qubit3 XY
+                6: {"offset": 0.0},  # Q qubit3 XY
+                7: {"offset": 0.0},  # I qubit2 XY
+                8: {"offset": 0.0},  # Q qubit2 XY
                 9: {"offset": 0.0},  # I qubit4 XY
                 10: {"offset": 0.0},  # Q qubit4 XY
             },
@@ -350,8 +352,8 @@ config = {
                 5: {"offset": idle_q1},  # qubit1 Z
                 6: {"offset": idle_q2},  # qubit2 Z
                 7: {"offset": idle_q3},  # qubit3 Z
-                8: {"offset": 0.0},  # qubit4 Z
-                9: {"offset": 0.0},  # qubit5 Z
+                8: {"offset": idle_q4},  # qubit4 Z
+                9: {"offset": idle_q5},  # qubit5 Z
                 10: {"offset": 0.0},  # 
             },
             "digital_outputs": {
@@ -481,10 +483,10 @@ config = {
         },
         "q2_xy": {
             "mixInputs": {
-                "I": ("con1", 5),
-                "Q": ("con1", 6),
+                "I": ("con1", 7),
+                "Q": ("con1", 8),
                 "lo_frequency": qubit_LO_q2,
-                "mixer": "octave_octave1_3",
+                "mixer": "octave_octave1_4",
             },
             "intermediate_frequency": qubit_IF_q2,  # frequency at offset ch8 (max freq)
             "operations": {
@@ -500,10 +502,10 @@ config = {
         },
         "q3_xy": {
             "mixInputs": {
-                "I": ("con1", 7),
-                "Q": ("con1", 8),
+                "I": ("con1", 5),
+                "Q": ("con1", 6),
                 "lo_frequency": qubit_LO_q3,
-                "mixer": "octave_octave1_4",
+                "mixer": "octave_octave1_3",
             },
             "intermediate_frequency": qubit_IF_q3,
             "operations": {
@@ -1238,15 +1240,15 @@ config = {
         ],
         "octave_octave1_3": [
             {
-                "intermediate_frequency": qubit_IF_q2,
-                "lo_frequency": qubit_LO_q2,
+                "intermediate_frequency": qubit_IF_q3,
+                "lo_frequency": qubit_LO_q3,
                 "correction": (1, 0, 0, 1),
             }
         ],
         "octave_octave1_4": [
             {
-                "intermediate_frequency": qubit_IF_q3,
-                "lo_frequency": qubit_LO_q3,
+                "intermediate_frequency": qubit_IF_q2,
+                "lo_frequency": qubit_LO_q2,
                 "correction": (1, 0, 0, 1),
             }
         ],

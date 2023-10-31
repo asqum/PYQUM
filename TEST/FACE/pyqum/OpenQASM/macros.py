@@ -12,27 +12,46 @@ from pyqum.OpenQASM.configuration import *
 # QUA macros #
 ##############
 
+def sx_gate(qubit):
+    play("x90", "q%s_xy"%qubit)
+def id_gate(qubit):
+    wait(1)
+def x_gate(qubit):
+    play("x180", "q%s_xy"%qubit)
+def y_gate(qubit):
+    play("y180", "q%s_xy"%qubit)
+def z_gate(qubit):
+    frame_rotation_2pi(0.5, "q%s_xy"%qubit)
+def h_gate(qubit):
+    play("y90", "q%s_xy"%qubit)
+    play("x180", "q%s_xy"%qubit)
 
-def cz_gate(type="square"):
+def cz_gate(control=1, target=2, type="square"):
     if type == "square":
         wait(5)  # for flux pulse to relax back completely
 
-        set_dc_offset("q2_z", "single", 0.29888) # 10cc: 0.1452099
+        align()
+        set_dc_offset("q2_z", "single", -0.12037) # 10cc: 0.1452099
         wait(40 // 4, "q2_z")
-        # set_dc_offset("q2_z", "single", 0.17371) # 10cc: 0.1452099
-        # wait(40 // 4, "q2_z")
 
         align()
         set_dc_offset("q2_z", "single", idle_q2)
         wait(5)  # for flux pulse to relax back completely
+        
         # Phase compensation:
         # frame_rotation_2pi(0.6, "q1_xy")
         # frame_rotation_2pi(0.4, "q2_xy")
+        align()
+
     elif type == "ft_gaussian":
         play("cz_1_2"*amp((0.150-max_frequency_point2)/(cz_point_1_2_q2-idle_q2)), "q2_z", duration=80//4)
     elif type == "gaussian":
         play("cz_1_2"*amp(1.4), "q2_z", duration=32//4)
 
+def cx_gate(control=1, target=2):
+    h_gate(target)
+    cz_gate(control, target)
+    h_gate(target)
 
 def multiplexed_readout(I, I_st, Q, Q_st, resonators, sequential=False, amplitude=1.0, weights=""):
     """Perform multiplexed readout on two resonators"""
