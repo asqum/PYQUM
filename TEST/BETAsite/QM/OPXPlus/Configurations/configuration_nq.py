@@ -14,7 +14,7 @@ u = unit(coerce_to_integer=True)
 # Network parameters #
 ######################
 # Either using Cluster or Port:
-cluster_name = "QPX_2"  # Write your cluster_name if version >= QOP220
+cluster_name = "QPX_3"  # Write your cluster_name if version >= QOP220
 qop_ip = "192.168.1.146"  # Write the QM router IP address
 qop_port = None  # Write the QOP port if version < QOP220
 # qop_ip = "qum.phys.sinica.edu.tw"  # Write the QM router IP address

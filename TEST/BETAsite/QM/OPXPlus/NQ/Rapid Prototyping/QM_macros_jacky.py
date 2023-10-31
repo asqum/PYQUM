@@ -6,53 +6,102 @@ All the macros below have been written and tested with the basic configuration. 
 
 from qm.qua import *
 from qualang_tools.addons.variables import assign_variables_to_element
-from configuration import u
+from qualang_tools.results import fetching_tool, progress_counter
+from qualang_tools.plot import interrupt_on_close
+from configuration import *
+
+import matplotlib.pyplot as plt
+from scipy import signal
+from scipy.optimize import curve_fit
 
 ##############
 # QUA macros #
 ##############
 
 
-def multiplexed_readout(I, I_st, Q, Q_st, resonators, sequential=False, amplitude=1.0, weights=""):
-    """Perform multiplexed readout on two resonators"""
+def cz_gate(type="square"):
+    if type == "square":
+        wait(5)  # for flux pulse to relax back completely
+        set_dc_offset("q2_z", "single", 0.14519591) # 10cc: 0.1452099
+        wait(48 // 4, "q2_z")
+        align()
+        set_dc_offset("q2_z", "single", idle_q2)
+        wait(5)  # for flux pulse to relax back completely
+    elif type == "ft_gaussian":
+        play("cz_1_2"*amp((0.150-max_frequency_point2)/(cz_point_1_2_q2-idle_q2)), "q2_z", duration=80//4)
+    elif type == "gaussian":
+        play("cz_1_2"*amp(1.4), "q2_z", duration=32//4)
+
+
+def multiRO_measurement( iqdata_stream, resonators:list, freq_IF:list=None, sequential=False, amp_modify=1.0, weights=""):
+    """
+        RO pulse
+    """
+    (I, I_st, Q, Q_st) = iqdata_stream
     if type(resonators) is not list:
         resonators = [resonators]
+        
+    ro_channel_num = len(resonators)
 
-    for ind, res in enumerate(resonators):
+
+    for idx, res in enumerate(resonators):
+        if isinstance(freq_IF ,list):
+            update_frequency(res, freq_IF[idx])
+
         measure(
-            "readout" * amp(amplitude),
-            f"rr{res}",
+            "readout" * amp(amp_modify),
+            f"{res}",
             None,
-            dual_demod.full(weights + "cos", "out1", weights + "sin", "out2", I[ind]),
-            dual_demod.full(weights + "minus_sin", "out1", weights + "cos", "out2", Q[ind]),
+            dual_demod.full(weights + "cos", "out1", weights + "sin", "out2", I[idx]),
+            dual_demod.full(weights + "minus_sin", "out1", weights + "cos", "out2", Q[idx]),
         )
 
         if I_st is not None:
-            save(I[ind], I_st[ind])
+            save(I[idx], I_st[idx])
         if Q_st is not None:
-            save(Q[ind], Q_st[ind])
+            save(Q[idx], Q_st[idx])
 
-        if sequential and ind < len(resonators) - 1:
-            align(f"rr{res}", f"rr{res+1}")
+        if sequential and idx < ro_channel_num -1:
+            align(f"{res}", f"{resonators[idx+1]}")
 
+def multiRO_pre_save( iqdata_stream, resonators:list, buffer_len:list ):
+    """
+    Save RO pulse signal on FPGA
+    """
+    (I, I_st, Q, Q_st) = iqdata_stream
+    if type(resonators) is not list:
+        resonators = [resonators]
+        
+    ro_channel_num = len(resonators)
+    for idx_res, res in enumerate(resonators):
+        print(idx_res, res)
+        for b in buffer_len:
+            print(b)
+            I_st[idx_res].buffer(b).average().save(f"{res}_I")
+            Q_st[idx_res].buffer(b).average().save(f"{res}_Q")  
+        # I_st[idx_res].average().save(f"{res}_I")
+        # Q_st[idx_res].average().save(f"{res}_Q")    
 
-def qua_declaration(nb_of_qubits):
+def multiRO_declare( resonators:list ):
     """
     Macro to declare the necessary QUA variables
 
-    :param nb_of_qubits: Number of qubits used in this experiment
-    :return:
+    :param resonators: name of the element for resonator
+    :return: I, I_st, Q, Q_st
     """
-    n = declare(int)
-    n_st = declare_stream()
-    I = [declare(fixed) for _ in range(nb_of_qubits)]
-    Q = [declare(fixed) for _ in range(nb_of_qubits)]
-    I_st = [declare_stream() for _ in range(nb_of_qubits)]
-    Q_st = [declare_stream() for _ in range(nb_of_qubits)]
+    if type(resonators) is not list:
+        resonators = [resonators]
+
+    ro_channel_num = len(resonators)
+
+    I = [declare(fixed) for _ in range(ro_channel_num)]
+    Q = [declare(fixed) for _ in range(ro_channel_num)]
+    I_st = [declare_stream() for _ in range(ro_channel_num)]
+    Q_st = [declare_stream() for _ in range(ro_channel_num)]
     # Workaround to manually assign the results variables to the readout elements
-    # for i in range(nb_of_qubits):
-    #     assign_variables_to_element(f"rr{i}", I[i], Q[i])
-    return I, I_st, Q, Q_st, n, n_st
+    for idx, ele_name in enumerate(resonators):
+        assign_variables_to_element( ele_name, I[idx], Q[idx])
+    return I, I_st, Q, Q_st
 
 
 def reset_qubit(method: str, qubit: str, resonator: str, **kwargs):
@@ -84,7 +133,7 @@ def reset_qubit(method: str, qubit: str, resonator: str, **kwargs):
         if (cooldown_time is None) or (cooldown_time < 4):
             raise Exception("'cooldown_time' must be an integer > 4 clock cycles")
         # Reset qubit state
-        wait(cooldown_time * u.ns, qubit)
+        wait(cooldown_time, qubit)
     elif method == "active":
         # Check threshold
         threshold = kwargs.get("threshold", None)
@@ -194,3 +243,53 @@ def filter_calc(exponential):
         feedforward_taps = 2 * feedforward_taps / max(feedforward_taps)
 
     return feedforward_taps, feedback_taps
+
+
+# Plotting
+
+# Fitting:
+
+# Fitting to cosine resonator frequency response
+def cosine_func(x, amplitude, frequency, phase, offset):
+    return amplitude * np.cos(2 * np.pi * frequency * x + phase) + offset
+
+def fit_plotting(x_range, y_range, q_id, stage):
+    if stage=="6b":
+        minima = np.zeros(len(x_range)) # Array for the flux minima
+        # Frequency range for the 3 resonators
+        frequencies = [(y_range + resonator_IF[i]) for i in q_id]
+        # Amplitude for the 3 resonators
+        R = [R1, R2, R3]
+        plt.figure()
+        for rr in q_id:
+            print(f"Resonator rr{rr+1}")
+            # Find the resonator frequency vs flux minima
+            for i in range(len(x_range)):
+                minima[i] = frequencies[q_id.index(rr)][np.argmin(R[rr].T[i])]
+
+            # Cosine fit
+            initial_guess = [1, 0.5, 0, 0]  # Initial guess for the parameters
+            fit_params, _ = curve_fit(cosine_func, x_range, minima, p0=initial_guess)
+
+            # Get the fitted values
+            amplitude_fit, frequency_fit, phase_fit, offset_fit = fit_params
+            print("fitting parameters", fit_params)
+
+            # Generate the fitted curve using the fitted parameters
+            fitted_curve = cosine_func(x_range, amplitude_fit, frequency_fit, phase_fit, offset_fit)
+            plt.subplot(3, 1, rr + 1)
+            plt.pcolor(x_range, frequencies[rr] / u.MHz, R1)
+            plt.plot(x_range, minima / u.MHz, "x-", color="red", label="Flux minima")
+            plt.plot(x_range, fitted_curve / u.MHz, label="Fitted Cosine", color="orange")
+            plt.xlabel("Flux bias [V]")
+            plt.ylabel("Readout IF [MHz]")
+            plt.title(f"Resonator rr{rr+1}")
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
+
+            print(
+                f"DC flux value corresponding to the maximum frequency point for resonator {rr}: {x_range[np.argmax(fitted_curve)]}"
+            )
+    
+

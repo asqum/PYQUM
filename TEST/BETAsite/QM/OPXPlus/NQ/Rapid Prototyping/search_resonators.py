@@ -22,7 +22,7 @@ from qualang_tools.results import progress_counter, fetching_tool
 from qualang_tools.loops import from_array
 import warnings
 
-from QM_macros_jacky import multiRO_declare, multiRO_measurement, multiRO_save
+from QM_macros_jacky import multiRO_declare, multiRO_measurement, multiRO_pre_save
 
 warnings.filterwarnings("ignore")
 
@@ -40,7 +40,9 @@ import sys
 # # The frequency sweep parameters
 # frequencies = np.arange(-247e6, -227e6, 0.01e6)
 
-def search_resonators( config, frequencies, ro_element, n_avg):
+def search_resonators( frequencies, config, ro_element, n_avg, qmm:QuantumMachinesManager):
+    
+    freq_len = frequencies.shape[-1]
 
     with program() as resonator_spec:
 
@@ -63,13 +65,8 @@ def search_resonators( config, frequencies, ro_element, n_avg):
 
         with stream_processing():
             # Cast the data into a 1D vector, average the 1D vectors together and store the results on the OPX processor
-            multiRO_save( iqdata_stream, ro_element, len(frequencies))
+            multiRO_pre_save( iqdata_stream, ro_element, [freq_len])
             n_st.save("iteration")
-
-    #####################################
-    #  Open Communication with the QOP  #
-    #####################################
-    qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
     ###########
     # execute #
     ###########
@@ -116,6 +113,7 @@ if __name__ == '__main__':
     ]
     myConfig.update_multiplex_readout_channel(mRO_common, mRO_individual )
     search_range = np.arange(-400e6, 400e6, 0.5e6)
+    qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
     
     test_config = myConfig.get_config()
     # print(test_config["elements"]["rr1"])
@@ -123,12 +121,14 @@ if __name__ == '__main__':
     # print(test_config["waveforms"])
     # print(test_config["mixers"])
 
-    idata, qdata, repetition = search_resonators(config,search_range,"rr1",100)  
+    idata, qdata, repetition = search_resonators(search_range,config,"rr1",100,qmm)  
     zdata = idata +1j*qdata
+    print(idata.shape)
     plt.plot(search_range, np.abs(zdata),label="Origin")
 
-    idata, qdata, repetition = search_resonators(test_config,search_range,"rr1",100)  
+    idata, qdata, repetition = search_resonators(search_range,test_config,"rr1",100,qmm)  
     zdata = idata +1j*qdata
+    print(idata.shape)
     plt.plot(search_range, np.abs(zdata),label="Dynamic")
     plt.legend()
     plt.show()
