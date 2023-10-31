@@ -37,16 +37,20 @@ def cosine_func(x, amplitude, frequency, phase, offset):
 ###################
 # The QUA program #
 ###################
-n_avg = 2000  # The number of averages
+n_avg = 20000  # The number of averages
+qubit_pair = [1,5]
+q1_xy, q1_z, q1_IF, q1_LO = "q%s_xy"%(qubit_pair[0]), "q%s_z"%(qubit_pair[0]), eval("qubit_IF_q%s"%(qubit_pair[0])), eval("qubit_LO_q%s"%(qubit_pair[0]))
+q2_xy, q2_z, q2_IF, q2_LO = "q%s_xy"%(qubit_pair[1]), "q%s_z"%(qubit_pair[1]), eval("qubit_IF_q%s"%(qubit_pair[1])), eval("qubit_LO_q%s"%(qubit_pair[1]))
+
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
-saturation_len = 12 * u.us  # In ns
-saturation_amp = 0.012  # pre-factor to the value defined in the config - restricted to [-2; 2)
+saturation_len = 20 * u.us  # In ns
+saturation_amp = 0.057  # pre-factor to the value defined in the config - restricted to [-2; 2)
 # Qubit detuning sweep with respect to qubit_IF
-dfs = np.arange(-200e6, +250e6, 0.45e6)
+dfs = np.arange(-450e6, +450e6, 1e6)
 # Flux sweep
-dcs = np.arange(-0.06, 0.06, 0.0012)
-flux_offset_1 = max_frequency_point1 +0.1 -0.035
-flux_offset_2 = max_frequency_point2 +0.0 -0.035
+dcs = np.arange(-0.2, 0.2, 0.002)
+flux_offset_1 = 0
+flux_offset_2 = 0
 
 # The fit parameters are take from the config
 fitted_curve1 = (cosine_func(dcs, amplitude_fit1, frequency_fit1, phase_fit1, offset_fit1)).astype(int)
@@ -64,24 +68,24 @@ with program() as multi_qubit_spec_vs_flux:
     with for_(n, 0, n < n_avg, n + 1):
         with for_(*from_array(df, dfs)):
             # Update the frequency of the two qubit elements
-            update_frequency("q1_xy", df + qubit_IF_q1)
-            update_frequency("q2_xy", df + qubit_IF_q2)
+            update_frequency(q1_xy, df + q1_IF)
+            update_frequency(q2_xy, df + q2_IF)
             assign(index, 0)
             with for_(*from_array(dc, dcs)):
                 # Flux sweeping
-                set_dc_offset("q1_z", "single", dc + flux_offset_1)
-                set_dc_offset("q2_z", "single", dc + flux_offset_2)
+                set_dc_offset(q1_z, "single", dc + flux_offset_1)
+                set_dc_offset(q2_z, "single", dc + flux_offset_2)
                 wait(flux_settle_time * u.ns)  # Wait for the flux to settle
                 # Update the resonator frequency to always measure on resonance
                 # update_frequency("rr1", resonator_freq1[index] + resonator_IF_q1)
                 # update_frequency("rr2", resonator_freq2[index] + resonator_IF_q2)
 
                 # Saturate qubit
-                play("saturation" * amp(saturation_amp), "q1_xy", duration=saturation_len * u.ns)
-                play("saturation" * amp(saturation_amp), "q2_xy", duration=saturation_len * u.ns)
+                play("saturation" * amp(saturation_amp), q1_xy, duration=saturation_len * u.ns)
+                play("saturation" * amp(saturation_amp), q2_xy, duration=saturation_len * u.ns)
 
                 # Multiplexed readout, also saves the measurement outcomes
-                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2], amplitude=0.9)
+                multiplexed_readout(I, I_st, Q, Q_st, resonators=qubit_pair, amplitude=0.9)
                 # Wait for the qubit to decay to the ground state
                 # wait(thermalization_time * u.ns)
                 # Update the resonator frequency vs flux index
@@ -139,29 +143,29 @@ else:
         R2 = np.abs(S2)
         phase2 = np.angle(S2)
         # Plots
-        plt.suptitle("Qubit spectroscopy")
+        plt.suptitle("Qubit spectroscopy (%s/%s)" %(n,n_avg))
         plt.subplot(221)
         plt.cla()
-        plt.pcolor(dcs, (qubit_IF_q1 + dfs) / u.MHz, R1)
+        plt.pcolor(dcs, (q1_IF + dfs) / u.MHz, R1)
         plt.xlabel("Flux bias [V]")
-        plt.ylabel("q1 IF [MHz]")
-        plt.title(f"q1 (f_res: {(qubit_LO_q1 + qubit_IF_q1) / u.MHz} MHz)")
+        plt.ylabel("q%s IF [MHz]"%(qubit_pair[0]))
+        plt.title(f"q{qubit_pair[0]} (LO: {(q1_LO) / u.MHz} MHz)")
         plt.subplot(223)
         plt.cla()
-        plt.pcolor(dcs, (qubit_IF_q1 + dfs) / u.MHz, phase1)
+        plt.pcolor(dcs, (q1_IF + dfs) / u.MHz, phase1)
         plt.xlabel("Flux bias [V]")
-        plt.ylabel("q1 IF [MHz]")
+        plt.ylabel("q%s IF [MHz]"%(qubit_pair[0]))
         plt.subplot(222)
         plt.cla()
-        plt.pcolor(dcs, (qubit_IF_q2 + dfs) / u.MHz, R2)
-        plt.title(f"q2 (f_res: {(qubit_LO_q2 + qubit_IF_q2) / u.MHz} MHz)")
+        plt.pcolor(dcs, (q2_IF + dfs) / u.MHz, R2)
         plt.xlabel("Flux bias [V]")
-        plt.ylabel("q2 IF [MHz]")
+        plt.ylabel("q%s IF [MHz]"%(qubit_pair[1]))
+        plt.title(f"q{qubit_pair[1]} (LO: {(q2_LO) / u.MHz} MHz)")
         plt.subplot(224)
         plt.cla()
-        plt.pcolor(dcs, (qubit_IF_q2 + dfs) / u.MHz, phase2)
+        plt.pcolor(dcs, (q2_IF + dfs) / u.MHz, phase2)
         plt.xlabel("Flux bias [V]")
-        plt.ylabel("q2 IF [MHz]")
+        plt.ylabel("q%s IF [MHz]"%(qubit_pair[1]))
         plt.tight_layout()
         plt.pause(0.1)
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
