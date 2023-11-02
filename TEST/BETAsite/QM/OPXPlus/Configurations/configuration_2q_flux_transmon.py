@@ -75,20 +75,20 @@ qubit_LO_q4 = (4.000) * u.GHz
 qubit_LO_q5 = (4.500) * u.GHz
 
 # Qubits IF
-qubit_IF_q1 = (-112.833 -0.666+0.954-1.940) * u.MHz # -244.1 +0.048
-qubit_IF_q2 = (-180.66 +0.305) * u.MHz # -173.39
-qubit_IF_q3 = (-237 -3.798-0.126) * u.MHz
-qubit_IF_q4 = (0) * u.MHz
-qubit_IF_q5 = (-414) * u.MHz
+qubit_IF_q1 = (-135.416 -1.679+1.445-0.187+0.366) * u.MHz # -244.1 +0.048
+qubit_IF_q2 = (-146.495 ) * u.MHz # -173.39
+qubit_IF_q3 = (-262.537 ) * u.MHz
+qubit_IF_q4 = (-408.869 ) * u.MHz
+qubit_IF_q5 = (-24.177  -1+0.968) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
 # Relaxation time
-qubit1_T1 = int(32688 * u.ns)
-qubit2_T1 = int(17388 * u.ns)
-qubit3_T1 = int(12000 * u.ns)
-qubit4_T1 = int(12000 * u.ns)
-qubit5_T1 = int(12000 * u.ns)
+qubit1_T1 = int(25028 * u.ns)
+qubit2_T1 = int(22208 * u.ns)
+qubit3_T1 = int(15672 * u.ns)
+qubit4_T1 = int(28568 * u.ns)
+qubit5_T1 = int(21624 * u.ns)
 thermalization_time = 5 * max(qubit1_T1, qubit2_T1, qubit3_T1, qubit4_T1, qubit5_T1)
 
 # CW pulse parameter
@@ -100,11 +100,11 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.02016
-pi_amp_q2 = 0.07575 # 0.0353
-pi_amp_q3 = 0.02342
-pi_amp_q4 = 0.5
-pi_amp_q5 = 0.5
+pi_amp_q1 = 0.018
+pi_amp_q2 = 0.0760
+pi_amp_q3 = 0.02125
+pi_amp_q4 = 0.1139
+pi_amp_q5 = 0.1599
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
 drag_coef_q1 = 0.4
@@ -196,16 +196,16 @@ minus_y90_I_wf_q5, minus_y90_Q_wf_q5 = (-1) * minus_y90_der_wf_q5, minus_y90_wf_
 flux_settle_time = 100 * u.ns
 
 max_frequency_point1 = 0
-max_frequency_point2 = 0
+max_frequency_point2 = 0.044
 max_frequency_point3 = 0
-max_frequency_point4 = 0
-max_frequency_point5 = 0
+max_frequency_point4 = 0.033
+max_frequency_point5 = 0.037
 
 idle_q1 = max_frequency_point1 - 0.203
-idle_q2 = max_frequency_point2 + 0.013
+idle_q2 = max_frequency_point2 + 0 # 0.013
 idle_q3 = max_frequency_point3 - 0.116
-idle_q4 = max_frequency_point4 + 0.052
-idle_q5 = max_frequency_point5 - 0.15
+idle_q4 = max_frequency_point4 + 0 # 0.052
+idle_q5 = max_frequency_point5 - 0 # 0.15
 
 # Resonator frequency versus flux fit parameters according to resonator_spec_vs_flux
 # amplitude * np.cos(2 * np.pi * frequency * x + phase) + offset
@@ -301,16 +301,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (100.2 / 180) * np.pi
-rotation_angle_q2 = (224.0 / 180) * np.pi
-rotation_angle_q3 = (142.9 / 180) * np.pi
-rotation_angle_q4 = (0 / 180) * np.pi
-rotation_angle_q5 = (0 / 180) * np.pi
-ge_threshold_q1 = -1.156e-06
-ge_threshold_q2 = 2.113e-06
-ge_threshold_q3 = 3.061e-04
-ge_threshold_q4 = 0
-ge_threshold_q5 = 0
+rotation_angle_q1 = (110.2 / 180) * np.pi
+rotation_angle_q2 = (239.7 / 180) * np.pi
+rotation_angle_q3 = (157.8 / 180) * np.pi
+rotation_angle_q4 = (5.2 / 180) * np.pi
+rotation_angle_q5 = (333.5 / 180) * np.pi
+ge_threshold_q1 = -7.934e-04
+ge_threshold_q2 = -4.917e-07
+ge_threshold_q3 = 4.212e-04
+ge_threshold_q4 = 4.297e-04
+ge_threshold_q5 = 1.378e-03
 
 #############################################
 #                  Config                   #

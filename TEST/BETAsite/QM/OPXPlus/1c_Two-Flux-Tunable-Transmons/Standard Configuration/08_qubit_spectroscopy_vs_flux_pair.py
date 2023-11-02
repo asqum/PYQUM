@@ -38,7 +38,7 @@ def cosine_func(x, amplitude, frequency, phase, offset):
 # The QUA program #
 ###################
 n_avg = 20000  # The number of averages
-qubit_pair = [1,5]
+qubit_pair = [2,5]
 q1_xy, q1_z, q1_IF, q1_LO = "q%s_xy"%(qubit_pair[0]), "q%s_z"%(qubit_pair[0]), eval("qubit_IF_q%s"%(qubit_pair[0])), eval("qubit_LO_q%s"%(qubit_pair[0]))
 q2_xy, q2_z, q2_IF, q2_LO = "q%s_xy"%(qubit_pair[1]), "q%s_z"%(qubit_pair[1]), eval("qubit_IF_q%s"%(qubit_pair[1])), eval("qubit_LO_q%s"%(qubit_pair[1]))
 
@@ -167,6 +167,7 @@ else:
         plt.xlabel("Flux bias [V]")
         plt.ylabel("q%s IF [MHz]"%(qubit_pair[1]))
         plt.tight_layout()
+        # plt.show()
         plt.pause(0.1)
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()
