@@ -40,7 +40,7 @@ t_delay = np.arange(tau_min, tau_max + 0.1, d_tau)  # Linear sweep
 
 # QUA program
 with program() as T1:
-    I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=3)
+    I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=5)
     t = declare(int)  # QUA variable for the wait time
 
     with for_(n, 0, n < n_avg, n + 1):
@@ -54,11 +54,17 @@ with program() as T1:
             # qubit 3
             play("x180", "q3_xy")
             wait(t, "q3_xy")
+            # qubit 4
+            play("x180", "q4_xy")
+            wait(t, "q4_xy")
+            # qubit 5
+            play("x180", "q5_xy")
+            wait(t, "q5_xy")
 
             # Align the elements to measure after having waited a time "tau" after the qubit pulses.
             align()
             # Measure the state of the resonators
-            multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2, 3], weights="rotated_")
+            multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2, 3, 4, 5], weights="rotated_")
             # Wait for the qubit to decay to the ground state
             wait(thermalization_time * u.ns)
         # Save the averaging iteration to get the progress bar
@@ -75,6 +81,12 @@ with program() as T1:
         # resonator 3
         I_st[2].buffer(len(t_delay)).average().save("I3")
         Q_st[2].buffer(len(t_delay)).average().save("Q3")
+        # resonator 4
+        I_st[3].buffer(len(t_delay)).average().save("I4")
+        Q_st[3].buffer(len(t_delay)).average().save("Q4")
+        # resonator 5
+        I_st[4].buffer(len(t_delay)).average().save("I5")
+        Q_st[4].buffer(len(t_delay)).average().save("Q5")
 
 
 #####################################
@@ -103,49 +115,71 @@ else:
     fig = plt.figure()
     interrupt_on_close(fig, job)
     # Tool to easily fetch results from the OPX (results_handle used in it)
-    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2", "I3", "Q3"], mode="live")
+    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2", "I3", "Q3", "I4", "Q4", "I5", "Q5"], mode="live")
     # Live plotting
     while results.is_processing():
         # Fetch results
-        n, I1, Q1, I2, Q2, I3, Q3 = results.fetch_all()
+        n, I1, Q1, I2, Q2, I3, Q3, I4, Q4, I5, Q5 = results.fetch_all()
         # Convert the results into Volts
         I1, Q1 = u.demod2volts(I1, readout_len), u.demod2volts(Q1, readout_len)
         I2, Q2 = u.demod2volts(I2, readout_len), u.demod2volts(Q2, readout_len)
         I3, Q3 = u.demod2volts(I3, readout_len), u.demod2volts(Q3, readout_len)
+        I4, Q4 = u.demod2volts(I4, readout_len), u.demod2volts(Q4, readout_len)
+        I5, Q5 = u.demod2volts(I5, readout_len), u.demod2volts(Q5, readout_len)
         # Progress bar
         progress_counter(n, n_avg, start_time=results.start_time)
         # Plot
-        plt.suptitle("T1 measurement")
+        plt.suptitle("T1 measurement (%s/%s)" %(n,n_avg))
         # q1:
-        plt.subplot(231)
+        plt.subplot(2,5,1)
         plt.cla()
         plt.plot(4 * t_delay, I1)
         plt.ylabel("I quadrature [V]")
         plt.title("Qubit 1")
-        plt.subplot(234)
+        plt.subplot(2,5,6)
         plt.cla()
         plt.plot(4 * t_delay, Q1)
         plt.ylabel("Q quadrature [V]")
         plt.xlabel("Wait time (ns)")
         # q2:
-        plt.subplot(232)
+        plt.subplot(2,5,2)
         plt.cla()
         plt.plot(4 * t_delay, I2)
         plt.title("Qubit 2")
-        plt.subplot(235)
+        plt.subplot(2,5,7)
         plt.cla()
         plt.plot(4 * t_delay, Q2)
         plt.title("Q2")
         plt.xlabel("Wait time (ns)")
         # q3:
-        plt.subplot(233)
+        plt.subplot(2,5,3)
         plt.cla()
         plt.plot(4 * t_delay, I3)
         plt.title("Qubit 3")
-        plt.subplot(236)
+        plt.subplot(2,5,8)
         plt.cla()
         plt.plot(4 * t_delay, Q3)
         plt.title("Q3")
+        plt.xlabel("Wait time (ns)")
+        # q4:
+        plt.subplot(2,5,4)
+        plt.cla()
+        plt.plot(4 * t_delay, I4)
+        plt.title("Qubit 4")
+        plt.subplot(2,5,9)
+        plt.cla()
+        plt.plot(4 * t_delay, Q4)
+        plt.title("Q4")
+        plt.xlabel("Wait time (ns)")
+        # q5:
+        plt.subplot(2,5,5)
+        plt.cla()
+        plt.plot(4 * t_delay, I5)
+        plt.title("Qubit 5")
+        plt.subplot(2,5,10)
+        plt.cla()
+        plt.plot(4 * t_delay, Q5)
+        plt.title("Q5")
         plt.xlabel("Wait time (ns)")
 
         plt.tight_layout()
@@ -162,7 +196,7 @@ else:
         plt.suptitle("T1 measurement")
         
         # q1:
-        plt.subplot(131)
+        plt.subplot(1,5,1)
         decay_fit = fit.T1(4 * t_delay, I1, plot=True)
         qubit_T1 = np.round(np.abs(decay_fit["T1"][0]) / 4) * 4
         plt.xlabel("Delay [ns]")
@@ -171,7 +205,7 @@ else:
         plt.legend((f"T1={qubit_T1:.0f}ns",))
         plt.title("Qubit 1")
         # q2:
-        plt.subplot(132)
+        plt.subplot(1,5,2)
         decay_fit = fit.T1(4 * t_delay, I2, plot=True)
         qubit_T1 = np.round(np.abs(decay_fit["T1"][0]) / 4) * 4
         plt.xlabel("Delay [ns]")
@@ -179,9 +213,8 @@ else:
         print(f"Qubit decay time to update in the config: qubit_T1 = {qubit_T1:.0f} ns")
         plt.legend((f"T1={qubit_T1:.0f}ns",))
         plt.title("Qubit 2")
-
         # q3:
-        plt.subplot(133)
+        plt.subplot(1,5,3)
         decay_fit = fit.T1(4 * t_delay, I3, plot=True)
         qubit_T1 = np.round(np.abs(decay_fit["T1"][0]) / 4) * 4
         plt.xlabel("Delay [ns]")
@@ -189,6 +222,24 @@ else:
         print(f"Qubit decay time to update in the config: qubit_T1 = {qubit_T1:.0f} ns")
         plt.legend((f"T1={qubit_T1:.0f}ns",))
         plt.title("Qubit 3")
+        # q4:
+        plt.subplot(1,5,4)
+        decay_fit = fit.T1(4 * t_delay, I4, plot=True)
+        qubit_T1 = np.round(np.abs(decay_fit["T1"][0]) / 4) * 4
+        plt.xlabel("Delay [ns]")
+        plt.ylabel("I quadrature [V]")
+        print(f"Qubit decay time to update in the config: qubit_T1 = {qubit_T1:.0f} ns")
+        plt.legend((f"T1={qubit_T1:.0f}ns",))
+        plt.title("Qubit 4")
+        # q5:
+        plt.subplot(1,5,5)
+        decay_fit = fit.T1(4 * t_delay, I5, plot=True)
+        qubit_T1 = np.round(np.abs(decay_fit["T1"][0]) / 4) * 4
+        plt.xlabel("Delay [ns]")
+        plt.ylabel("I quadrature [V]")
+        print(f"Qubit decay time to update in the config: qubit_T1 = {qubit_T1:.0f} ns")
+        plt.legend((f"T1={qubit_T1:.0f}ns",))
+        plt.title("Qubit 5")
 
         plt.tight_layout()
         plt.show()

@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 2,3
+control, target = 2,1
 DD_cycle = 0 # push T2, avoid zz-coupling
 
 # Idle time sweep in clock cycles (Needs to be a list of integers)

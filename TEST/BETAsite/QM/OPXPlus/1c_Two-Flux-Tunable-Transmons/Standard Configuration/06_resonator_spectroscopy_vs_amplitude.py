@@ -40,14 +40,9 @@ warnings.filterwarnings("ignore")
 qubit_num = 5
 n_avg = 10000  # The number of averages
 # The frequency sweep around the resonators' frequency "resonator_IF_q"
-span = 1.2 * u.MHz
-df = 100 * u.kHz
-dfs = np.arange(-span, +span + 0.1, df)
+dfs = np.arange(-1.2e6, +1.2e6, 0.1e6)
 # The readout amplitude sweep (as a pre-factor of the readout amplitude) - must be within [-2; 2)
-a_min = 0.01
-a_max = 1.99
-da = 0.02
-amplitudes = np.arange(a_min, a_max + da / 2, da)  # The amplitude vector +da/2 to add a_max to the scan
+amplitudes = np.arange(0.0, 1.98, 0.01)  # The amplitude vector +da/2 to add a_max to the scan
 
 with program() as multi_res_spec_vs_amp:
     # QUA macro to declare the measurement variables and their corresponding streams for a given number of resonators
@@ -221,76 +216,71 @@ else:
         # rr1:
         plt.subplot(2, qubit_num, 1)
         plt.cla()
-        plt.title(f"Resonator 1 - LO: {resonator_LO / u.GHz} GHz")
-        plt.ylabel("Readout IF [MHz]")
         plt.pcolor(amplitudes, (dfs + resonator_IF_q1) / u.MHz, R1)
+        plt.ylabel("Readout IF [MHz]")
+        plt.title(f"Resonator 1 - LO: {resonator_LO / u.GHz} GHz")
         plt.axhline(resonator_IF_q1 / u.MHz, color="k", linewidth=0.37)
         plt.axvline(1, color="k", linewidth=0.37)
+        plt.subplot(2, qubit_num, 6)
+        plt.cla()
+        plt.pcolor(amplitudes, (dfs + resonator_IF_q1) / u.MHz, signal.detrend(np.unwrap(phase1)))
+        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q1)
+        plt.ylabel("Readout IF [MHz]")
+        plt.axhline(resonator_IF_q1 / u.MHz, color="k", linewidth=0.37)
         # rr2:
         plt.subplot(2, qubit_num, 2)
         plt.cla()
-        plt.title(f"Resonator 2 - LO: {resonator_LO / u.GHz} GHz")
         plt.pcolor(amplitudes, (dfs + resonator_IF_q2) / u.MHz, R2)
+        plt.title(f"Resonator 2 - LO: {resonator_LO / u.GHz} GHz")
         plt.axhline(resonator_IF_q2 / u.MHz, color="k", linewidth=0.37)
         plt.axvline(1, color="k", linewidth=0.37)
+        plt.subplot(2, qubit_num, 7)
+        plt.cla()
+        plt.pcolor(amplitudes, (dfs + resonator_IF_q2) / u.MHz, signal.detrend(np.unwrap(phase2)))
+        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q2)
+        plt.axhline(resonator_IF_q2 / u.MHz, color="k", linewidth=0.37)
         # rr3:
         plt.subplot(2, qubit_num, 3)
         plt.cla()
-        plt.title(f"Resonator 3 - LO: {resonator_LO / u.GHz} GHz")
         plt.pcolor(amplitudes, (dfs + resonator_IF_q3) / u.MHz, R3)
+        plt.title(f"Resonator 3 - LO: {resonator_LO / u.GHz} GHz")
         plt.axhline(resonator_IF_q3 / u.MHz, color="k", linewidth=0.37)
         plt.axvline(1, color="k", linewidth=0.37)
+        plt.subplot(2, qubit_num, 8)
+        plt.cla()
+        plt.pcolor(amplitudes, (dfs + resonator_IF_q3) / u.MHz, signal.detrend(np.unwrap(phase3)))
+        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q3)
+        plt.axhline(resonator_IF_q3 / u.MHz, color="k", linewidth=0.37)
         # rr4:
         plt.subplot(2, qubit_num, 4)
         plt.cla()
-        plt.title(f"Resonator 4 - LO: {resonator_LO / u.GHz} GHz")
         plt.pcolor(amplitudes, (dfs + resonator_IF_q4) / u.MHz, R4)
+        plt.title(f"Resonator 4 - LO: {resonator_LO / u.GHz} GHz")
         plt.axhline(resonator_IF_q4 / u.MHz, color="k", linewidth=0.37)
         plt.axvline(1, color="k", linewidth=0.37)
+        plt.subplot(2, qubit_num, 9)
+        plt.cla()
+        plt.pcolor(amplitudes, (dfs + resonator_IF_q4) / u.MHz, signal.detrend(np.unwrap(phase4)))
+        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q4)
+        plt.axhline(resonator_IF_q4 / u.MHz, color="k", linewidth=0.37)
         # rr5:
         plt.subplot(2, qubit_num, 5)
         plt.cla()
-        plt.title(f"Resonator 5 - LO: {resonator_LO / u.GHz} GHz")
         plt.pcolor(amplitudes, (dfs + resonator_IF_q5) / u.MHz, R5)
+        plt.title(f"Resonator 5 - LO: {resonator_LO / u.GHz} GHz")
         plt.axhline(resonator_IF_q5 / u.MHz, color="k", linewidth=0.37)
         plt.axvline(1, color="k", linewidth=0.37)
-
-        # rr1:
-        plt.subplot(2, qubit_num, 6)
-        plt.cla()
-        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q1)
-        plt.ylabel("Readout IF [MHz]")
-        plt.pcolor(amplitudes, (dfs + resonator_IF_q1) / u.MHz, signal.detrend(np.unwrap(phase1)))
-        plt.axhline(resonator_IF_q1 / u.MHz, color="k", linewidth=0.37)
-        # rr2:
-        plt.subplot(2, qubit_num, 7)
-        plt.cla()
-        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q2)
-        plt.pcolor(amplitudes, (dfs + resonator_IF_q2) / u.MHz, signal.detrend(np.unwrap(phase2)))
-        plt.axhline(resonator_IF_q2 / u.MHz, color="k", linewidth=0.37)
-        # rr3:
-        plt.subplot(2, qubit_num, 8)
-        plt.cla()
-        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q3)
-        plt.pcolor(amplitudes, (dfs + resonator_IF_q3) / u.MHz, signal.detrend(np.unwrap(phase3)))
-        plt.axhline(resonator_IF_q3 / u.MHz, color="k", linewidth=0.37)
-        # rr4:
-        plt.subplot(2, qubit_num, 9)
-        plt.cla()
-        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q4)
-        plt.pcolor(amplitudes, (dfs + resonator_IF_q4) / u.MHz, signal.detrend(np.unwrap(phase4)))
-        plt.axhline(resonator_IF_q4 / u.MHz, color="k", linewidth=0.37)
-        # rr5:
         plt.subplot(2, qubit_num, 10)
         plt.cla()
-        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q5)
         plt.pcolor(amplitudes, (dfs + resonator_IF_q5) / u.MHz, signal.detrend(np.unwrap(phase5)))
+        plt.xlabel("Readout amplitude [%sV]" %readout_amp_q5)
         plt.axhline(resonator_IF_q5 / u.MHz, color="k", linewidth=0.37)
 
         plt.tight_layout()
-        # plt.show()
-        plt.pause(0.3)
+        plt.show()
+        plt.pause(0.1)
 
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()
+    
     

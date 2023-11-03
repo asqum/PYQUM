@@ -34,32 +34,36 @@ warnings.filterwarnings("ignore")
 # The QUA program #
 ###################
 n_avg = 100000  # The number of averages
+test_qubits = [1,2,3,4,5]
+
 # Qubit detuning sweep with respect to qubit_IF
 dfs = np.arange(-100e6, +100e6, 1e6)
 # Qubit pulse amplitude sweep (as a pre-factor of the qubit pulse amplitude) - must be within [-2; 2)
 amps = np.arange(0.0, 1.98, 0.01)
 
 with program() as rabi_chevron:
-    I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=3)
+    I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=5)
     df = declare(int)  # QUA variable for the qubit detuning
     a = declare(fixed)  # QUA variable for the qubit pulse amplitude pre-factor
 
     with for_(n, 0, n < n_avg, n + 1):
         with for_(*from_array(df, dfs)):
-            # Update the frequency of the two qubit elements
             update_frequency("q1_xy", df + qubit_IF_q1)
             update_frequency("q2_xy", df + qubit_IF_q2)
             update_frequency("q3_xy", df + qubit_IF_q3)
+            update_frequency("q4_xy", df + qubit_IF_q4)
+            update_frequency("q5_xy", df + qubit_IF_q5)
 
             with for_(*from_array(a, amps)):
-                # Play qubit pulses simultaneously
-                play("x180" * amp(a), "q1_xy")
-                play("x180" * amp(a), "q2_xy")
-                play("x180" * amp(a), "q3_xy")
+                if 1 in test_qubits: play("x180" * amp(a), "q1_xy")
+                if 2 in test_qubits: play("x180" * amp(a), "q2_xy")
+                if 3 in test_qubits: play("x180" * amp(a), "q3_xy")
+                if 4 in test_qubits: play("x180" * amp(a), "q4_xy")
+                if 5 in test_qubits: play("x180" * amp(a), "q5_xy")
                 # Measure after the qubit pulses
                 align()
                 # Multiplexed readout, also saves the measurement outcomes
-                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2, 3], weights="rotated_", amplitude=0.99)
+                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2, 3, 4, 5], weights="rotated_", amplitude=0.99)
                 # Wait for the qubit to decay to the ground state
                 wait(thermalization_time * u.ns)
         # Save the averaging iteration to get the progress bar
@@ -76,6 +80,12 @@ with program() as rabi_chevron:
         # resonator 3
         I_st[2].buffer(len(amps)).buffer(len(dfs)).average().save("I3")
         Q_st[2].buffer(len(amps)).buffer(len(dfs)).average().save("Q3")
+        # resonator 4
+        I_st[3].buffer(len(amps)).buffer(len(dfs)).average().save("I4")
+        Q_st[3].buffer(len(amps)).buffer(len(dfs)).average().save("Q4")
+        # resonator 5
+        I_st[4].buffer(len(amps)).buffer(len(dfs)).average().save("I5")
+        Q_st[4].buffer(len(amps)).buffer(len(dfs)).average().save("Q5")
 
 
 #####################################
@@ -104,55 +114,84 @@ else:
     fig = plt.figure()
     interrupt_on_close(fig, job)
     # Tool to easily fetch results from the OPX (results_handle used in it)
-    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2", "I3", "Q3"], mode="live")
+    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2", "I3", "Q3", "I4", "Q4", "I5", "Q5"], mode="live")
     # Live plotting
     while results.is_processing():
         # Fetch results
-        n, I1, Q1, I2, Q2, I3, Q3 = results.fetch_all()
+        n, I1, Q1, I2, Q2, I3, Q3, I4, Q4, I5, Q5 = results.fetch_all()
         # Progress bar
         progress_counter(n, n_avg, start_time=results.start_time)
         # Convert the results into Volts
         I1, Q1 = u.demod2volts(I1, readout_len), u.demod2volts(Q1, readout_len)
         I2, Q2 = u.demod2volts(I2, readout_len), u.demod2volts(Q2, readout_len)
         I3, Q3 = u.demod2volts(I3, readout_len), u.demod2volts(Q3, readout_len)
+        I4, Q4 = u.demod2volts(I4, readout_len), u.demod2volts(Q4, readout_len)
+        I5, Q5 = u.demod2volts(I5, readout_len), u.demod2volts(Q5, readout_len)
         # Plots
-        plt.suptitle("Rabi chevron")
+        plt.suptitle("Rabi chevron (%s/%s)" %(n,n_avg))
         # q1:
-        plt.subplot(231)
+        plt.subplot(2,5,1)
         plt.cla()
         plt.pcolor(amps * pi_amp_q1, dfs, I1)
         plt.xlabel("X-pulse amplitude [V]")
         plt.ylabel("q1 detuning [MHz]")
         plt.title(f"q1 (f_res: {(qubit_LO_q1 + qubit_IF_q1) / u.MHz} MHz)")
-        plt.subplot(234)
+        plt.subplot(2,5,6)
         plt.cla()
         plt.pcolor(amps * pi_amp_q1, dfs, Q1)
         plt.xlabel("X-pulse amplitude [V]")
         plt.ylabel("q1 detuning [MHz]")
         # q2:
-        plt.subplot(232)
+        plt.subplot(2,5,2)
         plt.cla()
         plt.pcolor(amps * pi_amp_q2, dfs, I2)
         plt.title(f"q2 (f_res: {(qubit_LO_q2 + qubit_IF_q2) / u.MHz} MHz)")
         plt.xlabel("X-pulse amplitude [V]")
         plt.ylabel("q2 detuning [MHz]")
-        plt.subplot(235)
+        plt.subplot(2,5,7)
         plt.cla()
         plt.pcolor(amps * pi_amp_q2, dfs, Q2)
         plt.xlabel("X-pulse amplitude [V]")
         plt.ylabel("q2 detuning [MHz]")
         # q3:
-        plt.subplot(233)
+        plt.subplot(2,5,3)
         plt.cla()
         plt.pcolor(amps * pi_amp_q3, dfs, I3)
         plt.title(f"q3 (f_res: {(qubit_LO_q3 + qubit_IF_q3) / u.MHz} MHz)")
         plt.xlabel("X-pulse amplitude [V]")
         plt.ylabel("q3 detuning [MHz]")
-        plt.subplot(236)
+        plt.subplot(2,5,8)
         plt.cla()
         plt.pcolor(amps * pi_amp_q3, dfs, Q3)
         plt.xlabel("X-pulse amplitude [V]")
         plt.ylabel("q3 detuning [MHz]")
+        plt.tight_layout()
+        plt.pause(0.1)
+        # q4:
+        plt.subplot(2,5,4)
+        plt.cla()
+        plt.pcolor(amps * pi_amp_q4, dfs, I4)
+        plt.title(f"q4 (f_res: {(qubit_LO_q4 + qubit_IF_q4) / u.MHz} MHz)")
+        plt.xlabel("X-pulse amplitude [V]")
+        plt.ylabel("q4 detuning [MHz]")
+        plt.subplot(2,5,9)
+        plt.cla()
+        plt.pcolor(amps * pi_amp_q4, dfs, Q4)
+        plt.xlabel("X-pulse amplitude [V]")
+        plt.ylabel("q4 detuning [MHz]")
+        # q5:
+        plt.subplot(2,5,5)
+        plt.cla()
+        plt.pcolor(amps * pi_amp_q5, dfs, I5)
+        plt.title(f"q5 (f_res: {(qubit_LO_q5 + qubit_IF_q5) / u.MHz} MHz)")
+        plt.xlabel("X-pulse amplitude [V]")
+        plt.ylabel("q5 detuning [MHz]")
+        plt.subplot(2,5,10)
+        plt.cla()
+        plt.pcolor(amps * pi_amp_q5, dfs, Q5)
+        plt.xlabel("X-pulse amplitude [V]")
+        plt.ylabel("q5 detuning [MHz]")
+
         plt.tight_layout()
         plt.pause(0.1)
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up

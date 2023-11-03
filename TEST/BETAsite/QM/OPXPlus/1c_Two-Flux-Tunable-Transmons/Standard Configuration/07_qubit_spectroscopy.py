@@ -45,6 +45,7 @@ warnings.filterwarnings("ignore")
 focus = False
 n_avg = 100000  # The number of averages
 qubit_num = 5
+test_qubits = [1,2,3,4,5]
 
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
 saturation_len = 20 * u.us  # In ns (should be < FFT of df)
@@ -77,19 +78,19 @@ with program() as multi_qubit_spec:
             
             # Play the saturation pulse to put the qubit in a mixed state - Can adjust the amplitude on the fly [-2; 2)
             # qubit 1
-            # play("saturation" * amp(saturation_amp), "q1_xy", duration=saturation_len * u.ns)
+            if 1 in test_qubits: play("saturation" * amp(saturation_amp), "q1_xy", duration=saturation_len * u.ns)
             align("q1_xy", "rr1")
             # qubit 2
-            # play("saturation" * amp(saturation_amp), "q2_xy", duration=saturation_len * u.ns)
+            if 2 in test_qubits: play("saturation" * amp(saturation_amp), "q2_xy", duration=saturation_len * u.ns)
             align("q2_xy", "rr2")
             # qubit 3
-            # play("saturation" * amp(saturation_amp), "q3_xy", duration=saturation_len * u.ns)
+            if 3 in test_qubits: play("saturation" * amp(saturation_amp), "q3_xy", duration=saturation_len * u.ns)
             align("q3_xy", "rr3")
             # qubit 4
-            # play("saturation" * amp(saturation_amp), "q4_xy", duration=saturation_len * u.ns)
+            if 4 in test_qubits: play("saturation" * amp(saturation_amp), "q4_xy", duration=saturation_len * u.ns)
             align("q4_xy", "rr4")
             # qubit 5
-            play("saturation" * amp(saturation_amp), "q5_xy", duration=saturation_len * u.ns)
+            if 5 in test_qubits: play("saturation" * amp(saturation_amp), "q5_xy", duration=saturation_len * u.ns)
             align("q5_xy", "rr5")
 
             # Multiplexed readout, also saves the measurement outcomes
