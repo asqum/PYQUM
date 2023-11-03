@@ -64,7 +64,7 @@ def multiRO_measurement( iqdata_stream, resonators:list, freq_IF:list=None, sequ
         if sequential and idx < ro_channel_num -1:
             align(f"{res}", f"{resonators[idx+1]}")
 
-def multiRO_pre_save( iqdata_stream, resonators:list, buffer_len:list ):
+def multiRO_pre_save( iqdata_stream, resonators:list, buffer_shape:tuple ):
     """
     Save RO pulse signal on FPGA
     """
@@ -74,11 +74,8 @@ def multiRO_pre_save( iqdata_stream, resonators:list, buffer_len:list ):
         
     ro_channel_num = len(resonators)
     for idx_res, res in enumerate(resonators):
-        print(idx_res, res)
-        for b in buffer_len:
-            print(b)
-            I_st[idx_res].buffer(b).average().save(f"{res}_I")
-            Q_st[idx_res].buffer(b).average().save(f"{res}_Q")  
+        I_st[idx_res].buffer(*buffer_shape).average().save(f"{res}_I")
+        Q_st[idx_res].buffer(*buffer_shape).average().save(f"{res}_Q")  
         # I_st[idx_res].average().save(f"{res}_I")
         # Q_st[idx_res].average().save(f"{res}_Q")    
 

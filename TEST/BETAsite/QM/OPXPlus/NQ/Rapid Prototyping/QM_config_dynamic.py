@@ -186,3 +186,20 @@ class QM_config():
     def update_element( self, name:str, setting:dict ):
         update_setting = {name:setting}
         self.__config["elements"].update(update_setting)
+
+    def export_config( self, path ):
+        import pickle
+
+        # define dictionary
+        # create a binary pickle file 
+        f = open(path,"wb")
+        # write the python object (dict) to pickle file
+        pickle.dump(self.__config,f)
+        # close file
+        f.close()
+
+    def import_config( self, path ):
+        import pickle
+        # Read dictionary pkl file
+        with open(path, 'rb') as fp:
+            self.__config = pickle.load(fp)
