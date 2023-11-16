@@ -2,7 +2,7 @@
 
 ````
 pip install qm-qua==1.1.3
-pip install --upgrade qm-qua
+pip install qm-octave==1.2.0
 pip install qualang-tools
 pip install --upgrade qualang-tools
 ````
