@@ -10,29 +10,37 @@
   <div class="container" id="profile">
     <form method="post">
 
-        <div class="row">
-          <div class="col-8" id='left'>
-            <label for="profile">Profile</label>
-          </div>
-        </div>
+      <div class="row"> <!-- UPDATE BUTTON -->
+        <div class="col-12" id='left'><input class='profile' id="profile-update" type="submit" value="Update Profile"></div>
+        <div class="col-15" id='left'><input class='profile' id="profile-update-password" type="submit" value="Change Password"></div>
+      </div>
         
-        <div class="row">
-          <div class="col-15" id='left'>
-              
-          </div>
-        </div>
-        
-        <div class="row"> <!-- UPDATE BUTTON -->
-          <!-- <div class="col-8" id='left'></div> -->
-          <div class="col-15" id='left'><input type="submit" value="Update"></div>
-        </div>
+      <div class="row label">
+        <div class="col-10" id='left'><label>Username:</label></div>
+        <div class="col-20" id='left'><input class='profile' id="profile-username" type="text"/></div>
+      </div>
 
-        <div class="row"> <!-- INDEXING BUTTON -->
-          <div class="col-15" id='left'><input class="user profile data-indexing" type="submit" value="Start InDeX"></div>
-          <div class="col-15" id='left'>
-            <div class="profile" id="usr_index_status"></div>
-          </div>
-        </div>
+      <div class="row label">
+        <div class="col-10" id='left'><label>Full Name:</label></div>
+        <div class="col-20" id='left'><input class='profile' id="profile-fullname" type="text"/></div>
+      </div>
+
+      <div class="row label">
+        <div class="col-10" id='left'><label>Email:</label></div>
+        <div class="col-20" id='left'><input class='profile' id="profile-email" type="text"/></div>
+      </div>
+
+      <div class="row label">
+        <div class="col-10" id='left'><label>Phone:</label></div>
+        <div class="col-20" id='left'><input class='profile' id="profile-phone" type="text"/></div>
+      </div>
+
+      <div class="row label">
+        <div class="col-10" id='left'><label>Affiliation:</label></div>
+        <div class="col-20" id='left'><input class='profile' id="profile-affiliation" type="text"/></div>
+      </div>
+        
+        
 
     </form>
   </div>

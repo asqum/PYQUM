@@ -24,7 +24,7 @@ import pandas as pd
 
 cz_type = "square"
 h_loop = 1
-qubit_count = 3
+qubit_count = 5
 
 # open communication with qm-cluster:
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
@@ -63,7 +63,7 @@ def simple_circuit(shots, script, qmm=qmm):
             
             
             align()
-            multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=[1, 2, 3], weights="rotated_")
+            multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=[1, 2, 3, 4, 5], weights="rotated_")
             
         with stream_processing():
 
@@ -73,6 +73,10 @@ def simple_circuit(shots, script, qmm=qmm):
             Q_st_g[1].save_all(f"Q_g_2")
             I_st_g[2].save_all(f"I_g_3")
             Q_st_g[2].save_all(f"Q_g_3")
+            I_st_g[3].save_all(f"I_g_4")
+            Q_st_g[3].save_all(f"Q_g_4")
+            I_st_g[4].save_all(f"I_g_5")
+            Q_st_g[4].save_all(f"Q_g_5")
 
     
 
@@ -89,22 +93,24 @@ def simple_circuit(shots, script, qmm=qmm):
     
     job = qm.execute(quantum_circuit)
     job.result_handles.wait_for_all_values()
-    results = fetching_tool(job, ["I_g_1", "I_g_2", "I_g_3"])
+    results = fetching_tool(job, ["I_g_1", "I_g_2", "I_g_3", "I_g_4", "I_g_5"])
     qm.close()
 
     q1_states = [str(int(x)) for x in np.array(results.fetch_all()[0])>ge_threshold_q1]
     q2_states = [str(int(x)) for x in np.array(results.fetch_all()[1])>ge_threshold_q2]
     q3_states = [str(int(x)) for x in np.array(results.fetch_all()[2])>ge_threshold_q3]
+    q4_states = [str(int(x)) for x in np.array(results.fetch_all()[3])>ge_threshold_q4]
+    q5_states = [str(int(x)) for x in np.array(results.fetch_all()[4])>ge_threshold_q5]
     dummy_states = [str(int(x)) for x in np.zeros(shots)]
 
     print("q1-states: %s" %Counter(q1_states))
     print("q2-states: %s" %Counter(q2_states))
     print("q3-states: %s" %Counter(q3_states))
+    print("q4-states: %s" %Counter(q4_states))
+    print("q5-states: %s" %Counter(q5_states))
 
-    bitstrings = sorted([''.join(x) for x in zip(dummy_states,dummy_states,       q3_states,q2_states,q1_states)])
+    bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states,q3_states,q2_states,q1_states)])
     print(Counter(bitstrings))
 
     return Counter(bitstrings)
-
-
 

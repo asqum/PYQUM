@@ -139,6 +139,18 @@ def openQASM_run():
     result, circuit_map, message = running_qc(backend, qasm_script, shots)
     return jsonify(message=message, circuit_map=circuit_map, result=result)
 
+@bp.route('/oqc/login', methods=['GET', 'POST'])
+def openQASM_login():
+    print(request.json)
+
+    user = request.json['user']
+    password = request.json['password']
+    print(password)
+    
+    print(Fore.YELLOW + "user: %s, password: %s" %(user,password))
+
+    return jsonify(ok=1, token="123456789")
+
 # endregion
 
 # region
