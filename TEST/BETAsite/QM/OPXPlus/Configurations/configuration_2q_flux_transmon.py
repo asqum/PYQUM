@@ -26,7 +26,8 @@ qop_port = 9800  # Write the QOP port if version < QOP220
 # Path to save data
 # save_dir = Path().absolute() / "QM" / "INSTALLATION" / "data"
 save_dir = (Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"data")
-# save_dir = (Path().absolute()/"PYQUM"/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"data")
+run_dir = (Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"run")
+
 
 ############################
 # Set octave configuration #
@@ -69,17 +70,17 @@ octave_config = octave_declaration(octaves)
 #             LO: 1=3, 2=4, 5=5             #
 #############################################   
 qubit_LO_q1 = (3.200) * u.GHz
-qubit_LO_q2 = (4.000) * u.GHz
+qubit_LO_q2 = (3.960) * u.GHz
 qubit_LO_q3 = (3.200) * u.GHz
-qubit_LO_q4 = (4.000) * u.GHz
-qubit_LO_q5 = (4.500) * u.GHz
+qubit_LO_q4 = qubit_LO_q2
+qubit_LO_q5 = (4.600) * u.GHz
 
-# Qubits IF
-qubit_IF_q1 = (-135.416 -1.679+1.445-0.187+0.366) * u.MHz # -244.1 +0.048
-qubit_IF_q2 = (-146.495 ) * u.MHz # -173.39
-qubit_IF_q3 = (-262.537 ) * u.MHz
-qubit_IF_q4 = (-408.869 ) * u.MHz
-qubit_IF_q5 = (-24.177  -1+0.968) * u.MHz
+# Qubits IF (Mixers love 100MHz < IF < 400MHz)
+qubit_IF_q1 = (-131.002 +0.4) * u.MHz # -244.1 +0.048
+qubit_IF_q2 = (-106.417 -0.134) * u.MHz # -173.39
+qubit_IF_q3 = (-261.76 +0.958-1.055) * u.MHz
+qubit_IF_q4 = (-368.712 ) * u.MHz
+qubit_IF_q5 = (-122.489 -0.370) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -100,16 +101,16 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.018
-pi_amp_q2 = 0.0760
-pi_amp_q3 = 0.02125
-pi_amp_q4 = 0.1139
-pi_amp_q5 = 0.1599
+pi_amp_q1 = 0.01969
+pi_amp_q2 = 0.0610
+pi_amp_q3 = 0.02152
+pi_amp_q4 = 0.0840 
+pi_amp_q5 = 0.1190
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
-drag_coef_q1 = 0.4
-drag_coef_q2 = 0.9
-drag_coef_q3 = 0.4
+drag_coef_q1 = 0.5
+drag_coef_q2 = 0
+drag_coef_q3 = 0
 drag_coef_q4 = 0
 drag_coef_q5 = 0
 anharmonicity_q1 = -abs(qubit_IF_q1 - -216.5*u.MHz) * 2
@@ -117,7 +118,7 @@ anharmonicity_q2 = -abs(qubit_IF_q2 - -281.3*u.MHz) * 2
 anharmonicity_q3 = -abs(qubit_IF_q3 - 344.2*u.MHz) * 2
 anharmonicity_q4 = -abs(qubit_IF_q4 - 344.2*u.MHz) * 2
 anharmonicity_q5 = -abs(qubit_IF_q5 - 344.2*u.MHz) * 2
-AC_stark_detuning_q1 = 0.04 * u.MHz
+AC_stark_detuning_q1 = 0.09 * u.MHz
 AC_stark_detuning_q2 = 0.09 * u.MHz
 AC_stark_detuning_q3 = 0.04 * u.MHz
 AC_stark_detuning_q4 = 0 * u.MHz
@@ -195,17 +196,17 @@ minus_y90_I_wf_q5, minus_y90_Q_wf_q5 = (-1) * minus_y90_der_wf_q5, minus_y90_wf_
 ##########################################
 flux_settle_time = 100 * u.ns
 
-max_frequency_point1 = 0
+max_frequency_point1 = +0.082
 max_frequency_point2 = 0.044
-max_frequency_point3 = 0
+max_frequency_point3 = +0.050
 max_frequency_point4 = 0.033
-max_frequency_point5 = 0.037
+max_frequency_point5 = 0.018
 
-idle_q1 = max_frequency_point1 - 0.203
-idle_q2 = max_frequency_point2 + 0 # 0.013
-idle_q3 = max_frequency_point3 - 0.116
-idle_q4 = max_frequency_point4 + 0 # 0.052
-idle_q5 = max_frequency_point5 - 0 # 0.15
+idle_q1 = max_frequency_point1 -0.285
+idle_q2 = max_frequency_point2 +0
+idle_q3 = max_frequency_point3 -0.166
+idle_q4 = max_frequency_point4 +0
+idle_q5 = max_frequency_point5 +0.019
 
 # Resonator frequency versus flux fit parameters according to resonator_spec_vs_flux
 # amplitude * np.cos(2 * np.pi * frequency * x + phase) + offset
@@ -215,8 +216,9 @@ amplitude_fit3, frequency_fit3, phase_fit3, offset_fit3 = [0, 0, 0, 0]
 amplitude_fit4, frequency_fit4, phase_fit4, offset_fit4 = [0, 0, 0, 0]
 amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
-const_flux_len = 200
-const_flux_amp = 0.45
+const_flux_len = 260 # 600, 260 max-bake: 260ns
+const_flux_amp = 0.022 # for cryoscope
+# const_flux_amp = 0.48 # for cz-chevron 
 
 ##########################################
 #               two-qubit                #
@@ -225,25 +227,29 @@ cz_point_1_2_q2 = 0.14519591 # q1 - q2 = Ec
 gft_cz_1_2_q2 = flattop_gaussian_waveform(cz_point_1_2_q2-idle_q2, 8 * u.ns, 8 * u.ns)
 g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
+# q5 -> q4:
+cz5_4_len = 40
+cz5_4_amp = 0.3
+
 #############################################
 #                Resonators                 #
 #############################################
 resonator_LO = 5.9 * u.GHz
 # Resonators IF
-resonator_IF_q1 = int((-163.07) * u.MHz)
-resonator_IF_q2 = int((126.41) * u.MHz)
-resonator_IF_q3 = int((-49.7) * u.MHz)
-resonator_IF_q4 = int((218.3) * u.MHz)
-resonator_IF_q5 = int((28.8) * u.MHz)
+resonator_IF_q1 = int((-163.07 -0.052) * u.MHz)
+resonator_IF_q2 = int((126.41 ) * u.MHz)
+resonator_IF_q3 = int((-49.7 -0.053) * u.MHz)
+resonator_IF_q4 = int((218.3 -0.106) * u.MHz)
+resonator_IF_q5 = int((28.8 -0.168) * u.MHz)
 # Above is for verifying wide-sweep results: -156, -38, 39, 138, 231
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
-readout_len = 4000
-readout_amp_q1 = 0.1112832
-readout_amp_q2 = 0.1036*1.23
-readout_amp_q3 = 0.1475*0.9*1.19
-readout_amp_q4 = 0.125 *0.88
-readout_amp_q5 = 0.125 *0.77
+readout_len = 1800
+readout_amp_q1 = 0.0868910316 *1.0
+readout_amp_q2 = 0.1309075425 *1.0
+readout_amp_q3 = 0.102461516  *1.0
+readout_amp_q4 = 0.243051850  *0.9
+readout_amp_q5 = 0.056009617  *1.0
 
 # TOF and depletion time
 time_of_flight = 284  # must be a multiple of 4
@@ -301,16 +307,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (110.2 / 180) * np.pi
-rotation_angle_q2 = (239.7 / 180) * np.pi
-rotation_angle_q3 = (157.8 / 180) * np.pi
-rotation_angle_q4 = (5.2 / 180) * np.pi
-rotation_angle_q5 = (333.5 / 180) * np.pi
-ge_threshold_q1 = -7.934e-04
-ge_threshold_q2 = -4.917e-07
-ge_threshold_q3 = 4.212e-04
-ge_threshold_q4 = 4.297e-04
-ge_threshold_q5 = 1.378e-03
+rotation_angle_q1 = (346.2 / 180) * np.pi
+rotation_angle_q2 = (116.9 / 180) * np.pi
+rotation_angle_q3 = (28.9 / 180) * np.pi
+rotation_angle_q4 = (191.0 / 180) * np.pi
+rotation_angle_q5 = (178.0 / 180) * np.pi
+ge_threshold_q1 = -4.957e-05
+ge_threshold_q2 = 1.259e-04
+ge_threshold_q3 = 2.147e-04
+ge_threshold_q4 = 7.057e-05
+ge_threshold_q5 = 2.235e-05
 
 #############################################
 #                  Config                   #
@@ -628,6 +634,16 @@ config = {
             "waveforms": {
                 "I": "saturation_wf",
                 "Q": "zero_wf",
+            },
+        },
+
+        # Relationships:
+        # q5 -> q4:
+        "cz5_4": {
+            "operation": "control",
+            "length": const_flux_len,
+            "waveforms": {
+                "single": "const_flux_wf",
             },
         },
         
