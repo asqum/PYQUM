@@ -217,8 +217,8 @@ amplitude_fit4, frequency_fit4, phase_fit4, offset_fit4 = [0, 0, 0, 0]
 amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
 const_flux_len = 260 # 600, 260 max-bake: 260ns
-const_flux_amp = 0.022 # for cryoscope
-# const_flux_amp = 0.48 # for cz-chevron 
+# const_flux_amp = 0.022 # for cryoscope
+const_flux_amp = 0.48 # for cz-chevron 
 
 ##########################################
 #               two-qubit                #
@@ -606,7 +606,7 @@ config = {
             },
             "operations": {
                 "const": "const_flux_pulse",
-                
+                "cz_4c5t": "cz_4c5t_pulse"
             },
         },
         
@@ -639,11 +639,11 @@ config = {
 
         # Relationships:
         # q5 -> q4:
-        "cz5_4": {
+        "cz_4c5t_pulse": {
             "operation": "control",
-            "length": const_flux_len,
+            "length": 32,
             "waveforms": {
-                "single": "const_flux_wf",
+                "single": "cz_4c5t_wf",
             },
         },
         
@@ -1090,8 +1090,10 @@ config = {
 
         # q1-q2:
         "gft_cz_wf_1_2_q2": {"type": "arbitrary", "samples": gft_cz_1_2_q2},
-        "g_cz_wf_1_2_q2": {"type": "arbitrary", "samples": g_cz_1_2_q2}
+        "g_cz_wf_1_2_q2": {"type": "arbitrary", "samples": g_cz_1_2_q2},
 
+         # q4-q5:
+        "cz_4c5t_wf": {"type": "arbitrary", "samples": [0.0] + [0.9983*1.034*(0.215-idle_q5)]*31},
     },
     "digital_waveforms": {
         "ON": {"samples": [(1, 0)]},
