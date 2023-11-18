@@ -144,6 +144,7 @@ def active_reset(threshold: float, qubit: str, resonator: str, max_tries=1, Ig=N
     if (max_tries < 1) or (not float(max_tries).is_integer()):
         raise Exception("max_count must be an integer >= 1.")
     # Initialize Ig to be > threshold
+    Ig = declare(fixed)
     assign(Ig, threshold + 2**-28)
     # Number of tries for active reset
     counter = declare(int)

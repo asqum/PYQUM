@@ -14,17 +14,17 @@ from macros import qua_declaration, multiplexed_readout, reset_qubit
 n_runs = 10000  # Number of runs
 
 with program() as iq_blobs:
-    I_g, I_g_st, Q_g, Q_g_st, n, _ = qua_declaration(nb_of_qubits=2)
-    I_e, I_e_st, Q_e, Q_e_st, _, _ = qua_declaration(nb_of_qubits=2)
+    I_g, I_g_st, Q_g, Q_g_st, n, _ = qua_declaration(nb_of_qubits=5)
+    I_e, I_e_st, Q_e, Q_e_st, _, _ = qua_declaration(nb_of_qubits=5)
 
     with for_(n, 0, n < n_runs, n + 1):
         # ground iq blobs
-        reset_qubit("cooldown", "q1_xy", "rr1", cooldown_time=thermalization_time)
-        reset_qubit("cooldown", "q2_xy", "rr2", cooldown_time=thermalization_time)
-        # reset_qubit("active", "q1_xy", "resonator", threshold=ge_threshold_q1, max_tries=10, Ig=I_g)
-        # reset_qubit("active", "q2_xy", "resonator", threshold=ge_threshold_q2, max_tries=10, Ig=I_g)
+        # reset_qubit("cooldown", "q1_xy", "rr1", cooldown_time=thermalization_time)
+        # reset_qubit("cooldown", "q2_xy", "rr2", cooldown_time=thermalization_time)
+        reset_qubit("active", "q1_xy", "rr1", threshold=ge_threshold_q1, max_tries=10, Ig=I_g)
+        reset_qubit("active", "q2_xy", "rr2", threshold=ge_threshold_q2, max_tries=10, Ig=I_g)
         align()
-        multiplexed_readout(I_g, I_g_st, Q_g, Q_g_st, resonators=[1, 2], weights="rotated_")
+        multiplexed_readout(I_g, I_g_st, Q_g, Q_g_st, resonators=[1, 2, 3, 4, 5], weights="rotated_")
 
         # excited iq blobs
         align()
@@ -33,9 +33,9 @@ with program() as iq_blobs:
         reset_qubit("cooldown", "q2_xy", "rr2", cooldown_time=thermalization_time)
         # Play the qubit pi pulses
         play("x180", "q1_xy")
-        # play("x180", "q2_xy")
+        play("x180", "q2_xy")
         align()
-        multiplexed_readout(I_e, I_e_st, Q_e, Q_e_st, resonators=[1, 2], weights="rotated_")
+        multiplexed_readout(I_e, I_e_st, Q_e, Q_e_st, resonators=[1, 2, 3, 4, 5], weights="rotated_")
 
     with stream_processing():
         # Save all streamed points for plotting the IQ blobs
