@@ -466,3 +466,10 @@ def usersamplesloc_update_qpc_wiring():
 
 print(Back.BLUE + Fore.CYAN + myname + ".bp registered!") # leave 2 lines blank before this
 
+
+# Test Zone
+if __name__ == "__main__":
+    password = "password"
+    hashed_pwd = generate_password_hash(password)
+    print("Hashed Password of the word '%s' is %s" %(password,hashed_pwd))
+

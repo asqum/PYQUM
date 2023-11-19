@@ -76,11 +76,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-131.002 +0.4) * u.MHz # -244.1 +0.048
-qubit_IF_q2 = (-106.417 -0.134) * u.MHz # -173.39
-qubit_IF_q3 = (-261.76 +0.958-1.055) * u.MHz
-qubit_IF_q4 = (-368.712 ) * u.MHz
-qubit_IF_q5 = (-122.489 -0.370) * u.MHz
+qubit_IF_q1 = (-130.723 -0.323) * u.MHz # -244.1 +0.048
+qubit_IF_q2 = (-106.458 ) * u.MHz # -173.39
+qubit_IF_q3 = (-261.447 -1.066) * u.MHz
+qubit_IF_q4 = (-368.712 -0.172) * u.MHz
+qubit_IF_q5 = (-122.859 -0.041) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -101,28 +101,28 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.01969
-pi_amp_q2 = 0.0598
-pi_amp_q3 = 0.02152
-pi_amp_q4 = 0.0840 
-pi_amp_q5 = 0.1190
+pi_amp_q1 = 0.01933
+pi_amp_q2 = 0.0595
+pi_amp_q3 = 0.02101
+pi_amp_q4 = 0.0816 
+pi_amp_q5 = 0.1177
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
 drag_coef_q1 = 0.5
 drag_coef_q2 = 0
 drag_coef_q3 = 0
 drag_coef_q4 = 0
-drag_coef_q5 = 0
+drag_coef_q5 = 0.5
 anharmonicity_q1 = -abs(qubit_IF_q1 - -216.5*u.MHz) * 2
 anharmonicity_q2 = -abs(qubit_IF_q2 - -281.3*u.MHz) * 2
 anharmonicity_q3 = -abs(qubit_IF_q3 - 344.2*u.MHz) * 2
 anharmonicity_q4 = -abs(qubit_IF_q4 - 344.2*u.MHz) * 2
-anharmonicity_q5 = -abs(qubit_IF_q5 - 344.2*u.MHz) * 2
-AC_stark_detuning_q1 = 0.09 * u.MHz
-AC_stark_detuning_q2 = 0.09 * u.MHz
-AC_stark_detuning_q3 = 0.04 * u.MHz
-AC_stark_detuning_q4 = 0 * u.MHz
-AC_stark_detuning_q5 = 0 * u.MHz
+anharmonicity_q5 = -abs(qubit_IF_q5 - -198*u.MHz) * 2
+AC_stark_detuning_q1 = 0.340 * u.MHz
+AC_stark_detuning_q2 = 0. * u.MHz
+AC_stark_detuning_q3 = 0. * u.MHz
+AC_stark_detuning_q4 = 0. * u.MHz
+AC_stark_detuning_q5 = 0.350 * u.MHz
 
 # DRAG waveforms (x180)
 x180_wf_q1, x180_der_wf_q1 = np.array(drag_gaussian_pulse_waveforms(pi_amp_q1, pi_len, pi_sigma, drag_coef_q1, anharmonicity_q1, AC_stark_detuning_q1))
@@ -228,8 +228,17 @@ gft_cz_1_2_q2 = flattop_gaussian_waveform(cz_point_1_2_q2-idle_q2, 8 * u.ns, 8 *
 g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
 # q5 -> q4:
-cz5_4_len = 40
-cz5_4_amp = 0.3
+cz5_4_len = 32 # ns
+cz5_4_amp = (0.215 - idle_q5) * 0.9983*1.034
+# q4 -> q3:
+cz4_3_len = 40 # ns
+cz4_3_amp = (0.25231 - idle_q4) * 0.975*1.001666
+# q2 -> q3: need to tune up q1 simultaneously
+cz2_3_len = 36 # ns
+cz2_3_amp = (0.27999 - idle_q2) * 0.98333*0.9958333
+# q1 -> q2:
+cz1_2_len = 36 # ns
+cz1_2_amp = (-0.0594 - idle_q1) * 0.9*1.01
 
 #############################################
 #                Resonators                 #
@@ -569,6 +578,7 @@ config = {
             },
             "operations": {
                 "const": "const_flux_pulse",
+                "cz_2c1t": "cz_2c1t_pulse",
 
             },
         },
@@ -578,6 +588,8 @@ config = {
             },
             "operations": {
                 "const": "const_flux_pulse",
+                "cz_3c2t": "cz_3c2t_pulse",
+
                 # options: gft_cz_pulse_1_2_q2, g_cz_pulse_1_2_q2
                 "cz_1_2": "gft_cz_pulse_1_2_q2",
             },
@@ -588,6 +600,7 @@ config = {
             },
             "operations": {
                 "const": "const_flux_pulse",
+
                 
             },
         },
@@ -597,6 +610,7 @@ config = {
             },
             "operations": {
                 "const": "const_flux_pulse",
+                "cz_3c4t": "cz_3c4t_pulse",
 
             },
         },
@@ -606,7 +620,8 @@ config = {
             },
             "operations": {
                 "const": "const_flux_pulse",
-                "cz_4c5t": "cz_4c5t_pulse"
+                "cz_4c5t": "cz_4c5t_pulse",
+
             },
         },
         
@@ -641,9 +656,33 @@ config = {
         # q5 -> q4:
         "cz_4c5t_pulse": {
             "operation": "control",
-            "length": 32,
+            "length": cz5_4_len,
             "waveforms": {
                 "single": "cz_4c5t_wf",
+            },
+        },
+        # q4 -> q3:
+        "cz_3c4t_pulse": {
+            "operation": "control",
+            "length": cz4_3_len,
+            "waveforms": {
+                "single": "cz_3c4t_wf",
+            },
+        },
+        # q2 -> q3:
+        "cz_3c2t_pulse": {
+            "operation": "control",
+            "length": cz2_3_len,
+            "waveforms": {
+                "single": "cz_3c2t_wf",
+            },
+        },
+        # q1 -> q2:
+        "cz_2c1t_pulse": {
+            "operation": "control",
+            "length": cz1_2_len,
+            "waveforms": {
+                "single": "cz_2c1t_wf",
             },
         },
         
@@ -1092,8 +1131,14 @@ config = {
         "gft_cz_wf_1_2_q2": {"type": "arbitrary", "samples": gft_cz_1_2_q2},
         "g_cz_wf_1_2_q2": {"type": "arbitrary", "samples": g_cz_1_2_q2},
 
-         # q4-q5:
-        "cz_4c5t_wf": {"type": "arbitrary", "samples": [0.0] + [0.9983*1.034*(0.215-idle_q5)]*31},
+        # q5->q4:
+        "cz_4c5t_wf": {"type": "arbitrary", "samples": [0.0] + [cz5_4_amp]*(cz5_4_len-1)},
+        # q4->q3:
+        "cz_3c4t_wf": {"type": "arbitrary", "samples": [0.0] + [cz4_3_amp]*(cz4_3_len-1)},
+        # q2->q3:
+        "cz_3c2t_wf": {"type": "arbitrary", "samples": [0.0] + [cz2_3_amp]*(cz2_3_len-1)},
+        # q1->q2:
+        "cz_2c1t_wf": {"type": "arbitrary", "samples": [0.0] + [cz1_2_amp]*(cz1_2_len-1)},
     },
     "digital_waveforms": {
         "ON": {"samples": [(1, 0)]},

@@ -21,19 +21,26 @@ from qm import generate_qua_script
 ##############
 
 
-def cz_gate(type="square"):
+def cz_gate(control, target, type="square"):
     if type == "square":
-        wait(5)  # for flux pulse to relax back completely
-
-        set_dc_offset("q2_z", "single", -0.12037) # 10cc: 0.1452099
-        wait(40 // 4, "q2_z")
+        wait(7)  # for flux pulse to relax back completely
 
         align()
-        set_dc_offset("q2_z", "single", idle_q2)
-        wait(5)  # for flux pulse to relax back completely
+        set_dc_offset(f"q{target}_z", "single", eval(f"idle_q{target}") + eval(f"cz{target}_{control}_amp"))
+        
+        wait(eval(f"cz{target}_{control}_len") // 4, f"q{target}_z")
+        
+        align()
+        set_dc_offset(f"q{target}_z", "single", eval(f"idle_q{target}"))
+        
+        wait(7)  # for flux pulse to relax back completely
+        
         # Phase compensation:
         # frame_rotation_2pi(0.6, "q1_xy")
         # frame_rotation_2pi(0.4, "q2_xy")
+
+    elif type == "const_wf": pass
+        
     elif type == "ft_gaussian":
         play("cz_1_2"*amp((0.150-max_frequency_point2)/(cz_point_1_2_q2-idle_q2)), "q2_z", duration=80//4)
     elif type == "gaussian":

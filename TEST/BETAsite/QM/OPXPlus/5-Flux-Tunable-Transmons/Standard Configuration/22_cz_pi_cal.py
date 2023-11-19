@@ -44,7 +44,7 @@ warnings.filterwarnings("ignore")
 ####################
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
-qubit_to_flux_tune, qubit_to_meet_with = 5, 4
+qubit_to_flux_tune, qubit_to_meet_with = 4, 3
 
 # qubit to flux-tune is target
 # qubit to meet with is control 
@@ -52,10 +52,11 @@ qubit_to_flux_tune, qubit_to_meet_with = 5, 4
 multiplexed = [1,2,3,4,5]
 points_per_cycle = 20
 
-n_avg = 130000  # The number of averages
+n_avg = 100000  # The number of averages
 phis = np.arange(0, 5, 1/points_per_cycle)
-# amps = (np.arange(0.9, 1.1, 0.005)) # q5->q4
-amps = np.linspace(0.995,1.005,25)
+# amps = np.linspace(0.9, 1.1, 25)
+# amps = np.linspace(0.99,1.01,25)
+amps = np.linspace(0.999,1.001,25)
 
 ###################
 # The QUA program #
@@ -84,7 +85,7 @@ with program() as cz_pi_cal:
                     # cz
                     wait(flux_settle_time * u.ns, f"q{qubit_to_flux_tune}_z")
                     align()
-                    play("cz_4c5t" * amp(a), f"q{qubit_to_flux_tune}_z")
+                    play(f"cz_{qubit_to_meet_with}c{qubit_to_flux_tune}t" * amp(a), f"q{qubit_to_flux_tune}_z")
                     # frame_rotation_2pi(0.0, f"q{qubit_to_flux_tune}_xy")
                     align()
                     wait(flux_settle_time * u.ns, f"q{qubit_to_flux_tune}_z")
@@ -107,11 +108,11 @@ with program() as cz_pi_cal:
         # for the progress counter
         n_st.save("n")
         
-        # resonator 1
+        # Target:
         I_st[multiplexed.index(qubit_to_flux_tune)].buffer(len(phis), len(amps), 2).average().save("I1")
         Q_st[multiplexed.index(qubit_to_flux_tune)].buffer(len(phis), len(amps), 2).average().save("Q1")
         
-        # resonator 2
+        # Control:
         I_st[multiplexed.index(qubit_to_meet_with)].buffer(len(phis), len(amps), 2).average().save("I2")
         I_st[multiplexed.index(qubit_to_meet_with)].buffer(len(phis), len(amps), 2).average().save("Q2")
         
@@ -140,50 +141,58 @@ else:
     # Send the QUA program to the OPX, which compiles and executes it
     job = qm.execute(cz_pi_cal)
     
-    import time
-    time.sleep(300)
     
-    I1 =job.result_handles.I1.fetch_all()
-    print(f"len of amps {len(amps)}")
-    print(f"len of phis {len(phis)}")
-    
-    qm.close()
+    # import time
+    # time.sleep(300)
+    # I1 =job.result_handles.I1.fetch_all()
+    # print(f"len of amps {len(amps)}")
+    # print(f"len of phis {len(phis)}")
+
+
+    # fig = plt.figure()
     fig, ax = plt.subplots(len(amps), 2)
     fig2, ax2 = plt.subplots(len(amps)//5, 5)
-    
-    def cosine_function(t, A, f, phi, C):
-        return A * np.cos(2 * np.pi * f * (t - phi)) + C
-    
-    filename = f"CZ_Pi_Cal_c{qubit_to_meet_with}_t{qubit_to_flux_tune}"
-    save = True
-    if save:
-        np.savez(save_dir/filename, I1=I1)
-        print("Data saved as %s.npz" %filename)
-    
-    CZ_sign = np.zeros([len(amps),len(phis)])
-    for i in range(len(amps)):
-        ax[i,0].plot(I1[:,i,0])
-        ax[i,0].plot(I1[:,i,1])
-        ax[i,0].set_title(f"amp scale: {amps[i]}")
-        
-        I10 = I1[:,i,0]
-        I10 /= np.max(I10)
-        I11 = I1[:,i,1]
-        I11 /= np.max(I11)
-        ax[i,1].plot(I10)
-        ax[i,1].plot(I11)
-        
-        CZ_sign[i,:] = I10 - I11
-        # ax[i,2].plot(CZ_sign[i,:])
-        ax2[int(i//5), int(i%5)].plot(I11, I10, '.')
-        ax2[int(i//5), int(i%5)].set_aspect('equal')
-        ax2[int(i//5), int(i%5)].set_title(f"amp scale: {amps[i]}")
-        
-    plt.show()
-    
+    interrupt_on_close(fig, job)
+    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
+    # Live plotting
+    while results.is_processing():
+        # Fetch results
+        n, I1, Q1, I2, Q2 = results.fetch_all()
+        # Progress bar
+        progress_counter(n, n_avg, start_time=results.start_time)
+        plt.suptitle(f"{n}/{n_avg}")
+        CZ_sign = np.zeros([len(amps),len(phis)])
+        for i in range(len(amps)):
+            ax[i,0].cla()
+            ax[i,0].plot(I1[:,i,0])
+            ax[i,0].plot(I1[:,i,1])
+            ax[i,0].set_title(f"amp scale: {amps[i]}")
+            
+            I10 = I1[:,i,0]
+            I10 /= np.max(I10)
+            I11 = I1[:,i,1]
+            I11 /= np.max(I11)
+            ax[i,1].cla()
+            ax[i,1].plot(I10)
+            ax[i,1].plot(I11)
+            
+            CZ_sign[i,:] = I10 - I11
+            ax2[int(i//5), int(i%5)].cla()
+            ax2[int(i//5), int(i%5)].plot(I11, I10, '.')
+            ax2[int(i//5), int(i%5)].set_aspect('equal')
+            ax2[int(i//5), int(i%5)].set_title(f"amp scale: {amps[i]}")
+
+        plt.tight_layout()
+        plt.pause(30)
+            
+    # plt.show()   
+
     plt.plot(amps, [np.max(CZ_sign[x,:]) for x in range(len(amps))] )
     plt.show()
     
+    # def cosine_function(t, A, f, phi, C):
+    #     return A * np.cos(2 * np.pi * f * (t - phi)) + C
+
     # for i in range(len(amps)):
     #     # Initial guess for parameters
     #     initial_guess = [np.abs(np.max(I1[:,i,0])-np.min(I1[:,i,0]))/2, 1/15, 0.0, np.mean(I1[:,i,0])]
@@ -191,48 +200,16 @@ else:
     #     params, covariance = curve_fit(cosine_function, phis, I1[:,i,0], p0=initial_guess)
     #     print(params)
     #     plt.plot(cosine_function(phis, params[0], params[1], params[2], params[3]))
-    #     plt.show()
+    # plt.show()
      
-    
-    # # Prepare the figure for live plotting
-    # fig = plt.figure()
-    # interrupt_on_close(fig, job)
-    # # Tool to easily fetch results from the OPX (results_handle used in it)
-    # results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
-    # # Live plotting
-    # while results.is_processing():
-    #     # Fetch results
-    #     n, I1, Q1, I2, Q2 = results.fetch_all()
-    #     # Convert the results into Volts
-    #     I1, Q1 = u.demod2volts(I1, readout_len), u.demod2volts(Q1, readout_len)
-    #     I2, Q2 = u.demod2volts(I2, readout_len), u.demod2volts(Q2, readout_len)
-    #     # Progress bar
-    #     progress_counter(n, n_avg, start_time=results.start_time)
-    #     # Plot
-    #     plt.suptitle(f"CZ chevron sweeping the flux on qubit {qubit_to_flux_tune}")
-    #     plt.subplot(221)
-    #     plt.cla()
-    #     plt.pcolor(amps * scale_reference + flux_offset, 4 * ts, I1)
-    #     plt.title(f"q{qubit_to_flux_tune} - I [V]")
-    #     plt.ylabel("Interaction time (ns)")
-    #     plt.subplot(223)
-    #     plt.cla()
-    #     plt.pcolor(amps * scale_reference + flux_offset, 4 * ts, Q1)
-    #     plt.title(f"q{qubit_to_flux_tune} - Q [V]")
-    #     plt.xlabel("Flux amplitude (V)")
-    #     plt.ylabel("Interaction time (ns)")
-    #     plt.subplot(222)
-    #     plt.cla()
-    #     plt.pcolor(amps * scale_reference + flux_offset, 4 * ts, I2)
-    #     plt.title(f"q{qubit_to_meet_with} - I [V]")
-    #     plt.subplot(224)
-    #     plt.cla()
-    #     plt.pcolor(amps * scale_reference + flux_offset, 4 * ts, Q2)
-    #     plt.title(f"q{qubit_to_meet_with} - Q [V]")
-    #     plt.xlabel("Flux amplitude (V)")
-    #     plt.tight_layout()
-    #     plt.pause(0.1)
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
-    
+    qm.close()
+    # plt.show()
+
+    filename = f"CZ_Pi_Cal_c{qubit_to_meet_with}_t{qubit_to_flux_tune}"
+    save = True
+    if save:
+        np.savez(save_dir/filename, I1=I1)
+        print("Data saved as %s.npz" %filename)
 
     # np.savez(save_dir/'cz', I1=I1, Q1=Q1, I2=I2, Q2=Q2, ts=ts, amps=amps)

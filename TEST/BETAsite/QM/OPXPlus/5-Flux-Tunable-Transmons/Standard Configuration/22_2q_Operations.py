@@ -24,23 +24,27 @@ modelist = ['sim', 'prev', 'load', 'new']
 mode='new'
 print("mode: %s" %mode)
 
-dc0_q2 = config["controllers"]["con2"]["analog_outputs"][6]["offset"]
-dc0_q1 = config["controllers"]["con2"]["analog_outputs"][5]["offset"]
+# Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
+# qubit to flux-tune is target
+# qubit to meet with is control 
+qubit_to_flux_tune, qubit_to_meet_with = 1, 2
+
 Phi = np.arange(0, 5, 0.05) # 5 rotations
 n_avg = 1300000
+multiplexed = [1,2,3,4,5]
 
 with program() as cz_ops:
 
     # update_frequency("q2_xy", 0)
 
-    I_g = [declare(fixed) for i in range(2)]
-    Q_g = [declare(fixed) for i in range(2)] 
-    I_e = [declare(fixed) for i in range(2)]
-    Q_e = [declare(fixed) for i in range(2)] 
-    I_st_g = [declare_stream() for i in range(2)]
-    Q_st_g = [declare_stream() for i in range(2)]
-    I_st_e = [declare_stream() for i in range(2)]
-    Q_st_e = [declare_stream() for i in range(2)]
+    I_g = [declare(fixed) for i in range(len(multiplexed))]
+    Q_g = [declare(fixed) for i in range(len(multiplexed))] 
+    I_e = [declare(fixed) for i in range(len(multiplexed))]
+    Q_e = [declare(fixed) for i in range(len(multiplexed))] 
+    I_st_g = [declare_stream() for i in range(len(multiplexed))]
+    Q_st_g = [declare_stream() for i in range(len(multiplexed))]
+    I_st_e = [declare_stream() for i in range(len(multiplexed))]
+    Q_st_e = [declare_stream() for i in range(len(multiplexed))]
     n = declare(int)
     n_st = declare_stream()
     t = declare(int)
@@ -51,41 +55,39 @@ with program() as cz_ops:
         save(n, n_st)
         with for_(*from_array(phi, Phi)):
             
-            # 1. Q1 = |0>:
-            wait(thermalization_time * u.ns, "q1_z")
+            # 1. Control = |0>:
+            wait(thermalization_time * u.ns, f"q{qubit_to_meet_with}_z")
             align()
             # Identity
-            play("x90", "q2_xy")
+            play("x90", f"q{qubit_to_flux_tune}_xy")
             align()
-            cz_gate(cz_type)
+            cz_gate(qubit_to_meet_with, qubit_to_flux_tune, cz_type)
             align()
-            frame_rotation_2pi(phi, "q2_xy")
-            play("x90", "q2_xy")
+            frame_rotation_2pi(phi, f"q{qubit_to_flux_tune}_xy")
+            play("x90", f"q{qubit_to_flux_tune}_xy")
             align()
 
             # Measure the state of the resonators
-            multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=[1, 2], weights="rotated_")
+            multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=multiplexed, weights="rotated_")
             
             align()
 
-            # 2. Q1 = |1>:
-            wait(thermalization_time * u.ns, "q1_z")
+            # 2. Control = |1>:
+            wait(thermalization_time * u.ns, f"q{qubit_to_meet_with}_z")
             align()
-            # Pi-pulse on Q1
-            play("x180", "q1_xy")
-            # frame_rotation_2pi(0.6, "q1_xy")
-            # frame_rotation_2pi(0.4, "q2_xy")
-            # align()
-            play("x90", "q2_xy")
+            # Pi-pulse on Control
+            play("x180", f"q{qubit_to_meet_with}_xy")
             align()
-            cz_gate(cz_type)
+            play("x90", f"q{qubit_to_flux_tune}_xy")
             align()
-            frame_rotation_2pi(phi, "q2_xy")
-            play("x90", "q2_xy")
+            cz_gate(qubit_to_meet_with, qubit_to_flux_tune, cz_type)
+            align()
+            frame_rotation_2pi(phi, f"q{qubit_to_flux_tune}_xy")
+            play("x90", f"q{qubit_to_flux_tune}_xy")
             align()
 
             # Measure the state of the resonators
-            multiplexed_readout(I_e, I_st_e, Q_e, Q_st_e, resonators=[1, 2], weights="rotated_")
+            multiplexed_readout(I_e, I_st_e, Q_e, Q_st_e, resonators=multiplexed, weights="rotated_")
                 
 
 
@@ -94,17 +96,17 @@ with program() as cz_ops:
         # for the progress counter
         n_st.save('n')
 
-        # resonator 1
-        I_st_g[0].buffer(len(Phi)).average().save("I1g")
-        Q_st_g[0].buffer(len(Phi)).average().save("Q1g")
-        I_st_e[0].buffer(len(Phi)).average().save("I1e")
-        Q_st_e[0].buffer(len(Phi)).average().save("Q1e")
+        # Control:
+        I_st_g[multiplexed.index(qubit_to_meet_with)].buffer(len(Phi)).average().save("I1g")
+        Q_st_g[multiplexed.index(qubit_to_meet_with)].buffer(len(Phi)).average().save("Q1g")
+        I_st_e[multiplexed.index(qubit_to_meet_with)].buffer(len(Phi)).average().save("I1e")
+        Q_st_e[multiplexed.index(qubit_to_meet_with)].buffer(len(Phi)).average().save("Q1e")
 
-        # resonator 2
-        I_st_g[1].buffer(len(Phi)).average().save("I2g")
-        Q_st_g[1].buffer(len(Phi)).average().save("Q2g")
-        I_st_e[1].buffer(len(Phi)).average().save("I2e")
-        Q_st_e[1].buffer(len(Phi)).average().save("Q2e")
+        # target:
+        I_st_g[multiplexed.index(qubit_to_flux_tune)].buffer(len(Phi)).average().save("I2g")
+        Q_st_g[multiplexed.index(qubit_to_flux_tune)].buffer(len(Phi)).average().save("Q2g")
+        I_st_e[multiplexed.index(qubit_to_flux_tune)].buffer(len(Phi)).average().save("I2e")
+        Q_st_e[multiplexed.index(qubit_to_flux_tune)].buffer(len(Phi)).average().save("Q2e")
 
 # Prepare Figures:
 row,col = 2,2

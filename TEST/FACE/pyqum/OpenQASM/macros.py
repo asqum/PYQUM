@@ -8,10 +8,13 @@ from qm.qua import *
 from qualang_tools.addons.variables import assign_variables_to_element
 from pyqum.OpenQASM.configuration import *
 
+from numpy import pi
+
 ##############
 # QUA macros #
 ##############
 
+# 1. Single-Qubit Clifford:
 def sx_gate(qubit):
     play("x90", "q%s_xy"%qubit)
 def id_gate(qubit):
@@ -22,33 +25,31 @@ def y_gate(qubit):
     play("y180", "q%s_xy"%qubit)
 def z_gate(qubit):
     frame_rotation_2pi(0.5, "q%s_xy"%qubit)
+def s_gate(qubit):
+    frame_rotation_2pi(0.5**2, "q%s_xy"%qubit)
+def t_gate(qubit):
+    frame_rotation_2pi(0.5**3, "q%s_xy"%qubit)
 def h_gate(qubit):
     play("y90", "q%s_xy"%qubit)
     play("x180", "q%s_xy"%qubit)
+def rx_gate(qubit,theta):
+    play("x180"*(theta/pi), "q%s_xy"%qubit)
+def ry_gate(qubit,theta):
+    play("y180"*(theta/pi), "q%s_xy"%qubit)
+def rz_gate(qubit,phi):
+    frame_rotation_2pi(phi/2/pi, "q%s_xy"%qubit)
 
-def cz_gate(control=1, target=2, type="square"):
-    if type == "square":
-        wait(5)  # for flux pulse to relax back completely
-
-        align()
-        set_dc_offset("q2_z", "single", -0.12037) # 10cc: 0.1452099
-        wait(40 // 4, "q2_z")
-
-        align()
-        set_dc_offset("q2_z", "single", idle_q2)
-        wait(5)  # for flux pulse to relax back completely
-        
-        # Phase compensation:
-        # frame_rotation_2pi(0.6, "q1_xy")
-        # frame_rotation_2pi(0.4, "q2_xy")
-        align()
-
-    elif type == "ft_gaussian":
-        play("cz_1_2"*amp((0.150-max_frequency_point2)/(cz_point_1_2_q2-idle_q2)), "q2_z", duration=80//4)
-    elif type == "gaussian":
-        play("cz_1_2"*amp(1.4), "q2_z", duration=32//4)
-
-def cx_gate(control=1, target=2):
+# 2. Two-Qubit Clifford:
+def cz_gate(c, t):
+    '''
+    target: paired with H
+    '''
+    if c > 2: control, target = c, t
+    else: control, target = t, c
+    align(f"q{control}_xy",f"q{control}_z",f"q{target}_xy",f"q{target}_z")
+    play(f"cz_{control}c{target}t", f"q{target}_z")
+    align(f"q{control}_xy",f"q{control}_z",f"q{target}_xy",f"q{target}_z")
+def cx_gate(control, target):
     h_gate(target)
     cz_gate(control, target)
     h_gate(target)

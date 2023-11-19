@@ -54,12 +54,19 @@ def simple_circuit(shots, script, qmm=qmm):
             for line in script[4:-1]:
                 if "measure" not in line:
                     operation = line.split(" ")[0]
-                    qubit = int(line.split(" ")[1].split("q[")[1].split("]")[0]) + 1
-                    print(Fore.YELLOW + "%s_gate(%s)" %(operation,qubit))
-                    try: 
-                        eval("%s_gate(%s)" %(operation,qubit))
-                    except Exception as e:
-                        print(Fore.RED + "error: %s" %e)
+                    # 2q gate:
+                    if "," in line:
+                        control = int(line.split(" ")[1].split(",")[0].split("q[")[1].split("]")[0]) + 1
+                        target = int(line.split(" ")[1].split(",")[1].split("q[")[1].split("]")[0]) + 1
+                        try: eval("%s_gate(%s,%s)" %(operation,control,target))
+                        except Exception as e: print(Fore.RED + "error: %s" %e)
+                        print(Fore.YELLOW + "%s_gate(%s,%s)" %(operation,control,target))
+                    # sq gate:
+                    else:
+                        qubit = int(line.split(" ")[1].split("q[")[1].split("]")[0]) + 1
+                        try: eval("%s_gate(%s)" %(operation,qubit))
+                        except Exception as e: print(Fore.RED + "error: %s" %e)
+                        print(Fore.YELLOW + "%s_gate(%s)" %(operation,qubit))
             
             
             align()

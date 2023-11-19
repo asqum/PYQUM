@@ -22,13 +22,14 @@ from macros import multiplexed_readout, cz_gate
 cz_type = "square"
 n_avg = 4960
 h_loop = 1
+multiplexed = [1,2,3,4,5]
 
 with program() as cz_ops:
 
-    I_g = [declare(fixed) for i in range(2)]
-    Q_g = [declare(fixed) for i in range(2)] 
-    I_st_g = [declare_stream() for i in range(2)]
-    Q_st_g = [declare_stream() for i in range(2)]
+    I_g = [declare(fixed) for i in range(len(multiplexed))]
+    Q_g = [declare(fixed) for i in range(len(multiplexed))] 
+    I_st_g = [declare_stream() for i in range(len(multiplexed))]
+    Q_st_g = [declare_stream() for i in range(len(multiplexed))]
     n = declare(int)
     n_st = declare_stream()
     t = declare(int)
@@ -102,33 +103,35 @@ with program() as cz_ops:
         # play("x180", "q2_xy")
     
     
-        multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=[5, 1], weights="rotated_")
+        multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=multiplexed, weights="rotated_")
         
     with stream_processing():
-
-        I_st_g[0].save_all(f"I_g_1")
-        Q_st_g[0].save_all(f"Q_g_1")
-        I_st_g[1].save_all(f"I_g_2")
-        Q_st_g[1].save_all(f"Q_g_2")
+        for i in range(len(multiplexed)):
+            I_st_g[i].save_all(f"I_g_{i+1}")
+            Q_st_g[i].save_all(f"Q_g_{i+1}")
+        
 
 # open communication with opx
-# qmm = QuantumMachinesManager('qum.phys.sinica.edu.tw',port=80)
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
 
 qm = qmm.open_qm(config)
 job = qm.execute(cz_ops)
 job.result_handles.wait_for_all_values()
-results = fetching_tool(job, ["I_g_1", "I_g_2", "Q_g_1", "Q_g_2"])
+results = fetching_tool(job, [f"I_g_{x}" for x in multiplexed])
 qm.close()
 
-two_state_discriminator(results.fetch_all()[0], results.fetch_all()[2], results.fetch_all()[1], results.fetch_all()[3], True, True)
-
-q1_states = [str(int(x)) for x in np.array(results.fetch_all()[0])>ge_threshold_q5]
-q2_states = [str(int(x)) for x in np.array(results.fetch_all()[1])>ge_threshold_q1]
+q1_states = [str(int(x)) for x in np.array(results.fetch_all()[0])>ge_threshold_q1]
+q2_states = [str(int(x)) for x in np.array(results.fetch_all()[1])>ge_threshold_q2]
+q3_states = [str(int(x)) for x in np.array(results.fetch_all()[2])>ge_threshold_q3]
+q4_states = [str(int(x)) for x in np.array(results.fetch_all()[3])>ge_threshold_q4]
+q5_states = [str(int(x)) for x in np.array(results.fetch_all()[4])>ge_threshold_q5]
 print("q1-states: %s" %Counter(q1_states))
 print("q2-states: %s" %Counter(q2_states))
+print("q3-states: %s" %Counter(q3_states))
+print("q4-states: %s" %Counter(q4_states))
+print("q5-states: %s" %Counter(q5_states))
 
-bitstrings = sorted([''.join(x) for x in zip(q2_states,q1_states)])
+bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states,q3_states,q2_states,q1_states)])
 print(Counter(bitstrings))
 
 n, bins, patches = plt.hist(x=bitstrings, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
