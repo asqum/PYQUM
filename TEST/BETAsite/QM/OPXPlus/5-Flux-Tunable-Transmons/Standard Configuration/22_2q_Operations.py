@@ -18,7 +18,7 @@ from macros import multiplexed_readout, cz_gate
 from cosine import Cosine
 
 filename = 'cz_ops_1'
-cz_type = "square"
+cz_type = "const_wf" #"square"
 modelist = ['sim', 'prev', 'load', 'new']
 # mode = modelist[int(input("1. simulate, 2. previous job, 3. load data, 4. new run (1-4)?"))-1]
 mode='new'
@@ -27,7 +27,7 @@ print("mode: %s" %mode)
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
 # qubit to flux-tune is target
 # qubit to meet with is control 
-qubit_to_flux_tune, qubit_to_meet_with = 1, 2
+qubit_to_flux_tune, qubit_to_meet_with = 5, 4
 
 Phi = np.arange(0, 5, 0.05) # 5 rotations
 n_avg = 1300000

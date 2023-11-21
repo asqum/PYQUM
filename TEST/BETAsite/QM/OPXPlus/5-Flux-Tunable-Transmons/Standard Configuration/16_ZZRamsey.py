@@ -46,6 +46,7 @@ else: idle_times = np.arange(0, 1000, 2**(DD_cycle + 1))
 
 detuning = 2.00e6  # "Virtual" detuning in Hz
 multiplexed = [1,2,3,4,5]
+the_rest = [x for x in multiplexed if x not in [control,target]]
 
 with program() as ramsey:
     I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=len(multiplexed))
@@ -91,12 +92,16 @@ with program() as ramsey:
 
     with stream_processing():
         n_st.save("n")
-        # resonator 1
+        # control:
         I_st[multiplexed.index(control)].buffer(len(idle_times)).average().save("I1")
         Q_st[multiplexed.index(control)].buffer(len(idle_times)).average().save("Q1")
-        # resonator 2
+        # target:
         I_st[multiplexed.index(target)].buffer(len(idle_times)).average().save("I2")
         Q_st[multiplexed.index(target)].buffer(len(idle_times)).average().save("Q2")
+        # the rest:
+        for i,k in enumerate(the_rest):
+            I_st[multiplexed.index(k)].buffer(len(idle_times)).average().save(f"I{3+i}")
+            Q_st[multiplexed.index(k)].buffer(len(idle_times)).average().save(f"Q{3+i}")
 
 #####################################
 #  Open Communication with the QOP  #
@@ -126,36 +131,54 @@ else:
     fig = plt.figure()
     interrupt_on_close(fig, job)
     # Tool to easily fetch results from the OPX (results_handle used in it)
-    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
+    results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2", "I3", "Q3", "I4", "Q4", "I5", "Q5"], mode="live")
     # Live plotting
     while results.is_processing():
         # Fetch results
-        n, I1, Q1, I2, Q2 = results.fetch_all()
+        n, I1, Q1, I2, Q2, I3, Q3, I4, Q4, I5, Q5 = results.fetch_all()
         # Convert the results into Volts
         I1, Q1 = u.demod2volts(I1, readout_len), u.demod2volts(Q1, readout_len)
         I2, Q2 = u.demod2volts(I2, readout_len), u.demod2volts(Q2, readout_len)
+        I3, Q3 = u.demod2volts(I3, readout_len), u.demod2volts(Q3, readout_len)
+        I4, Q4 = u.demod2volts(I4, readout_len), u.demod2volts(Q4, readout_len)
+        I5, Q5 = u.demod2volts(I5, readout_len), u.demod2volts(Q5, readout_len)
         # Progress bar
         progress_counter(n, n_avg, start_time=results.start_time)
         # Plot
-        plt.subplot(221)
+        plt.subplot(2,3,1)
         plt.cla()
         plt.plot(4 * idle_times, I1)
         plt.ylabel("I quadrature [V]")
         plt.title("Control: q%s (X=%s)" %(control,int(X)))
-        plt.subplot(223)
+        plt.subplot(2,3,4)
         plt.cla()
         plt.plot(4 * idle_times, Q1)
         plt.ylabel("Q quadrature [V]")
         plt.xlabel("Idle times [ns]")
-        plt.subplot(222)
+        plt.subplot(2,3,2)
         plt.cla()
         plt.plot(4 * idle_times, I2)
         plt.title("Target: q%s" %target)
-        plt.subplot(224)
+        plt.subplot(2,3,5)
         plt.cla()
         plt.plot(4 * idle_times, Q2)
         plt.title("Target-Q")
         plt.xlabel("Idle times [ns]")
+
+        plt.subplot(2,3,3)
+        plt.cla()
+        plt.plot(4 * idle_times, I3, 'b')
+        plt.plot(4 * idle_times, I4, 'r')
+        plt.plot(4 * idle_times, I5, 'g')
+        plt.title("Others: q%s,%s,%s" %(the_rest[0],the_rest[1],the_rest[2]))
+        plt.subplot(2,3,6)
+        plt.cla()
+        plt.plot(4 * idle_times, Q3, 'b')
+        plt.plot(4 * idle_times, Q4, 'r')
+        plt.plot(4 * idle_times, Q5, 'g')
+        plt.title(f"q{the_rest[0],the_rest[1],the_rest[2]}-Q")
+        plt.xlabel("Idle times [ns]")
+        
         plt.tight_layout()
         plt.pause(0.1)
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
@@ -164,24 +187,28 @@ else:
         fit = Fit()
         plt.figure()
         plt.suptitle(f"ZZ-Ramsey measurement with detuning={detuning} Hz")
-        plt.subplot(221)
-        fit.ramsey(4 * idle_times, I1, plot=True)
-        plt.xlabel("Idle times [ns]")
-        plt.ylabel("I quadrature [V]")
-        plt.title("Control-I")
-        plt.subplot(223)
-        fit.ramsey(4 * idle_times, Q1, plot=True)
-        plt.xlabel("Idle times [ns]")
-        plt.ylabel("I quadrature [V]")
-        plt.title("Control-Q")
-        plt.subplot(222)
+        
+        # plt.subplot(2,2,1)
+        # fit.ramsey(4 * idle_times, I1, plot=True)
+        # plt.xlabel("Idle times [ns]")
+        # plt.ylabel("I quadrature [V]")
+        # plt.title("Control-I")
+        # plt.subplot(2,2,3)
+        # fit.ramsey(4 * idle_times, Q1, plot=True)
+        # plt.xlabel("Idle times [ns]")
+        # plt.ylabel("I quadrature [V]")
+        # plt.title("Control-Q")
+
+        plt.subplot(1,1,1)
         fitting_results = fit.ramsey(4 * idle_times, I2, plot=True)
         plt.xlabel("Idle times [ns]")
         plt.ylabel("I quadrature [V]")
-        plt.subplot(224)
-        fit.ramsey(4 * idle_times, Q2, plot=True)
-        plt.xlabel("Idle times [ns]")
-        plt.ylabel("I quadrature [V]")
+
+        # plt.subplot(2,2,4)
+        # fit.ramsey(4 * idle_times, Q2, plot=True)
+        # plt.xlabel("Idle times [ns]")
+        # plt.ylabel("I quadrature [V]")
+
         plt.tight_layout()
         plt.show()
         print("Detuned: %s" %(fitting_results['f'][0]*1e9*u.MHz - detuning))

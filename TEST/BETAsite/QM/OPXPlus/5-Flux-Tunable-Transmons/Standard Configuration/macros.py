@@ -39,7 +39,14 @@ def cz_gate(control, target, type="square"):
         # frame_rotation_2pi(0.6, "q1_xy")
         # frame_rotation_2pi(0.4, "q2_xy")
 
-    elif type == "const_wf": pass
+    elif type == "const_wf":
+        # cz
+        wait(flux_settle_time * u.ns, f"q{target}_z")
+        align()
+        play(f"cz_{control}c{target}t", f"q{target}_z")
+        # frame_rotation_2pi(0.0, f"q{target}_xy")
+        align()
+        wait(flux_settle_time * u.ns, f"q{target}_z")
         
     elif type == "ft_gaussian":
         play("cz_1_2"*amp((0.150-max_frequency_point2)/(cz_point_1_2_q2-idle_q2)), "q2_z", duration=80//4)

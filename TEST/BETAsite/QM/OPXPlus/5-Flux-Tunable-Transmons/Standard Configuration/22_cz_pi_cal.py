@@ -38,13 +38,15 @@ from scipy.optimize import curve_fit
 
 warnings.filterwarnings("ignore")
 
+from cosine import Cosine
 
 ####################
 # Define variables #
 ####################
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
-qubit_to_flux_tune, qubit_to_meet_with = 4, 3
+qubit_to_flux_tune, qubit_to_meet_with = 2, 3
+cz = 1
 
 # qubit to flux-tune is target
 # qubit to meet with is control 
@@ -53,10 +55,10 @@ multiplexed = [1,2,3,4,5]
 points_per_cycle = 20
 
 n_avg = 100000  # The number of averages
-phis = np.arange(0, 5, 1/points_per_cycle)
-# amps = np.linspace(0.9, 1.1, 25)
+phis = np.arange(0, 3, 1/points_per_cycle)
+amps = np.linspace(0.5, 1.5, 25)
 # amps = np.linspace(0.99,1.01,25)
-amps = np.linspace(0.999,1.001,25)
+# amps = np.linspace(0.999,1.001,25)
 
 ###################
 # The QUA program #
@@ -67,6 +69,7 @@ with program() as cz_pi_cal:
     phi = declare(fixed)  # QUA variable angle of the second pi/2 wrt to the first pi/2
     a = declare(fixed)  # QUA variable for the flux pulse amplitude pre-factor.
     flag = declare(bool)
+    global_phase_correction = declare(fixed, value=eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_2pi_dev"))
 
     with for_(n, 0, n < n_avg, n + 1):
         # Save the averaging iteration to get the progress bar
@@ -83,12 +86,14 @@ with program() as cz_pi_cal:
                     play("x90", f"q{qubit_to_flux_tune}_xy")
                     
                     # cz
-                    wait(flux_settle_time * u.ns, f"q{qubit_to_flux_tune}_z")
-                    align()
-                    play(f"cz_{qubit_to_meet_with}c{qubit_to_flux_tune}t" * amp(a), f"q{qubit_to_flux_tune}_z")
-                    # frame_rotation_2pi(0.0, f"q{qubit_to_flux_tune}_xy")
-                    align()
-                    wait(flux_settle_time * u.ns, f"q{qubit_to_flux_tune}_z")
+                    if cz:
+                        wait(flux_settle_time * u.ns, f"q{qubit_to_flux_tune}_z")
+                        align()
+                        play(f"cz_{qubit_to_meet_with}c{qubit_to_flux_tune}t" * amp(a), f"q{qubit_to_flux_tune}_z")
+                        frame_rotation_2pi(global_phase_correction, f"q{qubit_to_flux_tune}_xy")
+                        frame_rotation_2pi(global_phase_correction, f"q{qubit_to_flux_tune}_xy")
+                        align()
+                        wait(flux_settle_time * u.ns, f"q{qubit_to_flux_tune}_z")
                     
                     # ramsey second pi/2
                     align()
@@ -150,8 +155,8 @@ else:
 
 
     # fig = plt.figure()
-    fig, ax = plt.subplots(len(amps), 2)
-    fig2, ax2 = plt.subplots(len(amps)//5, 5)
+    fig, ax = plt.subplots(len(amps)//5, 5)
+    # fig2, ax2 = plt.subplots(len(amps)//5, 5)
     interrupt_on_close(fig, job)
     results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
     # Live plotting
@@ -160,35 +165,48 @@ else:
         n, I1, Q1, I2, Q2 = results.fetch_all()
         # Progress bar
         progress_counter(n, n_avg, start_time=results.start_time)
-        plt.suptitle(f"{n}/{n_avg}")
-        CZ_sign = np.zeros([len(amps),len(phis)])
+        
+        plt.suptitle(f"q{qubit_to_flux_tune}->q{qubit_to_meet_with}: amp_scale, pha_diff_deg ({n}/{n_avg})")
+        # CZ_sign = np.zeros([len(amps),len(phis)])
         for i in range(len(amps)):
-            ax[i,0].cla()
-            ax[i,0].plot(I1[:,i,0])
-            ax[i,0].plot(I1[:,i,1])
-            ax[i,0].set_title(f"amp scale: {amps[i]}")
+            ax[int(i//5), int(i%5)].cla()
             
-            I10 = I1[:,i,0]
-            I10 /= np.max(I10)
-            I11 = I1[:,i,1]
-            I11 /= np.max(I11)
-            ax[i,1].cla()
-            ax[i,1].plot(I10)
-            ax[i,1].plot(I11)
+            # Fitting for phase
+            I_control_g = I1[:,i,1]
+            I_control_e = I1[:,i,0]
+            try:
+                fit = Cosine(phis, I_control_g, plot=False)
+                phase_g = fit.out.get('phase')[0]
+                ax[int(i//5), int(i%5)].plot(fit.x_data, fit.fit_type(fit.x, fit.popt) * fit.y_normal, '-b', alpha=0.5)
+                fit = Cosine(phis, I_control_e, plot=False)
+                phase_e = fit.out.get('phase')[0]
+                ax[int(i//5), int(i%5)].plot(fit.x_data, fit.fit_type(fit.x, fit.popt) * fit.y_normal, '-r', alpha=0.5)
+                dphase = (phase_g-phase_e)/np.pi*180     
+            except Exception as e: print(e)
+            ax[int(i//5), int(i%5)].plot(phis, I_control_e, '.r', phis, I_control_g, '.b')
+            ax[int(i//5), int(i%5)].set_title("%.7f, %.1f" %(amps[i], dphase))
             
-            CZ_sign[i,:] = I10 - I11
-            ax2[int(i//5), int(i%5)].cla()
-            ax2[int(i//5), int(i%5)].plot(I11, I10, '.')
-            ax2[int(i//5), int(i%5)].set_aspect('equal')
-            ax2[int(i//5), int(i%5)].set_title(f"amp scale: {amps[i]}")
+            # I10 = I1[:,i,0]
+            # I10 /= np.max(I10)
+            # I11 = I1[:,i,1]
+            # I11 /= np.max(I11)
+            # ax[i,1].cla()
+            # ax[i,1].plot(I10)
+            # ax[i,1].plot(I11)
+            
+            # CZ_sign[i,:] = I10 - I11
+            # ax2[int(i//5), int(i%5)].cla()
+            # ax2[int(i//5), int(i%5)].plot(I11, I10, '.')
+            # ax2[int(i//5), int(i%5)].set_aspect('equal')
+            # ax2[int(i//5), int(i%5)].set_title(f"amp scale: {amps[i]}")
 
         plt.tight_layout()
-        plt.pause(30)
+        plt.pause(3)
             
-    # plt.show()   
+    plt.show()   
 
-    plt.plot(amps, [np.max(CZ_sign[x,:]) for x in range(len(amps))] )
-    plt.show()
+    # plt.plot(amps, [np.max(CZ_sign[x,:]) for x in range(len(amps))] )
+    # plt.show()
     
     # def cosine_function(t, A, f, phi, C):
     #     return A * np.cos(2 * np.pi * f * (t - phi)) + C
@@ -207,7 +225,7 @@ else:
     # plt.show()
 
     filename = f"CZ_Pi_Cal_c{qubit_to_meet_with}_t{qubit_to_flux_tune}"
-    save = True
+    save = False
     if save:
         np.savez(save_dir/filename, I1=I1)
         print("Data saved as %s.npz" %filename)

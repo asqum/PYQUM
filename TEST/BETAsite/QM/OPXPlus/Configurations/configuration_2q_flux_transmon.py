@@ -76,11 +76,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-130.723 -0.323) * u.MHz # -244.1 +0.048
-qubit_IF_q2 = (-106.458 ) * u.MHz # -173.39
-qubit_IF_q3 = (-261.447 -1.066) * u.MHz
-qubit_IF_q4 = (-368.712 -0.172) * u.MHz
-qubit_IF_q5 = (-122.859 -0.041) * u.MHz
+qubit_IF_q1 = (-130.723 -0.229-0.259) * u.MHz # -244.1 +0.048
+qubit_IF_q2 = (-106.458 -0.023) * u.MHz # -173.39
+qubit_IF_q3 = (-261.447 -1.437) * u.MHz
+qubit_IF_q4 = (-368.712 -0.238) * u.MHz
+qubit_IF_q5 = (-122.859 -0.052) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -102,10 +102,10 @@ saturation_amp = 0.270
 pi_len = 32
 pi_sigma = pi_len / 4
 pi_amp_q1 = 0.01933
-pi_amp_q2 = 0.0595
+pi_amp_q2 = 0.0604
 pi_amp_q3 = 0.02101
-pi_amp_q4 = 0.0816 
-pi_amp_q5 = 0.1177
+pi_amp_q4 = 0.0823 
+pi_amp_q5 = 0.1183
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
 drag_coef_q1 = 0.5
@@ -194,7 +194,7 @@ minus_y90_I_wf_q5, minus_y90_Q_wf_q5 = (-1) * minus_y90_der_wf_q5, minus_y90_wf_
 ##########################################
 #               Flux line                #
 ##########################################
-flux_settle_time = 100 * u.ns
+flux_settle_time = 28 * u.ns
 
 max_frequency_point1 = +0.082
 max_frequency_point2 = 0.044
@@ -228,17 +228,21 @@ gft_cz_1_2_q2 = flattop_gaussian_waveform(cz_point_1_2_q2-idle_q2, 8 * u.ns, 8 *
 g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
 # q5 -> q4:
-cz5_4_len = 32 # ns
-cz5_4_amp = (0.215 - idle_q5) * 0.9983*1.034
+cz5_4_len = 40 # 44 # 48 # 32 # ns
+cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
+cz5_4_2pi_dev = 0.5
 # q4 -> q3:
-cz4_3_len = 40 # ns
-cz4_3_amp = (0.25231 - idle_q4) * 0.975*1.001666
+cz4_3_len = 48 # ns
+cz4_3_amp = (0.2528 - idle_q4) * 1.016667*0.9916667 # 0.975*1.001666
+cz4_3_2pi_dev = 0.5
 # q2 -> q3: need to tune up q1 simultaneously
 cz2_3_len = 36 # ns
-cz2_3_amp = (0.27999 - idle_q2) * 0.98333*0.9958333
+cz2_3_amp = (0.27942 - idle_q2) * 0.98333
+cz2_3_2pi_dev = 0
 # q1 -> q2:
 cz1_2_len = 36 # ns
 cz1_2_amp = (-0.0594 - idle_q1) * 0.9*1.01
+cz1_2_2pi_dev = 0
 
 #############################################
 #                Resonators                 #
@@ -316,16 +320,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (346.2 / 180) * np.pi
-rotation_angle_q2 = (116.9 / 180) * np.pi
-rotation_angle_q3 = (28.9 / 180) * np.pi
-rotation_angle_q4 = (191.0 / 180) * np.pi
-rotation_angle_q5 = (178.0 / 180) * np.pi
-ge_threshold_q1 = -4.957e-05
-ge_threshold_q2 = 1.259e-04
-ge_threshold_q3 = 2.147e-04
-ge_threshold_q4 = 7.057e-05
-ge_threshold_q5 = 2.235e-05
+rotation_angle_q1 = (304.2 / 180) * np.pi
+rotation_angle_q2 = (149.6 / 180) * np.pi
+rotation_angle_q3 = (17.9 / 180) * np.pi
+rotation_angle_q4 = (243.3 / 180) * np.pi
+rotation_angle_q5 = (181.3 / 180) * np.pi
+ge_threshold_q1 = -8.003e-05
+ge_threshold_q2 = 1.167e-04
+ge_threshold_q3 = 7.377e-05
+ge_threshold_q4 = 1.937e-04
+ge_threshold_q5 = 1.133e-04
 
 #############################################
 #                  Config                   #

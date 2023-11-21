@@ -19,8 +19,8 @@ import pandas as pd
 
 from macros import multiplexed_readout, cz_gate
 
-cz_type = "square"
-n_avg = 4960
+cz_type = "const_wf"
+n_avg = 1024
 h_loop = 1
 multiplexed = [1,2,3,4,5]
 
@@ -42,7 +42,7 @@ with program() as cz_ops:
         wait(thermalization_time * u.ns)
         align()
 
-        # play("x180", "q5_xy")
+        # play("x180", "q3_xy")
         # play("x180", "q1_xy")
         
         # Circuit 1:
@@ -60,36 +60,36 @@ with program() as cz_ops:
         # cz_gate(cz_type)
 
         # Circuit 2: Bell-state
-        # play("x180", "q2_xy")
-        # align()
+        # play("x180", "q4_xy")
+        align()
 
-        # play("y90", "q1_xy")
-        # play("x180", "q1_xy")
+        play("y90", "q3_xy")
+        play("x180", "q3_xy")
 
-        # align()
-        # play("y90", "q2_xy")
-        # play("x180", "q2_xy")
-        # align()
+        align()
+        play("y90", "q4_xy")
+        play("x180", "q4_xy")
+        align()
 
-        # play("x180", "q1_xy")
-        # play("x180", "q2_xy")
         # play("x180", "q1_xy")
         # play("x180", "q2_xy")
+        # play("x180", "q1_xy")
+        # play("x180", "q2_xy")
         # align()
 
-        # cz_gate(cz_type)
-        # frame_rotation_2pi(0.8, "q2_xy")
+        cz_gate(3, 4, cz_type)
+        frame_rotation_2pi(0.525, "q4_xy")
 
         # align()
         # play("y180", "q1_xy")
         # play("y180", "q2_xy")
         # play("y180", "q1_xy")
         # play("y180", "q2_xy")
-        # align()
+        align()
 
-        # play("y90", "q2_xy")
-        # play("x180", "q2_xy")
-        # align()
+        play("y90", "q4_xy")
+        play("x180", "q4_xy")
+        align()
 
         # Circuit 3: Hadamard-test
         # play("y90", "q1_xy")
@@ -131,19 +131,19 @@ print("q3-states: %s" %Counter(q3_states))
 print("q4-states: %s" %Counter(q4_states))
 print("q5-states: %s" %Counter(q5_states))
 
-bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states,q3_states,q2_states,q1_states)])
+bitstrings = sorted([''.join(x) for x in zip(q4_states,q3_states)])
 print(Counter(bitstrings))
 
-n, bins, patches = plt.hist(x=bitstrings, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
-plt.grid(axis='y', alpha=0.75)
-plt.xlabel('Bitstrings')
-plt.ylabel('Occurance')
-plt.title('State Population')
-plt.text(23, 45, r'$\mu=15, b=3$')
-maxfreq = n.max()
-# Set a clean upper y-axis limit.
-plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
-plt.show()
+# n, bins, patches = plt.hist(x=bitstrings, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
+# plt.grid(axis='y', alpha=0.75)
+# plt.xlabel('Bitstrings')
+# plt.ylabel('Occurance')
+# plt.title('State Population')
+# plt.text(23, 45, r'$\mu=15, b=3$')
+# maxfreq = n.max()
+# # Set a clean upper y-axis limit.
+# plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
+# plt.show()
 
 fig, ax = plt.subplots()
 
