@@ -46,9 +46,19 @@ def cz_gate(c, t):
     '''
     if c > 2: control, target = c, t
     else: control, target = t, c
-    align(f"q{control}_xy",f"q{control}_z",f"q{target}_xy",f"q{target}_z")
+
+    cz_corr = float(eval(f"cz{target}_{control}_2pi_dev"))
+    global_phase_correction = declare(fixed, value=cz_corr)
+
+    wait(flux_settle_time * u.ns, f"q{target}_z")
+    align()
+    # align(f"q{control}_xy",f"q{control}_z",f"q{target}_xy",f"q{target}_z")
     play(f"cz_{control}c{target}t", f"q{target}_z")
-    align(f"q{control}_xy",f"q{control}_z",f"q{target}_xy",f"q{target}_z")
+    frame_rotation_2pi(global_phase_correction, f"q{target}_xy")
+    align()
+    # align(f"q{control}_xy",f"q{control}_z",f"q{target}_xy",f"q{target}_z")
+    wait(flux_settle_time * u.ns, f"q{target}_z")
+
 def cx_gate(control, target):
     h_gate(target)
     cz_gate(control, target)

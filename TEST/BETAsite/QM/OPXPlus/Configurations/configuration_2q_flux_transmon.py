@@ -104,7 +104,7 @@ pi_sigma = pi_len / 4
 pi_amp_q1 = 0.01933
 pi_amp_q2 = 0.0604
 pi_amp_q3 = 0.02101
-pi_amp_q4 = 0.0823 
+pi_amp_q4 = 0.0838
 pi_amp_q5 = 0.1183
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
@@ -230,7 +230,7 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 # q5 -> q4:
 cz5_4_len = 40 # ns
 cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
-cz5_4_2pi_dev = 0.05
+cz5_4_2pi_dev = 0.5
 # q4 -> q3:
 cz4_3_len = 48 # ns
 cz4_3_amp = (0.2528 - idle_q4) * 1.016667*0.9916667 # 0.975*1.001666

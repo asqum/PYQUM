@@ -5,7 +5,7 @@ from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import *
 from qm import SimulationConfig
 from pyqum.OpenQASM.configuration import *
-from pyqum.OpenQASM.macros import *
+from pyqum.OpenQASM.protocols import *
 
 from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool, progress_counter
@@ -24,7 +24,7 @@ import pandas as pd
 
 cz_type = "square"
 h_loop = 1
-qubit_count = 5
+multiplexed = [1,2,3,4,5]
 
 # open communication with qm-cluster:
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
@@ -37,10 +37,10 @@ def simple_circuit(shots, script, qmm=qmm):
 
     with program() as quantum_circuit:
 
-        I_g = [declare(fixed) for i in range(qubit_count)]
-        Q_g = [declare(fixed) for i in range(qubit_count)] 
-        I_st_g = [declare_stream() for i in range(qubit_count)]
-        Q_st_g = [declare_stream() for i in range(qubit_count)]
+        I_g = [declare(fixed) for i in range(len(multiplexed))]
+        Q_g = [declare(fixed) for i in range(len(multiplexed))] 
+        I_st_g = [declare_stream() for i in range(len(multiplexed))]
+        Q_st_g = [declare_stream() for i in range(len(multiplexed))]
         n = declare(int)
         n_st = declare_stream()
 
@@ -49,8 +49,7 @@ def simple_circuit(shots, script, qmm=qmm):
             
             wait(thermalization_time * u.ns)
             align()
-            
-            
+                
             for line in script[4:-1]:
                 if "measure" not in line:
                     operation = line.split(" ")[0]
@@ -68,25 +67,33 @@ def simple_circuit(shots, script, qmm=qmm):
                         except Exception as e: print(Fore.RED + "error: %s" %e)
                         print(Fore.YELLOW + "%s_gate(%s)" %(operation,qubit))
             
+
+            align()
+            play("y90", "q4_xy")
+            play("x180", "q4_xy")
+
+            align()
+            play("y90", "q5_xy")
+            play("x180", "q5_xy")
+            align()
+
+            cz_gate(4, 5)
+            frame_rotation_2pi(0.5, "q5_xy")
+
+            align()
+            play("y90", "q5_xy")
+            play("x180", "q5_xy")
+
             
             align()
-            multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=[1, 2, 3, 4, 5], weights="rotated_")
+            multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=multiplexed, weights="rotated_")
             
         with stream_processing():
-
-            I_st_g[0].save_all(f"I_g_1")
-            Q_st_g[0].save_all(f"Q_g_1")
-            I_st_g[1].save_all(f"I_g_2")
-            Q_st_g[1].save_all(f"Q_g_2")
-            I_st_g[2].save_all(f"I_g_3")
-            Q_st_g[2].save_all(f"Q_g_3")
-            I_st_g[3].save_all(f"I_g_4")
-            Q_st_g[3].save_all(f"Q_g_4")
-            I_st_g[4].save_all(f"I_g_5")
-            Q_st_g[4].save_all(f"Q_g_5")
+            for i in range(len(multiplexed)):
+                I_st_g[i].save_all(f"I_g_{i+1}")
+                Q_st_g[i].save_all(f"Q_g_{i+1}")
 
     
-
     # while server in sleep mode, qmm requires 3 wake-up calls:
     wakeup_call = 0
     while (wakeup_call>=0) & (wakeup_call<10):
@@ -100,7 +107,7 @@ def simple_circuit(shots, script, qmm=qmm):
     
     job = qm.execute(quantum_circuit)
     job.result_handles.wait_for_all_values()
-    results = fetching_tool(job, ["I_g_1", "I_g_2", "I_g_3", "I_g_4", "I_g_5"])
+    results = fetching_tool(job, [f"I_g_{x}" for x in multiplexed])
     qm.close()
 
     q1_states = [str(int(x)) for x in np.array(results.fetch_all()[0])>ge_threshold_q1]
@@ -118,6 +125,16 @@ def simple_circuit(shots, script, qmm=qmm):
 
     bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states,q3_states,q2_states,q1_states)])
     print(Counter(bitstrings))
+
+
+    # fig, ax = plt.subplots()
+    # print(Counter(bitstrings).keys())
+    # CBits = [x for x in Counter(bitstrings).keys()]
+    # percentage = [x/shots*100 for x in Counter(bitstrings).values()]
+    # ax.bar(CBits, percentage)#, color=bar_colors)
+    # ax.set_ylabel('Population (%)')
+    # ax.set_title('Quantum Circuit\'s Outcome')
+    # plt.show()
 
     return Counter(bitstrings)
 

@@ -136,15 +136,15 @@ else:
     qm.close()
 
     filename = "IQ_Blobs"
-    save = False
+    save = True
     if save:
 
         output_data = np.empty([2,2,int(n_runs)])
-        print(type(I_g_q1))
-        output_data[0][0] = I_g_q1
-        output_data[0][1] = Q_g_q1
-        output_data[1][0] = I_e_q1
-        output_data[1][1] = Q_e_q1
+        print(type(I_g_q2))
+        output_data[0][0] = I_g_q2
+        output_data[0][1] = Q_g_q2
+        output_data[1][0] = I_e_q2
+        output_data[1][1] = Q_e_q2
         
         np.savez(save_dir/filename, output_data)
         print("Data saved as %s.npz" %filename)

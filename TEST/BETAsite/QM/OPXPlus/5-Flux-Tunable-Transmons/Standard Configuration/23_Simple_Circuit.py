@@ -65,12 +65,12 @@ with program() as cz_ops:
         # play("x180", "q4_xy")
         align()
 
-        play("y90", "q3_xy")
-        play("x180", "q3_xy")
-
-        align()
         play("y90", "q4_xy")
         play("x180", "q4_xy")
+
+        align()
+        play("y90", "q5_xy")
+        play("x180", "q5_xy")
         align()
 
         # play("x180", "q1_xy")
@@ -79,8 +79,8 @@ with program() as cz_ops:
         # play("x180", "q2_xy")
         # align()
 
-        cz_gate(3, 4, cz_type)
-        frame_rotation_2pi(global_phase_correction, "q4_xy")
+        cz_gate(4, 5, cz_type)
+        frame_rotation_2pi(global_phase_correction, "q5_xy")
 
         # align()
         # play("y180", "q1_xy")
@@ -89,8 +89,8 @@ with program() as cz_ops:
         # play("y180", "q2_xy")
         align()
 
-        play("y90", "q4_xy")
-        play("x180", "q4_xy")
+        play("y90", "q5_xy")
+        play("x180", "q5_xy")
         align()
 
         # Circuit 3: Hadamard-test
@@ -104,7 +104,7 @@ with program() as cz_ops:
         # play("y90", "q2_xy")
         # play("x180", "q2_xy")
     
-    
+        align()
         multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=multiplexed, weights="rotated_")
         
     with stream_processing():
@@ -133,7 +133,7 @@ print("q3-states: %s" %Counter(q3_states))
 print("q4-states: %s" %Counter(q4_states))
 print("q5-states: %s" %Counter(q5_states))
 
-bitstrings = sorted([''.join(x) for x in zip(q4_states,q3_states)])
+bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states,q3_states,q2_states,q1_states)])
 print(Counter(bitstrings))
 
 # n, bins, patches = plt.hist(x=bitstrings, bins='auto', color='#0504aa', alpha=0.7, rwidth=0.85)
@@ -148,9 +148,7 @@ print(Counter(bitstrings))
 # plt.show()
 
 fig, ax = plt.subplots()
-
 print(Counter(bitstrings).keys())
-
 CBits = [x for x in Counter(bitstrings).keys()]
 percentage = [x/n_avg*100 for x in Counter(bitstrings).values()]
 # bar_colors = ['tab:blue', 'tab:green', 'tab:orange', 'tab:red']
