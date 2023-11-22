@@ -47,22 +47,22 @@ qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_na
 simulate = True
 
 if simulate:
-    # # Simulates the QUA program for the specified duration
-    # simulation_config = SimulationConfig(duration=3_00)  # In clock cycles = 4ns
-    # # Simulate blocks python until the simulation is done
-    # job = qmm.simulate(config, hello_qua, simulation_config)
-    # # Plot the simulated samples
-    # job.get_simulated_samples().con1.plot()
-    # job.get_simulated_samples().con2.plot()
-    # plt.show()
+    # Simulates the QUA program for the specified duration
+    simulation_config = SimulationConfig(duration=3_00)  # In clock cycles = 4ns
+    # Simulate blocks python until the simulation is done
+    job = qmm.simulate(config, hello_qua, simulation_config)
+    # Plot the simulated samples
+    job.get_simulated_samples().con1.plot()
+    job.get_simulated_samples().con2.plot()
+    plt.show()
 
-    connections = create_simulator_controller_connections(2)
-    job = qmm.simulate(config,hello_qua,SimulationConfig(duration=1000, controller_connections=connections))
-    # get DAC and digital samples (optional).
-    samples = job.get_simulated_samples()
-    # get the waveform report object
-    waveform_report = job.get_simulated_waveform_report()
-    waveform_report.create_plot(samples, plot=True, save_path="./")
+    # connections = create_simulator_controller_connections(2)
+    # job = qmm.simulate(config,hello_qua,SimulationConfig(duration=1000, controller_connections=connections))
+    # # get DAC and digital samples (optional).
+    # samples = job.get_simulated_samples()
+    # # get the waveform report object
+    # waveform_report = job.get_simulated_waveform_report()
+    # waveform_report.create_plot(samples, plot=True, save_path="./")
 
 else:
     # Open a quantum machine to execute the QUA program
