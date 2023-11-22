@@ -228,20 +228,20 @@ gft_cz_1_2_q2 = flattop_gaussian_waveform(cz_point_1_2_q2-idle_q2, 8 * u.ns, 8 *
 g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
 # q5 -> q4:
-cz5_4_len = 40 # 44 # 48 # 32 # ns
+cz5_4_len = 40 # ns
 cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
-cz5_4_2pi_dev = 0.5
+cz5_4_2pi_dev = 0.05
 # q4 -> q3:
 cz4_3_len = 48 # ns
 cz4_3_amp = (0.2528 - idle_q4) * 1.016667*0.9916667 # 0.975*1.001666
 cz4_3_2pi_dev = 0.5
 # q2 -> q3: need to tune up q1 simultaneously
-cz2_3_len = 36 # ns
-cz2_3_amp = (0.27942 - idle_q2) * 0.98333
+cz2_3_len = 64#60 # ns
+cz2_3_amp = (0.2382 - idle_q2) * 0.9915975*0.998
 cz2_3_2pi_dev = 0
 # q1 -> q2:
-cz1_2_len = 36 # ns
-cz1_2_amp = (-0.0594 - idle_q1) * 0.9*1.01
+cz1_2_len = 24 # ns
+cz1_2_amp = (-0.0577 - idle_q1) * 0.9916667*1.00416*0.9997083
 cz1_2_2pi_dev = 0
 
 #############################################

@@ -23,6 +23,7 @@ cz_type = "const_wf"
 n_avg = 1024
 h_loop = 1
 multiplexed = [1,2,3,4,5]
+cz_corr = float(eval(f"cz{5}_{4}_2pi_dev"))
 
 with program() as cz_ops:
 
@@ -35,6 +36,7 @@ with program() as cz_ops:
     t = declare(int)
     a = declare(fixed)
     phi = declare(fixed)
+    global_phase_correction = declare(fixed, value=cz_corr)
 
     with for_(n, 0, n < n_avg, n+1):
         save(n, n_st)
@@ -78,7 +80,7 @@ with program() as cz_ops:
         # align()
 
         cz_gate(3, 4, cz_type)
-        frame_rotation_2pi(0.525, "q4_xy")
+        frame_rotation_2pi(global_phase_correction, "q4_xy")
 
         # align()
         # play("y180", "q1_xy")

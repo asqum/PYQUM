@@ -45,7 +45,7 @@ from cosine import Cosine
 ####################
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
-qubit_to_flux_tune, qubit_to_meet_with = 2, 3
+qubit_to_flux_tune, qubit_to_meet_with = 5, 4
 cz = 1
 
 # qubit to flux-tune is target
@@ -53,12 +53,13 @@ cz = 1
 
 multiplexed = [1,2,3,4,5]
 points_per_cycle = 20
+cz_corr = float(eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_2pi_dev"))
 
 n_avg = 100000  # The number of averages
 phis = np.arange(0, 3, 1/points_per_cycle)
-amps = np.linspace(0.5, 1.5, 25)
-# amps = np.linspace(0.99,1.01,25)
-# amps = np.linspace(0.999,1.001,25)
+# amps = np.linspace(0.9, 1.1, 25)
+amps = np.linspace(0.95,1.05,25)
+# amps = np.linspace(0.9995,1.0005,25)
 
 ###################
 # The QUA program #
@@ -69,11 +70,12 @@ with program() as cz_pi_cal:
     phi = declare(fixed)  # QUA variable angle of the second pi/2 wrt to the first pi/2
     a = declare(fixed)  # QUA variable for the flux pulse amplitude pre-factor.
     flag = declare(bool)
-    global_phase_correction = declare(fixed, value=eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_2pi_dev"))
+    global_phase_correction = declare(fixed, value=cz_corr)
 
     with for_(n, 0, n < n_avg, n + 1):
         # Save the averaging iteration to get the progress bar
         save(n, n_st)
+
         with for_(*from_array(phi, phis)):
             with for_(*from_array(a, amps)):
                 with for_each_(flag, [True, False]):
@@ -84,6 +86,9 @@ with program() as cz_pi_cal:
                     # ramsey first pi/2
                     align()
                     play("x90", f"q{qubit_to_flux_tune}_xy")
+
+                    # play("y180", f"q{qubit_to_flux_tune}_xy")
+                    # play("y180", f"q{qubit_to_flux_tune}_xy")
                     
                     # cz
                     if cz:
