@@ -10,7 +10,7 @@ myname = bs(__file__).split('.')[0] # This py-script's name
 import json, ast
 from sqlite3 import IntegrityError
 from flask import Flask, request, render_template, Response, redirect, Blueprint, jsonify, stream_with_context, g, session, abort
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from numpy import array, ndarray, unwrap, mean, trunc, sqrt, zeros, ones, shape, arctan2, int64, concatenate, transpose, arange, ndindex
 from time import sleep, strptime, mktime 
 from datetime import timedelta, datetime
@@ -139,17 +139,42 @@ def openQASM_run():
     result, circuit_map, message = running_qc(backend, qasm_script, shots)
     return jsonify(message=message, circuit_map=circuit_map, result=result)
 
+@bp.route('/oqc/login/add_salt', methods=['GET', 'POST'])
+def openQASM_add_salt():
+    user = request.json['user']
+    print(Fore.YELLOW + "User %s is logging into QCE" %(user))
+
+    db = get_db()
+    user_cv = db.execute(
+        'SELECT * FROM user WHERE username = ?', (user,)
+    ).fetchone()
+
+    if user is None:
+        message = 'Invalid username.'
+    elif user['status'].upper() != 'APPROVED':
+        message = 'Unauthorized Access'
+    else: message = 'Success'
+
+    salt = user_cv['password'].split("$")[1]
+    iteration = user_cv['password'].split("$")[0].split(":")[2]
+    return jsonify(ok=1, salt=salt, iteration=iteration, message=message)
+
+
 @bp.route('/oqc/login', methods=['GET', 'POST'])
 def openQASM_login():
     print(request.json)
 
     user = request.json['user']
     password = request.json['password']
-    print(password)
-    
-    print(Fore.YELLOW + "user: %s, password: %s" %(user,password))
+    print(Fore.BLUE + Back.WHITE + "Incoming: user: %s, password: %s" %(user, password))
 
-    return jsonify(ok=1, token="123456789")
+    db = get_db()
+    user_cv = db.execute(
+        'SELECT * FROM user WHERE username = ?', (user,)
+    ).fetchone()
+
+    print("state: %s" %bool(password==user_cv['password']))
+    return jsonify(ok=int(bool(password==user_cv['password'])), token="on_the_way")
 
 # endregion
 

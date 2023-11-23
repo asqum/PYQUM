@@ -473,3 +473,17 @@ if __name__ == "__main__":
     hashed_pwd = generate_password_hash(password)
     print("Hashed Password of the word '%s' is %s" %(password,hashed_pwd))
 
+    import bcrypt
+
+    password = u"seCr3t"
+    hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())
+
+    # convert to string with correct format
+    string_password = hashed_password.decode('utf8')
+
+    password = u"seCr3t"
+    # convert back to bytes with correct format
+    print("comparing %s and %s" %(password, string_password))
+    print(bcrypt.checkpw(password.encode('utf8'), string_password.encode('utf8')))
+    # True
+
