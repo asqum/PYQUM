@@ -11,6 +11,7 @@ from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.units import unit
+from qualang_tools.analysis import two_state_discriminator
 from oqc import *
 import grpclib
 
@@ -22,14 +23,13 @@ from collections import Counter
 import pandas as pd
 
 
-cz_type = "square"
-h_loop = 1
 multiplexed = [1,2,3,4,5]
 
 # open communication with qm-cluster:
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
 
 def simple_circuit(shots, script, qmm=qmm):
+    simulate_pulses = False
     shots = int(shots)
 
     script = script.split(";\n")
@@ -43,6 +43,7 @@ def simple_circuit(shots, script, qmm=qmm):
         Q_st_g = [declare_stream() for i in range(len(multiplexed))]
         n = declare(int)
         n_st = declare_stream()
+        global_phase_correction = declare(fixed, value=0.5)
 
         with for_(n, 0, n < shots, n+1):
             save(n, n_st)
@@ -68,23 +69,8 @@ def simple_circuit(shots, script, qmm=qmm):
                         print(Fore.YELLOW + "%s_gate(%s)" %(operation,qubit))
             
 
-            align()
-            play("y90", "q4_xy")
-            play("x180", "q4_xy")
-
-            align()
-            play("y90", "q5_xy")
-            play("x180", "q5_xy")
-            align()
-
-            cz_gate(4, 5)
-            frame_rotation_2pi(0.5, "q5_xy")
-
-            align()
-            play("y90", "q5_xy")
-            play("x180", "q5_xy")
-
-            
+            # align()
+            # play("x180", "q4_xy")
             align()
             multiplexed_readout(I_g, I_st_g, Q_g, Q_st_g, resonators=multiplexed, weights="rotated_")
             
@@ -93,48 +79,74 @@ def simple_circuit(shots, script, qmm=qmm):
                 I_st_g[i].save_all(f"I_g_{i+1}")
                 Q_st_g[i].save_all(f"Q_g_{i+1}")
 
+    if not simulate_pulses:
+        # while server in sleep mode, qmm requires 3 wake-up calls:
+        wakeup_call = 0
+        while (wakeup_call>=0) & (wakeup_call<10):
+            try: 
+                qm = qmm.open_qm(config)
+                wakeup_call = -1
+            except(grpclib.exceptions.StreamTerminatedError): 
+                wakeup_call += 1
+                print(Fore.BLUE + "WAKE-UPPPPPPPPP: %s" %wakeup_call)
+                pass
     
-    # while server in sleep mode, qmm requires 3 wake-up calls:
-    wakeup_call = 0
-    while (wakeup_call>=0) & (wakeup_call<10):
-        try: 
-            qm = qmm.open_qm(config)
-            wakeup_call = -1
-        except(grpclib.exceptions.StreamTerminatedError): 
-            wakeup_call += 1
-            print(Fore.BLUE + "WAKE-UPPPPPPPPP: %s" %wakeup_call)
-            pass
-    
-    job = qm.execute(quantum_circuit)
-    job.result_handles.wait_for_all_values()
-    results = fetching_tool(job, [f"I_g_{x}" for x in multiplexed])
-    qm.close()
+        job = qm.execute(quantum_circuit)
+        job.result_handles.wait_for_all_values()
+        results = fetching_tool(job, [f"I_g_{x}" for x in multiplexed] + [f"Q_g_{x}" for x in multiplexed])
+        qm.close()
 
-    q1_states = [str(int(x)) for x in np.array(results.fetch_all()[0])>ge_threshold_q1]
-    q2_states = [str(int(x)) for x in np.array(results.fetch_all()[1])>ge_threshold_q2]
-    q3_states = [str(int(x)) for x in np.array(results.fetch_all()[2])>ge_threshold_q3]
-    q4_states = [str(int(x)) for x in np.array(results.fetch_all()[3])>ge_threshold_q4]
-    q5_states = [str(int(x)) for x in np.array(results.fetch_all()[4])>ge_threshold_q5]
-    dummy_states = [str(int(x)) for x in np.zeros(shots)]
+        q1_states = [str(int(x)) for x in np.array(results.fetch_all()[0])>ge_threshold_q1]
+        q2_states = [str(int(x)) for x in np.array(results.fetch_all()[1])>ge_threshold_q2]
+        q3_states = [str(int(x)) for x in np.array(results.fetch_all()[2])>ge_threshold_q3]
+        q4_states = [str(int(x)) for x in np.array(results.fetch_all()[3])>ge_threshold_q4]
+        q5_states = [str(int(x)) for x in np.array(results.fetch_all()[4])>ge_threshold_q5]
+        dummy_states = [str(int(x)) for x in np.zeros(shots)]
 
-    print("q1-states: %s" %Counter(q1_states))
-    print("q2-states: %s" %Counter(q2_states))
-    print("q3-states: %s" %Counter(q3_states))
-    print("q4-states: %s" %Counter(q4_states))
-    print("q5-states: %s" %Counter(q5_states))
+        print("q1-states: %s" %Counter(q1_states))
+        print("q2-states: %s" %Counter(q2_states))
+        print("q3-states: %s" %Counter(q3_states))
+        print("q4-states: %s" %Counter(q4_states))
+        print("q5-states: %s" %Counter(q5_states))
 
-    bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states,q3_states,q2_states,q1_states)])
-    print(Counter(bitstrings))
+        bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states,q3_states,q2_states,q1_states)])
+        state_dist = Counter(bitstrings)
+
+        debug_UI = False
+        if debug_UI:
+            # 1. Checking IQ-blos:
+            two_state_discriminator(results.fetch_all()[3], results.fetch_all()[8], results.fetch_all()[4], results.fetch_all()[9], True, True)
+            # 1. Checking State Distribution before UI:
+            fig, ax = plt.subplots()
+            print(state_dist.keys())
+            CBits = [x for x in state_dist.keys()]
+            percentage = [x/shots*100 for x in state_dist.values()]
+            ax.bar(CBits, percentage)#, color=bar_colors)
+            ax.set_ylabel('Population (%)')
+            ax.set_title('Quantum Circuit\'s Outcome')
+            plt.show()
+
+    else:
+        # Simulates the QUA program for the specified duration
+        simulation_config = SimulationConfig(duration=3_000)  # In clock cycles = 4ns
+        # Simulate blocks python until the simulation is done
+        job = qmm.simulate(config, quantum_circuit, simulation_config)
+        # Plot the simulated samples
+        job.get_simulated_samples().con1.plot()
+        job.get_simulated_samples().con2.plot()
+        plt.show()
+
+        state_dist = {'00000': 101}
 
 
-    # fig, ax = plt.subplots()
-    # print(Counter(bitstrings).keys())
-    # CBits = [x for x in Counter(bitstrings).keys()]
-    # percentage = [x/shots*100 for x in Counter(bitstrings).values()]
-    # ax.bar(CBits, percentage)#, color=bar_colors)
-    # ax.set_ylabel('Population (%)')
-    # ax.set_title('Quantum Circuit\'s Outcome')
-    # plt.show()
+    print(f"state distribution: {state_dist}")
+    return state_dist
 
-    return Counter(bitstrings)
-
+if __name__ == "__main__":
+    script = '''
+            0;
+            0;
+            0;
+            0;
+            '''
+    simple_circuit(1024, script)

@@ -34,8 +34,8 @@ warnings.filterwarnings("ignore")
 # The QUA program #
 ###################
 n_avg = 10000  # Number of averages
-dfs = np.arange(-10e6, 10e6, 0.1e6)  # Frequency detuning sweep in Hz
-t_delay = np.arange(0, 300, 1)  # Idle time sweep in clock cycles (Needs to be a list of integers)
+dfs = np.arange(-1e6, 1e6, 0.1e6)  # Frequency detuning sweep in Hz
+t_delay = np.arange(0, 1000, 10)  # Idle time sweep in clock cycles (Needs to be a list of integers)
 
 with program() as ramsey:
     I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=2)
@@ -45,24 +45,24 @@ with program() as ramsey:
     with for_(n, 0, n < n_avg, n + 1):
         with for_(*from_array(df, dfs)):
             # Update the frequency of the two qubit elements
-            update_frequency("q1_xy", df + qubit_IF_q1)
-            update_frequency("q2_xy", df + qubit_IF_q2)
+            update_frequency("q4_xy", df + qubit_IF_q4)
+            # update_frequency("q2_xy", df + qubit_IF_q2)
 
             with for_(*from_array(t, t_delay)):
                 # qubit 1
-                play("x90", "q1_xy")
-                wait(t, "q1_xy")
-                play("x90", "q1_xy")
+                play("x90", "q4_xy")
+                wait(t, "q4_xy")
+                play("x90", "q4_xy")
 
                 # qubit 2
-                play("x90", "q2_xy")
-                wait(t, "q2_xy")
-                play("x90", "q2_xy")
+                # play("x90", "q2_xy")
+                # wait(t, "q2_xy")
+                # play("x90", "q2_xy")
 
                 # Align the elements to measure after having waited a time "tau" after the qubit pulses.
                 align()
                 # Measure the state of the resonators
-                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 2], weights="rotated_")
+                multiplexed_readout(I, I_st, Q, Q_st, resonators=[1, 4], weights="rotated_")
                 # Wait for the qubit to decay to the ground state
                 wait(thermalization_time * u.ns)
         # Save the averaging iteration to get the progress bar

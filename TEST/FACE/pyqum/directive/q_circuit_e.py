@@ -38,6 +38,15 @@ def running_qc(backend, qasm_script, shots):
 
     elif backend=="AS_5q_dr2a":
         result = simple_circuit(shots=shots, script=circuit_map['script'])
+
+        # script = '''
+        #     0;
+        #     0;
+        #     0;
+        #     0;
+        #     '''
+        # result = simple_circuit(1024, script)
+
         message = "Live QC execution completed."
 
     else: 

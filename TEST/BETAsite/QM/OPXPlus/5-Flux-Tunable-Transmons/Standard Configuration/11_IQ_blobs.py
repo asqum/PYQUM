@@ -135,16 +135,17 @@ else:
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()
 
-    filename = "IQ_Blobs"
+    qubit = 5
+    filename = f"IQ_Blobs_q{qubit}"
     save = True
     if save:
 
         output_data = np.empty([2,2,int(n_runs)])
         print(type(I_g_q2))
-        output_data[0][0] = I_g_q2
-        output_data[0][1] = Q_g_q2
-        output_data[1][0] = I_e_q2
-        output_data[1][1] = Q_e_q2
+        output_data[0][0] = eval(f"I_g_q{qubit}")
+        output_data[0][1] = eval(f"Q_g_q{qubit}")
+        output_data[1][0] = eval(f"I_e_q{qubit}")
+        output_data[1][1] = eval(f"Q_e_q{qubit}")
         
         np.savez(save_dir/filename, output_data)
         print("Data saved as %s.npz" %filename)

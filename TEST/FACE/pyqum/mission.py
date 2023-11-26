@@ -142,39 +142,40 @@ def openQASM_run():
 @bp.route('/oqc/login/add_salt', methods=['GET', 'POST'])
 def openQASM_add_salt():
     user = request.json['user']
-    print(Fore.YELLOW + "User %s is logging into QCE" %(user))
+    print(Fore.YELLOW + "User %s is knocking on the door" %(user))
 
     db = get_db()
-    user_cv = db.execute(
-        'SELECT * FROM user WHERE username = ?', (user,)
-    ).fetchone()
+    user_cv = db.execute('SELECT * FROM user WHERE username = ?', (user,)).fetchone()
 
-    if user is None:
-        message = 'Invalid username.'
-    elif user['status'].upper() != 'APPROVED':
-        message = 'Unauthorized Access'
-    else: message = 'Success'
+    if user_cv is None:
+        ok, salt, iteration = 0, None, None
+        message = 'Invalid username: Please register'
+    elif user_cv['status'].upper() != 'APPROVED':
+        ok, salt, iteration = 0, None, None
+        message = 'Unauthorized Access: Please consult Admin'
+    else: 
+        ok = 1
+        salt = user_cv['password'].split("$")[1]
+        iteration = user_cv['password'].split("$")[0].split(":")[2]
+        message = 'Success'
 
-    salt = user_cv['password'].split("$")[1]
-    iteration = user_cv['password'].split("$")[0].split(":")[2]
-    return jsonify(ok=1, salt=salt, iteration=iteration, message=message)
-
+    print(Fore.CYAN + message)
+    return jsonify(ok=ok, salt=salt, iteration=iteration, message=message)
 
 @bp.route('/oqc/login', methods=['GET', 'POST'])
 def openQASM_login():
-    print(request.json)
+    print("request payload from frontend: %s" %request.json)
 
     user = request.json['user']
-    password = request.json['password']
-    print(Fore.BLUE + Back.WHITE + "Incoming: user: %s, password: %s" %(user, password))
+    salted_password = request.json['password']
+    print(Fore.BLUE + Back.WHITE + "Incoming: user: %s, password: %s" %(user, salted_password))
 
     db = get_db()
-    user_cv = db.execute(
-        'SELECT * FROM user WHERE username = ?', (user,)
-    ).fetchone()
+    user_cv = db.execute('SELECT * FROM user WHERE username = ?', (user,)).fetchone()
 
-    print("state: %s" %bool(password==user_cv['password']))
-    return jsonify(ok=int(bool(password==user_cv['password'])), token="on_the_way")
+    ok = int(bool(salted_password==user_cv['password']))
+    print(Fore.GREEN + Back.WHITE + "ok: %s" %ok)
+    return jsonify(ok=ok, token="123456789")
 
 # endregion
 

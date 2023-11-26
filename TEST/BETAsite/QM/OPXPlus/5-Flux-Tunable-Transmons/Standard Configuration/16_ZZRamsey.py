@@ -37,14 +37,19 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 1,1
-DD_cycle = 0 # push T2, avoid zz-coupling
+control, target = 3,5
+
+DD_even = True
+DD_cycle = 1 # push T2, avoid zz-coupling
 
 # Idle time sweep in clock cycles (Needs to be a list of integers)
 if X: idle_times = np.arange(4, 1000, 1)
-else: idle_times = np.arange(0, 1000, 2**(DD_cycle + 1))
+else: 
+    if DD_even: idle_times = np.arange(0, 2000*DD_cycle, 3**(DD_cycle + 0))
+    else: idle_times = np.arange(0, 1000*DD_cycle, 2**(DD_cycle + 1))
+    print(f"First 3 idle-times: {idle_times[0:3]} clock cycles")
 
-detuning = 2.00e6  # "Virtual" detuning in Hz
+detuning = 2.00e6 / DD_cycle  # "Virtual" detuning in Hz
 multiplexed = [1,2,3,4,5]
 the_rest = [x for x in multiplexed if x not in [control,target]]
 
@@ -68,11 +73,18 @@ with program() as ramsey:
             # Qubit b
             play("x90", "q%s_xy"%target)  # 1st x90 gate
 
-            # wait(t, "q%s_xy"%target)
-            wait(t/(2**DD_cycle), "q%s_xy"%target)
-            for i in range(2**DD_cycle-1):
-                play("y180", "q%s_xy"%target)  # DD sequence
+            if DD_even: # even Pi: circuit implementation 
+                wait(t/(3**DD_cycle), "q%s_xy"%target)
+                for i in range(3**DD_cycle-1):
+                    play("y180", "q%s_xy"%target)  # DD sequence
+                    wait(t/(3**DD_cycle), "q%s_xy"%target)
+                    # print("Between echo: %s clock cycles" %(t/(3**DD_cycle)))
+
+            else: # odd Pi: usual echo
                 wait(t/(2**DD_cycle), "q%s_xy"%target)
+                for i in range(2**DD_cycle-1):
+                    play("y180", "q%s_xy"%target)  # DD sequence
+                    wait(t/(2**DD_cycle), "q%s_xy"%target)
 
             frame_rotation_2pi(phi, "q%s_xy"%target)  # Virtual Z-rotation
             play("x90", "q%s_xy"%target)  # 2nd x90 gate

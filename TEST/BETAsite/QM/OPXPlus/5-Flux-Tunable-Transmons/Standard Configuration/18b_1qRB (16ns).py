@@ -18,13 +18,13 @@ from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool
 
 inv_gates = [int(np.where(c1_table[i, :] == 0)[0][0]) for i in range(24)]
-max_circuit_depth = 1000
+max_circuit_depth = 500
 num_of_sequences = 40
 n_avg = 60
 seed = 345323
-cooldown_time = 5000
-qb = "q2_xy"
-rr = "rr2"
+cooldown_time = thermalization_time *u.ns
+qb = "q4_xy"
+rr = "rr4"
 
 # qmm = QuantumMachinesManager(host=qop_ip, port=9800, octave=octave_config, cluster_name=cluster_name)
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)

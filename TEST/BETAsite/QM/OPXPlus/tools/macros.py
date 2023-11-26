@@ -8,7 +8,7 @@ from qm.qua import *
 from qualang_tools.addons.variables import assign_variables_to_element
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
-from configuration import *
+from pyqum.OpenQASM.configuration import *
 
 import matplotlib.pyplot as plt
 from scipy import signal
@@ -20,16 +20,8 @@ from qm import generate_qua_script
 # QUA macros #
 ##############
 
-def Dynamical_Decoupling(qubit, refocusing_time):
-    t = declare(int, value=refocusing_time)
-    wait(t, f"q{qubit}_xy")
-    play("x180", f"q{qubit}_xy")
-    wait(t, f"q{qubit}_xy")
-    play("x180", f"q{qubit}_xy")
-    wait(t, f"q{qubit}_xy")
 
-
-def cz_gate(control, target, type="const_wf"):
+def cz_gate(control, target, type="square"):
     if type == "square":
         wait(7)  # for flux pulse to relax back completely
 
@@ -385,7 +377,7 @@ def serialize(qua_program, config):
     sourceFile.close()
     
 
-def readout_macro(ro_element, multiplexed, threshold=None, state=None, I=None, Q=None):
+def readout_macro( ro_element, threshold=None, state=None, I=None, Q=None):
     """
     A macro for performing the single-shot readout, with the ability to perform state discrimination.
     If `threshold` is given, the information in the `I` quadrature will be compared against the threshold and `state`
@@ -407,17 +399,6 @@ def readout_macro(ro_element, multiplexed, threshold=None, state=None, I=None, Q
         Q = declare(fixed)
     if (threshold is not None) and (state is None):
         state = declare(bool)
-
-    # Play through all the other resonators to be in the same condition as when the readout was optimized
-    align(f"q{ro_element[-1]}_xy", f"rr{ro_element[-1]}")
-    for rr in multiplexed:
-        if rr != int(ro_element[-1]):
-            # print("playing rr%s but not measuring" %rr)
-            align(f"q{ro_element[-1]}_xy", f"rr{rr}")
-            measure("readout"*amp(1), 
-                    f"rr{rr}", 
-                    None) # only play "measure" but ditch data "acquisition"
-            
     measure(
         "readout",
         ro_element,

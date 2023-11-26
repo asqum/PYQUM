@@ -1,6 +1,8 @@
 {
     "python.analysis.extraPaths": [
         "./TEST/BETAsite/resonator_tools",
-        "./TEST/BETAsite/QM/OPXPlus/Configurations"
+        "./TEST/BETAsite/QM/OPXPlus/Configurations",
+        "./TEST/FACE/pyqum/OpenQASM",
+        "./TEST/FACE/pyqum/OpenQASM"
     ]
 }
