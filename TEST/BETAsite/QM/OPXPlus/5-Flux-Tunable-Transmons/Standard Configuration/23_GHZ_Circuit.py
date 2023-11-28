@@ -43,18 +43,40 @@ with program() as cz_ops:
         save(n, n_st)
         
         if not simulate: wait(thermalization_time * u.ns)
-        align()
 
+        # align()
+        # play("y90", "q1_xy")
+        
+        # # CX(1,2)
+        # play("-y90", "q2_xy")
+        # align()
+        # cz_gate(2, 1, cz_type)
+        # frame_rotation_2pi(eval(f"cz{1}_{2}_2pi_dev"), "q1_xy")
+        align()
+        play("y90", "q2_xy")
+
+        # CX(2,3)
+        play("-y90", "q3_xy")
+        align()
+        cz_gate(3, 2, cz_type)
+        frame_rotation_2pi(eval(f"cz{2}_{3}_2pi_dev"), "q2_xy")
+        align()
+        play("y90", "q3_xy")
+
+        # CX(3,4)
+        play("-y90", "q4_xy")
+        align()
+        cz_gate(3, 4, cz_type)
+        frame_rotation_2pi(eval(f"cz{4}_{3}_2pi_dev"), "q4_xy")
+        align()
         play("y90", "q4_xy")
+
+        # CX(4,5)
         play("-y90", "q5_xy")
         align()
-
-        # Dynamical_Decoupling(4,2)
-
         cz_gate(4, 5, cz_type)
         frame_rotation_2pi(eval(f"cz{5}_{4}_2pi_dev"), "q5_xy")
         align()
-
         play("y90", "q5_xy")
 
         align()
@@ -88,7 +110,7 @@ if not simulate:
     print("q5-states: %s" %Counter(q5_states))
 
     # bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states,q3_states,q2_states,q1_states)])
-    bitstrings = sorted([''.join(x) for x in zip(q5_states,q4_states)])
+    bitstrings = sorted([''.join(x) for x in zip(q5_states, q4_states, q3_states, q2_states)])
     print(Counter(bitstrings))
 
     fig, ax = plt.subplots()
@@ -99,7 +121,7 @@ if not simulate:
     ax.bar(CBits, percentage)#, color=bar_colors)
     ax.set_ylabel('Population (%)')
     # ax.set_title('Quantum Circuit\'s Outcome')
-    ax.set_title(f'Bell state fidelity: {(Counter(bitstrings)["00"]+Counter(bitstrings)["11"])/shots*100:.3}%')
+    ax.set_title(f'Bell/GHZ state fidelity: {(percentage[0]+percentage[-1]):.3}%')
     # ax.legend(title='Fruit color')
     plt.show()
 
