@@ -79,7 +79,7 @@ qubit_LO_q5 = (4.600) * u.GHz
 qubit_IF_q1 = (-130.723 -0.781+0.265) * u.MHz 
 qubit_IF_q2 = (-106.458 -0.028) * u.MHz 
 qubit_IF_q3 = (-261.447 -1.437 +0.358) * u.MHz
-qubit_IF_q4 = (-368.712 -0.238 +0.365-0.251) * u.MHz
+qubit_IF_q4 = (-368.438 -0.122-0.023) * u.MHz
 qubit_IF_q5 = (-122.859 -0.029) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
@@ -222,9 +222,9 @@ amplitude_fit3, frequency_fit3, phase_fit3, offset_fit3 = [0, 0, 0, 0]
 amplitude_fit4, frequency_fit4, phase_fit4, offset_fit4 = [0, 0, 0, 0]
 amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
-const_flux_len = 260 # 600, 260 max-bake: 260ns
-# const_flux_amp = 0.022 # for cryoscope
-const_flux_amp = 0.48 # for cz-chevron 
+const_flux_len = 600 # 600, 260 max-bake: 260ns
+const_flux_amp = 0.012 # for cryoscope
+# const_flux_amp = 0.48 # for cz-chevron 
 
 ##########################################
 #               two-qubit                #
@@ -248,7 +248,8 @@ cz2_3_2pi_dev = 0.102
 # q1 -> q2:
 cz1_2_len = 24 # ns
 cz1_2_amp = (-0.0577 - idle_q1) * 0.9916667*1.00416*0.9997083
-cz1_2_2pi_dev = -0.049+0.103
+cz1_2_2pi_dev = 0.154 -0.088
+cz2_1_2pi_dev = 0.178 -0.229 +0.058
 
 #############################################
 #                Resonators                 #
@@ -267,7 +268,7 @@ readout_len = 1800
 readout_amp_q1 = 0.0868910316 *1.0
 readout_amp_q2 = 0.1309075425 *1.0
 readout_amp_q3 = 0.102461516  *1.0
-readout_amp_q4 = 0.243051850  *0.9
+readout_amp_q4 = 0.243051850  *0.88
 readout_amp_q5 = 0.056009617  *1.0
 
 # TOF and depletion time
@@ -326,16 +327,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (307.6 / 180) * np.pi
-rotation_angle_q2 = (152.5 / 180) * np.pi
-rotation_angle_q3 = (19.9 / 180) * np.pi
-rotation_angle_q4 = (245.6 / 180) * np.pi
-rotation_angle_q5 = (177.5 / 180) * np.pi
-ge_threshold_q1 = 7.956e-05
-ge_threshold_q2 = 2.007e-04
-ge_threshold_q3 = 1.421e-04
-ge_threshold_q4 = 2.007e-04
-ge_threshold_q5 = -5.748e-06
+rotation_angle_q1 = (301.4 / 180) * np.pi
+rotation_angle_q2 = (146.6 / 180) * np.pi
+rotation_angle_q3 = (16.8 / 180) * np.pi
+rotation_angle_q4 = (245.4 / 180) * np.pi
+rotation_angle_q5 = (179.6 / 180) * np.pi
+ge_threshold_q1 = -5.896e-05
+ge_threshold_q2 = 1.027e-04
+ge_threshold_q3 = 1.204e-04
+ge_threshold_q4 = 2.236e-04
+ge_threshold_q5 = 1.635e-04
 
 #############################################
 #                  Config                   #
@@ -374,11 +375,11 @@ config = {
                 2: {"offset": 0.0},  # Q qubit5 XY
                 3: {"offset": 0.0},  # 
                 4: {"offset": 0.0},  # 
-                5: {"offset": idle_q1},  # qubit1 Z
-                6: {"offset": idle_q2},  # qubit2 Z
-                7: {"offset": idle_q3},  # qubit3 Z
-                8: {"offset": idle_q4},  # qubit4 Z
-                9: {"offset": idle_q5},  # qubit5 Z
+                5: {"offset": idle_q1, "filter": {'feedforward': [], 'feedback':[]}},  # qubit1 Z
+                6: {"offset": idle_q2, "filter": {'feedforward': [], 'feedback':[]}},  # qubit2 Z
+                7: {"offset": idle_q3, "filter": {'feedforward': [], 'feedback':[]}},  # qubit3 Z
+                8: {"offset": idle_q4, "filter": {'feedforward': [], 'feedback':[]}},  # qubit4 Z
+                9: {"offset": idle_q5, "filter": {'feedforward': [], 'feedback':[]}},  # qubit5 Z
                 10: {"offset": 0.0},  # 
             },
             "digital_outputs": {

@@ -108,8 +108,10 @@ def filter_calc(exponential):
 # The QUA program #
 ###################
 # Index of the qubit to measure
-qubit = 5
-
+qubit = 4
+multiplexed = [1,2,3,4,5]
+wait_z = 450
+wait_xy = 400
 
 n_avg = 6_000  # Number of averages
 # Flux pulse durations in clock cycles (4ns) - must be > 4 or the pulse won't be played.
@@ -137,14 +139,14 @@ with program() as cryoscope:
                 # Play truncated flux pulse
                 align()
                 # Wait some time to ensure that the flux pulse will arrive after the x90 pulse
-                wait(500 * u.ns)
+                wait(wait_z * u.ns)
                 # Play the flux pulse only if t is larger than the minimum of 4 clock cycles (16ns)
                 with if_(t > 3):
                     play("const", f"q{qubit}_z", duration=t)
                 
                 # Wait for the idle time set slightly above the maximum flux pulse duration to ensure that the 2nd x90
                 # pulse arrives after the longest flux pulse
-                wait((const_flux_len + 500) * u.ns, f"q{qubit}_xy")
+                wait((const_flux_len + wait_xy) * u.ns, f"q{qubit}_xy")
                 # NOTE: Keep the phase consistent
 
                 # Play second X/2 or Y/2
@@ -154,18 +156,18 @@ with program() as cryoscope:
                     play("y90", f"q{qubit}_xy")
                 # Measure resonator state after the sequence
                 align()
-                multiplexed_readout(I, I_st, Q, Q_st, resonators=[4,5,1,2,3], weights="rotated_")
+                multiplexed_readout(I, I_st, Q, Q_st, resonators=multiplexed, weights="rotated_")
                 # State discrimination
                 assign(state[0], I[0] > ge_threshold_q4)
                 assign(state[1], I[1] > ge_threshold_q5)
-                # assign(state[2], I[2] > ge_threshold_q3)
-                # assign(state[3], I[3] > ge_threshold_q4)
-                # assign(state[4], I[4] > ge_threshold_q5)
+                assign(state[2], I[2] > ge_threshold_q3)
+                assign(state[3], I[3] > ge_threshold_q4)
+                assign(state[4], I[4] > ge_threshold_q5)
                 save(state[0], state_st[0])
                 save(state[1], state_st[1])
-                # save(state[2], state_st[2])
-                # save(state[3], state_st[3])
-                # save(state[4], state_st[4])
+                save(state[2], state_st[2])
+                save(state[3], state_st[3])
+                save(state[4], state_st[4])
                 # Wait cooldown time and save the results
                 wait(thermalization_time * u.ns)
         save(n, n_st)
@@ -173,14 +175,11 @@ with program() as cryoscope:
     with stream_processing():
         # for the progress counter
         n_st.save("n")
-        # resonator 1
-        I_st[0].buffer(2).buffer(len(durations)).average().save("I1")
-        Q_st[0].buffer(2).buffer(len(durations)).average().save("Q1")
-        state_st[0].boolean_to_int().buffer(2).buffer(len(durations)).average().save("state1")
-        # resonator 2
-        I_st[1].buffer(2).buffer(len(durations)).average().save("I2")
-        Q_st[1].buffer(2).buffer(len(durations)).average().save("Q2")
-        state_st[1].boolean_to_int().buffer(2).buffer(len(durations)).average().save("state2")
+        for i,x in enumerate(multiplexed):
+            I_st[i].buffer(2).buffer(len(durations)).average().save(f"I{x}")
+            # Q_st[i].buffer(2).buffer(len(durations)).average().save(f"Q{x}")
+            state_st[i].boolean_to_int().buffer(2).buffer(len(durations)).average().save(f"state{x}")
+        
 
 #####################################
 #  Open Communication with the QOP  #
@@ -207,30 +206,31 @@ else:
     # Send the QUA program to the OPX, which compiles and executes it
     job = qm.execute(cryoscope)
     # Get results from QUA program
-    results = fetching_tool(job, ["n", "I1", "Q1", "state1", "I2", "Q2", "state2"], mode="live")
+    results = fetching_tool(job, ["n"]+[f"I{x}" for x in multiplexed]+[f"state{x}" for x in multiplexed], mode="live")
     # Live plotting
     fig = plt.figure()
     interrupt_on_close(fig, job)  #  Interrupts the job when closing the figure
     while results.is_processing():
         # Fetch results
-        n, I1, Q1, state1, I2, Q2, state2 = results.fetch_all()
+        n, I1, I2, I3, I4, I5, state1, state2, state3, state4, state5 = results.fetch_all()
         # Convert the results into Volts
-        I1, Q1 = u.demod2volts(I1, readout_len), u.demod2volts(Q1, readout_len)
-        I2, Q2 = u.demod2volts(I2, readout_len), u.demod2volts(Q2, readout_len)
+        I1, I2, I3, I4, I5 = u.demod2volts(I1, readout_len), u.demod2volts(I2, readout_len), u.demod2volts(I3, readout_len), u.demod2volts(I4, readout_len), u.demod2volts(I5, readout_len)
+        
         # Progress bar
         progress_counter(n, n_avg, start_time=results.start_time)
+        
         # Bloch vector Sx + iSy
-        if qubit == 4:
-            Sxx = state1[:, 0] * 2 - 1
-            Syy = state1[:, 1] * 2 - 1
-        elif qubit == 5:
-            Sxx = state2[:, 0] * 2 - 1
-            Syy = state2[:, 1] * 2 - 1
-        else:
-            Sxx = 0
-            Syy = 0
+        eigenvalue_X = eval(f"state{qubit}")[:, 0]
+        Sxx = (eigenvalue_X-min(eigenvalue_X))
+        Sxx = Sxx/max(Sxx) * 2 - 1
+        
+        eigenvalue_Y = eval(f"state{qubit}")[:, 1]
+        Syy = (eigenvalue_Y-min(eigenvalue_Y))
+        Syy = Syy/max(Syy) * 2 - 1
+        
         S = Sxx + 1j * Syy
 
+        # print("max: %s "%max(eigenvalue_Y))
         # print("S: %s" %(S))
 
         # Accumulated phase: angle between Sx and Sy
@@ -242,51 +242,52 @@ else:
         step_response_freq = detuning / np.average(detuning[-int(const_flux_len / 2) :])
         step_response_volt = np.sqrt(step_response_freq)
         # Plots
-        plt.suptitle(f"Cryoscope for qubit {qubit} (qubit 1 (2) displayed on top (bottom))")
+        plt.suptitle(f"Cryoscope for qubit {qubit}")
         plt.subplot(241)
         plt.cla()
-        plt.plot(xplot, I1)
+        plt.plot(xplot, eval(f"I{qubit}"))
         plt.xlabel("Pulse duration [ns]")
-        plt.ylabel("I quadrature [V]")
+        plt.ylabel(f"q{qubit}-I [V]")
         plt.legend(("X", "Y"), loc="lower right")
         plt.subplot(242)
         plt.cla()
-        plt.plot(xplot, Q1)
+        plt.plot(xplot, phase)
         plt.xlabel("Pulse duration [ns]")
-        plt.ylabel("Q quadrature [V]")
-        plt.legend(("X", "Y"), loc="lower right")
+        plt.ylabel("phase")
         plt.subplot(243)
         plt.cla()
-        plt.plot(xplot, state1)
+        plt.plot(xplot, detuning)
         plt.xlabel("Pulse duration [ns]")
-        plt.ylabel("Excited state population")
-        plt.legend(("X", "Y"), loc="lower right")
+        plt.ylabel("detuning")
         plt.subplot(244)
         plt.cla()
         plt.plot(xplot, step_response_freq, label="Frequency")
         plt.xlabel("Pulse duration [ns]")
-        plt.ylabel("Step response")
+        plt.ylabel("Step response frequency")
         plt.title(f"Qubit {qubit}")
         plt.legend()
 
         plt.subplot(245)
         plt.cla()
-        plt.plot(xplot, I2)
+        plt.plot(xplot, eval(f"state{qubit}"))
         plt.xlabel("Pulse duration [ns]")
-        plt.ylabel("I quadrature [V]")
+        plt.ylabel(f"q{qubit} |1> population")
         plt.legend(("X", "Y"), loc="lower right")
         plt.subplot(246)
         plt.cla()
-        plt.plot(xplot, Q2)
+        plt.plot(xplot, Sxx, 'b', xplot, Syy, 'r')
         plt.xlabel("Pulse duration [ns]")
-        plt.ylabel("Q quadrature [V]")
-        plt.legend(("X", "Y"), loc="lower right")
+        plt.ylabel("State amplitude")
+        plt.legend(("Sx", "Sy"), loc="lower right")
         plt.subplot(247)
         plt.cla()
-        plt.plot(xplot, state2)
+        for x in multiplexed:
+            if x != qubit:
+                plt.plot(xplot, eval(f"state{x}"))
+                plt.legend((f"X{x}", f"Y{x}"), loc="lower right")
         plt.xlabel("Pulse duration [ns]")
-        plt.ylabel("Excited state population")
-        plt.legend(("X", "Y"), loc="lower right")
+        plt.ylabel("neighbors' |1> population")
+        
         plt.subplot(248)
         plt.cla()
         plt.plot(xplot, step_response_volt, label=r"Voltage ($\sqrt{freq}$)")
@@ -302,7 +303,7 @@ else:
     qm.close()
 
     filename = "Cryoscope4ns_q%s_%s" %(qubit,const_flux_len)
-    save = True
+    save = False
     if save:
         np.savez(save_dir/filename, I1=I1, I2=I2, Q1=Q1, Q2=Q2, S=S, xplot=xplot, step_response_volt=step_response_volt)
         print("Data saved as %s.npz" %filename)
