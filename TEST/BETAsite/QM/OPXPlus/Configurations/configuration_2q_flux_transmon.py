@@ -76,11 +76,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-130.723 -0.781+0.265) * u.MHz 
-qubit_IF_q2 = (-106.458 -0.028) * u.MHz 
-qubit_IF_q3 = (-261.447 -1.437 +0.358) * u.MHz
-qubit_IF_q4 = (-368.438 -0.122-0.023) * u.MHz
-qubit_IF_q5 = (-122.859 -0.029) * u.MHz
+qubit_IF_q1 = (-131.239 +0.004 ) * u.MHz 
+qubit_IF_q2 = (-106.486 +0.043 ) * u.MHz 
+qubit_IF_q3 = (-262.526 -0.266 ) * u.MHz
+qubit_IF_q4 = (-368.583 ) * u.MHz
+qubit_IF_q5 = (-122.888 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -90,7 +90,7 @@ qubit2_T1 = int(22208 * u.ns)
 qubit3_T1 = int(15672 * u.ns)
 qubit4_T1 = int(28568 * u.ns)
 qubit5_T1 = int(21624 * u.ns)
-thermalization_time = 5 * max(qubit1_T1, qubit2_T1, qubit3_T1, qubit4_T1, qubit5_T1)
+thermalization_time = 9 * max(qubit1_T1, qubit2_T1, qubit3_T1, qubit4_T1, qubit5_T1)
 
 # CW pulse parameter
 const_len = 100
@@ -208,7 +208,7 @@ max_frequency_point3 = +0.050
 max_frequency_point4 = 0.033
 max_frequency_point5 = 0.018
 
-idle_q1 = max_frequency_point1 -0.285
+idle_q1 = max_frequency_point1 -0.285  #-0.07
 idle_q2 = max_frequency_point2 +0
 idle_q3 = max_frequency_point3 -0.166
 idle_q4 = max_frequency_point4 +0
@@ -222,9 +222,15 @@ amplitude_fit3, frequency_fit3, phase_fit3, offset_fit3 = [0, 0, 0, 0]
 amplitude_fit4, frequency_fit4, phase_fit4, offset_fit4 = [0, 0, 0, 0]
 amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
-const_flux_len = 600 # 600, 260 max-bake: 260ns
-const_flux_amp = 0.012 # for cryoscope
-# const_flux_amp = 0.48 # for cz-chevron 
+const_flux_len = 200 # 600, 260 max-bake: 260ns
+# const_flux_amp = 0.013 # for cryoscope
+const_flux_amp = 0.48 # for cz-chevron 
+
+# filter taps:
+fir4 = []
+iir4 = []
+# fir4 = [1.048, -0.984]
+# iir4 = [0.94]
 
 ##########################################
 #               two-qubit                #
@@ -236,15 +242,18 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 # q5 -> q4:
 cz5_4_len = 40 # ns
 cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
-cz5_4_2pi_dev = 0.5 -0.03
+cz5_4_2pi_dev = 0.5 +0.065
+cz4_5_2pi_dev = -0.244
 # q4 -> q3:
 cz4_3_len = 48 # ns
 cz4_3_amp = (0.2528 - idle_q4) * 1.016667*0.9916667 # 0.975*1.001666
 cz4_3_2pi_dev = 0.5 -0.069
+cz3_4_2pi_dev = 0.329
 # q2 -> q3: need to tune up q1 simultaneously
 cz2_3_len = 64#60 # ns
 cz2_3_amp = (0.2382 - idle_q2) * 0.9915975*0.998
-cz2_3_2pi_dev = 0.102
+cz2_3_2pi_dev = -0.09 +0.055
+cz3_2_2pi_dev = 0.12
 # q1 -> q2:
 cz1_2_len = 24 # ns
 cz1_2_amp = (-0.0577 - idle_q1) * 0.9916667*1.00416*0.9997083
@@ -378,7 +387,7 @@ config = {
                 5: {"offset": idle_q1, "filter": {'feedforward': [], 'feedback':[]}},  # qubit1 Z
                 6: {"offset": idle_q2, "filter": {'feedforward': [], 'feedback':[]}},  # qubit2 Z
                 7: {"offset": idle_q3, "filter": {'feedforward': [], 'feedback':[]}},  # qubit3 Z
-                8: {"offset": idle_q4, "filter": {'feedforward': [], 'feedback':[]}},  # qubit4 Z
+                8: {"offset": idle_q4, "filter": {'feedforward': fir4, 'feedback':iir4}},  # qubit4 Z
                 9: {"offset": idle_q5, "filter": {'feedforward': [], 'feedback':[]}},  # qubit5 Z
                 10: {"offset": 0.0},  # 
             },
@@ -1164,13 +1173,13 @@ config = {
         "g_cz_wf_1_2_q2": {"type": "arbitrary", "samples": g_cz_1_2_q2},
 
         # q5->q4:
-        "cz_4c5t_wf": {"type": "arbitrary", "samples": [0.0] + [cz5_4_amp]*(cz5_4_len-1)},
+        "cz_4c5t_wf": {"type": "arbitrary", "samples": [0.0] + [cz5_4_amp]*(cz5_4_len-1) },
         # q4->q3:
-        "cz_3c4t_wf": {"type": "arbitrary", "samples": [0.0] + [cz4_3_amp]*(cz4_3_len-1)},
+        "cz_3c4t_wf": {"type": "arbitrary", "samples": [0.0] + [cz4_3_amp]*(cz4_3_len-1) },
         # q2->q3:
-        "cz_3c2t_wf": {"type": "arbitrary", "samples": [0.0] + [cz2_3_amp]*(cz2_3_len-1)},
+        "cz_3c2t_wf": {"type": "arbitrary", "samples": [0.0] + [cz2_3_amp]*(cz2_3_len-1) },
         # q1->q2:
-        "cz_2c1t_wf": {"type": "arbitrary", "samples": [0.0] + [cz1_2_amp]*(cz1_2_len-1)},
+        "cz_2c1t_wf": {"type": "arbitrary", "samples": [0.0] + [cz1_2_amp]*(cz1_2_len-1) },
     },
     "digital_waveforms": {
         "ON": {"samples": [(1, 0)]},

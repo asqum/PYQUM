@@ -129,12 +129,12 @@ def baked_waveform(waveform, pulse_duration, qubit_index):
 qubit = 4
 
 
-n_avg = 10_000  # Number of averages
+n_avg = 60_000  # Number of averages
 # FLux pulse waveform generation
 # The zeros are just here to visualize the rising and falling times of the flux pulse. they need to be set to 0 before
 # fitting the step response with an exponential.
-zeros_before_pulse = 20  # Beginning of the flux pulse (before we put zeros to see the rising time)
-zeros_after_pulse = 20  # End of the flux pulse (after we put zeros to see the falling time)
+zeros_before_pulse = 40 #20  # Beginning of the flux pulse (before we put zeros to see the rising time)
+zeros_after_pulse = 40 #20  # End of the flux pulse (after we put zeros to see the falling time)
 total_zeros = zeros_after_pulse + zeros_before_pulse
 flux_waveform = np.array([0.0] * zeros_before_pulse + [const_flux_amp] * const_flux_len + [0.0] * zeros_after_pulse)
 
@@ -164,14 +164,14 @@ with program() as cryoscope:
                 # Play truncated flux pulse
                 align()
                 # Wait some time to ensure that the flux pulse will arrive after the x90 pulse
-                wait(400 * u.ns)
+                wait(500 * u.ns)
                 with switch_(segment):
                     for j in range(0, len(flux_waveform) + 1):
                         with case_(j):
                             square_pulse_segments[j].run()
                 # Wait for the idle time set slightly above the maximum flux pulse duration to ensure that the 2nd x90
                 # pulse arrives after the longest flux pulse
-                wait((len(flux_waveform) + 200) * u.ns, f"q{qubit}_xy")
+                wait((len(flux_waveform) + 300) * u.ns, f"q{qubit}_xy")
                 # Play second X/2 or Y/2
                 with if_(flag):
                     play("x90", f"q{qubit}_xy")
@@ -245,6 +245,11 @@ else:
         else:
             Sxx = 0
             Syy = 0
+
+        # center around zero:
+        Sxx = Sxx - (max(Sxx) + min(Sxx)) / 2
+        Syy = Syy - (max(Syy) + min(Syy)) / 2
+
         S = Sxx + 1j * Syy
         # Accumulated phase: angle between Sx and Sy
         phase = np.unwrap(np.angle(S))
@@ -253,7 +258,7 @@ else:
         detuning = signal.savgol_filter(phase / 2 / np.pi, 21, 2, deriv=1, delta=0.001)
         # Flux line step response in freq domain and voltage domain
         step_response_freq = detuning / np.average(detuning[-int(const_flux_len / 2) :])
-        step_response_volt = np.sqrt(step_response_freq)
+        step_response_volt = np.sqrt( abs( step_response_freq ) )
         # Plots
         plt.suptitle(f"Cryoscope for qubit {qubit} (qubit 1 (2) displayed on top (bottom))")
         plt.subplot(241)

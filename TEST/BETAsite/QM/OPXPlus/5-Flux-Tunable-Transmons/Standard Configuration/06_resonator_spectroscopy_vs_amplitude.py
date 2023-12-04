@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore")
 ###################
 # The QUA program #
 ###################
-test_qubit = [1,2,3,4,5]
+test_qubit = [1,5]
 n_avg = 3700 #6400  # The number of averages (NOTE: max allocation per core ~ 152832000 ~ 4GBit?)
 # The frequency sweep around the resonators' frequency "resonator_IF_q"
 dfs = np.arange(-1.2e6, +1.2e6, 0.1e6)
@@ -106,5 +106,5 @@ else:
     qm.close()
     
     
-serialize(multi_res_spec_vs_amp, config)
+serialize(multi_res_spec_vs_amp, config, "respect_amplitude")
     

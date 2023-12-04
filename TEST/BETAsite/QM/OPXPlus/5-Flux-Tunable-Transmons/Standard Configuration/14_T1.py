@@ -32,8 +32,8 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000
 tau_min = 4  # in clock cycles
-tau_max = 24_000  # in clock cycles
-d_tau = 140  # in clock cycles
+tau_max = 100000//4 #24_000  # in clock cycles
+d_tau = 800//4 #140  # in clock cycles
 t_delay = np.arange(tau_min, tau_max + 0.1, d_tau)  # Linear sweep
 # t_delay = np.logspace(np.log10(tau_min), np.log10(tau_max), 29)  # Log sweep
 

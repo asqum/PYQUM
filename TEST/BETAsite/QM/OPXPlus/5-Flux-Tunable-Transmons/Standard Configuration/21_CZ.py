@@ -43,7 +43,7 @@ warnings.filterwarnings("ignore")
 ####################
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
-qubit_to_flux_tune, qubit_to_meet_with = 1, 2 
+qubit_to_flux_tune, qubit_to_meet_with = 4, 3 
 
 starting_point = eval(f"idle_q{qubit_to_flux_tune}")
 cz_point = starting_point + eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_amp")
@@ -67,11 +67,11 @@ ts = np.arange(4, 30, 1)  # The flux pulse durations in clock cycles (4ns) - Mus
 # amps = (np.arange(starting_point, starting_point + 0.35, 0.001) - flux_offset) / scale_reference
 
 # Zoom in:
-# amps = (np.arange(0.20, 0.24, 0.00005) - flux_offset) / scale_reference
+amps = (np.arange(0.22, 0.26, 0.00005) - flux_offset) / scale_reference
 
 # calibrated:
 # amps = (np.arange(-0.135, -0.115, 0.0002) - flux_offset) / scale_reference # q2->q1
-amps = (np.arange(-0.10, 0.00, 0.00005) - flux_offset) / scale_reference # q1->q2
+# amps = (np.arange(-0.10, 0.00, 0.00005) - flux_offset) / scale_reference # q1->q2
 # amps = (np.arange(0.23, 0.25, 0.00002) - flux_offset) / scale_reference # q2->q3
 # amps = (np.arange(0.23, 0.27, 0.00005) - flux_offset) / scale_reference # q4->q3
 # amps = (np.arange(0.208, 0.226, 0.00001) - flux_offset) / scale_reference # q5->q4
@@ -134,6 +134,7 @@ qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_na
 # Run or Simulate Program #
 ###########################
 simulate = False
+indicate_config = False
 
 if simulate:
     # Simulates the QUA program for the specified duration
@@ -166,29 +167,33 @@ else:
         plt.pcolor(amps * scale_reference + flux_offset, 4 * ts, I1)
         plt.title(f"q{qubit_to_flux_tune} - I [V]")
         plt.ylabel("Interaction time (ns)")
-        plt.axhline(cz_duration, color="r", linewidth=0.37)
-        plt.axvline(cz_point, color="r", linewidth=0.37)
+        if indicate_config:
+            plt.axhline(cz_duration, color="r", linewidth=0.37)
+            plt.axvline(cz_point, color="r", linewidth=0.37)
         plt.subplot(223)
         plt.cla()
         plt.pcolor(amps * scale_reference + flux_offset, 4 * ts, Q1)
         plt.title(f"q{qubit_to_flux_tune} - Q [V]")
         plt.xlabel("Flux amplitude (V)")
         plt.ylabel("Interaction time (ns)")
-        plt.axhline(cz_duration, color="r", linewidth=0.37)
-        plt.axvline(cz_point, color="r", linewidth=0.37)
+        if indicate_config:
+            plt.axhline(cz_duration, color="r", linewidth=0.37)
+            plt.axvline(cz_point, color="r", linewidth=0.37)
         plt.subplot(222)
         plt.cla()
         plt.pcolor(amps * scale_reference + flux_offset, 4 * ts, I2)
         plt.title(f"q{qubit_to_meet_with} - I [V]")
-        plt.axhline(cz_duration, color="r", linewidth=0.37)
-        plt.axvline(cz_point, color="r", linewidth=0.37)
+        if indicate_config:
+            plt.axhline(cz_duration, color="r", linewidth=0.37)
+            plt.axvline(cz_point, color="r", linewidth=0.37)
         plt.subplot(224)
         plt.cla()
         plt.pcolor(amps * scale_reference + flux_offset, 4 * ts, Q2)
         plt.title(f"q{qubit_to_meet_with} - Q [V]")
         plt.xlabel("Flux amplitude (V)")
-        plt.axhline(cz_duration, color="r", linewidth=0.37)
-        plt.axvline(cz_point, color="r", linewidth=0.37)
+        if indicate_config:
+            plt.axhline(cz_duration, color="r", linewidth=0.37)
+            plt.axvline(cz_point, color="r", linewidth=0.37)
 
         plt.tight_layout()
         plt.pause(0.1)

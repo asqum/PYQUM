@@ -20,11 +20,13 @@ from qualang_tools.results import fetching_tool
 inv_gates = [int(np.where(c1_table[i, :] == 0)[0][0]) for i in range(24)]
 max_circuit_depth = 500
 num_of_sequences = 40
-n_avg = 60
+n_avg = 40 #60
 seed = 345323
 cooldown_time = thermalization_time *u.ns
-qb = "q4_xy"
-rr = "rr4"
+qubit = 5
+qb = f"q{qubit}_xy"
+rr = f"rr{qubit}"
+multiplexed = [1,2,3,4,5]
 
 # qmm = QuantumMachinesManager(host=qop_ip, port=9800, octave=octave_config, cluster_name=cluster_name)
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
@@ -154,14 +156,31 @@ with program() as rb:
 
                 play_sequence(sequence_list, depth)
                 
-                align()
-                # Qubit-1
-                # measure("readout", "rr1", None, dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q))
-                # measure("readout", "rr2", None)
-                # Qubit-2
-                # measure("readout", "rr1", None)
-                measure("readout", rr, None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I))
+                # align()
+                # # Qubit-1
+                # # measure("readout", "rr1", None, dual_demod.full("rotated_sin", "out1", "rotated_cos", "out2", Q))
+                # # measure("readout", "rr2", None)
+                # # Qubit-2
+                # # measure("readout", "rr1", None)
+                # measure("readout", rr, None, dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I))
      
+                align(qb, rr)
+                # Play through all the other resonators to be in the same condition as when the readout was optimized
+                for r in multiplexed:
+                    if r != qubit:
+                        align(qb, f"rr{r}")
+                        measure("readout"*amp(1), 
+                                f"rr{r}", 
+                                None) # only play "measure" but ditch data "acquisition"
+                
+                measure(
+                    "readout",
+                    rr,
+                    None,
+                    dual_demod.full("rotated_cos", "out1", "rotated_sin", "out2", I),
+                    # dual_demod.full("rotated_minus_sin", "out1", "rotated_cos", "out2", Q),
+                )
+
                 save(I, I_st)
                 assign(sequence_list[depth], saved_gate)
         
@@ -189,7 +208,7 @@ while results.is_processing():
     # Fetch results
     I, iteration = results.fetch_all()
     # Progress bar
-    progress_counter(iteration, n_avg, start_time=results.get_start_time())
+    progress_counter(iteration, n_avg, start_time=results.start_time)
     # Plot results
     plt.cla()
     plt.plot(x, np.average(I, axis=0), ".", label="I")

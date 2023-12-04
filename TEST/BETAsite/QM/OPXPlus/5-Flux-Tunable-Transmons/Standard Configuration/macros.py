@@ -48,12 +48,16 @@ def cz_gate(control, target, type="const_wf"):
         # frame_rotation_2pi(0.4, "q2_xy")
 
     elif type == "const_wf":
+        '''
+        control: to meet with
+        target: flux-tuned primarily
+        '''
         # cz
         wait(flux_settle_time * u.ns, f"q{target}_z")
-        align()
+        # align()
         play(f"cz_{control}c{target}t", f"q{target}_z")
         # frame_rotation_2pi(0.0, f"q{target}_xy")
-        align()
+        # align()
         wait(flux_settle_time * u.ns, f"q{target}_z")
         
     elif type == "ft_gaussian":
@@ -378,8 +382,8 @@ def live_plotting(n_avg, q_id, job, x_range, y_range, title, save_data, save_pat
     return map_top, map_bottom
 
 
-def serialize(qua_program, config):
-    filename = 'run.py'
+def serialize(qua_program, config, experiment="test"):
+    filename = f'run_{experiment}.py'
     sourceFile = open(run_dir/filename, 'w')
     print(generate_qua_script(qua_program, config), file=sourceFile) # multi_res_spec_vs_flux
     sourceFile.close()

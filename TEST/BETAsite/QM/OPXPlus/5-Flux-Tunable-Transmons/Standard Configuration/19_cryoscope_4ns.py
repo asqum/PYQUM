@@ -110,12 +110,13 @@ def filter_calc(exponential):
 # Index of the qubit to measure
 qubit = 4
 multiplexed = [1,2,3,4,5]
-wait_z = 450
-wait_xy = 400
+wait_z = 500
+wait_xy = 300
+const_pad = 40 // 4
 
-n_avg = 6_000  # Number of averages
+n_avg = 26_000  # Number of averages
 # Flux pulse durations in clock cycles (4ns) - must be > 4 or the pulse won't be played.
-durations = np.arange(3, const_flux_len // 4, 1)  # Starts at 3 clock-cycles to have the first point without pulse.
+durations = np.arange(0, const_flux_len // 4, 1)  # Starts at some clock-cycles to have the first point without pulse.
 # flux_waveform = np.array([const_flux_amp] * max(durations))
 xplot = durations * 4  # x-axis for plotting and deriving the filter taps - must be in ns.
 step_response_th = [1.0] * len(xplot)  # Perfect step response (square)
@@ -141,7 +142,7 @@ with program() as cryoscope:
                 # Wait some time to ensure that the flux pulse will arrive after the x90 pulse
                 wait(wait_z * u.ns)
                 # Play the flux pulse only if t is larger than the minimum of 4 clock cycles (16ns)
-                with if_(t > 3):
+                with if_((t > const_pad) & (t < const_flux_len//4 - 0)):
                     play("const", f"q{qubit}_z", duration=t)
                 
                 # Wait for the idle time set slightly above the maximum flux pulse duration to ensure that the 2nd x90
@@ -240,7 +241,7 @@ else:
         detuning = signal.savgol_filter(phase / 2 / np.pi, 21, 2, deriv=1, delta=0.001)
         # Flux line step response in freq domain and voltage domain
         step_response_freq = detuning / np.average(detuning[-int(const_flux_len / 2) :])
-        step_response_volt = np.sqrt(step_response_freq)
+        step_response_volt = np.sqrt( abs( step_response_freq ) )
         # Plots
         plt.suptitle(f"Cryoscope for qubit {qubit}")
         plt.subplot(241)
