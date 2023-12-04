@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import pandas as pd
 
-
+pi = np.pi
 multiplexed = [1,2,3,4,5]
 
 # open communication with qm-cluster:
@@ -61,6 +61,14 @@ def simple_circuit(shots, script, qmm=qmm):
                         try: eval("%s_gate(%s,%s)" %(operation,control,target))
                         except Exception as e: print(Fore.RED + "error: %s" %e)
                         print(Fore.YELLOW + "%s_gate(%s,%s)" %(operation,control,target))
+                    # RXYZ gate:
+                    elif ("(" in line) and (")" in line):
+                        operation = line.split("(")[0]
+                        radian = eval(line.split("(")[1].split(")")[0])
+                        qubit = int(line.split(" ")[1].split("q[")[1].split("]")[0]) + 1
+                        try: eval("%s_gate(%s,%s)" %(operation,qubit,radian))
+                        except Exception as e: print(Fore.RED + "error: %s" %e)
+                        print(Fore.YELLOW + "%s_gate(%s,%s)" %(operation,qubit,radian))
                     # sq gate:
                     else:
                         qubit = int(line.split(" ")[1].split("q[")[1].split("]")[0]) + 1
