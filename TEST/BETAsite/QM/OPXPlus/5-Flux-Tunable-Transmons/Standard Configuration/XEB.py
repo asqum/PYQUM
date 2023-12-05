@@ -16,9 +16,9 @@ multiplexed = [4,5,1,2,3]
 cz_type = "const_wf"
 simulate = False
 
-random_gates = 3
+random_gates = 1
 seqs = 80
-depth = 7
+depth = 13
 avgs = 100
 depths = np.arange(depth)
 
@@ -135,7 +135,7 @@ with program() as xeb:
               if simulate:
                 wait(25, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
               else:
-                wait(thermalization_time, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
+                wait(thermalization_time * u.ns, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
               with for_(_d_, 0, _d_ < d, _d_ + 1):
                 play("x90"*amp(a1_00[_d_], a1_01[_d_], a1_10[_d_], a1_11[_d_]), f"q{qubits[0]}_xy")
                 play("x90"*amp(a2_00[_d_], a2_01[_d_], a2_10[_d_], a2_11[_d_]), f"q{qubits[1]}_xy")
@@ -144,13 +144,32 @@ with program() as xeb:
                 # play("cz", "q1_z")
                 # frame_rotation_2pi(0, f"q{qubits[0]}_xy")
 
+                # align()
+                # cz_gate(2, 1, cz_type)
+                # frame_rotation_2pi(eval(f"cz{1}_{2}_2pi_dev"), "q2_xy")
+                # frame_rotation_2pi(eval(f"cz{2}_{1}_2pi_dev"), "q1_xy")
+                # align()
+
+                # align()
+                # cz_gate(3, 2, cz_type)
+                # frame_rotation_2pi(eval(f"cz{2}_{3}_2pi_dev"), "q3_xy")
+                # frame_rotation_2pi(eval(f"cz{3}_{2}_2pi_dev"), "q2_xy")
+                # align()
+
+                # align()
+                # cz_gate(3, 4, cz_type)
+                # frame_rotation_2pi(eval(f"cz{4}_{3}_2pi_dev"), "q4_xy")
+                # frame_rotation_2pi(eval(f"cz{3}_{4}_2pi_dev"), "q3_xy")
+                # align()
+
                 align()
                 cz_gate(4, 5, cz_type)
                 frame_rotation_2pi(eval(f"cz{5}_{4}_2pi_dev"), "q5_xy")
                 frame_rotation_2pi(eval(f"cz{4}_{5}_2pi_dev"), "q4_xy")
                 align()
 
-              multiplexed_readout(I, I_st, Q, Q_st, resonators=multiplexed)
+              # multiplexed_readout(I, I_st, Q, Q_st, resonators=multiplexed)
+              multiplexed_readout(I, I_st, Q, Q_st, resonators=multiplexed, weights="rotated_")
 
               # State discrimination
               assign(state[0], I[0] > ge_threshold_q4)
@@ -270,7 +289,7 @@ else:
       print("Data saved as %s.npz" %filename)
 
   # Create a pcolor plot
-  plt.subplot(221)
+  plt.subplot(241)
   plt.pcolor(np.abs(S1))
   ax = plt.gca()
   ax.set_title('q1 measured')
@@ -280,7 +299,7 @@ else:
   ax.set_yticks(np.arange(1, seqs+1))
   plt.colorbar()
 
-  plt.subplot(222)
+  plt.subplot(242)
   plt.pcolor(np.abs(S2))
   ax = plt.gca()
   ax.set_title('q2 measured')
@@ -290,7 +309,7 @@ else:
   ax.set_yticks(np.arange(1, seqs+1))
   plt.colorbar()
 
-  plt.subplot(223)
+  plt.subplot(245)
   plt.pcolor(np.abs(S1))
   ax = plt.gca()
   ax.set_title('q1 expected')
@@ -300,10 +319,50 @@ else:
   ax.set_yticks(np.arange(1, seqs+1))
   plt.colorbar()
 
-  plt.subplot(224)
+  plt.subplot(246)
   plt.pcolor(np.abs(S2))
   ax = plt.gca()
   ax.set_title('q2 expected')
+  ax.set_xlabel('Circuit depth')
+  ax.set_ylabel('Sequences')
+  ax.set_xticks(np.array(depths))
+  ax.set_yticks(np.arange(1, seqs+1))
+  plt.colorbar()
+
+  plt.subplot(243)
+  plt.pcolor(state00)
+  ax = plt.gca()
+  ax.set_title('state00')
+  ax.set_xlabel('Circuit depth')
+  ax.set_ylabel('Sequences')
+  ax.set_xticks(np.array(depths))
+  ax.set_yticks(np.arange(1, seqs+1))
+  plt.colorbar()
+
+  plt.subplot(244)
+  plt.pcolor(state11)
+  ax = plt.gca()
+  ax.set_title('state11')
+  ax.set_xlabel('Circuit depth')
+  ax.set_ylabel('Sequences')
+  ax.set_xticks(np.array(depths))
+  ax.set_yticks(np.arange(1, seqs+1))
+  plt.colorbar()
+
+  plt.subplot(247)
+  plt.pcolor(state01)
+  ax = plt.gca()
+  ax.set_title('state01')
+  ax.set_xlabel('Circuit depth')
+  ax.set_ylabel('Sequences')
+  ax.set_xticks(np.array(depths))
+  ax.set_yticks(np.arange(1, seqs+1))
+  plt.colorbar()
+
+  plt.subplot(248)
+  plt.pcolor(state10)
+  ax = plt.gca()
+  ax.set_title('state10')
   ax.set_xlabel('Circuit depth')
   ax.set_ylabel('Sequences')
   ax.set_xticks(np.array(depths))
