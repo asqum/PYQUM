@@ -16,12 +16,14 @@ u = unit(coerce_to_integer=True)
 ######################
 # Network parameters #
 ######################
-# Either using Cluster or Port:
+# Either using Cluster (local) or Port (public):
 cluster_name = "QPX_1"  # Write your cluster_name if version >= QOP220
-# qop_ip = "192.168.1.77"  # Write the QM router IP address
-# qop_port = None  # Write the QOP port if version < QOP220
-qop_ip = "qum.phys.sinica.edu.tw"  # Write the QM router IP address
-qop_port = 9800  # Write the QOP port if version < QOP220
+# local:
+qop_ip = "192.168.1.77"  # Write the QM router IP address
+qop_port = None  # Write the QOP port if version < QOP220
+# public:
+# qop_ip = "qum.phys.sinica.edu.tw"  # Write the QM router IP address
+# qop_port = 9800  # Write the QOP port if version < QOP220
 
 # Path to save data
 # save_dir = Path().absolute() / "QM" / "INSTALLATION" / "data"
@@ -223,8 +225,8 @@ amplitude_fit4, frequency_fit4, phase_fit4, offset_fit4 = [0, 0, 0, 0]
 amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
 const_flux_len = 200 # 600, 260 max-bake: 260ns
-# const_flux_amp = 0.013 # for cryoscope
-const_flux_amp = 0.48 # for cz-chevron 
+const_flux_amp = 0.013 # for cryoscope
+# const_flux_amp = 0.48 # for cz-chevron 
 
 # filter taps:
 fir4 = []
@@ -252,7 +254,7 @@ cz3_4_2pi_dev = 0.329
 # q2 -> q3: need to tune up q1 simultaneously
 cz2_3_len = 64#60 # ns
 cz2_3_amp = (0.2382 - idle_q2) * 0.9915975*0.998
-cz2_3_2pi_dev = -0.09 +0.055
+cz2_3_2pi_dev = 0 #-0.09 +0.055
 cz3_2_2pi_dev = 0.12
 # q1 -> q2:
 cz1_2_len = 24 # ns
