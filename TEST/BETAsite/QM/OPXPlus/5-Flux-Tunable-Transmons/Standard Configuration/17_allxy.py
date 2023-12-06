@@ -32,7 +32,7 @@ warnings.filterwarnings("ignore")
 ##############################
 # Program-specific variables #
 ##############################
-qubit = 3
+qubit = 5
 qb = "q%s_xy"%qubit  # The qubit under study
 res = "rr%s"%qubit  # The resonator to measure the qubit defined above
 n_avg = 100000  # The number of averages

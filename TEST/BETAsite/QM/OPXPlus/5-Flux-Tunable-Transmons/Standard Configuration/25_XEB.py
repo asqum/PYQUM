@@ -16,10 +16,10 @@ multiplexed = [4,5,1,2,3]
 cz_type = "const_wf"
 simulate = False
 
-random_gates = 1
-seqs = 80
-depth = 13
-avgs = 100
+random_gates = 3
+seqs = 5
+depth = 7
+avgs = 300
 depths = np.arange(depth)
 
 with program() as xeb:
@@ -135,7 +135,7 @@ with program() as xeb:
               if simulate:
                 wait(25, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
               else:
-                wait(thermalization_time * u.ns, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
+                wait(3* thermalization_time * u.ns, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
               with for_(_d_, 0, _d_ < d, _d_ + 1):
                 play("x90"*amp(a1_00[_d_], a1_01[_d_], a1_10[_d_], a1_11[_d_]), f"q{qubits[0]}_xy")
                 play("x90"*amp(a2_00[_d_], a2_01[_d_], a2_10[_d_], a2_11[_d_]), f"q{qubits[1]}_xy")
@@ -172,16 +172,10 @@ with program() as xeb:
               multiplexed_readout(I, I_st, Q, Q_st, resonators=multiplexed, weights="rotated_")
 
               # State discrimination
-              assign(state[0], I[0] > ge_threshold_q4)
-              assign(state[1], I[1] > ge_threshold_q5)
-              # assign(state[2], I[2] > ge_threshold_q3)
-              # assign(state[3], I[3] > ge_threshold_q4)
-              # assign(state[4], I[4] > ge_threshold_q5)
+              assign(state[0], I[0] > eval(f"ge_threshold_q{qubits[0]}"))
+              assign(state[1], I[1] > eval(f"ge_threshold_q{qubits[1]}"))
               save(state[0], state_st[0])
               save(state[1], state_st[1])
-              # save(state[2], state_st[2])
-              # save(state[3], state_st[3])
-              # save(state[4], state_st[4])
 
               assign(tot_state_, Cast.to_int(state[0]) + 2 * Cast.to_int(state[1]) )
               with switch_(tot_state_):
@@ -266,8 +260,8 @@ else:
   g1 = job.result_handles.get("g1").fetch_all()['value'].flatten()
   g2 = job.result_handles.get("g2").fetch_all()['value'].flatten()
   I1 = job.result_handles.get("I1").fetch_all()['value']
-  Q1 = job.result_handles.get("I2").fetch_all()['value']
-  I2 = job.result_handles.get("Q1").fetch_all()['value']
+  I2 = job.result_handles.get("I2").fetch_all()['value']
+  Q1 = job.result_handles.get("Q1").fetch_all()['value']
   Q2 = job.result_handles.get("Q2").fetch_all()['value']
   state1 = job.result_handles.get('state1').fetch_all()['value']
   state2 = job.result_handles.get('state2').fetch_all()['value']
@@ -289,11 +283,12 @@ else:
       print("Data saved as %s.npz" %filename)
 
   # Create a pcolor plot
+  plt.suptitle(f"XEB for q{qubits[0]}-q{qubits[1]}, inner-average: {avgs}, random-gates: {random_gates}")
   plt.subplot(241)
   plt.pcolor(np.abs(S1))
   ax = plt.gca()
   ax.set_title('q1 measured')
-  ax.set_xlabel('Circuit depth')
+  # ax.set_xlabel('Circuit depth')
   ax.set_ylabel('Sequences')
   ax.set_xticks(np.array(depths))
   ax.set_yticks(np.arange(1, seqs+1))
@@ -303,16 +298,16 @@ else:
   plt.pcolor(np.abs(S2))
   ax = plt.gca()
   ax.set_title('q2 measured')
-  ax.set_xlabel('Circuit depth')
+  # ax.set_xlabel('Circuit depth')
   ax.set_ylabel('Sequences')
   ax.set_xticks(np.array(depths))
   ax.set_yticks(np.arange(1, seqs+1))
   plt.colorbar()
 
   plt.subplot(245)
-  plt.pcolor(np.abs(S1))
+  plt.pcolor(I1)
   ax = plt.gca()
-  ax.set_title('q1 expected')
+  ax.set_title(f'q{qubits[0]}-I')
   ax.set_xlabel('Circuit depth')
   ax.set_ylabel('Sequences')
   ax.set_xticks(np.array(depths))
@@ -320,9 +315,9 @@ else:
   plt.colorbar()
 
   plt.subplot(246)
-  plt.pcolor(np.abs(S2))
+  plt.pcolor(I2)
   ax = plt.gca()
-  ax.set_title('q2 expected')
+  ax.set_title(f'q{qubits[1]}-I')
   ax.set_xlabel('Circuit depth')
   ax.set_ylabel('Sequences')
   ax.set_xticks(np.array(depths))
@@ -333,7 +328,7 @@ else:
   plt.pcolor(state00)
   ax = plt.gca()
   ax.set_title('state00')
-  ax.set_xlabel('Circuit depth')
+  # ax.set_xlabel('Circuit depth')
   ax.set_ylabel('Sequences')
   ax.set_xticks(np.array(depths))
   ax.set_yticks(np.arange(1, seqs+1))
@@ -343,7 +338,7 @@ else:
   plt.pcolor(state11)
   ax = plt.gca()
   ax.set_title('state11')
-  ax.set_xlabel('Circuit depth')
+  # ax.set_xlabel('Circuit depth')
   ax.set_ylabel('Sequences')
   ax.set_xticks(np.array(depths))
   ax.set_yticks(np.arange(1, seqs+1))
