@@ -126,8 +126,10 @@ for i in range(seqs):
 
     fxeb = ((cross_entropy(incoherent, expected)-cross_entropy(measured, expected))/
             (cross_entropy(incoherent, expected)-cross_entropy(expected, expected)))
-    if isnan(fxeb): print(f"nan found in seq-{i+1}, depth{j+1}: {fxeb}, {cross_entropy(expected, expected)}")
-    elif isinf(fxeb): print(f"inf found in seq-{i+1}, depth{j+1}: {fxeb}, {cross_entropy(expected, expected)}")
+    if i==1 and j==2:
+       print(f"seq-{i},depth-{j}: {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
+    if isnan(fxeb): print(f"nan found in seq-{i+1}, depth-{j+1}: {fxeb}, {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
+    elif isinf(fxeb): print(f"inf found in seq-{i+1}, depth-{j+1}: {fxeb}, {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
 
     ce_vec.append(fxeb)
   expected00_mat.append(v00)
@@ -242,16 +244,16 @@ print(Fxeb)
 def exponential_decay(x, a, b, c):
     return a * np.exp(-b * x) + c
 
-params, covariance = curve_fit(exponential_decay, np.arange(depth), Fxeb)
-a_fit, b_fit, c_fit = params
-
-x = exponential_decay(np.arange(depth), a_fit, b_fit, c_fit)
-
-xeb_err_per_cycle = 1 - (x[2]-c_fit)/(x[1]-c_fit)
+try:
+  params, covariance = curve_fit(exponential_decay, np.arange(depth), Fxeb)
+  a_fit, b_fit, c_fit = params
+  x = exponential_decay(np.arange(depth), a_fit, b_fit, c_fit)
+  xeb_err_per_cycle = 1 - (x[2]-c_fit)/(x[1]-c_fit)
+except: pass
 
 
 plt.scatter(np.arange(depth), Fxeb, label='Original Data')
-plt.plot(np.arange(depth), exponential_decay(np.arange(depth), a_fit, b_fit, c_fit), label='err_per_cycle={:.2f}'.format(xeb_err_per_cycle), color='red')
+# plt.plot(np.arange(depth), exponential_decay(np.arange(depth), a_fit, b_fit, c_fit), label='err_per_cycle={:.2f}'.format(xeb_err_per_cycle), color='red')
 plt.legend()
 ax = plt.gca()
 ax.set_title('XEB')
