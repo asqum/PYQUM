@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pprint
 from scipy.optimize import curve_fit
+from math import isnan, isinf
+
 from configuration import *
 
 # Load the npz file
@@ -122,9 +124,12 @@ for i in range(seqs):
     expected = np.array([v00[-1], v10[-1], v01[-1], v11[-1]])
     measured = np.array([(state00[i][j])/avgs, (state01[i][j])/avgs, (state10[i][j])/avgs, (state11[i][j])/avgs])
 
-    # ce_vec.append(-cross_entropy(measured, expected))
-    ce_vec.append((cross_entropy(incoherent, expected)-cross_entropy(measured, expected))/
-                  (cross_entropy(incoherent, expected)-cross_entropy(expected, expected)))
+    fxeb = ((cross_entropy(incoherent, expected)-cross_entropy(measured, expected))/
+            (cross_entropy(incoherent, expected)-cross_entropy(expected, expected)))
+    if isnan(fxeb): print(f"nan found in seq-{i+1}, depth{j+1}: {fxeb}, {cross_entropy(expected, expected)}")
+    elif isinf(fxeb): print(f"inf found in seq-{i+1}, depth{j+1}: {fxeb}, {cross_entropy(expected, expected)}")
+
+    ce_vec.append(fxeb)
   expected00_mat.append(v00)
   expected01_mat.append(v01)
   expected10_mat.append(v10)
@@ -232,6 +237,7 @@ plt.colorbar()
 # Create a 
 plt.subplot(5,2,10)
 Fxeb = np.mean(ce_mat, axis=0)
+print(Fxeb)
 
 def exponential_decay(x, a, b, c):
     return a * np.exp(-b * x) + c
