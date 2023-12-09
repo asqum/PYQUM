@@ -5,10 +5,10 @@ from scipy.optimize import curve_fit
 from configuration import *
 
 # Load the npz file
-npz_file = np.load(save_dir/'XEB_q4_5_seqs(77)_depth(7)_avgs(101)_random_gates(3).npz')
+# npz_file = np.load(save_dir/'XEB_q4_5_seqs(77)_depth(7)_avgs(101)_random_gates(3).npz')
 # npz_file = np.load(save_dir/'XEB_test.npz')
 # Hero:
-# npz_file = np.load(save_dir/'XEB_q4_5_seqs(80)_depth(7)_avgs(100)_random_gates(3).npz')
+npz_file = np.load(save_dir/'XEB_q4_5_seqs(80)_depth(7)_avgs(100)_random_gates(3).npz')
 
 # Create an empty dictionary to store variables
 variables = {}
