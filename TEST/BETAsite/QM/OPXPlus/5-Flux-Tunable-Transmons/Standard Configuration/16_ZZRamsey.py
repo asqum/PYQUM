@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 1,3
+control, target = 1,5
 
 DD_even = False
 DD_cycle = 0 # push T2, avoid zz-coupling

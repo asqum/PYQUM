@@ -8,5 +8,5 @@ sys.path.append(str(Path().absolute().parent/"BETAsite"/"QM"/"OPXPlus"/"Configur
 # For VS-Code workspace:
 sys.path.append(str(Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"Configurations"))
 
-from configuration_2q_flux_transmon import *
+from configuration_AS_5q_dr2a import *
 

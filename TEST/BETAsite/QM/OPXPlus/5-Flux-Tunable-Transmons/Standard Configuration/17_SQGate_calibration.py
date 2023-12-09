@@ -289,8 +289,9 @@ def amp_calibration( amp_modify_range, q_name, ro_element, multiplexed, config, 
 if __name__ == '__main__':
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
     n_avg = 20000
-    qubit = 1
+    qubit = 4
     multiplexed = [1,2,3,4,5]
+    mode = "drag"
 
     # Scan the DRAG coefficient pre-factor
 
@@ -300,6 +301,9 @@ if __name__ == '__main__':
     assert drag_coef != 0, "The DRAG coefficient 'drag_coef' must be different from 0 in the config."
     sequence_repeat = 24
     prefactor_range = 0.25/sequence_repeat
-    # DRAG_calibration_Yale( f"q{qubit}_xy", f"rr{qubit}", multiplexed, config, qmm, n_avg=n_avg)
-    amp_calibration( prefactor_range, f"q{qubit}_xy", f"rr{qubit}", multiplexed, config, qmm, n_avg=n_avg, sequence_repeat=sequence_repeat)
+    match mode.lower():
+        case "drag":
+            DRAG_calibration_Yale( f"q{qubit}_xy", f"rr{qubit}", multiplexed, config, qmm, n_avg=n_avg)
+        case "amp":
+            amp_calibration( prefactor_range, f"q{qubit}_xy", f"rr{qubit}", multiplexed, config, qmm, n_avg=n_avg, sequence_repeat=sequence_repeat)
     plt.show()

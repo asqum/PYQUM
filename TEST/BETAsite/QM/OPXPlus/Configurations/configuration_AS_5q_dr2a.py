@@ -19,11 +19,11 @@ u = unit(coerce_to_integer=True)
 # Either using Cluster (local) or Port (public):
 cluster_name = "QPX_1"  # Write your cluster_name if version >= QOP220
 # local:
-qop_ip = "192.168.1.77"  # Write the QM router IP address
-qop_port = None  # Write the QOP port if version < QOP220
+# qop_ip = "192.168.1.77"  # Write the QM router IP address
+# qop_port = None  # Write the QOP port if version < QOP220
 # public:
-# qop_ip = "qum.phys.sinica.edu.tw"  # Write the QM router IP address
-# qop_port = 9800  # Write the QOP port if version < QOP220
+qop_ip = "qum.phys.sinica.edu.tw"  # Write the QM router IP address
+qop_port = 9800  # Write the QOP port if version < QOP220
 
 # Path to save data
 # save_dir = Path().absolute() / "QM" / "INSTALLATION" / "data"
@@ -81,8 +81,8 @@ qubit_LO_q5 = (4.600) * u.GHz
 qubit_IF_q1 = (-131.239 +0.004 ) * u.MHz 
 qubit_IF_q2 = (-106.486 +0.043 ) * u.MHz 
 qubit_IF_q3 = (-262.526 -0.266 ) * u.MHz
-qubit_IF_q4 = (-368.583 ) * u.MHz
-qubit_IF_q5 = (-122.888 ) * u.MHz
+qubit_IF_q4 = (-368.583 +0.075 ) * u.MHz
+qubit_IF_q5 = (-122.888 -0.020 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -103,17 +103,17 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.01933 *1.00986231
-pi_amp_q2 = 0.0604 *1.00518417469
-pi_amp_q3 = 0.02138 *0.99695*0.99529*1.00063
-pi_amp_q4 = 0.0837716
+pi_amp_q1 = 0.01952
+pi_amp_q2 = 0.060713
+pi_amp_q3 = 0.0212277634
+pi_amp_q4 = 0.083352742 
 pi_amp_q5 = 0.1180260872
 
 r90_amp_q1 = pi_amp_q1 / 2 *0.99883
 r90_amp_q2 = pi_amp_q2 / 2 *1.0146223169
 r90_amp_q3 = pi_amp_q3 / 2 *1
 r90_amp_q4 = pi_amp_q4 / 2 *1.0081961818*0.999
-r90_amp_q5 = pi_amp_q5 / 2 *1.0078738311
+r90_amp_q5 = pi_amp_q5 / 2 *1.009012728529
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
 drag_coef_q1 = 0.9592
@@ -224,9 +224,8 @@ amplitude_fit3, frequency_fit3, phase_fit3, offset_fit3 = [0, 0, 0, 0]
 amplitude_fit4, frequency_fit4, phase_fit4, offset_fit4 = [0, 0, 0, 0]
 amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
-const_flux_len = 200 # 600, 260 max-bake: 260ns
-const_flux_amp = 0.013 # for cryoscope
-# const_flux_amp = 0.48 # for cz-chevron 
+const_flux_len = 360 # 600, 260 max-bake: 260ns
+const_flux_amp = 0.48 # for cz-chevron 
 
 # filter taps:
 fir4 = []
@@ -244,8 +243,8 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 # q5 -> q4:
 cz5_4_len = 40 # ns
 cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
-cz5_4_2pi_dev = 0.5 +0.065
-cz4_5_2pi_dev = -0.244
+cz5_4_2pi_dev = 0.5 -0.030
+cz4_5_2pi_dev = -0.219
 # q4 -> q3:
 cz4_3_len = 48 # ns
 cz4_3_amp = (0.2528 - idle_q4) * 1.016667*0.9916667 # 0.975*1.001666
@@ -342,12 +341,12 @@ rotation_angle_q1 = (301.4 / 180) * np.pi
 rotation_angle_q2 = (146.6 / 180) * np.pi
 rotation_angle_q3 = (16.8 / 180) * np.pi
 rotation_angle_q4 = (245.4 / 180) * np.pi
-rotation_angle_q5 = (179.6 / 180) * np.pi
+rotation_angle_q5 = (184.2 / 180) * np.pi
 ge_threshold_q1 = -5.896e-05
 ge_threshold_q2 = 1.027e-04
 ge_threshold_q3 = 1.204e-04
-ge_threshold_q4 = 2.236e-04
-ge_threshold_q5 = 1.635e-04
+ge_threshold_q4 = 2.753e-04
+ge_threshold_q5 = 2.111e-04
 
 #############################################
 #                  Config                   #

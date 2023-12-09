@@ -110,9 +110,8 @@ def filter_calc(exponential):
 # Index of the qubit to measure
 qubit = 4
 multiplexed = [1,2,3,4,5]
-wait_z = 500
-wait_xy = 300
-const_pad = 40 // 4
+wait_z = 30
+wait_xy = 30
 
 n_avg = 26_000  # Number of averages
 # Flux pulse durations in clock cycles (4ns) - must be > 4 or the pulse won't be played.
@@ -142,8 +141,8 @@ with program() as cryoscope:
                 # Wait some time to ensure that the flux pulse will arrive after the x90 pulse
                 wait(wait_z * u.ns)
                 # Play the flux pulse only if t is larger than the minimum of 4 clock cycles (16ns)
-                with if_((t > const_pad) & (t < const_flux_len//4 - 0)):
-                    play("const", f"q{qubit}_z", duration=t)
+                with if_((t > 60//4) & (t < const_flux_len//4 - 60//4)):
+                    play("const"*amp(0.06), f"q{qubit}_z", duration=t)
                 
                 # Wait for the idle time set slightly above the maximum flux pulse duration to ensure that the 2nd x90
                 # pulse arrives after the longest flux pulse
@@ -334,7 +333,7 @@ else:
     plt.suptitle("Cryoscope with filter implementation")
     plt.plot(xplot, step_response_volt, "o-", label="Experimental data")
     plt.plot(xplot, no_filter, label="Fitted response without filter")
-    plt.plot(xplot, with_filter, label="Fitted response with filter")
+    plt.plot(xplot, with_filter, ".-", label="Fitted response with filter")
     plt.plot(xplot, step_response_th, label="Ideal WF")  # pulse
     plt.text(
         max(xplot) // 2,

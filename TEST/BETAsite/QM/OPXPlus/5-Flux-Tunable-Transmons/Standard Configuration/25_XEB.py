@@ -17,10 +17,13 @@ cz_type = "const_wf"
 simulate = False
 
 random_gates = 3
-seqs = 5
+seqs = 77
 depth = 7
-avgs = 300
+avgs = 101
 depths = np.arange(depth)
+
+filename = f"XEB_q{qubits[0]}_{qubits[1]}_seqs({seqs})_depth({depth})_avgs({avgs})_random_gates({random_gates})"
+# filename = "XEB_test"
 
 with program() as xeb:
 
@@ -32,6 +35,7 @@ with program() as xeb:
   _d = declare(int)
   _d_ = declare(int)
   s = declare(int)
+  s_st = declare_stream()
   g1 = declare(int, size=depths[-1]) # single qubit gate q1
   g2 = declare(int, size=depths[-1]) # single qubit gate q1
   g1_st = declare_stream()
@@ -193,7 +197,11 @@ with program() as xeb:
         save(state10, state10_st)
         save(state11, state11_st)
 
+        # Save the sequence iteration to get the progress bar
+        save(s, s_st)
+
   with stream_processing():
+     s_st.save("s")
      g1_st.save_all('g1')
      g2_st.save_all('g2')
      I_st[0].buffer(avgs).map(FUNCTIONS.average()).buffer(len(depths)).save_all("I1")
@@ -275,7 +283,6 @@ else:
   # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
   qm.close()
 
-  filename = f"XEB_q{qubits[0]}_{qubits[1]}_seqs({seqs})_depth({depth})_avgs({avgs})_random_gates({random_gates})"
   save = True
   if save:
       np.savez(save_dir/filename, g1=g1, g2=g2, I1=I1, I2=I2, Q1=Q1, Q2=Q2, seqs=seqs, depth=depth, avgs=avgs, random_gates=random_gates, 

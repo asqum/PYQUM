@@ -26,8 +26,8 @@ h_loop = 1
 multiplexed = [1,2,3,4,5]
 bitstrings = ['00', '01', '10', '11']
 
-qubit_to_flux_tune, qubit_to_meet_with = 2, 3
-cx_control, cx_target = 2, 3
+qubit_to_flux_tune, qubit_to_meet_with = 5, 4
+cx_control, cx_target = 4, 5
 th_control, th_target = eval(f"ge_threshold_q{cx_control}"), eval(f"ge_threshold_q{cx_target}")
 phis_corr = np.linspace(-0.9, 0.9, 180)
 
@@ -61,11 +61,11 @@ with program() as cz_ops:
             # frame_rotation_2pi(global_phase_correction+phi_corr, f"q{cx_target}_xy")
 
             # for 3-4, 4-5 upper: FT = target
-            # frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_target}_xy")
-            # frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
+            frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_target}_xy")
+            frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
             # for 1-2, 2-3 upper: FT = control
-            frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_target}_xy") 
-            frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
+            # frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_target}_xy") 
+            # frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
             
             align()
             play("y90", f"q{cx_target}_xy")
