@@ -54,7 +54,10 @@ def cross_entropy(p, q, epsilon=1e-15):
     - Cross entropy between p and q
     """
     q = np.maximum(q, epsilon)  # Avoid taking the logarithm of zero
-    return -np.sum(p * np.log(q))
+
+    x_entropy = -np.sum(p * np.log(q))
+
+    return x_entropy
 
 # Define the matrices
 phix = np.pi/2
@@ -127,7 +130,9 @@ for i in range(seqs):
     fxeb = ((cross_entropy(incoherent, expected)-cross_entropy(measured, expected))/
             (cross_entropy(incoherent, expected)-cross_entropy(expected, expected)))
     if i==1 and j==2:
-       print(f"seq-{i},depth-{j}: {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
+       from decimal import Decimal as dc
+       print(f"incoherent: {incoherent}, expected: {expected}")
+       print(f"seq-{i},depth-{j}: {dc(cross_entropy(incoherent, expected))}, {dc(cross_entropy(expected, expected))}")
     if isnan(fxeb): print(f"nan found in seq-{i+1}, depth-{j+1}: {fxeb}, {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
     elif isinf(fxeb): print(f"inf found in seq-{i+1}, depth-{j+1}: {fxeb}, {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
 
