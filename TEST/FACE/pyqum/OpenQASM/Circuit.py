@@ -25,7 +25,7 @@ import pandas as pd
 pi = np.pi
 multiplexed = [1,2,3,4,5]
 
-# open communication with qm-cluster:
+print(Fore.YELLOW + "open communication with qm-cluster:")
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
 
 def simple_circuit(shots, script, qmm=qmm):

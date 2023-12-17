@@ -43,6 +43,7 @@ from cosine import Cosine
 ####################
 # Define variables #
 ####################
+simulate = True
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
 qubit_to_flux_tune, qubit_to_meet_with = 2, 3
@@ -111,8 +112,9 @@ with program() as cz_pi_cal:
                     multiplexed_readout(I, I_st, Q, Q_st, resonators=multiplexed, weights="rotated_")
                     
                     # Wait for the qubit to decay to the ground state
-                    wait(thermalization_time * u.ns)
-       
+                    if simulate: wait(7)
+                    else: wait(thermalization_time * u.ns)
+                    
 
     with stream_processing():
         # for the progress counter
@@ -136,7 +138,6 @@ qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_na
 ###########################
 # Run or Simulate Program #
 ###########################
-simulate = False
 
 if simulate:
     # Simulates the QUA program for the specified duration

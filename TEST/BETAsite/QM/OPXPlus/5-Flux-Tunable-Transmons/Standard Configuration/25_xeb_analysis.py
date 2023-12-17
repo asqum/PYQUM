@@ -7,10 +7,10 @@ from math import isnan, isinf
 from configuration import *
 
 # Load the npz file
-# npz_file = np.load(save_dir/'XEB_q4_5_seqs(77)_depth(7)_avgs(101)_random_gates(3).npz')
+npz_file = np.load(save_dir/'XEB_q4_5_seqs(77)_depth(7)_avgs(101)_random_gates(3).npz')
 # npz_file = np.load(save_dir/'XEB_test.npz')
 # Hero:
-npz_file = np.load(save_dir/'XEB_q4_5_seqs(80)_depth(7)_avgs(100)_random_gates(3).npz')
+# npz_file = np.load(save_dir/'XEB_q4_5_seqs(80)_depth(7)_avgs(100)_random_gates(3).npz')
 
 # Create an empty dictionary to store variables
 variables = {}
@@ -55,7 +55,9 @@ def cross_entropy(p, q, epsilon=1e-15):
     """
     q = np.maximum(q, epsilon)  # Avoid taking the logarithm of zero
 
-    x_entropy = -np.sum(p * np.log(q))
+    print(f"p: {p}, \nq: {q}")
+
+    x_entropy = -np.sum(p * np.log2(q))
 
     return x_entropy
 
@@ -127,12 +129,18 @@ for i in range(seqs):
     expected = np.array([v00[-1], v10[-1], v01[-1], v11[-1]])
     measured = np.array([(state00[i][j])/avgs, (state01[i][j])/avgs, (state10[i][j])/avgs, (state11[i][j])/avgs])
 
-    fxeb = ((cross_entropy(incoherent, expected)-cross_entropy(measured, expected))/
-            (cross_entropy(incoherent, expected)-cross_entropy(expected, expected)))
+    xe_incoherent = cross_entropy(incoherent, expected)
+    xe_measured = cross_entropy(measured, expected)
+    xe_expected = cross_entropy(expected, expected)
+    
+    fxeb = ((xe_incoherent-xe_measured)/(xe_incoherent-xe_expected))
+    
     if i==1 and j==2:
+       
        from decimal import Decimal as dc
-       print(f"incoherent: {incoherent}, expected: {expected}")
+       print(f"incoherent: {([dc(x) for x in incoherent])}, expected: {([dc(x) for x in expected])}, ee: {-np.sum(expected * np.log(expected))}, ie: {-np.sum(incoherent * np.log(expected))}")
        print(f"seq-{i},depth-{j}: {dc(cross_entropy(incoherent, expected))}, {dc(cross_entropy(expected, expected))}")
+
     if isnan(fxeb): print(f"nan found in seq-{i+1}, depth-{j+1}: {fxeb}, {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
     elif isinf(fxeb): print(f"inf found in seq-{i+1}, depth-{j+1}: {fxeb}, {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
 

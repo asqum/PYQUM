@@ -23,10 +23,11 @@ num_of_sequences = 40
 n_avg = 40 #60
 seed = 345323
 cooldown_time = thermalization_time *u.ns
-qubit = 5
+qubit = 1
 qb = f"q{qubit}_xy"
 rr = f"rr{qubit}"
 multiplexed = [1,2,3,4,5]
+simulate = True
 
 # qmm = QuantumMachinesManager(host=qop_ip, port=9800, octave=octave_config, cluster_name=cluster_name)
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
@@ -150,7 +151,8 @@ with program() as rb:
                 assign(saved_gate, sequence_list[depth])
                 assign(sequence_list[depth], inv_gate_list[depth - 1])
 
-                wait(cooldown_time)
+                if simulate: wait(10)
+                else: wait(cooldown_time)
 
                 align()
 
@@ -189,78 +191,88 @@ with program() as rb:
         I_st.buffer(max_circuit_depth).buffer(num_of_sequences).average().save("I")
         n_st.save("iteration")
 
-# job = qmm.simulate(config, rb, SimulationConfig(10000))
-# job.get_simulated_samples().con1.plot()
-# plt.show()
+if simulate:
+    # job = qmm.simulate(config, rb, SimulationConfig(30000))
+    # job.get_simulated_samples().con1.plot()
+    # job.get_simulated_samples().con2.plot()
+    # plt.show()
 
-qm = qmm.open_qm(config)
+    # Simulates the QUA program for the specified duration
+    simulation_config = SimulationConfig(duration=10_000)  # In clock cycles = 4ns
+    job = qmm.simulate(config, rb, simulation_config)
+    job.get_simulated_samples().con1.plot()
+    # job.get_simulated_samples().con2.plot()
+    plt.show()
 
-job = qm.execute(rb)
+else:
+    qm = qmm.open_qm(config)
 
-# Get results from QUA program
-results = fetching_tool(job, data_list=["I", "iteration"], mode="live")
-# Live plotting
-fig = plt.figure()
-interrupt_on_close(fig, job)  # Interrupts the job when closing the figure
+    job = qm.execute(rb)
 
-x = np.linspace(1, max_circuit_depth, max_circuit_depth)
-while results.is_processing():
-    # Fetch results
-    I, iteration = results.fetch_all()
-    # Progress bar
-    progress_counter(iteration, n_avg, start_time=results.start_time)
-    # Plot results
-    plt.cla()
-    plt.plot(x, np.average(I, axis=0), ".", label="I")
-    plt.xlabel("Number of Clifford gates")
-    plt.legend()
-    plt.pause(1.0)
+    # Get results from QUA program
+    results = fetching_tool(job, data_list=["I", "iteration"], mode="live")
+    # Live plotting
+    fig = plt.figure()
+    interrupt_on_close(fig, job)  # Interrupts the job when closing the figure
 
-
-def power_law(m, a, b, p):
-    return a * (p**m) + b
+    x = np.linspace(1, max_circuit_depth, max_circuit_depth)
+    while results.is_processing():
+        # Fetch results
+        I, iteration = results.fetch_all()
+        # Progress bar
+        progress_counter(iteration, n_avg, start_time=results.start_time)
+        # Plot results
+        plt.cla()
+        plt.plot(x, np.average(I, axis=0), ".", label="I")
+        plt.xlabel("Number of Clifford gates")
+        plt.legend()
+        plt.pause(1.0)
 
 
-data = I
-value = np.average(data, axis=0)  # Can change to Q
-error = np.std(data, axis=0)
-pars, cov = curve_fit(
-    f=power_law,
-    xdata=x,
-    ydata=value,
-    p0=[0.5, 0.5, 0.9],
-    bounds=(-np.inf, np.inf),
-    maxfev=2000,
-)
-plt.figure()
-plt.errorbar(x, value, yerr=error, marker=".")
-plt.plot(x, power_law(x, *pars), linestyle="--", linewidth=2)
+    def power_law(m, a, b, p):
+        return a * (p**m) + b
 
-stdevs = np.sqrt(np.diag(cov))
 
-print("#########################")
-print("### Fitted Parameters ###")
-print("#########################")
-print(f"A = {pars[0]:.3} ({stdevs[0]:.1}), B = {pars[1]:.3} ({stdevs[1]:.1}), p = {pars[2]:.3} ({stdevs[2]:.1})")
-print("Covariance Matrix")
-print(cov)
+    data = I
+    value = np.average(data, axis=0)  # Can change to Q
+    error = np.std(data, axis=0)
+    pars, cov = curve_fit(
+        f=power_law,
+        xdata=x,
+        ydata=value,
+        p0=[0.5, 0.5, 0.9],
+        bounds=(-np.inf, np.inf),
+        maxfev=2000,
+    )
+    plt.figure()
+    plt.errorbar(x, value, yerr=error, marker=".")
+    plt.plot(x, power_law(x, *pars), linestyle="--", linewidth=2)
 
-one_minus_p = 1 - pars[2]
-r_c = one_minus_p * (1 - 1 / 2**1)
-r_g = r_c / 1.875  # 1.875 is the average number of gates in clifford operation
-r_c_std = stdevs[2] * (1 - 1 / 2**1)
-r_g_std = r_c_std / 1.875
+    stdevs = np.sqrt(np.diag(cov))
 
-print("#########################")
-print("### Useful Parameters ###")
-print("#########################")
-print(
-    f"Error rate: 1-p = {np.format_float_scientific(one_minus_p, precision=2)} ({stdevs[2]:.1})\n"
-    f"Clifford set infidelity: r_c = {np.format_float_scientific(r_c, precision=2)} ({r_c_std:.1})\n"
-    f"Gate infidelity: r_g = {np.format_float_scientific(r_g, precision=2)}  ({r_g_std:.1})"
-)
+    print("#########################")
+    print("### Fitted Parameters ###")
+    print("#########################")
+    print(f"A = {pars[0]:.3} ({stdevs[0]:.1}), B = {pars[1]:.3} ({stdevs[1]:.1}), p = {pars[2]:.3} ({stdevs[2]:.1})")
+    print("Covariance Matrix")
+    print(cov)
 
-plt.title("r_c: %s%%, r_g: %s%%" %(r_c*100, r_g*100))
-plt.show()
+    one_minus_p = 1 - pars[2]
+    r_c = one_minus_p * (1 - 1 / 2**1)
+    r_g = r_c / 1.875  # 1.875 is the average number of gates in clifford operation
+    r_c_std = stdevs[2] * (1 - 1 / 2**1)
+    r_g_std = r_c_std / 1.875
 
-np.savez(save_dir/"rb_values", value)
+    print("#########################")
+    print("### Useful Parameters ###")
+    print("#########################")
+    print(
+        f"Error rate: 1-p = {np.format_float_scientific(one_minus_p, precision=2)} ({stdevs[2]:.1})\n"
+        f"Clifford set infidelity: r_c = {np.format_float_scientific(r_c, precision=2)} ({r_c_std:.1})\n"
+        f"Gate infidelity: r_g = {np.format_float_scientific(r_g, precision=2)}  ({r_g_std:.1})"
+    )
+
+    plt.title("r_c: %s%%, r_g: %s%%" %(r_c*100, r_g*100))
+    plt.show()
+
+    np.savez(save_dir/"rb_values", value)

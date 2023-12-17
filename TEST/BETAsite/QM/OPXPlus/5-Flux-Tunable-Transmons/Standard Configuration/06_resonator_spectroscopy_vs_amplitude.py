@@ -37,8 +37,8 @@ warnings.filterwarnings("ignore")
 ###################
 # The QUA program #
 ###################
-test_qubit = [1,5]
-n_avg = 3700 #6400  # The number of averages (NOTE: max allocation per core ~ 152832000 ~ 4GBit?)
+test_qubit = [1,2,3,4,5]
+n_avg = 13700 #6400  # The number of averages (NOTE: max allocation per core ~ 152832000 ~ 4GBit?)
 # The frequency sweep around the resonators' frequency "resonator_IF_q"
 dfs = np.arange(-1.2e6, +1.2e6, 0.1e6)
 # The readout amplitude sweep (as a pre-factor of the readout amplitude) - must be within [-2; 2)

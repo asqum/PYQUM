@@ -78,11 +78,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-131.239 +0.004 ) * u.MHz 
-qubit_IF_q2 = (-106.486 +0.043 ) * u.MHz 
-qubit_IF_q3 = (-262.526 -0.266 ) * u.MHz
-qubit_IF_q4 = (-368.583 +0.075 ) * u.MHz
-qubit_IF_q5 = (-122.888 -0.020 ) * u.MHz
+qubit_IF_q1 = (-131.239 -0.153 ) * u.MHz 
+qubit_IF_q2 = (-106.486 +0.109 ) * u.MHz 
+qubit_IF_q3 = (-262.526 +0.177 ) * u.MHz
+qubit_IF_q4 = (-368.583 +0.053 ) * u.MHz
+qubit_IF_q5 = (-122.888 -0.003 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -283,7 +283,8 @@ readout_amp_q5 = 0.056009617  *1.0
 
 # TOF and depletion time
 time_of_flight = 284  # must be a multiple of 4
-depletion_time = int(1000/560) * u.us
+# depletion_time = int(1000/560) * u.us
+depletion_time = 17 * u.us # for resonator spectroscopy (average of 13700: >5us, 7us still safe, 8us faster)
 
 opt_weights = False
 if opt_weights:
@@ -337,16 +338,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (301.4 / 180) * np.pi
-rotation_angle_q2 = (146.6 / 180) * np.pi
-rotation_angle_q3 = (16.8 / 180) * np.pi
-rotation_angle_q4 = (245.4 / 180) * np.pi
-rotation_angle_q5 = (184.2 / 180) * np.pi
-ge_threshold_q1 = -5.896e-05
-ge_threshold_q2 = 1.027e-04
-ge_threshold_q3 = 1.204e-04
-ge_threshold_q4 = 2.753e-04
-ge_threshold_q5 = 2.111e-04
+rotation_angle_q1 = (340.1 / 180) * np.pi
+rotation_angle_q2 = (120.3 / 180) * np.pi
+rotation_angle_q3 = (20.0 / 180) * np.pi
+rotation_angle_q4 = (196.1 / 180) * np.pi
+rotation_angle_q5 = (174.1 / 180) * np.pi
+ge_threshold_q1 = 4.546e-05
+ge_threshold_q2 = 1.020e-05
+ge_threshold_q3 = 9.554e-05
+ge_threshold_q4 = 3.171e-05
+ge_threshold_q5 = 1.908e-05
 
 #############################################
 #                  Config                   #

@@ -244,7 +244,7 @@ if __name__ == '__main__':
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
     n_avg = 2000  # Number of averages
 
-    qubit_select = [3]
+    qubit_select = [5]
     ro_element = ["rr1","rr2","rr3","rr4","rr5"]
     q_name =  [f"q{x}_xy" for x in qubit_select]
     virtual_detune = 2 # Unit in MHz
