@@ -64,6 +64,7 @@ with program() as multi_res_spec_vs_amp:
                 # wait for the resonators to relax
                 # wait(depletion_time * u.ns, "rr1", "rr2", "rr3", "rr4", "rr5")
                 wait(depletion_time * u.ns)
+                # wait(1000)
 
         # Save the averaging iteration to get the progress bar
         save(n, n_st)
@@ -103,6 +104,7 @@ else:
     live_plotting(n_avg, q_id, job, amplitudes, dfs, "Power dep. Resonator spectroscopy", False, "~", stage="6a")
 
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
+    print(job.execution_report())
     qm.close()
     
     

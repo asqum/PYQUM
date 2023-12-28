@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pprint
 from scipy.optimize import curve_fit
 from math import isnan, isinf
+from decimal import Decimal as dc
 
 from configuration import *
 
@@ -55,9 +56,9 @@ def cross_entropy(p, q, epsilon=1e-15):
     """
     q = np.maximum(q, epsilon)  # Avoid taking the logarithm of zero
 
-    print(f"p: {p}, \nq: {q}")
+    # print(f"p: {p}, \nq: {q}")
 
-    x_entropy = -np.sum(p * np.log2(q))
+    x_entropy = -np.sum(p * np.log(q))
 
     return x_entropy
 
@@ -107,13 +108,25 @@ for i in range(seqs):
     k=0
     psi = np.kron([1,0], [1,0])
     while k<j:
-      if g1[idx]==0: g1_ = X90 
-      elif g1[idx]==1: g1_ = Y90
-      elif g1[idx]==2: g1_ = W90
+      if g1[idx]==0: 
+         g1_ = X90
+         g1_gate = "X90" 
+      elif g1[idx]==1: 
+         g1_ = Y90
+         g1_gate = "Y90"
+      elif g1[idx]==2: 
+         g1_ = W90
+         g1_gate = "W90"
       else: print('ERR')
-      if g2[idx]==0: g2_ = X90 
-      elif g2[idx]==1: g2_ = Y90
-      elif g2[idx]==2: g2_ = W90
+      if g2[idx]==0: 
+         g2_ = X90
+         g2_gate = "X90" 
+      elif g2[idx]==1: 
+         g2_ = Y90
+         g2_gate = "Y90"
+      elif g2[idx]==2: 
+         g2_ = W90
+         g2_gate = "W90"
       else: print('ERR')
       # op_ = np.kron(g1_, g2_)
       op_ = np.kron(g2_, g1_)
@@ -127,19 +140,23 @@ for i in range(seqs):
     v11.append(np.abs(psi[3])**2)
     incoherent = np.array([0.25, 0.25, 0.25, 0.25])
     expected = np.array([v00[-1], v10[-1], v01[-1], v11[-1]])
+    expectedd = [np.longdouble(x) for x in expected]
     measured = np.array([(state00[i][j])/avgs, (state01[i][j])/avgs, (state10[i][j])/avgs, (state11[i][j])/avgs])
+    measuredd = [np.longdouble(x) for x in measured]
+    # print(f"expected: {([float(x) for x in expected])}")
 
-    xe_incoherent = cross_entropy(incoherent, expected)
-    xe_measured = cross_entropy(measured, expected)
-    xe_expected = cross_entropy(expected, expected)
+    xe_incoherent = cross_entropy(incoherent, expectedd)
+    xe_measured = cross_entropy(measuredd, expectedd)
+    xe_expected = cross_entropy(expectedd, expectedd)
     
     fxeb = ((xe_incoherent-xe_measured)/(xe_incoherent-xe_expected))
     
-    if i==1 and j==2:
+    if i==13 and j==2:
        
-       from decimal import Decimal as dc
+       print(f"g1: {g1_gate}, g2: {g2_gate}")
+       print(f"incoherent: {(incoherent)}, expected: {(expectedd)}, ee: {-np.sum(expectedd * np.log(expectedd))}, ie: {-np.sum(incoherent * np.log(expectedd))}")
        print(f"incoherent: {([dc(x) for x in incoherent])}, expected: {([dc(x) for x in expected])}, ee: {-np.sum(expected * np.log(expected))}, ie: {-np.sum(incoherent * np.log(expected))}")
-       print(f"seq-{i},depth-{j}: {dc(cross_entropy(incoherent, expected))}, {dc(cross_entropy(expected, expected))}")
+       print(f"seq-{i+1},depth-{j+1}: {dc(cross_entropy(incoherent, expected))}, {dc(cross_entropy(expected, expected))}")
 
     if isnan(fxeb): print(f"nan found in seq-{i+1}, depth-{j+1}: {fxeb}, {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
     elif isinf(fxeb): print(f"inf found in seq-{i+1}, depth-{j+1}: {fxeb}, {cross_entropy(incoherent, expected)}, {cross_entropy(expected, expected)}")
