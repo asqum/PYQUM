@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 experiment = SweepPower(
-    freq_center=5.90648e9,
+    freq_center=6.102e9, # 6.102, 5.90648
     freq_span=10e6,
     df=80e3,
     num_averages=800,

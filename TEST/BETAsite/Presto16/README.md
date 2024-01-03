@@ -1,3 +1,10 @@
+# presto-installation
+
+https://intermod.pro/manuals/presto/setup.html
+https://intermod.pro/downloads/Sinica/
+The Wheel files can be located inside MANUAL/DAC_ADC/Intermodulation/API
+Works in python 3.11.4
+
 # presto-measure
 
 Collection of measurement and analysis scripts for the Presto platform.

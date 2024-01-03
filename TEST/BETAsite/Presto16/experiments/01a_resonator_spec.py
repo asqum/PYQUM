@@ -3,7 +3,7 @@ from sweep import Sweep
 import matplotlib.pyplot as plt
 
 experiment = Sweep(
-    freq_center=(5.90648)*1e9, # 5.93(wide), 6.102, 5.90648
+    freq_center=(6.102)*1e9, # 5.93(wide), 6.102, 5.90648
     freq_span=9e6,
     df=30e3,
     num_averages=900,
@@ -15,7 +15,7 @@ experiment = Sweep(
 # save_filename = experiment.run(presto_address)
 # presto_address = "qum2.phys.sinica.edu.tw"  # 10.10.233.10
 presto_address = "qum.phys.sinica.edu.tw"
-save_filename = experiment.run(presto_address, 5070)
+save_filename = experiment.run(presto_address, 5070) # External port
 
 experiment.analyze()
 plt.show()
