@@ -26,8 +26,8 @@ h_loop = 1
 multiplexed = [1,2,3,4,5]
 bitstrings = ['00', '01', '10', '11']
 
-qubit_to_flux_tune, qubit_to_meet_with = 5, 4
-cx_control, cx_target = 4, 5
+qubit_to_flux_tune, qubit_to_meet_with = 1, 2
+cx_control, cx_target = 1, 2  # switch order in turn to compensate both channel consecutively
 th_control, th_target = eval(f"ge_threshold_q{cx_control}"), eval(f"ge_threshold_q{cx_target}")
 phis_corr = np.linspace(-0.9, 0.9, 180)
 
@@ -61,14 +61,16 @@ with program() as cz_ops:
             # frame_rotation_2pi(global_phase_correction+phi_corr, f"q{cx_target}_xy")
 
             # for 3-4, 4-5 upper: FT = target
-            frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_target}_xy")
-            frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
+            if (qubit_to_flux_tune==4 and qubit_to_meet_with==3) or (qubit_to_flux_tune==5 and qubit_to_meet_with==4):
+                frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_target}_xy")  # <---------
+                frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
             # for 1-2, 2-3 upper: FT = control
-            # frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_target}_xy") 
-            # frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
+            if (qubit_to_flux_tune==1 and qubit_to_meet_with==2) or (qubit_to_flux_tune==2 and qubit_to_meet_with==3):
+                frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_target}_xy")  # <---------
+                frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
             
             align()
-            play("y90", f"q{cx_target}_xy")
+            play("y90", f"q{cx_target}_xy") # the channel that we're calibrating
 
             # align()
             # play("x180"*amp(phi_corr), f"q{cx_control}_xy")
@@ -124,8 +126,8 @@ if not simulate:
         plt.subplot(122)
         plt.cla()
         plt.plot(phis_corr, Bell_SNR)
-        plt.xlabel("Bell SNR")
-        plt.ylabel("Phase adjustment (2pi)")
+        plt.xlabel("Phase adjustment (2pi)")
+        plt.ylabel("Bell SNR")
         plt.title(f"The Best Phi-Adjust: {phis_corr[list(Bell_SNR).index(max(Bell_SNR))]:.3f}")
 
         plt.tight_layout()

@@ -78,11 +78,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-131.239 -0.153 ) * u.MHz 
-qubit_IF_q2 = (-106.486 +0.109 ) * u.MHz 
-qubit_IF_q3 = (-262.526 +0.177 ) * u.MHz
-qubit_IF_q4 = (-368.583 +0.053 ) * u.MHz
-qubit_IF_q5 = (-122.888 -0.003 ) * u.MHz
+qubit_IF_q1 = (-131.239 -0.177 ) * u.MHz 
+qubit_IF_q2 = (-106.486 +0.081 ) * u.MHz 
+qubit_IF_q3 = (-262.526 +0.143 ) * u.MHz
+qubit_IF_q4 = (-368.583 -0.302 ) * u.MHz
+qubit_IF_q5 = (-122.888 -0.018 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -103,24 +103,24 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.01952
-pi_amp_q2 = 0.060713
-pi_amp_q3 = 0.0212277634
-pi_amp_q4 = 0.083352742 
-pi_amp_q5 = 0.1180260872
+pi_amp_q1 = 0.0192668256 *1.015
+pi_amp_q2 = 0.060409435  *1.0079987125
+pi_amp_q3 = 0.020964539  *1.0179936375
+pi_amp_q4 = 0.08243586   *1.0145098195549982
+pi_amp_q5 = 0.1168458263 *1
 
-r90_amp_q1 = pi_amp_q1 / 2 *0.99883
-r90_amp_q2 = pi_amp_q2 / 2 *1.0146223169
-r90_amp_q3 = pi_amp_q3 / 2 *1
-r90_amp_q4 = pi_amp_q4 / 2 *1.0081961818*0.999
-r90_amp_q5 = pi_amp_q5 / 2 *1.009012728529
+r90_amp_q1 = pi_amp_q1 / 2 *0.99917899
+r90_amp_q2 = pi_amp_q2 / 2 *1.015918956
+r90_amp_q3 = pi_amp_q3 / 2 *0.996976325
+r90_amp_q4 = pi_amp_q4 / 2 *1.0081893303
+r90_amp_q5 = pi_amp_q5 / 2 *1.010506
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
-drag_coef_q1 = 0.9592
-drag_coef_q2 = 0.5352
-drag_coef_q3 = 1.355
+drag_coef_q1 = 1.064
+drag_coef_q2 = 0.488
+drag_coef_q3 = 1.111
 drag_coef_q4 = 1.42
-drag_coef_q5 = 0.2840
+drag_coef_q5 = 0.418
 anharmonicity_q1 = -abs(qubit_IF_q1 - -236 *u.MHz) * 2      # checked
 anharmonicity_q2 =  abs(qubit_IF_q2 - -207 *u.MHz) * 2      # checked
 anharmonicity_q3 = -abs(qubit_IF_q3 - -373 *u.MHz) * 2      # checked
@@ -244,7 +244,7 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 cz5_4_len = 40 # ns
 cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
 cz5_4_2pi_dev = 0.5 -0.030
-cz4_5_2pi_dev = -0.219
+cz4_5_2pi_dev = -0.216 +0.035
 # q4 -> q3:
 cz4_3_len = 48 # ns
 cz4_3_amp = (0.2528 - idle_q4) * 1.016667*0.9916667 # 0.975*1.001666

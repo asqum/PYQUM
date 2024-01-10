@@ -37,9 +37,13 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 1,5
+control, target = 1,3
 
-DD_even = False
+detuning = +2.00e6 # "Virtual" detuning in Hz
+multiplexed = [1,2,3,4,5]
+the_rest = [x for x in multiplexed if x not in [control,target]]
+
+DD_even = False # for circuit implementation
 DD_cycle = 0 # push T2, avoid zz-coupling
 
 # Idle time sweep in clock cycles (Needs to be a list of integers)
@@ -49,9 +53,6 @@ else:
     else: idle_times = np.arange(0, 1000, 2**(DD_cycle + 1))
     print(f"First 3 idle-times: {idle_times[0:3]} clock cycles")
 
-detuning = 2.00e6 # "Virtual" detuning in Hz
-multiplexed = [1,2,3,4,5]
-the_rest = [x for x in multiplexed if x not in [control,target]]
 
 with program() as ramsey:
     I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=len(multiplexed))

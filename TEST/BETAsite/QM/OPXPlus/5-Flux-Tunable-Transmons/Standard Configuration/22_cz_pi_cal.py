@@ -43,10 +43,10 @@ from cosine import Cosine
 ####################
 # Define variables #
 ####################
-simulate = True
+simulate = False
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
-qubit_to_flux_tune, qubit_to_meet_with = 2, 3
+qubit_to_flux_tune, qubit_to_meet_with = 5, 4
 cz = 1
 
 # qubit to flux-tune is target

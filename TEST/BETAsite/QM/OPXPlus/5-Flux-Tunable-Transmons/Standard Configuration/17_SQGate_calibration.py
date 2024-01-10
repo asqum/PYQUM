@@ -291,7 +291,7 @@ if __name__ == '__main__':
     n_avg = 20000
     qubit = 4
     multiplexed = [1,2,3,4,5]
-    mode = "drag"
+    mode = "amp"
 
     # Scan the DRAG coefficient pre-factor
 
@@ -299,7 +299,7 @@ if __name__ == '__main__':
     ge_threshold = eval(f"ge_threshold_q{qubit}")
     # Check that the DRAG coefficient is not 0
     assert drag_coef != 0, "The DRAG coefficient 'drag_coef' must be different from 0 in the config."
-    sequence_repeat = 24
+    sequence_repeat = 15 # 5, 15, 25, 35
     prefactor_range = 0.25/sequence_repeat
     match mode.lower():
         case "drag":
