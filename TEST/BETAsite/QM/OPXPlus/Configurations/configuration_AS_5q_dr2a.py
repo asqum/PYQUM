@@ -243,17 +243,17 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 # q5 -> q4:
 cz5_4_len = 40 # ns
 cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
-cz5_4_2pi_dev = 0.5 -0.030
+cz5_4_2pi_dev = 0.505
 cz4_5_2pi_dev = -0.216 +0.035
 # q4 -> q3:
 cz4_3_len = 48 # ns
 cz4_3_amp = (0.2528 - idle_q4) * 1.016667*0.9916667 # 0.975*1.001666
-cz4_3_2pi_dev = 0.5 -0.069
+cz4_3_2pi_dev = -0.578
 cz3_4_2pi_dev = 0.329
 # q2 -> q3: need to tune up q1 simultaneously
 cz2_3_len = 64#60 # ns
 cz2_3_amp = (0.2382 - idle_q2) * 0.9915975*0.998
-cz2_3_2pi_dev = 0 #-0.09 +0.055
+cz2_3_2pi_dev = -0.09 +0.055
 cz3_2_2pi_dev = 0.12
 # q1 -> q2:
 cz1_2_len = 24 # ns
@@ -338,16 +338,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (340.1 / 180) * np.pi
-rotation_angle_q2 = (120.3 / 180) * np.pi
-rotation_angle_q3 = (20.0 / 180) * np.pi
-rotation_angle_q4 = (196.1 / 180) * np.pi
-rotation_angle_q5 = (174.1 / 180) * np.pi
-ge_threshold_q1 = 4.546e-05
-ge_threshold_q2 = 1.020e-05
-ge_threshold_q3 = 9.554e-05
-ge_threshold_q4 = 3.171e-05
-ge_threshold_q5 = 1.908e-05
+rotation_angle_q1 = (335.1 / 180) * np.pi
+rotation_angle_q2 = (115.8 / 180) * np.pi
+rotation_angle_q3 = (25.9 / 180) * np.pi
+rotation_angle_q4 = (193.8 / 180) * np.pi
+rotation_angle_q5 = (168.2 / 180) * np.pi
+ge_threshold_q1 = 1.494e-05
+ge_threshold_q2 = 3.898e-06
+ge_threshold_q3 = 8.787e-05
+ge_threshold_q4 = 2.411e-05
+ge_threshold_q5 = 1.033e-04
 
 #############################################
 #                  Config                   #
