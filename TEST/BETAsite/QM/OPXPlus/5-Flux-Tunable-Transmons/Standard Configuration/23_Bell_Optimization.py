@@ -19,17 +19,24 @@ import pandas as pd
 
 from macros import multiplexed_readout, cz_gate, Dynamical_Decoupling
 
-simulate = False
+simulate = True
 cz_type = "const_wf"
 shots = 2048
 h_loop = 1
 multiplexed = [1,2,3,4,5]
 bitstrings = ['00', '01', '10', '11']
 
-qubit_to_flux_tune, qubit_to_meet_with = 1, 2
-cx_control, cx_target = 1, 2  # switch order in turn to compensate both channel consecutively
+qubit_to_flux_tune, qubit_to_meet_with = 5, 4
+
+'''NOTE:
+1. switch order in turn to compensate both channel consecutively
+2. Ascent order: first row of cz*_*_2pi_dev in configuration
+3. Descent order: Second row of cz*_*_2pi_dev in configuration
+'''
+cx_control, cx_target = 4, 5  
+
 th_control, th_target = eval(f"ge_threshold_q{cx_control}"), eval(f"ge_threshold_q{cx_target}")
-phis_corr = np.linspace(-0.9, 0.9, 180)
+phis_corr = np.linspace(-0.9, 0.9, 360)
 
 with program() as cz_ops:
 
@@ -60,11 +67,11 @@ with program() as cz_ops:
             cz_gate(qubit_to_meet_with, qubit_to_flux_tune, cz_type)
             # frame_rotation_2pi(global_phase_correction+phi_corr, f"q{cx_target}_xy")
 
-            # for 3-4, 4-5 upper: FT = target
+            # for 3-4, 4-5 upper: Flux-tune = target
             if (qubit_to_flux_tune==4 and qubit_to_meet_with==3) or (qubit_to_flux_tune==5 and qubit_to_meet_with==4):
                 frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_target}_xy")  # <---------
                 frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
-            # for 1-2, 2-3 upper: FT = control
+            # for 1-2, 2-3 upper: Flux-tune = control
             if (qubit_to_flux_tune==1 and qubit_to_meet_with==2) or (qubit_to_flux_tune==2 and qubit_to_meet_with==3):
                 frame_rotation_2pi(eval(f"cz{cx_control}_{cx_target}_2pi_dev")+phi_corr, f"q{cx_target}_xy")  # <---------
                 frame_rotation_2pi(eval(f"cz{cx_target}_{cx_control}_2pi_dev")+phi_corr, f"q{cx_control}_xy") # from flux-crosstalk
@@ -137,9 +144,13 @@ if not simulate:
     qm.close()
     plt.show()
     
-
+    if (qubit_to_flux_tune==4 and qubit_to_meet_with==3) or (qubit_to_flux_tune==5 and qubit_to_meet_with==4):
+        Phi_config = eval(f"cz{cx_target}_{cx_control}_2pi_dev")  # <---------
+    if (qubit_to_flux_tune==1 and qubit_to_meet_with==2) or (qubit_to_flux_tune==2 and qubit_to_meet_with==3):
+        Phi_config = eval(f"cz{cx_control}_{cx_target}_2pi_dev")  # <---------
+        
     collected_shots = len(I1[:,0])
-    for j in [0, list(Bell_SNR).index(max(Bell_SNR)), -1]:
+    for ii,j in enumerate([0, list(phis_corr).index(min(phis_corr, key=lambda x:abs(x))), list(Bell_SNR).index(max(Bell_SNR)), -1]):
         q_states = [] #np.zeros((len(multiplexed),collected_shots))
         for i,x in enumerate(multiplexed): 
             q_states += [[str(int(a)) for a in np.array(eval(f"I{x}")[:,j])>eval(f"ge_threshold_q{x}")]]
@@ -154,7 +165,9 @@ if not simulate:
         percentage = [x/collected_shots*100 for x in Counter(bitstrings).values()]
         ax.bar(CBits, percentage)#, color=bar_colors)
         ax.set_ylabel('Population (%)')
-        ax.set_title(f'Bell/GHZ state fidelity: {(percentage[0]+percentage[-1]):.3}%')
+
+        note_that = ["First", "Configured", "The BEST", "Last"]
+        ax.set_title(f'{note_that[ii]} Bell/GHZ state fidelity: {(percentage[0]+percentage[-1]):.3}% (Phi={Phi_config+phis_corr[j]})')
         plt.show()
 
     print("=====================================")
