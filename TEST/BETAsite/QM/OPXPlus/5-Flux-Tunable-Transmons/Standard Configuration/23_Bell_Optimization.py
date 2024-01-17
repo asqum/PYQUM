@@ -19,7 +19,7 @@ import pandas as pd
 
 from macros import multiplexed_readout, cz_gate, Dynamical_Decoupling
 
-simulate = True
+simulate = False
 cz_type = "const_wf"
 shots = 2048
 h_loop = 1

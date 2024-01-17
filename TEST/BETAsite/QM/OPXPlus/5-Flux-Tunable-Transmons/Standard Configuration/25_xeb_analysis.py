@@ -7,8 +7,12 @@ from decimal import Decimal as dc
 
 from configuration import *
 
+seqs = 7
+depth = 7 # 77, 21, 7
+avgs = 101
+
 # Load the npz file
-npz_file = np.load(save_dir/'XEB_q4_5_seqs(77)_depth(7)_avgs(101)_random_gates(3).npz')
+npz_file = np.load(save_dir/f'XEB_q4_5_seqs({seqs})_depth({depth})_avgs({avgs})_random_gates(3).npz')
 # npz_file = np.load(save_dir/'XEB_test.npz')
 # Hero:
 # npz_file = np.load(save_dir/'XEB_q4_5_seqs(80)_depth(7)_avgs(100)_random_gates(3).npz')
@@ -140,9 +144,9 @@ for i in range(seqs):
     v11.append(np.abs(psi[3])**2)
     incoherent = np.array([0.25, 0.25, 0.25, 0.25])
     expected = np.array([v00[-1], v10[-1], v01[-1], v11[-1]])
-    expectedd = [np.longdouble(x) for x in expected]
+    expectedd = [x for x in expected]
     measured = np.array([(state00[i][j])/avgs, (state01[i][j])/avgs, (state10[i][j])/avgs, (state11[i][j])/avgs])
-    measuredd = [np.longdouble(x) for x in measured]
+    measuredd = [x for x in measured]
     # print(f"expected: {([float(x) for x in expected])}")
 
     xe_incoherent = cross_entropy(incoherent, expectedd)

@@ -17,7 +17,7 @@ cz_type = "const_wf"
 simulate = False
 
 random_gates = 3
-seqs = 77
+seqs = 7
 depth = 7
 avgs = 101
 depths = np.arange(depth)
@@ -81,9 +81,17 @@ with program() as xeb:
           """
           an index between 0-2 will be randomized for each qubit per iteration and will determine the sequence
           """
-          with for_(d_, 0, d_<d, d_+1):
-            assign(g1[d_], r.rand_int(random_gates))
-            assign(g2[d_], r.rand_int(random_gates))
+          assign(g1[0], r.rand_int(3))
+          assign(g2[0], r.rand_int(3))
+          save(g1[0], g1_st)
+          save(g2[0], g2_st)
+          with for_(d_, 1, d_ < d, d_ + 1):
+            assign(g1[d_], r.rand_int(3))
+            with while_(g1[d_] == g1[d_ - 1]):
+              assign(g1[d_], r.rand_int(3))
+            assign(g2[d_], r.rand_int(3))
+            with while_(g2[d_] == g2[d_ - 1]):
+              assign(g2[d_], r.rand_int(3))
             save(g1[d_], g1_st)
             save(g2[d_], g2_st)
         
