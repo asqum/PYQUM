@@ -7,8 +7,8 @@ from decimal import Decimal as dc
 
 from configuration import *
 
-seqs = 7
-depth = 7 # 77, 21, 7
+seqs = 97 # 97, 77, 21, 7
+depth = 5 # 13, 5, 7
 avgs = 101
 
 # Load the npz file
@@ -108,7 +108,7 @@ for i in range(seqs):
   v00 = []; v01 = []; v10 = []; v11 = []
   ce_vec = []
   for j in range(depth):
-    # print(f"depth = {j}")
+    print(f"depth = {j}")
     k=0
     psi = np.kron([1,0], [1,0])
     while k<j:
@@ -147,7 +147,7 @@ for i in range(seqs):
     expectedd = [x for x in expected]
     measured = np.array([(state00[i][j])/avgs, (state01[i][j])/avgs, (state10[i][j])/avgs, (state11[i][j])/avgs])
     measuredd = [x for x in measured]
-    # print(f"expected: {([float(x) for x in expected])}")
+    print(f"expected: {([float(x) for x in expected])}")
 
     xe_incoherent = cross_entropy(incoherent, expectedd)
     xe_measured = cross_entropy(measuredd, expectedd)
@@ -155,7 +155,7 @@ for i in range(seqs):
     
     fxeb = ((xe_incoherent-xe_measured)/(xe_incoherent-xe_expected))
     
-    if i==13 and j==2:
+    if i==0 and j==2:
        
        print(f"g1: {g1_gate}, g2: {g2_gate}")
        print(f"incoherent: {(incoherent)}, expected: {(expectedd)}, ee: {-np.sum(expectedd * np.log(expectedd))}, ie: {-np.sum(incoherent * np.log(expectedd))}")
@@ -273,17 +273,20 @@ plt.colorbar()
 # Create a 
 plt.subplot(5,2,10)
 Fxeb = np.mean(ce_mat, axis=0)
-print(Fxeb)
+print("Fxeb: %s" %Fxeb)
 
 def exponential_decay(x, a, b, c):
     return a * np.exp(-b * x) + c
 
 try:
+  print("fitting.. ")
   params, covariance = curve_fit(exponential_decay, np.arange(depth), Fxeb)
   a_fit, b_fit, c_fit = params
   x = exponential_decay(np.arange(depth), a_fit, b_fit, c_fit)
   xeb_err_per_cycle = 1 - (x[2]-c_fit)/(x[1]-c_fit)
-except: pass
+  print("CZ-fidelity: %s%%" %((1-xeb_err_per_cycle)*100))
+except: 
+   print("fitting not successful")
 
 
 plt.scatter(np.arange(depth), Fxeb, label='Original Data')

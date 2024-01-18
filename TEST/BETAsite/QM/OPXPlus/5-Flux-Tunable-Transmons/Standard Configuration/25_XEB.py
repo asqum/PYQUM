@@ -17,8 +17,8 @@ cz_type = "const_wf"
 simulate = False
 
 random_gates = 3
-seqs = 7
-depth = 7
+seqs = 97
+depth = 5
 avgs = 101
 depths = np.arange(depth)
 
@@ -81,17 +81,23 @@ with program() as xeb:
           """
           an index between 0-2 will be randomized for each qubit per iteration and will determine the sequence
           """
-          assign(g1[0], r.rand_int(3))
-          assign(g2[0], r.rand_int(3))
-          save(g1[0], g1_st)
-          save(g2[0], g2_st)
-          with for_(d_, 1, d_ < d, d_ + 1):
+          # assign(g1[0], r.rand_int(3))
+          # assign(g2[0], r.rand_int(3))
+          # save(g1[0], g1_st)
+          # save(g2[0], g2_st)
+          # with for_(d_, 1, d_ < d, d_ + 1):
+          #   assign(g1[d_], r.rand_int(3))
+          #   with while_(g1[d_] == g1[d_ - 1]):
+          #     assign(g1[d_], r.rand_int(3))
+          #   assign(g2[d_], r.rand_int(3))
+          #   with while_(g2[d_] == g2[d_ - 1]):
+          #     assign(g2[d_], r.rand_int(3))
+          #   save(g1[d_], g1_st)
+          #   save(g2[d_], g2_st)
+
+          with for_(d_, 0, d_<d, d_+1):
             assign(g1[d_], r.rand_int(3))
-            with while_(g1[d_] == g1[d_ - 1]):
-              assign(g1[d_], r.rand_int(3))
             assign(g2[d_], r.rand_int(3))
-            with while_(g2[d_] == g2[d_ - 1]):
-              assign(g2[d_], r.rand_int(3))
             save(g1[d_], g1_st)
             save(g2[d_], g2_st)
         
@@ -147,7 +153,7 @@ with program() as xeb:
               if simulate:
                 wait(25, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
               else:
-                wait(3* thermalization_time * u.ns, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
+                wait(1* thermalization_time * u.ns, f"q{qubits[0]}_xy", f"q{qubits[1]}_xy")
               with for_(_d_, 0, _d_ < d, _d_ + 1):
                 play("x90"*amp(a1_00[_d_], a1_01[_d_], a1_10[_d_], a1_11[_d_]), f"q{qubits[0]}_xy")
                 play("x90"*amp(a2_00[_d_], a2_01[_d_], a2_10[_d_], a2_11[_d_]), f"q{qubits[1]}_xy")

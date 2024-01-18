@@ -14,7 +14,7 @@ from numpy import pi
 # QUA macros #
 ##############
 
-# 1. Single-Qubit Clifford:
+# 1.1 Single-Qubit Clifford:
 def sx_gate(qubit):
     play("x90", "q%s_xy"%qubit)
 def id_gate(qubit):
@@ -32,6 +32,7 @@ def t_gate(qubit):
 def h_gate(qubit):
     play("y90", "q%s_xy"%qubit)
     play("x180", "q%s_xy"%qubit)
+# 1.2 Single-Qubit Non-Clifford:
 def rx_gate(qubit,theta):
     if theta<=pi/2: play("x90"*amp(theta/(pi/2)), "q%s_xy"%qubit)
     if theta>pi/2 and theta<=pi: play("x180"*amp(theta/pi), "q%s_xy"%qubit)
@@ -45,6 +46,8 @@ def ry_gate(qubit,theta):
         theta -= 2*pi
         play("-y90"*amp(-theta/(pi/2)), "q%s_xy"%qubit)
 def rz_gate(qubit,phi):
+    frame_rotation_2pi(phi/2/pi, "q%s_xy"%qubit)
+def p_gate(qubit,phi): # P(pi/4)=T
     frame_rotation_2pi(phi/2/pi, "q%s_xy"%qubit)
 
 # 2. Two-Qubit Clifford:
