@@ -79,10 +79,10 @@ qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
 qubit_IF_q1 = (-131.239 -0.177 ) * u.MHz 
-qubit_IF_q2 = (-106.486 +0.081 ) * u.MHz 
+qubit_IF_q2 = (-106.486 +0.161 ) * u.MHz 
 qubit_IF_q3 = (-262.526 +0.143 ) * u.MHz
-qubit_IF_q4 = (-368.583 -0.302 ) * u.MHz
-qubit_IF_q5 = (-122.888 -0.018 ) * u.MHz
+qubit_IF_q4 = (-368.583 +0.056 ) * u.MHz
+qubit_IF_q5 = (-122.888 -0.019 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -243,7 +243,7 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 # q5 -> q4:
 cz5_4_len = 40 # ns
 cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
-cz5_4_2pi_dev = 0.505
+cz5_4_2pi_dev = 0.505 -0.018
 cz4_5_2pi_dev = -0.216 +0.035
 # q4 -> q3:
 cz4_3_len = 48 # ns
