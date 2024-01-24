@@ -3,7 +3,7 @@ from rabi_amp import RabiAmp
 import numpy as np
 import matplotlib.pyplot as plt
 
-qubit = dr2b.q4
+qubit = dr2b.q5
 feedline = dr2b.feedline
 
 experiment = RabiAmp(
@@ -18,7 +18,7 @@ experiment = RabiAmp(
     readout_sample_delay=feedline['readout_sample_delay'],
 
     control_amp_arr=np.linspace(0, 1, 101),
-    control_duration=30e-9,
+    control_duration=16e-9,
     wait_delay=40e-6,
     num_averages=2000,
     num_pulses=1,

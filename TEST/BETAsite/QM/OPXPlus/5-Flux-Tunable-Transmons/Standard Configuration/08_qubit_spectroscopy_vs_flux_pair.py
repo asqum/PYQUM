@@ -38,17 +38,17 @@ def cosine_func(x, amplitude, frequency, phase, offset):
 # The QUA program #
 ###################
 n_avg = 10000  # The number of averages
-qubit_pair = [1,5]
+qubit_pair = [3,5]
 q1_xy, q1_z, q1_IF, q1_LO = "q%s_xy"%(qubit_pair[0]), "q%s_z"%(qubit_pair[0]), eval("qubit_IF_q%s"%(qubit_pair[0])), eval("qubit_LO_q%s"%(qubit_pair[0]))
 q2_xy, q2_z, q2_IF, q2_LO = "q%s_xy"%(qubit_pair[1]), "q%s_z"%(qubit_pair[1]), eval("qubit_IF_q%s"%(qubit_pair[1])), eval("qubit_LO_q%s"%(qubit_pair[1]))
 
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
 saturation_len = 20 * u.us  # In ns
-saturation_amp = 0.057  # pre-factor to the value defined in the config - restricted to [-2; 2)
+saturation_amp = 0.07  # pre-factor to the value defined in the config - restricted to [-2; 2)
 # Qubit detuning sweep with respect to qubit_IF
 dfs = np.arange(-490e6, +490e6, 1e6)
 # Flux sweep
-dcs = np.arange(-0.2, 0.2, 0.002)
+dcs = np.arange(-0.25, 0.25, 0.0025)
 flux_offset_1 = eval("idle_q%s" %qubit_pair[0]) 
 flux_offset_2 = eval("idle_q%s" %qubit_pair[1]) 
 

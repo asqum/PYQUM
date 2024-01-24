@@ -3,11 +3,11 @@ from sweep import Sweep
 import matplotlib.pyplot as plt
 
 experiment = Sweep(
-    freq_center=(6.102)*1e9, # 5.93(wide), 6.102, 5.90648
-    freq_span=9e6,
-    df=30e3,
+    freq_center=(5.93)*1e9, # 5.93(wide), 6.102, 5.90648
+    freq_span=200e6,
+    df=100e3,
     num_averages=900,
-    amp=0.07,
+    amp=0.3,
     output_port=1,
     input_port=1,
 )

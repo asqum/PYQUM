@@ -39,7 +39,7 @@ n_avg = 100000  # Number of averages
 X = False
 control, target = 1,5
 
-detuning = +2.00e6 # "Virtual" detuning in Hz
+detuning = -2.00e6 # "Virtual" detuning in Hz
 multiplexed = [1,2,3,4,5]
 the_rest = [x for x in multiplexed if x not in [control,target]]
 

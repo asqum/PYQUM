@@ -9,21 +9,23 @@
 
     "q4": {
         "readout_freq": 6.102e9,
-        "control_freq": 3572039901.1137786,
-        "readout_amp": 0.09,
+        "control_freq": 3.449018e9,
+        "readout_amp": 0.07,
         "control_port": 2,
-        "control_amp_180": 0.74236,
-        "control_amp_90": 0.37118,
+        "control_amp_180": 0.63802,
+        "control_amp_90": 0.31901,
         "control_duration": 10e-9,
         "bias_port": 14
     },
 
     "q5": {
-        "readout_freq": 5.90648e9,
-        "control_freq": 4427086382,
-        "readout_amp": 0.1,
+        "readout_freq": 5.909415e9,
+        "control_freq": 4704009200,
+        "readout_amp": 0.07,
         "control_port": 3,
-
+        "control_amp_180": 0.80753,
+        "control_amp_90": 0.40376,
+        "control_duration": 16e-9,
         "bias_port": 15
     }
 }

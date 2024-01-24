@@ -4,11 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 experiment = SweepPower(
-    freq_center=6.102e9, # 6.102, 5.90648
-    freq_span=10e6,
-    df=80e3,
-    num_averages=800,
-    amp_arr=np.linspace(0.01, 0.3, 40),
+    freq_center=5.909295e9, # 6.102, 5.90648
+    freq_span=4e6,
+    df=100e3,
+    num_averages=600,
+    amp_arr=np.linspace(0.01, 0.6, 30),
     output_port=1,
     input_port=1,
 )

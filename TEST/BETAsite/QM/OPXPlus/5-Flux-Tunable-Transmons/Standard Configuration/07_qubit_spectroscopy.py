@@ -42,15 +42,16 @@ warnings.filterwarnings("ignore")
 ###################
 # The QUA program #
 ###################
+show_2_photons = True
 focus = False
 n_avg = 100000  # The number of averages
 qubit_num = 5
-test_qubits = [1]
+test_qubits = [5]
 
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
 saturation_len = 20 * u.us  # In ns (should be < FFT of df)
 if focus: saturation_amp = 0.0001  # pre-factor to the value defined in the config - restricted to [-2; 2)
-else: saturation_amp = 0.2  # pre-factor to the value defined in the config - restricted to [-2; 2)
+else: saturation_amp = 0.1  # pre-factor to the value defined in the config - restricted to [-2; 2)
 
 # Qubit detuning sweep with respect to qubit_IF
 if focus:
@@ -59,8 +60,8 @@ if focus:
     df = 1 * u.kHz
 else:
     # 2. Wide-scan, Find 02/2:
-    span = 480 * u.MHz
-    df = 480 * u.kHz
+    span = 130 * u.MHz
+    df = 130 * u.kHz
 dfs = np.arange(-span, +span + 0.1, df)
 
 
@@ -171,72 +172,87 @@ else:
         # Plots
         plt.suptitle("Qubit spectroscopy")
         # q1:
+        EC = dfs[np.argmax(R1)] * 2
         plt.subplot(2, qubit_num, 1)
         plt.cla()
         plt.plot((dfs + qubit_IF_q1) / u.MHz, R1)
         plt.ylabel(r"$R=\sqrt{I^2 + Q^2}$ [V]")
-        plt.title(f"Qubit 1 - LO = {qubit_LO_q1 / u.GHz} GHz)")
+        plt.title(f"q1: EC = {EC / u.MHz} MHz")
         plt.axvline(qubit_IF_q1 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q1-abs(anharmonicity_q1)/2) / u.MHz, color='r', linewidth=0.371)
+        plt.axvline((qubit_IF_q1 + EC/2) / u.MHz, color='b', linewidth=0.371)
+        if show_2_photons: 
+            plt.axvline((qubit_IF_q1-abs(anharmonicity_q1)/2) / u.MHz, color='r', linewidth=0.371)
         plt.subplot(2, qubit_num, 6)
         plt.cla()
         plt.plot((dfs + qubit_IF_q1) / u.MHz, np.unwrap(phase1))
         plt.ylabel("Phase [rad]")
         plt.xlabel("Qubit intermediate frequency [MHz]")
         plt.axvline(qubit_IF_q1 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q1-abs(anharmonicity_q1)/2) / u.MHz, color='r', linewidth=0.371)
+        if show_2_photons: plt.axvline((qubit_IF_q1-abs(anharmonicity_q1)/2) / u.MHz, color='r', linewidth=0.371)
         # q2:
+        EC = dfs[np.argmax(R2)] * 2
         plt.subplot(2, qubit_num, 2)
         plt.cla()
-        plt.plot((dfs + qubit_IF_q2) / u.MHz, np.abs(R2))
-        plt.title(f"Qubit 2 - LO = {qubit_LO_q2 / u.GHz} GHz)")
+        plt.plot((dfs + qubit_IF_q2) / u.MHz, R2)
+        plt.title(f"q2: EC = {EC / u.MHz} MHz")
         plt.axvline(qubit_IF_q2 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q2-abs(anharmonicity_q2)/2) / u.MHz, color='r', linewidth=0.371)
+        plt.axvline((qubit_IF_q2 + EC/2) / u.MHz, color='b', linewidth=0.371)
+        if show_2_photons: 
+            plt.axvline((qubit_IF_q2-abs(anharmonicity_q2)/2) / u.MHz, color='r', linewidth=0.371)
         plt.subplot(2, qubit_num, 7)
         plt.cla()
         plt.plot((dfs + qubit_IF_q2) / u.MHz, np.unwrap(phase2))
         plt.xlabel("Qubit intermediate frequency [MHz]")
         plt.axvline(qubit_IF_q2 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q2-abs(anharmonicity_q2)/2) / u.MHz, color='r', linewidth=0.371)
+        if show_2_photons: plt.axvline((qubit_IF_q2-abs(anharmonicity_q2)/2) / u.MHz, color='r', linewidth=0.371)
         # q3:
+        EC = dfs[np.argmax(R3)] * 2
         plt.subplot(2, qubit_num, 3)
         plt.cla()
-        plt.plot((dfs + qubit_IF_q3) / u.MHz, np.abs(R3))
-        plt.title(f"Qubit 3 - LO = {qubit_LO_q3 / u.GHz} GHz)")
+        plt.plot((dfs + qubit_IF_q3) / u.MHz, R3)
+        plt.title(f"q3: EC = {EC / u.MHz} MHz")
         plt.axvline(qubit_IF_q3 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q3-abs(anharmonicity_q3)/2) / u.MHz, color='r', linewidth=0.371)
+        plt.axvline((qubit_IF_q3 + dfs[np.argmax(R3)]) / u.MHz, color='b', linewidth=0.371)
+        if show_2_photons: 
+            plt.axvline((qubit_IF_q3-abs(anharmonicity_q3)/2) / u.MHz, color='r', linewidth=0.371)
         plt.subplot(2, qubit_num, 8)
         plt.cla()
         plt.plot((dfs + qubit_IF_q3) / u.MHz, np.unwrap(phase3))
         plt.xlabel("Qubit intermediate frequency [MHz]")
         plt.axvline(qubit_IF_q3 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q3-abs(anharmonicity_q3)/2) / u.MHz, color='r', linewidth=0.371)
+        if show_2_photons: plt.axvline((qubit_IF_q3-abs(anharmonicity_q3)/2) / u.MHz, color='r', linewidth=0.371)
         # q4:
+        EC = dfs[np.argmax(R4)] * 2
         plt.subplot(2, qubit_num, 4)
         plt.cla()
-        plt.plot((dfs + qubit_IF_q4) / u.MHz, np.abs(R4))
-        plt.title(f"Qubit 4 - LO = {qubit_LO_q4 / u.GHz} GHz)")
+        plt.plot((dfs + qubit_IF_q4) / u.MHz, R4)
+        plt.title(f"q4: EC = {EC / u.MHz} MHz")
         plt.axvline(qubit_IF_q4 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q4-abs(anharmonicity_q4)/2) / u.MHz, color='r', linewidth=0.371)
+        plt.axvline((qubit_IF_q4 + dfs[np.argmax(R4)]) / u.MHz, color='b', linewidth=0.371)
+        if show_2_photons: 
+            plt.axvline((qubit_IF_q4-abs(anharmonicity_q4)/2) / u.MHz, color='r', linewidth=0.371)
         plt.subplot(2, qubit_num, 9)
         plt.cla()
         plt.plot((dfs + qubit_IF_q4) / u.MHz, np.unwrap(phase4))
         plt.xlabel("Qubit intermediate frequency [MHz]")
         plt.axvline(qubit_IF_q4 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q4-abs(anharmonicity_q4)/2) / u.MHz, color='r', linewidth=0.371)
+        if show_2_photons: plt.axvline((qubit_IF_q4-abs(anharmonicity_q4)/2) / u.MHz, color='r', linewidth=0.371)
         # q5:
+        EC = dfs[np.argmax(R5)] * 2
         plt.subplot(2, qubit_num, 5)
         plt.cla()
-        plt.plot((dfs + qubit_IF_q5) / u.MHz, np.abs(R5))
-        plt.title(f"Qubit 5 - LO = {qubit_LO_q5 / u.GHz} GHz)")
+        plt.plot((dfs + qubit_IF_q5) / u.MHz, R5)
+        plt.title(f"q5: EC = {EC / u.MHz} MHz")
         plt.axvline(qubit_IF_q5 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q5-abs(anharmonicity_q5)/2) / u.MHz, color='r', linewidth=0.371)
+        plt.axvline((qubit_IF_q5 + dfs[np.argmax(R5)]) / u.MHz, color='b', linewidth=0.371)
+        if show_2_photons: 
+            plt.axvline((qubit_IF_q5-abs(anharmonicity_q5)/2) / u.MHz, color='r', linewidth=0.371)
         plt.subplot(2, qubit_num, 10)
         plt.cla()
         plt.plot((dfs + qubit_IF_q5) / u.MHz, np.unwrap(phase5))
         plt.xlabel("Qubit intermediate frequency [MHz]")
         plt.axvline(qubit_IF_q5 / u.MHz, color='r', linewidth=0.371)
-        plt.axvline((qubit_IF_q5-abs(anharmonicity_q5)/2) / u.MHz, color='r', linewidth=0.371)
+        if show_2_photons: plt.axvline((qubit_IF_q5-abs(anharmonicity_q5)/2) / u.MHz, color='r', linewidth=0.371)
 
         plt.tight_layout()
         plt.pause(0.1)

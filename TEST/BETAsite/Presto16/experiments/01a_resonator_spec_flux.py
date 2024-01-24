@@ -3,7 +3,7 @@ from sweep_freq_and_DC_flux import SweepFreqAndDC
 import numpy as np
 import matplotlib.pyplot as plt
 
-loadata = True
+loadata = False
 qubit = dr2b.q5
 feedline = dr2b.feedline
 
@@ -13,13 +13,13 @@ if loadata:
 else:
 
     experiment = SweepFreqAndDC(
-        freq_span=6e6,
-        df=240e3,
+        freq_span=5.5e6,
+        df=40e3,
         num_averages=1000,
         bias_arr = np.linspace(-1, 1, 41),
 
         bias_port = qubit['bias_port'],
-        freq_center=qubit['readout_freq'] + 6e6/4,
+        freq_center=qubit['readout_freq'],# + 3e6/4,
         amp=qubit['readout_amp'],
         output_port=feedline['readout_port'],
         input_port=feedline['sample_port'],

@@ -78,11 +78,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-131.239 +0.081 ) * u.MHz 
-qubit_IF_q2 = (-106.486 +0.091 ) * u.MHz 
-qubit_IF_q3 = (-262.526 +0.412 ) * u.MHz
-qubit_IF_q4 = (-368.583 -0.260 ) * u.MHz
-qubit_IF_q5 = (-122.888 -0.019 ) * u.MHz
+qubit_IF_q1 = (-135.317 +0.081 ) * u.MHz 
+qubit_IF_q2 = (-99.241  +0.091 ) * u.MHz 
+qubit_IF_q3 = (-207.517 +0.412 ) * u.MHz
+qubit_IF_q4 = (-367.542 -0.555 ) * u.MHz
+qubit_IF_q5 = (-128.078 -0.201 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -121,11 +121,11 @@ drag_coef_q2 = 0.488
 drag_coef_q3 = 1.111
 drag_coef_q4 = 1.42
 drag_coef_q5 = 0.418
-anharmonicity_q1 = -abs(qubit_IF_q1 - -236 *u.MHz) * 2      # checked
-anharmonicity_q2 =  abs(qubit_IF_q2 - -207 *u.MHz) * 2      # checked
-anharmonicity_q3 = -abs(qubit_IF_q3 - -373 *u.MHz) * 2      # checked
-anharmonicity_q4 = (257) *u.MHz                             # checked
-anharmonicity_q5 = -abs(qubit_IF_q5 - -221*u.MHz) * 2       # checked
+anharmonicity_q1 = - 199.42 *u.MHz      # checked
+anharmonicity_q2 = + 200.46 *u.MHz      # checked
+anharmonicity_q3 = - 169.51 *u.MHz      # checked
+anharmonicity_q4 = + 195.00 *u.MHz      # checked
+anharmonicity_q5 = - 193.70 *u.MHz      # checked
 AC_stark_detuning_q1 = 0.0 * u.MHz
 AC_stark_detuning_q2 = 0.0 * u.MHz
 AC_stark_detuning_q3 = 0.0 * u.MHz
@@ -204,17 +204,17 @@ minus_y90_I_wf_q5, minus_y90_Q_wf_q5 = (-1) * minus_y90_der_wf_q5, minus_y90_wf_
 ##########################################
 flux_settle_time = 28 * u.ns
 
-max_frequency_point1 = +0.082
-max_frequency_point2 = 0.044
-max_frequency_point3 = +0.050
-max_frequency_point4 = 0.033
-max_frequency_point5 = 0.018
+max_frequency_point1 = -0.267
+max_frequency_point2 = 0.0018
+max_frequency_point3 = -0.182
+max_frequency_point4 = 0.0018
+max_frequency_point5 = 0.0095
 
-idle_q1 = max_frequency_point1 -0.285  #-0.07
+idle_q1 = max_frequency_point1 +0.275
 idle_q2 = max_frequency_point2 +0
-idle_q3 = max_frequency_point3 -0.166
+idle_q3 = max_frequency_point3 +0.15
 idle_q4 = max_frequency_point4 +0
-idle_q5 = max_frequency_point5 +0.019
+idle_q5 = max_frequency_point5 +0
 
 # Resonator frequency versus flux fit parameters according to resonator_spec_vs_flux
 # amplitude * np.cos(2 * np.pi * frequency * x + phase) + offset
@@ -242,7 +242,7 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
 # q5 -> q4:
 cz5_4_len = 40 # ns
-cz5_4_amp = (0.215 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
+cz5_4_amp = (idle_q5 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
 cz5_4_2pi_dev = 0.505 -0.018
 cz4_5_2pi_dev = -0.216 +0.035
 # q4 -> q3:
@@ -338,16 +338,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (335.1 / 180) * np.pi
-rotation_angle_q2 = (115.8 / 180) * np.pi
-rotation_angle_q3 = (25.9 / 180) * np.pi
-rotation_angle_q4 = (193.8 / 180) * np.pi
-rotation_angle_q5 = (168.2 / 180) * np.pi
-ge_threshold_q1 = 1.494e-05
-ge_threshold_q2 = 3.898e-06
-ge_threshold_q3 = 8.787e-05
-ge_threshold_q4 = 2.411e-05
-ge_threshold_q5 = 1.033e-04
+rotation_angle_q1 = (29.6 / 180) * np.pi
+rotation_angle_q2 = (162.0 / 180) * np.pi
+rotation_angle_q3 = (58.9 / 180) * np.pi
+rotation_angle_q4 = (229.0 / 180) * np.pi
+rotation_angle_q5 = (207.8 / 180) * np.pi
+ge_threshold_q1 = 1.332e-03
+ge_threshold_q2 = 1.232e-03
+ge_threshold_q3 = 1.667e-03
+ge_threshold_q4 = 1.004e-03
+ge_threshold_q5 = 8.866e-04
 
 #############################################
 #                  Config                   #

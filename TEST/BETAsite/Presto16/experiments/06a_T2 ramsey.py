@@ -3,7 +3,7 @@ from ramsey_single import RamseySingle
 import numpy as np
 import matplotlib.pyplot as plt
 
-qubit = dr2b.q4
+qubit = dr2b.q5
 feedline = dr2b.feedline
 
 experiment = RamseySingle(
