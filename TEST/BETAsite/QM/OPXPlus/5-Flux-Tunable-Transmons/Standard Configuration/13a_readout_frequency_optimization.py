@@ -41,22 +41,30 @@ da = 0.01
 amplitudes = np.arange(0, 1.9 + da / 2, da)  # The amplitude vector +da/2 to add a_max to the scan
 
 mode = "a" # a or f
-if mode=="a": var = amplitudes
-else: var = dfs
+if mode=="a": 
+    var = amplitudes
+else: 
+    var = dfs
 
 with program() as ro_freq_opt:
     Ig, Ig_st, Qg, Qg_st, n, n_st = qua_declaration(nb_of_qubits=5)
     Ie, Ie_st, Qe, Qe_st, _, _ = qua_declaration(nb_of_qubits=5)
     df = declare(int)  # QUA variable for the readout frequency
     a = declare(fixed)  # QUA variable for the readout amplitude
+    if mode=="a": v = declare(fixed)
+    else: v = declare(int)
 
     with for_(n, 0, n < n_avg, n + 1):
 
+        # define constants:
         if mode=="a": df = 0
         else: a = 0.5
         
-        # with for_(*from_array(df, dfs)):
-        with for_(*from_array(a, amplitudes)):
+        with for_(*from_array(v, var)):
+
+            # passing variables:
+            if mode=="a": a = v
+            else: df = v
             
             # Update the frequency of the two resonator elements
             update_frequency("rr1", df + resonator_IF_q1)
@@ -330,9 +338,9 @@ else:
         print(f"The optimal readout amplitude is {var[np.argmax(SNR4)] * readout_amp_q4} V (SNR={max(SNR4)})")
         print(f"The optimal readout amplitude is {var[np.argmax(SNR5)] * readout_amp_q5} V (SNR={max(SNR5)})")
     else:
-        print(f"The optimal readout frequency is {var[np.argmax(SNR1)] + resonator_IF_q1} Hz (SNR={max(SNR1)})")
-        print(f"The optimal readout frequency is {var[np.argmax(SNR2)] + resonator_IF_q2} Hz (SNR={max(SNR2)})")
-        print(f"The optimal readout frequency is {var[np.argmax(SNR3)] + resonator_IF_q3} Hz (SNR={max(SNR3)})")
-        print(f"The optimal readout frequency is {var[np.argmax(SNR4)] + resonator_IF_q4} Hz (SNR={max(SNR4)})")
-        print(f"The optimal readout frequency is {var[np.argmax(SNR5)] + resonator_IF_q5} Hz (SNR={max(SNR5)})")
+        print(f"The optimal readout frequency is {(var[np.argmax(SNR1)] + resonator_IF_q1/u.MHz)} MHz (SNR={max(SNR1)})")
+        print(f"The optimal readout frequency is {(var[np.argmax(SNR2)] + resonator_IF_q2/u.MHz)} MHz (SNR={max(SNR2)})")
+        print(f"The optimal readout frequency is {(var[np.argmax(SNR3)] + resonator_IF_q3/u.MHz)} MHz (SNR={max(SNR3)})")
+        print(f"The optimal readout frequency is {(var[np.argmax(SNR4)] + resonator_IF_q4/u.MHz)} MHz (SNR={max(SNR4)})")
+        print(f"The optimal readout frequency is {(var[np.argmax(SNR5)] + resonator_IF_q5/u.MHz)} MHz (SNR={max(SNR5)})")
 

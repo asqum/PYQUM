@@ -257,12 +257,18 @@ def amp_calibration( amp_modify_range, q_name, ro_element, multiplexed, config, 
             I2, Q2 = u.demod2volts(I2, readout_len), u.demod2volts(Q2, readout_len)
             # Progress bar
             progress_counter(iteration, n_avg, start_time=results.get_start_time())
+            # Find optimal points:
+            x90_opt = amps[np.argmin(I1)]
+            x180_opt = amps[np.argmin(I2)]
             # Plot results
             plt.suptitle("Amp pre factor calibration (AS)")
             plt.subplot(311)
             plt.cla()
             plt.plot(amps, I1, label="x90x90")
             plt.plot(amps, I2, label="x180x180")
+            plt.axvline(x90_opt, color='b', linewidth=0.371)
+            plt.axvline(x180_opt, color='r', linewidth=0.371)
+            plt.title(f"x180_opt: {x180_opt:.5f}, x90_opt: {x90_opt:.5f}")
 
             plt.ylabel("I [V]")
             plt.legend()
@@ -291,7 +297,7 @@ if __name__ == '__main__':
     n_avg = 20000
     qubit = 4
     multiplexed = [1,2,3,4,5]
-    mode = "amp"
+    mode = "drag"
 
     # Scan the DRAG coefficient pre-factor
 
@@ -299,7 +305,7 @@ if __name__ == '__main__':
     ge_threshold = eval(f"ge_threshold_q{qubit}")
     # Check that the DRAG coefficient is not 0
     assert drag_coef != 0, "The DRAG coefficient 'drag_coef' must be different from 0 in the config."
-    sequence_repeat = 15 # 5, 15, 25, 35
+    sequence_repeat = 25 # 5, 15, 25, 35
     prefactor_range = 0.25/sequence_repeat
     match mode.lower():
         case "drag":

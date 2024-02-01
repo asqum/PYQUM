@@ -70,3 +70,10 @@ print("QPU q4 control frequency: %s Hz" %(QPU["q4"]["control"]["frequency"]))
 # print("QPU q5 readout frequency: %s Hz" %(QPU["q5"]["readout"]["frequency"]))
 print("QPU q5 control frequency: %s Hz" %(QPU["q5"]["control"]["frequency"]))
 
+# Flux offset (at idle-point) 
+# for i in range(5):
+#     flux_offset = config["controllers"]["con2"]["analog_outputs"][
+#         config["elements"][f"q{i+1}_z"]["singleInput"]["port"][1]
+#     ]["offset"]
+#     print("flux_offset for q%s: %s" %(i+1, flux_offset))
+    

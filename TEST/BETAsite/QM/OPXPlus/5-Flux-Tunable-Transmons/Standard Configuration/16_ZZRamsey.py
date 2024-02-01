@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 1,5
+control, target = 1,4
 
 detuning = -2.00e6 # "Virtual" detuning in Hz
 multiplexed = [1,2,3,4,5]
@@ -224,6 +224,6 @@ else:
 
         plt.tight_layout()
         plt.show()
-        print("Detuned: %s" %(fitting_results['f'][0]*1e9*u.MHz - detuning))
+        print("f01-correction: %.3f MHz" %((fitting_results['f'][0]*1e9 - abs(detuning))/u.MHz) )
     except (Exception,) as e:
         print(e)

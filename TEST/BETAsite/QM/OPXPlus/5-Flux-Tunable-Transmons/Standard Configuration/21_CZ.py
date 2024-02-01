@@ -37,17 +37,21 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+simulate = False
+indicate_config = 1
 
 ####################
 # Define variables #
 ####################
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
-qubit_to_flux_tune, qubit_to_meet_with = 5, 4 
+# 5,4  4,3  2,3  1,2
+qubit_to_flux_tune,qubit_to_meet_with = 1,2 
 
 starting_point = eval(f"idle_q{qubit_to_flux_tune}")
-cz_point = starting_point + eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_amp")
-cz_duration = eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_len")
+if indicate_config:
+    cz_point = starting_point + eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_amp")
+    cz_duration = eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_len")
 multiplexed = [1,2,3,4,5]
 
 # Pulse waveforms to choose from:
@@ -64,20 +68,31 @@ n_avg = 130000  # The number of averages
 ts = np.arange(4, 30, 1)  # The flux pulse durations in clock cycles (4ns) - Must be larger than 4 clock cycles.
 
 # First guess:
-# amps = (np.arange(starting_point, starting_point + 0.25, 0.001) - flux_offset) / scale_reference
+amps = (np.arange(starting_point-0.35, starting_point+0.35, 0.0005) - flux_offset) / scale_reference
 
 # Zoom in:
-# amps = (np.arange(0.18, 0.21, 0.00003) - flux_offset) / scale_reference
+amps = (np.arange(0.15, 0.3, 0.0001) - flux_offset) / scale_reference
 
 # calibrated:
-# amps = (np.arange(-0.135, -0.115, 0.0002) - flux_offset) / scale_reference # q2->q1
-# amps = (np.arange(-0.10, 0.00, 0.00005) - flux_offset) / scale_reference # q1->q2
-# amps = (np.arange(0.23, 0.25, 0.00002) - flux_offset) / scale_reference # q2->q3
-# amps = (np.arange(0.23, 0.27, 0.00005) - flux_offset) / scale_reference # q4->q3
+# q2->q1
+# amps = (np.arange(-0.135, -0.115, 0.0002) - flux_offset) / scale_reference  
+
+# q1->q2 
+amps = (np.arange(-0.20, -0.10, 0.00005) - flux_offset) / scale_reference
+
+# q3->q2
+# amps = (np.arange(0.0, 0.033, 0.00002) - flux_offset) / scale_reference 
+
+# q2->q3
+# amps = (np.arange(0.16, 0.18, 0.00002) - flux_offset) / scale_reference
+# amps = (np.arange(0.19, 0.22, 0.00002) - flux_offset) / scale_reference
+# amps = (np.arange(0.265, 0.285, 0.00002) - flux_offset) / scale_reference 
+
+# q4->q3
+# amps = (np.arange(0.15, 0.18, 0.00005) - flux_offset) / scale_reference 
 
 # q5->q4:
-# amps = (np.arange(0.208, 0.226, 0.00001) - flux_offset) / scale_reference 
-amps = (np.arange(0.187, 0.205, 0.00001) - flux_offset) / scale_reference
+# amps = (np.arange(0.187, 0.205, 0.00001) - flux_offset) / scale_reference
 
 
 # gaussian-like:
@@ -93,26 +108,28 @@ with program() as cz:
     a = declare(fixed)  # QUA variable for the flux pulse amplitude pre-factor.
 
     with for_(n, 0, n < n_avg, n + 1):
+        # set_dc_offset("q1_z", "single", 0.15)
         with for_(*from_array(t, ts)):
             with for_(*from_array(a, amps)):
                 # Put the two qubits in their excited states
                 play("x180", f"q{qubit_to_flux_tune}_xy")
                 play("x180", f"q{qubit_to_meet_with}_xy")
+                
                 align()
-                # Wait some time to ensure that the flux pulse will arrive after the x90 pulse
                 wait(flux_settle_time * u.ns)
+
                 # Play a flux pulse on the qubit with the highest frequency to bring it close to the excited qubit while
                 # varying its amplitude and duration in order to observe the SWAP chevron.
                 play("const" * amp(a), f"q{qubit_to_flux_tune}_z", duration=t)
-                # play("cz_1_2" * amp(a), f"q{qubit_to_flux_tune}_z", duration=t)
+                # NOTE: optional: play another pulse on the "qubit_to_meet_with"
+                # play("const" * amp(0.3125), f"q{qubit_to_meet_with}_z", duration=t)
+                
                 align()
-                # Wait some time to ensure that the flux pulse will end before the readout pulse
+                
                 wait(flux_settle_time * u.ns)
-                # Align the elements to measure after having waited a time "tau" after the qubit pulses.
                 align()
-                # Measure the state of the resonators
+
                 multiplexed_readout(I, I_st, Q, Q_st, resonators=multiplexed, weights="rotated_")
-                # Wait for the qubit to decay to the ground state
                 wait(thermalization_time * u.ns)
         # Save the averaging iteration to get the progress bar
         save(n, n_st)
@@ -136,9 +153,6 @@ qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_na
 ###########################
 # Run or Simulate Program #
 ###########################
-simulate = False
-indicate_config = False
-
 if simulate:
     # Simulates the QUA program for the specified duration
     simulation_config = SimulationConfig(duration=10_000)  # In clock cycles = 4ns

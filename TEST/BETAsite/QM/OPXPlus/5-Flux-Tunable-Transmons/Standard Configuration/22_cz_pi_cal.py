@@ -46,7 +46,7 @@ from cosine import Cosine
 simulate = False
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
-qubit_to_flux_tune, qubit_to_meet_with = 5, 4
+qubit_to_flux_tune,qubit_to_meet_with = 1,2
 cz = 1
 
 # qubit to flux-tune is target
@@ -58,8 +58,9 @@ cz_corr = float(eval(f"cz{qubit_to_flux_tune}_{qubit_to_meet_with}_2pi_dev"))
 
 n_avg = 100000  # The number of averages
 phis = np.arange(0, 3, 1/points_per_cycle)
-amps = np.linspace(0.9, 1.1, 25)
-amps = np.linspace(0.95,1.05,25)
+amps = np.linspace(0.7, 1.3, 25)
+amps = np.linspace(0.9,1.1,25)
+# amps = np.linspace(0.995,1.005,25)
 # amps = np.linspace(0.9995,1.0005,25)
 
 ###################
@@ -162,7 +163,10 @@ else:
 
     # fig = plt.figure()
     fig, ax = plt.subplots(len(amps)//5, 5)
+
     # fig2, ax2 = plt.subplots(len(amps)//5, 5)
+    # CZ_sign = np.zeros([len(amps),len(phis)])
+
     interrupt_on_close(fig, job)
     results = fetching_tool(job, ["n", "I1", "Q1", "I2", "Q2"], mode="live")
     # Live plotting
@@ -173,7 +177,6 @@ else:
         progress_counter(n, n_avg, start_time=results.start_time)
         
         plt.suptitle(f"q{qubit_to_flux_tune}->q{qubit_to_meet_with}: amp_scale, pha_diff_deg ({n}/{n_avg})")
-        # CZ_sign = np.zeros([len(amps),len(phis)])
         for i in range(len(amps)):
             ax[int(i//5), int(i%5)].cla()
             
@@ -196,10 +199,6 @@ else:
             # I10 /= np.max(I10)
             # I11 = I1[:,i,1]
             # I11 /= np.max(I11)
-            # ax[i,1].cla()
-            # ax[i,1].plot(I10)
-            # ax[i,1].plot(I11)
-            
             # CZ_sign[i,:] = I10 - I11
             # ax2[int(i//5), int(i%5)].cla()
             # ax2[int(i//5), int(i%5)].plot(I11, I10, '.')

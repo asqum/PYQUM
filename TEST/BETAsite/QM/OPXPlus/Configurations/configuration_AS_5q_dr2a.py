@@ -78,11 +78,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-135.317 +0.081 ) * u.MHz 
-qubit_IF_q2 = (-99.241  +0.091 ) * u.MHz 
-qubit_IF_q3 = (-207.517 +0.412 ) * u.MHz
-qubit_IF_q4 = (-367.542 -0.555 ) * u.MHz
-qubit_IF_q5 = (-128.078 -0.201 ) * u.MHz
+qubit_IF_q1 = (-130.904 -0.380-0.123 ) * u.MHz 
+qubit_IF_q2 = (-99.241  +0.013 ) * u.MHz 
+qubit_IF_q3 = (-207.517 -0.521-0.102 ) * u.MHz
+qubit_IF_q4 = (-364.021 -0.096-0.035 ) * u.MHz
+qubit_IF_q5 = (-128.078 -0.847 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -104,26 +104,26 @@ saturation_amp = 0.270
 pi_len = 32
 pi_sigma = pi_len / 4
 pi_amp_q1 = 0.0192668256 *1.015
-pi_amp_q2 = 0.060409435  *1.0079987125
-pi_amp_q3 = 0.020964539  *1.0179936375
-pi_amp_q4 = 0.08243586   *1.0145098195549982
-pi_amp_q5 = 0.1168458263 *1
+pi_amp_q2 = 0.0574       *1.00492576
+pi_amp_q3 = 0.01931      *1.006
+pi_amp_q4 = 0.0788       *0.995*1.01125
+pi_amp_q5 = 0.1168458263 *1.0170081825
 
-r90_amp_q1 = pi_amp_q1 / 2 *0.99917899
-r90_amp_q2 = pi_amp_q2 / 2 *1.015918956
+r90_amp_q1 = pi_amp_q1 / 2 *1.000677758485
+r90_amp_q2 = pi_amp_q2 / 2 *1.009323025
 r90_amp_q3 = pi_amp_q3 / 2 *0.996976325
-r90_amp_q4 = pi_amp_q4 / 2 *1.0081893303
-r90_amp_q5 = pi_amp_q5 / 2 *1.010506
+r90_amp_q4 = pi_amp_q4 / 2 *1.0051647623
+r90_amp_q5 = pi_amp_q5 / 2 *1.0094955
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
-drag_coef_q1 = 1.064
-drag_coef_q2 = 0.488
-drag_coef_q3 = 1.111
-drag_coef_q4 = 1.42
-drag_coef_q5 = 0.418
+drag_coef_q1 = 0.8999
+drag_coef_q2 = 0.5259
+drag_coef_q3 = 0.8341
+drag_coef_q4 = 1.34
+drag_coef_q5 = 0.0979
 anharmonicity_q1 = - 199.42 *u.MHz      # checked
 anharmonicity_q2 = + 200.46 *u.MHz      # checked
-anharmonicity_q3 = - 169.51 *u.MHz      # checked
+anharmonicity_q3 = + 169.51 *u.MHz      # checked
 anharmonicity_q4 = + 195.00 *u.MHz      # checked
 anharmonicity_q5 = - 193.70 *u.MHz      # checked
 AC_stark_detuning_q1 = 0.0 * u.MHz
@@ -242,49 +242,63 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
 # q5 -> q4:
 cz5_4_len = 40 # ns
-cz5_4_amp = (idle_q5 - idle_q5) * 0.9833*1.0042 # 1.0416*0.9966667 # 1.034
-cz5_4_2pi_dev = 0.505 -0.018
-cz4_5_2pi_dev = -0.216 +0.035
+cz5_4_amp = (0.19587 - idle_q5) *0.9816948905826226*.9995833
+cz5_4_2pi_dev = 0.016
+cz4_5_2pi_dev = -0.013
+
 # q4 -> q3:
 cz4_3_len = 48 # ns
-cz4_3_amp = (0.2528 - idle_q4) * 1.016667*0.9916667 # 0.975*1.001666
-cz4_3_2pi_dev = -0.578
-cz3_4_2pi_dev = 0.329
-# q2 -> q3: need to tune up q1 simultaneously
-cz2_3_len = 64#60 # ns
-cz2_3_amp = (0.2382 - idle_q2) * 0.9915975*0.998
-cz2_3_2pi_dev = -0.09 +0.055
-cz3_2_2pi_dev = 0.12
+cz4_3_amp = (0.16668 - idle_q4) *0.9546288003055827
+cz4_3_2pi_dev = -0.153
+cz3_4_2pi_dev = -0.008
+
+# q2 -> q3: hardest: might need to tune up q1 simultaneously
+# zone-1:
+# cz2_3_len = 60 #48,60 # ns
+# cz2_3_amp = (0.164 - idle_q2) *1
+# zone-2:
+# cz2_3_len = 60 #48,60 # ns
+# cz2_3_amp = (0.20040 - idle_q2) *0.9933368010473368
+# zone-3:
+cz2_3_len = 52 #64,52 # ns
+cz2_3_amp = (0.2713 - idle_q2) *0.9903278753941791*1.0029167*.9975
+cz2_3_2pi_dev = 0.048
+cz3_2_2pi_dev = 0.153
+
+# q3 -> q2: under consideration:
+cz3_2_len = 32 # ns
+cz3_2_amp = (0.015 - idle_q3) *1
+
 # q1 -> q2:
-cz1_2_len = 24 # ns
-cz1_2_amp = (-0.0577 - idle_q1) * 0.9916667*1.00416*0.9997083
-cz1_2_2pi_dev = 0.154 -0.088
-cz2_1_2pi_dev = 0.178 -0.229 +0.058
+cz1_2_len = 24 ## ns
+cz1_2_amp = (-0.1398 - idle_q1) *0.9916667*0.9983333
+cz1_2_2pi_dev = 0.053
+cz2_1_2pi_dev = 0.078
 
 #############################################
 #                Resonators                 #
 #############################################
 resonator_LO = 5.9 * u.GHz
 # Resonators IF
-resonator_IF_q1 = int((-163.07 -0.052) * u.MHz)
-resonator_IF_q2 = int((126.41 ) * u.MHz)
-resonator_IF_q3 = int((-49.7 -0.053) * u.MHz)
-resonator_IF_q4 = int((218.3 -0.106) * u.MHz)
-resonator_IF_q5 = int((28.8 -0.168) * u.MHz)
+resonator_IF_q1 = int((-163.272) * u.MHz)
+resonator_IF_q2 = int((126.11) * u.MHz)
+resonator_IF_q3 = int((-50.303) * u.MHz)
+resonator_IF_q4 = int((217.644) * u.MHz)
+resonator_IF_q5 = int((28.031999) * u.MHz)
 # Above is for verifying wide-sweep results: -156, -38, 39, 138, 231
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
 readout_len = 1800
 readout_amp_q1 = 0.0868910316 *1.0
 readout_amp_q2 = 0.1309075425 *1.0
-readout_amp_q3 = 0.102461516  *1.0
-readout_amp_q4 = 0.243051850  *0.88
+readout_amp_q3 = 0.102461516  *0.75
+readout_amp_q4 = 0.243051850  *1.04 
 readout_amp_q5 = 0.056009617  *1.0
 
 # TOF and depletion time
 time_of_flight = 284  # must be a multiple of 4
 # depletion_time = int(1000/560) * u.us
-depletion_time = 17 * u.us # for resonator spectroscopy (average of 13700: >5us, 7us still safe, 8us faster)
+depletion_time = 37 * u.us # for resonator spectroscopy (average of 13700: >5us, 7us still safe, 8us faster)
 
 opt_weights = False
 if opt_weights:
@@ -338,16 +352,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = (29.6 / 180) * np.pi
-rotation_angle_q2 = (162.0 / 180) * np.pi
-rotation_angle_q3 = (58.9 / 180) * np.pi
-rotation_angle_q4 = (229.0 / 180) * np.pi
-rotation_angle_q5 = (207.8 / 180) * np.pi
-ge_threshold_q1 = 1.332e-03
-ge_threshold_q2 = 1.232e-03
-ge_threshold_q3 = 1.667e-03
-ge_threshold_q4 = 1.004e-03
-ge_threshold_q5 = 8.866e-04
+rotation_angle_q1 = ((346.6 ) / 180) * np.pi
+rotation_angle_q2 = ((80.7  ) / 180) * np.pi
+rotation_angle_q3 = ((277.6 ) / 180) * np.pi
+rotation_angle_q4 = ((99.1  ) / 180) * np.pi
+rotation_angle_q5 = ((70.8  ) / 180) * np.pi
+ge_threshold_q1 = 4.058e-04
+ge_threshold_q2 = -2.324e-04
+ge_threshold_q3 = -1.812e-03
+ge_threshold_q4 = -1.138e-03
+ge_threshold_q5 = -1.257e-03
 
 #############################################
 #                  Config                   #
@@ -643,7 +657,7 @@ config = {
             },
             "operations": {
                 "const": "const_flux_pulse",
-
+                "cz_2c3t": "cz_2c3t_pulse",
                 
             },
         },
@@ -718,6 +732,14 @@ config = {
             "length": cz2_3_len,
             "waveforms": {
                 "single": "cz_3c2t_wf",
+            },
+        },
+        # q3 -> q2:
+        "cz_2c3t_pulse": {
+            "operation": "control",
+            "length": cz3_2_len,
+            "waveforms": {
+                "single": "cz_2c3t_wf",
             },
         },
         # q1 -> q2:
@@ -1180,6 +1202,8 @@ config = {
         "cz_3c4t_wf": {"type": "arbitrary", "samples": [0.0] + [cz4_3_amp]*(cz4_3_len-1) },
         # q2->q3:
         "cz_3c2t_wf": {"type": "arbitrary", "samples": [0.0] + [cz2_3_amp]*(cz2_3_len-1) },
+        # q3->q2:
+        "cz_2c3t_wf": {"type": "arbitrary", "samples": [0.0] + [cz3_2_amp]*(cz3_2_len-1) },
         # q1->q2:
         "cz_2c1t_wf": {"type": "arbitrary", "samples": [0.0] + [cz1_2_amp]*(cz1_2_len-1) },
     },

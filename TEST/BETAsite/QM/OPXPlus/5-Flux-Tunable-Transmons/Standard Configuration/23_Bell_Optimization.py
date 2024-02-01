@@ -26,14 +26,14 @@ h_loop = 1
 multiplexed = [1,2,3,4,5]
 bitstrings = ['00', '01', '10', '11']
 
-qubit_to_flux_tune, qubit_to_meet_with = 5, 4
+qubit_to_flux_tune, qubit_to_meet_with = 1, 2
 
 '''NOTE:
 1. switch order in turn to compensate both channel consecutively
 2. Ascent order: first row of cz*_*_2pi_dev in configuration
 3. Descent order: Second row of cz*_*_2pi_dev in configuration
 '''
-cx_control, cx_target = 4, 5  
+cx_control, cx_target = 2, 1  
 
 th_control, th_target = eval(f"ge_threshold_q{cx_control}"), eval(f"ge_threshold_q{cx_target}")
 phis_corr = np.linspace(-0.9, 0.9, 360)
