@@ -171,3 +171,11 @@ else:
         plt.pause(0.1)
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()
+
+save = True
+if save:
+    save_progam_name = sys.argv[0].split('\\')[-1].split('.')[0]  # get the name of current running .py program
+    filename = f"{save_progam_name}_dr2a_q{qubit_pair[0]}_{qubit_pair[1]}"
+    np.savez(save_dir/filename, flux_offset_1=flux_offset_1, flux_offset_2=flux_offset_2, dcs=dcs, fq0=(q1_IF+dfs)/u.MHz, fq1=(q2_IF+dfs)/u.MHz, R1=R1, R2=R2, phase1=phase1, phase2=phase2)
+    print("Data saved as %s.npz" %filename)
+    

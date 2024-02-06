@@ -78,10 +78,10 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-130.904 -0.380-0.123 ) * u.MHz 
+qubit_IF_q1 = (-130.904 -0.503 ) * u.MHz 
 qubit_IF_q2 = (-99.241  +0.013 ) * u.MHz 
-qubit_IF_q3 = (-207.517 -0.521-0.102 ) * u.MHz
-qubit_IF_q4 = (-364.021 -0.096-0.035 ) * u.MHz
+qubit_IF_q3 = (-207.517 +0.745 ) * u.MHz
+qubit_IF_q4 = (-364.021 -0.076 ) * u.MHz
 qubit_IF_q5 = (-128.078 -0.847 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
@@ -224,7 +224,7 @@ amplitude_fit3, frequency_fit3, phase_fit3, offset_fit3 = [0, 0, 0, 0]
 amplitude_fit4, frequency_fit4, phase_fit4, offset_fit4 = [0, 0, 0, 0]
 amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
-const_flux_len = 360 # 600, 260 max-bake: 260ns
+const_flux_len = 200 # 360, 600, 260 max-bake: 260ns (200ns to be safe?)
 const_flux_amp = 0.48 # for cz-chevron 
 
 # filter taps:
@@ -242,7 +242,7 @@ g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
 # q5 -> q4:
 cz5_4_len = 40 # ns
-cz5_4_amp = (0.19587 - idle_q5) *0.9816948905826226*.9995833
+cz5_4_amp = (0.19587 - idle_q5) *0.9816947201222114
 cz5_4_2pi_dev = 0.016
 cz4_5_2pi_dev = -0.013
 
@@ -352,16 +352,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = ((346.6 ) / 180) * np.pi
-rotation_angle_q2 = ((80.7  ) / 180) * np.pi
-rotation_angle_q3 = ((277.6 ) / 180) * np.pi
-rotation_angle_q4 = ((99.1  ) / 180) * np.pi
-rotation_angle_q5 = ((70.8  ) / 180) * np.pi
-ge_threshold_q1 = 4.058e-04
-ge_threshold_q2 = -2.324e-04
-ge_threshold_q3 = -1.812e-03
-ge_threshold_q4 = -1.138e-03
-ge_threshold_q5 = -1.257e-03
+rotation_angle_q1 = ((347.9 ) / 180) * np.pi
+rotation_angle_q2 = ((85.6  ) / 180) * np.pi
+rotation_angle_q3 = ((287.2 ) / 180) * np.pi
+rotation_angle_q4 = ((102.0  ) / 180) * np.pi
+rotation_angle_q5 = ((75.4  ) / 180) * np.pi
+ge_threshold_q1 = 5.133e-04
+ge_threshold_q2 = -2.769e-04
+ge_threshold_q3 = -1.804e-03
+ge_threshold_q4 = -1.485e-03
+ge_threshold_q5 = -1.419e-03
 
 #############################################
 #                  Config                   #

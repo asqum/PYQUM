@@ -46,7 +46,7 @@ from cosine import Cosine
 simulate = False
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
-qubit_to_flux_tune,qubit_to_meet_with = 1,2
+qubit_to_flux_tune,qubit_to_meet_with = 5,4
 cz = 1
 
 # qubit to flux-tune is target
@@ -60,7 +60,7 @@ n_avg = 100000  # The number of averages
 phis = np.arange(0, 3, 1/points_per_cycle)
 amps = np.linspace(0.7, 1.3, 25)
 amps = np.linspace(0.9,1.1,25)
-# amps = np.linspace(0.995,1.005,25)
+amps = np.linspace(0.995,1.005,25)
 # amps = np.linspace(0.9995,1.0005,25)
 
 ###################
