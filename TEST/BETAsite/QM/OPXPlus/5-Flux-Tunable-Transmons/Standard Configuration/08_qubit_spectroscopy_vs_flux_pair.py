@@ -48,7 +48,7 @@ saturation_amp = 0.07  # pre-factor to the value defined in the config - restric
 # Qubit detuning sweep with respect to qubit_IF
 dfs = np.arange(-490e6, +490e6, 1e6)
 # Flux sweep
-dcs = np.arange(-0.25, 0.25, 0.0025)
+dcs = np.arange(-0.15, 0.15, 0.0015)
 flux_offset_1 = eval("idle_q%s" %qubit_pair[0]) 
 flux_offset_2 = eval("idle_q%s" %qubit_pair[1]) 
 
@@ -174,8 +174,7 @@ else:
 
 save = True
 if save:
-    save_progam_name = sys.argv[0].split('\\')[-1].split('.')[0]  # get the name of current running .py program
-    filename = f"{save_progam_name}_dr2a_q{qubit_pair[0]}_{qubit_pair[1]}"
+    filename = f"qSpectroscopy_dr2a_q{qubit_pair[0]}_{qubit_pair[1]}"
     np.savez(save_dir/filename, flux_offset_1=flux_offset_1, flux_offset_2=flux_offset_2, dcs=dcs, fq0=(q1_IF+dfs)/u.MHz, fq1=(q2_IF+dfs)/u.MHz, R1=R1, R2=R2, phase1=phase1, phase2=phase2)
     print("Data saved as %s.npz" %filename)
     

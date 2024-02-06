@@ -3,7 +3,7 @@ import sys
 import numpy as np
 
 def save_npz( save_dir, file_name, output_data, suffix_time:bool=True ):
-    save_path = f"{save_dir}\{file_name}"
+    save_path = f"{save_dir}/{file_name}"
     print(f"save file: {save_path}")
     save_time = ""
     if suffix_time:
