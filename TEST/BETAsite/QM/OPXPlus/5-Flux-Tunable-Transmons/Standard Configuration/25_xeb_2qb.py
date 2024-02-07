@@ -35,7 +35,7 @@ qubits_el = [f"q{i}_xy" for i in qubits]
 multiplexed = [4, 5, 1, 2, 3]
 # multiplexed = [1, 2, 3, 4, 5]
 cz_type = "const_wf"
-apply_cz = True
+apply_cz = False
 
 # qop_ip = ""
 # qop_port = 443
@@ -52,9 +52,9 @@ qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_na
 simulate = False
 
 seqs = 10  # Number of random sequences to run per depth
-max_depth = 3  # 7  # Max depth of the XEB sequence
+max_depth = 30  # 7  # Max depth of the XEB sequence
 step = 1  # Step for the depth iteration
-avgs = 1000  # 101  # Number of averages per sequence
+avgs = 101  # 101  # Number of averages per sequence
 depths = np.arange(1, max_depth+1, step)  # Create an array of depths to iterate through
 
 # Random gates
@@ -484,6 +484,6 @@ else:
     # The additional factor of four in the exponent is because each layer
     # involves two moments of two qubits (so each layer has four applications
     # of a single-qubit single-moment depolarizing channel).
-    
+    print(fids["fidelity"])
 
     
