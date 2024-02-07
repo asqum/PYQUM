@@ -33,7 +33,9 @@ from qiskit.quantum_info import Statevector
 qubits = [4, 5]
 qubits_el = [f"q{i}_xy" for i in qubits]
 multiplexed = [4, 5, 1, 2, 3]
+# multiplexed = [1, 2, 3, 4, 5]
 cz_type = "const_wf"
+apply_cz = True
 
 # qop_ip = ""
 # qop_port = 443
@@ -52,7 +54,7 @@ simulate = False
 seqs = 10  # Number of random sequences to run per depth
 max_depth = 3  # 7  # Max depth of the XEB sequence
 step = 1  # Step for the depth iteration
-avgs = 101  # 101  # Number of averages per sequence
+avgs = 1000  # 101  # Number of averages per sequence
 depths = np.arange(1, max_depth+1, step)  # Create an array of depths to iterate through
 
 # Random gates
@@ -113,7 +115,7 @@ with program() as xeb:
     I, I_st, Q, Q_st, n, n_st = qua_declaration(nb_of_qubits=len(multiplexed))
     # I, Q = [declare(fixed) for _ in range(2)], [declare(fixed) for _ in range(2)]
     s, tot_state_ = declare(int), declare(int)
-    d, d_, _d = declare(int), declare(int), declare(int)
+    d, d_ = declare(int), declare(int)
     g = [declare(int, size=max_depth) for _ in range(2)]  # Gate indices list for both qubits
     a = [[declare(fixed, size=max_depth) for _ in range(4)] for _ in
          range(len(qubits))]  # Amplitude matrices for both qubits (for all depths)
@@ -131,10 +133,11 @@ with program() as xeb:
     r.set_seed(12321)
 
     # If we are simulating, we need to update the frequency of the qubits to 0 to visualize the sequence
-    if simulate:
-        a_st = [[declare_stream() for _ in range(4)] for _ in range(random_gates - 1)]
-        for qubit in qubits_el:
-            update_frequency(qubit, 0)
+    # if simulate:
+    if True:
+        a_st = [[declare_stream() for _ in range(4)] for _ in range(len(qubits))]
+        # for qubit in qubits_el:
+            # update_frequency(qubit, 0)
 
     # Generate and run the XEB sequences
     with for_(s, 0, s < seqs, s + 1):
@@ -150,9 +153,10 @@ with program() as xeb:
                     assign_amplitude_matrix(g[q][d_], [a[q][i][d_] for i in range(4)])
                     save(g[q][d_], g_st[q])
 
-                    if simulate:
+                    # if simulate:
+                    if True:
                         for amp_matrix_element in range(4):
-                            save(a[q][amp_matrix_element][_d], a_st[q][amp_matrix_element])
+                            save(a[q][amp_matrix_element][d_], a_st[q][amp_matrix_element])
 
             # Run the XEB sequence
             with for_(n, 0, n < avgs, n + 1):
@@ -170,18 +174,19 @@ with program() as xeb:
                             with switch_(g[q][d_], unsafe=True):
                                 for j in range(2):
                                     with case_(j):
-                                        play("x90" * amp(*[a[q][i][_d] for i in range(4)]), qubits_el[q])
+                                        play("x90" * amp(*[a[q][i][d_] for i in range(4)]), qubits_el[q])
                                 with case_(2):
                                     frame_rotation(np.pi/4, qubits_el[q])
                         elif SW_dict in gate_dict.values():
                             raise NotImplementedError("SW gate not implemented yet")
                         else:
-                            play("x90" * amp(*[a[q][i][_d] for i in range(4)]), qubits_el[q])
+                            play("x90" * amp(*[a[q][i][d_] for i in range(4)]), qubits_el[q])
                     align()
-                    # Insert your two-qubit gate macro here
-                    cz_gate(qubits[0], qubits[1], cz_type)
-                    frame_rotation_2pi(eval(f"cz{5}_{4}_2pi_dev"), "q5_xy")
-                    frame_rotation_2pi(eval(f"cz{4}_{5}_2pi_dev"), "q4_xy")
+                    if apply_cz:
+                        # Insert your two-qubit gate macro here
+                        cz_gate(qubits[0], qubits[1], cz_type)
+                        frame_rotation_2pi(eval(f"cz{5}_{4}_2pi_dev"), "q5_xy")
+                        frame_rotation_2pi(eval(f"cz{4}_{5}_2pi_dev"), "q4_xy")
                     align()
 
                 # Measure the state (insert your readout macro here)
@@ -199,7 +204,11 @@ with program() as xeb:
                     for i in range(2 ** len(qubits)):  # Bitstring conversion
                         with case_(i):
                             assign(counts[i], counts[i] + 1)  # counts for 00, 01, 10 and 11
-                            save(counts[i], counts_st[i])
+            
+            for i in range(2 ** len(qubits)):  # Resetting Bitstring collection
+                save(counts[i], counts_st[i])
+                assign(counts[i], 0)
+
             # Save the sequence iteration to get the progress bar
             save(s, s_st)
 
@@ -216,7 +225,8 @@ with program() as xeb:
             string = "s" + bin(i)[2:].zfill(2)
             counts_st[i].buffer(len(depths)).save_all(string)
 
-        if simulate:
+        # if simulate:
+        if True:
             for i in range(2):
                 for d_ in range(4):
                     a_st[i][d_].save_all(f"a{i + 1}_{bin(d_)[2:]}")
@@ -239,12 +249,20 @@ if simulate:
     a2_00, a2_01, a2_10, a2_11 = [job.result_handles.get(f"a2_{bin(i)[2:]}").fetch_all()['value'].flatten() for i in
                                   range(4)]
 else:
+    a1_00, a1_01, a1_10, a1_11 = [job.result_handles.get(f"a1_{bin(i)[2:]}").fetch_all()['value'].flatten() for i in
+                                  range(4)]
+    a2_00, a2_01, a2_10, a2_11 = [job.result_handles.get(f"a2_{bin(i)[2:]}").fetch_all()['value'].flatten() for i in
+                                  range(4)]
+
     I1, I2, Q1, Q2 = [job.result_handles.get(f"{i}{j}").fetch_all()['value'] for i in ["I", "Q"] for j in [1, 2]]
 
     state1, state2 = [job.result_handles.get(f'state{i}').fetch_all()['value'] for i in [1, 2]]
     state00, state01, state10, state11 = [job.result_handles.get(f's{bin(i)[2:].zfill(2)}').fetch_all()['value'] for
                                           i in
                                           range(4)]
+    
+    print(f"state1:\n {state1}, state2:\n {state2}")
+    print(f"state00:\n {state00}, state01:\n {state01}, state10:\n {state10}, state11:\n {state11}")
 
     S1 = I1 + 1J * Q1
     S2 = I2 + 1J * Q2
@@ -297,15 +315,16 @@ else:
         for d_, d in enumerate(depths):
             state = Statevector.from_int(0, 2 ** len(qubits))
             qc = QuantumCircuit(len(qubits))
-            for k in range(d_):
+            for k in range(d):
                 sq_gates = [gate_dict[sq_indices[s][d_][q][k]]["gate"] for q in range(len(qubits))]
                 for q in range(len(qubits)):
                     qc.append(sq_gates[q], [q])
 
-                qc.append(CZ, [0, 1])
+                if apply_cz: 
+                    qc.append(CZ, [0, 1])
 
             circuits_list[s].append(qc)
-            expected_probs[s, d_] = Statevector(qc).probabilities()
+            expected_probs[s, d_] = np.round(Statevector(qc).probabilities(), 5)
             measured_probs[s, d_] = np.array([state00[s][d_], state01[s][d_],
                                               state10[s][d_], state11[s][d_]]) / avgs
 
@@ -331,6 +350,17 @@ else:
         u_u = np.sum(record["pure_probs"]) / 2 ** len(qubits)
         m_u = np.sum(record["pure_probs"] * record["sampled_probs"])
         record.update(e_u=e_u, u_u=u_u, m_u=m_u)
+
+    idx = 0
+    print("seqs: %s, depths: %s" %(seqs, depths))
+    for s in range(seqs):
+        for d in depths:
+            print("circuit of seqs-%s, depths-%s:\n %s" %(s+1, d, circuits_list[s][d-1]))
+            for d_ in range(d):
+                print(f"cycle-{d_+1}")
+                print(f"a1:\n [[{a1_00[idx]}, {a1_01[idx]}], [{a1_10[idx]}, {a1_11[idx]}]]")
+                print(f"a2:\n [[{a2_00[idx]}, {a2_01[idx]}], [{a2_10[idx]}, {a2_11[idx]}]]")
+                idx += 1
 
     # Plot the results
     def create_subplot(data, subplot_number, title):
@@ -378,7 +408,8 @@ else:
         xeb_err_per_cycle = 1 - (x[2] - c_fit) / (x[1] - c_fit)
     except:
         pass
-
+        
+    plt.figure(1)
     plt.scatter(depths, Fxeb, label='Original Data')
     # plt.plot(np.arange(depth), exponential_decay(np.arange(depth), a_fit, b_fit, c_fit), label='err_per_cycle={:.2f}'.format(xeb_err_per_cycle), color='red')
     plt.legend()
@@ -416,6 +447,7 @@ else:
 
 
     fids = df.groupby("depth").apply(per_cycle_depth).reset_index()
+    plt.figure(2)
     plt.xlabel(r"$e_U - u_U$", fontsize=18)
     plt.ylabel(r"$m_U - u_U$", fontsize=18)
     _lines = np.asarray(_lines)
@@ -434,24 +466,24 @@ else:
         a_fit, b_fit, c_fit = params
         x = exponential_decay(depths, a_fit, b_fit, c_fit)
         xeb_err_per_cycle = 1 - (x[2] - c_fit) / (x[1] - c_fit)
+        
+        plt.figure(3)
+        plt.plot(xx, exponential_decay(xx, a_fit, b_fit, c_fit),
+             label='Least Squares fit, err_per_cycle={:.2f}'.format(xeb_err_per_cycle),
+             color='red')
+
+        plt.ylabel("Circuit fidelity", fontsize=18)
+        plt.xlabel("Cycle Depth $d$", fontsize=18)
+        plt.title("XEB Fidelity (Google notebook post processing)")
+        plt.legend(loc="best")
+        plt.yscale("log")
+        plt.tight_layout()
     except:
         pass
 
     # The additional factor of four in the exponent is because each layer
     # involves two moments of two qubits (so each layer has four applications
     # of a single-qubit single-moment depolarizing channel).
-    plt.plot(xx, exponential_decay(xx, a_fit, b_fit, c_fit),
-             label='Least Squares fit, err_per_cycle={:.2f}'.format(xeb_err_per_cycle),
-             color='red')
+    
 
-    plt.ylabel("Circuit fidelity", fontsize=18)
-    plt.xlabel("Cycle Depth $d$", fontsize=18)
-    plt.title("XEB Fidelity (Google notebook post processing)")
-    plt.legend(loc="best")
-    plt.yscale("log")
-    plt.tight_layout()
-
-    print("seqs: %s, depths: %s" %(seqs, depths))
-    for s in range(seqs):
-        for d in depths:
-            print("circuit of seqs-%s, depths-%s:\n %s" %(s, d-1, circuits_list[s][d-1]))
+    
