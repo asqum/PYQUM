@@ -35,7 +35,7 @@ qubits_el = [f"q{i}_xy" for i in qubits]
 multiplexed = [4, 5, 1, 2, 3]
 # multiplexed = [1, 2, 3, 4, 5]
 cz_type = "const_wf"
-apply_cz = False
+apply_cz = True
 
 # qop_ip = ""
 # qop_port = 443
@@ -51,10 +51,10 @@ qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_na
 # thermalization_time = 100  # Thermalization time for the qubits (in ns)
 simulate = False
 
-seqs = 10  # Number of random sequences to run per depth
-max_depth = 30  # 7  # Max depth of the XEB sequence
+seqs = 28  # Number of random sequences to run per depth
+max_depth = 7  # 7  # Max depth of the XEB sequence
 step = 1  # Step for the depth iteration
-avgs = 101  # 101  # Number of averages per sequence
+avgs = 31  # 101  # Number of averages per sequence
 depths = np.arange(1, max_depth+1, step)  # Create an array of depths to iterate through
 
 # Random gates
@@ -371,7 +371,7 @@ else:
         plt.pcolor(depths, range(seqs), np.abs(data))
         ax = plt.gca()
         ax.set_title(title)
-        ax.set_xlabel('Circuit depth')
+        if subplot_number > 244: ax.set_xlabel('Circuit depth')
         ax.set_ylabel('Sequences')
         ax.set_xticks(depths)
         ax.set_yticks(np.arange(1, seqs + 1))
@@ -390,7 +390,8 @@ else:
         data.append(expected_probs[:, :, i])
 
     plot_number = [241, 242, 243, 244, 245, 246, 247, 248]
-    plt.suptitle(f"XEB for q{qubits[0]}-q{qubits[1]}, inner-average: {avgs}, random-gates: {random_gates}")
+    plt.figure()
+    plt.suptitle(f"XEB for q{qubits[0]}-q{qubits[1]}, inner-average: {avgs}, random-gates: {random_gates}, Apply-CZ: {apply_cz}")
     for title, d, n in zip(titles, data, plot_number):
         create_subplot(d, n, title)
 
@@ -409,7 +410,7 @@ else:
     except:
         pass
         
-    plt.figure(1)
+    plt.figure()
     plt.scatter(depths, Fxeb, label='Original Data')
     # plt.plot(np.arange(depth), exponential_decay(np.arange(depth), a_fit, b_fit, c_fit), label='err_per_cycle={:.2f}'.format(xeb_err_per_cycle), color='red')
     plt.legend()
@@ -447,7 +448,7 @@ else:
 
 
     fids = df.groupby("depth").apply(per_cycle_depth).reset_index()
-    plt.figure(2)
+    plt.figure()
     plt.xlabel(r"$e_U - u_U$", fontsize=18)
     plt.ylabel(r"$m_U - u_U$", fontsize=18)
     _lines = np.asarray(_lines)
@@ -467,7 +468,7 @@ else:
         x = exponential_decay(depths, a_fit, b_fit, c_fit)
         xeb_err_per_cycle = 1 - (x[2] - c_fit) / (x[1] - c_fit)
         
-        plt.figure(3)
+        # plt.figure()
         plt.plot(xx, exponential_decay(xx, a_fit, b_fit, c_fit),
              label='Least Squares fit, err_per_cycle={:.2f}'.format(xeb_err_per_cycle),
              color='red')
@@ -478,6 +479,8 @@ else:
         plt.legend(loc="best")
         plt.yscale("log")
         plt.tight_layout()
+        plt.show()
+
     except:
         pass
 

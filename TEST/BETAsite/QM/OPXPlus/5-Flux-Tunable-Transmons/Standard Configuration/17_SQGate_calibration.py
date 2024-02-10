@@ -297,7 +297,7 @@ if __name__ == '__main__':
     n_avg = 20000
     qubit = 4
     multiplexed = [1,2,3,4,5]
-    mode = "drag"
+    mode = "amp"
 
     # Scan the DRAG coefficient pre-factor
 

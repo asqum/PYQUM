@@ -82,7 +82,7 @@ qubit_IF_q1 = (-130.904 -0.503 ) * u.MHz
 qubit_IF_q2 = (-99.241  +0.013 ) * u.MHz 
 qubit_IF_q3 = (-207.517 +0.745 ) * u.MHz
 qubit_IF_q4 = (-364.021 -0.076 ) * u.MHz
-qubit_IF_q5 = (-128.078 -0.847 ) * u.MHz
+qubit_IF_q5 = (-128.078 -0.814-0.357 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -106,8 +106,8 @@ pi_sigma = pi_len / 4
 pi_amp_q1 = 0.0192668256 *1.015
 pi_amp_q2 = 0.0574       *1.00492576
 pi_amp_q3 = 0.01931      *1.006
-pi_amp_q4 = 0.0788       *0.995*1.01125
-pi_amp_q5 = 0.1168458263 *1.0170081825
+pi_amp_q4 = 0.0788       *1.010721621875
+pi_amp_q5 = 0.1168458263 *1.0200592070474999
 
 r90_amp_q1 = pi_amp_q1 / 2 *1.000677758485
 r90_amp_q2 = pi_amp_q2 / 2 *1.009323025
