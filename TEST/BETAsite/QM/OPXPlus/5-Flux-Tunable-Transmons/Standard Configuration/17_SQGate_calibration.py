@@ -295,9 +295,9 @@ def amp_calibration( amp_modify_range, q_name, ro_element, multiplexed, config, 
 if __name__ == '__main__':
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
     n_avg = 20000
-    qubit = 4
+    qubit = 5
     multiplexed = [1,2,3,4,5]
-    mode = "amp"
+    mode = "drag"
 
     # Scan the DRAG coefficient pre-factor
 

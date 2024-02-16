@@ -23,7 +23,7 @@ cz_type = "const_wf"
 n_avg = 1024
 h_loop = 1
 multiplexed = [1,2,3,4,5]
-cz_corr = float(eval(f"cz{4}_{3}_2pi_dev"))
+cz_corr = float(eval(f"cz{5}_{4}_2pi_dev"))
 
 with program() as cz_ops:
 
@@ -104,8 +104,22 @@ with program() as cz_ops:
         # play("y90", "q2_xy")
         # play("x180", "q2_xy")
 
-        align()
+        # align()
+        # play("x180", "q4_xy")
+        # play("x180", "q5_xy")
+
+        # Circuit 4: CX
         play("x180", "q4_xy")
+        align()
+        play("x90"*amp(*np.array([0., -1., 1., 0.])), "q5_xy") # y90
+        # play("y90", "q5_xy")
+        play("x180", "q5_xy")
+        align()
+        cz_gate(4, 5, cz_type)
+        frame_rotation_2pi(eval(f"cz{5}_{4}_2pi_dev"), "q5_xy")
+        frame_rotation_2pi(eval(f"cz{4}_{5}_2pi_dev"), "q4_xy")
+        align()
+        play("y90", "q5_xy")
         play("x180", "q5_xy")
     
         align()

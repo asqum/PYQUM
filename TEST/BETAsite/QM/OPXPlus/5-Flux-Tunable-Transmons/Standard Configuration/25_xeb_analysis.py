@@ -74,7 +74,7 @@ phiy = np.pi/2
 Y90 = np.array([[np.cos(phix/2), -np.sin(phix/2)], [+np.sin(phix/2), np.cos(phix/2)]])
 # print(Y90)
 
-W90 = 1/np.sqrt(3) * (X90 + Y90)
+W90 = 1/np.sqrt(3) * (X90 + Y90) # NOTE: this might not be equivalent to each other!
 # print(W90)
 CZ = np.array([[+1,0,0,0],[0,1,0,0],[0,0,+1,0],[0,0,0,-1]])
 # CZ = np.array([[+1,0,0,0],[0,1,0,0],[0,0,-1,0],[0,0,0,1]])
