@@ -9,28 +9,49 @@ from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results import progress_counter
-from qualang_tools.plot.fitting import Fit
-from scipy.optimize import curve_fit
 import warnings
 from RO_macros import multiRO_declare, multiRO_measurement, multiRO_pre_save
 import config_par as gc
 warnings.filterwarnings("ignore")
+import xarray as xr
 
 # Qi = 1 stands for Q1
 
-def qubit_flux_decay(dfs,t_delay, q_name:list, ro_element:list, z_name:list,dc,config, qmm:QuantumMachinesManager, n_avg=100,initializer=None,simulate=False):
+def qubit_flux_decay( flux_amp, freq_span:Union[tuple, float], switch_time:tuple, freq_resolution:float, q_name:list, ro_element:list, z_name:list, config, qmm:QuantumMachinesManager,time_resolution=1, n_avg=100,initializer=None,simulate=False):
     """
-    Return ductionary with value 2*N array
-    N is t_delay length
+    freq_span unit in MHz \n
+    for asymetric span, in put a tuple ( begin, end )\n
+    switch_time is a tuple include three element unit in us \n
+    (switch_delay, switch_on, switch_off) \n
+    total record time = switch_delay  +switch_on +switch_off\n
+    time_resolution unit in clock cycle (4ns), defalut is 1\n
+
     """
+
+    s_delay_qua = switch_time[0]/4 *u.us +4
+    s_on_qua = switch_time[1]/4 *u.us
+    s_off_qua = switch_time[2]/4 *u.us
+
+    pi_delay_qua = np.arange(4, s_delay_qua+s_on_qua+s_off_qua, 1)  # Linear sweep
+
+    freq_resolution_qua = freq_resolution *u.MHz
+    if isinstance(freq_span, float):
+        freqs_qua = np.arange( -freq_span/2 *u.MHz, +freq_span/2 *u.MHz, freq_resolution_qua)
+    else:
+        freqs_qua = np.arange( freq_span[0] *u.MHz, freq_span[1] *u.MHz, freq_resolution_qua)
+
+    freqs_mhz = freqs_qua/1e6 # Convert Hz to MHz
+    pi_delay_ns = pi_delay_qua*4  # Convert clock cycle to ns
+
     ref_z_offset = {}
     for z in z_name:
         ref_z_offset[z] = gc.get_offset(z, config)
     ref_xy_IF = {}
     for xy in q_name:
         ref_xy_IF[xy] = gc.get_IF(xy, config)
-    evo_time_len = t_delay.shape[-1]
-    freq_len = len(dfs)
+
+    time_len = pi_delay_qua.shape[-1]
+    freq_len = len(freqs_qua)
     # QUA program
     with program() as decay_time:
 
@@ -40,8 +61,8 @@ def qubit_flux_decay(dfs,t_delay, q_name:list, ro_element:list, z_name:list,dc,c
         df = declare(int)
         n_st = declare_stream()
         with for_(n, 0, n < n_avg, n + 1):
-            with for_(*from_array(df, dfs)):
-                with for_(*from_array(t, t_delay)):
+            with for_(*from_array(df, freqs_qua)):
+                with for_(*from_array(t, pi_delay_qua)):
                     # Init
                     if initializer is None:
                         wait(100*u.us)
@@ -55,18 +76,19 @@ def qubit_flux_decay(dfs,t_delay, q_name:list, ro_element:list, z_name:list,dc,c
                     for q in q_name:
                         update_frequency(q, ref_xy_IF[q]+df)
                     # Operation
-                    for z in z_name:
-                        wait(50,z)
                     for q in q_name:
                         wait(t,q)
                         play("x180", q)
+
+
                     for z in z_name:
-                        set_dc_offset(z, "single", ref_z_offset[z]+dc)
-                    wait(125)
+                        wait(s_delay_qua,z)
+                        set_dc_offset(z, "single", ref_z_offset[z]+flux_amp)
+                    wait(s_on_qua)
                     #align()
                     for z in z_name:
                         set_dc_offset(z, "single", ref_z_offset[z])
-                        wait(50,z)
+                        wait(s_off_qua,z)
                     align()
                     
                     
@@ -78,7 +100,7 @@ def qubit_flux_decay(dfs,t_delay, q_name:list, ro_element:list, z_name:list,dc,c
 
         with stream_processing():
             n_st.save("iteration")
-            multiRO_pre_save(iqdata_stream, ro_element, (freq_len,evo_time_len) )
+            multiRO_pre_save(iqdata_stream, ro_element, (freq_len, time_len) )
     if simulate:
         simulation_config = SimulationConfig(duration=150000)  # In clock cycles = 4ns
         job = qmm.simulate(config, decay_time, simulation_config)
@@ -107,7 +129,7 @@ def qubit_flux_decay(dfs,t_delay, q_name:list, ro_element:list, z_name:list,dc,c
                 ax[0][r_idx].cla()
                 ax[1][r_idx].cla()
                 output_data[r_name] = np.array([fetch_data[r_idx*2], fetch_data[r_idx*2+1]])
-                plot_qubit_flux_decay(output_data[r_name], dfs, t_delay, [ax[0][r_idx],ax[1][r_idx]])
+                plot_qubit_flux_decay(output_data[r_name], freqs_mhz, pi_delay_ns, [ax[0][r_idx],ax[1][r_idx]])
             iteration = fetch_data[-1]
             # Progress bar
             progress_counter(iteration, n_avg, start_time=results.get_start_time()) 
@@ -117,12 +139,17 @@ def qubit_flux_decay(dfs,t_delay, q_name:list, ro_element:list, z_name:list,dc,c
         fetch_data = results.fetch_all()
         output_data = {}
         for r_idx, r_name in enumerate(ro_element):
-            output_data[r_name] = np.array([fetch_data[r_idx*2], fetch_data[r_idx*2+1]])
+            output_data[r_name] = ( ["mixer","frequency","time"],
+                                np.array([fetch_data[r_idx*2], fetch_data[r_idx*2+1]]) )
 
         qm.close()
-        return output_data
+        dataset = xr.Dataset(
+            output_data,
+            coords={ "mixer":np.array(["I","Q"]), "frequency": freqs_mhz, "time": pi_delay_ns }
+        )
+        return dataset
 
-def plot_qubit_flux_decay( data, time, dfs, ax=None ):
+def plot_qubit_flux_decay( data, time, freqs_qua, ax=None ):
     """
     data shape ( 2, N, M )
     2 is I,Q
@@ -138,10 +165,10 @@ def plot_qubit_flux_decay( data, time, dfs, ax=None ):
         fig, ax = plt.subplots()
         ax.set_title('pcolormesh')
         fig.show()
-    ax[0].pcolormesh( dfs, time, np.abs(s21), cmap='RdBu')# , vmin=z_min, vmax=z_max)
-    ax[1].pcolormesh( dfs, time, np.angle(s21), cmap='RdBu')# , vmin=z_min, vmax=z_max)
+    ax[0].pcolormesh( freqs_qua, time, np.abs(s21), cmap='RdBu')# , vmin=z_min, vmax=z_max)
+    ax[1].pcolormesh( freqs_qua, time, np.angle(s21), cmap='RdBu')# , vmin=z_min, vmax=z_max)
 
-def plot_ana_qubit_flux_decay( data, dfs, time, freq_LO, freq_IF, ax=None ):
+def plot_ana_qubit_flux_decay( data, freqs_qua, time, freq_LO, freq_IF, ax=None ):
     """
     data shape ( 2, N, M )
     2 is I,Q
@@ -153,7 +180,7 @@ def plot_ana_qubit_flux_decay( data, dfs, time, freq_LO, freq_IF, ax=None ):
     zdata = idata +1j*qdata
     s21 = zdata
 
-    abs_freq = freq_LO+freq_IF+dfs
+    abs_freq = freq_LO+freq_IF+freqs_qua
     if type(ax)==None:
         fig, ax = plt.subplots()
         ax.set_title('pcolormesh')
@@ -176,34 +203,26 @@ if __name__ == '__main__':
     # config = QM_config()
     # spec.import_spec(spec_loca)
     # config.import_config(config_loca)
-    # q_num = 5
     from configuration import *
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
-
     target_q = 'q3'
-
+  
     # qmm, _ = spec.buildup_qmm()
     # init_macro = initializer((spec.give_WaitTime_with_q(target_q,5),),'wait')
-
-    n_avg = 100
-    tau_min = 16 // 4 # in clock cycles
-    tau_max = 860 // 4  # in clock cycles
-    d_tau = 4 // 4  # in clock cycles
-    t_delay = np.arange(tau_min, tau_max + 0.1, d_tau)  # Linear sweep
-    dfs = np.arange(-250e6, 100e6, 0.35e6)
-
+  
+    n_avg = 70
     q_name = [f"{target_q}_xy"]
     ro_element = ["rr3"]
     z_name = [f"{target_q}_z"]
-    dc=0.035
-    output = qubit_flux_decay(dfs,t_delay,q_name,ro_element,z_name,dc,config,qmm,n_avg,initializer=None,simulate=False)
+    flux_amp=0.03
+    output = qubit_flux_decay(flux_amp,(-200., 100.),(0.1,0.04,0.1),1.5,q_name,ro_element,z_name,config,qmm,n_avg=n_avg,initializer=None,simulate=False)
     plt.show()
     #Data Saving   #
     
     save_data = True
     if save_data:
-        from save_data import save_npz
+        from save_data import *
         import sys
         filename = f"qb_flux_decay_dr2a_q3"
-        save_npz(save_dir, filename, output)
-    
+        save_xr(save_dir, filename, output)
+        # output.to_netcdf(save_dir/filename)
