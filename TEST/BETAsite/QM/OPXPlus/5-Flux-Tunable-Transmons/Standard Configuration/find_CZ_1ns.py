@@ -131,3 +131,4 @@ q_id = [1,2,3,4]
 ts = np.arange(0,const_flux_len+0.1,1)
 qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)      
 I,Q = CZ_1ns(q_id,Qi_list,flux_Qi,amps,const_flux_len,simulate,qmm)
+

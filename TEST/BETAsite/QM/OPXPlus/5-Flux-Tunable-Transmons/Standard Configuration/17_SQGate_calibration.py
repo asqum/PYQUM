@@ -130,22 +130,24 @@ def DRAG_calibration_Yale( q_name, ro_element, multiplexed, config, qmm:QuantumM
             I2, Q2 = u.demod2volts(I2, readout_len), u.demod2volts(Q2, readout_len)
             # Progress bar
             progress_counter(iteration, n_avg, start_time=results.get_start_time())
+            # Find optimal points:
+            drag_coef_opt = amps[np.argmin(np.abs(state1-state2))] * drag_coef
             # Plot results
-            plt.suptitle("DRAG coefficient calibration (Yale)")
-            plt.subplot(311)
+            plt.suptitle(f"DRAG coefficient calibration (Yale): {drag_coef_opt:.4f}")
+            plt.subplot(221)
             plt.cla()
             plt.plot(amps * drag_coef, I1, label="x180y90")
             plt.plot(amps * drag_coef, I2, label="y180x90")
             plt.ylabel("I [V]")
             plt.legend()
             plt.axvline(drag_coef, color='r', linewidth=0.37)
-            plt.subplot(312)
+            plt.subplot(222)
             plt.cla()
             plt.plot(amps * drag_coef, Q1, label="x180y90")
             plt.plot(amps * drag_coef, Q2, label="y180x90")
             plt.ylabel("Q [V]")
             plt.legend()
-            plt.subplot(313)
+            plt.subplot(223)
             plt.cla()
             plt.plot(amps * drag_coef, state1, label="x180y90")
             plt.plot(amps * drag_coef, state2, label="y180x90")
@@ -153,6 +155,14 @@ def DRAG_calibration_Yale( q_name, ro_element, multiplexed, config, qmm:QuantumM
             plt.ylabel("g-e transition probability")
             plt.legend()
             plt.axvline(drag_coef, color='r', linewidth=0.37)
+            plt.subplot(224)
+            plt.cla()
+            plt.plot(amps * drag_coef, np.abs(state1-state2), label="|x180y90-y180x90|", color='black')
+            plt.xlabel("Drag coefficient")
+            plt.ylabel("Find the lowest probability")
+            plt.legend()
+            plt.axvline(drag_coef, color='r', linewidth=0.57)
+            plt.axvline(drag_coef_opt, color='b', linewidth=0.57)
 
             plt.tight_layout()
             plt.pause(0.1)
@@ -269,20 +279,20 @@ def amp_calibration( amp_modify_range, q_name, ro_element, multiplexed, config, 
             plt.axvline(x90_opt, color='b', linewidth=0.371)
             plt.axvline(x180_opt, color='r', linewidth=0.371)
             plt.title(f"x180_opt: {x180_opt:.5f}, x90_opt: {x90_opt:.5f}")
-
             plt.ylabel("I [V]")
             plt.legend()
+
             plt.subplot(312)
             plt.cla()
             plt.plot(amps, Q1, label="x90x90")
             plt.plot(amps, Q2, label="x180x180")
             plt.ylabel("Q [V]")
             plt.legend()
+
             plt.subplot(313)
             plt.cla()
             plt.plot(amps, state1, label="x90x90")
             plt.plot(amps, state2, label="x180x180")
-
             # plt.plot(amps * drag_coef, state2, label="y180x90")
             plt.xlabel("amp pre factor")
             plt.ylabel("g-e transition probability")
@@ -295,9 +305,9 @@ def amp_calibration( amp_modify_range, q_name, ro_element, multiplexed, config, 
 if __name__ == '__main__':
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
     n_avg = 20000
-    qubit = 5
+    qubit = 4
     multiplexed = [1,2,3,4,5]
-    mode = "drag"
+    mode = "amp"
 
     # Scan the DRAG coefficient pre-factor
 

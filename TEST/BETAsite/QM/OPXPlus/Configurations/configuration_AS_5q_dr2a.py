@@ -78,11 +78,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-130.904 -0.503 ) * u.MHz 
-qubit_IF_q2 = (-99.241  +0.013 ) * u.MHz 
-qubit_IF_q3 = (-207.517 +0.745 ) * u.MHz
-qubit_IF_q4 = (-364.021 -0.107 ) * u.MHz
-qubit_IF_q5 = (-128.078 -0.814-0.357 ) * u.MHz
+qubit_IF_q1 = (-124.607 +0.068 ) * u.MHz 
+qubit_IF_q2 = (-99.241  +0.149 ) * u.MHz 
+qubit_IF_q3 = (-195.512 +0 ) * u.MHz
+qubit_IF_q4 = (-364.021 +0.228 ) * u.MHz
+qubit_IF_q5 = (-126.767 +0.081-0.570 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -101,26 +101,26 @@ const_amp = 270 * u.mV
 saturation_len = 1 * u.us
 saturation_amp = 0.270
 # Pi pulse parameters
-pi_len = 32
+pi_len = 24 # 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.0192668256 *1.015
-pi_amp_q2 = 0.0574       *1.00492576
-pi_amp_q3 = 0.01931      *1.006
-pi_amp_q4 = 0.0788       *0.99472090387882
-pi_amp_q5 = 0.1168458263 *1.0200592070474999*.9965
+pi_amp_q1 = 0.0270
+pi_amp_q2 = 0.0788
+pi_amp_q3 = 0.0245
+pi_amp_q4 = 0.1083 *.98875
+pi_amp_q5 = 0.0900 *1.0031325
 
-r90_amp_q1 = pi_amp_q1 / 2 *1.000677758485
-r90_amp_q2 = pi_amp_q2 / 2 *1.009323025
-r90_amp_q3 = pi_amp_q3 / 2 *0.996976325
-r90_amp_q4 = pi_amp_q4 / 2 *1.0061709332332331
-r90_amp_q5 = pi_amp_q5 / 2 *1.0094955
+r90_amp_q1 = pi_amp_q1 / 2 *1.
+r90_amp_q2 = pi_amp_q2 / 2 *1.
+r90_amp_q3 = pi_amp_q3 / 2 *1.
+r90_amp_q4 = pi_amp_q4 / 2 *1.011376
+r90_amp_q5 = pi_amp_q5 / 2 *1.003
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
 drag_coef_q1 = 0.8999
 drag_coef_q2 = 0.5259
 drag_coef_q3 = 0.8341
-drag_coef_q4 = 1.34
-drag_coef_q5 = 0.0979
+drag_coef_q4 = 1.192
+drag_coef_q5 = 0.1
 anharmonicity_q1 = - 199.42 *u.MHz      # checked
 anharmonicity_q2 = + 200.46 *u.MHz      # checked
 anharmonicity_q3 = + 169.51 *u.MHz      # checked
@@ -208,7 +208,7 @@ max_frequency_point1 = -0.267
 max_frequency_point2 = 0.0018
 max_frequency_point3 = -0.182
 max_frequency_point4 = 0.0018
-max_frequency_point5 = 0.0095
+max_frequency_point5 = 0.0095 +0.0116
 
 idle_q1 = max_frequency_point1 +0.275
 idle_q2 = max_frequency_point2 +0

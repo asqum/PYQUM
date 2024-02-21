@@ -44,11 +44,13 @@ q2_xy, q2_z, q2_IF, q2_LO = "q%s_xy"%(qubit_pair[1]), "q%s_z"%(qubit_pair[1]), e
 
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
 saturation_len = 20 * u.us  # In ns
-saturation_amp = 0.07  # pre-factor to the value defined in the config - restricted to [-2; 2)
+saturation_amp = 0.003  # pre-factor to the value defined in the config - restricted to [-2; 2)
 # Qubit detuning sweep with respect to qubit_IF
 dfs = np.arange(-490e6, +490e6, 1e6)
+dfs = np.arange(-60e6, +30e6, 1e6) # zoom-in
 # Flux sweep
 dcs = np.arange(-0.15, 0.15, 0.0015)
+dcs = np.arange(-0.03, 0.03, 0.0015) # zoom-in
 flux_offset_1 = eval("idle_q%s" %qubit_pair[0]) 
 flux_offset_2 = eval("idle_q%s" %qubit_pair[1]) 
 

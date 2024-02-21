@@ -18,9 +18,9 @@ from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool
 
 inv_gates = [int(np.where(c1_table[i, :] == 0)[0][0]) for i in range(24)]
-max_circuit_depth = 700#500
-num_of_sequences = 7#40
-n_avg = 40 #60
+max_circuit_depth = 600#500,700
+num_of_sequences = 101#40
+n_avg = 101 #60
 seed = 345323
 cooldown_time = thermalization_time *u.ns
 qubit = 4
@@ -223,6 +223,7 @@ else:
         progress_counter(iteration, n_avg, start_time=results.start_time)
         # Plot results
         plt.cla()
+        plt.title("Progress: %s/%s" %(iteration,n_avg))
         plt.plot(x, np.average(I, axis=0), ".", label="I")
         plt.xlabel("Number of Clifford gates")
         plt.legend()
@@ -245,8 +246,12 @@ else:
         maxfev=2000,
     )
     plt.figure()
-    plt.errorbar(x, value, yerr=error, marker=".")
-    plt.plot(x, power_law(x, *pars), linestyle="--", linewidth=2)
+    # plt.errorbar(x, value, yerr=error, marker=".")
+    plt.plot(x, value, marker=".", color="black")
+    plt.plot(x, power_law(x, *pars), linestyle="-", linewidth=7, color='red')
+    plt.xlabel("Clifford cycles", fontsize=18)
+    plt.gca().tick_params(axis='x', labelsize=14)
+    plt.gca().tick_params(axis='y', labelsize=14)
 
     stdevs = np.sqrt(np.diag(cov))
 
@@ -272,7 +277,7 @@ else:
         f"Gate infidelity: r_g = {np.format_float_scientific(r_g, precision=2)}  ({r_g_std:.1})"
     )
 
-    plt.title("r_c: %s%%, r_g: %s%%" %(r_c*100, r_g*100))
+    plt.title("q%s: F=%s%%" %(qubit, np.round((1-r_g)*100,1)))
     plt.show()
 
-    np.savez(save_dir/"rb_values", value)
+    np.savez(save_dir/f"q{qubit}_rb_values", value=value, max_circuit_depth=max_circuit_depth)

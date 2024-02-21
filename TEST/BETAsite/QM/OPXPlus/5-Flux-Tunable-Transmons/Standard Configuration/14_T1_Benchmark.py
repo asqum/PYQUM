@@ -168,18 +168,18 @@ if __name__ == '__main__':
     t_delay = np.arange(tau_min, tau_max + 0.1, d_tau)  # Linear sweep
     print(f"Estimated runtime per sample: {np.sum(t_delay+thermalization_time+readout_len+pi_len) *n_avg *1e-9} seconds")
 
-    q_name = ["q2_xy","q4_xy"]
+    q_name = ["q2_xy","q5_xy"]
     ro_element = ["rr1","rr2","rr3","rr4","rr5"]
 
-    repeat_T1 = 1577
+    repeat_T1 = 10
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
     statistic_T1, raw_data = statistic_T1_exp(repeat_T1, t_delay, q_name, ro_element, config, qmm, n_avg)
-    fig = T1_hist(statistic_T1["rr4"][0],40, "rr4")
+    fig = T1_hist(statistic_T1["rr5"][0],40, "rr5")
     fig_1 = T1_hist(statistic_T1["rr2"][0],40, "rr2")
 
 
     #   Data Saving   # 
-    save_data = True
+    save_data = False
     if save_data == True:
         from save_data import save_npz
         import sys
