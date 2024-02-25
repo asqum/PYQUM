@@ -38,7 +38,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 simulate = False
-indicate_config = 1
+indicate_config = 0
 
 ####################
 # Define variables #
@@ -46,7 +46,7 @@ indicate_config = 1
 
 # Qubit to flux-tune to reach some distance of Ec with another qubit, Qubit to meet with:
 # 5,4  4,3  2,3  1,2
-qubit_to_flux_tune,qubit_to_meet_with = 1,2 
+qubit_to_flux_tune,qubit_to_meet_with = 5,4 
 
 starting_point = eval(f"idle_q{qubit_to_flux_tune}")
 if indicate_config:
@@ -71,14 +71,14 @@ ts = np.arange(4, 30, 1)  # The flux pulse durations in clock cycles (4ns) - Mus
 amps = (np.arange(starting_point-0.35, starting_point+0.35, 0.0005) - flux_offset) / scale_reference
 
 # Zoom in:
-amps = (np.arange(0.15, 0.3, 0.0001) - flux_offset) / scale_reference
+amps = (np.arange(0.225, 0.255, 0.0001) - flux_offset) / scale_reference
 
 # calibrated:
 # q2->q1
 # amps = (np.arange(-0.135, -0.115, 0.0002) - flux_offset) / scale_reference  
 
 # q1->q2 
-amps = (np.arange(-0.20, -0.10, 0.00005) - flux_offset) / scale_reference
+# amps = (np.arange(-0.20, -0.10, 0.00005) - flux_offset) / scale_reference
 
 # q3->q2
 # amps = (np.arange(0.0, 0.033, 0.00002) - flux_offset) / scale_reference 
@@ -92,7 +92,7 @@ amps = (np.arange(-0.20, -0.10, 0.00005) - flux_offset) / scale_reference
 # amps = (np.arange(0.15, 0.18, 0.00005) - flux_offset) / scale_reference 
 
 # q5->q4:
-# amps = (np.arange(0.187, 0.205, 0.00001) - flux_offset) / scale_reference
+# amps = (np.arange(0.23, 0.25, 0.00001) - flux_offset) / scale_reference
 
 
 # gaussian-like:

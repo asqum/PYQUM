@@ -41,12 +41,12 @@ warnings.filterwarnings("ignore")
 qubit_num = 5
 n_avg = 6000
 # The frequency sweep around the resonators' frequency "resonator_IF_q"
-span = 1.5 * u.MHz
+span = 1.9 * u.MHz
 df = 100 * u.kHz
 dfs = np.arange(-span, +span + 0.1, df)
 # Flux bias sweep in V
-flux_min = -0.35
-flux_max = 0.35
+flux_min = -0.49
+flux_max = 0.49
 step = 0.01
 flux = np.arange(flux_min, flux_max + step / 2, step)
 

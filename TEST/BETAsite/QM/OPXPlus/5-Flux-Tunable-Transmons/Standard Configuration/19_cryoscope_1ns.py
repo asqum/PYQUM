@@ -48,7 +48,12 @@ from qualang_tools.bakery import baking
 import warnings
 
 warnings.filterwarnings("ignore")
-
+simulate = False
+check_filter = True
+if check_filter: 
+    savedata = False
+else: 
+    savedata = True
 
 ####################
 # Helper functions #
@@ -126,17 +131,17 @@ def baked_waveform(waveform, pulse_duration, qubit_index):
 # The QUA program #
 ###################
 # Index of the qubit to measure
-qubit = 4
+qubit = 5
 
 
 n_avg = 60_000  # Number of averages
 # FLux pulse waveform generation
 # The zeros are just here to visualize the rising and falling times of the flux pulse. they need to be set to 0 before
 # fitting the step response with an exponential.
-zeros_before_pulse = 40 #20  # Beginning of the flux pulse (before we put zeros to see the rising time)
-zeros_after_pulse = 40 #20  # End of the flux pulse (after we put zeros to see the falling time)
+zeros_before_pulse = 0 #20  # Beginning of the flux pulse (before we put zeros to see the rising time)
+zeros_after_pulse = 0 #20  # End of the flux pulse (after we put zeros to see the falling time)
 total_zeros = zeros_after_pulse + zeros_before_pulse
-flux_waveform = np.array([0.0] * zeros_before_pulse + [const_flux_amp] * const_flux_len + [0.0] * zeros_after_pulse)
+flux_waveform = np.array([0.0] * zeros_before_pulse + [cryo_flux_amp] * const_flux_len + [0.0] * zeros_after_pulse)
 
 # Baked flux pulse segments with 1ns resolution
 square_pulse_segments = baked_waveform(flux_waveform, len(flux_waveform), qubit)
@@ -186,7 +191,7 @@ with program() as cryoscope:
                 save(state[0], state_st[0])
                 save(state[1], state_st[1])
                 # Wait cooldown time and save the results
-                wait(thermalization_time * u.ns)
+                if not simulate: wait(thermalization_time * u.ns)
         save(n, n_st)
 
     with stream_processing():
@@ -210,13 +215,14 @@ qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_na
 ###########################
 # Run or Simulate Program #
 ###########################
-simulate = False
 
 if simulate:
     # Simulates the QUA program for the specified duration
     simulation_config = SimulationConfig(duration=10_000)  # In clock cycles = 4ns
     job = qmm.simulate(config, cryoscope, simulation_config)
     job.get_simulated_samples().con1.plot()
+    job.get_simulated_samples().con2.plot()
+    plt.show()
 else:
     # Open the quantum machine
     qm = qmm.open_qm(config)
@@ -319,12 +325,18 @@ else:
     # Close the quantum machines at the end in order to put all flux biases to 0 so that the fridge doesn't heat-up
     qm.close()
 
+    # Saving Data:
     filename = "Cryoscope1ns_q%s_%s" %(qubit,const_flux_len)
-    save = True
-    if save:
+    if savedata:
         np.savez(save_dir/filename, I1=I1, I2=I2, Q1=Q1, Q2=Q2, S=S, xplot=xplot, step_response_volt=step_response_volt)
         print("Data saved as %s.npz" %filename)
-
+    else: 
+        npz_file = np.load(save_dir/f"{filename}.npz")
+        print("Checking filter in %s.npz" %filename)
+        variables = {}
+        for key in npz_file.files: variables[key] = npz_file[key]
+        npz_file.close()
+        unfiltered_step_response_volt = variables['step_response_volt']
 
     ## Fit step response with exponential
     [A, tau], _ = optimize.curve_fit(
@@ -348,9 +360,12 @@ else:
     plt.rcParams.update({"font.size": 13})
     plt.figure()
     plt.suptitle("Cryoscope with filter implementation")
-    plt.plot(xplot, step_response_volt, "o-", label="Experimental data")
-    plt.plot(xplot, no_filter, label="Fitted response without filter")
-    plt.plot(xplot, with_filter, label="Fitted response with filter")
+    plt.plot(xplot, step_response_volt, "o-", label="Response data")
+    if check_filter:
+        plt.plot(xplot, unfiltered_step_response_volt, "o-", color="red", label="unfiltered Response")
+    else:
+        plt.plot(xplot, no_filter, label="Fitted response without filter")
+        plt.plot(xplot, with_filter, label="Fitted response with filter")
     plt.plot(xplot, step_response_th, label="Ideal WF")  # pulse
     plt.text(
         max(xplot) // 2,
@@ -369,4 +384,3 @@ else:
     plt.legend(loc="upper right")
     plt.tight_layout()
     plt.show()
-

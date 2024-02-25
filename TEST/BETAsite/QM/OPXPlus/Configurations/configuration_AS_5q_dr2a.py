@@ -82,7 +82,7 @@ qubit_IF_q1 = (-124.607 +0.068 ) * u.MHz
 qubit_IF_q2 = (-99.241  +0.149 ) * u.MHz 
 qubit_IF_q3 = (-195.512 +0 ) * u.MHz
 qubit_IF_q4 = (-364.021 +0.228 ) * u.MHz
-qubit_IF_q5 = (-126.767 +0.081-0.570 ) * u.MHz
+qubit_IF_q5 = (-126.767 -0.576+0.049 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -106,8 +106,8 @@ pi_sigma = pi_len / 4
 pi_amp_q1 = 0.0270
 pi_amp_q2 = 0.0788
 pi_amp_q3 = 0.0245
-pi_amp_q4 = 0.1083 *.98875
-pi_amp_q5 = 0.0900 *1.0031325
+pi_amp_q4 = 0.1083 *0.971045073201875
+pi_amp_q5 = 0.0900 *0.9991237317468751
 
 r90_amp_q1 = pi_amp_q1 / 2 *1.
 r90_amp_q2 = pi_amp_q2 / 2 *1.
@@ -216,6 +216,8 @@ idle_q3 = max_frequency_point3 +0.15
 idle_q4 = max_frequency_point4 +0
 idle_q5 = max_frequency_point5 +0
 
+q5_phi0 = 0.359-(-0.396)
+
 # Resonator frequency versus flux fit parameters according to resonator_spec_vs_flux
 # amplitude * np.cos(2 * np.pi * frequency * x + phase) + offset
 amplitude_fit1, frequency_fit1, phase_fit1, offset_fit1 = [0, 0, 0, 0]
@@ -226,12 +228,21 @@ amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
 const_flux_len = 200 # 360, 600, 260 max-bake: 260ns (200ns to be safe?)
 const_flux_amp = 0.48 # for cz-chevron 
+cryo_flux_amp = 0.142 # for cryoscope: make sure detuning < 400 MHz
 
 # filter taps:
 fir4 = []
 iir4 = []
-# fir4 = [1.048, -0.984]
-# iir4 = [0.94]
+# fir5 = [1.06526356, -0.98860281]
+# iir5 = [0.92333925]
+fir5 = [1.06569937, -0.98851684]
+iir5 = [0.92281746]
+
+
+# readout correction with filter on:
+ro_corr = [0, 0, 0, 0, 0]
+if len(fir5): 
+    ro_corr = [59.7, 17.6, 203.5, 162.7, 127.4]
 
 ##########################################
 #               two-qubit                #
@@ -241,10 +252,10 @@ gft_cz_1_2_q2 = flattop_gaussian_waveform(cz_point_1_2_q2-idle_q2, 8 * u.ns, 8 *
 g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
 # q5 -> q4:
-cz5_4_len = 40 # ns
-cz5_4_amp = (0.19587 - idle_q5) *0.9816947201222114
-cz5_4_2pi_dev = 0.119
-cz4_5_2pi_dev = -0.051
+cz5_4_len = 28 # ns
+cz5_4_amp = (0.2408 - idle_q5) *.9995833
+cz5_4_2pi_dev = -0.124
+cz4_5_2pi_dev = 0.027
 
 # q4 -> q3:
 cz4_3_len = 48 # ns
@@ -352,11 +363,11 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = ((347.9 ) / 180) * np.pi
-rotation_angle_q2 = ((85.6  ) / 180) * np.pi
-rotation_angle_q3 = ((287.2 ) / 180) * np.pi
-rotation_angle_q4 = ((102.0  ) / 180) * np.pi
-rotation_angle_q5 = ((75.4  ) / 180) * np.pi
+rotation_angle_q1 = ((347.9 +ro_corr[0]) / 180) * np.pi
+rotation_angle_q2 = ((85.6  +ro_corr[1]) / 180) * np.pi
+rotation_angle_q3 = ((287.2 +ro_corr[2]) / 180) * np.pi
+rotation_angle_q4 = ((102.0 +ro_corr[3]) / 180) * np.pi
+rotation_angle_q5 = ((75.4  +ro_corr[4]) / 180) * np.pi
 ge_threshold_q1 = 5.133e-04
 ge_threshold_q2 = -2.769e-04
 ge_threshold_q3 = -1.804e-03
@@ -404,7 +415,7 @@ config = {
                 6: {"offset": idle_q2, "filter": {'feedforward': [], 'feedback':[]}},  # qubit2 Z
                 7: {"offset": idle_q3, "filter": {'feedforward': [], 'feedback':[]}},  # qubit3 Z
                 8: {"offset": idle_q4, "filter": {'feedforward': fir4, 'feedback':iir4}},  # qubit4 Z
-                9: {"offset": idle_q5, "filter": {'feedforward': [], 'feedback':[]}},  # qubit5 Z
+                9: {"offset": idle_q5, "filter": {'feedforward': fir5, 'feedback':iir5}},  # qubit5 Z
                 10: {"offset": 0.0},  # 
             },
             "digital_outputs": {
