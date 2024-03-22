@@ -37,7 +37,8 @@ n_avg = 100000  # The number of averages
 test_qubits = [1,2,3,4,5]
 
 # Qubit detuning sweep with respect to qubit_IF
-dfs = np.arange(-100e6, +100e6, 1e6)
+dfs = np.arange(-90e6, +90e6, 2e6)
+# dfs = np.arange(-490e6, +490e6, 10e6)
 # Qubit pulse amplitude sweep (as a pre-factor of the qubit pulse amplitude) - must be within [-2; 2)
 amps = np.arange(0.0, 1.98, 0.01)
 

@@ -2,7 +2,7 @@
 import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
-
+from configuration import save_dir
 
 def plot_sub( x, y, data, ax=None ):
     """
@@ -14,7 +14,7 @@ def plot_sub( x, y, data, ax=None ):
     idata = data[0]
     qdata = data[1]
     zdata = idata +1j*qdata
-    print(x, y, zdata.shape)
+    print(x.shape, y.shape, zdata.shape)
     if ax==None:
         fig, ax = plt.subplots()
         ax.set_title('pcolormesh')
@@ -22,7 +22,7 @@ def plot_sub( x, y, data, ax=None ):
     ax.pcolormesh( x, y, np.abs(zdata), cmap='RdBu')# , vmin=z_min, vmax=z_max)
 
 
-dataset = xr.open_dataset(r"C:\Users\shiau\PYQUM\TEST\BETAsite\QM\OPXPlus\data\qb_flux_decay_dr2a_q3_20240217-113001.nc")
+dataset = xr.open_dataset(save_dir/"qb_flux_decay_dr2a_q5_(2Xpi).nc")
 
 # Plot
 dfs = dataset.coords["frequency"].values

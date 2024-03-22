@@ -307,7 +307,7 @@ if __name__ == '__main__':
     n_avg = 20000
     qubit = 5
     multiplexed = [1,2,3,4,5]
-    mode = "amp"
+    mode = "drag"
 
     # Scan the DRAG coefficient pre-factor
 
@@ -315,8 +315,8 @@ if __name__ == '__main__':
     ge_threshold = eval(f"ge_threshold_q{qubit}")
     # Check that the DRAG coefficient is not 0
     assert drag_coef != 0, "The DRAG coefficient 'drag_coef' must be different from 0 in the config."
-    sequence_repeat = 25 # 5, 15, 25, 35
-    prefactor_range = 0.25/sequence_repeat
+    sequence_repeat = 48 # 5, 15, 25, 35
+    prefactor_range = 0.8/sequence_repeat
     match mode.lower():
         case "drag":
             DRAG_calibration_Yale( f"q{qubit}_xy", f"rr{qubit}", multiplexed, config, qmm, n_avg=n_avg)

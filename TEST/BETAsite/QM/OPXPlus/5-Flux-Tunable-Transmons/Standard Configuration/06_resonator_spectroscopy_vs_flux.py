@@ -50,7 +50,7 @@ flux_max = 0.49
 step = 0.01
 flux = np.arange(flux_min, flux_max + step / 2, step)
 
-center = "max"
+center = "idle"
 
 with program() as multi_res_spec_vs_flux:
     # QUA macro to declare the measurement variables and their corresponding streams for a given number of resonators

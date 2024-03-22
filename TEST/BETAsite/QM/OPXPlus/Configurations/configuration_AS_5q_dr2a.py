@@ -78,11 +78,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-124.607 +0.068 ) * u.MHz 
-qubit_IF_q2 = (-99.241  +0.149 ) * u.MHz 
-qubit_IF_q3 = (-195.512 +0 ) * u.MHz
-qubit_IF_q4 = (-364.021 +0.228 ) * u.MHz
-qubit_IF_q5 = (-126.767 -0.576+0.049 ) * u.MHz
+qubit_IF_q1 = (-124.607 -0.030 ) * u.MHz 
+qubit_IF_q2 = (-99.241-23  -1.293 ) * u.MHz 
+qubit_IF_q3 = (-195.512 -2.325 ) * u.MHz
+qubit_IF_q4 = (-367.071 -1.760 ) * u.MHz
+qubit_IF_q5 = (-126.767 -4.669 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -103,24 +103,24 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 24 # 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.0270
-pi_amp_q2 = 0.0788
-pi_amp_q3 = 0.0245
-pi_amp_q4 = 0.1083 *0.971045073201875
-pi_amp_q5 = 0.0900 *0.9991237317468751
+pi_amp_q1 = 0.0265
+pi_amp_q2 = 0.0778
+pi_amp_q3 = 0.0236
+pi_amp_q4 = 0.1044 *1.0128887397847575*1.00083
+pi_amp_q5 = 0.0887 *1.0255121
 
 r90_amp_q1 = pi_amp_q1 / 2 *1.
 r90_amp_q2 = pi_amp_q2 / 2 *1.
 r90_amp_q3 = pi_amp_q3 / 2 *1.
-r90_amp_q4 = pi_amp_q4 / 2 *1.011376
-r90_amp_q5 = pi_amp_q5 / 2 *1.003
+r90_amp_q4 = pi_amp_q4 / 2 *1.01
+r90_amp_q5 = pi_amp_q5 / 2 *0.9998151*1.00083
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
 drag_coef_q1 = 0.8999
 drag_coef_q2 = 0.5259
 drag_coef_q3 = 0.8341
-drag_coef_q4 = 1.192
-drag_coef_q5 = 0.1
+drag_coef_q4 = .983
+drag_coef_q5 = 0.128
 anharmonicity_q1 = - 199.42 *u.MHz      # checked
 anharmonicity_q2 = + 200.46 *u.MHz      # checked
 anharmonicity_q3 = + 169.51 *u.MHz      # checked
@@ -204,17 +204,17 @@ minus_y90_I_wf_q5, minus_y90_Q_wf_q5 = (-1) * minus_y90_der_wf_q5, minus_y90_wf_
 ##########################################
 flux_settle_time = 28 * u.ns
 
-max_frequency_point1 = -0.267
+max_frequency_point1 = 0.08499
 max_frequency_point2 = 0.0018
-max_frequency_point3 = -0.182
-max_frequency_point4 = 0.0018
-max_frequency_point5 = 0.0095 +0.0116
+max_frequency_point3 = 0.0340
+max_frequency_point4 = 0.0218
+max_frequency_point5 = 0.0151
 
-idle_q1 = max_frequency_point1 +0.275
-idle_q2 = max_frequency_point2 +0
-idle_q3 = max_frequency_point3 +0.15
-idle_q4 = max_frequency_point4 +0
-idle_q5 = max_frequency_point5 +0
+idle_q1 = max_frequency_point1 +0. #+0.252 # idle-point too hot for this run..
+idle_q2 = max_frequency_point2 -0.03
+idle_q3 = max_frequency_point3 +0.17 #+0.128
+idle_q4 = max_frequency_point4 -0.037
+idle_q5 = max_frequency_point5 -0.032
 
 q5_phi0 = 0.359-(-0.396)
 
@@ -233,8 +233,9 @@ cryo_flux_amp = 0.142 # for cryoscope: make sure detuning < 400 MHz
 # filter taps:
 fir4 = []
 iir4 = []
-# fir5 = [1.06526356, -0.98860281]
-# iir5 = [0.92333925]
+
+# fir5 = []
+# iir5 = []
 fir5 = [1.06569937, -0.98851684]
 iir5 = [0.92281746]
 
@@ -242,7 +243,7 @@ iir5 = [0.92281746]
 # readout correction with filter on:
 ro_corr = [0, 0, 0, 0, 0]
 if len(fir5): 
-    ro_corr = [59.7, 17.6, 203.5, 162.7, 127.4]
+    ro_corr = [60.2, 20.2, 211.6, 160.7, 123.6]
 
 ##########################################
 #               two-qubit                #
@@ -252,10 +253,10 @@ gft_cz_1_2_q2 = flattop_gaussian_waveform(cz_point_1_2_q2-idle_q2, 8 * u.ns, 8 *
 g_cz_1_2_q2 = 0.5 * abs(0.5-idle_q2) * gaussian(16, 16/4)
 
 # q5 -> q4:
-cz5_4_len = 28 # ns
-cz5_4_amp = (0.2408 - idle_q5) *.9995833
-cz5_4_2pi_dev = -0.124
-cz4_5_2pi_dev = 0.027
+cz5_4_len = 28#28 # ns
+cz5_4_amp = (0.19449 - idle_q5) *1.0008333
+cz5_4_2pi_dev = -0.188
+cz4_5_2pi_dev = -0.028
 
 # q4 -> q3:
 cz4_3_len = 48 # ns
@@ -363,16 +364,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = ((347.9 +ro_corr[0]) / 180) * np.pi
-rotation_angle_q2 = ((85.6  +ro_corr[1]) / 180) * np.pi
-rotation_angle_q3 = ((287.2 +ro_corr[2]) / 180) * np.pi
-rotation_angle_q4 = ((102.0 +ro_corr[3]) / 180) * np.pi
-rotation_angle_q5 = ((75.4  +ro_corr[4]) / 180) * np.pi
-ge_threshold_q1 = 5.133e-04
-ge_threshold_q2 = -2.769e-04
-ge_threshold_q3 = -1.804e-03
-ge_threshold_q4 = -1.485e-03
-ge_threshold_q5 = -1.419e-03
+rotation_angle_q1 = ((344.8 +ro_corr[0]) / 180) * np.pi
+rotation_angle_q2 = ((79.7  +ro_corr[1]) / 180) * np.pi
+rotation_angle_q3 = ((270.0 +ro_corr[2]) / 180) * np.pi
+rotation_angle_q4 = ((94.1 +ro_corr[3]) / 180) * np.pi
+rotation_angle_q5 = ((72.9  +ro_corr[4]) / 180) * np.pi
+ge_threshold_q1 = +5.273e-04
+ge_threshold_q2 = -5.160e-04
+ge_threshold_q3 = -2.005e-03
+ge_threshold_q4 = -1.490e-03
+ge_threshold_q5 = -1.207e-03
 
 #############################################
 #                  Config                   #

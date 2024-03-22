@@ -42,7 +42,7 @@ amps = np.arange(0.1, 1.9, 0.01)
 
 # Number of applied Rabi pulses sweep
 # max_nb_of_pulses = 2 # 1D-sweep
-max_nb_of_pulses = 48  # 2D-sweep: Maximum number of qubit pulses
+max_nb_of_pulses = 35  # 2D-sweep: Maximum number of qubit pulses
 nb_of_pulses = np.arange(1, max_nb_of_pulses, 2)  # Always play an odd/even number of pulses to end up in the same state
 
 with program() as rabi:

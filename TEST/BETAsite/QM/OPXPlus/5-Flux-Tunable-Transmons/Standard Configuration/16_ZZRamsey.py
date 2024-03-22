@@ -224,6 +224,9 @@ else:
 
         plt.tight_layout()
         plt.show()
-        print("f01-correction: %.3f MHz" %((fitting_results['f'][0]*1e9 - abs(detuning))/u.MHz) )
+        if detuning > 0:
+            print("f01-correction: %.3f MHz" %((detuning - fitting_results['f'][0]*1e9)/u.MHz) )
+        elif detuning < 0:
+            print("f01-correction: %.3f MHz" %((detuning + fitting_results['f'][0]*1e9)/u.MHz) )
     except (Exception,) as e:
         print(e)

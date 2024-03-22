@@ -17,7 +17,9 @@ import xarray as xr
 
 # Qi = 1 stands for Q1
 
-def qubit_flux_decay( flux_amp, freq_span:Union[tuple, float], switch_time:tuple, freq_resolution:float, q_name:list, ro_element:list, z_name:list, config, qmm:QuantumMachinesManager,time_resolution=1, n_avg=100,initializer=None,simulate=False):
+def qubit_flux_decay( flux_amp, freq_span:Union[tuple, float], switch_time:tuple, freq_resolution:float, 
+                     q_name:list, ro_element:list, z_name:list, config, qmm:QuantumMachinesManager,time_resolution=1, 
+                     n_avg=100,initializer=False,simulate=False, pi_pulse_scaling=5):
     """
     freq_span unit in MHz \n
     for asymetric span, in put a tuple ( begin, end )\n
@@ -27,6 +29,9 @@ def qubit_flux_decay( flux_amp, freq_span:Union[tuple, float], switch_time:tuple
     time_resolution unit in clock cycle (4ns), defalut is 1\n
 
     """
+    # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
+    saturation_len = pi_len * pi_pulse_scaling
+    saturation_amp = pi_amp_q5 / pi_pulse_scaling  # pre-factor to the value defined in the config - restricted to [-2; 2)
 
     s_delay_qua = switch_time[0]/4 *u.us +4
     s_on_qua = switch_time[1]/4 *u.us
@@ -64,9 +69,9 @@ def qubit_flux_decay( flux_amp, freq_span:Union[tuple, float], switch_time:tuple
             with for_(*from_array(df, freqs_qua)):
                 with for_(*from_array(t, pi_delay_qua)):
                     # Init
-                    if initializer is None:
-                        wait(100*u.us)
-                        #wait(thermalization_time * u.ns)
+                    if initializer:
+                        # wait(100*u.us)
+                        wait(thermalization_time * u.ns)
                     else:
                         try:
                             initializer[0](*initializer[1])
@@ -78,7 +83,8 @@ def qubit_flux_decay( flux_amp, freq_span:Union[tuple, float], switch_time:tuple
                     # Operation
                     for q in q_name:
                         wait(t,q)
-                        play("x180", q)
+                        # play("x180", q)
+                        play("saturation" * amp(saturation_amp), q, duration=saturation_len * u.ns)
 
 
                     for z in z_name:
@@ -101,14 +107,24 @@ def qubit_flux_decay( flux_amp, freq_span:Union[tuple, float], switch_time:tuple
         with stream_processing():
             n_st.save("iteration")
             multiRO_pre_save(iqdata_stream, ro_element, (freq_len, time_len) )
+
+    continue_from_previous = 1
     if simulate:
         simulation_config = SimulationConfig(duration=150000)  # In clock cycles = 4ns
         job = qmm.simulate(config, decay_time, simulation_config)
         job.get_simulated_samples().con1.plot()
         plt.show()
     else:
-        qm = qmm.open_qm(config)
-        job = qm.execute(decay_time)
+        if continue_from_previous:
+            qm_list =  qmm.list_open_quantum_machines()
+            qm = qmm.get_qm(qm_list[0])
+            print("QM-ID: %s, Queue: %s, Version: %s" %(qm.id,qm.queue.count,qmm.version()))
+            job = qm.get_running_job()
+            print("The Cluster is currently running JOB-ID: %s" %job.id())
+            job = qm.get_job(job.id)
+        else:    
+            qm = qmm.open_qm(config)
+            job = qm.execute(decay_time)
         
         fig, ax = plt.subplots(2, len(ro_element))
         if len(ro_element) == 1:
@@ -205,17 +221,18 @@ if __name__ == '__main__':
     # config.import_config(config_loca)
     from configuration import *
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
-    target_q = 'q3'
+    target_q = 'q5'
   
     # qmm, _ = spec.buildup_qmm()
     # init_macro = initializer((spec.give_WaitTime_with_q(target_q,5),),'wait')
   
-    n_avg = 70
+    pi_pulse_scaling = 2
+    n_avg = 100_000
     q_name = [f"{target_q}_xy"]
-    ro_element = ["rr3"]
+    ro_element = ["rr5"]
     z_name = [f"{target_q}_z"]
-    flux_amp=0.03
-    output = qubit_flux_decay(flux_amp,(-200., 100.),(0.1,0.04,0.1),1.5,q_name,ro_element,z_name,config,qmm,n_avg=n_avg,initializer=None,simulate=False)
+    flux_amp=0.04
+    output = qubit_flux_decay(flux_amp,(-60., 20.),(0.3,0.3,0.1),0.2,q_name,ro_element,z_name,config,qmm,n_avg=n_avg,initializer=True,simulate=False, pi_pulse_scaling=pi_pulse_scaling)
     plt.show()
     #Data Saving   #
     
@@ -223,6 +240,6 @@ if __name__ == '__main__':
     if save_data:
         from save_data import *
         import sys
-        filename = f"qb_flux_decay_dr2a_q3"
-        save_xr(save_dir, filename, output)
+        filename = f"qb_flux_decay_dr2a_{target_q}_({pi_pulse_scaling}Xpi)"
+        save_xr(save_dir, filename, output, False)
         # output.to_netcdf(save_dir/filename)

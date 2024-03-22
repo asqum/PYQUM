@@ -33,7 +33,7 @@ qubit_to_flux_tune, qubit_to_meet_with = 5, 4
 2. Ascent order: first row of cz*_*_2pi_dev in configuration
 3. Descent order: Second row of cz*_*_2pi_dev in configuration
 '''
-cx_control, cx_target = 4, 5  
+cx_control, cx_target = 5, 4  
 
 th_control, th_target = eval(f"ge_threshold_q{cx_control}"), eval(f"ge_threshold_q{cx_target}")
 phis_corr = np.linspace(-0.9, 0.9, 360)
