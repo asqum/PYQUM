@@ -1,6 +1,0 @@
-include LICENSE
-include pyqum/authschema.sql
-graft pyqum/static
-graft pyqum/templates
-graft tests
-global-exclude *.pyc
