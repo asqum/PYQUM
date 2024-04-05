@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 1,5
+control, target = 1,2
 
 detuning = -2.00e6 # "Virtual" detuning in Hz
 multiplexed = [1,2,3,4,5]

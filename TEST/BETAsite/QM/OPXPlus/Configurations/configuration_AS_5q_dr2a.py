@@ -79,9 +79,9 @@ qubit_LO_q5 = (4.600) * u.GHz
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
 qubit_IF_q1 = (-124.607 -0.030 ) * u.MHz 
-qubit_IF_q2 = (-99.241-23  -1.293 ) * u.MHz 
+qubit_IF_q2 = (-136.545 -1.566 ) * u.MHz 
 qubit_IF_q3 = (-195.512 -2.325 ) * u.MHz
-qubit_IF_q4 = (-367.071 -1.760 ) * u.MHz
+qubit_IF_q4 = (-367.071 -1.410 ) * u.MHz
 qubit_IF_q5 = (-126.767 -4.669 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
@@ -104,25 +104,25 @@ saturation_amp = 0.270
 pi_len = 24 # 32
 pi_sigma = pi_len / 4
 pi_amp_q1 = 0.0265
-pi_amp_q2 = 0.0778
+pi_amp_q2 = 0.0909 *1.0049369117521438
 pi_amp_q3 = 0.0236
-pi_amp_q4 = 0.1044 *1.0128887397847575*1.00083
-pi_amp_q5 = 0.0887 *1.0255121
+pi_amp_q4 = 0.1126 *.98*.999*1.028
+pi_amp_q5 = 0.0887 *1.0296141484
 
 r90_amp_q1 = pi_amp_q1 / 2 *1.
-r90_amp_q2 = pi_amp_q2 / 2 *1.
+r90_amp_q2 = pi_amp_q2 / 2 *1.0267324510810187
 r90_amp_q3 = pi_amp_q3 / 2 *1.
-r90_amp_q4 = pi_amp_q4 / 2 *1.01
-r90_amp_q5 = pi_amp_q5 / 2 *0.9998151*1.00083
+r90_amp_q4 = pi_amp_q4 / 2 *1.0108383/.999
+r90_amp_q5 = pi_amp_q5 / 2 *1.0056421673959859*.999
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
 drag_coef_q1 = 0.8999
-drag_coef_q2 = 0.5259
+drag_coef_q2 = 0.63
 drag_coef_q3 = 0.8341
 drag_coef_q4 = .983
 drag_coef_q5 = 0.128
 anharmonicity_q1 = - 199.42 *u.MHz      # checked
-anharmonicity_q2 = + 200.46 *u.MHz      # checked
+anharmonicity_q2 = - 200.46 *u.MHz      # checked
 anharmonicity_q3 = + 169.51 *u.MHz      # checked
 anharmonicity_q4 = + 195.00 *u.MHz      # checked
 anharmonicity_q5 = - 193.70 *u.MHz      # checked
@@ -364,16 +364,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = ((344.8 +ro_corr[0]) / 180) * np.pi
-rotation_angle_q2 = ((79.7  +ro_corr[1]) / 180) * np.pi
-rotation_angle_q3 = ((270.0 +ro_corr[2]) / 180) * np.pi
-rotation_angle_q4 = ((94.1 +ro_corr[3]) / 180) * np.pi
-rotation_angle_q5 = ((72.9  +ro_corr[4]) / 180) * np.pi
+rotation_angle_q1 = ((200.7 +ro_corr[0]) / 180) * np.pi
+rotation_angle_q2 = ((89.4  +ro_corr[1]) / 180) * np.pi
+rotation_angle_q3 = ((280.4 +ro_corr[2]) / 180) * np.pi
+rotation_angle_q4 = ((105.8 +ro_corr[3]) / 180) * np.pi
+rotation_angle_q5 = ((78.6  +ro_corr[4]) / 180) * np.pi
 ge_threshold_q1 = +5.273e-04
-ge_threshold_q2 = -5.160e-04
+ge_threshold_q2 = -1.159e-04
 ge_threshold_q3 = -2.005e-03
-ge_threshold_q4 = -1.490e-03
-ge_threshold_q5 = -1.207e-03
+ge_threshold_q4 = -1.363e-03
+ge_threshold_q5 = -1.168e-03
 
 #############################################
 #                  Config                   #
