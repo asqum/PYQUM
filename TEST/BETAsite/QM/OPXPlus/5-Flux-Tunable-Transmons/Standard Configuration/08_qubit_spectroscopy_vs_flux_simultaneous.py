@@ -45,7 +45,7 @@ saturation_amp = 0.057  # pre-factor to the value defined in the config - restri
 # Qubit detuning sweep with respect to qubit_IF
 dfs = np.arange(-200e6, 200e6, 2e6)
 # Flux sweep
-dcs = np.arange(-0.2, 0.2, 0.003)
+dcs = np.arange(-0.35, 0.35, 0.0035)
 # search for idle points:
 flux_offset_1 = idle_q1
 flux_offset_2 = idle_q2
@@ -75,9 +75,9 @@ with program() as multi_qubit_spec_vs_flux:
             assign(index, 0)
             with for_(*from_array(dc, dcs)):
                 # Flux sweeping
-                # set_dc_offset("q1_z", "single", dc + flux_offset_1)
-                # set_dc_offset("q2_z", "single", dc + flux_offset_2)
-                set_dc_offset("q3_z", "single", dc)
+                set_dc_offset("q1_z", "single", dc + flux_offset_1)
+                set_dc_offset("q2_z", "single", dc + flux_offset_2)
+                # set_dc_offset("q3_z", "single", dc)
                 wait(flux_settle_time * u.ns)  # Wait for the flux to settle
 
                 # Update the resonator frequency to always measure on resonance

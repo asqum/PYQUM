@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore")
 qubit_num = 5
 n_avg = 6000
 # The frequency sweep around the resonators' frequency "resonator_IF_q"
-span = 1.9 * u.MHz
+span = 10 * u.MHz
 df = 100 * u.kHz
 dfs = np.arange(-span, +span + 0.1, df)
 # Flux bias sweep in V
@@ -70,10 +70,13 @@ with program() as multi_res_spec_vs_flux:
                 # Flux sweeping
                 if center == "idle":
                     set_dc_offset("q1_z", "single", idle_q1 + dc)
-                    set_dc_offset("q2_z", "single", idle_q2 + dc)
-                    set_dc_offset("q3_z", "single", idle_q3 + dc)
-                    set_dc_offset("q4_z", "single", idle_q4 + dc)
-                    set_dc_offset("q5_z", "single", idle_q5 + dc)
+                    # set_dc_offset("c1_2", "single", idle_c1 + dc)
+                    # set_dc_offset("q2_z", "single", idle_q2 + dc)
+                    # set_dc_offset("c2_3", "single", idle_c2 + dc)
+                    # set_dc_offset("q3_z", "single", idle_q3 + dc)
+                    # set_dc_offset("q4_z", "single", idle_q4 + dc)
+                    set_dc_offset("c4_5", "single", idle_c4 + dc)
+                    # set_dc_offset("q5_z", "single", idle_q5 + dc)
                 if center == "max":
                     set_dc_offset("q1_z", "single", max_frequency_point1 + dc)
                     set_dc_offset("q2_z", "single", max_frequency_point2 + dc)

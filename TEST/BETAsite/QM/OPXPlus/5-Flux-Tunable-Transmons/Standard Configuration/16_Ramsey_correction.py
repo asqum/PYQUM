@@ -240,11 +240,13 @@ def plot_ana_result( evo_time, data, detuning, ax=None ):
     ax.legend()
     plt.tight_layout()
 
+    print(f"Real Detuning freq : {(freq_pos-freq_neg)/2:.3f}")
+
 if __name__ == '__main__':
     qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
     n_avg = 2000  # Number of averages
 
-    qubit_select = [5]
+    qubit_select = [4]
     ro_element = ["rr1","rr2","rr3","rr4","rr5"]
     q_name =  [f"q{x}_xy" for x in qubit_select]
     virtual_detune = 2 # Unit in MHz

@@ -51,7 +51,7 @@ test_qubits = [5]
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
 saturation_len = 20 * u.us  # In ns (should be < FFT of df)
 if focus: saturation_amp = 0.0001  # pre-factor to the value defined in the config - restricted to [-2; 2)
-else: saturation_amp = 0.1  # pre-factor to the value defined in the config - restricted to [-2; 2)
+else: saturation_amp = 0.15  # pre-factor to the value defined in the config - restricted to [-2; 2)
 
 # Qubit detuning sweep with respect to qubit_IF
 if focus:

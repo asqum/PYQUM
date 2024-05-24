@@ -4,7 +4,7 @@ import sys
 print("Absolute Path: " + str(Path().absolute()))
 sys.path.append(str(Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"Configurations"))
 # sys.path.append(str(Path().absolute()/"PYQUM"/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"Configurations"))
-from configuration_AS_5q_dr2a import *
+from configuration_AS_5q4c_dr2a import *
 
 QPU = {
     "q1": {

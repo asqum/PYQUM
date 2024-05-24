@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore")
 qubit_num = 5
 n_avg = 2000  # The number of averages
 # The frequency sweep parameters (for both resonators)
-span = 3 * u.MHz  # the span around the resonant frequencies
+span = 9 * u.MHz  # the span around the resonant frequencies
 step = 100 * u.kHz
 dfs = np.arange(-span, span, step)
 
@@ -194,6 +194,7 @@ else:
         # Plot
         plt.suptitle("Multiplexed resonator spectroscopy (%s/%s)" %(iteration,n_avg))
         # rr1:
+        print("resonator_IF_q1: %s" %resonator_IF_q1)
         plt.subplot(2, qubit_num, 1)
         plt.cla()
         plt.plot((resonator_IF_q1 + dfs) / u.MHz, R1)

@@ -32,13 +32,13 @@ warnings.filterwarnings("ignore")
 ###################
 # The QUA program #
 ###################
-resonator = "rr2"  # The middle-resonator element
-n_avg = 1000  # The number of averages
+resonator = "rr1"  # The middle-resonator element
+n_avg = 3000  # The number of averages
 # The frequency sweep parameters
 if resonator == "rr2":
     frequencies = np.arange(-370e6, 370e6, 0.1e6)
 else:
-    frequencies = np.arange(-135e6, -128e6, 0.1e6)
+    frequencies = np.arange(-190e6, 190e6, 0.1e6)
 
 
 with program() as resonator_spec:
