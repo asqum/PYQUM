@@ -4,7 +4,7 @@ import sys
 print("Absolute Path: " + str(Path().absolute()))
 sys.path.append(str(Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"Configurations"))
 # sys.path.append(str(Path().absolute()/"PYQUM"/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"Configurations"))
-from configuration_AS_5q4c_dr2a import *
+from configuration_AS_5q4c_dr2a_new_qua import *
 
 QPU = {
     "q1": {
@@ -76,4 +76,5 @@ print("QPU q5 control frequency: %s Hz" %(QPU["q5"]["control"]["frequency"]))
 #         config["elements"][f"q{i+1}_z"]["singleInput"]["port"][1]
 #     ]["offset"]
 #     print("flux_offset for q%s: %s" %(i+1, flux_offset))
-    
+
+print("running local experiments.. ")  

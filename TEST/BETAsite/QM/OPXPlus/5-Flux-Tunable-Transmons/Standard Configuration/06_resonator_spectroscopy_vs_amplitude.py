@@ -40,7 +40,7 @@ warnings.filterwarnings("ignore")
 test_qubit = [1,2,3,4,5]
 n_avg = 13700 #6400  # The number of averages (NOTE: max allocation per core ~ 152832000 ~ 4GBit?)
 # The frequency sweep around the resonators' frequency "resonator_IF_q"
-dfs = np.arange(-4e6, +4e6, 0.2e6)
+dfs = np.arange(-3e6, +3e6, 0.15e6)
 # The readout amplitude sweep (as a pre-factor of the readout amplitude) - must be within [-2; 2)
 amplitudes = np.arange(0.0, 1.99, 0.01)  # The amplitude vector +da/2 to add a_max to the scan
 

@@ -1,10 +1,9 @@
 ## How to setup QM
 
 ````
-pip install qm-qua==1.1.3
-pip install qm-octave==1.2.0
-pip install qualang-tools
-pip install --upgrade qualang-tools
+pip install qm-qua==1.1.6
+pip install qm-octave==2.0.1
+pip install qualang-tools==0.17.4
 ````
 
 ## Documentations

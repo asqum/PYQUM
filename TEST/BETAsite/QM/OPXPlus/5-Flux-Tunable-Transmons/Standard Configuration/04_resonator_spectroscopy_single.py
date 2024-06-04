@@ -38,7 +38,7 @@ n_avg = 3000  # The number of averages
 if resonator == "rr2":
     frequencies = np.arange(-370e6, 370e6, 0.1e6)
 else:
-    frequencies = np.arange(-190e6, 190e6, 0.1e6)
+    frequencies = np.arange(-390e6, 390e6, 0.1e6)
 
 
 with program() as resonator_spec:

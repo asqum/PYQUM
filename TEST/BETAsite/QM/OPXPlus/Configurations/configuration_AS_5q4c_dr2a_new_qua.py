@@ -7,6 +7,8 @@ from qualang_tools.units import unit
 import matplotlib
 matplotlib.use('TkAgg')
 
+print("using new qua config.. ")
+
 
 #######################
 # AUXILIARY FUNCTIONS #
@@ -35,27 +37,27 @@ run_dir = (Path().absolute()/"TEST"/"BETAsite"/"QM"/"OPXPlus"/"run")
 # Set octave configuration #
 ############################
 # Custom port mapping example
-port_mapping = {
-    ("con1", 1): ("octave1", "I1"),
-    ("con1", 2): ("octave1", "Q1"),
-    ("con1", 3): ("octave1", "I2"),
-    ("con1", 4): ("octave1", "Q2"),
-    ("con1", 5): ("octave1", "I3"),
-    ("con1", 6): ("octave1", "Q3"),
-    ("con1", 7): ("octave1", "I4"),
-    ("con1", 8): ("octave1", "Q4"),
-    ("con1", 9): ("octave1", "I5"),
-    ("con1", 10): ("octave1", "Q5"),
-    ("con2", 1): ("octave2", "I1"),
-    ("con2", 2): ("octave2", "Q1"),
-    # ("con2", 3): ("octave2", "I2"),
-    # ("con2", 4): ("octave2", "Q2"),
-}
+# port_mapping = {
+#     ("con1", 1): ("octave1", "I1"),
+#     ("con1", 2): ("octave1", "Q1"),
+#     ("con1", 3): ("octave1", "I2"),
+#     ("con1", 4): ("octave1", "Q2"),
+#     ("con1", 5): ("octave1", "I3"),
+#     ("con1", 6): ("octave1", "Q3"),
+#     ("con1", 7): ("octave1", "I4"),
+#     ("con1", 8): ("octave1", "Q4"),
+#     ("con1", 9): ("octave1", "I5"),
+#     ("con1", 10): ("octave1", "Q5"),
+#     ("con2", 1): ("octave2", "I1"),
+#     ("con2", 2): ("octave2", "Q1"),
+#     # ("con2", 3): ("octave2", "I2"),
+#     # ("con2", 4): ("octave2", "Q2"),
+# }
 
 # The Octave port is 11xxx, where xxx are the last three digits of the Octave internal IP that can be accessed from
 # the OPX admin panel if you QOP version is >= QOP220. Otherwise, it is 50 for Octave1, then 51, 52 and so on.
-octave_1 = OctaveUnit("octave1", qop_ip, port=11250, con="con1", clock="External_1000MHz", port_mapping=port_mapping)
-octave_2 = OctaveUnit("octave2", qop_ip, port=11251, con="con2", clock="External_1000MHz", port_mapping=port_mapping)
+octave_1 = OctaveUnit("octave1", qop_ip, port=11250, con="con1", clock="External_1000MHz")#, port_mapping=port_mapping)
+octave_2 = OctaveUnit("octave2", qop_ip, port=11251, con="con2", clock="External_1000MHz")#, port_mapping=port_mapping)
 
 # Add the octaves
 octaves = [octave_1, octave_2]
@@ -297,20 +299,20 @@ cz2_1_2pi_dev = 0.078
 #############################################
 resonator_LO = 5.88 * u.GHz
 # Resonators IF
-resonator_IF_q1 = int((34.3) * u.MHz) # 21.5
-resonator_IF_q2 = int((134.4) * u.MHz)
-resonator_IF_q3 = int((-22.2) * u.MHz)
-resonator_IF_q4 = int((158) * u.MHz)
-resonator_IF_q5 = int((63.3) * u.MHz)
+resonator_IF_q1 = int((33.9) * u.MHz) # 21.5
+resonator_IF_q2 = int((133.7) * u.MHz)
+resonator_IF_q3 = int((-22.8) * u.MHz)
+resonator_IF_q4 = int((156.0) * u.MHz)
+resonator_IF_q5 = int((62.5) * u.MHz)
 # Above is for verifying wide-sweep results: -156, -38, 39, 138, 231
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
-readout_len = 600 #1800
-readout_amp_q1 = 0.0324
-readout_amp_q2 = 0.144
-readout_amp_q3 = 0.0891
-readout_amp_q4 = 0.0691
-readout_amp_q5 = 0.131
+readout_len = 1800
+readout_amp_q1 = 0.0065
+readout_amp_q2 = 0.033
+readout_amp_q3 = 0.0246
+readout_amp_q4 = 0.0155
+readout_amp_q5 = 0.0188
 
 # TOF and depletion time
 time_of_flight = 284  # must be a multiple of 4
@@ -436,109 +438,120 @@ config = {
     },
     "elements": {
         "rr1": {
-            "mixInputs": {
-                "I": ("con1", 1),
-                "Q": ("con1", 2),
-                "lo_frequency": resonator_LO,
-                "mixer": "octave_octave1_1",
-            },
+            'RF_outputs': {"port": ("octave1", 1)},
+            "RF_inputs": {"port": ("octave1", 1)},
+            # "mixInputs": {
+            #     "I": ("con1", 1),
+            #     "Q": ("con1", 2),
+            #     "lo_frequency": resonator_LO,
+            #     "mixer": "octave_octave1_1",
+            # },
             "intermediate_frequency": resonator_IF_q1,
             "operations": {
                 "cw": "const_pulse",
                 "readout": "readout_pulse_q1",
             },
-            "outputs": {
-                "out1": ("con1", 1),
-                "out2": ("con1", 2),
-            },
+            # "outputs": {
+            #     "out1": ("con1", 1),
+            #     "out2": ("con1", 2),
+            # },
             "time_of_flight": time_of_flight,
             "smearing": 0,
         },
         "rr2": {
-            "mixInputs": {
-                "I": ("con1", 1),
-                "Q": ("con1", 2),
-                "lo_frequency": resonator_LO,
-                "mixer": "octave_octave1_1",
-            },
+            'RF_outputs': {"port": ("octave1", 1)},
+            "RF_inputs": {"port": ("octave1", 1)},
+            # "mixInputs": {
+            #     "I": ("con1", 1),
+            #     "Q": ("con1", 2),
+            #     "lo_frequency": resonator_LO,
+            #     "mixer": "octave_octave1_1",
+            # },
             "intermediate_frequency": resonator_IF_q2,
             "operations": {
                 "cw": "const_pulse",
                 "readout": "readout_pulse_q2",
             },
-            "outputs": {
-                "out1": ("con1", 1),
-                "out2": ("con1", 2),
-            },
+            # "outputs": {
+            #     "out1": ("con1", 1),
+            #     "out2": ("con1", 2),
+            # },
             "time_of_flight": time_of_flight,
             "smearing": 0,
         },
         "rr3": {
-            "mixInputs": {
-                "I": ("con1", 1),
-                "Q": ("con1", 2),
-                "lo_frequency": resonator_LO,
-                "mixer": "octave_octave1_1",
-            },
+            'RF_outputs': {"port": ("octave1", 1)},
+            "RF_inputs": {"port": ("octave1", 1)},
+            # "mixInputs": {
+            #     "I": ("con1", 1),
+            #     "Q": ("con1", 2),
+            #     "lo_frequency": resonator_LO,
+            #     "mixer": "octave_octave1_1",
+            # },
             "intermediate_frequency": resonator_IF_q3,
             "operations": {
                 "cw": "const_pulse",
                 "readout": "readout_pulse_q3",
             },
-            "outputs": {
-                "out1": ("con1", 1),
-                "out2": ("con1", 2),
-            },
+            # "outputs": {
+            #     "out1": ("con1", 1),
+            #     "out2": ("con1", 2),
+            # },
             "time_of_flight": time_of_flight,
             "smearing": 0,
         },
         "rr4": {
-            "mixInputs": {
-                "I": ("con1", 1),
-                "Q": ("con1", 2),
-                "lo_frequency": resonator_LO,
-                "mixer": "octave_octave1_1",
-            },
+            'RF_outputs': {"port": ("octave1", 1)},
+            "RF_inputs": {"port": ("octave1", 1)},
+            # "mixInputs": {
+            #     "I": ("con1", 1),
+            #     "Q": ("con1", 2),
+            #     "lo_frequency": resonator_LO,
+            #     "mixer": "octave_octave1_1",
+            # },
             "intermediate_frequency": resonator_IF_q4,
             "operations": {
                 "cw": "const_pulse",
                 "readout": "readout_pulse_q4",
             },
-            "outputs": {
-                "out1": ("con1", 1),
-                "out2": ("con1", 2),
-            },
+            # "outputs": {
+            #     "out1": ("con1", 1),
+            #     "out2": ("con1", 2),
+            # },
             "time_of_flight": time_of_flight,
             "smearing": 0,
         },
         "rr5": {
-            "mixInputs": {
-                "I": ("con1", 1),
-                "Q": ("con1", 2),
-                "lo_frequency": resonator_LO,
-                "mixer": "octave_octave1_1",
-            },
+            'RF_outputs': {"port": ("octave1", 1)},
+            "RF_inputs": {"port": ("octave1", 1)},
+            # "mixInputs": {
+            #     "I": ("con1", 1),
+            #     "Q": ("con1", 2),
+            #     "lo_frequency": resonator_LO,
+            #     "mixer": "octave_octave1_1",
+            # },
             "intermediate_frequency": resonator_IF_q5,
             "operations": {
                 "cw": "const_pulse",
                 "readout": "readout_pulse_q5",
             },
-            "outputs": {
-                "out1": ("con1", 1),
-                "out2": ("con1", 2),
-            },
+            # "outputs": {
+            #     "out1": ("con1", 1),
+            #     "out2": ("con1", 2),
+            # },
             "time_of_flight": time_of_flight,
             "smearing": 0,
         },
         "q1_xy": {
-            "mixInputs": {
-                # "I": ("con1", 3),
-                # "Q": ("con1", 4),
-                "I": ("con2", 1),
-                "Q": ("con2", 2),
-                "lo_frequency": qubit_LO_q1,
-                "mixer": "octave_octave2_1",
-            },
+            'RF_inputs': {"port": ("octave2", 1)},
+            # "mixInputs": {
+            #     # "I": ("con1", 3),
+            #     # "Q": ("con1", 4),
+            #     "I": ("con2", 1),
+            #     "Q": ("con2", 2),
+            #     "lo_frequency": qubit_LO_q1,
+            #     "mixer": "octave_octave2_1",
+            # },
             "intermediate_frequency": qubit_IF_q1,  # frequency at offset ch7 (max freq)
             "operations": {
                 "cw": "const_pulse",
@@ -552,12 +565,13 @@ config = {
             },
         },
         "q2_xy": {
-            "mixInputs": {
-                "I": ("con1", 7),
-                "Q": ("con1", 8),
-                "lo_frequency": qubit_LO_q2,
-                "mixer": "octave_octave1_4",
-            },
+            'RF_inputs': {"port": ("octave1", 4)},
+            # "mixInputs": {
+            #     "I": ("con1", 7),
+            #     "Q": ("con1", 8),
+            #     "lo_frequency": qubit_LO_q2,
+            #     "mixer": "octave_octave1_4",
+            # },
             "intermediate_frequency": qubit_IF_q2,  # frequency at offset ch8 (max freq)
             "operations": {
                 "cw": "const_pulse",
@@ -571,12 +585,13 @@ config = {
             },
         },
         "q3_xy": {
-            "mixInputs": {
-                "I": ("con1", 5),
-                "Q": ("con1", 6),
-                "lo_frequency": qubit_LO_q3,
-                "mixer": "octave_octave1_3",
-            },
+            'RF_inputs': {"port": ("octave1", 3)},
+            # "mixInputs": {
+            #     "I": ("con1", 5),
+            #     "Q": ("con1", 6),
+            #     "lo_frequency": qubit_LO_q3,
+            #     "mixer": "octave_octave1_3",
+            # },
             "intermediate_frequency": qubit_IF_q3,
             "operations": {
                 "cw": "const_pulse",
@@ -591,12 +606,13 @@ config = {
         },
 
         "q4_xy": {
-            "mixInputs": {
-                "I": ("con1", 9),
-                "Q": ("con1", 10),
-                "lo_frequency": qubit_LO_q4,
-                "mixer": "octave_octave1_5",
-            },
+            'RF_inputs': {"port": ("octave1", 5)},
+            # "mixInputs": {
+            #     "I": ("con1", 9),
+            #     "Q": ("con1", 10),
+            #     "lo_frequency": qubit_LO_q4,
+            #     "mixer": "octave_octave1_5",
+            # },
             "intermediate_frequency": qubit_IF_q4,
             "operations": {
                 "cw": "const_pulse",
@@ -610,12 +626,13 @@ config = {
             },
         },
         "q00_xy": {
-            "mixInputs": {
-                "I": ("con1", 9),
-                "Q": ("con1", 10),
-                "lo_frequency": qubit_LO_q4,
-                "mixer": "octave_octave1_5",
-            },
+            'RF_inputs': {"port": ("octave1", 5)},
+            # "mixInputs": {
+            #     "I": ("con1", 9),
+            #     "Q": ("con1", 10),
+            #     "lo_frequency": qubit_LO_q4,
+            #     "mixer": "octave_octave1_5",
+            # },
             "intermediate_frequency": qubit_IF_q4,
             "operations": {
                 "cw": "const_pulse",
@@ -630,14 +647,15 @@ config = {
         },
 
         "q5_xy": {
-            "mixInputs": {
-                # "I": ("con2", 1),
-                # "Q": ("con2", 2),
-                "I": ("con1", 3),
-                "Q": ("con1", 4),
-                "lo_frequency": qubit_LO_q5,
-                "mixer": "octave_octave1_2",
-            },
+            'RF_inputs': {"port": ("octave1", 2)},
+            # "mixInputs": {
+            #     # "I": ("con2", 1),
+            #     # "Q": ("con2", 2),
+            #     "I": ("con1", 3),
+            #     "Q": ("con1", 4),
+            #     "lo_frequency": qubit_LO_q5,
+            #     "mixer": "octave_octave1_2",
+            # },
             "intermediate_frequency": qubit_IF_q5,
             "operations": {
                 "cw": "const_pulse",
@@ -724,6 +742,16 @@ config = {
 
             },
         },
+        "c3_4": {
+            "singleInput": {
+                "port": ("con2", 5),
+            },
+            "operations": {
+                "const": "const_flux_pulse",
+                
+
+            },
+        },
         "c4_5": {
             "singleInput": {
                 "port": ("con2", 10),
@@ -735,6 +763,61 @@ config = {
             },
         },
         
+    },
+    "octaves": {
+        "octave1": {
+            "RF_outputs": {
+                1: {
+                    "LO_frequency": resonator_LO,
+                    "LO_source": "internal",
+                    "output_mode": "always_on",
+                    "gain": 6,
+                },
+                2: {
+                    "LO_frequency": qubit_LO_q5,
+                    "LO_source": "internal",
+                    "output_mode": "always_on",
+                    "gain": 20,
+                },
+                3: {
+                    "LO_frequency": qubit_LO_q3,
+                    "LO_source": "internal",
+                    "output_mode": "always_on",
+                    "gain": 15,
+                },
+                4: {
+                    "LO_frequency": qubit_LO_q2,
+                    "LO_source": "internal",
+                    "output_mode": "always_on",
+                    "gain": 20,
+                },
+                5: {
+                    "LO_frequency": qubit_LO_q4,
+                    "LO_source": "internal",
+                    "output_mode": "always_on",
+                    "gain": 20,
+                },
+            },
+            "RF_inputs": {
+                1: {
+                    "LO_frequency": resonator_LO,
+                    "LO_source": "internal",
+                },
+            },
+            "connectivity": "con1",
+        },
+        "octave2": {
+            "RF_outputs": {
+                1: {
+                    "LO_frequency": qubit_LO_q1,
+                    "LO_source": "internal",
+                    "output_mode": "always_on",
+                    "gain": 15,
+                },
+                
+            },
+            "connectivity": "con2",
+        }
     },
     "pulses": {
         # General:
@@ -1411,76 +1494,14 @@ config = {
         },
 
     },
-
-    "mixers": {
-        # Control:
-        "octave_octave1_2": [
-            {
-                "intermediate_frequency": qubit_IF_q5,
-                "lo_frequency": qubit_LO_q5,
-                "correction": (1, 0, 0, 1),
-            },
-        ],
-        "octave_octave1_3": [
-            {
-                "intermediate_frequency": qubit_IF_q3,
-                "lo_frequency": qubit_LO_q3,
-                "correction": (1, 0, 0, 1),
-            }
-        ],
-        "octave_octave1_4": [
-            {
-                "intermediate_frequency": qubit_IF_q2,
-                "lo_frequency": qubit_LO_q2,
-                "correction": (1, 0, 0, 1),
-            }
-        ],
-        "octave_octave1_5": [
-            {
-                "intermediate_frequency": qubit_IF_q4,
-                "lo_frequency": qubit_LO_q4,
-                "correction": (1, 0, 0, 1),
-            }
-        ],
-        "octave_octave2_1": [
-            {
-                "intermediate_frequency": qubit_IF_q1,
-                "lo_frequency": qubit_LO_q1,
-                "correction": (1, 0, 0, 1),
-            }
-        ],
-
-        # Readout:
-        "octave_octave1_1": [
-            {
-                "intermediate_frequency": resonator_IF_q1,
-                "lo_frequency": resonator_LO,
-                "correction": (1, 0, 0, 1),
-            },
-            {
-                "intermediate_frequency": resonator_IF_q2,
-                "lo_frequency": resonator_LO,
-                "correction": (1, 0, 0, 1),
-            },
-            {
-                "intermediate_frequency": resonator_IF_q3,
-                "lo_frequency": resonator_LO,
-                "correction": (1, 0, 0, 1),
-            },
-            {
-                "intermediate_frequency": resonator_IF_q4,
-                "lo_frequency": resonator_LO,
-                "correction": (1, 0, 0, 1),
-            },
-            {
-                "intermediate_frequency": resonator_IF_q5,
-                "lo_frequency": resonator_LO,
-                "correction": (1, 0, 0, 1),
-            },
-        ],
-
-    },
 }
 
-# import pickle
-# pickle.dump(config, open("qua_config_no_quamap.pkl", "wb"))
+
+if True:
+    try:
+        from pprint import pformat
+        import pyperclip
+        
+        pyperclip.copy(pformat(config, indent=4))
+    except Exception:
+        pass
