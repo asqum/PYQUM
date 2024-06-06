@@ -1,5 +1,5 @@
 
-# Single QUA script generated at 2024-06-04 11:33:11.556475
+# Single QUA script generated at 2024-06-06 10:36:44.446732
 # QUA library version: 1.1.6
 
 from qm.qua import *
@@ -1595,7 +1595,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 1),
                 "Q": ('con1', 2),
-                "mixer": "rr1_mixer_5ea",
+                "mixer": "rr1_mixer_5f8",
                 "lo_frequency": 5880000000.0,
             },
         },
@@ -1616,7 +1616,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 1),
                 "Q": ('con1', 2),
-                "mixer": "rr2_mixer_642",
+                "mixer": "rr2_mixer_f25",
                 "lo_frequency": 5880000000.0,
             },
         },
@@ -1637,7 +1637,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 1),
                 "Q": ('con1', 2),
-                "mixer": "rr3_mixer_746",
+                "mixer": "rr3_mixer_8ab",
                 "lo_frequency": 5880000000.0,
             },
         },
@@ -1658,7 +1658,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 1),
                 "Q": ('con1', 2),
-                "mixer": "rr4_mixer_85f",
+                "mixer": "rr4_mixer_abd",
                 "lo_frequency": 5880000000.0,
             },
         },
@@ -1679,7 +1679,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 1),
                 "Q": ('con1', 2),
-                "mixer": "rr5_mixer_6be",
+                "mixer": "rr5_mixer_561",
                 "lo_frequency": 5880000000.0,
             },
         },
@@ -1700,7 +1700,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con2', 1),
                 "Q": ('con2', 2),
-                "mixer": "q1_xy_mixer_cd2",
+                "mixer": "q1_xy_mixer_574",
                 "lo_frequency": 5200000000.0,
             },
         },
@@ -1721,7 +1721,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 7),
                 "Q": ('con1', 8),
-                "mixer": "q2_xy_mixer_bb4",
+                "mixer": "q2_xy_mixer_8f0",
                 "lo_frequency": 4600000000.0,
             },
         },
@@ -1742,7 +1742,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 5),
                 "Q": ('con1', 6),
-                "mixer": "q3_xy_mixer_c2b",
+                "mixer": "q3_xy_mixer_030",
                 "lo_frequency": 4600000000.0,
             },
         },
@@ -1763,7 +1763,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 9),
                 "Q": ('con1', 10),
-                "mixer": "q4_xy_mixer_9a4",
+                "mixer": "q4_xy_mixer_d31",
                 "lo_frequency": 4600000000.0,
             },
         },
@@ -1784,7 +1784,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 9),
                 "Q": ('con1', 10),
-                "mixer": "q00_xy_mixer_b32",
+                "mixer": "q00_xy_mixer_35b",
                 "lo_frequency": 4600000000.0,
             },
         },
@@ -1805,7 +1805,7 @@ loaded_config = {
             "mixInputs": {
                 "I": ('con1', 3),
                 "Q": ('con1', 4),
-                "mixer": "q5_xy_mixer_6df",
+                "mixer": "q5_xy_mixer_fd0",
                 "lo_frequency": 4600000000.0,
             },
         },
@@ -2900,17 +2900,17 @@ loaded_config = {
         },
     },
     "mixers": {
-        "rr1_mixer_5ea": [{'intermediate_frequency': 33900000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "rr2_mixer_642": [{'intermediate_frequency': 133700000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "rr3_mixer_746": [{'intermediate_frequency': -22800000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "rr4_mixer_85f": [{'intermediate_frequency': 156000000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "rr5_mixer_6be": [{'intermediate_frequency': 62500000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "q1_xy_mixer_cd2": [{'intermediate_frequency': -118000000.0, 'lo_frequency': 5200000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "q2_xy_mixer_bb4": [{'intermediate_frequency': -164000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "q3_xy_mixer_c2b": [{'intermediate_frequency': -137000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "q4_xy_mixer_9a4": [{'intermediate_frequency': -180000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "q00_xy_mixer_b32": [{'intermediate_frequency': -180000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
-        "q5_xy_mixer_6df": [{'intermediate_frequency': -237000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "rr1_mixer_5f8": [{'intermediate_frequency': 33900000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "rr2_mixer_f25": [{'intermediate_frequency': 133700000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "rr3_mixer_8ab": [{'intermediate_frequency': -22800000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "rr4_mixer_abd": [{'intermediate_frequency': 156000000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "rr5_mixer_561": [{'intermediate_frequency': 62500000.0, 'lo_frequency': 5880000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "q1_xy_mixer_574": [{'intermediate_frequency': -118000000.0, 'lo_frequency': 5200000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "q2_xy_mixer_8f0": [{'intermediate_frequency': -164000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "q3_xy_mixer_030": [{'intermediate_frequency': -137000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "q4_xy_mixer_d31": [{'intermediate_frequency': -180000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "q00_xy_mixer_35b": [{'intermediate_frequency': -180000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
+        "q5_xy_mixer_fd0": [{'intermediate_frequency': -237000000.0, 'lo_frequency': 4600000000.0, 'correction': [1, 0.0, 0.0, 1]}],
     },
 }
 

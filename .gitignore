@@ -6,3 +6,5 @@ TEST/BETAsite/QM/OPXPlus/5-Flux-Tunable-Transmons/.DS_Store
 TEST/BETAsite/QM/OPXPlus/.DS_Store
 
 TEST/BETAsite/QM/.DS_Store
+
+*.pyc
