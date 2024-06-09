@@ -74,17 +74,17 @@ octave_config = octave_declaration(octaves)
 #             LO: 5=3, 2=4; 1               #
 #############################################   
 qubit_LO_q1 = (5.200) * u.GHz
-qubit_LO_q2 = (4.600) * u.GHz
-qubit_LO_q3 = (4.600) * u.GHz
+qubit_LO_q2 = (4.500) * u.GHz
+qubit_LO_q3 = (4.500) * u.GHz
 qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = qubit_LO_q3
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
 qubit_IF_q1 = (-118 ) * u.MHz 
-qubit_IF_q2 = (-164 ) * u.MHz 
-qubit_IF_q3 = (-137 ) * u.MHz
-qubit_IF_q4 = (-180 ) * u.MHz
-qubit_IF_q5 = (-237 ) * u.MHz
+qubit_IF_q2 = (-100 ) * u.MHz 
+qubit_IF_q3 = (-80 ) * u.MHz
+qubit_IF_q4 = (-85 ) * u.MHz
+qubit_IF_q5 = (-143. +6.-1.5 +0.05 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -103,26 +103,26 @@ const_amp = 270 * u.mV
 saturation_len = 1 * u.us
 saturation_amp = 0.270
 # Pi pulse parameters
-pi_len = 24 # 32
+pi_len = 40 # 32
 pi_sigma = pi_len / 4
 pi_amp_q1 = 0.099
-pi_amp_q2 = 0.1318
-pi_amp_q3 = 0.1948
-pi_amp_q4 = 0.141
-pi_amp_q5 = 0.256
+pi_amp_q2 = 0.1
+pi_amp_q3 = 0.1
+pi_amp_q4 = 0.006 *3
+pi_amp_q5 = 0.0057 *3 *0.95 *1.13*1.013
 
 r90_amp_q1 = pi_amp_q1 / 2 *1.
-r90_amp_q2 = pi_amp_q2 / 2 *1.0267324510810187
+r90_amp_q2 = pi_amp_q2 / 2 *1.
 r90_amp_q3 = pi_amp_q3 / 2 *1.
-r90_amp_q4 = pi_amp_q4 / 2 *1.0108383/.999
-r90_amp_q5 = pi_amp_q5 / 2 *1.0056421673959859*.999
+r90_amp_q4 = pi_amp_q4 / 2 *1.
+r90_amp_q5 = pi_amp_q5 / 2 /1.013*0.993
 
 # DRAG coefficients (# No DRAG when drag_coef_qi=0, it's just a gaussian.)
 drag_coef_q1 = 0.8999
 drag_coef_q2 = 0.63
 drag_coef_q3 = 0.8341
 drag_coef_q4 = .983
-drag_coef_q5 = 0.128
+drag_coef_q5 = 1.0
 anharmonicity_q1 = - 204.46 *u.MHz      # checked
 anharmonicity_q2 = - 214.24 *u.MHz      # checked
 anharmonicity_q3 = + 216.32 *u.MHz      # checked
@@ -208,9 +208,9 @@ flux_settle_time = 28 * u.ns
 
 max_frequency_point1 = 0
 max_frequency_point2 = 0
-max_frequency_point3 = 0
-max_frequency_point4 = 0
-max_frequency_point5 = 0
+max_frequency_point3 = -0.03
+max_frequency_point4 = -0.01 +0.01
+max_frequency_point5 = -0.01 +0.007
 
 idle_q1 = max_frequency_point1 +0.
 idle_q2 = max_frequency_point2 +0.
@@ -235,16 +235,16 @@ amplitude_fit5, frequency_fit5, phase_fit5, offset_fit5 = [0, 0, 0, 0]
 
 const_flux_len = 200 # 360, 600, 260 max-bake: 260ns (200ns to be safe?)
 const_flux_amp = 0.48 # for cz-chevron 
-cryo_flux_amp = 0.142 # for cryoscope: make sure detuning < 400 MHz
+cryo_flux_amp = 0.1 # for cryoscope: make sure detuning < 400 MHz
 
 # filter taps:
 fir4 = []
 iir4 = []
 
-# fir5 = []
-# iir5 = []
-fir5 = [1.06569937, -0.98851684]
-iir5 = [0.92281746]
+fir5 = []
+iir5 = []
+# fir5 = [1.06569937, -0.98851684]
+# iir5 = [0.92281746]
 
 
 # readout correction with filter on:
@@ -301,18 +301,18 @@ resonator_LO = 5.88 * u.GHz
 # Resonators IF
 resonator_IF_q1 = int((33.9) * u.MHz) # 21.5
 resonator_IF_q2 = int((133.7) * u.MHz)
-resonator_IF_q3 = int((-22.8) * u.MHz)
-resonator_IF_q4 = int((156.0) * u.MHz)
-resonator_IF_q5 = int((62.5) * u.MHz)
+resonator_IF_q3 = int((-22.8-0.5) * u.MHz)
+resonator_IF_q4 = int((157.0 +0.5) * u.MHz)
+resonator_IF_q5 = int((63-1 +0.3) * u.MHz)
 # Above is for verifying wide-sweep results: -156, -38, 39, 138, 231
 
 # Readout pulse parameters (optimal input for IQ-mixer: 125mV)
-readout_len = 1800
-readout_amp_q1 = 0.0065
-readout_amp_q2 = 0.033
-readout_amp_q3 = 0.0246
-readout_amp_q4 = 0.0155
-readout_amp_q5 = 0.0188
+readout_len = 600
+readout_amp_q1 = 0.1 *0.1*0.8*0.9
+readout_amp_q2 = 0.2 *0.1*0.8*0.9
+readout_amp_q3 = 0.2 *0.1*0.8*0.9
+readout_amp_q4 = 0.2 *0.1*0.8*0.9 *0.9
+readout_amp_q5 = 0.2 *0.1*0.8*0.9
 
 # TOF and depletion time
 time_of_flight = 284  # must be a multiple of 4
@@ -371,11 +371,11 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = ((109.8 +ro_corr[0]) / 180) * np.pi
-rotation_angle_q2 = ((188.9  +ro_corr[1]) / 180) * np.pi
-rotation_angle_q3 = ((197.1 +ro_corr[2]) / 180) * np.pi
-rotation_angle_q4 = ((291.0 +ro_corr[3]) / 180) * np.pi
-rotation_angle_q5 = ((140.3  +ro_corr[4]) / 180) * np.pi
+rotation_angle_q1 = ((0 +ro_corr[0]) / 180) * np.pi
+rotation_angle_q2 = ((0  +ro_corr[1]) / 180) * np.pi
+rotation_angle_q3 = ((0 +ro_corr[2]) / 180) * np.pi
+rotation_angle_q4 = ((0 +ro_corr[3]) / 180) * np.pi
+rotation_angle_q5 = ((95.3  +ro_corr[4]) / 180) * np.pi
 ge_threshold_q1 = 1.988e-03
 ge_threshold_q2 = 2.365e-03
 ge_threshold_q3 = 2.471e-03
@@ -771,31 +771,31 @@ config = {
                     "LO_frequency": resonator_LO,
                     "LO_source": "internal",
                     "output_mode": "always_on",
-                    "gain": 6,
+                    "gain": 0,
                 },
                 2: {
                     "LO_frequency": qubit_LO_q5,
                     "LO_source": "internal",
                     "output_mode": "always_on",
-                    "gain": 20,
+                    "gain": 8,
                 },
                 3: {
                     "LO_frequency": qubit_LO_q3,
                     "LO_source": "internal",
                     "output_mode": "always_on",
-                    "gain": 15,
+                    "gain": 8,
                 },
                 4: {
                     "LO_frequency": qubit_LO_q2,
                     "LO_source": "internal",
                     "output_mode": "always_on",
-                    "gain": 20,
+                    "gain": 8,
                 },
                 5: {
                     "LO_frequency": qubit_LO_q4,
                     "LO_source": "internal",
                     "output_mode": "always_on",
-                    "gain": 20,
+                    "gain": 8,
                 },
             },
             "RF_inputs": {
@@ -812,7 +812,7 @@ config = {
                     "LO_frequency": qubit_LO_q1,
                     "LO_source": "internal",
                     "output_mode": "always_on",
-                    "gain": 15,
+                    "gain": 8,
                 },
                 
             },
