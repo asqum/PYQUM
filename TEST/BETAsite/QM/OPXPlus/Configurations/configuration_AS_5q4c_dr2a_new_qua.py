@@ -80,11 +80,11 @@ qubit_LO_q4 = qubit_LO_q2
 qubit_LO_q5 = qubit_LO_q3
 
 # Qubits IF (Mixers love 100MHz < IF < 400MHz)
-qubit_IF_q1 = (-118 ) * u.MHz 
-qubit_IF_q2 = (-100 ) * u.MHz 
-qubit_IF_q3 = (-80 ) * u.MHz
-qubit_IF_q4 = (-85 ) * u.MHz
-qubit_IF_q5 = (-143. +6.-1.5 +0.05 ) * u.MHz
+qubit_IF_q1 = (-116 -2.5355 ) * u.MHz 
+qubit_IF_q2 = (-64  -0.912  ) * u.MHz 
+qubit_IF_q3 = (-58  -0.6295 ) * u.MHz
+qubit_IF_q4 = (-85  +1.1400 ) * u.MHz
+qubit_IF_q5 = (-143 +4.6565 ) * u.MHz
 # For comparing 2q:
 # qubit_IF_q2 = qubit_IF_q1
 
@@ -105,11 +105,11 @@ saturation_amp = 0.270
 # Pi pulse parameters
 pi_len = 40 # 32
 pi_sigma = pi_len / 4
-pi_amp_q1 = 0.099
-pi_amp_q2 = 0.1
-pi_amp_q3 = 0.1
-pi_amp_q4 = 0.006 *3
-pi_amp_q5 = 0.0057 *3 *0.95 *1.13*1.013
+pi_amp_q1 = 0.0222
+pi_amp_q2 = 0.0180
+pi_amp_q3 = 0.0195
+pi_amp_q4 = 0.0193
+pi_amp_q5 = 0.0177
 
 r90_amp_q1 = pi_amp_q1 / 2 *1.
 r90_amp_q2 = pi_amp_q2 / 2 *1.
@@ -371,16 +371,16 @@ else:
     opt_weights_minus_real_q5 = [(1.0, readout_len)]
 
 # state discrimination
-rotation_angle_q1 = ((0 +ro_corr[0]) / 180) * np.pi
-rotation_angle_q2 = ((0  +ro_corr[1]) / 180) * np.pi
-rotation_angle_q3 = ((0 +ro_corr[2]) / 180) * np.pi
-rotation_angle_q4 = ((0 +ro_corr[3]) / 180) * np.pi
-rotation_angle_q5 = ((95.3  +ro_corr[4]) / 180) * np.pi
-ge_threshold_q1 = 1.988e-03
-ge_threshold_q2 = 2.365e-03
-ge_threshold_q3 = 2.471e-03
-ge_threshold_q4 = 6.010e-04
-ge_threshold_q5 = 1.304e-03
+rotation_angle_q1 = ((230.2  +ro_corr[0]) / 180) * np.pi
+rotation_angle_q2 = ((284.3  +ro_corr[1]) / 180) * np.pi
+rotation_angle_q3 = ((266.7  +ro_corr[2]) / 180) * np.pi
+rotation_angle_q4 = ((153.5  +ro_corr[3]) / 180) * np.pi
+rotation_angle_q5 = ((96.4  +ro_corr[4]) / 180) * np.pi
+ge_threshold_q1 = 8.799e-04
+ge_threshold_q2 = 1.451e-04
+ge_threshold_q3 = 5.724e-05
+ge_threshold_q4 = 1.822e-04
+ge_threshold_q5 = -1.322e-04
 
 #############################################
 #                  Config                   #

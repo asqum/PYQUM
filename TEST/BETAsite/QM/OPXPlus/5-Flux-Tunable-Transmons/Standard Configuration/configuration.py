@@ -59,16 +59,17 @@ QPU = {
     },
 }
 
-# print("QPU q1 readout frequency: %s Hz" %(QPU["q1"]["readout"]["frequency"]))
 print("QPU q1 control frequency: %s Hz" %(QPU["q1"]["control"]["frequency"]))
-# print("QPU q2 readout frequency: %s Hz" %(QPU["q2"]["readout"]["frequency"]))
 print("QPU q2 control frequency: %s Hz" %(QPU["q2"]["control"]["frequency"]))
-# print("QPU q3 readout frequency: %s Hz" %(QPU["q3"]["readout"]["frequency"]))
 print("QPU q3 control frequency: %s Hz" %(QPU["q3"]["control"]["frequency"]))
-# print("QPU q4 readout frequency: %s Hz" %(QPU["q4"]["readout"]["frequency"]))
 print("QPU q4 control frequency: %s Hz" %(QPU["q4"]["control"]["frequency"]))
-# print("QPU q5 readout frequency: %s Hz" %(QPU["q5"]["readout"]["frequency"]))
 print("QPU q5 control frequency: %s Hz" %(QPU["q5"]["control"]["frequency"]))
+
+print("QPU q1 readout frequency: %s Hz" %(QPU["q1"]["readout"]["frequency"]))
+print("QPU q2 readout frequency: %s Hz" %(QPU["q2"]["readout"]["frequency"]))
+print("QPU q3 readout frequency: %s Hz" %(QPU["q3"]["readout"]["frequency"]))
+print("QPU q4 readout frequency: %s Hz" %(QPU["q4"]["readout"]["frequency"]))
+print("QPU q5 readout frequency: %s Hz" %(QPU["q5"]["readout"]["frequency"]))
 
 # Flux offset (at idle-point) 
 # for i in range(5):

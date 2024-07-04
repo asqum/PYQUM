@@ -37,9 +37,9 @@ warnings.filterwarnings("ignore")
 ###################
 n_avg = 100000  # Number of averages
 X = False
-control, target = 1,4
+control, target = 5,4
 
-detuning = -2.00e6 # "Virtual" detuning in Hz
+detuning = -2.00e6 # "Virtual" detuning in Hz (NOTE: take the average correction between + & - detuning)
 multiplexed = [1,2,3,4,5]
 the_rest = [x for x in multiplexed if x not in [control,target]]
 
@@ -199,7 +199,7 @@ else:
     try:
         fit = Fit()
         plt.figure()
-        plt.suptitle(f"ZZ-Ramsey measurement with detuning={detuning} Hz")
+        plt.suptitle(f"q{target}'s ZZ-Ramsey with detuning={detuning} Hz")
         
         # plt.subplot(2,2,1)
         # fit.ramsey(4 * idle_times, I1, plot=True)

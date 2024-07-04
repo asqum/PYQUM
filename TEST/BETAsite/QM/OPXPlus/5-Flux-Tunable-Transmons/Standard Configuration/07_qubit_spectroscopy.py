@@ -46,7 +46,7 @@ show_2_photons = True
 focus = False
 n_avg = 100000  # The number of averages
 qubit_num = 5
-test_qubits = [5]
+test_qubits = [1]
 
 # Adjust the pulse duration and amplitude to drive the qubit into a mixed state
 saturation_len = 20 * u.us  # In ns (should be < FFT of df)

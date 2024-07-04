@@ -23,7 +23,8 @@ qm.octave.set_clock("octave2", clock_mode=ClockMode.External_1000MHz)
 print("running mixer calibration: ")
 calibration = True
 if calibration:
-    elements = ["rr1", "rr2", "rr3", "rr4", "rr5", "q1_xy", "q2_xy", "q3_xy", "q4_xy", "q5_xy"]
+    # elements = ["rr1"]#, "rr2", "rr3", "rr4", "rr5", "q1_xy", "q2_xy", "q3_xy", "q4_xy", "q5_xy"]
+    elements = ["q1_xy", "q2_xy", "q3_xy", "q4_xy", "q5_xy"]
     for element in elements:
         print("-" * 37 + f" Calibrates {element}")
         qm.calibrate_element(element)  # can provide many IFs for specific LO
