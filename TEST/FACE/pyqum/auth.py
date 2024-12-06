@@ -191,7 +191,7 @@ def login():
             error = 'Incorrect username.'
         elif not check_password_hash(user['password'], password):
             error = 'Incorrect password.'
-        elif user['status'].upper() != 'APPROVED':
+        elif user['status'].upper() != 'APPROVED' and user['status'].upper() != 'VISITOR':
             error = 'Awaiting Approval...'
 
         # Entering the system after being vetted:
@@ -214,8 +214,9 @@ def login():
             print("%s has logged-in Successfully!" %session['user_name'] )
 
             g.approved_user_list = None
+            g.visitor_list = None
             if user['management'] == "oversee":
-                # ALL approved users' credentials:
+                # ALL approved users' credential:
                 g.approved_user_list = db.execute(
                     'SELECT u.id, username, measurement, instrument, analysis'
                     ' FROM user u WHERE u.status = ?'
@@ -223,8 +224,16 @@ def login():
                     ('approved',)
                 ).fetchall()
                 g.approved_user_list = [dict(x) for x in g.approved_user_list]
-            print(Fore.RED + Back.WHITE + "ALL APPROVED USER CREDENTIALS: %s" %g.approved_user_list)
-
+                print(Fore.RED + Back.WHITE + "ALL APPROVED USERS' CREDENTIAL: %s" %g.approved_user_list)
+                # ALL visitors' credential:
+                g.visitor_list = db.execute(
+                    'SELECT u.id, username, measurement, instrument, analysis'
+                    ' FROM user u WHERE u.status = ?'
+                    ' ORDER BY id DESC',
+                    ('visitor',)
+                ).fetchall()
+                g.visitor_list = [dict(x) for x in g.visitor_list]
+            print(Fore.RED + Back.WHITE + "ALL VISITORS' CREDENTIAL: %s" %g.visitor_list)
             return redirect(url_for('index'))
 
         close_db()

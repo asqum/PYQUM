@@ -1,18 +1,9 @@
 from colorama import init, Back, Fore
 init(autoreset=True) #to convert termcolor to wins color
 
-from qm.QuantumMachinesManager import QuantumMachinesManager
-from qm.qua import *
-from qm import SimulationConfig
 from pyqum.OpenQASM.configuration import *
 from pyqum.OpenQASM.protocols import *
 
-from qualang_tools.loops import from_array
-from qualang_tools.results import fetching_tool, progress_counter
-from qualang_tools.plot import interrupt_on_close
-from qualang_tools.units import unit
-from qualang_tools.analysis import two_state_discriminator
-from oqc import *
 import grpclib
 
 import numpy as np
@@ -25,8 +16,23 @@ import pandas as pd
 pi = np.pi
 multiplexed = [1,2,3,4,5]
 
-print(Fore.YELLOW + "open communication with qm-cluster:")
-qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
+print(Fore.YELLOW + "pyqum.OpenQASM.Circuit: open communication with qm-cluster:") 
+open_backend = False
+if open_backend:
+    from qm.QuantumMachinesManager import QuantumMachinesManager
+    from qm.qua import *
+    from qm import SimulationConfig
+    from qualang_tools.loops import from_array
+    from qualang_tools.results import fetching_tool, progress_counter
+    from qualang_tools.plot import interrupt_on_close
+    from qualang_tools.units import unit
+    from qualang_tools.analysis import two_state_discriminator
+    from oqc import *
+    qmm = QuantumMachinesManager(host=qop_ip, port=qop_port, cluster_name=cluster_name, octave=octave_config)
+    print(Fore.GREEN + "Backend activated.")
+else:
+    qmm = None
+    print(Fore.YELLOW + "Backend not active")
 
 def simple_circuit(shots, script, qmm=qmm):
     simulate_pulses = False

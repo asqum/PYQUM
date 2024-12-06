@@ -59,10 +59,14 @@
         {% if g.user['instrument'] %}
             <button class="machine" id="left"><i class="far fa-hdd"></i></button>
         {% endif %}
+
+        {% if g.user['status']=='approved' %}
         <!-- <button class="mission" id="left"><i class="far fa-arrow-alt-circle-up"></i></button> -->
         <button class="bridge" id="left"><i class="fas fa-umbrella"></i></button>
         <!-- To benchmark -->
         <button class="benchmark" id="left"><i class="fa fa-microchip"></i></button>
+        {% endif %}
+
         {% if g.user['instrument'] %}
             <!-- <button class="ups" id="left"><a href="https://qum.phys.sinica.edu.tw:8888/0">UPS</a></button> -->
         {% endif %}
